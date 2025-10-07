@@ -1,15 +1,30 @@
-main = "src/worker.ts"
-compatibility_date = "2024-12-01"
+# 🪙 FixoriumPay Cloudflare Configuration
+# ---------------------------------------
+
+# Your project name (appears in Cloudflare dashboard)
+name = "fixoriumpay"
+
+# The directory containing your built static assets (from Vite)
+pages_build_output_dir = "dist/spa"
+
+# Date that defines the runtime compatibility for your Cloudflare Functions
+compatibility_date = "2025-10-07"
+
+# Optional: enable automatic updates for new runtime features
 compatibility_flags = ["nodejs_compat"]
 
-type = "javascript"
+# Optional: observability (helps with logs, debugging)
+[observability]
+enabled = true
 
-[build]
-command = "pnpm build"
-
-[assets]
-directory = "./dist/spa"
-binding = "ASSETS"
-
+# Optional: environment variables (safe defaults, you can add more in Cloudflare Dashboard)
 [vars]
-SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+NODE_ENV = "production"
+
+# Functions live under /functions — Cloudflare will auto-detect them.
+# No need to specify routes manually unless you want custom rules.
+
+# Example route override (optional):
+# [routes]
+#   pattern = "/api/*"
+#   zone_name = "fixorium.com.pk"

@@ -1,75 +1,31 @@
-import type { Env } from "../../types/env" // optional env typings
-// This file wraps existing Express handler from server/routes/wallet.ts
-// and adapts it to Cloudflare Pages Functions runtime.
+export async function onRequestGet({ request }) {
+  try {
+    const url = new URL(request.url);
+    const wallet = url.searchParams.get("wallet");
+    if (!wallet)
+      return new Response(JSON.stringify({ error: "Missing wallet address" }), { status: 400 });
 
-import { handleWalletTokenAccounts } from "../../../server/routes/wallet.ts";
+    const rpcUrl = "https://api.mainnet-beta.solana.com";
+    const rpcBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTokenAccountsByOwner",
+      params: [
+        wallet,
+        { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+        { encoding: "jsonParsed" },
+      ],
+    };
 
-async function callHandler(handler, req) {
-  // Build mock Express req and res
-  const body = await (async () => {
-    try {
-      return await req.json();
-    } catch (e) {
-      return null;
-    }
-  })();
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(rpcBody),
+    });
 
-  const url = new URL(req.url);
-  const query = Object.fromEntries(url.searchParams.entries());
-  const params = {};
-
-  let statusSet = 200;
-  let headers = {};
-  let sent = null;
-
-  const res = {
-    status: (s) => {
-      statusSet = s;
-      return res;
-    },
-    setHeader: (k, v) => {
-      headers[k] = v;
-    },
-    json: (payload) => {
-      sent = payload;
-    },
-    send: (payload) => {
-      sent = payload;
-    },
-    end: () => {}
-  };
-
-  const mockReq = {
-    method: req.method,
-    headers: Object.fromEntries(req.headers),
-    body,
-    query,
-    params,
-    url: req.url
-  };
-
-  // call handler
-  await handler(mockReq as any, res as any);
-
-  // Build Response
-  const respHeaders = new Headers(headers || { "Content-Type": "application/json" });
-  respHeaders.set("Access-Control-Allow-Origin", "*");
-  respHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-  respHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  const bodyOut = (sent === null) ? "" : (typeof sent === "string" ? sent : JSON.stringify(sent));
-  return new Response(bodyOut, { status: statusSet, headers: respHeaders });
-}
-
-export const onRequest = async (context) => {
-  const { request, env } = context;
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    const headers = new Headers();
-    headers.set("Access-Control-Allow-Origin", "*");
-    headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    return new Response(null, { status: 204, headers });
+    const data = await response.json();
+    return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
-  return await callHandler(handleWalletTokenAccounts, request);
-};
+}

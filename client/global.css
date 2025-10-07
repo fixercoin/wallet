@@ -1,0 +1,322 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+  */
+  :root {
+    /* White background, purple accents; global text in black */
+    --background: 0 0% 100%; /* white */
+    --foreground: 0 0% 0%; /* black text */
+
+    --card: 260 10% 98%; /* subtle off-white for card area */
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 270 65% 54%; /* purple */
+    --primary-foreground: 260 10% 98%;
+
+    --secondary: 270 50% 96%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 270 50% 96%;
+    --muted-foreground: 0 0% 0%;
+
+    --accent: 270 65% 54%;
+    --accent-foreground: 260 10% 98%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 260 20% 90%;
+    --input: 260 20% 96%;
+    --ring: 270 65% 54%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 260 8% 98%;
+
+    --sidebar-foreground: 0 0% 0%;
+
+    --sidebar-primary: 270 60% 20%;
+
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 270 60% 95%;
+
+    --sidebar-accent-foreground: 0 0% 0%;
+
+    --sidebar-border: 260 10% 92%;
+
+    --sidebar-ring: 270 70% 60%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 267 69% 59%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 267 69% 59%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 267 69% 59%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Force written text elements to use the global foreground (black) */
+  p,
+  span,
+  a,
+  li,
+  label,
+  small,
+  strong,
+  em,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground)) !important;
+  }
+}
+
+@layer components {
+  /* Wallet-specific styles */
+  .wallet-gradient {
+    @apply bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100;
+  }
+
+  .wallet-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;
+  }
+
+  .wallet-button-primary {
+    @apply bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl;
+  }
+
+  .wallet-button-secondary {
+    @apply bg-white/90 backdrop-blur-sm border border-white/30 hover:bg-white text-gray-900 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+
+  .token-icon {
+    @apply w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm;
+  }
+
+  .balance-card {
+    @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 shadow-2xl border-0;
+  }
+
+  .transaction-item {
+    @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-4;
+    }
+
+    .wallet-card {
+      @apply rounded-lg;
+    }
+
+    .balance-card {
+      @apply p-4;
+    }
+  }
+
+  /* Smooth animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 2px;
+  }
+
+  .dashboard-loader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.65),
+      rgba(248, 250, 252, 0.4)
+    );
+    backdrop-filter: blur(8px);
+  }
+
+  .dashboard-loader {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: conic-gradient(#0000 10%, #eb40f4);
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      #0000 calc(100% - 8px),
+      #000 0
+    );
+    animation: dashboard-loader-spin 1s linear infinite;
+  }
+
+  @keyframes dashboard-loader-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/20 backdrop-blur-md border border-white/30;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/20 backdrop-blur-md border border-gray-700/30;
+  }
+
+  /* Dashboard button - shining light blue styling */
+  .dash-btn {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    transition:
+      background-color 0.15s ease,
+      transform 0.08s ease;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.12);
+  }
+
+  .dash-btn:hover {
+    filter: brightness(0.95);
+  }
+
+  .dash-btn:active {
+    transform: translateY(1px);
+  }
+
+  .dash-btn-circle {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: 9999px;
+    transition:
+      background-color 0.15s ease,
+      transform 0.08s ease;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.1);
+  }
+
+  .dash-btn-circle:hover {
+    filter: brightness(0.95);
+  }
+
+  /* Cream text utility for branding */
+  .text-cream {
+    color: hsl(var(--primary)) !important;
+  }
+
+  /* Mobile optimizations for dashboard buttons */
+  @media (max-width: 640px) {
+    .dash-btn {
+      box-shadow: 0 4px 12px rgba(3, 105, 161, 0.12);
+    }
+  }
+
+  /* Smooth animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

@@ -1,32 +1,37 @@
-export async function onRequestGet({ request }) {
-  const url = new URL(request.url);
-  const wallet = url.searchParams.get("wallet");
-
-  if (!wallet)
-    return new Response(JSON.stringify({ error: "Missing wallet address" }), {
-      status: 400,
-    });
-
-  const body = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getTokenAccountsByOwner",
-    params: [wallet, { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }, { encoding: "jsonParsed" }],
-  };
-
+export async function onRequestPost({ request }) {
   try {
-    const res = await fetch("https://api.mainnet-beta.solana.com", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
+    const { walletAddress } = await request.json();
+
+    const rpcBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTokenAccountsByOwner",
+      params: [
+        walletAddress,
+        { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+        { encoding: "jsonParsed" },
+      ],
+    };
+
+    const response = await fetch(
+      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rpcBody),
+      }
+    );
+
+    const data = await response.json();
+
     return new Response(JSON.stringify(data), {
+      status: response.status,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch token accounts", details: err.message }),
+      { status: 500 }
+    );
   }
 }

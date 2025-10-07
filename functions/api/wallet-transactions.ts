@@ -1,32 +1,33 @@
-export async function onRequestGet({ request }) {
-  const url = new URL(request.url);
-  const wallet = url.searchParams.get("wallet");
-
-  if (!wallet)
-    return new Response(JSON.stringify({ error: "Missing wallet address" }), {
-      status: 400,
-    });
-
-  const body = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getSignaturesForAddress",
-    params: [wallet, { limit: 10 }],
-  };
-
+export async function onRequestPost({ request }) {
   try {
-    const res = await fetch("https://api.mainnet-beta.solana.com", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
+    const { walletAddress, limit = 10 } = await request.json();
+
+    const rpcBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getSignaturesForAddress",
+      params: [walletAddress, { limit }],
+    };
+
+    const response = await fetch(
+      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rpcBody),
+      }
+    );
+
+    const data = await response.json();
+
     return new Response(JSON.stringify(data), {
+      status: response.status,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch transactions", details: err.message }),
+      { status: 500 }
+    );
   }
 }

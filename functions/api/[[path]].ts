@@ -24,29 +24,29 @@ function createForwardRequest(request: Request, targetUrl: string) {
   return new Request(targetUrl, init);
 }
 
-async function proxyToHelius(
+// Choose which provider to use based on env vars
+async function proxyToSolanaRPC(
   request: Request,
   env: Record<string, string | undefined>,
 ) {
-  const apiKey = env.HELIUS_API_KEY;
-  if (!apiKey) {
+  let rpcUrl = "";
+  if (env.HELIUS_API_KEY) {
+    rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  } else if (env.ALCHEMY_RPC_URL) {
+    rpcUrl = env.ALCHEMY_RPC_URL;
+  } else {
+    // fallback or error
     const headers = applyCors(
       new Headers({ "Content-Type": "application/json" }),
     );
     return new Response(
-      JSON.stringify({ error: "Missing HELIUS_API_KEY environment variable" }),
+      JSON.stringify({ error: "No Solana RPC endpoint configured." }),
       { status: 500, headers },
     );
   }
 
-  const heliusUrl = new URL("https://mainnet.helius-rpc.com/");
-  heliusUrl.searchParams.set("api-key", apiKey);
-
-  const response = await fetch(
-    createForwardRequest(request, heliusUrl.toString()),
-  );
+  const response = await fetch(createForwardRequest(request, rpcUrl));
   const headers = applyCors(new Headers(response.headers));
-
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -54,32 +54,7 @@ async function proxyToHelius(
   });
 }
 
-async function proxyToApi(
-  request: Request,
-  env: Record<string, string | undefined>,
-  path: string,
-  search: string,
-) {
-  const requestOrigin = new URL(request.url).origin;
-  const upstreamBase = (env.API_BASE_URL || "").trim() || requestOrigin;
-  const targetUrl = new URL(`${path}${search}`, upstreamBase).toString();
-  const response = await fetch(createForwardRequest(request, targetUrl));
-  const headers = applyCors(new Headers(response.headers));
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-}
-
-export const onRequest = async ({
-  request,
-  env,
-}: {
-  request: Request;
-  env: Record<string, string | undefined>;
-}) => {
+export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
   const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
@@ -92,18 +67,16 @@ export const onRequest = async ({
   }
 
   try {
-    if (normalizedPath === "/helius") {
-      return await proxyToHelius(request, env);
+    // Solana RPC proxy
+    if (normalizedPath === "/solana-rpc") {
+      return await proxyToSolanaRPC(request, env);
     }
-
-    return await proxyToApi(request, env, normalizedPath, url.search);
+    // ...other API routing
   } catch (error) {
-    console.error("Cloudflare API proxy error", error);
     const headers = applyCors(
       new Headers({ "Content-Type": "application/json" }),
     );
     const message = error instanceof Error ? error.message : String(error);
-
     return new Response(JSON.stringify({ error: message }), {
       status: 502,
       headers,

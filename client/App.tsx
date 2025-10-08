@@ -35,7 +35,10 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/fixorium/add" element={<FixoriumAdd />} />
               <Route path="/fixorium/create-token" element={<CreateToken />} />
-              <Route path="/fixorium/token-listing" element={<TokenListing />} />
+              <Route
+                path="/fixorium/token-listing"
+                element={<TokenListing />}
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -26,7 +26,7 @@ export const connection: Connection = (() => {
     return _connection;
   } catch {
     // In environments where web3 isn't available, this will be set later by context
-    return (_connection as any) as Connection;
+    return _connection as any as Connection;
   }
 })();
 

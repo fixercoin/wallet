@@ -202,10 +202,17 @@ class HeliusAPI {
   async getWalletBalance(publicKey: string): Promise<number> {
     try {
       console.log(`Fetching SOL balance for ${publicKey} via Helius...`);
-      const lamports = await this.makeRpcCall("getBalance", [publicKey]);
-      const balance = lamports / 1000000000; // Convert lamports to SOL
-      console.log(`SOL balance: ${balance}`);
-      return balance;
+      const res = await this.makeRpcCall("getBalance", [publicKey]);
+      const lamports =
+        typeof res === "number"
+          ? res
+          : typeof (res as any)?.value === "number"
+            ? (res as any).value
+            : 0;
+      const balance = lamports / 1_000_000_000; // Convert lamports to SOL
+      const safe = Number.isFinite(balance) ? balance : 0;
+      console.log(`SOL balance: ${safe}`);
+      return safe;
     } catch (error) {
       console.error("Error fetching wallet balance via Helius:", error);
       throw error;

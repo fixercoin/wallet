@@ -251,11 +251,15 @@ class TransactionMonitor {
         if (walletIndex !== -1) {
           const preBalance = transaction.meta.preBalances[walletIndex];
           const postBalance = transaction.meta.postBalances[walletIndex];
-          const difference = (postBalance - preBalance) / 1e9; // Convert lamports to SOL
-
-          if (Math.abs(difference) > 0) {
-            notification.amount = Math.abs(difference);
-            notification.token = "SOL";
+          if (
+            typeof preBalance === "number" &&
+            typeof postBalance === "number"
+          ) {
+            const difference = (postBalance - preBalance) / 1e9; // Convert lamports to SOL
+            if (Number.isFinite(difference) && Math.abs(difference) > 0) {
+              notification.amount = Math.abs(difference);
+              notification.token = "SOL";
+            }
           }
         }
       }

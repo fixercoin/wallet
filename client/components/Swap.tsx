@@ -13,7 +13,7 @@ export default function Swap({ wallet }) {
   return (
     <div className="p-4">
       <h2 className="text-lg font-semibold">Wallet Swap</h2>
-      <p>Balance: {balance / 1e9} SOL</p>
+      <p>Balance: {balance} SOL</p>
     </div>
   );
 }

@@ -71,11 +71,14 @@ export const makeRpcCall = async (
           });
         } catch (fetchErr) {
           // Network/connection error (e.g. Dev server not running, middleware not mounted)
-          const fetchError = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          const fetchError =
+            fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
           // Health check to provide better guidance
           try {
-            const health = await fetch("/api/health").then((r) => r.text()).catch(() => "");
+            const health = await fetch("/api/health")
+              .then((r) => r.text())
+              .catch(() => "");
             throw new Error(
               `Network fetch failed: ${fetchError}. API health check: ${health || "no response"}`,
             );
@@ -94,18 +97,29 @@ export const makeRpcCall = async (
             parsedErr = responseText ? JSON.parse(responseText) : null;
           } catch {}
 
-          const details = parsedErr?.error?.message || parsedErr?.message || responseText || response.statusText || "(no response body)";
+          const details =
+            parsedErr?.error?.message ||
+            parsedErr?.message ||
+            responseText ||
+            response.statusText ||
+            "(no response body)";
 
           // If server-provided diagnostics endpoint exists, attempt to fetch and append
           let serverDiag = "";
           if (response.status === 500) {
             try {
-              serverDiag = await fetch("/api/debug/rpc").then((d) => d.text()).catch(() => "");
+              serverDiag = await fetch("/api/debug/rpc")
+                .then((d) => d.text())
+                .catch(() => "");
             } catch {}
           }
 
-          const diagSuffix = serverDiag ? ` Server diagnostics: ${serverDiag}` : "";
-          throw new Error(`RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`);
+          const diagSuffix = serverDiag
+            ? ` Server diagnostics: ${serverDiag}`
+            : "";
+          throw new Error(
+            `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
+          );
         }
 
         // Try to parse response as JSON, if not available return raw text
@@ -118,7 +132,9 @@ export const makeRpcCall = async (
         }
 
         if (data && data.error) {
-          throw new Error(`RPC error: ${data.error.message} (code: ${data.error.code || "unknown"})`);
+          throw new Error(
+            `RPC error: ${data.error.message} (code: ${data.error.code || "unknown"})`,
+          );
         }
 
         return data?.result ?? data ?? text;
@@ -126,12 +142,16 @@ export const makeRpcCall = async (
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < retries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * (attempt + 1)),
+          );
         }
       }
     }
 
-    throw new Error(`RPC call failed after ${retries + 1} attempts: ${lastError?.message || "Unknown error"}`);
+    throw new Error(
+      `RPC call failed after ${retries + 1} attempts: ${lastError?.message || "Unknown error"}`,
+    );
   })();
 
   requestQueue.set(requestKey, requestPromise);
@@ -149,8 +169,15 @@ export const makeRpcCall = async (
  */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
   try {
-    const balance = await makeRpcCall("getBalance", [publicKey]);
-    return balance / 1_000_000_000;
+    const res = await makeRpcCall("getBalance", [publicKey]);
+    const lamports =
+      typeof res === "number"
+        ? res
+        : typeof (res as any)?.value === "number"
+          ? (res as any).value
+          : 0;
+    const sol = lamports / 1_000_000_000;
+    return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
     console.error("Error fetching wallet balance:", error);
     return 0;

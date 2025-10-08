@@ -208,7 +208,10 @@ export const onRequest = async ({ request, env }) => {
       const params = new URLSearchParams({ ids });
 
       for (let i = 0; i < JUPITER_PRICE_ENDPOINTS.length; i++) {
-        const endpoint = JUPITER_PRICE_ENDPOINTS[(currentIdx + i) % JUPITER_PRICE_ENDPOINTS.length];
+        const endpoint =
+          JUPITER_PRICE_ENDPOINTS[
+            (currentIdx + i) % JUPITER_PRICE_ENDPOINTS.length
+          ];
         const apiUrl = `${endpoint}/price?${params.toString()}`;
         try {
           const controller = new AbortController();
@@ -253,7 +256,16 @@ export const onRequest = async ({ request, env }) => {
 
       const fetchWithTimeout = (u: string, ms: number) => {
         const timeoutPromise = new Promise<Response>((resolve) => {
-          setTimeout(() => resolve(new Response("", { status: 504, statusText: "Gateway Timeout" })), ms);
+          setTimeout(
+            () =>
+              resolve(
+                new Response("", {
+                  status: 504,
+                  statusText: "Gateway Timeout",
+                }),
+              ),
+            ms,
+          );
         });
         return Promise.race([
           fetch(u, {
@@ -291,7 +303,10 @@ export const onRequest = async ({ request, env }) => {
       }
 
       return jsonCors(502, {
-        error: { message: "All Jupiter token endpoints failed", details: lastError || "Unknown error" },
+        error: {
+          message: "All Jupiter token endpoints failed",
+          details: lastError || "Unknown error",
+        },
         data: [],
       });
     }
@@ -302,9 +317,12 @@ export const onRequest = async ({ request, env }) => {
       const outputMint = url.searchParams.get("outputMint");
       const amount = url.searchParams.get("amount");
       const slippageBps = url.searchParams.get("slippageBps") || "50";
-      const asLegacyTransaction = url.searchParams.get("asLegacyTransaction") || "false";
+      const asLegacyTransaction =
+        url.searchParams.get("asLegacyTransaction") || "false";
       if (!inputMint || !outputMint || !amount) {
-        return jsonCors(400, { error: "Missing required query params: inputMint, outputMint, amount" });
+        return jsonCors(400, {
+          error: "Missing required query params: inputMint, outputMint, amount",
+        });
       }
       const params = new URLSearchParams({
         inputMint,
@@ -343,7 +361,10 @@ export const onRequest = async ({ request, env }) => {
         }
         break;
       }
-      return jsonCors(lastStatus || 500, { error: "Quote failed", details: lastText });
+      return jsonCors(lastStatus || 500, {
+        error: "Quote failed",
+        details: lastText,
+      });
     }
 
     // Jupiter: /api/jupiter/swap (POST)
@@ -356,7 +377,10 @@ export const onRequest = async ({ request, env }) => {
         body = await request.json();
       } catch (_) {}
       if (!body || !body.quoteResponse || !body.userPublicKey) {
-        return jsonCors(400, { error: "Missing required body: { quoteResponse, userPublicKey, ...options }" });
+        return jsonCors(400, {
+          error:
+            "Missing required body: { quoteResponse, userPublicKey, ...options }",
+        });
       }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -373,7 +397,10 @@ export const onRequest = async ({ request, env }) => {
       clearTimeout(timeoutId);
       if (!resp.ok) {
         const text = await resp.text().catch(() => "");
-        return jsonCors(resp.status, { error: `Swap failed: ${resp.statusText}`, details: text });
+        return jsonCors(resp.status, {
+          error: `Swap failed: ${resp.statusText}`,
+          details: text,
+        });
       }
       const data = await resp.json();
       return jsonCors(200, data);

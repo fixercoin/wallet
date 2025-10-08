@@ -1,15 +1,15 @@
 export const onRequestPost: PagesFunction = async (context) => {
   try {
-    const alchemyUrl =
+    const ALCHEMY_URL =
       context.env.ALCHEMY_RPC_URL ||
       "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX";
 
-    const requestBody = await context.request.json();
+    const body = await context.request.json();
 
-    const response = await fetch(alchemyUrl, {
+    const response = await fetch(ALCHEMY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(body),
     });
 
     const result = await response.text();
@@ -21,9 +21,9 @@ export const onRequestPost: PagesFunction = async (context) => {
     return new Response(
       JSON.stringify({
         jsonrpc: "2.0",
-        error: { code: 500, message: err.message || "Proxy error" },
+        error: { code: 500, message: err.message || "RPC Proxy Error" },
       }),
-      { headers: { "Content-Type": "application/json" }, status: 500 }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };

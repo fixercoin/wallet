@@ -1,29 +1,23 @@
-export const onRequestPost: PagesFunction = async (context) => {
-  try {
-    const ALCHEMY_URL =
-      context.env.ALCHEMY_RPC_URL ||
-      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX";
+const RPC_ENDPOINTS = [
+  process.env.HELIUS_API_KEY
+    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
+    : "",
+  process.env.ALCHEMY_RPC_URL || ""
+].filter(Boolean);
 
-    const body = await context.request.json();
-
-    const response = await fetch(ALCHEMY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    const result = await response.text();
-    return new Response(result, {
-      headers: { "Content-Type": "application/json" },
-      status: response.status,
-    });
-  } catch (err: any) {
-    return new Response(
-      JSON.stringify({
-        jsonrpc: "2.0",
-        error: { code: 500, message: err.message || "RPC Proxy Error" },
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+async function callRpc(payload: any) {
+  for (const endpoint of RPC_ENDPOINTS) {
+    try {
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (resp.ok) return await resp.json();
+      // If you get a 403, skip to next endpoint
+    } catch (e) {
+      // log error, continue
+    }
   }
-};
+  throw new Error("All RPC endpoints failed or blocked.");
+}

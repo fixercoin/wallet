@@ -1,29 +1,29 @@
-// functions/api/solana-rpc.ts
-// Proxy JSON-RPC requests to the Solana RPC provider (Alchemy).
-// POST expected: JSON-RPC body forwarded to Alchemy.
-
-export async function onRequestPost(context: any) {
-  const { request, env } = context;
-  const ALCHEMY = env?.ALCHEMY_RPC_URL ?? "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX";
-
+export const onRequestPost: PagesFunction = async (context) => {
   try {
-    const body = await request.json();
+    const alchemyUrl =
+      context.env.ALCHEMY_RPC_URL ||
+      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX";
 
-    const resp = await fetch(ALCHEMY, {
+    const requestBody = await context.request.json();
+
+    const response = await fetch(alchemyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(requestBody),
     });
 
-    const text = await resp.text();
-    return new Response(text, {
-      status: resp.status,
+    const result = await response.text();
+    return new Response(result, {
       headers: { "Content-Type": "application/json" },
+      status: response.status,
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: "Proxy error", details: err?.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        error: { code: 500, message: err.message || "Proxy error" },
+      }),
+      { headers: { "Content-Type": "application/json" }, status: 500 }
+    );
   }
-}
+};

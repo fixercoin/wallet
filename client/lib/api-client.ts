@@ -11,18 +11,9 @@ const determineBase = (): string => {
   const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
   if (envBase) return envBase;
 
-  if (typeof window === "undefined") return DEFAULT_WORKER_BASE;
-
-  const { hostname } = window.location;
-  if (
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname.endsWith(".local")
-  ) {
-    return "";
-  }
-
-  return DEFAULT_WORKER_BASE;
+  // Default to same-origin both locally and in production
+  // so that Cloudflare Pages Functions at /api/* are used.
+  return "";
 };
 
 let cachedBase: string | null = null;

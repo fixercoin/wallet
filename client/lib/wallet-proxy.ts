@@ -3,7 +3,7 @@ import {
   generateMnemonic as generateBip39Mnemonic,
   mnemonicToSeedSync,
 } from "@scure/bip39";
-import { wordlist } from "@scure/bip39/wordlists/english";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import * as nacl from "tweetnacl";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { deriveEd25519Path } from "@/lib/solana-derivation";

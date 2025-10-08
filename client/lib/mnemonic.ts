@@ -1,5 +1,5 @@
 import { validateMnemonic } from "@scure/bip39";
-import { wordlist } from "@scure/bip39/wordlists/english";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 
 const WORD_COUNT_OPTIONS = new Set([12, 24]);
 

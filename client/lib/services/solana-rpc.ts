@@ -149,8 +149,15 @@ export const makeRpcCall = async (
  */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
   try {
-    const balance = await makeRpcCall("getBalance", [publicKey]);
-    return balance / 1_000_000_000;
+    const res = await makeRpcCall("getBalance", [publicKey]);
+    const lamports =
+      typeof res === "number"
+        ? res
+        : typeof (res as any)?.value === "number"
+          ? (res as any).value
+          : 0;
+    const sol = lamports / 1_000_000_000;
+    return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
     console.error("Error fetching wallet balance:", error);
     return 0;

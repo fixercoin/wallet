@@ -1,12 +1,16 @@
 name = "fixercoin-wallet"
 compatibility_date = "2024-10-01"
+compatibility_flags = [ "nodejs_compat" ]
 
+# 👇 Required for Cloudflare Pages builds
 [build]
 command = "pnpm run build"
-
-[pages]
 pages_build_output_dir = "dist"
 
-# Optional: define environment variables for production
+# 👇 Add environment variables here
 [vars]
 ALCHEMY_RPC_URL = "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX"
+NODE_ENV = "production"
+
+# 👇 Optional: add routes if you use Workers API
+# routes = [{ pattern = "wallet-c36.pages.dev/*", zone_name = "wallet-c36.pages.dev" }]

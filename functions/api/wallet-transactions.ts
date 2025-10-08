@@ -1,75 +1,45 @@
-import type { Env } from "../../types/env" // optional env typings
-// This file wraps existing Express handler from server/routes/wallet-transactions.ts
-// and adapts it to Cloudflare Pages Functions runtime.
+// functions/api/wallet-transactions.ts
+// POST JSON: { "walletAddress": "<Pubkey>", "limit": 10 }
+// Returns getSignaturesForAddress proxied via Alchemy.
 
-import { handleWalletTransactions } from "../../../server/routes/wallet-transactions.ts";
-
-async function callHandler(handler, req) {
-  // Build mock Express req and res
-  const body = await (async () => {
-    try {
-      return await req.json();
-    } catch (e) {
-      return null;
-    }
-  })();
-
-  const url = new URL(req.url);
-  const query = Object.fromEntries(url.searchParams.entries());
-  const params = {};
-
-  let statusSet = 200;
-  let headers = {};
-  let sent = null;
-
-  const res = {
-    status: (s) => {
-      statusSet = s;
-      return res;
-    },
-    setHeader: (k, v) => {
-      headers[k] = v;
-    },
-    json: (payload) => {
-      sent = payload;
-    },
-    send: (payload) => {
-      sent = payload;
-    },
-    end: () => {}
-  };
-
-  const mockReq = {
-    method: req.method,
-    headers: Object.fromEntries(req.headers),
-    body,
-    query,
-    params,
-    url: req.url
-  };
-
-  // call handler
-  await handler(mockReq as any, res as any);
-
-  // Build Response
-  const respHeaders = new Headers(headers || { "Content-Type": "application/json" });
-  respHeaders.set("Access-Control-Allow-Origin", "*");
-  respHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-  respHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  const bodyOut = (sent === null) ? "" : (typeof sent === "string" ? sent : JSON.stringify(sent));
-  return new Response(bodyOut, { status: statusSet, headers: respHeaders });
-}
-
-export const onRequest = async (context) => {
+export async function onRequestPost(context: any) {
   const { request, env } = context;
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    const headers = new Headers();
-    headers.set("Access-Control-Allow-Origin", "*");
-    headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    return new Response(null, { status: 204, headers });
+  const ALCHEMY = env?.ALCHEMY_RPC_URL ?? "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX";
+
+  try {
+    const body = await request.json();
+    const walletAddress = body?.walletAddress ?? body?.address ?? null;
+    const limit = Number(body?.limit ?? 10);
+
+    if (!walletAddress) {
+      return new Response(JSON.stringify({ error: "Missing walletAddress in POST body" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const rpcBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getSignaturesForAddress",
+      params: [walletAddress, { limit }],
+    };
+
+    const resp = await fetch(ALCHEMY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(rpcBody),
+    });
+
+    const data = await resp.json();
+    return new Response(JSON.stringify(data), {
+      status: resp.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: "Failed to fetch transactions", details: err?.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
-  return await callHandler(handleWalletTransactions, request);
-};
+}

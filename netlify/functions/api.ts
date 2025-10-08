@@ -106,7 +106,8 @@ async function tryDexEndpoints(path: string) {
       return data;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
-      if (i < DEXSCREENER_ENDPOINTS.length - 1) await new Promise((r) => setTimeout(r, 1000));
+      if (i < DEXSCREENER_ENDPOINTS.length - 1)
+        await new Promise((r) => setTimeout(r, 1000));
     }
   }
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
@@ -144,19 +145,31 @@ export const handler = async (event: any) => {
     // DexScreener: tokens
     if (path === "/dexscreener/tokens" && event.httpMethod === "GET") {
       const mints = event.queryStringParameters?.mints;
-      if (!mints) return jsonResponse(400, { error: "Missing 'mints' query parameter" });
+      if (!mints)
+        return jsonResponse(400, { error: "Missing 'mints' query parameter" });
       const data = await tryDexEndpoints(`/tokens/${mints}`);
-      const pairs = Array.isArray(data?.pairs) ? data.pairs.filter((p: any) => p?.chainId === "solana") : [];
-      return jsonResponse(200, { schemaVersion: data?.schemaVersion || "1.0.0", pairs });
+      const pairs = Array.isArray(data?.pairs)
+        ? data.pairs.filter((p: any) => p?.chainId === "solana")
+        : [];
+      return jsonResponse(200, {
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs,
+      });
     }
 
     // DexScreener: search
     if (path === "/dexscreener/search" && event.httpMethod === "GET") {
       const q = event.queryStringParameters?.q;
-      if (!q) return jsonResponse(400, { error: "Missing 'q' query parameter" });
+      if (!q)
+        return jsonResponse(400, { error: "Missing 'q' query parameter" });
       const data = await tryDexEndpoints(`/search/?q=${encodeURIComponent(q)}`);
-      const pairs = Array.isArray(data?.pairs) ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20) : [];
-      return jsonResponse(200, { schemaVersion: data?.schemaVersion || "1.0.0", pairs });
+      const pairs = Array.isArray(data?.pairs)
+        ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20)
+        : [];
+      return jsonResponse(200, {
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs,
+      });
     }
 
     // DexScreener: trending
@@ -164,11 +177,20 @@ export const handler = async (event: any) => {
       const data = await tryDexEndpoints(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
-            .filter((p: any) => (p?.volume?.h24 || 0) > 1000 && (p?.liquidity?.usd || 0) > 10000)
-            .sort((a: any, b: any) => (b?.volume?.h24 || 0) - (a?.volume?.h24 || 0))
+            .filter(
+              (p: any) =>
+                (p?.volume?.h24 || 0) > 1000 &&
+                (p?.liquidity?.usd || 0) > 10000,
+            )
+            .sort(
+              (a: any, b: any) => (b?.volume?.h24 || 0) - (a?.volume?.h24 || 0),
+            )
             .slice(0, 50)
         : [];
-      return jsonResponse(200, { schemaVersion: data?.schemaVersion || "1.0.0", pairs });
+      return jsonResponse(200, {
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs,
+      });
     }
 
     // Unknown API route

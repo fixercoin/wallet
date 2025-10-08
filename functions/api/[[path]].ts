@@ -68,7 +68,8 @@ async function tryDexscreenerEndpoints(path: string) {
   let lastError: Error | null = null;
 
   for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
-    const endpointIndex = (currentDexEndpointIndex + i) % DEXSCREENER_ENDPOINTS.length;
+    const endpointIndex =
+      (currentDexEndpointIndex + i) % DEXSCREENER_ENDPOINTS.length;
     const endpoint = DEXSCREENER_ENDPOINTS[endpointIndex];
     const url = `${endpoint}${path}`;
 
@@ -106,7 +107,9 @@ async function tryDexscreenerEndpoints(path: string) {
 }
 
 function jsonCors(status: number, body: any) {
-  const headers = applyCors(new Headers({ "Content-Type": "application/json" }));
+  const headers = applyCors(
+    new Headers({ "Content-Type": "application/json" }),
+  );
   return new Response(typeof body === "string" ? body : JSON.stringify(body), {
     status,
     headers,
@@ -138,8 +141,13 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(400, { error: "Missing 'mints' query parameter" });
       }
       const data = await tryDexscreenerEndpoints(`/tokens/${mints}`);
-      const pairs = Array.isArray(data?.pairs) ? data.pairs.filter((p: any) => p?.chainId === "solana") : [];
-      return jsonCors(200, { schemaVersion: data?.schemaVersion || "1.0.0", pairs });
+      const pairs = Array.isArray(data?.pairs)
+        ? data.pairs.filter((p: any) => p?.chainId === "solana")
+        : [];
+      return jsonCors(200, {
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs,
+      });
     }
 
     // DexScreener: /api/dexscreener/search?q=...
@@ -148,9 +156,16 @@ export const onRequest = async ({ request, env }) => {
       if (!q) {
         return jsonCors(400, { error: "Missing 'q' query parameter" });
       }
-      const data = await tryDexscreenerEndpoints(`/search/?q=${encodeURIComponent(q)}`);
-      const pairs = Array.isArray(data?.pairs) ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20) : [];
-      return jsonCors(200, { schemaVersion: data?.schemaVersion || "1.0.0", pairs });
+      const data = await tryDexscreenerEndpoints(
+        `/search/?q=${encodeURIComponent(q)}`,
+      );
+      const pairs = Array.isArray(data?.pairs)
+        ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20)
+        : [];
+      return jsonCors(200, {
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs,
+      });
     }
 
     // DexScreener: /api/dexscreener/trending
@@ -158,11 +173,20 @@ export const onRequest = async ({ request, env }) => {
       const data = await tryDexscreenerEndpoints(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
-            .filter((p: any) => (p?.volume?.h24 || 0) > 1000 && (p?.liquidity?.usd || 0) > 10000)
-            .sort((a: any, b: any) => (b?.volume?.h24 || 0) - (a?.volume?.h24 || 0))
+            .filter(
+              (p: any) =>
+                (p?.volume?.h24 || 0) > 1000 &&
+                (p?.liquidity?.usd || 0) > 10000,
+            )
+            .sort(
+              (a: any, b: any) => (b?.volume?.h24 || 0) - (a?.volume?.h24 || 0),
+            )
             .slice(0, 50)
         : [];
-      return jsonCors(200, { schemaVersion: data?.schemaVersion || "1.0.0", pairs });
+      return jsonCors(200, {
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs,
+      });
     }
 
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });

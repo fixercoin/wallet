@@ -3,5 +3,9 @@ pages_build_output_dir = "dist/spa"
 compatibility_date = "2025-10-07"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+# You can set this in Cloudflare Pages UI instead of hardcoding here.
+# ALCHEMY_RPC_URL = "https://solana-mainnet.g.alchemy.com/v2/KEY"
+
 [observability]
 enabled = true

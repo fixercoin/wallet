@@ -1,38 +1,12 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FIXORIUM</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Fixorium Wallet</title>
   </head>
-
   <body>
     <div id="root"></div>
-
-    <script>
-      window["_fs_namespace"] = "FS";
-    </script>
-
-    <script>
-      window.addEventListener("error", (e) => {
-        console.error("Global window error:", e.error || e.message || e);
-      });
-      window.addEventListener("unhandledrejection", (e) => {
-        console.error("Unhandled promise rejection:", e.reason || e);
-      });
-      console.log("index.html early script loaded");
-    </script>
-
-    <script type="module">
-      import * as buffer from "buffer";
-      import process from "process";
-
-      window.Buffer = buffer.Buffer;
-      window.process = process;
-
-      console.log("polyfills applied: Buffer, process");
-    </script>
-
-    <script type="module" src="/client/App.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -231,12 +231,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
+    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
     const arr = [...tokens];
     arr.sort((a, b) => {
-      if (a.symbol === "SOL") return -1;
-      if (b.symbol === "SOL") return 1;
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
+
+      const aIdx = priority.indexOf(aSym);
+      const bIdx = priority.indexOf(bSym);
+
+      // If both are in priority list, sort by their priority order
+      if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
+      // If only a is in priority, a comes first
+      if (aIdx >= 0) return -1;
+      // If only b is in priority, b comes first
+      if (bIdx >= 0) return 1;
+
+      // Otherwise fallback to alphabetic by symbol
       return aSym.localeCompare(bSym);
     });
     return arr;

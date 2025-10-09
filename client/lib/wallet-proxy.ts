@@ -60,7 +60,7 @@ export interface TokenInfo {
   liquidity?: number;
 }
 
-// Default tokens including SOL and FIXERCOIN
+// Default tokens including SOL, USDC, and FIXERCOIN
 export const DEFAULT_TOKENS: TokenInfo[] = [
   {
     mint: "So11111111111111111111111111111111111111112", // SOL wrapped
@@ -69,6 +69,15 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 9,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+  },
+  {
+    // USDC (Solana native)
+    mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    symbol: "USDC",
+    name: "USD Coin",
+    decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
   {
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",

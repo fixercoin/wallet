@@ -60,7 +60,19 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
 
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
+// Special handling for USDC (Solana)
+if (
+  contractAddress.trim() ===
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+) {
+  mockTokenInfo.symbol = "USDC";
+  mockTokenInfo.name = "USD Coin";
+  mockTokenInfo.decimals = 6;
+  mockTokenInfo.logoURI = "https://cryptologos.cc/logos/usd-coin-usdc-logo.png";
+  mockTokenInfo.marketCap = 32000000000; // $32B
+  mockTokenInfo.volume24h = 4500000000; // $4.5B
+  mockTokenInfo.liquidity = 1800000000; // $1.8B
+}
       // Special handling for FIXERCOIN
       if (
         contractAddress.trim() ===

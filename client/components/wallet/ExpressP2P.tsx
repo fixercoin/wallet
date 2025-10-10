@@ -203,7 +203,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const handleReleaseUsdc = () => {
     toast({
       title: "USDC escrow released",
-      description: `USDC released with PKR ${RELEASE_USDC_BASE_FEE} extra and PKR ${RELEASE_USDC_SERVICE_FEE} service fees accounted for.",
+      description: `USDC released with PKR ${RELEASE_USDC_BASE_FEE} extra and PKR ${RELEASE_USDC_SERVICE_FEE} service fees accounted for.`,
     });
     setChat((previous) => [
       ...previous,

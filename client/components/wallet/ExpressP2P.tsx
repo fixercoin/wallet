@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRightLeft,
-  CheckCircle2,
   History,
+  MessageSquareMore,
   MoreHorizontal,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
@@ -37,7 +36,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -130,13 +128,10 @@ interface ExpressP2PProps {
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { toast } = useToast();
   const [side, setSide] = useState<TradeSide>("buy");
-  const [pkAmount, setPkAmount] = useState("25000");
+  const [pkAmount, setPkAmount] = useState("");
   const [rate, setRate] = useState(279.25);
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethodId>("easypaisa");
-  const [notes, setNotes] = useState(
-    "Confirm receipt with counterparty before releasing escrow on either side.",
-  );
   const [history, setHistory] = useState<TradeHistoryEntry[]>(initialHistory);
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -233,6 +228,18 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
           <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80 backdrop-blur"
+              aria-label="Chat"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <span>
+                <MessageSquareMore className="h-4 w-4" />
+              </span>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -480,16 +487,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   </Select>
                 </div>
 
-                <div className="rounded-2xl border border-dashed border-[hsl(var(--border))] bg-slate-50/70 px-4 py-4 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">
-                    Manual payout expectation
-                  </p>
-                  <p className="mt-1 leading-relaxed">{method.description}</p>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-[hsl(var(--primary))]">
-                    Use the top-right menu to log payments or release escrow.
-                  </p>
-                </div>
-
                 <div className="grid gap-3 rounded-2xl border border-[hsl(var(--border))] bg-white/80 px-4 py-4 text-sm">
                   <div className="flex items-center justify-between text-muted-foreground">
                     <span>USDC to release</span>
@@ -515,171 +512,54 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </CardContent>
         </Card>
 
-        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Confirmation
-              & summary
-            </CardTitle>
-            <CardDescription>
-              Snapshot of the settlement plus space for any manual validation
-              notes. Actions remain in the menu above.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3 rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
-              <p className="text-sm font-semibold text-foreground">
-                Trade overview
-              </p>
-              <div className="grid gap-2 text-sm text-muted-foreground">
-                <p>
-                  Side:{" "}
-                  <span className="font-medium capitalize text-foreground">
-                    {side}
-                  </span>
-                </p>
-                <p>
-                  PKR amount:{" "}
-                  <span className="font-medium text-foreground">
-                    {numericPk.toLocaleString()}
-                  </span>
-                </p>
-                <p>
-                  USDC amount:{" "}
-                  <span className="font-medium text-foreground">
-                    {usdcFormatter.format(usdcValue)}
-                  </span>
-                </p>
-                <p>
-                  Method:{" "}
-                  <span className="font-medium text-foreground">
-                    {method.label}
-                  </span>
-                </p>
-              </div>
-              <Textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                className="min-h-[110px] resize-none"
-                placeholder="Add any confirmation notes for the counterparty."
-              />
-            </div>
-            <div className="grid gap-3">
-              <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Fee breakdown</p>
-                <div className="mt-2 space-y-1.5">
-                  <p>
-                    Receiving USDC: {rateFormatter.format(receiveFeeTotal)} fee
-                    ({RECEIVE_FEE_PER_USDC} PKR per USDC)
-                  </p>
-                  <p>
-                    Releasing USDC: PKR {RELEASE_USDC_BASE_FEE} extra + PKR {RELEASE_USDC_SERVICE_FEE} service = PKR {releaseUsdcTotalFee}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Reminders</p>
-                <ul className="mt-2 space-y-1.5">
-                  <li>Keep a clear record of each step in History.</li>
-                  <li>
-                    Verify counterparty details align with manual instructions
-                    before releases.
-                  </li>
-                  <li>Keep screenshots handy in case of dispute review.</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <ShieldCheck className="h-5 w-5 text-emerald-500" /> Release
-              checklist
-            </CardTitle>
-            <CardDescription>
-              Follow these confirmations before pressing release on either side.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">When releasing PKR</p>
-              <ul className="mt-2 list-disc space-y-1.5 pl-5">
-                <li>
-                  Ensure the method instructions from {method.label} are
-                  followed exactly.
-                </li>
-                <li>Capture and retain the payment confirmation.</li>
-                <li>
-                  Wait for the counterparty to acknowledge before closing the
-                  step.
-                </li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">When releasing USDC</p>
-              <ul className="mt-2 list-disc space-y-1.5 pl-5">
-                <li>Verify PKR receipt is confirmed by counterparty.</li>
-                <li>
-                  Account for the PKR {releaseUsdcTotalFee} total release fees.
-                </li>
-                <li>
-                  Log the release using the dropdown menu for audit purposes.
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Trade history</DialogTitle>
-            <DialogDescription>
-              A chronological record of key actions in this session.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-2 max-h-[60vh] space-y-3 overflow-y-auto">
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No history yet.</p>
-            ) : (
-              history.map((h) => (
-                <div
-                  key={h.id}
-                  className="rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Badge
-                        className={
-                          h.type === "request"
-                            ? "border-blue-200 bg-blue-50 text-blue-700"
-                            : h.type === "release_pkr"
-                            ? "border-amber-200 bg-amber-50 text-amber-700"
-                            : h.type === "release_usdc"
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-white text-slate-600"
-                        }
-                      >
-                        {h.type.replace("_", " ")}
-                      </Badge>
-                      <span className="text-foreground">{h.message}</span>
+        <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Trade history</DialogTitle>
+              <DialogDescription>
+                A chronological record of key actions in this session.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 max-h-[60vh] space-y-3 overflow-y-auto">
+              {history.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No history yet.</p>
+              ) : (
+                history.map((h) => (
+                  <div
+                    key={h.id}
+                    className="rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Badge
+                          className={
+                            h.type === "request"
+                              ? "border-blue-200 bg-blue-50 text-blue-700"
+                              : h.type === "release_pkr"
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : h.type === "release_usdc"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-slate-200 bg-white text-slate-600"
+                          }
+                        >
+                          {h.type.replace("_", " ")}
+                        </Badge>
+                        <span className="text-foreground">{h.message}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(h.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(h.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

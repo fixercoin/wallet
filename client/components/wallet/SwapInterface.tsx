@@ -790,7 +790,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       const fPrice = fromUsdPrice ?? 0;
                       let usd = 0;
                       if (tPrice > 0 && toAmt > 0) usd = toAmt * tPrice;
-                      else if (fPrice > 0 && fromAmt > 0) usd = fromAmt * fPrice;
+                      else if (fPrice > 0 && fromAmt > 0)
+                        usd = fromAmt * fPrice;
                       return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
                     })()}
                   </div>

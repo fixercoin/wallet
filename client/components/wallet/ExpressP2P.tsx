@@ -3,7 +3,7 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   CheckCircle2,
-  MessageSquareMore,
+  History,
   MoreHorizontal,
   ShieldCheck,
   Sparkles,
@@ -39,6 +39,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type TradeSide = "buy" | "sell";
 
@@ -50,10 +57,10 @@ interface PaymentMethod {
   description: string;
 }
 
-interface ChatMessage {
+interface TradeHistoryEntry {
   id: string;
-  sender: "you" | "counterparty" | "system";
-  content: string;
+  type: "request" | "release_pkr" | "release_usdc" | "system";
+  message: string;
   createdAt: number;
 }
 
@@ -62,13 +69,13 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: "easypaisa",
     label: "Easypaisa",
     description:
-      "Manual wallet transfer. Share the payment receipt in chat before requesting release.",
+      "Manual wallet transfer. Keep the receipt for your records before requesting release.",
   },
   {
     id: "firstpay",
     label: "FirstPay",
     description:
-      "Complete a FirstPay wallet transfer and upload confirmation for the counterparty.",
+      "Complete a FirstPay wallet transfer and keep confirmation for verification.",
   },
   {
     id: "sadapay",
@@ -80,7 +87,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     id: "nayapay",
     label: "NayaPay",
     description:
-      "Send via NayaPay wallet. Include EXPRESS-P2P in the reference and update the chat log.",
+      "Send via NayaPay wallet. Include EXPRESS-P2P in the reference and record the transfer.",
   },
 ];
 
@@ -101,26 +108,12 @@ const createId = () =>
     ? crypto.randomUUID()
     : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-const initialMessages: ChatMessage[] = [
+const initialHistory: TradeHistoryEntry[] = [
   {
     id: createId(),
-    sender: "system",
-    content:
-      "Express P2P room opened. Keep all settlement updates recorded here.",
-    createdAt: Date.now() - 1000 * 60 * 9,
-  },
-  {
-    id: createId(),
-    sender: "counterparty",
-    content:
-      "Hello! Please share the PKR transfer receipt once it is submitted.",
-    createdAt: Date.now() - 1000 * 60 * 4,
-  },
-  {
-    id: createId(),
-    sender: "you",
-    content: "Will do. Preparing the request details now.",
-    createdAt: Date.now() - 1000 * 60 * 2,
+    type: "system",
+    message: "Session started. Record important settlement updates in History.",
+    createdAt: Date.now() - 1000 * 60 * 5,
   },
 ];
 
@@ -141,11 +134,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [rate, setRate] = useState(279.25);
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethodId>("easypaisa");
-  const [chat, setChat] = useState<ChatMessage[]>(initialMessages);
-  const [draftMessage, setDraftMessage] = useState("");
   const [notes, setNotes] = useState(
-    "Confirm receipt within chat before releasing escrow on either side.",
+    "Confirm receipt with counterparty before releasing escrow on either side.",
   );
+  const [history, setHistory] = useState<TradeHistoryEntry[]>(initialHistory);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -182,6 +175,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const method = PAYMENT_METHODS.find((item) => item.id === selectedMethod)!;
 
+  const logHistory = (entry: Omit<TradeHistoryEntry, "id" | "createdAt">) => {
+    setHistory((prev) => [
+      ...prev,
+      { id: createId(), createdAt: Date.now(), ...entry },
+    ]);
+  };
+
   const handleRequest = () => {
     if (numericPk <= 0) {
       toast({
@@ -196,15 +196,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       title: `${action} request created`,
       description: `${action} ${usdcFormatter.format(usdcValue)} USDC using ${method.label}.`,
     });
-    setChat((previous) => [
-      ...previous,
-      {
-        id: createId(),
-        sender: "you",
-        content: `${action} request submitted for ${usdcFormatter.format(usdcValue)} USDC via ${method.label}. Awaiting approval.`,
-        createdAt: Date.now(),
-      },
-    ]);
+    logHistory({
+      type: "request",
+      message: `${action} request submitted for ${usdcFormatter.format(usdcValue)} USDC via ${method.label}. Awaiting approval.`,
+    });
   };
 
   const handleReleasePayment = () => {
@@ -213,16 +208,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       description:
         "PKR payment marked as sent. Counterparty will verify before releasing USDC.",
     });
-    setChat((previous) => [
-      ...previous,
-      {
-        id: createId(),
-        sender: "you",
-        content:
-          "PKR payment released. Please confirm receipt and proceed with the escrow release.",
-        createdAt: Date.now(),
-      },
-    ]);
+    logHistory({
+      type: "release_pkr",
+      message:
+        "PKR payment released. Waiting for counterparty confirmation to proceed.",
+    });
   };
 
   const handleReleaseUsdc = () => {
@@ -230,31 +220,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       title: "USDC escrow released",
       description: `USDC released with PKR ${RELEASE_USDC_BASE_FEE} extra and PKR ${RELEASE_USDC_SERVICE_FEE} service fees accounted for.`,
     });
-    setChat((previous) => [
-      ...previous,
-      {
-        id: createId(),
-        sender: "system",
-        content: "Escrow marked as released. Session closed successfully.",
-        createdAt: Date.now(),
-      },
-    ]);
-  };
-
-  const handleSendMessage = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmed = draftMessage.trim();
-    if (!trimmed) return;
-    setChat((previous) => [
-      ...previous,
-      {
-        id: createId(),
-        sender: "you",
-        content: trimmed,
-        createdAt: Date.now(),
-      },
-    ]);
-    setDraftMessage("");
+    logHistory({
+      type: "release_usdc",
+      message: "Escrow marked as released. Session closed successfully.",
+    });
   };
 
   const headerLabel = side === "buy" ? "Buy" : "Sell";
@@ -264,16 +233,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
           <div className="flex items-center gap-2">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80 backdrop-blur"
-            >
-              <a href="#settlement-chat" aria-label="Open chat">
-                <MessageSquareMore className="h-4 w-4" />
-              </a>
-            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -287,7 +246,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <h1 className="text-xl font-semibold">Express P2P Service</h1>
               <p className="text-sm text-muted-foreground">
                 Trade USDC against PKR with manual control, escrow safety, and
-                live chat coordination.
+                coordinated settlement.
               </p>
             </div>
           </div>
@@ -305,7 +264,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuLabel className="text-xs uppercase text-muted-foreground">
                   Quick controls
                 </DropdownMenuLabel>
@@ -315,8 +274,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 >
                   <span>Request settlement setup</span>
                   <span className="text-xs text-muted-foreground">
-                    Submit the {side === "buy" ? "buy" : "sell"} request using{" "}
-                    {method.label}.
+                    Submit the {side === "buy" ? "buy" : "sell"} request using {method.label}.
                   </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -335,12 +293,19 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 >
                   <span>Release USDC escrow</span>
                   <span className="text-xs text-muted-foreground">
-                    Includes PKR {RELEASE_USDC_BASE_FEE} extra fee + PKR{" "}
-                    {RELEASE_USDC_SERVICE_FEE} service fee.
+                    Includes PKR {RELEASE_USDC_BASE_FEE} extra fee + PKR {RELEASE_USDC_SERVICE_FEE} service fee.
                   </span>
                   <DropdownMenuShortcut>
                     PKR {releaseUsdcTotalFee}
                   </DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => setHistoryOpen(true)}
+                  className="flex items-center gap-2 py-2 text-sm"
+                >
+                  <History className="h-4 w-4" />
+                  <span>View history</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -400,8 +365,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      1 USDC ≈ {rateFormatter.format(rate)} · Receiving fee{" "}
-                      {rateFormatter.format(receiveFeeTotal)} (
+                      1 USDC ≈ {rateFormatter.format(rate)} · Receiving fee {rateFormatter.format(receiveFeeTotal)} (
                       {RECEIVE_FEE_PER_USDC} PKR per USDC)
                     </p>
                   </div>
@@ -488,8 +452,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Releasing USDC adds PKR {RELEASE_USDC_BASE_FEE} extra +
-                      PKR {RELEASE_USDC_SERVICE_FEE} service fee per settlement.
+                      Releasing USDC adds PKR {RELEASE_USDC_BASE_FEE} extra + PKR {RELEASE_USDC_SERVICE_FEE} service fee per settlement.
                     </p>
                   </div>
                 </div>
@@ -610,16 +573,14 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     ({RECEIVE_FEE_PER_USDC} PKR per USDC)
                   </p>
                   <p>
-                    Releasing USDC: PKR {RELEASE_USDC_BASE_FEE} extra + PKR{" "}
-                    {RELEASE_USDC_SERVICE_FEE} service = PKR{" "}
-                    {releaseUsdcTotalFee}
+                    Releasing USDC: PKR {RELEASE_USDC_BASE_FEE} extra + PKR {RELEASE_USDC_SERVICE_FEE} service = PKR {releaseUsdcTotalFee}
                   </p>
                 </div>
               </div>
               <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Reminders</p>
                 <ul className="mt-2 space-y-1.5">
-                  <li>Log every step in chat for transparency.</li>
+                  <li>Keep a clear record of each step in History.</li>
                   <li>
                     Verify counterparty details align with manual instructions
                     before releases.
@@ -628,68 +589,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 </ul>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card
-          id="settlement-chat"
-          className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur"
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <MessageSquareMore className="h-5 w-5 text-[hsl(var(--primary))]" />{" "}
-              Settlement chat
-            </CardTitle>
-            <CardDescription>
-              Coordinate in real time. Use the chat log as proof before
-              approving any release.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
-              {chat.map((message) => (
-                <div key={message.id} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      className={
-                        message.sender === "you"
-                          ? "border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
-                          : message.sender === "counterparty"
-                            ? "border-blue-200 bg-blue-50 text-blue-600"
-                            : "border-slate-200 bg-white text-slate-600"
-                      }
-                    >
-                      {message.sender === "you"
-                        ? "You"
-                        : message.sender === "counterparty"
-                          ? "Counterparty"
-                          : "System"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(message.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground">{message.content}</p>
-                </div>
-              ))}
-            </div>
-            <form
-              onSubmit={handleSendMessage}
-              className="flex flex-col gap-3 md:flex-row"
-            >
-              <Input
-                placeholder="Type your update…"
-                value={draftMessage}
-                onChange={(event) => setDraftMessage(event.target.value)}
-                className="rounded-xl border border-[hsl(var(--border))] bg-white/80 md:flex-1"
-              />
-              <Button type="submit" className="rounded-xl md:w-auto">
-                Send update
-              </Button>
-            </form>
           </CardContent>
         </Card>
 
@@ -711,7 +610,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   Ensure the method instructions from {method.label} are
                   followed exactly.
                 </li>
-                <li>Capture and upload the payment confirmation to chat.</li>
+                <li>Capture and retain the payment confirmation.</li>
                 <li>
                   Wait for the counterparty to acknowledge before closing the
                   step.
@@ -721,7 +620,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">When releasing USDC</p>
               <ul className="mt-2 list-disc space-y-1.5 pl-5">
-                <li>Verify PKR receipt is confirmed inside chat.</li>
+                <li>Verify PKR receipt is confirmed by counterparty.</li>
                 <li>
                   Account for the PKR {releaseUsdcTotalFee} total release fees.
                 </li>
@@ -733,6 +632,54 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Trade history</DialogTitle>
+            <DialogDescription>
+              A chronological record of key actions in this session.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 max-h-[60vh] space-y-3 overflow-y-auto">
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No history yet.</p>
+            ) : (
+              history.map((h) => (
+                <div
+                  key={h.id}
+                  className="rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge
+                        className={
+                          h.type === "request"
+                            ? "border-blue-200 bg-blue-50 text-blue-700"
+                            : h.type === "release_pkr"
+                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                            : h.type === "release_usdc"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-slate-200 bg-white text-slate-600"
+                        }
+                      >
+                        {h.type.replace("_", " ")}
+                      </Badge>
+                      <span className="text-foreground">{h.message}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(h.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

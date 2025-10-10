@@ -306,11 +306,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   };
 
   const handleSendChat = () => {
-    if (!chatText && !chatFile) return;
+    const messageContent = chatText.trim();
+    if (!messageContent && !chatFile) return;
     const imageUrl = chatFile ? URL.createObjectURL(chatFile) : undefined;
     logHistory({
       type: "message",
-      message: chatText || (chatFile ? "Proof uploaded" : ""),
+      message: messageContent || (chatFile ? "Proof uploaded" : ""),
       imageUrl,
     });
     setChatText("");

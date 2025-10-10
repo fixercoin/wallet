@@ -1,5 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, RefreshCw, Zap } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRightLeft,
+  CheckCircle2,
+  MessageSquareMore,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,363 +19,215 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-
-type TradeSide = "buy" | "sell";
-type OrderStatus = "pendingApproval" | "approved" | "released";
 
 interface ExpressP2PProps {
   onBack: () => void;
 }
 
+type TradeSide = "buy" | "sell";
+
+type PaymentMethodId = "easypaisa" | "firstpay" | "sadapay" | "nayapay";
+
 interface PaymentMethod {
+  id: PaymentMethodId;
+  label: string;
+  accountName: string;
+  accountNumber: string;
+  notes: string;
+}
+
+interface ChatMessage {
   id: string;
-  name: string;
-  account: string;
-  instructions: string;
+  sender: "you" | "counterparty" | "system";
+  content: string;
   createdAt: number;
 }
 
-interface TradeOrder {
-  id: string;
-  side: TradeSide;
-  amountUsdc: number;
-  status: OrderStatus;
-  counterparty: string;
-  createdAt: number;
-  statusUpdatedAt: number;
-  rate: number;
-}
+const PAYMENT_METHODS: PaymentMethod[] = [
+  {
+    id: "easypaisa",
+    label: "Easypaisa",
+    accountName: "Ameer Nawaz Khan",
+    accountNumber: "0310 7044833",
+    notes: "Transfer to Easypaisa mobile account. Share receipt in chat before confirming.",
+  },
+  {
+    id: "firstpay",
+    label: "FirstPay",
+    accountName: "Ameer Nawaz Khan",
+    accountNumber: "0310 7044833",
+    notes: "Send funds via FirstPay wallet and capture the confirmation screen.",
+  },
+  {
+    id: "sadapay",
+    label: "SadaPay",
+    accountName: "Ameer Nawaz Khan",
+    accountNumber: "0310 7044833",
+    notes: "Use SadaPay instant transfer. Verify CNIC name matches before release.",
+  },
+  {
+    id: "nayapay",
+    label: "NayaPay",
+    accountName: "Ameer Nawaz Khan",
+    accountNumber: "0310 7044833",
+    notes: "Send to NayaPay wallet. Add reference: EXPRESS-P2P and notify in chat.",
+  },
+];
 
-interface MarketActivity {
-  id: string;
-  side: TradeSide;
-  amountUsdc: number;
-  rate: number;
-  createdAt: number;
-}
-
-const RATE_LIMITS = { min: 272.5, max: 284.5 } as const;
-const DEFAULT_LIMITS: Record<TradeSide, { min: number; max: number }> = {
-  buy: { min: 50, max: 5000 },
-  sell: { min: 100, max: 10000 },
-};
-
-const usdcFormatter = new Intl.NumberFormat("en-US", {
+const rateFormatter = new Intl.NumberFormat("en-PK", {
+  style: "currency",
+  currency: "PKR",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-const pkrFormatter = new Intl.NumberFormat("en-PK", {
-  style: "currency",
-  currency: "PKR",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
+const usdcFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
 });
-
-const statusStyles: Record<OrderStatus, { label: string; className: string }> = {
-  pendingApproval: {
-    label: "Pending approval",
-    className: "bg-amber-100 text-amber-700 border-transparent",
-  },
-  approved: {
-    label: "Approved",
-    className: "bg-blue-100 text-blue-700 border-transparent",
-  },
-  released: {
-    label: "Released",
-    className: "bg-emerald-100 text-emerald-700 border-transparent",
-  },
-};
 
 const createId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-const toPkr = (amountUsdc: number, rate: number) => amountUsdc * rate;
+const initialMessages: ChatMessage[] = [
+  {
+    id: createId(),
+    sender: "system",
+    content: "Express P2P room opened. Keep all settlement updates inside chat.",
+    createdAt: Date.now() - 1000 * 60 * 9,
+  },
+  {
+    id: createId(),
+    sender: "counterparty",
+    content: "Hi Ameer, please share Easypaisa receipt once you send the PKR.",
+    createdAt: Date.now() - 1000 * 60 * 4,
+  },
+  {
+    id: createId(),
+    sender: "you",
+    content: "Sure, preparing to submit the buy request now.",
+    createdAt: Date.now() - 1000 * 60 * 2,
+  },
+];
+
+const RATE_MIN = 272.25;
+const RATE_MAX = 285.5;
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { toast } = useToast();
-  const [rate, setRate] = useState(278.4);
-  const rateRef = useRef(rate);
-  const [tradeSide, setTradeSide] = useState<TradeSide>("buy");
-  const [tradeAmount, setTradeAmount] = useState<string>("");
-  const [tradeError, setTradeError] = useState<string | null>(null);
-  const [methodError, setMethodError] = useState<string | null>(null);
-  const [methodForm, setMethodForm] = useState({
-    name: "",
-    account: "",
-    instructions: "",
-  });
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(() => [
-    {
-      id: createId(),
-      name: "Meezan Bank Transfer",
-      account: "IBAN PK12 MZNB 0000 1234 5678",
-      instructions:
-        "Log in to your Meezan Bank account and initiate a manual fund transfer. Share the transaction receipt inside the chat before requesting release.",
-      createdAt: Date.now() - 1000 * 60 * 15,
-    },
-  ]);
-  const [orders, setOrders] = useState<TradeOrder[]>(() => [
-    {
-      id: createId(),
-      side: "buy",
-      amountUsdc: 250,
-      status: "pendingApproval",
-      counterparty: "Counterparty 4921",
-      createdAt: Date.now() - 1000 * 60 * 6,
-      statusUpdatedAt: Date.now() - 1000 * 60 * 6,
-      rate: 278.12,
-    },
-    {
-      id: createId(),
-      side: "sell",
-      amountUsdc: 640,
-      status: "approved",
-      counterparty: "Counterparty 7315",
-      createdAt: Date.now() - 1000 * 60 * 14,
-      statusUpdatedAt: Date.now() - 1000 * 60 * 3,
-      rate: 278.64,
-    },
-  ]);
-  const [marketFeed, setMarketFeed] = useState<MarketActivity[]>(() => [
-    {
-      id: createId(),
-      side: "buy",
-      amountUsdc: 180,
-      rate: 278.22,
-      createdAt: Date.now() - 1000 * 45,
-    },
-    {
-      id: createId(),
-      side: "sell",
-      amountUsdc: 420,
-      rate: 278.78,
-      createdAt: Date.now() - 1000 * 120,
-    },
-  ]);
-
-  rateRef.current = rate;
+  const [side, setSide] = useState<TradeSide>("buy");
+  const [pkAmount, setPkAmount] = useState("25000");
+  const [rate, setRate] = useState(279.25);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>("easypaisa");
+  const [chat, setChat] = useState<ChatMessage[]>(initialMessages);
+  const [draftMessage, setDraftMessage] = useState("");
+  const [notes, setNotes] = useState("Confirm receipt before releasing USDC. Account owner: Ameer Nawaz Khan.");
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setRate((previous) => {
+      setRate((current) => {
         const jitter = (Math.random() - 0.5) * 0.6;
-        const next = Number((previous + jitter).toFixed(2));
-        return Math.min(RATE_LIMITS.max, Math.max(RATE_LIMITS.min, next));
+        const next = Number((current + jitter).toFixed(2));
+        if (next < RATE_MIN) return RATE_MIN;
+        if (next > RATE_MAX) return RATE_MAX;
+        return next;
       });
-    }, 6000);
+    }, 7000);
 
     return () => window.clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setMarketFeed((existing) => {
-        const amountUsdc = Math.round((100 + Math.random() * 900) * 100) / 100;
-        const side: TradeSide = Math.random() > 0.5 ? "buy" : "sell";
-        const entry: MarketActivity = {
-          id: createId(),
-          side,
-          amountUsdc,
-          rate: Number(rateRef.current.toFixed(2)),
-          createdAt: Date.now(),
-        };
-        return [entry, ...existing].slice(0, 6);
+  const usdcValue = useMemo(() => {
+    const numericPk = Number(pkAmount.replace(/[^0-9.]/g, ""));
+    if (Number.isNaN(numericPk) || numericPk <= 0) {
+      return 0;
+    }
+    return Number((numericPk / rate).toFixed(4));
+  }, [pkAmount, rate]);
+
+  const method = PAYMENT_METHODS.find((item) => item.id === selectedMethod)!;
+
+  const handleRequest = () => {
+    if (!pkAmount || Number(pkAmount) <= 0) {
+      toast({
+        title: "Add a PKR amount",
+        description: "Enter a PKR spend amount before requesting the trade.",
       });
-    }, 9000);
+      return;
+    }
 
-    return () => window.clearInterval(interval);
-  }, []);
+    const action = side === "buy" ? "Buy" : "Sell";
+    toast({
+      title: `${action} request created`,
+      description: `${action} ${usdcFormatter.format(usdcValue)} USDC using ${method.label}.`,
+    });
+    setChat((previous) => [
+      ...previous,
+      {
+        id: createId(),
+        sender: "you",
+        content: `${action} request submitted for ${usdcFormatter.format(usdcValue)} USDC via ${method.label}. Awaiting approval.`,
+        createdAt: Date.now(),
+      },
+    ]);
+  };
 
-  const sortedOrders = useMemo(
-    () => [...orders].sort((a, b) => b.createdAt - a.createdAt),
-    [orders],
-  );
+  const handleReleasePayment = () => {
+    toast({
+      title: "PKR release confirmed",
+      description: "Marked PKR payment as sent. Counterparty will verify before releasing USDC.",
+    });
+    setChat((previous) => [
+      ...previous,
+      {
+        id: createId(),
+        sender: "you",
+        content: "PKR payment released. Please confirm receipt and release the USDC escrow.",
+        createdAt: Date.now(),
+      },
+    ]);
+  };
 
-  const outstandingVolumes = useMemo(() => {
-    const pending = orders
-      .filter((order) => order.status !== "released")
-      .reduce(
-        (acc, order) => {
-          acc.usdc += order.amountUsdc;
-          acc.pkr += toPkr(order.amountUsdc, order.rate);
-          return acc;
-        },
-        { usdc: 0, pkr: 0 },
-      );
-    return {
-      pendingUsdc: pending.usdc,
-      pendingPkr: pending.pkr,
-      totalOrders: orders.length,
-    };
-  }, [orders]);
+  const handleReleaseUsdc = () => {
+    toast({
+      title: "USDC escrow released",
+      description: "You completed the order and released the USDC to the buyer.",
+    });
+    setChat((previous) => [
+      ...previous,
+      {
+        id: createId(),
+        sender: "system",
+        content: "You marked the escrow as released. Order closed successfully.",
+        createdAt: Date.now(),
+      },
+    ]);
+  };
 
-  const currentAmount = Number(tradeAmount);
-  const currentAmountValid = !Number.isNaN(currentAmount) && currentAmount > 0;
-  const currentPkrValue = currentAmountValid
-    ? toPkr(currentAmount, rate)
-    : 0;
-
-  const handleMethodSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedName = methodForm.name.trim();
-    const trimmedAccount = methodForm.account.trim();
-    const trimmedInstructions = methodForm.instructions.trim();
-
-    if (!trimmedName || !trimmedAccount) {
-      setMethodError("Provide a name and account details to add the payment method manually.");
-      return;
-    }
-
-    const next: PaymentMethod = {
-      id: createId(),
-      name: trimmedName,
-      account: trimmedAccount,
-      instructions: trimmedInstructions,
-      createdAt: Date.now(),
-    };
-
-    setPaymentMethods((existing) => [next, ...existing]);
-    setMethodForm({ name: "", account: "", instructions: "" });
-    setMethodError(null);
-
-    toast({
-      title: "Payment method added",
-      description: `${trimmedName} is now available for manual settlements.`,
-    });
+    const trimmed = draftMessage.trim();
+    if (!trimmed) return;
+    setChat((previous) => [
+      ...previous,
+      {
+        id: createId(),
+        sender: "you",
+        content: trimmed,
+        createdAt: Date.now(),
+      },
+    ]);
+    setDraftMessage("");
   };
 
-  const handleTradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const numericAmount = Number(tradeAmount);
-    const { min, max } = DEFAULT_LIMITS[tradeSide];
-
-    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
-      setTradeError("Enter a positive USDC amount.");
-      return;
-    }
-
-    if (numericAmount < min || numericAmount > max) {
-      setTradeError(
-        `Amount must be between ${usdcFormatter.format(min)} and ${usdcFormatter.format(max)} USDC for a ${tradeSide} order.`,
-      );
-      return;
-    }
-
-    const order: TradeOrder = {
-      id: createId(),
-      side: tradeSide,
-      amountUsdc: numericAmount,
-      status: "pendingApproval",
-      counterparty: `Counterparty ${Math.floor(1000 + Math.random() * 9000)}`,
-      createdAt: Date.now(),
-      statusUpdatedAt: Date.now(),
-      rate,
-    };
-
-    setOrders((existing) => [order, ...existing]);
-    setTradeAmount("");
-    setTradeError(null);
-    toast({
-      title: tradeSide === "buy" ? "Buy order submitted" : "Sell order submitted",
-      description: `Waiting for counterparty approval of ${usdcFormatter.format(numericAmount)} USDC.`,
-    });
-  };
-
-  const handleApprove = (orderId: string) => {
-    setOrders((existing) =>
-      existing.map((order) =>
-        order.id === orderId
-          ? { ...order, status: "approved", statusUpdatedAt: Date.now() }
-          : order,
-      ),
-    );
-    toast({
-      title: "Order approved",
-      description: "USDC escrow approved. Counterparty may now release PKR.",
-    });
-  };
-
-  const handleRelease = (orderId: string) => {
-    setOrders((existing) =>
-      existing.map((order) =>
-        order.id === orderId
-          ? { ...order, status: "released", statusUpdatedAt: Date.now() }
-          : order,
-      ),
-    );
-    toast({
-      title: "PKR released",
-      description: "PKR funds released to counterparty successfully.",
-    });
-  };
-
-  const renderTradeContent = (side: TradeSide) => {
-    const { min, max } = DEFAULT_LIMITS[side];
-
-    return (
-      <form onSubmit={handleTradeSubmit} className="space-y-4" noValidate>
-        <div className="space-y-2">
-          <Label htmlFor={`${side}-amount`}>Amount in USDC</Label>
-          <Input
-            id={`${side}-amount`}
-            type="number"
-            min={min}
-            max={max}
-            step="0.01"
-            inputMode="decimal"
-            placeholder={`${min} - ${max}`}
-            value={tradeSide === side ? tradeAmount : ""}
-            onChange={(event) => {
-              if (tradeSide === side) {
-                setTradeAmount(event.target.value);
-              }
-            }}
-          />
-        </div>
-
-        <div className="grid gap-3 rounded-md border border-dashed border-[hsl(var(--border))] bg-white/60 p-4 text-sm text-muted-foreground">
-          <div className="flex items-center justify-between">
-            <span>Live settlement rate</span>
-            <span className="flex items-center gap-1 font-medium text-foreground">
-              {rate.toFixed(2)} PKR
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Estimated payout</span>
-            <span className="font-semibold text-foreground">
-              {currentAmountValid && tradeSide === side
-                ? pkrFormatter.format(Math.round(currentPkrValue))
-                : pkrFormatter.format(Math.round(toPkr(min, rate)))}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span>Limits</span>
-            <span>{`${usdcFormatter.format(min)} - ${usdcFormatter.format(max)} USDC`}</span>
-          </div>
-        </div>
-
-        {tradeError && tradeSide === side ? (
-          <p className="text-sm font-medium text-destructive">{tradeError}</p>
-        ) : null}
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-xs text-muted-foreground">
-            Manual settlements only — currency fixed to USDC against PKR release.
-          </span>
-          <Button type="submit" className="w-full sm:w-auto">
-            {side === "buy" ? "Place buy order" : "Place sell order"}
-          </Button>
-        </div>
-      </form>
-    );
-  };
+  const headerLabel = side === "buy" ? "Buy" : "Sell";
+  const ctaLabel = side === "buy" ? "Buy with PKR" : "Sell for PKR";
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
@@ -386,266 +245,279 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <div>
               <h1 className="text-xl font-semibold">Express P2P Service</h1>
               <p className="text-sm text-muted-foreground">
-                Real-time trades between USDC and Pakistani Rupee with manual payment methods.
+                Manual peer trades between USDC and PKR, backed by escrow and chat confirmation.
               </p>
             </div>
           </div>
-          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-            <Zap className="mr-1 h-3.5 w-3.5" /> Live service
+          <Badge className="border-emerald-200 bg-emerald-100 text-emerald-700">
+            <Sparkles className="mr-1 h-3.5 w-3.5" /> Real-time live
           </Badge>
         </div>
 
-        <Card className="border border-[hsl(var(--border))] bg-white/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Settlement overview</CardTitle>
+        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
+          <CardHeader className="pb-0">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ArrowRightLeft className="h-4 w-4" /> {headerLabel} flow
+            </CardTitle>
             <CardDescription>
-              Track current appetite and stay aligned with live conversion updates.
+              Set the PKR amount, review the USDC you will {side === "buy" ? "receive" : "deliver"}, then choose a payment method.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border border-[hsl(var(--border))] bg-white p-4">
-                <p className="text-xs text-muted-foreground">USDC → PKR live rate</p>
-                <p className="mt-2 text-2xl font-semibold">{rate.toFixed(2)} PKR</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Updates every few seconds within regulated corridor.
-                </p>
-              </div>
-              <div className="rounded-lg border border-[hsl(var(--border))] bg-white p-4">
-                <p className="text-xs text-muted-foreground">Order limits</p>
-                <p className="mt-2 text-sm font-semibold">Buy: {`${usdcFormatter.format(DEFAULT_LIMITS.buy.min)} - ${usdcFormatter.format(DEFAULT_LIMITS.buy.max)} USDC`}</p>
-                <p className="text-sm font-semibold">Sell: {`${usdcFormatter.format(DEFAULT_LIMITS.sell.min)} - ${usdcFormatter.format(DEFAULT_LIMITS.sell.max)} USDC`}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Limits enforced on every submission.</p>
-              </div>
-              <div className="rounded-lg border border-[hsl(var(--border))] bg-white p-4">
-                <p className="text-xs text-muted-foreground">Outstanding volume</p>
-                <p className="mt-2 text-2xl font-semibold">
-                  {usdcFormatter.format(outstandingVolumes.pendingUsdc)} USDC
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  ≈ {pkrFormatter.format(Math.round(outstandingVolumes.pendingPkr))} across {outstandingVolumes.totalOrders} orders
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-[hsl(var(--border))] bg-white/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Manual payment methods</CardTitle>
-            <CardDescription>
-              Add instructions for every counterparty — no automated rails, only manual settlement.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              <form className="space-y-4" onSubmit={handleMethodSubmit} noValidate>
-                <div className="space-y-2">
-                  <Label htmlFor="method-name">Method name</Label>
-                  <Input
-                    id="method-name"
-                    placeholder="e.g. Meezan Bank manual transfer"
-                    value={methodForm.name}
-                    onChange={(event) =>
-                      setMethodForm((previous) => ({
-                        ...previous,
-                        name: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="method-account">Account / reference details</Label>
-                  <Input
-                    id="method-account"
-                    placeholder="Account number, IBAN or wallet address"
-                    value={methodForm.account}
-                    onChange={(event) =>
-                      setMethodForm((previous) => ({
-                        ...previous,
-                        account: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="method-instructions">Manual instructions</Label>
-                  <Textarea
-                    id="method-instructions"
-                    placeholder="Share step-by-step instructions for the counterparty."
-                    value={methodForm.instructions}
-                    onChange={(event) =>
-                      setMethodForm((previous) => ({
-                        ...previous,
-                        instructions: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                {methodError ? (
-                  <p className="text-sm font-medium text-destructive">{methodError}</p>
-                ) : null}
-                <Button type="submit" className="w-full">
-                  Add payment method manually
-                </Button>
-              </form>
-
-              <div className="space-y-3">
-                {paymentMethods.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-[hsl(var(--border))] bg-white/60 p-6 text-sm text-muted-foreground">
-                    No payment methods yet. Add your first manual settlement instructions.
-                  </div>
-                ) : (
-                  paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className="rounded-lg border border-[hsl(var(--border))] bg-white/70 p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-base font-semibold">{method.name}</h3>
-                        <span className="text-xs text-muted-foreground">
-                          Added {new Date(method.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm font-medium text-foreground">
-                        {method.account}
-                      </p>
-                      {method.instructions ? (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {method.instructions}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-[hsl(var(--border))] bg-white/80 shadow-sm">
-          <CardHeader className="flex flex-col gap-2">
-            <CardTitle className="text-lg">Create trade</CardTitle>
-            <CardDescription>
-              Choose buy or sell and submit the order with fixed USDC currency.
-            </CardDescription>
-            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              Every order requires manual approval before PKR release.
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs
-              value={tradeSide}
-              onValueChange={(value) => {
-                setTradeSide(value as TradeSide);
-                setTradeAmount("");
-                setTradeError(null);
-              }}
-            >
-              <TabsList className="mb-4">
-                <TabsTrigger value="buy">Buy USDC</TabsTrigger>
-                <TabsTrigger value="sell">Sell USDC</TabsTrigger>
+          <CardContent className="pt-6">
+            <Tabs value={side} onValueChange={(value) => setSide(value as TradeSide)}>
+              <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/60 p-1">
+                <TabsTrigger value="buy" className="rounded-lg text-base">
+                  Buy
+                </TabsTrigger>
+                <TabsTrigger value="sell" className="rounded-lg text-base">
+                  Sell
+                </TabsTrigger>
               </TabsList>
-              <TabsContent value="buy">{renderTradeContent("buy")}</TabsContent>
-              <TabsContent value="sell">{renderTradeContent("sell")}</TabsContent>
+              <TabsContent value="buy" className="mt-6 space-y-5">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Spend</Label>
+                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Enter PKR amount</span>
+                      <span className="font-semibold">PKR</span>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={pkAmount}
+                      onChange={(event) => setPkAmount(event.target.value)}
+                      className="mt-1 border-0 px-0 text-2xl font-semibold focus-visible:ring-0"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Receive ≈</Label>
+                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Estimated USDC</span>
+                      <span className="font-semibold">USDC</span>
+                    </div>
+                    <div className="mt-1 text-2xl font-semibold">
+                      {usdcFormatter.format(usdcValue)}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    1 USDC ≈ {rateFormatter.format(rate)}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Payment method</Label>
+                  <Select value={selectedMethod} onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((item) => (
+                        <SelectItem value={item.id} key={item.id}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">{method.label}</p>
+                  <p>Account owner: {method.accountName}</p>
+                  <p>Number: {method.accountNumber}</p>
+                  <p className="mt-1 text-xs">{method.notes}</p>
+                </div>
+
+                <Button className="w-full text-base" onClick={handleRequest}>
+                  {ctaLabel}
+                </Button>
+              </TabsContent>
+
+              <TabsContent value="sell" className="mt-6 space-y-5">
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  You are selling USDC to receive PKR manually. Confirm incoming receipt before releasing escrow.
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Receive</Label>
+                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Calculated PKR</span>
+                      <span className="font-semibold">PKR</span>
+                    </div>
+                    <div className="mt-1 text-2xl font-semibold">
+                      {Number(pkAmount) > 0 ? Number(pkAmount).toLocaleString() : "0"}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Send</Label>
+                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>USDC to deliver</span>
+                      <span className="font-semibold">USDC</span>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={usdcValue}
+                      readOnly
+                      className="mt-1 border-0 px-0 text-2xl font-semibold focus-visible:ring-0"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    1 USDC ≈ {rateFormatter.format(rate)}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Payment method you expect</Label>
+                  <Select value={selectedMethod} onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((item) => (
+                        <SelectItem value={item.id} key={item.id}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">Provide method instructions</p>
+                  <p>Account owner: {method.accountName}</p>
+                  <p>Number: {method.accountNumber}</p>
+                  <p className="mt-1 text-xs">{method.notes}</p>
+                </div>
+                <Button className="w-full text-base" onClick={handleRequest}>
+                  {ctaLabel}
+                </Button>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
 
-        <Card className="border border-[hsl(var(--border))] bg-white/80 shadow-sm">
+        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Approvals and releases</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Confirmation & controls
+            </CardTitle>
             <CardDescription>
-              Approve USDC escrow first, then release PKR once settlement is confirmed.
+              Request the method, confirm PKR transfer, then release USDC when ready. Maintain manual oversight for every step.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {sortedOrders.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[hsl(var(--border))] bg-white/60 p-6 text-sm text-muted-foreground">
-                No active orders. Submit a buy or sell order to start the approval flow.
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-foreground">Trade summary</p>
+              <div className="text-sm text-muted-foreground">
+                <p>Side: <span className="font-medium capitalize text-foreground">{side}</span></p>
+                <p>PKR amount: <span className="font-medium text-foreground">{Number(pkAmount).toLocaleString()}</span></p>
+                <p>USDC amount: <span className="font-medium text-foreground">{usdcFormatter.format(usdcValue)}</span></p>
+                <p>Method: <span className="font-medium text-foreground">{method.label}</span></p>
               </div>
-            ) : (
-              sortedOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex flex-col gap-3 rounded-lg border border-[hsl(var(--border))] bg-white/70 p-4 md:flex-row md:items-center md:justify-between"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Badge className={statusStyles[order.status].className}>
-                        {statusStyles[order.status].label}
-                      </Badge>
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {order.side === "buy" ? "Buy" : "Sell"}
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {usdcFormatter.format(order.amountUsdc)} USDC · {pkrFormatter.format(Math.round(toPkr(order.amountUsdc, order.rate)))}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Counterparty {order.counterparty} · {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2 md:flex-row">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={order.status !== "pendingApproval"}
-                      onClick={() => handleApprove(order.id)}
-                    >
-                      Approve escrow
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="dash-btn"
-                      disabled={order.status !== "approved"}
-                      onClick={() => handleRelease(order.id)}
-                    >
-                      Release PKR
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
+              <Textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                className="min-h-[100px]"
+                placeholder="Add any confirmation notes for the counterparty."
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button className="h-12 text-base" onClick={handleRequest}>
+                Request method approval
+              </Button>
+              <Button className="h-12 text-base" variant="outline" onClick={handleReleasePayment}>
+                Release PKR payment
+              </Button>
+              <Button className="h-12 text-base" variant="ghost" onClick={handleReleaseUsdc}>
+                Release USDC escrow
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-[hsl(var(--border))] bg-white/80 shadow-sm">
+        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Real-time service feed</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MessageSquareMore className="h-5 w-5 text-[hsl(var(--primary))]" /> Settlement chat
+            </CardTitle>
             <CardDescription>
-              Latest fulfilled interests across the marketplace to gauge liquidity.
+              Coordinate the transfer in real time. Use the log as proof before approving releases.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {marketFeed.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[hsl(var(--border))] bg-white/60 p-6 text-sm text-muted-foreground">
-                Feed will populate as trades start flowing.
-              </div>
-            ) : (
-              marketFeed.map((trade) => (
-                <div
-                  key={trade.id}
-                  className="flex flex-col gap-1 rounded-lg border border-[hsl(var(--border))] bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {trade.side === "buy" ? "Buy" : "Sell"} interest · {usdcFormatter.format(trade.amountUsdc)} USDC
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Spot rate {trade.rate.toFixed(2)} PKR — published {new Date(trade.createdAt).toLocaleTimeString([], {
+          <CardContent className="flex flex-col gap-4">
+            <div className="max-h-72 space-y-3 overflow-y-auto rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4">
+              {chat.map((message) => (
+                <div key={message.id} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={
+                        message.sender === "you"
+                          ? "border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
+                          : message.sender === "counterparty"
+                          ? "border-blue-200 bg-blue-50 text-blue-600"
+                          : "border-slate-200 bg-white text-slate-600"
+                      }
+                    >
+                      {message.sender === "you"
+                        ? "You"
+                        : message.sender === "counterparty"
+                        ? "Counterparty"
+                        : "System"}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(message.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
-                    </p>
+                    </span>
                   </div>
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Manual release on completion
-                  </span>
+                  <p className="text-sm text-foreground">{message.content}</p>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
+            <form onSubmit={handleSendMessage} className="flex flex-col gap-3 md:flex-row">
+              <Input
+                placeholder="Type your update…"
+                value={draftMessage}
+                onChange={(event) => setDraftMessage(event.target.value)}
+                className="md:flex-1"
+              />
+              <Button type="submit" className="md:w-auto">
+                Send update
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ShieldCheck className="h-5 w-5 text-emerald-500" /> Release checklist
+            </CardTitle>
+            <CardDescription>
+              Follow these confirmations before pressing release on either side.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">When releasing PKR</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>Verify account name: Ameer Nawaz Khan.</li>
+                <li>Send manual transfer via {method.label} and save receipt.</li>
+                <li>Upload confirmation in chat for the counterparty.</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">When releasing USDC</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>Ensure PKR receipt is verified inside chat.</li>
+                <li>Confirm settlement rate: {rateFormatter.format(rate)}.</li>
+                <li>Release escrow only after all details match.</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </div>

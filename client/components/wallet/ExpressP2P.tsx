@@ -584,7 +584,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 variant="outline"
                 size="icon"
                 className="h-12 w-12 rounded-full border border-[hsl(var(--border))]/70"
-                onClick={() => fileRef.current?.click()}
+                onClick={handleUploadClick}
                 aria-label="Upload proof"
               >
                 <Plus className="h-5 w-5" />

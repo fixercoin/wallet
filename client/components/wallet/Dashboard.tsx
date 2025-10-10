@@ -18,12 +18,21 @@ import {
   Settings,
   Bot,
   Plus,
+  MoreVertical,
+  Gift,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardProps {
   onSend: () => void;
@@ -278,28 +287,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span className="text-cream">FIXORIUM</span>
           </div>
           <div className="flex items-center gap-1">
-            <div>
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (typeof onAccounts === "function") {
-                    onAccounts();
-                  }
-                }}
-                disabled={isLoading}
-                className="h-8 w-8 p-0 dash-btn-circle"
-              >
-                <Wallet className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={onSettings}
-              className="h-8 w-8 p-0 dash-btn-circle"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" className="h-8 w-8 p-0 dash-btn-circle">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => onAccounts?.()} className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  <span>My Wallet</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onAirdrop} className="flex items-center gap-2">
+                  <Gift className="h-4 w-4" />
+                  <span>Token Airdrop</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={onSettings} className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Setting</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -363,16 +372,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="h-12 w-12 rounded-full dash-btn-circle p-0 border-0"
           >
             <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* AIRDROP DISTRIBUTION - separate button above token list */}
-        <div className="mb-4">
-          <Button
-            onClick={onAirdrop}
-            className="w-full h-12 dash-btn font-semibold border-0"
-          >
-            AIRDROP DISTRIBUTION
           </Button>
         </div>
 

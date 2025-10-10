@@ -202,10 +202,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const formatAmount = (amount: number | string, symbol?: string) => {
     const num =
       typeof amount === "string" ? parseFloat(amount) : (amount as number);
-    if (isNaN(num)) return "0.0000";
-    const sym = (symbol || "").toUpperCase();
-    if (sym === "FIXERCOIN" || sym === "FIXER") return num.toFixed(2);
-    return num.toFixed(4);
+    if (isNaN(num)) return "0.000";
+    return num.toFixed(3);
   };
 
   const validateSwap = (): string | null => {

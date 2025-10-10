@@ -322,9 +322,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const title = side === "buy" ? "Buy" : "Sell";
   const buySummaryLabel = `${usdcFormatterPrecise.format(buyNetUsdc)} USDC`;
   const sellSummaryLabel = rateFormatter.format(sellNetPkr);
-  const summaryLabel = side === "buy" ? buySummaryLabel : sellSummaryLabel;
-  const summaryDescription =
-    side === "buy" ? "USDC you will receive" : "PKR you will receive";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-4 text-[hsl(var(--foreground))]">

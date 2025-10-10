@@ -50,6 +50,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const allTokens = availableTokens;
   const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
   const [quoteError, setQuoteError] = useState<string>("");
+  const [fromUsd, setFromUsd] = useState<number | null>(null);
+  const [toUsd, setToUsd] = useState<number | null>(null);
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -87,6 +89,61 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     const sol = (tokens || []).find((t: TokenInfo) => t.symbol === "SOL");
     if (sol && !fromToken) setFromToken(sol);
   }, [tokens, fromToken]);
+
+  useEffect(() => {
+    const fetchPrice = async (mint?: string) => {
+      if (!mint) return null;
+      const p = await jupiterAPI.getTokenPrice(mint);
+      if (p && isFinite(p) && p > 0) return p;
+      try {
+        const dex = await dexscreenerAPI.getTokenByMint(mint);
+        const usd = dex?.priceUsd ? parseFloat(dex.priceUsd) : null;
+        return usd && isFinite(usd) && usd > 0 ? usd : null;
+      } catch {
+        return null;
+      }
+    };
+
+    (async () => {
+      const p = await fetchPrice(fromToken?.mint);
+      setFromUsd(p);
+    })();
+  }, [fromToken]);
+
+  useEffect(() => {
+    const fetchPrice = async (mint?: string) => {
+      if (!mint) return null;
+      const p = await jupiterAPI.getTokenPrice(mint);
+      if (p && isFinite(p) && p > 0) return p;
+      try {
+        const dex = await dexscreenerAPI.getTokenByMint(mint);
+        const usd = dex?.priceUsd ? parseFloat(dex.priceUsd) : null;
+        return usd && isFinite(usd) && usd > 0 ? usd : null;
+      } catch {
+        return null;
+      }
+    };
+
+    (async () => {
+      const p = await fetchPrice(toToken?.mint);
+      setToUsd(p);
+    })();
+  }, [toToken]);
+
+  const formatUsd = (val?: number | null) => {
+    if (!val || !isFinite(val) || val <= 0) return "$ 0.00";
+    const digits = val >= 1 ? 2 : val >= 0.01 ? 4 : 6;
+    return `$ ${val.toLocaleString(undefined, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })}`;
+  };
+
+  const usdForAmount = (amountStr: string, price?: number | null) => {
+    const amt = parseFloat(amountStr || "");
+    if (!price || !isFinite(price) || !(amt > 0)) return 0;
+    return amt * price;
+  };
 
   useEffect(() => {
     const getQuote = async () => {
@@ -630,7 +687,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     className="w-full bg-transparent border-0 p-0 h-auto text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
                   />
                   <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-                    $ 0.00
+                    {formatUsd(usdForAmount(fromAmount, fromUsd))}
                   </div>
                 </div>
 
@@ -739,7 +796,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       : "0.000"}
                   </div>
                   <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-                    {toToken?.symbol ? `$ 0.00` : `$ 0.00`}
+                    {formatUsd(usdForAmount(toAmount, toUsd))}
                   </div>
                 </div>
 

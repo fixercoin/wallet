@@ -329,7 +329,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               size="icon"
               className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80"
               aria-label="Back"
-              onClick={() => window.history.back()}
+              onClick={handleBack}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>

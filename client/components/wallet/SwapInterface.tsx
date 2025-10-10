@@ -451,7 +451,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               const t = allTokens.find((x) => x.mint === v);
               if (t) onSelect(t);
             }}
-         >
+          >
             <SelectTrigger className="w-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70">
               <SelectValue placeholder="Select a token">
                 {selectedToken ? (
@@ -649,10 +649,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           {fromToken ? (
                             <>
                               <Avatar className="h-6 w-6">
-                                <AvatarImage src={fromToken.logoURI} alt={fromToken.symbol} />
-                                <AvatarFallback className="text-xs">{fromToken.symbol.slice(0, 2)}</AvatarFallback>
+                                <AvatarImage
+                                  src={fromToken.logoURI}
+                                  alt={fromToken.symbol}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {fromToken.symbol.slice(0, 2)}
+                                </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">{fromToken.symbol}</span>
+                              <span className="font-medium">
+                                {fromToken.symbol}
+                              </span>
                             </>
                           ) : (
                             <span>Select</span>
@@ -669,19 +676,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         >
                           <div className="flex items-center gap-2 w-full">
                             <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage src={token.logoURI} alt={token.symbol} />
+                              <AvatarImage
+                                src={token.logoURI}
+                                alt={token.symbol}
+                              />
                               <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
                                 {token.symbol.slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <span className="font-medium">{token.symbol}</span>
+                                <span className="font-medium">
+                                  {token.symbol}
+                                </span>
                                 <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(getTokenBalance(token), token.symbol)}
+                                  {formatAmount(
+                                    getTokenBalance(token),
+                                    token.symbol,
+                                  )}
                                 </span>
                               </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">{token.name}</div>
+                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                                {token.name}
+                              </div>
                             </div>
                           </div>
                         </SelectItem>
@@ -690,7 +707,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </Select>
                   {fromToken ? (
                     <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
-                      {formatAmount(getTokenBalance(fromToken), fromToken.symbol)} {fromToken.symbol}
+                      {formatAmount(
+                        getTokenBalance(fromToken),
+                        fromToken.symbol,
+                      )}{" "}
+                      {fromToken.symbol}
                     </div>
                   ) : null}
                 </div>
@@ -713,7 +734,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
                   <div className="text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
-                    {toAmount ? formatAmount(toAmount, toToken?.symbol) : "0.000"}
+                    {toAmount
+                      ? formatAmount(toAmount, toToken?.symbol)
+                      : "0.000"}
                   </div>
                   <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
                     {toToken?.symbol ? `$ 0.00` : `$ 0.00`}
@@ -735,10 +758,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           {toToken ? (
                             <>
                               <Avatar className="h-6 w-6">
-                                <AvatarImage src={toToken.logoURI} alt={toToken.symbol} />
-                                <AvatarFallback className="text-xs">{toToken.symbol.slice(0, 2)}</AvatarFallback>
+                                <AvatarImage
+                                  src={toToken.logoURI}
+                                  alt={toToken.symbol}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {toToken.symbol.slice(0, 2)}
+                                </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">{toToken.symbol}</span>
+                              <span className="font-medium">
+                                {toToken.symbol}
+                              </span>
                             </>
                           ) : (
                             <span>Select</span>
@@ -755,19 +785,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         >
                           <div className="flex items-center gap-2 w-full">
                             <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage src={token.logoURI} alt={token.symbol} />
+                              <AvatarImage
+                                src={token.logoURI}
+                                alt={token.symbol}
+                              />
                               <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
                                 {token.symbol.slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <span className="font-medium">{token.symbol}</span>
+                                <span className="font-medium">
+                                  {token.symbol}
+                                </span>
                                 <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(getTokenBalance(token), token.symbol)}
+                                  {formatAmount(
+                                    getTokenBalance(token),
+                                    token.symbol,
+                                  )}
                                 </span>
                               </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">{token.name}</div>
+                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                                {token.name}
+                              </div>
                             </div>
                           </div>
                         </SelectItem>
@@ -787,26 +827,44 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
               <div className="mt-2 bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">Quote</span>
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                    Quote
+                  </span>
                   <span className="text-sm">
-                    1 {fromToken.symbol} = {(
+                    1 {fromToken.symbol} ={" "}
+                    {(
                       parseFloat(toAmount) / parseFloat(fromAmount || "1")
-                    ).toFixed(4)} {toToken.symbol}
+                    ).toFixed(4)}{" "}
+                    {toToken.symbol}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">Network fee</span>
-                  <span className="text-[hsl(var(--foreground))]">Included</span>
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    Network fee
+                  </span>
+                  <span className="text-[hsl(var(--foreground))]">
+                    Included
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">Time</span>
-                  <span className="text-[hsl(var(--foreground))]">&lt; 1 min</span>
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    Time
+                  </span>
+                  <span className="text-[hsl(var(--foreground))]">
+                    &lt; 1 min
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">Rate includes</span>
-                  <span className="text-[hsl(var(--foreground))]">{slippage}% slippage</span>
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    Rate includes
+                  </span>
+                  <span className="text-[hsl(var(--foreground))]">
+                    {slippage}% slippage
+                  </span>
                 </div>
-                <div className="text-right text-sm text-blue-400">More quotes</div>
+                <div className="text-right text-sm text-blue-400">
+                  More quotes
+                </div>
               </div>
             ) : null}
 
@@ -819,7 +877,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {indicative && (
               <Alert className="bg-blue-500/10 border-blue-400/20 text-blue-200">
                 <AlertDescription>
-                  Indicative price shown (no route available). Try adjusting amount or pair.
+                  Indicative price shown (no route available). Try adjusting
+                  amount or pair.
                 </AlertDescription>
               </Alert>
             )}

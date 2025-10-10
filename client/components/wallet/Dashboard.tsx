@@ -296,16 +296,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => onAccounts?.()} className="flex items-center gap-2">
+                <DropdownMenuItem
+                  onSelect={() => onAccounts?.()}
+                  className="flex items-center gap-2"
+                >
                   <Wallet className="h-4 w-4" />
                   <span>My Wallet</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={onAirdrop} className="flex items-center gap-2">
+                <DropdownMenuItem
+                  onSelect={onAirdrop}
+                  className="flex items-center gap-2"
+                >
                   <Gift className="h-4 w-4" />
                   <span>Token Airdrop</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={onSettings} className="flex items-center gap-2">
+                <DropdownMenuItem
+                  onSelect={onSettings}
+                  className="flex items-center gap-2"
+                >
                   <Settings className="h-4 w-4" />
                   <span>Setting</span>
                 </DropdownMenuItem>
@@ -379,7 +388,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* EXPRESS P2P SERVICE */}
         <div className="mb-4">
-          <Button onClick={onP2P} className="w-full h-12 dash-btn font-semibold border-0">
+          <Button
+            onClick={onP2P}
+            className="w-full h-12 dash-btn font-semibold border-0"
+          >
             EXPRESS P2P SERVICE
           </Button>
         </div>

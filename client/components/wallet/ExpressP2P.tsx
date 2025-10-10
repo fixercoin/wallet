@@ -1,7 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowLeft,
   CircleDollarSign,
+  Copy,
   IndianRupee,
   MessageSquareMore,
 } from "lucide-react";
@@ -25,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useWallet } from "@/contexts/WalletContext";
+import { getTokenAccounts } from "@/lib/services/solana-rpc";
 
 // Types
 type TradeSide = "buy" | "sell";
@@ -76,6 +83,14 @@ const initialHistory: TradeHistoryEntry[] = [
   },
 ];
 
+const EXPRESS_WALLET_ADDRESS = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qFE1TZMHJY7S4q8YDT3k3dDdHr";
+
+const shortenAddress = (address: string) =>
+  address.length <= 10
+    ? address
+    : `${address.slice(0, 4)}...${address.slice(-4)}`;
+
 // Pricing model (internal only)
 const RATE_MIN = 272.25;
 const RATE_MAX = 285.5;
@@ -83,7 +98,6 @@ const INTERNAL_CHARGE_PER_USDC = 2; // do not show in UI
 
 export const ExpressP2P: React.FC = () => {
   const { toast } = useToast();
-  const { tokens, refreshTokens } = useWallet();
 
   const [side, setSide] = useState<TradeSide>("buy");
   const [buyPkAmount, setBuyPkAmount] = useState("");
@@ -94,17 +108,42 @@ export const ExpressP2P: React.FC = () => {
   const [waitOpen, setWaitOpen] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
+  const [expressUsdcBalance, setExpressUsdcBalance] = useState<number | null>(
+    null,
+  );
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  const [orderSummary, setOrderSummary] = useState<{
+    side: TradeSide;
+    pkrAmount: number;
+    usdcAmount: number;
+  } | null>(null);
+
   // Chat form
   const [chatText, setChatText] = useState("");
   const [chatFile, setChatFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    // Ensure balances/tokens are fresh
-    refreshTokens?.();
-  }, [refreshTokens]);
+  const fetchExpressBalance = useCallback(async () => {
+    setIsBalanceLoading(true);
+    try {
+      const accounts = await getTokenAccounts(EXPRESS_WALLET_ADDRESS);
+      const usdcAccount = accounts.find(
+        (account) =>
+          account.mint === USDC_MINT ||
+          account.symbol?.toUpperCase() === "USDC",
+      );
+      const amount = Number(usdcAccount?.balance ?? 0);
+      setExpressUsdcBalance(Number.isFinite(amount) ? amount : 0);
+    } catch (error) {
+      console.error("Error fetching EXPRESS LIVE balance:", error);
+      setExpressUsdcBalance((prev) => (prev == null ? 0 : prev));
+    } finally {
+      setIsBalanceLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
+    fetchExpressBalance();
     const interval = window.setInterval(() => {
       setRate((current) => {
         const jitter = (Math.random() - 0.5) * 0.6;
@@ -113,10 +152,10 @@ export const ExpressP2P: React.FC = () => {
         if (next > RATE_MAX) return RATE_MAX;
         return next;
       });
-      refreshTokens?.();
+      fetchExpressBalance();
     }, 15000);
     return () => window.clearInterval(interval);
-  }, [refreshTokens]);
+  }, [fetchExpressBalance]);
 
   useEffect(() => {
     if (!waitOpen) return;
@@ -139,10 +178,29 @@ export const ExpressP2P: React.FC = () => {
     return () => clearInterval(id);
   }, [waitOpen, toast]);
 
-  const usdcBalance = useMemo(() => {
-    const usdc = tokens?.find((t) => t.symbol === "USDC");
-    return Number(usdc?.balance || 0);
-  }, [tokens]);
+  const usdcBalance = useMemo(
+    () => (expressUsdcBalance == null ? 0 : expressUsdcBalance),
+    [expressUsdcBalance],
+  );
+
+  const shortExpressWallet = useMemo(
+    () => shortenAddress(EXPRESS_WALLET_ADDRESS),
+    [],
+  );
+
+  const handleCopyAddress = useCallback(async () => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(EXPRESS_WALLET_ADDRESS);
+        toast({ title: "Wallet address copied" });
+      } else {
+        throw new Error("Clipboard unavailable");
+      }
+    } catch (error) {
+      console.error("Copy failed:", error);
+      toast({ title: "Unable to copy address" });
+    }
+  }, [toast]);
 
   const buyPk = useMemo(() => {
     const n = Number(buyPkAmount.replace(/[^0-9.]/g, ""));
@@ -179,10 +237,19 @@ export const ExpressP2P: React.FC = () => {
         toast({ title: "Enter PKR amount" });
         return;
       }
+      if (buyNetUsdc > usdcBalance) {
+        toast({ title: "Insufficient USDC available" });
+        return;
+      }
       toast({ title: "Buyer request sent" });
       logHistory({
         type: "confirm",
         message: `Buy ~${usdcFormatterPrecise.format(buyNetUsdc)} USDC`,
+      });
+      setOrderSummary({
+        side,
+        pkrAmount: buyPk,
+        usdcAmount: buyNetUsdc,
       });
       setWaitOpen(true);
       return;
@@ -191,10 +258,19 @@ export const ExpressP2P: React.FC = () => {
       toast({ title: "Enter USDC amount" });
       return;
     }
+    if (sellUsdc > usdcBalance) {
+      toast({ title: "Insufficient USDC available" });
+      return;
+    }
     toast({ title: "Waiting for buyer payment" });
     logHistory({
       type: "confirm",
       message: `Sell ~${rateFormatter.format(sellNetPkr)} PKR`,
+    });
+    setOrderSummary({
+      side,
+      pkrAmount: sellNetPkr,
+      usdcAmount: sellUsdc,
     });
     setWaitOpen(true);
   };

@@ -60,9 +60,19 @@ const DEXSCREENER_ENDPOINTS = [
   "https://api.dexscreener.io/latest/dex", // Alternative domain
 ];
 
-let currentEndpointIndex = 0;
+const CACHE_TTL_MS = 30_000; // 30 seconds
+const MAX_TOKENS_PER_BATCH = 20;
 
-const tryDexscreenerEndpoints = async (path: string): Promise<any> => {
+let currentEndpointIndex = 0;
+const cache = new Map<
+  string,
+  { data: DexscreenerResponse; expiresAt: number }
+>();
+const inflightRequests = new Map<string, Promise<DexscreenerResponse>>();
+
+const tryDexscreenerEndpoints = async (
+  path: string,
+): Promise<DexscreenerResponse> => {
   let lastError: Error | null = null;
 
   for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
@@ -98,7 +108,7 @@ const tryDexscreenerEndpoints = async (path: string): Promise<any> => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as DexscreenerResponse;
 
       // Success - update current endpoint
       currentEndpointIndex = endpointIndex;
@@ -121,6 +131,54 @@ const tryDexscreenerEndpoints = async (path: string): Promise<any> => {
   );
 };
 
+const fetchDexscreenerData = async (
+  path: string,
+): Promise<DexscreenerResponse> => {
+  const cached = cache.get(path);
+  const now = Date.now();
+
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
+  const existing = inflightRequests.get(path);
+  if (existing) {
+    return existing;
+  }
+
+  const request = (async () => {
+    try {
+      const data = await tryDexscreenerEndpoints(path);
+      cache.set(path, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+      return data;
+    } finally {
+      inflightRequests.delete(path);
+    }
+  })();
+
+  inflightRequests.set(path, request);
+  return request;
+};
+
+const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
+  const byMint = new Map<string, DexscreenerToken>();
+
+  pairs.forEach((pair) => {
+    const mint = pair.baseToken?.address || pair.pairAddress;
+    if (!mint) return;
+
+    const existing = byMint.get(mint);
+    const existingLiquidity = existing?.liquidity?.usd ?? 0;
+    const candidateLiquidity = pair.liquidity?.usd ?? 0;
+
+    if (!existing || candidateLiquidity > existingLiquidity) {
+      byMint.set(mint, pair);
+    }
+  });
+
+  return Array.from(byMint.values());
+};
+
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
   try {
     const { mints } = req.query;
@@ -134,19 +192,45 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
     console.log(`DexScreener tokens request for: ${mints}`);
 
-    const data = await tryDexscreenerEndpoints(`/tokens/${mints}`);
+    const rawMints = mints
+      .split(",")
+      .map((mint) => mint.trim())
+      .filter(Boolean);
 
-    // Validate response structure
-    if (!data || !Array.isArray(data.pairs)) {
-      console.warn("Invalid response format from DexScreener API");
-      return res.json({ schemaVersion: "1.0.0", pairs: [] });
+    const uniqueMints = Array.from(new Set(rawMints));
+
+    if (uniqueMints.length === 0) {
+      return res.status(400).json({
+        error: "No valid token mints provided.",
+      });
     }
 
-    // Filter for Solana pairs only and sort by liquidity/volume
-    const solanaPairs = data.pairs
+    const batches: string[][] = [];
+    for (let i = 0; i < uniqueMints.length; i += MAX_TOKENS_PER_BATCH) {
+      batches.push(uniqueMints.slice(i, i + MAX_TOKENS_PER_BATCH));
+    }
+
+    const results: DexscreenerToken[] = [];
+    let schemaVersion = "1.0.0";
+
+    for (const batch of batches) {
+      const path = `/tokens/${batch.join(",")}`;
+      const data = await fetchDexscreenerData(path);
+      if (data?.schemaVersion) {
+        schemaVersion = data.schemaVersion;
+      }
+
+      if (!data || !Array.isArray(data.pairs)) {
+        console.warn("Invalid response format from DexScreener API batch");
+        continue;
+      }
+
+      results.push(...data.pairs);
+    }
+
+    const solanaPairs = mergePairsByToken(results)
       .filter((pair: DexscreenerToken) => pair.chainId === "solana")
       .sort((a: DexscreenerToken, b: DexscreenerToken) => {
-        // Sort by liquidity first, then volume
         const aLiquidity = a.liquidity?.usd || 0;
         const bLiquidity = b.liquidity?.usd || 0;
         if (bLiquidity !== aLiquidity) return bLiquidity - aLiquidity;
@@ -157,9 +241,9 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       });
 
     console.log(
-      `DexScreener response: ${solanaPairs.length} Solana pairs found`,
+      `DexScreener response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)`,
     );
-    res.json({ schemaVersion: data.schemaVersion, pairs: solanaPairs });
+    res.json({ schemaVersion, pairs: solanaPairs });
   } catch (error) {
     console.error("DexScreener tokens proxy error:", {
       mints: req.query.mints,
@@ -190,7 +274,7 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
 
     console.log(`DexScreener search request for: ${q}`);
 
-    const data = await tryDexscreenerEndpoints(
+    const data = await fetchDexscreenerData(
       `/search/?q=${encodeURIComponent(q)}`,
     );
 
@@ -225,7 +309,7 @@ export const handleDexscreenerTrending: RequestHandler = async (req, res) => {
   try {
     console.log("DexScreener trending tokens request");
 
-    const data = await tryDexscreenerEndpoints("/pairs/solana");
+    const data = await fetchDexscreenerData("/pairs/solana");
 
     // Get top trending pairs, sorted by volume and liquidity
     const trendingPairs = (data.pairs || [])

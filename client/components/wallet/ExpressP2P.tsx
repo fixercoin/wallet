@@ -445,7 +445,14 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     PKR
                   </span>
                 </div>
-                <p className="text-lg text-muted-foreground">{estLabel}</p>
+                <div className="flex items-center justify-between rounded-xl bg-muted/20 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">
+                    USDC you will receive
+                  </span>
+                  <span className="text-lg font-semibold text-foreground">
+                    {buySummaryLabel}
+                  </span>
+                </div>
                 <Button
                   className="h-14 w-full rounded-2xl text-lg font-semibold"
                   onClick={onConfirm}
@@ -469,7 +476,14 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     USDC
                   </span>
                 </div>
-                <p className="text-lg text-muted-foreground">{estLabel}</p>
+                <div className="flex items-center justify-between rounded-xl bg-muted/20 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">
+                    PKR you will receive
+                  </span>
+                  <span className="text-lg font-semibold text-foreground">
+                    {sellSummaryLabel}
+                  </span>
+                </div>
                 <Button
                   className="h-14 w-full rounded-2xl text-lg font-semibold"
                   onClick={onConfirm}

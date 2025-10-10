@@ -659,7 +659,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     placeholder="0.000"
                     value={fromAmount}
                     onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
+                    className="w-full bg-transparent border-0 p-0 h-auto text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
                   />
                   <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
                     {(() => {
@@ -770,7 +770,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
-                  <div className="text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
+                  <div className="text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
                     {toAmount
                       ? formatAmount(toAmount, toToken?.symbol)
                       : "0.000"}

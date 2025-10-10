@@ -490,8 +490,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               </TabsContent>
             </Tabs>
 
-            <div className="pt-1 text-xs text-muted-foreground">
-              1 USDC ≈ {rateFormatter.format(rate)}
+            <div className="pt-1 text-xs text-muted-foreground text-right font-medium">
+              1 USDC ~ {rateFormatter.format(rate)}
             </div>
           </CardContent>
         </Card>

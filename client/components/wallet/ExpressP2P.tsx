@@ -22,7 +22,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -57,7 +56,15 @@ interface PaymentMethod {
 
 interface TradeHistoryEntry {
   id: string;
-  type: "request" | "release_pkr" | "release_usdc" | "system" | "confirm" | "timeout" | "buy_ready";
+  type:
+    | "request"
+    | "release_pkr"
+    | "release_usdc"
+    | "system"
+    | "confirm"
+    | "timeout"
+    | "buy_ready"
+    | "paid";
   message: string;
   createdAt: number;
 }
@@ -110,14 +117,14 @@ const initialHistory: TradeHistoryEntry[] = [
   {
     id: createId(),
     type: "system",
-    message: "Session started. Record important settlement updates in History.",
+    message: "Session started. Record key settlement updates in History.",
     createdAt: Date.now() - 1000 * 60 * 5,
   },
 ];
 
 const RATE_MIN = 272.25;
 const RATE_MAX = 285.5;
-const RECEIVE_FEE_PER_USDC = 2; // used internally only (no UI)
+const RECEIVE_FEE_PER_USDC = 2; // internal charge model only
 
 interface ExpressP2PProps {
   onBack: () => void;
@@ -126,17 +133,23 @@ interface ExpressP2PProps {
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { toast } = useToast();
   const { tokens } = useWallet();
+
   const [side, setSide] = useState<TradeSide>("buy");
-  const [pkAmount, setPkAmount] = useState("");
+  const [buyPkAmount, setBuyPkAmount] = useState("");
+  const [sellUsdcAmount, setSellUsdcAmount] = useState("");
   const [rate, setRate] = useState(279.25);
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethodId>("easypaisa");
   const [history, setHistory] = useState<TradeHistoryEntry[]>(initialHistory);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  // Sell confirmation modal state
-  const [sellConfirmOpen, setSellConfirmOpen] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  // Buy flow waiting for seller release
+  const [buyWaitOpen, setBuyWaitOpen] = useState(false);
+  const [buyCountdown, setBuyCountdown] = useState(60);
+
+  // Sell flow waiting for buyer confirmation
+  const [sellWaitOpen, setSellWaitOpen] = useState(false);
+  const [sellCountdown, setSellCountdown] = useState(60);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -152,17 +165,17 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => window.clearInterval(interval);
   }, []);
 
-  // Countdown effect for sell confirm
+  // Timers
   useEffect(() => {
-    if (!sellConfirmOpen) return;
-    setCountdown(60);
+    if (!buyWaitOpen) return;
+    setBuyCountdown(60);
     const id = setInterval(() => {
-      setCountdown((c) => {
+      setBuyCountdown((c) => {
         if (c <= 1) {
           clearInterval(id);
-          setSellConfirmOpen(false);
+          setBuyWaitOpen(false);
           toast({ title: "Service is not acceptable" });
-          logHistory({ type: "timeout", message: "Confirmation timeout (60s)." });
+          logHistory({ type: "timeout", message: "Seller did not confirm within 60s." });
           return 0;
         }
         return c - 1;
@@ -170,30 +183,57 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     }, 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sellConfirmOpen]);
+  }, [buyWaitOpen]);
 
-  const numericPk = useMemo(() => {
-    const parsed = Number(pkAmount.replace(/[^0-9.]/g, ""));
-    if (Number.isNaN(parsed) || parsed <= 0) {
-      return 0;
-    }
-    return parsed;
-  }, [pkAmount]);
+  useEffect(() => {
+    if (!sellWaitOpen) return;
+    setSellCountdown(60);
+    const id = setInterval(() => {
+      setSellCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(id);
+          setSellWaitOpen(false);
+          toast({ title: "Service is not acceptable" });
+          logHistory({ type: "timeout", message: "Buyer did not confirm within 60s." });
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellWaitOpen]);
 
-  // Net USDC estimate including internal fees (not displayed as fees)
-  const netUsdcEstimate = useMemo(() => {
-    if (numericPk <= 0) return 0;
-    const effectiveRate = rate + RECEIVE_FEE_PER_USDC; // PKR per USDC including charges
-    return Number((numericPk / effectiveRate).toFixed(4));
-  }, [numericPk, rate]);
+  const buyPk = useMemo(() => {
+    const parsed = Number(buyPkAmount.replace(/[^0-9.]/g, ""));
+    return !Number.isFinite(parsed) || parsed <= 0 ? 0 : parsed;
+  }, [buyPkAmount]);
 
-  // Raw usdc for sell case (no fee text shown)
-  const usdcForSell = useMemo(() => {
-    if (numericPk <= 0) return 0;
-    return Number((numericPk / rate).toFixed(4));
-  }, [numericPk, rate]);
+  const sellUsdc = useMemo(() => {
+    const parsed = Number(sellUsdcAmount.replace(/[^0-9.]/g, ""));
+    return !Number.isFinite(parsed) || parsed <= 0 ? 0 : parsed;
+  }, [sellUsdcAmount]);
+
+  // Buy: net USDC including charges (no fees UI)
+  const buyNetUsdc = useMemo(() => {
+    if (buyPk <= 0) return 0;
+    const effectiveRate = rate + RECEIVE_FEE_PER_USDC; // PKR per USDC with charges
+    return Number((buyPk / effectiveRate).toFixed(4));
+  }, [buyPk, rate]);
+
+  // Sell: net PKR including charges (no fees UI) -> reduce per-USDC charge
+  const sellNetPkr = useMemo(() => {
+    if (sellUsdc <= 0) return 0;
+    const effectiveRate = Math.max(0, rate - RECEIVE_FEE_PER_USDC);
+    return Number((sellUsdc * effectiveRate).toFixed(2));
+  }, [sellUsdc, rate]);
 
   const method = PAYMENT_METHODS.find((item) => item.id === selectedMethod)!;
+
+  const usdcBalance = useMemo(() => {
+    const usdc = tokens?.find((t) => t.symbol === "USDC");
+    return Number(usdc?.balance || 0);
+  }, [tokens]);
 
   const logHistory = (entry: Omit<TradeHistoryEntry, "id" | "createdAt">) => {
     setHistory((prev) => [
@@ -202,54 +242,50 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     ]);
   };
 
-  const handleRequest = () => {
-    if (numericPk <= 0) {
-      toast({
-        title: "Add a PKR amount",
-        description: "Enter a PKR amount before requesting the trade.",
-      });
-      return;
-    }
-
-    const action = side === "buy" ? "Buy" : "Sell";
-    toast({ title: `${action} request created` });
-    logHistory({
-      type: "request",
-      message:
-        side === "buy"
-          ? `Requested ${usdcFormatter.format(netUsdcEstimate)} USDC via ${method.label}.`
-          : `Requested to release ${usdcFormatter.format(usdcForSell)} USDC via ${method.label}.`,
-    });
-  };
-
-  const handleConfirm = () => {
-    if (numericPk <= 0) {
+  // Buy flow actions
+  const handleBuyConfirm = () => {
+    if (buyPk <= 0) {
       toast({ title: "Add a PKR amount" });
       return;
     }
-
-    if (side === "buy") {
-      const usdcToken = tokens.find((t) => t.symbol === "USDC");
-      const hasUsdc = (usdcToken?.balance || 0) > 0;
-      if (hasUsdc) {
-        toast({ title: "USDC detected in wallet" });
-        logHistory({ type: "buy_ready", message: "USDC available in wallet. Proceeding." });
-      } else {
-        toast({ title: "USDC not available in wallet" });
-        logHistory({ type: "confirm", message: "USDC not detected in wallet." });
-      }
-      return;
-    }
-
-    // side === 'sell'
-    setSellConfirmOpen(true);
-    logHistory({ type: "confirm", message: "Waiting for wallet owner confirmation (60s)." });
+    toast({ title: "Buyer request sent" });
+    logHistory({
+      type: "confirm",
+      message: `Buyer started process: ${usdcFormatter.format(buyNetUsdc)} USDC via ${method.label}.`,
+    });
   };
 
-  const handleOwnerConfirmed = () => {
-    setSellConfirmOpen(false);
-    toast({ title: "Confirmed. Processing" });
-    logHistory({ type: "release_usdc", message: "Owner confirmed payment. Proceeding." });
+  const handleIHavePaid = () => {
+    if (buyPk <= 0) {
+      toast({ title: "Add a PKR amount" });
+      return;
+    }
+    logHistory({ type: "paid", message: "Buyer marked payment as sent (proof shared)." });
+    setBuyWaitOpen(true);
+  };
+
+  const simulateSellerReleased = () => {
+    setBuyWaitOpen(false);
+    toast({ title: "Seller confirmed. USDC released." });
+    logHistory({ type: "release_usdc", message: "Seller released USDC." });
+  };
+
+  // Sell flow actions
+  const handleSellConfirm = () => {
+    if (sellUsdc <= 0) {
+      toast({ title: "Add a USDC amount" });
+      return;
+    }
+    toast({ title: "Waiting for buyer payment" });
+    logHistory({
+      type: "confirm",
+      message: `Seller started process: expecting ${rateFormatter.format(sellNetPkr)} via ${method.label}.`,
+    });
+    setSellWaitOpen(true);
+  };
+
+  const handleBuyerSentPkr = () => {
+    logHistory({ type: "paid", message: "Buyer sent PKR payment to seller." });
   };
 
   const headerLabel = side === "buy" ? "Buy" : "Sell";
@@ -305,23 +341,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <DropdownMenuLabel className="text-xs uppercase text-muted-foreground">
                   Quick controls
                 </DropdownMenuLabel>
-                <DropdownMenuItem
-                  onSelect={handleRequest}
-                  className="flex flex-col items-start gap-1 py-2 text-sm"
-                >
-                  <span>Request settlement setup</span>
-                  <span className="text-xs text-muted-foreground">
-                    Submit the {side === "buy" ? "buy" : "sell"} request using {method.label}.
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={handleConfirm}
-                  className="flex flex-col items-start gap-1 py-2 text-sm"
-                >
-                  <span>Confirm</span>
-                  <span className="text-xs text-muted-foreground">
-                    {side === "buy" ? "Check wallet USDC and proceed" : "Prompt for payment confirmation (60s)"}
-                  </span>
+                <DropdownMenuItem onSelect={() => setHistoryOpen(true)}>
+                  View history
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -333,15 +354,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <CardTitle className="flex items-center gap-2 text-lg">
               <ArrowRightLeft className="h-4 w-4" /> {headerLabel} flow
             </CardTitle>
-            <CardDescription>
-              Enter the amount and review estimated conversion.
-            </CardDescription>
+            <CardDescription>Enter the amount and review estimated conversion.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            <Tabs
-              value={side}
-              onValueChange={(value) => setSide(value as TradeSide)}
-            >
+            <Tabs value={side} onValueChange={(value) => setSide(value as TradeSide)}>
               <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted/60 p-1">
                 <TabsTrigger value="buy" className="rounded-xl text-base">
                   Buy
@@ -350,6 +366,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   Sell
                 </TabsTrigger>
               </TabsList>
+
+              {/* BUY */}
               <TabsContent value="buy" className="mt-6 space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-3">
@@ -362,8 +380,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       <Input
                         type="number"
                         min={0}
-                        value={pkAmount}
-                        onChange={(event) => setPkAmount(event.target.value)}
+                        value={buyPkAmount}
+                        onChange={(e) => setBuyPkAmount(e.target.value)}
                         className="mt-2 border-0 bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
                       />
                     </div>
@@ -376,23 +394,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         <span className="font-semibold">USDC</span>
                       </div>
                       <div className="mt-2 text-3xl font-semibold tracking-tight">
-                        {usdcFormatter.format(netUsdcEstimate)}
+                        {usdcFormatter.format(buyNetUsdc)}
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      1 USDC ≈ {rateFormatter.format(rate)}
-                    </p>
+                    <p className="text-xs text-muted-foreground">1 USDC ≈ {rateFormatter.format(rate)}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Payment method</Label>
-                  <Select
-                    value={selectedMethod}
-                    onValueChange={(value) =>
-                      setSelectedMethod(value as PaymentMethodId)
-                    }
-                  >
+                  <Select value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}>
                     <SelectTrigger className="rounded-xl border border-[hsl(var(--border))] bg-white/80">
                       <SelectValue placeholder="Select a method" />
                     </SelectTrigger>
@@ -407,55 +418,72 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 </div>
 
                 <div className="rounded-2xl border border-dashed border-[hsl(var(--border))] bg-slate-50/70 px-4 py-4 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">
-                    Manual settlement with {method.label}
-                  </p>
-                  <p className="mt-1 leading-relaxed">{method.description}</p>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-[hsl(var(--primary))]">
-                    Actions available from the top-right menu.
-                  </p>
+                  <p className="font-medium text-foreground">Manual settlement with {method.label}</p>
+                  <p className="mt-1 leading-relaxed">Share payment proof, then mark "I have paid".</p>
+                  <p className="mt-2 text-xs uppercase tracking-wide text-[hsl(var(--primary))]">Actions below.</p>
+                </div>
+
+                <div className="grid gap-3 rounded-2xl border border-[hsl(var(--border))] bg-white/80 px-4 py-4 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Wallet USDC available</span>
+                    <span className="font-semibold text-foreground">{usdcFormatter.format(usdcBalance)}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button onClick={handleBuyConfirm} className="rounded-xl sm:w-auto">
+                    Confirm
+                  </Button>
+                  <Button onClick={handleIHavePaid} variant="secondary" className="rounded-xl sm:w-auto">
+                    I have paid
+                  </Button>
                 </div>
               </TabsContent>
 
+              {/* SELL */}
               <TabsContent value="sell" className="mt-6 space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold">Receive</Label>
-                    <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>PKR amount</span>
-                        <span className="font-semibold">PKR</span>
-                      </div>
-                      <div className="mt-2 text-3xl font-semibold tracking-tight">
-                        {numericPk.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
                   <div className="space-y-3">
                     <Label className="text-sm font-semibold">Send</Label>
                     <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>USDC to release</span>
+                        <span>USDC amount</span>
                         <span className="font-semibold">USDC</span>
                       </div>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={sellUsdcAmount}
+                        onChange={(e) => setSellUsdcAmount(e.target.value)}
+                        className="mt-2 border-0 bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Receive ≈</Label>
+                    <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Estimated PKR</span>
+                        <span className="font-semibold">PKR</span>
+                      </div>
                       <div className="mt-2 text-3xl font-semibold tracking-tight">
-                        {usdcFormatter.format(usdcForSell)}
+                        {rateFormatter.format(sellNetPkr)}
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      1 USDC ≈ {rateFormatter.format(rate)}
-                    </p>
+                    <p className="text-xs text-muted-foreground">1 USDC ≈ {rateFormatter.format(rate)}</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 rounded-2xl border border-[hsl(var(--border))] bg-white/80 px-4 py-4 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Wallet USDC available</span>
+                    <span className="font-semibold text-foreground">{usdcFormatter.format(usdcBalance)}</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Payment method expected</Label>
-                  <Select
-                    value={selectedMethod}
-                    onValueChange={(value) =>
-                      setSelectedMethod(value as PaymentMethodId)
-                    }
-                  >
+                  <Select value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}>
                     <SelectTrigger className="rounded-xl border border-[hsl(var(--border))] bg-white/80">
                       <SelectValue placeholder="Select a method" />
                     </SelectTrigger>
@@ -469,66 +497,39 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   </Select>
                 </div>
 
-                <div className="grid gap-3 rounded-2xl border border-[hsl(var(--border))] bg-white/80 px-4 py-4 text-sm">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>USDC to release</span>
-                    <span className="font-semibold text-foreground">
-                      {usdcFormatter.format(usdcForSell)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Estimated PKR payout</span>
-                    <span className="font-semibold text-foreground">
-                      {rateFormatter.format(numericPk)}
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button onClick={handleSellConfirm} className="rounded-xl sm:w-auto">
+                    Confirm
+                  </Button>
+                  <Button onClick={handleBuyerSentPkr} variant="secondary" className="rounded-xl sm:w-auto">
+                    Send PKR payment to seller
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
 
+        {/* History */}
         <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Trade history</DialogTitle>
-              <DialogDescription>
-                A chronological record of key actions in this session.
-              </DialogDescription>
+              <DialogDescription>A chronological record of key actions.</DialogDescription>
             </DialogHeader>
             <div className="mt-2 max-h-[60vh] space-y-3 overflow-y-auto">
               {history.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No history yet.</p>
               ) : (
                 history.map((h) => (
-                  <div
-                    key={h.id}
-                    className="rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3"
-                  >
+                  <div key={h.id} className="rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm">
-                        <Badge
-                          className={
-                            h.type === "request"
-                              ? "border-blue-200 bg-blue-50 text-blue-700"
-                              : h.type === "release_pkr"
-                              ? "border-amber-200 bg-amber-50 text-amber-700"
-                              : h.type === "release_usdc"
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : h.type === "timeout"
-                              ? "border-red-200 bg-red-50 text-red-700"
-                              : "border-slate-200 bg-white text-slate-600"
-                          }
-                        >
-                          {h.type.replace("_", " ")}
-                        </Badge>
+                        <Badge className="border-slate-200 bg-white text-slate-600">{h.type.replace("_", " ")}</Badge>
                         <span className="text-foreground">{h.message}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(h.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(h.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                   </div>
@@ -538,19 +539,34 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={sellConfirmOpen} onOpenChange={setSellConfirmOpen}>
+        {/* Buy wait modal */}
+        <Dialog open={buyWaitOpen} onOpenChange={setBuyWaitOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Awaiting payment confirmation</DialogTitle>
-              <DialogDescription>
-                Ask the wallet owner to confirm. Expires in {countdown}s.
-              </DialogDescription>
+              <DialogTitle>Waiting for seller confirmation</DialogTitle>
+              <DialogDescription>Expires in {buyCountdown}s.</DialogDescription>
             </DialogHeader>
             <div className="flex items-center justify-between">
-              <Button onClick={handleOwnerConfirmed} className="rounded-xl">
+              <Button onClick={simulateSellerReleased} className="rounded-xl">
+                Seller released
+              </Button>
+              <span className="text-sm text-muted-foreground">{buyCountdown}s</span>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Sell wait modal */}
+        <Dialog open={sellWaitOpen} onOpenChange={setSellWaitOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Waiting for buyer confirmation</DialogTitle>
+              <DialogDescription>Expires in {sellCountdown}s.</DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-between">
+              <Button onClick={() => setSellWaitOpen(false)} className="rounded-xl">
                 Confirm received
               </Button>
-              <span className="text-sm text-muted-foreground">{countdown}s</span>
+              <span className="text-sm text-muted-foreground">{sellCountdown}s</span>
             </div>
           </DialogContent>
         </Dialog>

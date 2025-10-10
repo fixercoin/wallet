@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  RefreshCw,
-  Copy,
-  ArrowUpRight,
-  ArrowDownLeft,
-  ShoppingCart,
-  DollarSign,
-} from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
+import { BuySellPieChart } from "./token-detail/BuySellPieChart";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -157,33 +150,33 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <div className="grid grid-cols-4 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
               >
-                <ShoppingCart className="h-4 w-4 mr-1" />
-                Buy
+                BUY
               </Button>
               <Button
                 onClick={() => onSell(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
               >
-                <DollarSign className="h-4 w-4 mr-1" />
-                Sell
+                SELL
               </Button>
               <Button
                 onClick={() => onSend(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
               >
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-                Send
+                SEND
               </Button>
               <Button
                 onClick={() => onReceive(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
               >
-                <ArrowDownLeft className="h-4 w-4 mr-1" />
-                Receive
+                RECIEVE
               </Button>
             </div>
+          </div>
+
+          <div className="px-4 pb-4">
+            <BuySellPieChart mint={displayToken.mint} />
           </div>
 
           <div className="px-4 pb-2">

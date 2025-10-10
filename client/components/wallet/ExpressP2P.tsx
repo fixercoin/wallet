@@ -96,7 +96,11 @@ const RATE_MIN = 272.25;
 const RATE_MAX = 285.5;
 const INTERNAL_CHARGE_PER_USDC = 2; // do not show in UI
 
-export const ExpressP2P: React.FC = () => {
+interface ExpressP2PProps {
+  onBack?: () => void;
+}
+
+export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { toast } = useToast();
 
   const [side, setSide] = useState<TradeSide>("buy");

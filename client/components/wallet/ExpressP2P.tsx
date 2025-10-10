@@ -319,6 +319,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const handleUploadClick = useCallback(() => {
+    fileRef.current?.click();
+  }, []);
+
   const title = side === "buy" ? "Buy" : "Sell";
   const buySummaryLabel = `${usdcFormatterPrecise.format(buyNetUsdc)} USDC`;
   const sellSummaryLabel = rateFormatter.format(sellNetPkr);

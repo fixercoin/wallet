@@ -87,7 +87,9 @@ const EXPRESS_WALLET_ADDRESS = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qFE1TZMHJY7S4q8YDT3k3dDdHr";
 
 const shortenAddress = (address: string) =>
-  address.length <= 10 ? address : `${address.slice(0, 4)}...${address.slice(-4)}`;
+  address.length <= 10
+    ? address
+    : `${address.slice(0, 4)}...${address.slice(-4)}`;
 
 // Pricing model (internal only)
 const RATE_MIN = 272.25;
@@ -106,8 +108,9 @@ export const ExpressP2P: React.FC = () => {
   const [waitOpen, setWaitOpen] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
-  const [expressUsdcBalance, setExpressUsdcBalance] =
-    useState<number | null>(null);
+  const [expressUsdcBalance, setExpressUsdcBalance] = useState<number | null>(
+    null,
+  );
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
   const [orderSummary, setOrderSummary] = useState<{
     side: TradeSide;
@@ -182,14 +185,12 @@ export const ExpressP2P: React.FC = () => {
 
   const shortExpressWallet = useMemo(
     () => shortenAddress(EXPRESS_WALLET_ADDRESS),
-    []);
+    [],
+  );
 
   const handleCopyAddress = useCallback(async () => {
     try {
-      if (
-        typeof navigator !== "undefined" &&
-        navigator.clipboard?.writeText
-      ) {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(EXPRESS_WALLET_ADDRESS);
         toast({ title: "Wallet address copied" });
       } else {

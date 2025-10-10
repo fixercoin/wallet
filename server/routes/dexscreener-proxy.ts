@@ -64,10 +64,15 @@ const CACHE_TTL_MS = 30_000; // 30 seconds
 const MAX_TOKENS_PER_BATCH = 20;
 
 let currentEndpointIndex = 0;
-const cache = new Map<string, { data: DexscreenerResponse; expiresAt: number }>();
+const cache = new Map<
+  string,
+  { data: DexscreenerResponse; expiresAt: number }
+>();
 const inflightRequests = new Map<string, Promise<DexscreenerResponse>>();
 
-const tryDexscreenerEndpoints = async (path: string): Promise<DexscreenerResponse> => {
+const tryDexscreenerEndpoints = async (
+  path: string,
+): Promise<DexscreenerResponse> => {
   let lastError: Error | null = null;
 
   for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
@@ -126,7 +131,9 @@ const tryDexscreenerEndpoints = async (path: string): Promise<DexscreenerRespons
   );
 };
 
-const fetchDexscreenerData = async (path: string): Promise<DexscreenerResponse> => {
+const fetchDexscreenerData = async (
+  path: string,
+): Promise<DexscreenerResponse> => {
   const cached = cache.get(path);
   const now = Date.now();
 

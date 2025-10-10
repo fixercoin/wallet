@@ -180,6 +180,27 @@ export const ExpressP2P: React.FC = () => {
     [expressUsdcBalance],
   );
 
+  const shortExpressWallet = useMemo(
+    () => shortenAddress(EXPRESS_WALLET_ADDRESS),
+    []);
+
+  const handleCopyAddress = useCallback(async () => {
+    try {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.clipboard?.writeText
+      ) {
+        await navigator.clipboard.writeText(EXPRESS_WALLET_ADDRESS);
+        toast({ title: "Wallet address copied" });
+      } else {
+        throw new Error("Clipboard unavailable");
+      }
+    } catch (error) {
+      console.error("Copy failed:", error);
+      toast({ title: "Unable to copy address" });
+    }
+  }, [toast]);
+
   const buyPk = useMemo(() => {
     const n = Number(buyPkAmount.replace(/[^0-9.]/g, ""));
     return !Number.isFinite(n) || n <= 0 ? 0 : n;

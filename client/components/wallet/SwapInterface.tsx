@@ -204,12 +204,36 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
       try {
-        const tokens = await dexscreenerAPI.getTokensByMints(mints);
-        const priceMap = dexscreenerAPI.getTokenPrices(tokens);
-        setFromUsdPrice(
-          fromToken?.mint ? (priceMap[fromToken.mint] ?? null) : null,
-        );
-        setToUsdPrice(toToken?.mint ? (priceMap[toToken.mint] ?? null) : null);
+        // Prefer Jupiter price API for reliable USD prices
+        const jupMap = await jupiterAPI.getTokenPrices(mints);
+        let fromPrice: number | null = fromToken?.mint
+          ? (jupMap[fromToken.mint] ?? null)
+          : null;
+        let toPrice: number | null = toToken?.mint
+          ? (jupMap[toToken.mint] ?? null)
+          : null;
+
+        // Fallback to DexScreener if Jupiter didn't return prices
+        if (
+          fromPrice == null ||
+          !(fromPrice > 0) ||
+          toPrice == null ||
+          !(toPrice > 0)
+        ) {
+          const tokens = await dexscreenerAPI.getTokensByMints(mints);
+          const dsMap = dexscreenerAPI.getTokenPrices(tokens);
+          if (fromPrice == null || !(fromPrice > 0)) {
+            fromPrice = fromToken?.mint
+              ? (dsMap[fromToken.mint] ?? null)
+              : null;
+          }
+          if (toPrice == null || !(toPrice > 0)) {
+            toPrice = toToken?.mint ? (dsMap[toToken.mint] ?? null) : null;
+          }
+        }
+
+        setFromUsdPrice(fromPrice ?? null);
+        setToUsdPrice(toPrice ?? null);
       } catch (e) {
         setFromUsdPrice(null);
         setToUsdPrice(null);

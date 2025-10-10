@@ -236,10 +236,19 @@ export const ExpressP2P: React.FC = () => {
         toast({ title: "Enter PKR amount" });
         return;
       }
+      if (buyNetUsdc > usdcBalance) {
+        toast({ title: "Insufficient USDC available" });
+        return;
+      }
       toast({ title: "Buyer request sent" });
       logHistory({
         type: "confirm",
         message: `Buy ~${usdcFormatterPrecise.format(buyNetUsdc)} USDC`,
+      });
+      setOrderSummary({
+        side,
+        pkrAmount: buyPk,
+        usdcAmount: buyNetUsdc,
       });
       setWaitOpen(true);
       return;
@@ -248,10 +257,19 @@ export const ExpressP2P: React.FC = () => {
       toast({ title: "Enter USDC amount" });
       return;
     }
+    if (sellUsdc > usdcBalance) {
+      toast({ title: "Insufficient USDC available" });
+      return;
+    }
     toast({ title: "Waiting for buyer payment" });
     logHistory({
       type: "confirm",
       message: `Sell ~${rateFormatter.format(sellNetPkr)} PKR`,
+    });
+    setOrderSummary({
+      side,
+      pkrAmount: sellNetPkr,
+      usdcAmount: sellUsdc,
     });
     setWaitOpen(true);
   };

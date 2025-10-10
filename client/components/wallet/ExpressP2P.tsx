@@ -103,6 +103,16 @@ interface ExpressP2PProps {
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { toast } = useToast();
 
+  const handleBack = useCallback(() => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    }
+  }, [onBack]);
+
   const [side, setSide] = useState<TradeSide>("buy");
   const [buyPkAmount, setBuyPkAmount] = useState("");
   const [sellUsdcAmount, setSellUsdcAmount] = useState("");

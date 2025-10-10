@@ -517,13 +517,17 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   hour: "2-digit",
                   minute: "2-digit",
                 });
-                const alignment = isUserMessage ? "justify-end" : "justify-start";
+                const alignment = isUserMessage
+                  ? "justify-end"
+                  : "justify-start";
                 const bubbleClasses = cn(
                   "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
                   isUserMessage &&
                     "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
-                  isSystem && "bg-muted text-muted-foreground border border-dashed",
-                  !isUserMessage && !isSystem &&
+                  isSystem &&
+                    "bg-muted text-muted-foreground border border-dashed",
+                  !isUserMessage &&
+                    !isSystem &&
                     "bg-white border border-[hsl(var(--border))]/60",
                 );
                 const metaTextClass = isUserMessage
@@ -532,7 +536,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 const typeTextClass = isUserMessage
                   ? "text-white"
                   : "text-muted-foreground";
-                const messageTextClass = isUserMessage ? "text-white" : "text-foreground";
+                const messageTextClass = isUserMessage
+                  ? "text-white"
+                  : "text-foreground";
 
                 return (
                   <div key={h.id} className={cn("flex", alignment)}>

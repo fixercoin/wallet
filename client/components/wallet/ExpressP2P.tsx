@@ -4,6 +4,7 @@ import {
   ArrowRightLeft,
   CheckCircle2,
   MessageSquareMore,
+  MoreHorizontal,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -17,16 +18,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-
-interface ExpressP2PProps {
-  onBack: () => void;
-}
 
 type TradeSide = "buy" | "sell";
 
@@ -35,9 +33,7 @@ type PaymentMethodId = "easypaisa" | "firstpay" | "sadapay" | "nayapay";
 interface PaymentMethod {
   id: PaymentMethodId;
   label: string;
-  accountName: string;
-  accountNumber: string;
-  notes: string;
+  description: string;
 }
 
 interface ChatMessage {
@@ -51,30 +47,22 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   {
     id: "easypaisa",
     label: "Easypaisa",
-    accountName: "Ameer Nawaz Khan",
-    accountNumber: "0310 7044833",
-    notes: "Transfer to Easypaisa mobile account. Share receipt in chat before confirming.",
+    description: "Manual wallet transfer. Share the payment receipt in chat before requesting release.",
   },
   {
     id: "firstpay",
     label: "FirstPay",
-    accountName: "Ameer Nawaz Khan",
-    accountNumber: "0310 7044833",
-    notes: "Send funds via FirstPay wallet and capture the confirmation screen.",
+    description: "Complete a FirstPay wallet transfer and upload confirmation for the counterparty.",
   },
   {
     id: "sadapay",
     label: "SadaPay",
-    accountName: "Ameer Nawaz Khan",
-    accountNumber: "0310 7044833",
-    notes: "Use SadaPay instant transfer. Verify CNIC name matches before release.",
+    description: "Use SadaPay instant transfer. Double-check the recipient handle before submitting proof.",
   },
   {
     id: "nayapay",
     label: "NayaPay",
-    accountName: "Ameer Nawaz Khan",
-    accountNumber: "0310 7044833",
-    notes: "Send to NayaPay wallet. Add reference: EXPRESS-P2P and notify in chat.",
+    description: "Send via NayaPay wallet. Include EXPRESS-P2P in the reference and update the chat log.",
   },
 ];
 
@@ -99,25 +87,32 @@ const initialMessages: ChatMessage[] = [
   {
     id: createId(),
     sender: "system",
-    content: "Express P2P room opened. Keep all settlement updates inside chat.",
+    content: "Express P2P room opened. Keep all settlement updates recorded here.",
     createdAt: Date.now() - 1000 * 60 * 9,
   },
   {
     id: createId(),
     sender: "counterparty",
-    content: "Hi Ameer, please share Easypaisa receipt once you send the PKR.",
+    content: "Hello! Please share the PKR transfer receipt once it is submitted.",
     createdAt: Date.now() - 1000 * 60 * 4,
   },
   {
     id: createId(),
     sender: "you",
-    content: "Sure, preparing to submit the buy request now.",
+    content: "Will do. Preparing the request details now.",
     createdAt: Date.now() - 1000 * 60 * 2,
   },
 ];
 
 const RATE_MIN = 272.25;
 const RATE_MAX = 285.5;
+const RECEIVE_FEE_PER_USDC = 2;
+const RELEASE_USDC_BASE_FEE = 100;
+const RELEASE_USDC_SERVICE_FEE = 2;
+
+interface ExpressP2PProps {
+  onBack: () => void;
+}
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { toast } = useToast();
@@ -127,7 +122,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>("easypaisa");
   const [chat, setChat] = useState<ChatMessage[]>(initialMessages);
   const [draftMessage, setDraftMessage] = useState("");
-  const [notes, setNotes] = useState("Confirm receipt before releasing USDC. Account owner: Ameer Nawaz Khan.");
+  const [notes, setNotes] = useState("Confirm receipt within chat before releasing escrow on either side.");
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -143,18 +138,29 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => window.clearInterval(interval);
   }, []);
 
+  const numericPk = useMemo(() => {
+    const parsed = Number(pkAmount.replace(/[^0-9.]/g, ""));
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      return 0;
+    }
+    return parsed;
+  }, [pkAmount]);
+
   const usdcValue = useMemo(() => {
-    const numericPk = Number(pkAmount.replace(/[^0-9.]/g, ""));
-    if (Number.isNaN(numericPk) || numericPk <= 0) {
+    if (numericPk <= 0) {
       return 0;
     }
     return Number((numericPk / rate).toFixed(4));
-  }, [pkAmount, rate]);
+  }, [numericPk, rate]);
+
+  const receiveFeeTotal = Number((usdcValue * RECEIVE_FEE_PER_USDC).toFixed(2));
+  const totalSpendWithFees = numericPk + receiveFeeTotal;
+  const releaseUsdcTotalFee = RELEASE_USDC_BASE_FEE + RELEASE_USDC_SERVICE_FEE;
 
   const method = PAYMENT_METHODS.find((item) => item.id === selectedMethod)!;
 
   const handleRequest = () => {
-    if (!pkAmount || Number(pkAmount) <= 0) {
+    if (numericPk <= 0) {
       toast({
         title: "Add a PKR amount",
         description: "Enter a PKR spend amount before requesting the trade.",
@@ -180,15 +186,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const handleReleasePayment = () => {
     toast({
-      title: "PKR release confirmed",
-      description: "Marked PKR payment as sent. Counterparty will verify before releasing USDC.",
+      title: "PKR release logged",
+      description: "PKR payment marked as sent. Counterparty will verify before releasing USDC.",
     });
     setChat((previous) => [
       ...previous,
       {
         id: createId(),
         sender: "you",
-        content: "PKR payment released. Please confirm receipt and release the USDC escrow.",
+        content: "PKR payment released. Please confirm receipt and proceed with the escrow release.",
         createdAt: Date.now(),
       },
     ]);
@@ -197,14 +203,14 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const handleReleaseUsdc = () => {
     toast({
       title: "USDC escrow released",
-      description: "You completed the order and released the USDC to the buyer.",
+      description: `USDC released with PKR ${RELEASE_USDC_BASE_FEE} extra and PKR ${RELEASE_USDC_SERVICE_FEE} service fees accounted for.",
     });
     setChat((previous) => [
       ...previous,
       {
         id: createId(),
         sender: "system",
-        content: "You marked the escrow as released. Order closed successfully.",
+        content: "Escrow marked as released. Session closed successfully.",
         createdAt: Date.now(),
       },
     ]);
@@ -227,90 +233,139 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   };
 
   const headerLabel = side === "buy" ? "Buy" : "Sell";
-  const ctaLabel = side === "buy" ? "Buy with PKR" : "Sell for PKR";
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 text-[hsl(var(--foreground))] p-4">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div className="flex items-center justify-between pt-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
+          <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80 backdrop-blur"
+            >
+              <a href="#settlement-chat" aria-label="Open chat">
+                <MessageSquareMore className="h-4 w-4" />
+              </a>
+            </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={onBack}
-              className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+              className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80 backdrop-blur"
+              aria-label="Go back"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
+            <div className="ml-1">
               <h1 className="text-xl font-semibold">Express P2P Service</h1>
               <p className="text-sm text-muted-foreground">
-                Manual peer trades between USDC and PKR, backed by escrow and chat confirmation.
+                Trade USDC against PKR with manual control, escrow safety, and live chat coordination.
               </p>
             </div>
           </div>
-          <Badge className="border-emerald-200 bg-emerald-100 text-emerald-700">
-            <Sparkles className="mr-1 h-3.5 w-3.5" /> Real-time live
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge className="border-emerald-200 bg-emerald-100 text-emerald-700">
+              <Sparkles className="mr-1 h-3.5 w-3.5" /> Real-time live
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="rounded-full border border-[hsl(var(--border))]/80 bg-white/80 px-3 text-sm font-medium backdrop-blur"
+                >
+                  Trade actions
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-xs uppercase text-muted-foreground">
+                  Quick controls
+                </DropdownMenuLabel>
+                <DropdownMenuItem onSelect={handleRequest} className="flex flex-col items-start gap-1 py-2 text-sm">
+                  <span>Request settlement setup</span>
+                  <span className="text-xs text-muted-foreground">
+                    Submit the {side === "buy" ? "buy" : "sell"} request using {method.label}.
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleReleasePayment} className="flex flex-col items-start gap-1 py-2 text-sm">
+                  <span>Release PKR payment</span>
+                  <span className="text-xs text-muted-foreground">
+                    Log the manual PKR transfer before asking for USDC release.
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleReleaseUsdc} className="flex flex-col items-start gap-1 py-2 text-sm">
+                  <span>Release USDC escrow</span>
+                  <span className="text-xs text-muted-foreground">
+                    Includes PKR {RELEASE_USDC_BASE_FEE} extra fee + PKR {RELEASE_USDC_SERVICE_FEE} service fee.
+                  </span>
+                  <DropdownMenuShortcut>PKR {releaseUsdcTotalFee}</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
+        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
           <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 text-lg">
               <ArrowRightLeft className="h-4 w-4" /> {headerLabel} flow
             </CardTitle>
             <CardDescription>
-              Set the PKR amount, review the USDC you will {side === "buy" ? "receive" : "deliver"}, then choose a payment method.
+              Enter the amount, review live conversion, and keep currency fixed to USDC for settlements.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <Tabs value={side} onValueChange={(value) => setSide(value as TradeSide)}>
-              <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/60 p-1">
-                <TabsTrigger value="buy" className="rounded-lg text-base">
+              <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted/60 p-1">
+                <TabsTrigger value="buy" className="rounded-xl text-base">
                   Buy
                 </TabsTrigger>
-                <TabsTrigger value="sell" className="rounded-lg text-base">
+                <TabsTrigger value="sell" className="rounded-xl text-base">
                   Sell
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="buy" className="mt-6 space-y-5">
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Spend</Label>
-                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Enter PKR amount</span>
-                      <span className="font-semibold">PKR</span>
-                    </div>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={pkAmount}
-                      onChange={(event) => setPkAmount(event.target.value)}
-                      className="mt-1 border-0 px-0 text-2xl font-semibold focus-visible:ring-0"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Receive ≈</Label>
-                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Estimated USDC</span>
-                      <span className="font-semibold">USDC</span>
-                    </div>
-                    <div className="mt-1 text-2xl font-semibold">
-                      {usdcFormatter.format(usdcValue)}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Spend</Label>
+                    <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>PKR amount</span>
+                        <span className="font-semibold">PKR</span>
+                      </div>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={pkAmount}
+                        onChange={(event) => setPkAmount(event.target.value)}
+                        className="mt-2 border-0 bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    1 USDC ≈ {rateFormatter.format(rate)}
-                  </p>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Receive ≈</Label>
+                    <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>USDC amount (before fees)</span>
+                        <span className="font-semibold">USDC</span>
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold tracking-tight">
+                        {usdcFormatter.format(usdcValue)}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      1 USDC ≈ {rateFormatter.format(rate)} · Receiving fee {rateFormatter.format(receiveFeeTotal)} ({RECEIVE_FEE_PER_USDC} PKR per USDC)
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Payment method</Label>
                   <Select value={selectedMethod} onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl border border-[hsl(var(--border))] bg-white/80">
                       <SelectValue placeholder="Select a method" />
                     </SelectTrigger>
                     <SelectContent>
@@ -323,57 +378,65 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   </Select>
                 </div>
 
-                <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">{method.label}</p>
-                  <p>Account owner: {method.accountName}</p>
-                  <p>Number: {method.accountNumber}</p>
-                  <p className="mt-1 text-xs">{method.notes}</p>
+                <div className="rounded-2xl border border-dashed border-[hsl(var(--border))] bg-slate-50/70 px-4 py-4 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">Manual settlement with {method.label}</p>
+                  <p className="mt-1 leading-relaxed">{method.description}</p>
+                  <p className="mt-2 text-xs uppercase tracking-wide text-[hsl(var(--primary))]">
+                    Actions available from the top-right menu.
+                  </p>
                 </div>
 
-                <Button className="w-full text-base" onClick={handleRequest}>
-                  {ctaLabel}
-                </Button>
+                <div className="grid gap-3 rounded-2xl border border-[hsl(var(--border))] bg-white/80 px-4 py-4 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>PKR spend</span>
+                    <span className="font-semibold text-foreground">{numericPk.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Receiving fee</span>
+                    <span className="font-semibold text-foreground">{rateFormatter.format(receiveFeeTotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Total with fees</span>
+                    <span className="font-semibold text-foreground">{rateFormatter.format(totalSpendWithFees)}</span>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="sell" className="mt-6 space-y-5">
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  You are selling USDC to receive PKR manually. Confirm incoming receipt before releasing escrow.
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Receive</Label>
-                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Calculated PKR</span>
-                      <span className="font-semibold">PKR</span>
-                    </div>
-                    <div className="mt-1 text-2xl font-semibold">
-                      {Number(pkAmount) > 0 ? Number(pkAmount).toLocaleString() : "0"}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Receive</Label>
+                    <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>PKR amount</span>
+                        <span className="font-semibold">PKR</span>
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold tracking-tight">
+                        {numericPk.toLocaleString()}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Send</Label>
-                  <div className="rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>USDC to deliver</span>
-                      <span className="font-semibold">USDC</span>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Send</Label>
+                    <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>USDC to release</span>
+                        <span className="font-semibold">USDC</span>
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold tracking-tight">
+                        {usdcFormatter.format(usdcValue)}
+                      </div>
                     </div>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={usdcValue}
-                      readOnly
-                      className="mt-1 border-0 px-0 text-2xl font-semibold focus-visible:ring-0"
-                    />
+                    <p className="text-xs text-muted-foreground">
+                      Releasing USDC adds PKR {RELEASE_USDC_BASE_FEE} extra + PKR {RELEASE_USDC_SERVICE_FEE} service fee per settlement.
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    1 USDC ≈ {rateFormatter.format(rate)}
-                  </p>
                 </div>
+
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Payment method you expect</Label>
+                  <Label className="text-sm font-semibold">Payment method expected</Label>
                   <Select value={selectedMethod} onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl border border-[hsl(var(--border))] bg-white/80">
                       <SelectValue placeholder="Select a method" />
                     </SelectTrigger>
                     <SelectContent>
@@ -385,70 +448,94 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">Provide method instructions</p>
-                  <p>Account owner: {method.accountName}</p>
-                  <p>Number: {method.accountNumber}</p>
-                  <p className="mt-1 text-xs">{method.notes}</p>
+
+                <div className="rounded-2xl border border-dashed border-[hsl(var(--border))] bg-slate-50/70 px-4 py-4 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">Manual payout expectation</p>
+                  <p className="mt-1 leading-relaxed">{method.description}</p>
+                  <p className="mt-2 text-xs uppercase tracking-wide text-[hsl(var(--primary))]">
+                    Use the top-right menu to log payments or release escrow.
+                  </p>
                 </div>
-                <Button className="w-full text-base" onClick={handleRequest}>
-                  {ctaLabel}
-                </Button>
+
+                <div className="grid gap-3 rounded-2xl border border-[hsl(var(--border))] bg-white/80 px-4 py-4 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>USDC to release</span>
+                    <span className="font-semibold text-foreground">{usdcFormatter.format(usdcValue)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Estimated PKR payout</span>
+                    <span className="font-semibold text-foreground">{rateFormatter.format(numericPk)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Release fees</span>
+                    <span className="font-semibold text-foreground">PKR {releaseUsdcTotalFee}</span>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
 
-        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
+        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Confirmation & controls
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Confirmation & summary
             </CardTitle>
             <CardDescription>
-              Request the method, confirm PKR transfer, then release USDC when ready. Maintain manual oversight for every step.
+              Snapshot of the settlement plus space for any manual validation notes. Actions remain in the menu above.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-foreground">Trade summary</p>
-              <div className="text-sm text-muted-foreground">
+            <div className="space-y-3 rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
+              <p className="text-sm font-semibold text-foreground">Trade overview</p>
+              <div className="grid gap-2 text-sm text-muted-foreground">
                 <p>Side: <span className="font-medium capitalize text-foreground">{side}</span></p>
-                <p>PKR amount: <span className="font-medium text-foreground">{Number(pkAmount).toLocaleString()}</span></p>
+                <p>PKR amount: <span className="font-medium text-foreground">{numericPk.toLocaleString()}</span></p>
                 <p>USDC amount: <span className="font-medium text-foreground">{usdcFormatter.format(usdcValue)}</span></p>
                 <p>Method: <span className="font-medium text-foreground">{method.label}</span></p>
               </div>
               <Textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[110px] resize-none"
                 placeholder="Add any confirmation notes for the counterparty."
               />
             </div>
-            <div className="flex flex-col gap-3">
-              <Button className="h-12 text-base" onClick={handleRequest}>
-                Request method approval
-              </Button>
-              <Button className="h-12 text-base" variant="outline" onClick={handleReleasePayment}>
-                Release PKR payment
-              </Button>
-              <Button className="h-12 text-base" variant="ghost" onClick={handleReleaseUsdc}>
-                Release USDC escrow
-              </Button>
+            <div className="grid gap-3">
+              <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Fee breakdown</p>
+                <div className="mt-2 space-y-1.5">
+                  <p>
+                    Receiving USDC: {rateFormatter.format(receiveFeeTotal)} fee ({RECEIVE_FEE_PER_USDC} PKR per USDC)
+                  </p>
+                  <p>
+                    Releasing USDC: PKR {RELEASE_USDC_BASE_FEE} extra + PKR {RELEASE_USDC_SERVICE_FEE} service = PKR {releaseUsdcTotalFee}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Reminders</p>
+                <ul className="mt-2 space-y-1.5">
+                  <li>Log every step in chat for transparency.</li>
+                  <li>Verify counterparty details align with manual instructions before releases.</li>
+                  <li>Keep screenshots handy in case of dispute review.</li>
+                </ul>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
+        <Card id="settlement-chat" className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <MessageSquareMore className="h-5 w-5 text-[hsl(var(--primary))]" /> Settlement chat
             </CardTitle>
             <CardDescription>
-              Coordinate the transfer in real time. Use the log as proof before approving releases.
+              Coordinate in real time. Use the chat log as proof before approving any release.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <div className="max-h-72 space-y-3 overflow-y-auto rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4">
+            <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
               {chat.map((message) => (
                 <div key={message.id} className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -483,16 +570,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 placeholder="Type your update…"
                 value={draftMessage}
                 onChange={(event) => setDraftMessage(event.target.value)}
-                className="md:flex-1"
+                className="rounded-xl border border-[hsl(var(--border))] bg-white/80 md:flex-1"
               />
-              <Button type="submit" className="md:w-auto">
+              <Button type="submit" className="rounded-xl md:w-auto">
                 Send update
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="border border-[hsl(var(--border))] bg-white shadow-sm">
+        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <ShieldCheck className="h-5 w-5 text-emerald-500" /> Release checklist
@@ -502,20 +589,20 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">When releasing PKR</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                <li>Verify account name: Ameer Nawaz Khan.</li>
-                <li>Send manual transfer via {method.label} and save receipt.</li>
-                <li>Upload confirmation in chat for the counterparty.</li>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5">
+                <li>Ensure the method instructions from {method.label} are followed exactly.</li>
+                <li>Capture and upload the payment confirmation to chat.</li>
+                <li>Wait for the counterparty to acknowledge before closing the step.</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">When releasing USDC</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                <li>Ensure PKR receipt is verified inside chat.</li>
-                <li>Confirm settlement rate: {rateFormatter.format(rate)}.</li>
-                <li>Release escrow only after all details match.</li>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5">
+                <li>Verify PKR receipt is confirmed inside chat.</li>
+                <li>Account for the PKR {releaseUsdcTotalFee} total release fees.</li>
+                <li>Log the release using the dropdown menu for audit purposes.</li>
               </ul>
             </div>
           </CardContent>

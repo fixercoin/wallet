@@ -131,12 +131,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }, [toToken]);
 
   const formatUsd = (val?: number | null) => {
-    if (!val || !isFinite(val) || val <= 0) return "$ 0.00";
+    if (!val || !isFinite(val) || val <= 0) return "0.00 usd";
     const digits = val >= 1 ? 2 : val >= 0.01 ? 4 : 6;
-    return `$ ${val.toLocaleString(undefined, {
+    return `${val.toLocaleString(undefined, {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
-    })}`;
+    })} usd`;
   };
 
   const usdForAmount = (amountStr: string, price?: number | null) => {

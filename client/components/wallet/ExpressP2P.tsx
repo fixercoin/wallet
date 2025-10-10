@@ -1,7 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowLeft,
   CircleDollarSign,
+  Copy,
   IndianRupee,
   MessageSquareMore,
 } from "lucide-react";
@@ -25,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useWallet } from "@/contexts/WalletContext";
+import { getTokenAccounts } from "@/lib/services/solana-rpc";
 
 // Types
 type TradeSide = "buy" | "sell";

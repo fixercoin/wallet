@@ -505,48 +505,101 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 Send a message or upload payment proof.
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-2 space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-              {history.map((h) => (
-                <div key={h.id} className="rounded-lg border p-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium capitalize">
-                      {h.type.replace("_", " ")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(h.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+            <div className="mt-2 max-h-[50vh] space-y-3 overflow-y-auto pr-1">
+              {history.map((h) => {
+                const isUserMessage = h.type === "message";
+                const isSystem = h.type === "system";
+                const timestamp = new Date(h.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                const alignment = isUserMessage ? "justify-end" : "justify-start";
+                const bubbleClasses = cn(
+                  "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                  isUserMessage &&
+                    "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+                  isSystem && "bg-muted text-muted-foreground border border-dashed",
+                  !isUserMessage && !isSystem &&
+                    "bg-white border border-[hsl(var(--border))]/60",
+                );
+                const metaTextClass = isUserMessage
+                  ? "text-white/70"
+                  : "text-muted-foreground";
+                const typeTextClass = isUserMessage
+                  ? "text-white"
+                  : "text-muted-foreground";
+                const messageTextClass = isUserMessage ? "text-white" : "text-foreground";
+
+                return (
+                  <div key={h.id} className={cn("flex", alignment)}>
+                    <div className={bubbleClasses}>
+                      <div className="mb-1 flex items-center justify-between gap-4 text-xs uppercase tracking-wide">
+                        <span className={cn("font-semibold", typeTextClass)}>
+                          {h.type.replace("_", " ")}
+                        </span>
+                        <span className={cn(metaTextClass)}>{timestamp}</span>
+                      </div>
+                      {h.message && (
+                        <div
+                          className={cn(
+                            "whitespace-pre-wrap break-words text-sm",
+                            messageTextClass,
+                          )}
+                        >
+                          {h.message}
+                        </div>
+                      )}
+                      {h.imageUrl && (
+                        <img
+                          src={h.imageUrl}
+                          alt="proof"
+                          className={cn(
+                            "mt-3 max-h-64 w-full rounded-lg object-cover",
+                            isUserMessage
+                              ? "border border-white/40"
+                              : "border border-[hsl(var(--border))]/60",
+                          )}
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div className="text-foreground break-words">{h.message}</div>
-                  {h.imageUrl && (
-                    <img
-                      src={h.imageUrl}
-                      alt="proof"
-                      className="mt-2 max-h-64 w-auto rounded-md border"
-                    />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex items-end gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setChatFile(e.target.files?.[0] || null)}
+                className="hidden"
+                id="express-chat-proof"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 rounded-full border border-[hsl(var(--border))]/70"
+                onClick={() => fileRef.current?.click()}
+                aria-label="Upload proof"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
               <Input
                 value={chatText}
                 onChange={(e) => setChatText(e.target.value)}
                 placeholder="Type a message"
                 className="flex-1"
               />
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => setChatFile(e.target.files?.[0] || null)}
-              />
-              <Button onClick={handleSendChat} className="rounded-xl">
+              <Button onClick={handleSendChat} className="h-12 rounded-xl px-6">
                 Send
               </Button>
             </div>
+            {chatFile?.name && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Attached: {chatFile.name}
+              </p>
+            )}
           </DialogContent>
         </Dialog>
 

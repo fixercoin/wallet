@@ -661,6 +661,33 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         </div>
                       </SelectValue>
                     </SelectTrigger>
+                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                      {allTokens.map((token) => (
+                        <SelectItem
+                          key={token.mint}
+                          value={token.mint}
+                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                              <AvatarImage src={token.logoURI} alt={token.symbol} />
+                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                {token.symbol.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{token.symbol}</span>
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {formatAmount(getTokenBalance(token), token.symbol)}
+                                </span>
+                              </div>
+                              <div className="text-xs text-[hsl(var(--muted-foreground))]">{token.name}</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                   {fromToken ? (
                     <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
@@ -720,6 +747,33 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         </div>
                       </SelectValue>
                     </SelectTrigger>
+                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                      {allTokens.map((token) => (
+                        <SelectItem
+                          key={token.mint}
+                          value={token.mint}
+                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                              <AvatarImage src={token.logoURI} alt={token.symbol} />
+                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                {token.symbol.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{token.symbol}</span>
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {formatAmount(getTokenBalance(token), token.symbol)}
+                                </span>
+                              </div>
+                              <div className="text-xs text-[hsl(var(--muted-foreground))]">{token.name}</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                   {toToken ? (
                     <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))] font-mono">

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
@@ -16,8 +14,6 @@ import {
   ArrowLeft,
   ArrowUpDown,
   Settings,
-  Zap,
-  AlertTriangle,
   Check,
   ExternalLink,
 } from "lucide-react";
@@ -206,9 +202,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const formatAmount = (amount: number | string, symbol?: string) => {
     const num =
       typeof amount === "string" ? parseFloat(amount) : (amount as number);
-    if (isNaN(num)) return "0.0000";
-    if (symbol === "FIXERCOIN" || symbol === "FIXER") return num.toFixed(8);
-    return num.toFixed(4);
+    if (isNaN(num)) return "0.000";
+    return num.toFixed(3);
   };
 
   const validateSwap = (): string | null => {
@@ -600,288 +595,315 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
       <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-6 pt-4">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-              Swap Tokens
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="secondary"
-              className="flex items-center gap-1 bg-yellow-500/20 text-yellow-300 border-yellow-400/30"
-            >
-              <Zap className="h-3 w-3" />
-              Jupiter
-            </Badge>
-            <Badge
-              variant="secondary"
-              className="flex items-center gap-1 bg-green-500/20 text-green-300 border-green-400/30"
-            >
-              LIVE
-            </Badge>
-          </div>
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-4 pt-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Swap</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
         </div>
 
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg">
-          <div className="px-6 pt-6">
-            <div className="flex items-center justify-between text-[hsl(var(--primary))]">
-              <span />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-6 p-6">
-            {step !== "success" ? (
-              <div>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      Swap
-                    </span>
-                    {fromToken && (
-                      <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Balance:{" "}
-                        {formatAmount(
-                          getTokenBalance(fromToken),
-                          fromToken.symbol,
-                        )}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="border border-[hsl(var(--border))] bg-[hsl(var(--card))]/30 rounded-lg p-4 space-y-4">
-                    {/* From */}
-                    <div>
-                      <label className="text-sm font-medium text-[hsl(var(--muted-foreground))]">
-                        From
-                      </label>
-                      <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {fromToken && (
-                            <Avatar className="h-6 w-6 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={fromToken.logoURI}
-                                alt={fromToken.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {fromToken.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                          <span className="font-medium text-[hsl(var(--foreground))]">
-                            {fromToken?.symbol || "Select"}
-                          </span>
-                        </div>
-
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={fromAmount}
-                          onChange={(e) => setFromAmount(e.target.value)}
-                          className="border-0 text-2xl p-0 h-auto font-semibold bg-transparent text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
-                        />
-                      </div>
-
-                      <div className="mt-3">
-                        <TokenSelector
-                          selectedToken={fromToken}
-                          onSelect={setFromToken}
-                          label="Select token to swap from"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-center">
-                      <Button
-                        size="sm"
-                        onClick={handleSwapTokens}
-                        className="rounded-full p-2 h-10 w-10 bg-[hsl(var(--card))]/70 border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/80"
-                      >
-                        <ArrowUpDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {/* To */}
-                    <div>
-                      <label className="text-sm font-medium text-[hsl(var(--muted-foreground))]">
-                        To (estimated)
-                      </label>
-                      <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {toToken && (
-                            <Avatar className="h-6 w-6 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={toToken.logoURI}
-                                alt={toToken.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {toToken.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                          <span className="font-medium text-[hsl(var(--foreground))]">
-                            {toToken?.symbol || "Select"}
-                          </span>
-                        </div>
-
-                        <span className="text-2xl font-semibold text-[hsl(var(--muted-foreground))]">
-                          {toAmount
-                            ? formatAmount(toAmount, toToken?.symbol)
-                            : formatAmount(0, toToken?.symbol)}
-                        </span>
-                      </div>
-
-                      <div className="mt-3">
-                        <TokenSelector
-                          selectedToken={toToken}
-                          onSelect={setToToken}
-                          label="Select token to receive"
-                        />
-                      </div>
-                    </div>
+        {/* Card */}
+        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden">
+          <div className="p-5 space-y-4">
+            {/* FROM row */}
+            <div className="">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 pr-3">
+                  <Input
+                    type="number"
+                    placeholder="0.000"
+                    value={fromAmount}
+                    onChange={(e) => setFromAmount(e.target.value)}
+                    className="w-full bg-transparent border-0 p-0 h-auto text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
+                  />
+                  <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
+                    $ 0.00
                   </div>
                 </div>
 
-                {isLoading && (
-                  <Alert className="bg-yellow-500/20 border-yellow-400/30 text-yellow-200">
-                    Signing with local wallet and submitting transaction...
-                  </Alert>
-                )}
+                {/* Token select pill (from) */}
+                <div className="flex flex-col items-end min-w-[8.5rem]">
+                  <Select
+                    value={fromToken?.mint || ""}
+                    onValueChange={(v) => {
+                      const t = allTokens.find((x) => x.mint === v);
+                      if (t) setFromToken(t);
+                    }}
+                  >
+                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          {fromToken ? (
+                            <>
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage
+                                  src={fromToken.logoURI}
+                                  alt={fromToken.symbol}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {fromToken.symbol.slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">
+                                {fromToken.symbol}
+                              </span>
+                            </>
+                          ) : (
+                            <span>Select</span>
+                          )}
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                      {allTokens.map((token) => (
+                        <SelectItem
+                          key={token.mint}
+                          value={token.mint}
+                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                              <AvatarImage
+                                src={token.logoURI}
+                                alt={token.symbol}
+                              />
+                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                {token.symbol.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">
+                                  {token.symbol}
+                                </span>
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {formatAmount(
+                                    getTokenBalance(token),
+                                    token.symbol,
+                                  )}
+                                </span>
+                              </div>
+                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                                {token.name}
+                              </div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {fromToken ? (
+                    <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
+                      {formatAmount(
+                        getTokenBalance(fromToken),
+                        fromToken.symbol,
+                      )}{" "}
+                      {fromToken.symbol}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
 
-                {indicative && (
-                  <Alert className="mt-3 bg-blue-500/10 border-blue-400/30 text-blue-200">
-                    <AlertDescription>
-                      Indicative price shown (no route available). Try adjusting
-                      amount or pair.
-                    </AlertDescription>
-                  </Alert>
-                )}
+            {/* swap arrow */}
+            <div className="flex items-center justify-center py-1">
+              <Button
+                size="icon"
+                onClick={handleSwapTokens}
+                className="rounded-full h-9 w-9 bg-[hsl(var(--card))]/70 hover:bg-[hsl(var(--card))]/80 border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
 
-                {quoteError && !indicative && (
-                  <Alert className="mt-3 bg-red-500/10 border-red-400/30 text-red-200">
-                    <AlertDescription>{quoteError}</AlertDescription>
-                  </Alert>
-                )}
-
-                {quote && fromToken && toToken && (
-                  <div className="bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-lg p-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Rate:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        1 {fromToken.symbol} ≈{" "}
-                        {(
-                          parseFloat(toAmount) / parseFloat(fromAmount)
-                        ).toFixed(6)}{" "}
-                        {toToken.symbol}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Price Impact:
-                      </span>
-                      <span
-                        className={
-                          parseFloat(quote.priceImpactPct) > 1
-                            ? "text-red-400"
-                            : "text-emerald-400"
-                        }
-                      >
-                        {parseFloat(quote.priceImpactPct).toFixed(2)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Slippage:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        {slippage}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Route:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        {quote.routePlan.length} hop
-                        {quote.routePlan.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Network Fee:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        ~0.000005 SOL
-                      </span>
-                    </div>
+            {/* TO row */}
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex-1 pr-3">
+                  <div className="text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
+                    {toAmount
+                      ? formatAmount(toAmount, toToken?.symbol)
+                      : "0.000"}
                   </div>
-                )}
-
-                {!quote && indicative && fromToken && toToken && toAmount && (
-                  <div className="bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-lg p-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Indicative Rate:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        1 {fromToken.symbol} ≈{" "}
-                        {(
-                          parseFloat(toAmount) / parseFloat(fromAmount || "1")
-                        ).toFixed(6)}{" "}
-                        {toToken.symbol}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Slippage:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        {slippage}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Route:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">N/A</span>
-                    </div>
+                  <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
+                    {toToken?.symbol ? `$ 0.00` : `$ 0.00`}
                   </div>
-                )}
+                </div>
 
-                <Button
-                  onClick={handleSwap}
-                  className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                  disabled={
-                    !quote ||
-                    indicative ||
-                    !!quoteError ||
-                    !fromToken ||
-                    !toToken ||
-                    !fromAmount ||
-                    isLoading
-                  }
-                >
-                  {isLoading ? "Signing & Sending..." : "Confirm Transaction"}
-                </Button>
+                {/* Token select pill (to) */}
+                <div className="flex flex-col items-end min-w-[8.5rem]">
+                  <Select
+                    value={toToken?.mint || ""}
+                    onValueChange={(v) => {
+                      const t = allTokens.find((x) => x.mint === v);
+                      if (t) setToToken(t);
+                    }}
+                  >
+                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          {toToken ? (
+                            <>
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage
+                                  src={toToken.logoURI}
+                                  alt={toToken.symbol}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {toToken.symbol.slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">
+                                {toToken.symbol}
+                              </span>
+                            </>
+                          ) : (
+                            <span>Select</span>
+                          )}
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                      {allTokens.map((token) => (
+                        <SelectItem
+                          key={token.mint}
+                          value={token.mint}
+                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                              <AvatarImage
+                                src={token.logoURI}
+                                alt={token.symbol}
+                              />
+                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                {token.symbol.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">
+                                  {token.symbol}
+                                </span>
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {formatAmount(
+                                    getTokenBalance(token),
+                                    token.symbol,
+                                  )}
+                                </span>
+                              </div>
+                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                                {token.name}
+                              </div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {toToken ? (
+                    <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))] font-mono">
+                      {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {/* Quote details */}
+            {(quote || (indicative && toAmount)) && fromToken && toToken ? (
+              <div className="mt-2 bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                    Quote
+                  </span>
+                  <span className="text-sm">
+                    1 {fromToken.symbol} ={" "}
+                    {(
+                      parseFloat(toAmount) / parseFloat(fromAmount || "1")
+                    ).toFixed(4)}{" "}
+                    {toToken.symbol}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    Network fee
+                  </span>
+                  <span className="text-[hsl(var(--foreground))]">
+                    Included
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    Time
+                  </span>
+                  <span className="text-[hsl(var(--foreground))]">
+                    &lt; 1 min
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    Rate includes
+                  </span>
+                  <span className="text-[hsl(var(--foreground))]">
+                    {slippage}% slippage
+                  </span>
+                </div>
+                <div className="text-right text-sm text-blue-400">
+                  More quotes
+                </div>
               </div>
             ) : null}
+
+            {/* Alerts */}
+            {isLoading && (
+              <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
+                Signing with local wallet and submitting transaction...
+              </Alert>
+            )}
+            {indicative && (
+              <Alert className="bg-blue-500/10 border-blue-400/20 text-blue-200">
+                <AlertDescription>
+                  Indicative price shown (no route available). Try adjusting
+                  amount or pair.
+                </AlertDescription>
+              </Alert>
+            )}
+            {quoteError && !indicative && (
+              <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
+                <AlertDescription>{quoteError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Submit */}
+            <Button
+              onClick={handleSwap}
+              className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={
+                !quote ||
+                indicative ||
+                !!quoteError ||
+                !fromToken ||
+                !toToken ||
+                !fromAmount ||
+                isLoading
+              }
+            >
+              Submit
+            </Button>
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import { Settings } from "@/components/wallet/Settings";
 import { AutoBot } from "@/components/wallet/AutoBot";
 import { Airdrop } from "@/components/wallet/Airdrop";
 import { Accounts } from "@/components/wallet/Accounts";
+import { ExpressP2P } from "@/components/wallet/ExpressP2P";
 
 type Screen =
   | "dashboard"
@@ -21,7 +22,8 @@ type Screen =
   | "autobot"
   | "setup"
   | "accounts"
-  | "airdrop";
+  | "airdrop"
+  | "p2p";
 
 interface ScreenState {
   screen: Screen;
@@ -126,6 +128,9 @@ export default function Index() {
     case "airdrop":
       return <Airdrop onBack={navigateToDashboard} />;
 
+    case "p2p":
+      return <ExpressP2P onBack={navigateToDashboard} />;
+
     case "dashboard":
     default:
       return (
@@ -139,6 +144,7 @@ export default function Index() {
           onSettings={() => navigateToScreen("settings")}
           onOpenSetup={() => navigateToScreen("setup")}
           onAccounts={() => navigateToScreen("accounts")}
+          onP2P={() => navigateToScreen("p2p")}
         />
       );
   }

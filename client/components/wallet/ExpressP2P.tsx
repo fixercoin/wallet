@@ -96,7 +96,6 @@ const INTERNAL_CHARGE_PER_USDC = 2; // do not show in UI
 
 export const ExpressP2P: React.FC = () => {
   const { toast } = useToast();
-  const { tokens, refreshTokens } = useWallet();
 
   const [side, setSide] = useState<TradeSide>("buy");
   const [buyPkAmount, setBuyPkAmount] = useState("");
@@ -107,17 +106,41 @@ export const ExpressP2P: React.FC = () => {
   const [waitOpen, setWaitOpen] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
+  const [expressUsdcBalance, setExpressUsdcBalance] =
+    useState<number | null>(null);
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  const [orderSummary, setOrderSummary] = useState<{
+    side: TradeSide;
+    pkrAmount: number;
+    usdcAmount: number;
+  } | null>(null);
+
   // Chat form
   const [chatText, setChatText] = useState("");
   const [chatFile, setChatFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    // Ensure balances/tokens are fresh
-    refreshTokens?.();
-  }, [refreshTokens]);
+  const fetchExpressBalance = useCallback(async () => {
+    setIsBalanceLoading(true);
+    try {
+      const accounts = await getTokenAccounts(EXPRESS_WALLET_ADDRESS);
+      const usdcAccount = accounts.find(
+        (account) =>
+          account.mint === USDC_MINT ||
+          account.symbol?.toUpperCase() === "USDC",
+      );
+      const amount = Number(usdcAccount?.balance ?? 0);
+      setExpressUsdcBalance(Number.isFinite(amount) ? amount : 0);
+    } catch (error) {
+      console.error("Error fetching EXPRESS LIVE balance:", error);
+      setExpressUsdcBalance((prev) => (prev == null ? 0 : prev));
+    } finally {
+      setIsBalanceLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
+    fetchExpressBalance();
     const interval = window.setInterval(() => {
       setRate((current) => {
         const jitter = (Math.random() - 0.5) * 0.6;
@@ -126,10 +149,10 @@ export const ExpressP2P: React.FC = () => {
         if (next > RATE_MAX) return RATE_MAX;
         return next;
       });
-      refreshTokens?.();
+      fetchExpressBalance();
     }, 15000);
     return () => window.clearInterval(interval);
-  }, [refreshTokens]);
+  }, [fetchExpressBalance]);
 
   useEffect(() => {
     if (!waitOpen) return;
@@ -152,10 +175,10 @@ export const ExpressP2P: React.FC = () => {
     return () => clearInterval(id);
   }, [waitOpen, toast]);
 
-  const usdcBalance = useMemo(() => {
-    const usdc = tokens?.find((t) => t.symbol === "USDC");
-    return Number(usdc?.balance || 0);
-  }, [tokens]);
+  const usdcBalance = useMemo(
+    () => (expressUsdcBalance == null ? 0 : expressUsdcBalance),
+    [expressUsdcBalance],
+  );
 
   const buyPk = useMemo(() => {
     const n = Number(buyPkAmount.replace(/[^0-9.]/g, ""));

@@ -83,6 +83,12 @@ const initialHistory: TradeHistoryEntry[] = [
   },
 ];
 
+const EXPRESS_WALLET_ADDRESS = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qFE1TZMHJY7S4q8YDT3k3dDdHr";
+
+const shortenAddress = (address: string) =>
+  address.length <= 10 ? address : `${address.slice(0, 4)}...${address.slice(-4)}`;
+
 // Pricing model (internal only)
 const RATE_MIN = 272.25;
 const RATE_MAX = 285.5;

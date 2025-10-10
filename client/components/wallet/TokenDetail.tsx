@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Copy, ArrowUpRight, ArrowDownLeft, ShoppingCart, DollarSign } from "lucide-react";
+import {
+  ArrowLeft,
+  RefreshCw,
+  Copy,
+  ArrowUpRight,
+  ArrowDownLeft,
+  ShoppingCart,
+  DollarSign,
+} from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
@@ -147,19 +155,31 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           {/* Action Buttons */}
           <div className="px-4 pb-3">
             <div className="grid grid-cols-4 gap-2">
-              <Button onClick={() => onBuy(tokenMint)} className="h-10 font-medium">
+              <Button
+                onClick={() => onBuy(tokenMint)}
+                className="h-10 font-medium"
+              >
                 <ShoppingCart className="h-4 w-4 mr-1" />
                 Buy
               </Button>
-              <Button onClick={() => onSell(tokenMint)} className="h-10 font-medium">
+              <Button
+                onClick={() => onSell(tokenMint)}
+                className="h-10 font-medium"
+              >
                 <DollarSign className="h-4 w-4 mr-1" />
                 Sell
               </Button>
-              <Button onClick={() => onSend(tokenMint)} className="h-10 font-medium">
+              <Button
+                onClick={() => onSend(tokenMint)}
+                className="h-10 font-medium"
+              >
                 <ArrowUpRight className="h-4 w-4 mr-1" />
                 Send
               </Button>
-              <Button onClick={() => onReceive(tokenMint)} className="h-10 font-medium">
+              <Button
+                onClick={() => onReceive(tokenMint)}
+                className="h-10 font-medium"
+              >
                 <ArrowDownLeft className="h-4 w-4 mr-1" />
                 Receive
               </Button>

@@ -157,31 +157,27 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <div className="grid grid-cols-4 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-gray-800 text-white hover:bg-gray-900"
               >
-                <ShoppingCart className="h-4 w-4 mr-1" />
-                Buy
+                BUY
               </Button>
               <Button
                 onClick={() => onSell(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-gray-800 text-white hover:bg-gray-900"
               >
-                <DollarSign className="h-4 w-4 mr-1" />
-                Sell
+                SELL
               </Button>
               <Button
                 onClick={() => onSend(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-gray-800 text-white hover:bg-gray-900"
               >
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-                Send
+                SEND
               </Button>
               <Button
                 onClick={() => onReceive(tokenMint)}
-                className="h-10 font-medium"
+                className="h-10 font-semibold bg-gray-800 text-white hover:bg-gray-900"
               >
-                <ArrowDownLeft className="h-4 w-4 mr-1" />
-                Receive
+                RECIEVE
               </Button>
             </div>
           </div>

@@ -255,6 +255,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         toast({ title: "Insufficient USDC available" });
         return;
       }
+      logHistory({
+        type: "request",
+        message: `Buy request of ${rateFormatter.format(buyPk)} PKR (~${usdcFormatterPrecise.format(buyNetUsdc)} USDC) sent to ${shortExpressWallet}`,
+      });
       toast({ title: "Buyer request sent" });
       logHistory({
         type: "confirm",
@@ -399,6 +403,31 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
               {/* Buy */}
               <TabsContent value="buy" className="mt-4 space-y-4">
+                <div className="rounded-xl border border-[hsl(var(--border))]/70 bg-muted/30 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Express wallet available USDC
+                      </p>
+                      <p className="text-2xl font-semibold text-foreground">
+                        {isBalanceLoading
+                          ? "Fetching..."
+                          : usdcFormatter.format(usdcBalance)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={handleCopyAddress}
+                    >
+                      Copy address
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Wallet: {shortExpressWallet}
+                  </p>
+                </div>
                 <div className="relative">
                   <Input
                     type="number"

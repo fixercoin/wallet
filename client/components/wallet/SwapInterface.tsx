@@ -50,6 +50,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const allTokens = availableTokens;
   const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
   const [quoteError, setQuoteError] = useState<string>("");
+  const [fromUsdPrice, setFromUsdPrice] = useState<number | null>(null);
+  const [toUsdPrice, setToUsdPrice] = useState<number | null>(null);
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -183,6 +185,39 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     const t = setTimeout(getQuote, 300);
     return () => clearTimeout(t);
   }, [fromAmount, fromToken, toToken, slippage]);
+
+  // Load USD prices for selected tokens
+  useEffect(() => {
+    const loadPrices = async () => {
+      if (!fromToken && !toToken) {
+        setFromUsdPrice(null);
+        setToUsdPrice(null);
+        return;
+      }
+      const mints: string[] = [];
+      if (fromToken?.mint) mints.push(fromToken.mint);
+      if (toToken?.mint && toToken.mint !== fromToken?.mint)
+        mints.push(toToken.mint);
+      if (mints.length === 0) {
+        setFromUsdPrice(null);
+        setToUsdPrice(null);
+        return;
+      }
+      try {
+        const tokens = await dexscreenerAPI.getTokensByMints(mints);
+        const priceMap = dexscreenerAPI.getTokenPrices(tokens);
+        setFromUsdPrice(
+          fromToken?.mint ? (priceMap[fromToken.mint] ?? null) : null,
+        );
+        setToUsdPrice(toToken?.mint ? (priceMap[toToken.mint] ?? null) : null);
+      } catch (e) {
+        setFromUsdPrice(null);
+        setToUsdPrice(null);
+      }
+    };
+    loadPrices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromToken?.mint, toToken?.mint]);
 
   const handleSwapTokens = () => {
     const prevFrom = fromToken;
@@ -627,10 +662,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     placeholder="0.000"
                     value={fromAmount}
                     onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
+                    className="w-full bg-transparent border-0 p-0 h-auto text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
                   />
-                  <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-                    $ 0.00
+                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
+                    {(() => {
+                      const amt = parseFloat(fromAmount || "0");
+                      const price = fromUsdPrice ?? 0;
+                      const usd = amt * price;
+                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
+                    })()}
                   </div>
                 </div>
 
@@ -733,13 +773,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
-                  <div className="text-5xl font-semibold leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
+                  <div className="text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
                     {toAmount
                       ? formatAmount(toAmount, toToken?.symbol)
                       : "0.000"}
                   </div>
-                  <div className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-                    {toToken?.symbol ? `$ 0.00` : `$ 0.00`}
+                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
+                    {(() => {
+                      const amt = parseFloat(toAmount || "0");
+                      const price = toUsdPrice ?? 0;
+                      const usd = amt * price;
+                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
+                    })()}
                   </div>
                 </div>
 

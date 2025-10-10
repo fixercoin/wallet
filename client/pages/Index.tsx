@@ -96,6 +96,7 @@ export default function Index() {
           onBuy={handleBuyToken}
           onSell={handleSellToken}
           onSend={handleSendToken}
+          onReceive={() => navigateToScreen("receive")}
         />
       );
 

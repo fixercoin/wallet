@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Copy } from "lucide-react";
+import {
+  ArrowLeft,
+  RefreshCw,
+  Copy,
+  ArrowUpRight,
+  ArrowDownLeft,
+  ShoppingCart,
+  DollarSign,
+} from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +21,7 @@ interface TokenDetailProps {
   onBuy: (tokenMint: string) => void;
   onSell: (tokenMint: string) => void;
   onSend: (tokenMint: string) => void;
+  onReceive: (tokenMint: string) => void;
 }
 
 // Mock price data for demonstration
@@ -31,6 +40,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   onBuy,
   onSell,
   onSend,
+  onReceive,
 }) => {
   const { tokens, balance, wallet, refreshTokens } = useWallet();
   const { toast } = useToast();
@@ -141,6 +151,40 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             onToggleBalance={() => setShowBalance(!showBalance)}
             withinCard
           />
+
+          {/* Action Buttons */}
+          <div className="px-4 pb-3">
+            <div className="grid grid-cols-4 gap-2">
+              <Button
+                onClick={() => onBuy(tokenMint)}
+                className="h-10 font-medium"
+              >
+                <ShoppingCart className="h-4 w-4 mr-1" />
+                Buy
+              </Button>
+              <Button
+                onClick={() => onSell(tokenMint)}
+                className="h-10 font-medium"
+              >
+                <DollarSign className="h-4 w-4 mr-1" />
+                Sell
+              </Button>
+              <Button
+                onClick={() => onSend(tokenMint)}
+                className="h-10 font-medium"
+              >
+                <ArrowUpRight className="h-4 w-4 mr-1" />
+                Send
+              </Button>
+              <Button
+                onClick={() => onReceive(tokenMint)}
+                className="h-10 font-medium"
+              >
+                <ArrowDownLeft className="h-4 w-4 mr-1" />
+                Receive
+              </Button>
+            </div>
+          </div>
 
           <div className="px-4 pb-2">
             <div className="bg-[hsl(var(--card))] rounded-lg p-3 flex items-center justify-between border-t border-[hsl(var(--border))]">

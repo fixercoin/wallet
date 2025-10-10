@@ -1,5 +1,6 @@
 import { Buffer } from "buffer";
 import process from "process";
+import { Buffer } from "buffer";
 
 (window as any).global = globalThis;
 (window as any).Buffer = Buffer;

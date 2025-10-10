@@ -666,9 +666,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   />
                   <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
                     {(() => {
-                      const amt = parseFloat(fromAmount || "0");
-                      const price = fromUsdPrice ?? 0;
-                      const usd = amt * price;
+                      const fromAmt = parseFloat(fromAmount || "0");
+                      const toAmt = parseFloat(toAmount || "0");
+                      const fPrice = fromUsdPrice ?? 0;
+                      const tPrice = toUsdPrice ?? 0;
+                      let usd = 0;
+                      if (fPrice > 0 && fromAmt > 0) usd = fromAmt * fPrice;
+                      else if (tPrice > 0 && toAmt > 0) usd = toAmt * tPrice;
                       return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
                     })()}
                   </div>
@@ -780,9 +784,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </div>
                   <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
                     {(() => {
-                      const amt = parseFloat(toAmount || "0");
-                      const price = toUsdPrice ?? 0;
-                      const usd = amt * price;
+                      const toAmt = parseFloat(toAmount || "0");
+                      const fromAmt = parseFloat(fromAmount || "0");
+                      const tPrice = toUsdPrice ?? 0;
+                      const fPrice = fromUsdPrice ?? 0;
+                      let usd = 0;
+                      if (tPrice > 0 && toAmt > 0) usd = toAmt * tPrice;
+                      else if (fPrice > 0 && fromAmt > 0) usd = fromAmt * fPrice;
                       return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
                     })()}
                   </div>

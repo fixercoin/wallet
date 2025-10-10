@@ -516,7 +516,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   if (step === "success") {
     return (
-      <div className="dark min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] p-4">
+      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
         <div className="max-w-md mx-auto pt-8">
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg">
             <div className="p-8 text-center">
@@ -594,7 +594,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="dark min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] p-4">
+    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
       <div className="max-w-md mx-auto">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4 pt-2">
@@ -602,7 +602,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="text-[hsl(var(--foreground))] hover:bg-white/5"
+            className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -610,7 +610,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-white/5"
+            className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
           >
             <Settings className="h-5 w-5" />
           </Button>
@@ -644,7 +644,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       if (t) setFromToken(t);
                     }}
                   >
-                    <SelectTrigger className="h-11 rounded-full bg-white/5 border-white/10 text-[hsl(var(--foreground))] hover:bg-white/10 w-auto px-3">
+                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
                       <SelectValue>
                         <div className="flex items-center gap-2">
                           {fromToken ? (
@@ -703,7 +703,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               <Button
                 size="icon"
                 onClick={handleSwapTokens}
-                className="rounded-full h-9 w-9 bg-white/5 hover:bg-white/10 border border-white/10 text-[hsl(var(--foreground))]"
+                className="rounded-full h-9 w-9 bg-[hsl(var(--card))]/70 hover:bg-[hsl(var(--card))]/80 border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
@@ -730,7 +730,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       if (t) setToToken(t);
                     }}
                   >
-                    <SelectTrigger className="h-11 rounded-full bg-white/5 border-white/10 text-[hsl(var(--foreground))] hover:bg-white/10 w-auto px-3">
+                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
                       <SelectValue>
                         <div className="flex items-center gap-2">
                           {toToken ? (
@@ -786,7 +786,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
             {/* Quote details */}
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
-              <div className="mt-2 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="mt-2 bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[hsl(var(--muted-foreground))]">Quote</span>
                   <span className="text-sm">
@@ -833,7 +833,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {/* Submit */}
             <Button
               onClick={handleSwap}
-              className="mt-2 w-full h-12 rounded-xl bg-white text-black hover:bg-white/90 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={
                 !quote ||
                 indicative ||

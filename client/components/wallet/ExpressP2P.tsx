@@ -163,7 +163,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
         </div>
 
         {/* Card */}
-        <Card className="border border-[hsl(var(--border))] bg-white">
+        <Card className="bg-white">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">

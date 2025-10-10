@@ -7,39 +7,73 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useWallet } from "@/contexts/WalletContext";
 
 // Types
- type TradeSide = "buy" | "sell";
+type TradeSide = "buy" | "sell";
 
 interface TradeHistoryEntry {
   id: string;
-  type: "request" | "release_usdc" | "system" | "confirm" | "timeout" | "paid" | "message";
+  type:
+    | "request"
+    | "release_usdc"
+    | "system"
+    | "confirm"
+    | "timeout"
+    | "paid"
+    | "message";
   message: string;
   createdAt: number;
   imageUrl?: string;
 }
 
 // Formatters
-const rateFormatter = new Intl.NumberFormat("en-PK", { style: "currency", currency: "PKR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const usdcFormatter = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const usdcFormatterPrecise = new Intl.NumberFormat("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const rateFormatter = new Intl.NumberFormat("en-PK", {
+  style: "currency",
+  currency: "PKR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const usdcFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const usdcFormatterPrecise = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
 
 // Helpers
-const createId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+const createId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const initialHistory: TradeHistoryEntry[] = [
-  { id: createId(), type: "system", message: "Session started.", createdAt: Date.now() - 1000 * 60 * 5 },
+  {
+    id: createId(),
+    type: "system",
+    message: "Session started.",
+    createdAt: Date.now() - 1000 * 60 * 5,
+  },
 ];
 
 // Pricing model (internal only)
@@ -93,7 +127,10 @@ export const ExpressP2P: React.FC = () => {
           clearInterval(id);
           setWaitOpen(false);
           toast({ title: "Service is not acceptable" });
-          logHistory({ type: "timeout", message: "No confirmation within 60s." });
+          logHistory({
+            type: "timeout",
+            message: "No confirmation within 60s.",
+          });
           return 0;
         }
         return c - 1;
@@ -130,39 +167,66 @@ export const ExpressP2P: React.FC = () => {
     return Number((sellUsdc * effectiveRate).toFixed(2));
   }, [sellUsdc, rate]);
 
-  const logHistory = (entry: Omit<TradeHistoryEntry, "id" | "createdAt">) => setHistory((p) => [...p, { id: createId(), createdAt: Date.now(), ...entry }]);
+  const logHistory = (entry: Omit<TradeHistoryEntry, "id" | "createdAt">) =>
+    setHistory((p) => [
+      ...p,
+      { id: createId(), createdAt: Date.now(), ...entry },
+    ]);
 
   const onConfirm = () => {
     if (side === "buy") {
-      if (buyPk <= 0) { toast({ title: "Enter PKR amount" }); return; }
+      if (buyPk <= 0) {
+        toast({ title: "Enter PKR amount" });
+        return;
+      }
       toast({ title: "Buyer request sent" });
-      logHistory({ type: "confirm", message: `Buy ~${usdcFormatterPrecise.format(buyNetUsdc)} USDC` });
+      logHistory({
+        type: "confirm",
+        message: `Buy ~${usdcFormatterPrecise.format(buyNetUsdc)} USDC`,
+      });
       setWaitOpen(true);
       return;
     }
-    if (sellUsdc <= 0) { toast({ title: "Enter USDC amount" }); return; }
+    if (sellUsdc <= 0) {
+      toast({ title: "Enter USDC amount" });
+      return;
+    }
     toast({ title: "Waiting for buyer payment" });
-    logHistory({ type: "confirm", message: `Sell ~${rateFormatter.format(sellNetPkr)} PKR` });
+    logHistory({
+      type: "confirm",
+      message: `Sell ~${rateFormatter.format(sellNetPkr)} PKR`,
+    });
     setWaitOpen(true);
   };
 
   const simulateCounterpartyConfirmed = () => {
     setWaitOpen(false);
-    logHistory({ type: "release_usdc", message: side === "buy" ? "Seller released USDC" : "Buyer confirmed payment" });
+    logHistory({
+      type: "release_usdc",
+      message:
+        side === "buy" ? "Seller released USDC" : "Buyer confirmed payment",
+    });
     toast({ title: side === "buy" ? "USDC released" : "Payment confirmed" });
   };
 
   const handleSendChat = () => {
     if (!chatText && !chatFile) return;
     const imageUrl = chatFile ? URL.createObjectURL(chatFile) : undefined;
-    logHistory({ type: "message", message: chatText || (chatFile ? "Proof uploaded" : ""), imageUrl });
+    logHistory({
+      type: "message",
+      message: chatText || (chatFile ? "Proof uploaded" : ""),
+      imageUrl,
+    });
     setChatText("");
     setChatFile(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const title = side === "buy" ? "Buy" : "Sell";
-  const estLabel = side === "buy" ? `Est. ${usdcFormatterPrecise.format(buyNetUsdc)} USDC` : `Est. ${rateFormatter.format(sellNetPkr)}`;
+  const estLabel =
+    side === "buy"
+      ? `Est. ${usdcFormatterPrecise.format(buyNetUsdc)} USDC`
+      : `Est. ${rateFormatter.format(sellNetPkr)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-4 text-[hsl(var(--foreground))]">
@@ -170,20 +234,33 @@ export const ExpressP2P: React.FC = () => {
         {/* Top bar */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80" aria-label="Back" onClick={() => window.history.back()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80"
+              aria-label="Back"
+              onClick={() => window.history.back()}
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-3xl font-bold">{title}</h1>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80" aria-label="Open chat">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80"
+                aria-label="Open chat"
+              >
                 <MessageSquareMore className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>Open chat</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
+                Open chat
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -200,7 +277,9 @@ export const ExpressP2P: React.FC = () => {
                 )}
               </div>
               <div>
-                <p className="text-base text-muted-foreground">{side === "buy" ? "Available USDC" : "Available PKR"}</p>
+                <p className="text-base text-muted-foreground">
+                  {side === "buy" ? "Available USDC" : "Available PKR"}
+                </p>
                 <p className="text-3xl font-semibold">
                   {side === "buy"
                     ? usdcFormatter.format(usdcBalance)
@@ -214,10 +293,16 @@ export const ExpressP2P: React.FC = () => {
             {/* Tabs */}
             <Tabs value={side} onValueChange={(v) => setSide(v as TradeSide)}>
               <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                <TabsTrigger value="buy" className="justify-start border-b-2 data-[state=active]:border-black data-[state=inactive]:border-transparent">
+                <TabsTrigger
+                  value="buy"
+                  className="justify-start border-b-2 data-[state=active]:border-black data-[state=inactive]:border-transparent"
+                >
                   Buy
                 </TabsTrigger>
-                <TabsTrigger value="sell" className="justify-start border-b-2 data-[state=active]:border-black data-[state=inactive]:border-transparent">
+                <TabsTrigger
+                  value="sell"
+                  className="justify-start border-b-2 data-[state=active]:border-black data-[state=inactive]:border-transparent"
+                >
                   Sell
                 </TabsTrigger>
               </TabsList>
@@ -225,25 +310,55 @@ export const ExpressP2P: React.FC = () => {
               {/* Buy */}
               <TabsContent value="buy" className="mt-4 space-y-4">
                 <div className="relative">
-                  <Input type="number" inputMode="decimal" placeholder="Enter amount" value={buyPkAmount} onChange={(e) => setBuyPkAmount(e.target.value)} className="h-14 rounded-xl pr-16 text-lg" />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-lg font-semibold text-muted-foreground">PKR</span>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="Enter amount"
+                    value={buyPkAmount}
+                    onChange={(e) => setBuyPkAmount(e.target.value)}
+                    className="h-14 rounded-xl pr-16 text-lg"
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-lg font-semibold text-muted-foreground">
+                    PKR
+                  </span>
                 </div>
                 <p className="text-lg text-muted-foreground">{estLabel}</p>
-                <Button className="h-14 w-full rounded-2xl text-lg font-semibold" onClick={onConfirm}>Confirm</Button>
+                <Button
+                  className="h-14 w-full rounded-2xl text-lg font-semibold"
+                  onClick={onConfirm}
+                >
+                  Confirm
+                </Button>
               </TabsContent>
 
               {/* Sell */}
               <TabsContent value="sell" className="mt-4 space-y-4">
                 <div className="relative">
-                  <Input type="number" inputMode="decimal" placeholder="Enter amount" value={sellUsdcAmount} onChange={(e) => setSellUsdcAmount(e.target.value)} className="h-14 rounded-xl pr-20 text-lg" />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-lg font-semibold text-muted-foreground">USDC</span>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="Enter amount"
+                    value={sellUsdcAmount}
+                    onChange={(e) => setSellUsdcAmount(e.target.value)}
+                    className="h-14 rounded-xl pr-20 text-lg"
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-lg font-semibold text-muted-foreground">
+                    USDC
+                  </span>
                 </div>
                 <p className="text-lg text-muted-foreground">{estLabel}</p>
-                <Button className="h-14 w-full rounded-2xl text-lg font-semibold" onClick={onConfirm}>Confirm</Button>
+                <Button
+                  className="h-14 w-full rounded-2xl text-lg font-semibold"
+                  onClick={onConfirm}
+                >
+                  Confirm
+                </Button>
               </TabsContent>
             </Tabs>
 
-            <div className="pt-1 text-xs text-muted-foreground">1 USDC ≈ {rateFormatter.format(rate)}</div>
+            <div className="pt-1 text-xs text-muted-foreground">
+              1 USDC ≈ {rateFormatter.format(rate)}
+            </div>
           </CardContent>
         </Card>
 
@@ -252,26 +367,51 @@ export const ExpressP2P: React.FC = () => {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Chat</DialogTitle>
-              <DialogDescription>Send a message or upload payment proof.</DialogDescription>
+              <DialogDescription>
+                Send a message or upload payment proof.
+              </DialogDescription>
             </DialogHeader>
             <div className="mt-2 space-y-2 max-h-[50vh] overflow-y-auto pr-1">
               {history.map((h) => (
                 <div key={h.id} className="rounded-lg border p-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium capitalize">{h.type.replace("_", " ")}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(h.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="font-medium capitalize">
+                      {h.type.replace("_", " ")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(h.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
                   <div className="text-foreground break-words">{h.message}</div>
                   {h.imageUrl && (
-                    <img src={h.imageUrl} alt="proof" className="mt-2 max-h-64 w-auto rounded-md border" />
+                    <img
+                      src={h.imageUrl}
+                      alt="proof"
+                      className="mt-2 max-h-64 w-auto rounded-md border"
+                    />
                   )}
                 </div>
               ))}
             </div>
             <div className="mt-3 flex items-center gap-2">
-              <Input value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Type a message" className="flex-1" />
-              <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setChatFile(e.target.files?.[0] || null)} />
-              <Button onClick={handleSendChat} className="rounded-xl">Send</Button>
+              <Input
+                value={chatText}
+                onChange={(e) => setChatText(e.target.value)}
+                placeholder="Type a message"
+                className="flex-1"
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setChatFile(e.target.files?.[0] || null)}
+              />
+              <Button onClick={handleSendChat} className="rounded-xl">
+                Send
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -284,8 +424,15 @@ export const ExpressP2P: React.FC = () => {
               <DialogDescription>Expires in {countdown}s.</DialogDescription>
             </DialogHeader>
             <div className="flex items-center justify-between">
-              <Button onClick={simulateCounterpartyConfirmed} className="rounded-xl">Mark confirmed</Button>
-              <span className="text-sm text-muted-foreground">{countdown}s</span>
+              <Button
+                onClick={simulateCounterpartyConfirmed}
+                className="rounded-xl"
+              >
+                Mark confirmed
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {countdown}s
+              </span>
             </div>
           </DialogContent>
         </Dialog>

@@ -337,7 +337,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <span>Live settlement rate</span>
             <span className="flex items-center gap-1 font-medium text-foreground">
               {rate.toFixed(2)} PKR
-              <RefreshCw className="h-3.5 w-3.5 animate-spin-slow" />
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
             </span>
           </div>
           <div className="flex items-center justify-between">
@@ -438,7 +438,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr.2)]">
+            <div className="grid gap-6 md:grid-cols-2">
               <form className="space-y-4" onSubmit={handleMethodSubmit} noValidate>
                 <div className="space-y-2">
                   <Label htmlFor="method-name">Method name</Label>

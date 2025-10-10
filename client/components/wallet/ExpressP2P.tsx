@@ -1,21 +1,16 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRightLeft,
+  ArrowLeft,
   CircleDollarSign,
-  History,
+  IndianRupee,
   MessageSquareMore,
-  MoreHorizontal,
-  Sparkles,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -29,9 +24,10 @@ import { useWallet } from "@/contexts/WalletContext";
 
 interface TradeHistoryEntry {
   id: string;
-  type: "request" | "release_usdc" | "system" | "confirm" | "timeout" | "paid";
+  type: "request" | "release_usdc" | "system" | "confirm" | "timeout" | "paid" | "message";
   message: string;
   createdAt: number;
+  imageUrl?: string;
 }
 
 // Formatters
@@ -51,11 +47,9 @@ const RATE_MIN = 272.25;
 const RATE_MAX = 285.5;
 const INTERNAL_CHARGE_PER_USDC = 2; // do not show in UI
 
-interface ExpressP2PProps { onBack?: () => void }
-
-export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
+export const ExpressP2P: React.FC = () => {
   const { toast } = useToast();
-  const { tokens } = useWallet();
+  const { tokens, refreshTokens } = useWallet();
 
   const [side, setSide] = useState<TradeSide>("buy");
   const [buyPkAmount, setBuyPkAmount] = useState("");
@@ -66,6 +60,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
   const [waitOpen, setWaitOpen] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
+  // Chat form
+  const [chatText, setChatText] = useState("");
+  const [chatFile, setChatFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    // Ensure balances/tokens are fresh
+    refreshTokens?.();
+  }, [refreshTokens]);
+
   useEffect(() => {
     const interval = window.setInterval(() => {
       setRate((current) => {
@@ -75,9 +79,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
         if (next > RATE_MAX) return RATE_MAX;
         return next;
       });
-    }, 7000);
+      refreshTokens?.();
+    }, 15000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [refreshTokens]);
 
   useEffect(() => {
     if (!waitOpen) return;
@@ -95,8 +100,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
       });
     }, 1000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waitOpen]);
+  }, [waitOpen, toast]);
 
   const usdcBalance = useMemo(() => {
     const usdc = tokens?.find((t) => t.symbol === "USDC");
@@ -148,6 +152,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
     toast({ title: side === "buy" ? "USDC released" : "Payment confirmed" });
   };
 
+  const handleSendChat = () => {
+    if (!chatText && !chatFile) return;
+    const imageUrl = chatFile ? URL.createObjectURL(chatFile) : undefined;
+    logHistory({ type: "message", message: chatText || (chatFile ? "Proof uploaded" : ""), imageUrl });
+    setChatText("");
+    setChatFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const title = side === "buy" ? "Buy" : "Sell";
   const estLabel = side === "buy" ? `Est. ${usdcFormatterPrecise.format(buyNetUsdc)} USDC` : `Est. ${rateFormatter.format(sellNetPkr)}`;
 
@@ -156,10 +169,23 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
       <div className="mx-auto w-full max-w-md">
         {/* Top bar */}
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{title}</h1>
-          <Button variant="ghost" size="icon" className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80" aria-label="Open chat" onClick={() => setHistoryOpen(true)}>
-            <MessageSquareMore className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80" aria-label="Back" onClick={() => window.history.back()}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-3xl font-bold">{title}</h1>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80" aria-label="Open chat">
+                <MessageSquareMore className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>Open chat</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Card */}
@@ -167,11 +193,19 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                <CircleDollarSign className="h-7 w-7 text-blue-600" />
+                {side === "buy" ? (
+                  <CircleDollarSign className="h-7 w-7 text-blue-600" />
+                ) : (
+                  <IndianRupee className="h-7 w-7 text-blue-600" />
+                )}
               </div>
               <div>
-                <p className="text-base text-muted-foreground">Available USDC</p>
-                <p className="text-3xl font-semibold">{usdcFormatter.format(usdcBalance)}</p>
+                <p className="text-base text-muted-foreground">{side === "buy" ? "Available USDC" : "Available PKR"}</p>
+                <p className="text-3xl font-semibold">
+                  {side === "buy"
+                    ? usdcFormatter.format(usdcBalance)
+                    : rateFormatter.format(sellNetPkr)}
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -213,23 +247,31 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = () => {
           </CardContent>
         </Card>
 
-        {/* History (chat) */}
+        {/* Chat (history) */}
         <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Trade history</DialogTitle>
-              <DialogDescription>Important actions in this session.</DialogDescription>
+              <DialogTitle>Chat</DialogTitle>
+              <DialogDescription>Send a message or upload payment proof.</DialogDescription>
             </DialogHeader>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2 space-y-2 max-h-[50vh] overflow-y-auto pr-1">
               {history.map((h) => (
                 <div key={h.id} className="rounded-lg border p-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-medium capitalize">{h.type.replace("_", " ")}</span>
                     <span className="text-xs text-muted-foreground">{new Date(h.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
-                  <div className="text-foreground">{h.message}</div>
+                  <div className="text-foreground break-words">{h.message}</div>
+                  {h.imageUrl && (
+                    <img src={h.imageUrl} alt="proof" className="mt-2 max-h-64 w-auto rounded-md border" />
+                  )}
                 </div>
               ))}
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <Input value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Type a message" className="flex-1" />
+              <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setChatFile(e.target.files?.[0] || null)} />
+              <Button onClick={handleSendChat} className="rounded-xl">Send</Button>
             </div>
           </DialogContent>
         </Dialog>

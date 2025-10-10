@@ -214,11 +214,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           : null;
 
         // Fallback to DexScreener if Jupiter didn't return prices
-        if ((fromPrice == null || !(fromPrice > 0)) || (toPrice == null || !(toPrice > 0))) {
+        if (
+          fromPrice == null ||
+          !(fromPrice > 0) ||
+          toPrice == null ||
+          !(toPrice > 0)
+        ) {
           const tokens = await dexscreenerAPI.getTokensByMints(mints);
           const dsMap = dexscreenerAPI.getTokenPrices(tokens);
           if (fromPrice == null || !(fromPrice > 0)) {
-            fromPrice = fromToken?.mint ? (dsMap[fromToken.mint] ?? null) : null;
+            fromPrice = fromToken?.mint
+              ? (dsMap[fromToken.mint] ?? null)
+              : null;
           }
           if (toPrice == null || !(toPrice > 0)) {
             toPrice = toToken?.mint ? (dsMap[toToken.mint] ?? null) : null;

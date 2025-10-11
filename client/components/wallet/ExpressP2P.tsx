@@ -13,20 +13,17 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-white">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-3 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
+    <div className="relative h-screen w-screen bg-white">
+      <div className="absolute left-4 top-4 z-10">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleBack}
           aria-label="Back to dashboard"
-          className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+          className="h-10 w-10 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm backdrop-blur-sm hover:bg-[hsl(var(--primary))]/10"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-          Express P2P Service
-        </span>
       </div>
 
       <iframe

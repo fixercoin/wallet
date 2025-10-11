@@ -364,6 +364,23 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </DropdownMenu>
         </div>
 
+        {/* Embedded external Express P2P site */}
+        <div className="mb-4">
+          <div
+            className="rounded-xl overflow-hidden border border-[hsl(var(--border))]/70 bg-white"
+            style={{ height: "70vh" }}
+          >
+            <iframe
+              src="https://express.fixorium.com.pk"
+              title="Express P2P"
+              className="w-full h-full"
+              loading="lazy"
+              allow="clipboard-write; fullscreen; payment *"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+            />
+          </div>
+        </div>
+
         {/* Card */}
         <Card className="bg-white">
           <CardHeader className="pb-2">

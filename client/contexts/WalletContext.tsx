@@ -13,6 +13,8 @@ import {
   getTokenAccounts,
   DEFAULT_TOKENS,
 } from "@/lib/wallet-proxy";
+import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
+import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
@@ -54,6 +56,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const providerRef = useRef<FixoriumWalletProvider | null>(null);
+
+  // Ensure Fixorium provider is available and wired once on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const provider = ensureFixoriumProvider();
+    if (!provider) return;
+    providerRef.current = provider;
+    provider.setDefaultConnection(globalConnection ?? null);
+
+    return () => {
+      provider
+        .disconnect()
+        .catch(() => undefined);
+      provider.setWallet(null);
+    };
+  }, []);
 
   // Load wallets from localStorage on mount (migrate legacy if necessary)
   useEffect(() => {
@@ -143,6 +162,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   }, [wallets]);
 
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
+
+  useEffect(() => {
+    const provider = providerRef.current ?? ensureFixoriumProvider();
+    if (!provider) return;
+    provider.setDefaultConnection(globalConnection ?? null);
+    provider.setWallet(wallet);
+  }, [wallet]);
 
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {

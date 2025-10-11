@@ -25,7 +25,7 @@ const DEFAULT_COMMITMENT: SendOptions["preflightCommitment"] = "confirmed";
 
 const encoder = new TextEncoder();
 
-class FixoriumWalletProvider {
+export class FixoriumWalletProvider {
   readonly isFixorium = true;
   readonly name = "Fixorium Wallet";
   readonly icon = ICON_URL;
@@ -46,10 +46,6 @@ class FixoriumWalletProvider {
 
   get isConnected(): boolean {
     return this.connected && !!this.wallet;
-  }
-
-  get providers(): FixoriumWalletProvider[] {
-    return [this];
   }
 
   setDefaultConnection(connection: Connection | null) {
@@ -292,16 +288,16 @@ export const ensureFixoriumProvider = () => {
   if (!existing) {
     win.solana = providerInstance;
   } else if (existing && typeof existing === "object") {
-    const providers: Set<FixoriumWalletProvider> = new Set();
     if (Array.isArray(existing.providers)) {
-      existing.providers
-        .filter((provider: FixoriumWalletProvider) => !!provider)
-        .forEach((provider: FixoriumWalletProvider) => providers.add(provider));
-    } else if (existing !== providerInstance) {
-      providers.add(existing);
+      if (!existing.providers.includes(providerInstance)) {
+        existing.providers.push(providerInstance);
+      }
+    } else {
+      const uniqueProviders = new Set<unknown>();
+      uniqueProviders.add(existing);
+      uniqueProviders.add(providerInstance);
+      existing.providers = Array.from(uniqueProviders);
     }
-    providers.add(providerInstance);
-    existing.providers = Array.from(providers);
   } else {
     win.solana = providerInstance;
   }
@@ -311,5 +307,3 @@ export const ensureFixoriumProvider = () => {
 
   return providerInstance;
 };
-
-export type { FixoriumWalletProvider };

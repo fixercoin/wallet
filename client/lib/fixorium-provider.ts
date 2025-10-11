@@ -29,7 +29,7 @@ export class FixoriumWalletProvider {
   readonly isFixorium = true;
   readonly name = "Fixorium Wallet";
   readonly icon = ICON_URL;
-  readonly url = "https://fixorium.com";
+  readonly url = "https://wallet.fixorium.com.pk";
   readonly version = "1.0.0";
   autoApprove = false;
 

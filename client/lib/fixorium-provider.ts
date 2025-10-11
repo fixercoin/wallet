@@ -11,7 +11,11 @@ import {
 import nacl from "tweetnacl";
 import type { WalletData } from "@/lib/wallet-proxy";
 
-export type FixoriumProviderEvent = "connect" | "disconnect" | "accountChanged" | "error";
+export type FixoriumProviderEvent =
+  | "connect"
+  | "disconnect"
+  | "accountChanged"
+  | "error";
 
 export interface FixoriumRequest {
   method: string;
@@ -37,7 +41,10 @@ export class FixoriumWalletProvider {
   private publicKeyCache: PublicKey | null = null;
   private connected = false;
   private defaultConnection: Connection | null = null;
-  private readonly listeners = new Map<FixoriumProviderEvent, Set<(...args: any[]) => void>>();
+  private readonly listeners = new Map<
+    FixoriumProviderEvent,
+    Set<(...args: any[]) => void>
+  >();
   private initializedEventDispatched = false;
 
   get publicKey(): PublicKey | null {
@@ -56,7 +63,9 @@ export class FixoriumWalletProvider {
     const previousKey = this.publicKeyCache?.toBase58() ?? null;
 
     this.wallet = nextWallet;
-    this.publicKeyCache = nextWallet ? new PublicKey(nextWallet.publicKey) : null;
+    this.publicKeyCache = nextWallet
+      ? new PublicKey(nextWallet.publicKey)
+      : null;
 
     if (!nextWallet) {
       const wasConnected = this.connected;
@@ -79,9 +88,13 @@ export class FixoriumWalletProvider {
     windowObj.dispatchEvent(new Event("solana#initialized"));
   }
 
-  async connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: PublicKey }> {
+  async connect(options?: {
+    onlyIfTrusted?: boolean;
+  }): Promise<{ publicKey: PublicKey }> {
     if (!this.wallet || !this.publicKeyCache) {
-      throw new Error("No Fixorium wallet is available. Please create or import a wallet first.");
+      throw new Error(
+        "No Fixorium wallet is available. Please create or import a wallet first.",
+      );
     }
 
     if (options?.onlyIfTrusted && !this.connected) {
@@ -125,7 +138,8 @@ export class FixoriumWalletProvider {
 
   async signMessage(message: Uint8Array | string): Promise<Uint8Array> {
     this.assertReady();
-    const payload = typeof message === "string" ? encoder.encode(message) : message;
+    const payload =
+      typeof message === "string" ? encoder.encode(message) : message;
     const signature = nacl.sign.detached(payload, this.wallet!.secretKey);
     return signature;
   }
@@ -137,9 +151,10 @@ export class FixoriumWalletProvider {
   ): Promise<TransactionSignature> {
     const signed = await this.signTransaction(transaction);
     const resolvedConnection = connection ?? this.ensureConnection();
-    const serialized = "version" in signed
-      ? (signed as VersionedTransaction).serialize()
-      : (signed as Transaction).serialize({ requireAllSignatures: false });
+    const serialized =
+      "version" in signed
+        ? (signed as VersionedTransaction).serialize()
+        : (signed as Transaction).serialize({ requireAllSignatures: false });
 
     return resolvedConnection.sendRawTransaction(serialized, {
       skipPreflight: options?.skipPreflight ?? false,
@@ -153,11 +168,15 @@ export class FixoriumWalletProvider {
     const params = args.params ?? [];
     switch (args.method) {
       case "connect":
-        return this.connect(params[0] as { onlyIfTrusted?: boolean } | undefined);
+        return this.connect(
+          params[0] as { onlyIfTrusted?: boolean } | undefined,
+        );
       case "disconnect":
         return this.disconnect();
       case "signTransaction":
-        return this.signTransaction(params[0] as Transaction | VersionedTransaction);
+        return this.signTransaction(
+          params[0] as Transaction | VersionedTransaction,
+        );
       case "signAllTransactions":
         return this.signAllTransactions(
           (params[0] as (Transaction | VersionedTransaction)[]) ?? [],
@@ -171,7 +190,9 @@ export class FixoriumWalletProvider {
           params[2] as SendOptions | undefined,
         );
       default:
-        throw new Error(`Unsupported Fixorium wallet request method: ${args.method}`);
+        throw new Error(
+          `Unsupported Fixorium wallet request method: ${args.method}`,
+        );
     }
   }
 
@@ -202,11 +223,17 @@ export class FixoriumWalletProvider {
     return this;
   }
 
-  addListener(event: FixoriumProviderEvent, handler: (...args: any[]) => void): this {
+  addListener(
+    event: FixoriumProviderEvent,
+    handler: (...args: any[]) => void,
+  ): this {
     return this.on(event, handler);
   }
 
-  removeListener(event: FixoriumProviderEvent, handler: (...args: any[]) => void): this {
+  removeListener(
+    event: FixoriumProviderEvent,
+    handler: (...args: any[]) => void,
+  ): this {
     return this.off(event, handler);
   }
 
@@ -260,7 +287,9 @@ export class FixoriumWalletProvider {
       throw new Error("Fixorium wallet is not ready. Connect a wallet first.");
     }
     if (!this.connected) {
-      throw new Error("Fixorium wallet is not connected. Call connect() before signing.");
+      throw new Error(
+        "Fixorium wallet is not connected. Call connect() before signing.",
+      );
     }
   }
 }

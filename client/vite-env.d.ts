@@ -11,11 +11,13 @@ interface ImportMeta {
 
 declare global {
   interface Window {
-    solana?: (FixoriumWalletProvider & {
-      providers?: FixoriumWalletProvider[];
-      isPhantom?: boolean;
-      isSolflare?: boolean;
-    }) | undefined;
+    solana?:
+      | (FixoriumWalletProvider & {
+          providers?: FixoriumWalletProvider[];
+          isPhantom?: boolean;
+          isSolflare?: boolean;
+        })
+      | undefined;
     fixorium?: FixoriumWalletProvider;
   }
 }

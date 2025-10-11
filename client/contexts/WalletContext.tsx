@@ -67,9 +67,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     provider.setDefaultConnection(globalConnection ?? null);
 
     return () => {
-      provider
-        .disconnect()
-        .catch(() => undefined);
+      provider.disconnect().catch(() => undefined);
       provider.setWallet(null);
     };
   }, []);

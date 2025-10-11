@@ -108,12 +108,12 @@ export class FixoriumWalletProvider {
     this.assertReady();
     const keypair = this.getKeypair();
 
-    if (transaction instanceof VersionedTransaction) {
-      transaction.sign([keypair]);
+    if ("version" in transaction) {
+      (transaction as VersionedTransaction).sign([keypair]);
       return transaction;
     }
 
-    transaction.partialSign(keypair);
+    (transaction as Transaction).partialSign(keypair);
     return transaction;
   }
 
@@ -137,9 +137,9 @@ export class FixoriumWalletProvider {
   ): Promise<TransactionSignature> {
     const signed = await this.signTransaction(transaction);
     const resolvedConnection = connection ?? this.ensureConnection();
-    const serialized = signed instanceof VersionedTransaction
-      ? signed.serialize()
-      : signed.serialize({ requireAllSignatures: false });
+    const serialized = "version" in signed
+      ? (signed as VersionedTransaction).serialize()
+      : (signed as Transaction).serialize({ requireAllSignatures: false });
 
     return resolvedConnection.sendRawTransaction(serialized, {
       skipPreflight: options?.skipPreflight ?? false,

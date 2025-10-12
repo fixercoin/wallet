@@ -227,6 +227,46 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     };
   }, [selectedToken]);
 
+  // Fetch Binance price for selected token when needed
+  useEffect(() => {
+    let abort = false;
+    const loadBinance = async () => {
+      try {
+        setLoadingBinance(true);
+        setBinanceError(null);
+        setBinancePriceUsd(null);
+        const mapSymbol = (tok: string) => {
+          if (tok === "USDC") return "USDCUSDT";
+          if (tok === "SOL") return "SOLUSDT";
+          if (tok === "FIXERCOIN") return "FIXERCOINUSDT";
+          return `${tok}USDT`;
+        };
+        const symbol = mapSymbol(selectedToken);
+        const resp = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        if (!resp.ok) throw new Error("binance request failed");
+        const json = await resp.json();
+        const price = Number(json?.price);
+        if (!abort && price && isFinite(price) && price > 0) {
+          setBinancePriceUsd(price);
+        }
+      } catch (e) {
+        if (!abort) setBinanceError("Binance price unavailable");
+      } finally {
+        if (!abort) setLoadingBinance(false);
+      }
+    };
+    loadBinance();
+    return () => {
+      abort = true;
+    };
+  }, [selectedToken]);
+
+  const binanceRatePkr = useMemo(() => {
+    if (!binancePriceUsd || !pkrPerUsd) return null;
+    const val = binancePriceUsd * pkrPerUsd;
+    return isFinite(val) && val > 0 ? val : null;
+  }, [binancePriceUsd, pkrPerUsd]);
+
   // Buy: PKR -> token units
   const buyReceiveAmount = useMemo(() => {
     const amt = parseFloat(pkrAmount || "0");

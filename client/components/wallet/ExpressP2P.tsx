@@ -80,6 +80,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [loadingTokenPrice, setLoadingTokenPrice] = useState(false);
   const [tokenPriceError, setTokenPriceError] = useState<string | null>(null);
 
+  // Binance price (USD) and derived PKR value
+  const [binancePriceUsd, setBinancePriceUsd] = useState<number | null>(null);
+  const [loadingBinance, setLoadingBinance] = useState(false);
+  const [binanceError, setBinanceError] = useState<string | null>(null);
+
   const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
   const paymentMenuRef = useRef<HTMLDivElement | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =

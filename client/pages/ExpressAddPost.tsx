@@ -111,7 +111,10 @@ export default function ExpressAddPost() {
       return;
     }
     if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
-      toast({ title: "Only admin wallet can post offers", variant: "destructive" });
+      toast({
+        title: "Only admin wallet can post offers",
+        variant: "destructive",
+      });
       return;
     }
 

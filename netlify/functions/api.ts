@@ -319,7 +319,10 @@ export const handler = async (event: any) => {
           lastErr = e instanceof Error ? e.message : String(e);
         }
       }
-      return jsonResponse(502, { error: "All Binance endpoints failed", details: lastErr });
+      return jsonResponse(502, {
+        error: "All Binance endpoints failed",
+        details: lastErr,
+      });
     }
 
     return jsonResponse(404, { error: `No handler for ${path}` });

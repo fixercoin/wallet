@@ -276,7 +276,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       });
     } else {
       if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
-        toast({ title: "Only admin wallet can add posts", variant: "destructive" });
+        toast({
+          title: "Only admin wallet can add posts",
+          variant: "destructive",
+        });
         return;
       }
       navigate("/express/add-post");

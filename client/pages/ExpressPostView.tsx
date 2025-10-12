@@ -63,19 +63,28 @@ export default function ExpressPostView() {
     }
 
     if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
-      toast({ title: "Only admin wallet can save posts", variant: "destructive" });
+      toast({
+        title: "Only admin wallet can save posts",
+        variant: "destructive",
+      });
       return;
     }
 
     try {
       const resp = await fetch(`/api/p2p/post`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Admin-Wallet": wallet.publicKey },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Wallet": wallet.publicKey,
+        },
         body: JSON.stringify({ id: post.id, ...form }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast({ title: `Failed to save: ${err.error || resp.statusText}`, variant: "destructive" });
+        toast({
+          title: `Failed to save: ${err.error || resp.statusText}`,
+          variant: "destructive",
+        });
         return;
       }
       const data = await resp.json();

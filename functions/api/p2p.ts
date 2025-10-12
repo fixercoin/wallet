@@ -7,7 +7,8 @@ export default async function (request: Request): Promise<Response> {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Admin-Wallet",
+        "Access-Control-Allow-Headers":
+          "Content-Type,Authorization,X-Admin-Wallet",
       },
     });
   }
@@ -26,7 +27,10 @@ export default async function (request: Request): Promise<Response> {
   const jsonResponse = (data: any, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
 
   try {
@@ -44,9 +48,15 @@ export default async function (request: Request): Promise<Response> {
     }
 
     // Create or update post (admin only)
-    if ((request.method === "POST" || request.method === "PUT") && path === "/post") {
+    if (
+      (request.method === "POST" || request.method === "PUT") &&
+      path === "/post"
+    ) {
       const body = await request.json().catch(() => null);
-      const adminHeader = request.headers.get("x-admin-wallet") || (body && body.adminWallet) || "";
+      const adminHeader =
+        request.headers.get("x-admin-wallet") ||
+        (body && body.adminWallet) ||
+        "";
       if (adminHeader !== ADMIN_WALLET) {
         return jsonResponse({ error: "unauthorized" }, 401);
       }
@@ -78,32 +88,55 @@ export default async function (request: Request): Promise<Response> {
     }
 
     // Trade messages: list
-    if (request.method === "GET" && path.startsWith("/trade/") && path.endsWith("/messages")) {
+    if (
+      request.method === "GET" &&
+      path.startsWith("/trade/") &&
+      path.endsWith("/messages")
+    ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/messages$/, "");
       const msgs = store.messages[tradeId] || [];
       return jsonResponse({ messages: msgs });
     }
 
     // Trade messages: post a message
-    if (request.method === "POST" && path.startsWith("/trade/") && path.endsWith("/message")) {
+    if (
+      request.method === "POST" &&
+      path.startsWith("/trade/") &&
+      path.endsWith("/message")
+    ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/message$/, "");
       const body = await request.json().catch(() => null);
       const msg = body?.message;
       if (!msg) return jsonResponse({ error: "invalid message" }, 400);
-      const entry = { id: `m-${Date.now()}`, message: msg, from: body.from || "unknown", ts: Date.now() };
+      const entry = {
+        id: `m-${Date.now()}`,
+        message: msg,
+        from: body.from || "unknown",
+        ts: Date.now(),
+      };
       store.messages[tradeId] = store.messages[tradeId] || [];
       store.messages[tradeId].push(entry);
       return jsonResponse({ message: entry }, 201);
     }
 
     // Upload proof (base64) for a trade
-    if (request.method === "POST" && path.startsWith("/trade/") && path.endsWith("/proof")) {
+    if (
+      request.method === "POST" &&
+      path.startsWith("/trade/") &&
+      path.endsWith("/proof")
+    ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/proof$/, "");
       const body = await request.json().catch(() => null);
       const proof = body?.proof; // expect { filename, data (base64) }
-      if (!proof || !proof.filename || !proof.data) return jsonResponse({ error: "invalid proof" }, 400);
+      if (!proof || !proof.filename || !proof.data)
+        return jsonResponse({ error: "invalid proof" }, 400);
       store.proofs[tradeId] = store.proofs[tradeId] || [];
-      store.proofs[tradeId].push({ id: `p-${Date.now()}`, filename: proof.filename, data: proof.data, ts: Date.now() });
+      store.proofs[tradeId].push({
+        id: `p-${Date.now()}`,
+        filename: proof.filename,
+        data: proof.data,
+        ts: Date.now(),
+      });
       return jsonResponse({ ok: true }, 201);
     }
 

@@ -98,7 +98,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     let mounted = true;
     const load = async () => {
       try {
-        const resp = await fetch('/api/p2p/list');
+        const resp = await fetch("/api/p2p/list");
         if (!resp.ok) return;
         const j = await resp.json();
         if (mounted) setPosts(j.posts || []);
@@ -114,7 +114,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     };
   }, []);
 
-
   const handleCopyAddress = async () => {
     if (!wallet) return;
     const success = await copyToClipboard(wallet.publicKey);
@@ -126,7 +125,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       variant: success ? undefined : "destructive",
     });
   };
-
 
   // Close token menu on outside click
   useEffect(() => {

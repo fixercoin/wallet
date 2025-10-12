@@ -121,16 +121,29 @@ export default function ExpressAddPost() {
           "Content-Type": "application/json",
           "X-Admin-Wallet": wallet.publicKey,
         },
-        body: JSON.stringify({ type, token, pricePkr: price, minToken: min, maxToken: max, paymentMethod: selectedPaymentMethod?.id ?? "bank" }),
+        body: JSON.stringify({
+          type,
+          token,
+          pricePkr: price,
+          minToken: min,
+          maxToken: max,
+          paymentMethod: selectedPaymentMethod?.id ?? "bank",
+        }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast({ title: `Failed to post: ${err.error || resp.statusText}`, variant: "destructive" });
+        toast({
+          title: `Failed to post: ${err.error || resp.statusText}`,
+          variant: "destructive",
+        });
         return;
       }
       const json = await resp.json();
       const createdPost = json.post;
-      toast({ title: "Offer posted", description: `${type.toUpperCase()} ${token} @ PKR ${price}` });
+      toast({
+        title: "Offer posted",
+        description: `${type.toUpperCase()} ${token} @ PKR ${price}`,
+      });
       navigate("/express/post", { state: { post: createdPost } });
     } catch (e) {
       toast({ title: "Failed to post offer", variant: "destructive" });

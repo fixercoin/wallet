@@ -614,7 +614,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 }
                 className="h-10 w-full rounded-md bg-[hsl(330,81%,60%)] text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
               >
-                {buyActive ? "Buy With PKR" : "Sell For PKR"}
+                {buyActive ? "Buy With PKR" : "Review Sell"}
               </Button>
 
               <div className="mt-1 text-center text-xs text-muted-foreground">

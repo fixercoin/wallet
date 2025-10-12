@@ -108,6 +108,26 @@ export default function ExpressStartTrade() {
     };
   }, [tradeId]);
 
+  // Notify when counterparty confirms settlement via special message
+  const localRole = params?.side === "sell" ? "seller" : "buyer";
+  const lastConfirmedMessageId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    const confirmMsg = messages
+      .slice()
+      .reverse()
+      .find((m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__");
+    if (confirmMsg && confirmMsg.id && confirmMsg.from !== localRole) {
+      if (lastConfirmedMessageId.current !== confirmMsg.id) {
+        toast({
+          title: "Order update",
+          description: "Counterparty confirmed settlement",
+        });
+        lastConfirmedMessageId.current = confirmMsg.id;
+      }
+    }
+  }, [messages, localRole, toast]);
+
   const handleSend = async () => {
     if (!tradeId) return;
     const text = message.trim();

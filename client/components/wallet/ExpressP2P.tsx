@@ -93,6 +93,28 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
+  // P2P market posts (polled for demo realtime)
+  const [posts, setPosts] = useState<any[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const resp = await fetch('/api/p2p/list');
+        if (!resp.ok) return;
+        const j = await resp.json();
+        if (mounted) setPosts(j.posts || []);
+      } catch (e) {
+        // ignore
+      }
+    };
+    load();
+    const id = setInterval(load, 2000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

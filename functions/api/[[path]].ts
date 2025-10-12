@@ -189,6 +189,69 @@ export const onRequest = async ({ request, env }) => {
       });
     }
 
+    // Binance passthrough: /api/binance/<path>
+    if (normalizedPath.startsWith("/binance/")) {
+      const BINANCE_ENDPOINTS = [
+        "https://api.binance.com",
+        "https://api1.binance.com",
+        "https://api2.binance.com",
+        "https://api3.binance.com",
+      ];
+      const subPath = normalizedPath.replace(/^\/binance\//, "/");
+      const search = url.search || "";
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
+        const base = BINANCE_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const resp = await fetch(target, {
+            method: request.method,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+            },
+            body:
+              request.method !== "GET" && request.method !== "HEAD"
+                ? await request
+                    .clone()
+                    .text()
+                    .catch(() => undefined)
+                : undefined,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            // try next if rate limited or server error
+            if (resp.status === 429 || resp.status >= 500) continue;
+            const t = await resp.text().catch(() => "");
+            return jsonCors(resp.status, { error: t || resp.statusText });
+          }
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await resp.json();
+            return jsonCors(200, data);
+          }
+          // Non-JSON: return as text
+          const text = await resp.text();
+          return new Response(text, {
+            status: 200,
+            headers: applyCors(
+              new Headers({ "Content-Type": contentType || "text/plain" }),
+            ),
+          });
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonCors(502, {
+        error: "All Binance endpoints failed",
+        details: lastErr,
+      });
+    }
+
     // Jupiter: /api/jupiter/price?ids=... (comma-separated mints)
     if (normalizedPath === "/jupiter/price") {
       const ids = url.searchParams.get("ids");

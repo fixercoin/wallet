@@ -314,33 +314,54 @@ export default function ExpressStartTrade() {
 
                 <div className="mt-3 flex gap-2">
                   <Button
-                    onClick={async () => {
-                      if (!tradeId) return;
-                      try {
-                        const resp = await fetch(
-                          `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                          {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              message: "__CONFIRMED_SETTLEMENT__",
-                              from: localRole,
-                            }),
-                          },
-                        );
-                        if (!resp.ok) throw new Error("failed");
-                        toast({ title: "You confirmed settlement" });
-                      } catch (e) {
-                        toast({
-                          title: "Confirmation failed",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
+                    onClick={() => setShowConfirm(true)}
                     className="h-10"
                   >
                     Confirm Settlement
                   </Button>
+
+                  {/* Confirmation modal */}
+                  {showConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                      <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
+                        <div className="mb-3 text-lg font-semibold">Confirm Settlement</div>
+                        <div className="mb-4 text-sm">Are you sure you want to confirm settlement for this order? This will notify the counterparty.</div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setShowConfirm(false)} className="h-9">Cancel</Button>
+                          <Button
+                            onClick={async () => {
+                              if (!tradeId) return;
+                              try {
+                                const resp = await fetch(
+                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                  {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      message: "__CONFIRMED_SETTLEMENT__",
+                                      from: localRole,
+                                    }),
+                                  },
+                                );
+                                if (!resp.ok) throw new Error("failed");
+                                setShowConfirm(false);
+                                toast({ title: "You confirmed settlement" });
+                              } catch (e) {
+                                setShowConfirm(false);
+                                toast({
+                                  title: "Confirmation failed",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className="h-9"
+                          >
+                            Confirm
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <Button
                     variant="outline"

@@ -81,9 +81,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
   const paymentMenuRef = useRef<HTMLDivElement | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodOption>(
-    PAYMENT_METHODS[0],
-  );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
@@ -581,7 +580,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         </div>
                         <div
                           className={`text-base font-semibold ${
-                            dexToken.priceChange?.h24 && dexToken.priceChange.h24 >= 0
+                            dexToken.priceChange?.h24 &&
+                            dexToken.priceChange.h24 >= 0
                               ? "text-emerald-600"
                               : "text-red-500"
                           }`}
@@ -614,7 +614,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     </div>
                   ) : (
                     <div className="text-xs text-muted-foreground">
-                      {dexError || "DexScreener data for this token is currently unavailable."}
+                      {dexError ||
+                        "DexScreener data for this token is currently unavailable."}
                     </div>
                   )}
                 </div>

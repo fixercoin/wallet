@@ -139,7 +139,7 @@ export default function ExpressStartTrade() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, from: "buyer" }),
+          body: JSON.stringify({ message: text, from: localRole }),
         },
       );
       if (!resp.ok) throw new Error("send failed");

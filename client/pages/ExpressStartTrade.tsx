@@ -130,26 +130,6 @@ export default function ExpressStartTrade() {
     }
   }, [messages, localRole, toast]);
 
-  const handleSend = async () => {
-    if (!tradeId) return;
-    const text = message.trim();
-    if (!text) return;
-    try {
-      const resp = await fetch(
-        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, from: localRole }),
-        },
-      );
-      if (!resp.ok) throw new Error("send failed");
-      setMessage("");
-      toast({ title: "Message sent" });
-    } catch (e) {
-      toast({ title: "Failed to send message", variant: "destructive" });
-    }
-  };
 
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);

@@ -47,7 +47,18 @@ export default function ExpressPostView() {
         </header>
         <main className="flex-1">
           <div className="container mx-auto max-w-md px-4 py-6">
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-card p-4 text-sm">
+            <div className="mb-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                aria-label="Back"
+                className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm">
               No post data was provided. Go back and create a post.
             </div>
           </div>
@@ -107,14 +118,6 @@ export default function ExpressPostView() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              aria-label="Back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div className="font-semibold">Offer Details</div>
           </div>
           <div>
@@ -134,7 +137,18 @@ export default function ExpressPostView() {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-card p-4">
+          <div className="mb-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Back"
+              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-4">
             <div className="space-y-3">
               <div>
                 <div className="text-xs text-muted-foreground">Type</div>

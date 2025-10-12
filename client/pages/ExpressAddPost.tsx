@@ -187,17 +187,7 @@ export default function ExpressAddPost() {
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              aria-label="Back"
-              className="h-9 w-9 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </div>
+          <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
             <Button
@@ -213,14 +203,25 @@ export default function ExpressAddPost() {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
+          <div className="mb-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Back"
+              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
           {connectMsg && (
             <div className="mb-3 rounded-md border border-[hsl(var(--border))] bg-white/60 px-3 py-2 text-xs text-muted-foreground">
               {connectMsg}
             </div>
           )}
 
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(330,100%,96%)] p-3">
-            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-[hsl(330,40%,96%)]">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-3">
+            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
               <button
                 className={`py-2 text-center text-sm font-semibold ${
                   type === "buy"
@@ -248,7 +249,7 @@ export default function ExpressAddPost() {
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Token
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                   <CurrencyBadge label={token} />
                   <div className="relative ml-auto" ref={tokenMenuRef}>
                     <button
@@ -291,7 +292,7 @@ export default function ExpressAddPost() {
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Price (PKR per {token})
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                   <CurrencyBadge label="PKR" />
                   <input
                     value={pricePkr}
@@ -310,7 +311,7 @@ export default function ExpressAddPost() {
                       <div className="mb-1 text-[10px] text-muted-foreground">
                         Price per USDC (Fixercoin)
                       </div>
-                      <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                         <input
                           value={pricePerUSDC}
                           onChange={(e) => {
@@ -327,7 +328,7 @@ export default function ExpressAddPost() {
                       <div className="mb-1 text-[10px] text-muted-foreground">
                         Price per SOL (Fixercoin)
                       </div>
-                      <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                         <input
                           value={pricePerSOL}
                           onChange={(e) => {
@@ -349,7 +350,7 @@ export default function ExpressAddPost() {
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
                     Min Amount ({token})
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                     <input
                       value={minToken}
                       onChange={(e) => {
@@ -366,7 +367,7 @@ export default function ExpressAddPost() {
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
                     Max Amount ({token})
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                     <input
                       value={maxToken}
                       onChange={(e) => {
@@ -388,7 +389,7 @@ export default function ExpressAddPost() {
                 <div className="relative" ref={paymentMenuRef}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
+                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-left text-sm"
                     aria-haspopup="listbox"
                     aria-expanded={paymentMenuOpen}
                     onClick={() => setPaymentMenuOpen((o) => !o)}
@@ -427,7 +428,7 @@ export default function ExpressAddPost() {
                     <div className="mb-1 text-[10px] text-muted-foreground">
                       Account Name ({selectedPaymentMethod.label})
                     </div>
-                    <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                       <input
                         value={accountName}
                         onChange={(e) => setAccountName(e.target.value)}
@@ -440,7 +441,7 @@ export default function ExpressAddPost() {
                     <div className="mb-1 text-[10px] text-muted-foreground">
                       Account Number ({selectedPaymentMethod.label})
                     </div>
-                    <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                       <input
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
@@ -457,7 +458,7 @@ export default function ExpressAddPost() {
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
                     Wallet Address (to receive assets)
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                     <input
                       value={walletAddress}
                       onChange={(e) => setWalletAddress(e.target.value)}

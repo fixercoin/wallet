@@ -294,20 +294,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (onBack) onBack();
-                else navigate(-1);
-              }}
-              aria-label="Back to dashboard"
-              className="h-9 w-9 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </div>
+          <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
             {wallet ? (
@@ -353,8 +340,28 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             </div>
           )}
 
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(330,100%,96%)] p-3">
-            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-[hsl(330,40%,96%)]">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (onBack) onBack();
+                    else navigate("/");
+                  }}
+                  aria-label="Back"
+                  className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="text-sm font-semibold uppercase">
+                  EXPRESS P2P SERVICE
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
               <button
                 className={`py-2 text-center text-sm font-semibold ${
                   buyActive
@@ -382,7 +389,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <>
                   <div>
                     <SectionLabel>Spend</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                       <CurrencyBadge label="PKR" />
                       <input
                         value={pkrAmount}
@@ -399,7 +406,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
                   <div>
                     <SectionLabel>Receive</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                       <CurrencyBadge label={selectedToken} />
                       <input
                         value={buyReceiveAmount}
@@ -454,7 +461,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <>
                   <div>
                     <SectionLabel>Spend</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                       <CurrencyBadge label={selectedToken} />
                       <input
                         value={tokenAmount}
@@ -507,7 +514,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
                   <div>
                     <SectionLabel>Receive</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
                       <CurrencyBadge label="PKR" />
                       <input
                         value={sellReceivePkr}
@@ -540,7 +547,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     <div className="relative" ref={paymentMenuRef}>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
+                        className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-left text-sm"
                         aria-haspopup="listbox"
                         aria-expanded={paymentMenuOpen}
                         onClick={() => setPaymentMenuOpen((open) => !open)}
@@ -579,7 +586,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 ) : (
                   <>
                     <SectionLabel>Sell Instructions</SectionLabel>
-                    <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-xs text-muted-foreground">
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-xs text-muted-foreground">
                       After matching with a counterparty, you'll receive payment
                       instructions. No wallet address is required on this page.
                     </div>

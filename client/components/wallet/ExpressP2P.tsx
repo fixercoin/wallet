@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Info } from "lucide-react";
+import { ArrowLeft, ChevronDown, Copy, Info, LogOut } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { shortenAddress, copyToClipboard } from "@/lib/wallet";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExpressP2PProps {
   onBack?: () => void;
@@ -26,9 +28,40 @@ const CurrencyBadge = ({ label }: { label: string }) => (
 const W_SOL_MINT = "So11111111111111111111111111111111111111112";
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 
+const TOKEN_MINTS = {
+  USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  SOL: W_SOL_MINT,
+  FIXERCOIN: FIXERCOIN_MINT,
+} as const;
+
+type PaymentMethodOption = {
+  id: "bank" | "easypaisa" | "firstpay";
+  label: string;
+  description?: string;
+};
+
+const PAYMENT_METHODS: PaymentMethodOption[] = [
+  {
+    id: "bank",
+    label: "BANK ACCOUNT",
+    description: "Settle using a standard bank account transfer.",
+  },
+  {
+    id: "easypaisa",
+    label: "EASYPAISA",
+    description: "Use your Easypaisa account-linked bank for instant payments.",
+  },
+  {
+    id: "firstpay",
+    label: "FIRSTPAY",
+    description: "Accept and send payments via FirstPay business banking.",
+  },
+];
+
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
+  const { wallet, logout } = useWallet();
+  const { toast } = useToast();
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [pkrAmount, setPkrAmount] = useState<string>(""); // buy: PKR -> token
@@ -46,6 +79,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [loadingTokenPrice, setLoadingTokenPrice] = useState(false);
   const [tokenPriceError, setTokenPriceError] = useState<string | null>(null);
 
+  const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
+  const paymentMenuRef = useRef<HTMLDivElement | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
+
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
@@ -53,12 +91,39 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     if (onBack) onBack();
   };
 
+  const handleCopyAddress = async () => {
+    if (!wallet) return;
+    const success = await copyToClipboard(wallet.publicKey);
+    toast({
+      title: success ? "Address Copied" : "Copy Failed",
+      description: success
+        ? "Wallet address copied to clipboard."
+        : "Unable to copy wallet address.",
+      variant: success ? undefined : "destructive",
+    });
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      const provider = ensureFixoriumProvider();
+      await provider?.disconnect();
+    } catch (error) {
+      console.warn("Failed to disconnect provider:", error);
+    } finally {
+      logout();
+      toast({ title: "Wallet Disconnected" });
+    }
+  };
+
   // Close token menu on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!tokenMenuRef.current) return;
-      if (!tokenMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (tokenMenuRef.current && !tokenMenuRef.current.contains(target)) {
         setTokenMenuOpen(false);
+      }
+      if (paymentMenuRef.current && !paymentMenuRef.current.contains(target)) {
+        setPaymentMenuOpen(false);
       }
     };
     document.addEventListener("click", onDocClick);
@@ -112,7 +177,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               return;
             }
           } catch {}
-          if (!abort) setTokenPriceUsd(100); // fallback
+          if (!abort) setTokenPriceUsd(100);
           return;
         }
         if (selectedToken === "FIXERCOIN") {
@@ -206,13 +271,38 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              onClick={handleConnect}
-              disabled={connecting}
-              className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
-            >
-              {wallet ? "CONNECTED" : "CONNECT WALLET"}
-            </Button>
+            {wallet ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCopyAddress}
+                  className="h-9 gap-2 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
+                >
+                  <span className="font-mono text-xs">
+                    {shortenAddress(wallet.publicKey, 6)}
+                  </span>
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleDisconnect}
+                  className="h-9 rounded-md text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Disconnect
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleConnect}
+                disabled={connecting}
+                className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+              >
+                {connecting ? "CONNECTING…" : "CONNECT WALLET"}
+              </Button>
+            )}
             <Button
               onClick={() => navigate("/express/add-post")}
               className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
@@ -413,15 +503,122 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
               <div>
                 <SectionLabel>Payment Methods</SectionLabel>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
-                  aria-haspopup="listbox"
-                  aria-expanded="false"
-                >
-                  <span>Bank Account</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </button>
+                <div className="relative" ref={paymentMenuRef}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
+                    aria-haspopup="listbox"
+                    aria-expanded={paymentMenuOpen}
+                    onClick={() => setPaymentMenuOpen((open) => !open)}
+                  >
+                    <span>{selectedPaymentMethod.label}</span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                  {paymentMenuOpen && (
+                    <div
+                      role="listbox"
+                      className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl"
+                    >
+                      {PAYMENT_METHODS.map((method) => (
+                        <button
+                          key={method.id}
+                          role="option"
+                          className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-gray-50 ${method.id === selectedPaymentMethod.id ? "bg-gray-100 font-semibold" : ""}`}
+                          onClick={() => {
+                            setSelectedPaymentMethod(method);
+                            setPaymentMenuOpen(false);
+                          }}
+                        >
+                          <span>{method.label}</span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {method.description}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {selectedPaymentMethod.description}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                  <span>DexScreener Insights</span>
+                  {dexToken?.url && (
+                    <a
+                      href={dexToken.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[hsl(var(--primary))] hover:underline"
+                    >
+                      View Pair
+                    </a>
+                  )}
+                </div>
+                <div className="mt-2 text-sm text-foreground">
+                  {loadingDexData ? (
+                    <div className="text-xs text-muted-foreground">
+                      Fetching live market data…
+                    </div>
+                  ) : dexToken ? (
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-[10px] uppercase text-muted-foreground">
+                          Price (USD)
+                        </div>
+                        <div className="text-base font-semibold">
+                          {dexToken.priceUsd
+                            ? parseFloat(dexToken.priceUsd).toFixed(4)
+                            : tokenPriceUsd.toFixed(4)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-muted-foreground">
+                          24h Change
+                        </div>
+                        <div
+                          className={`text-base font-semibold ${
+                            dexToken.priceChange?.h24 &&
+                            dexToken.priceChange.h24 >= 0
+                              ? "text-emerald-600"
+                              : "text-red-500"
+                          }`}
+                        >
+                          {dexToken.priceChange?.h24 !== undefined
+                            ? `${dexToken.priceChange.h24 >= 0 ? "+" : ""}${dexToken.priceChange.h24.toFixed(2)}%`
+                            : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-muted-foreground">
+                          Volume (24h)
+                        </div>
+                        <div className="text-base font-semibold">
+                          {dexToken.volume?.h24
+                            ? `$${dexToken.volume.h24.toLocaleString()}`
+                            : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-muted-foreground">
+                          Liquidity (USD)
+                        </div>
+                        <div className="text-base font-semibold">
+                          {dexToken.liquidity?.usd
+                            ? `$${dexToken.liquidity.usd.toLocaleString()}`
+                            : "—"}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      {dexError ||
+                        "DexScreener data for this token is currently unavailable."}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Button

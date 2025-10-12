@@ -29,11 +29,30 @@ export default function ExpressAddPost() {
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
+  // Payment methods for ExpressAddPost
+  type PaymentMethodOption = {
+    id: "bank" | "easypaisa" | "firstpay";
+    label: string;
+    description?: string;
+  };
+
+  const PAYMENT_METHODS: PaymentMethodOption[] = [
+    { id: "bank", label: "Bank Account", description: "Settle using a standard bank account transfer." },
+    { id: "easypaisa", label: "Easypaisa", description: "Use Easypaisa for instant transfers." },
+    { id: "firstpay", label: "FirstPay", description: "Accept payments via FirstPay business banking." },
+  ];
+
+  const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
+  const paymentMenuRef = useRef<HTMLDivElement | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
+
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!tokenMenuRef.current) return;
-      if (!tokenMenuRef.current.contains(e.target as Node)) {
+      if (tokenMenuRef.current && !tokenMenuRef.current.contains(e.target as Node)) {
         setTokenMenuOpen(false);
+      }
+      if (paymentMenuRef.current && !paymentMenuRef.current.contains(e.target as Node)) {
+        setPaymentMenuOpen(false);
       }
     };
     document.addEventListener("click", onDocClick);
@@ -247,15 +266,36 @@ export default function ExpressAddPost() {
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Payment Method
                 </div>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
-                  aria-haspopup="listbox"
-                  aria-expanded="false"
-                >
-                  <span>Bank Account</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </button>
+                <div className="relative" ref={paymentMenuRef}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
+                    aria-haspopup="listbox"
+                    aria-expanded={paymentMenuOpen}
+                    onClick={() => setPaymentMenuOpen((o) => !o)}
+                  >
+                    <span>{selectedPaymentMethod.label}</span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                  {paymentMenuOpen && (
+                    <div role="listbox" className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl">
+                      {PAYMENT_METHODS.map((method) => (
+                        <button
+                          key={method.id}
+                          role="option"
+                          className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-gray-50 ${method.id === selectedPaymentMethod.id ? "bg-gray-100 font-semibold" : ""}`}
+                          onClick={() => {
+                            setSelectedPaymentMethod(method);
+                            setPaymentMenuOpen(false);
+                          }}
+                        >
+                          <span>{method.label}</span>
+                          {method.description && <span className="text-xs font-normal text-muted-foreground">{method.description}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Button

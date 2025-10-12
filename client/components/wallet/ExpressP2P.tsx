@@ -96,9 +96,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   // Close token menu on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!tokenMenuRef.current) return;
-      if (!tokenMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (tokenMenuRef.current && !tokenMenuRef.current.contains(target)) {
         setTokenMenuOpen(false);
+      }
+      if (paymentMenuRef.current && !paymentMenuRef.current.contains(target)) {
+        setPaymentMenuOpen(false);
       }
     };
     document.addEventListener("click", onDocClick);

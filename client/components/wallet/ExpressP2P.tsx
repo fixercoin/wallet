@@ -159,55 +159,112 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     };
   }, []);
 
-  // Fetch token USD price depending on selected token
+  // Fetch token USD price depending on selected token and hydrate DexScreener data
   useEffect(() => {
     let abort = false;
     const load = async () => {
+      const mint = TOKEN_MINTS[selectedToken];
+      if (!mint) {
+        setDexToken(null);
+        setDexError("Unsupported token");
+        setTokenPriceError("Price unavailable");
+        return;
+      }
+
+      setLoadingTokenPrice(true);
+      setLoadingDexData(true);
+      setTokenPriceError(null);
+      setDexError(null);
+
       try {
-        setLoadingTokenPrice(true);
-        setTokenPriceError(null);
+        let priceCaptured = false;
+        let dexFetchFailed = false;
+        let dexData: DexscreenerToken | null = null;
+
+        try {
+          dexData = await dexscreenerAPI.getTokenByMint(mint);
+        } catch (error) {
+          dexFetchFailed = true;
+          console.warn("DexScreener lookup failed:", error);
+        }
+
+        if (!abort) {
+          setDexToken(dexData);
+          setDexError(dexFetchFailed && !dexData ? "DexScreener data unavailable" : null);
+        }
+
+        if (!abort && dexData?.priceUsd) {
+          const dexPrice = parseFloat(dexData.priceUsd);
+          if (Number.isFinite(dexPrice) && dexPrice > 0) {
+            setTokenPriceUsd(dexPrice);
+            priceCaptured = true;
+          }
+        }
+
+        if (priceCaptured) {
+          return;
+        }
+
         if (selectedToken === "USDC") {
           if (!abort) setTokenPriceUsd(1);
           return;
         }
+
         if (selectedToken === "SOL") {
           try {
             const prices = await jupiterAPI.getTokenPrices([W_SOL_MINT]);
-            const p = prices?.[W_SOL_MINT];
-            if (p && p > 0) {
-              if (!abort) setTokenPriceUsd(p);
+            const solPrice = prices?.[W_SOL_MINT];
+            if (!abort && solPrice && solPrice > 0) {
+              setTokenPriceUsd(solPrice);
+              priceCaptured = true;
               return;
             }
-          } catch {}
-          if (!abort) setTokenPriceUsd(100); // fallback
+          } catch (error) {
+            console.warn("Jupiter SOL price fallback failed:", error);
+          }
+          if (!abort) setTokenPriceUsd(100);
           return;
         }
+
         if (selectedToken === "FIXERCOIN") {
           try {
             const fixer = await fixercoinPriceService
               .getFixercoinPrice()
               .catch(() => null as any);
-            if (fixer && typeof fixer.price === "number" && fixer.price > 0) {
-              if (!abort) setTokenPriceUsd(fixer.price);
+            if (!abort && fixer && typeof fixer.price === "number" && fixer.price > 0) {
+              setTokenPriceUsd(fixer.price);
+              priceCaptured = true;
               return;
             }
-          } catch {}
+          } catch (error) {
+            console.warn("Fixercoin price proxy failed:", error);
+          }
           try {
             const price = await fixercoinPriceService.getPrice();
-            if (price && price > 0) {
-              if (!abort) setTokenPriceUsd(price);
+            if (!abort && price && price > 0) {
+              setTokenPriceUsd(price);
+              priceCaptured = true;
               return;
             }
-          } catch {}
+          } catch (error) {
+            console.warn("Fixercoin fallback price failed:", error);
+          }
           if (!abort) setTokenPriceUsd(0.000023);
           return;
         }
-      } catch (e) {
-        if (!abort) setTokenPriceError("Price unavailable");
+      } catch (error) {
+        if (!abort) {
+          console.warn("Token price load error:", error);
+          setTokenPriceError("Price unavailable");
+        }
       } finally {
-        if (!abort) setLoadingTokenPrice(false);
+        if (!abort) {
+          setLoadingTokenPrice(false);
+          setLoadingDexData(false);
+        }
       }
     };
+
     load();
     return () => {
       abort = true;

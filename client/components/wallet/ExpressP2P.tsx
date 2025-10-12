@@ -8,6 +8,7 @@ import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 interface ExpressP2PProps {
   onBack?: () => void;

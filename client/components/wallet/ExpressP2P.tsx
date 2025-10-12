@@ -6,7 +6,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
-import { dexscreenerAPI, type DexscreenerToken } from "@/lib/services/dexscreener";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 

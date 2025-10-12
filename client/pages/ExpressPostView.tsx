@@ -58,7 +58,7 @@ export default function ExpressPostView() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-card p-4 text-sm">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm">
               No post data was provided. Go back and create a post.
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function ExpressPostView() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-card p-4">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-4">
             <div className="space-y-3">
               <div>
                 <div className="text-xs text-muted-foreground">Type</div>

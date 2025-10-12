@@ -534,45 +534,75 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               </div>
 
               <div>
-                <SectionLabel>Payment Methods</SectionLabel>
-                <div className="relative" ref={paymentMenuRef}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
-                    aria-haspopup="listbox"
-                    aria-expanded={paymentMenuOpen}
-                    onClick={() => setPaymentMenuOpen((open) => !open)}
-                  >
-                    <span>{selectedPaymentMethod.label}</span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                  {paymentMenuOpen && (
-                    <div
-                      role="listbox"
-                      className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl"
-                    >
-                      {PAYMENT_METHODS.map((method) => (
-                        <button
-                          key={method.id}
-                          role="option"
-                          className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-gray-50 ${method.id === selectedPaymentMethod.id ? "bg-gray-100 font-semibold" : ""}`}
-                          onClick={() => {
-                            setSelectedPaymentMethod(method);
-                            setPaymentMenuOpen(false);
-                          }}
+                {buyActive ? (
+                  <>
+                    <SectionLabel>Payment Methods</SectionLabel>
+                    <div className="relative" ref={paymentMenuRef}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
+                        aria-haspopup="listbox"
+                        aria-expanded={paymentMenuOpen}
+                        onClick={() => setPaymentMenuOpen((open) => !open)}
+                      >
+                        <span>{selectedPaymentMethod.label}</span>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                      {paymentMenuOpen && (
+                        <div
+                          role="listbox"
+                          className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl"
                         >
-                          <span>{method.label}</span>
-                          <span className="text-xs font-normal text-muted-foreground">
-                            {method.description}
-                          </span>
-                        </button>
-                      ))}
+                          {PAYMENT_METHODS.map((method) => (
+                            <button
+                              key={method.id}
+                              role="option"
+                              className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-gray-50 ${method.id === selectedPaymentMethod.id ? "bg-gray-100 font-semibold" : ""}`}
+                              onClick={() => {
+                                setSelectedPaymentMethod(method);
+                                setPaymentMenuOpen(false);
+                              }}
+                            >
+                              <span>{method.label}</span>
+                              <span className="text-xs font-normal text-muted-foreground">
+                                {method.description}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {selectedPaymentMethod.description}
-                </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {selectedPaymentMethod.description}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <SectionLabel>Wallet Address</SectionLabel>
+                    <div className="flex items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <span className="font-mono text-xs">{shortenAddress(ADMIN_WALLET, 6)}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          const success = await copyToClipboard(ADMIN_WALLET);
+                          toast({
+                            title: success ? "Address Copied" : "Copy Failed",
+                            description: success ? "Counterparty address copied." : "Unable to copy address.",
+                            variant: success ? undefined : "destructive",
+                          });
+                        }}
+                        className="h-7"
+                      >
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Copy
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Send your {selectedToken} to this address to proceed.
+                    </p>
+                  </>
+                )}
               </div>
 
               <Button

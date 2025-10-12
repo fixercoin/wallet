@@ -22,6 +22,7 @@ import TokenListing from "./pages/TokenListing";
 import ExpressAddPost from "./pages/ExpressAddPost";
 import ExpressPostView from "./pages/ExpressPostView";
 import ExpressStartTrade from "./pages/ExpressStartTrade";
+import ExpressP2P from "./components/wallet/ExpressP2P";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/fixorium/add" element={<FixoriumAdd />} />
               <Route path="/fixorium/create-token" element={<CreateToken />} />
               <Route path="/express/add-post" element={<ExpressAddPost />} />
+              <Route path="/express" element={<ExpressP2P />} />
               <Route
                 path="/express/start-trade"
                 element={<ExpressStartTrade />}

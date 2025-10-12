@@ -130,27 +130,6 @@ export default function ExpressStartTrade() {
     }
   }, [messages, localRole, toast]);
 
-  const handleSend = async () => {
-    if (!tradeId) return;
-    const text = message.trim();
-    if (!text) return;
-    try {
-      const resp = await fetch(
-        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, from: localRole }),
-        },
-      );
-      if (!resp.ok) throw new Error("send failed");
-      setMessage("");
-      toast({ title: "Message sent" });
-    } catch (e) {
-      toast({ title: "Failed to send message", variant: "destructive" });
-    }
-  };
-
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);
     if (!match) return false;
@@ -160,32 +139,37 @@ export default function ExpressStartTrade() {
     );
   }, [match, params]);
 
-  const handleUploadProof = async () => {
-    if (!tradeId || !proofFile) return;
+  // Send a message; if a file is attached, include it in the message payload
+  const sendMessage = async () => {
+    if (!tradeId) return;
+    const text = message.trim();
+    if (!text && !proofFile) return;
     try {
       setUploading(true);
-      // Read file as base64
-      const base64: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(proofFile);
-      });
+      let body: any = { message: text || "", from: localRole };
+      if (proofFile) {
+        const base64: string = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(proofFile);
+        });
+        body.proof = { filename: proofFile.name, data: base64 };
+      }
       const resp = await fetch(
-        `/api/p2p/trade/${encodeURIComponent(tradeId)}/proof`,
+        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            proof: { filename: proofFile.name, data: base64 },
-          }),
+          body: JSON.stringify(body),
         },
       );
-      if (!resp.ok) throw new Error("upload failed");
+      if (!resp.ok) throw new Error("send failed");
+      setMessage("");
       setProofFile(null);
-      toast({ title: "Proof uploaded" });
+      toast({ title: "Message sent" });
     } catch (e) {
-      toast({ title: "Upload failed", variant: "destructive" });
+      toast({ title: "Failed to send message", variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -201,19 +185,22 @@ export default function ExpressStartTrade() {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          <div className="mb-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              aria-label="Back"
-              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
           <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-4">
-            <h2 className="mb-2 text-base font-semibold">Order Review</h2>
+            <div className="mb-3 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/express")}
+                aria-label="Back"
+                className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-sm font-semibold uppercase">
+                Order Review
+              </div>
+            </div>
+
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Side</span>
@@ -294,25 +281,6 @@ export default function ExpressStartTrade() {
 
             <div className="mt-4">
               <div className="mt-4">
-                <div className="mb-1 text-xs font-medium text-muted-foreground">
-                  Upload payment proof (image)
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                    className="block w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm"
-                  />
-                  <Button
-                    onClick={handleUploadProof}
-                    disabled={!tradeId || !proofFile || uploading}
-                    className="h-10 px-3"
-                  >
-                    {uploading ? "Uploading…" : "Upload"}
-                  </Button>
-                </div>
-
                 <div className="mt-3 flex gap-2">
                   <Button onClick={() => setShowConfirm(true)} className="h-10">
                     Confirm Settlement
@@ -373,14 +341,6 @@ export default function ExpressStartTrade() {
                       </div>
                     </div>
                   )}
-
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(-1)}
-                    className="h-10"
-                  >
-                    Back
-                  </Button>
                 </div>
               </div>
             </div>
@@ -410,25 +370,41 @@ export default function ExpressStartTrade() {
                 messages.map((m) => (
                   <div key={m.id} className="mb-1">
                     <span className="font-medium">{m.from}:</span> {m.message}
+                    {m.proof?.filename && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Attachment: {m.proof.filename}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex gap-2 items-center">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                className="block rounded-md border border-[hsl(var(--input))] bg-white px-2 py-1 text-sm w-32"
+              />
               <input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message…"
-                className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
+                className="flex-1 rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
               />
               <Button
-                onClick={handleSend}
-                disabled={!tradeId || !message.trim()}
+                onClick={sendMessage}
+                disabled={!tradeId || (!message.trim() && !proofFile)}
                 className="h-10 px-3"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            {proofFile && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Selected: {proofFile.name}
+              </div>
+            )}
           </div>
         )}
       </main>

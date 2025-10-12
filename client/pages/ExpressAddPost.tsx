@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 const CurrencyBadge = ({ label }: { label: string }) => (
   <span className="inline-flex shrink-0 items-center rounded-md bg-secondary/60 px-2 py-1 text-xs font-semibold text-foreground">
@@ -15,7 +16,6 @@ const CurrencyBadge = ({ label }: { label: string }) => (
 export default function ExpressAddPost() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
-  const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
   const { toast } = useToast();
 
   const [type, setType] = useState<"buy" | "sell">("buy");

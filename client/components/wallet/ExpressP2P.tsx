@@ -330,13 +330,38 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              onClick={handleConnect}
-              disabled={connecting}
-              className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
-            >
-              {wallet ? "CONNECTED" : "CONNECT WALLET"}
-            </Button>
+            {wallet ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCopyAddress}
+                  className="h-9 gap-2 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
+                >
+                  <span className="font-mono text-xs">
+                    {shortenAddress(wallet.publicKey, 6)}
+                  </span>
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleDisconnect}
+                  className="h-9 rounded-md text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Disconnect
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleConnect}
+                disabled={connecting}
+                className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+              >
+                {connecting ? "CONNECTING…" : "CONNECT WALLET"}
+              </Button>
+            )}
             <Button
               onClick={() => navigate("/express/add-post")}
               className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"

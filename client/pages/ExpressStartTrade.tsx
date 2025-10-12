@@ -27,6 +27,8 @@ export default function ExpressStartTrade() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [tradeId, setTradeId] = useState<string | null>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Load posts to match an order against seller listings
   useEffect(() => {
@@ -136,6 +138,37 @@ export default function ExpressStartTrade() {
     );
   }, [match, params]);
 
+  const handleUploadProof = async () => {
+    if (!tradeId || !proofFile) return;
+    try {
+      setUploading(true);
+      // Read file as base64
+      const base64: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(proofFile);
+      });
+      const resp = await fetch(
+        `/api/p2p/trade/${encodeURIComponent(tradeId)}/proof`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            proof: { filename: proofFile.name, data: base64 },
+          }),
+        },
+      );
+      if (!resp.ok) throw new Error("upload failed");
+      setProofFile(null);
+      toast({ title: "Proof uploaded" });
+    } catch (e) {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
@@ -177,29 +210,8 @@ export default function ExpressStartTrade() {
               </div>
               {params?.side === "sell" ? (
                 <div className="flex items-center justify-between">
-                  <span>Wallet Address</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">
-                      {shortenAddress(ADMIN_WALLET, 6)}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        const ok = await copyToClipboard(ADMIN_WALLET);
-                        toast({
-                          title: ok ? "Address Copied" : "Copy Failed",
-                          description: ok
-                            ? "Counterparty address copied."
-                            : "Unable to copy address.",
-                          variant: ok ? undefined : "destructive",
-                        });
-                      }}
-                      className="h-7"
-                    >
-                      <Copy className="h-3.5 w-3.5 mr-1" /> Copy
-                    </Button>
-                  </div>
+                  <span>Sell Instructions</span>
+                  <span className="text-xs text-muted-foreground">Will be shared after match</span>
                 </div>
               ) : (
                 <div className="flex justify-between">
@@ -272,6 +284,25 @@ export default function ExpressStartTrade() {
                     </div>
                   ))
                 )}
+              </div>
+
+              <div className="mt-4">
+                <div className="mb-1 text-xs font-medium text-muted-foreground">Upload payment proof (image)</div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                    className="block w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm"
+                  />
+                  <Button
+                    onClick={handleUploadProof}
+                    disabled={!tradeId || !proofFile || uploading}
+                    className="h-10 px-3"
+                  >
+                    {uploading ? "Uploading…" : "Upload"}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -186,7 +186,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
             <div className="space-y-6">
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  All ACCOUNTS
+                  SELECT ACCOUNT
                 </div>
                 <div className="flex items-center">
                   <select
@@ -240,8 +240,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         }
                         className="flex-1 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-2 rounded-md border border-[hsl(var(--border))] font-mono"
                       >
-                        <option value="recovery">Recovery Phrase</option>
-                        <option value="private">Private Key</option>
+                        <option value="recovery">RECOVERY PHRASE</option>
+                        <option value="private">PRIVATE KEY</option>
                       </select>
 
                       <select

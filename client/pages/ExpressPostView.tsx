@@ -26,7 +26,12 @@ export default function ExpressPostView() {
       <div className="flex min-h-screen w-screen flex-col bg-background">
         <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
           <div className="container mx-auto flex h-14 items-center px-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Back">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Back"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="ml-4 font-semibold">Post not found</div>
@@ -64,14 +69,26 @@ export default function ExpressPostView() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Back">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Back"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="font-semibold">Offer Details</div>
           </div>
           <div>
-            <Button onClick={() => setEditing((e) => !e)} className="mr-2">{editing ? "Cancel" : "Edit"}</Button>
-            <Button onClick={handleSave} className="bg-[hsl(330,81%,60%)] text-white">Save</Button>
+            <Button onClick={() => setEditing((e) => !e)} className="mr-2">
+              {editing ? "Cancel" : "Edit"}
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="bg-[hsl(330,81%,60%)] text-white"
+            >
+              Save
+            </Button>
           </div>
         </div>
       </header>
@@ -83,19 +100,31 @@ export default function ExpressPostView() {
               <div>
                 <div className="text-xs text-muted-foreground">Type</div>
                 {editing ? (
-                  <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full rounded-md border px-3 py-2">
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                    className="w-full rounded-md border px-3 py-2"
+                  >
                     <option value="buy">Buy</option>
                     <option value="sell">Sell</option>
                   </select>
                 ) : (
-                  <div className="font-semibold">{post.type?.toUpperCase()}</div>
+                  <div className="font-semibold">
+                    {post.type?.toUpperCase()}
+                  </div>
                 )}
               </div>
 
               <div>
                 <div className="text-xs text-muted-foreground">Token</div>
                 {editing ? (
-                  <select value={form.token} onChange={(e) => setForm({ ...form, token: e.target.value })} className="w-full rounded-md border px-3 py-2">
+                  <select
+                    value={form.token}
+                    onChange={(e) =>
+                      setForm({ ...form, token: e.target.value })
+                    }
+                    className="w-full rounded-md border px-3 py-2"
+                  >
                     <option value="USDC">USDC</option>
                     <option value="SOL">SOL</option>
                     <option value="FIXERCOIN">FIXERCOIN</option>
@@ -108,7 +137,13 @@ export default function ExpressPostView() {
               <div>
                 <div className="text-xs text-muted-foreground">Price (PKR)</div>
                 {editing ? (
-                  <input value={form.pricePkr} onChange={(e) => setForm({ ...form, pricePkr: e.target.value })} className="w-full rounded-md border px-3 py-2" />
+                  <input
+                    value={form.pricePkr}
+                    onChange={(e) =>
+                      setForm({ ...form, pricePkr: e.target.value })
+                    }
+                    className="w-full rounded-md border px-3 py-2"
+                  />
                 ) : (
                   <div className="font-semibold">PKR {post.pricePkr}</div>
                 )}
@@ -118,7 +153,13 @@ export default function ExpressPostView() {
                 <div>
                   <div className="text-xs text-muted-foreground">Min</div>
                   {editing ? (
-                    <input value={form.minToken} onChange={(e) => setForm({ ...form, minToken: e.target.value })} className="w-full rounded-md border px-3 py-2" />
+                    <input
+                      value={form.minToken}
+                      onChange={(e) =>
+                        setForm({ ...form, minToken: e.target.value })
+                      }
+                      className="w-full rounded-md border px-3 py-2"
+                    />
                   ) : (
                     <div className="font-semibold">{post.minToken}</div>
                   )}
@@ -126,7 +167,13 @@ export default function ExpressPostView() {
                 <div>
                   <div className="text-xs text-muted-foreground">Max</div>
                   {editing ? (
-                    <input value={form.maxToken} onChange={(e) => setForm({ ...form, maxToken: e.target.value })} className="w-full rounded-md border px-3 py-2" />
+                    <input
+                      value={form.maxToken}
+                      onChange={(e) =>
+                        setForm({ ...form, maxToken: e.target.value })
+                      }
+                      className="w-full rounded-md border px-3 py-2"
+                    />
                   ) : (
                     <div className="font-semibold">{post.maxToken}</div>
                   )}
@@ -134,9 +181,17 @@ export default function ExpressPostView() {
               </div>
 
               <div>
-                <div className="text-xs text-muted-foreground">Payment Method</div>
+                <div className="text-xs text-muted-foreground">
+                  Payment Method
+                </div>
                 {editing ? (
-                  <select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} className="w-full rounded-md border px-3 py-2">
+                  <select
+                    value={form.paymentMethod}
+                    onChange={(e) =>
+                      setForm({ ...form, paymentMethod: e.target.value })
+                    }
+                    className="w-full rounded-md border px-3 py-2"
+                  >
                     <option value="bank">Bank Account</option>
                     <option value="easypaisa">Easypaisa</option>
                     <option value="firstpay">FirstPay</option>

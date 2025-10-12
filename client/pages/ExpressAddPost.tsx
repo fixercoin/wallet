@@ -37,21 +37,40 @@ export default function ExpressAddPost() {
   };
 
   const PAYMENT_METHODS: PaymentMethodOption[] = [
-    { id: "bank", label: "Bank Account", description: "Settle using a standard bank account transfer." },
-    { id: "easypaisa", label: "Easypaisa", description: "Use Easypaisa for instant transfers." },
-    { id: "firstpay", label: "FirstPay", description: "Accept payments via FirstPay business banking." },
+    {
+      id: "bank",
+      label: "Bank Account",
+      description: "Settle using a standard bank account transfer.",
+    },
+    {
+      id: "easypaisa",
+      label: "Easypaisa",
+      description: "Use Easypaisa for instant transfers.",
+    },
+    {
+      id: "firstpay",
+      label: "FirstPay",
+      description: "Accept payments via FirstPay business banking.",
+    },
   ];
 
   const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
   const paymentMenuRef = useRef<HTMLDivElement | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (tokenMenuRef.current && !tokenMenuRef.current.contains(e.target as Node)) {
+      if (
+        tokenMenuRef.current &&
+        !tokenMenuRef.current.contains(e.target as Node)
+      ) {
         setTokenMenuOpen(false);
       }
-      if (paymentMenuRef.current && !paymentMenuRef.current.contains(e.target as Node)) {
+      if (
+        paymentMenuRef.current &&
+        !paymentMenuRef.current.contains(e.target as Node)
+      ) {
         setPaymentMenuOpen(false);
       }
     };
@@ -291,7 +310,10 @@ export default function ExpressAddPost() {
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </button>
                   {paymentMenuOpen && (
-                    <div role="listbox" className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl">
+                    <div
+                      role="listbox"
+                      className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl"
+                    >
                       {PAYMENT_METHODS.map((method) => (
                         <button
                           key={method.id}
@@ -303,7 +325,11 @@ export default function ExpressAddPost() {
                           }}
                         >
                           <span>{method.label}</span>
-                          {method.description && <span className="text-xs font-normal text-muted-foreground">{method.description}</span>}
+                          {method.description && (
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {method.description}
+                            </span>
+                          )}
                         </button>
                       ))}
                     </div>

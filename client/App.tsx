@@ -39,7 +39,10 @@ const App = () => (
               <Route path="/fixorium/add" element={<FixoriumAdd />} />
               <Route path="/fixorium/create-token" element={<CreateToken />} />
               <Route path="/express/add-post" element={<ExpressAddPost />} />
-              <Route path="/express/start-trade" element={<ExpressStartTrade />} />
+              <Route
+                path="/express/start-trade"
+                element={<ExpressStartTrade />}
+              />
               <Route path="/express/post" element={<ExpressPostView />} />
               <Route
                 path="/fixorium/token-listing"

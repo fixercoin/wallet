@@ -23,7 +23,10 @@ const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 const store: {
   posts: P2PPost[];
   messages: Record<string, TradeMessage[]>;
-  proofs: Record<string, { id: string; filename: string; data: string; ts: number }[]>;
+  proofs: Record<
+    string,
+    { id: string; filename: string; data: string; ts: number }[]
+  >;
 } = (globalThis as any).__P2P_STORE || {
   posts: [],
   messages: {},
@@ -48,7 +51,11 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
   if (payload?.id) {
     const idx = store.posts.findIndex((p) => p.id === payload.id);
     if (idx === -1) return { error: "not found", status: 404 } as const;
-    store.posts[idx] = { ...store.posts[idx], ...payload, updatedAt: now } as P2PPost;
+    store.posts[idx] = {
+      ...store.posts[idx],
+      ...payload,
+      updatedAt: now,
+    } as P2PPost;
     return { post: store.posts[idx], status: 200 } as const;
   }
   const id = `post-${now}`;
@@ -72,7 +79,11 @@ export function listTradeMessages(tradeId: string) {
   return { messages };
 }
 
-export function addTradeMessage(tradeId: string, message: string, from: string) {
+export function addTradeMessage(
+  tradeId: string,
+  message: string,
+  from: string,
+) {
   if (!message) return { error: "invalid message", status: 400 } as const;
   const entry: TradeMessage = {
     id: `m-${Date.now()}`,
@@ -85,7 +96,10 @@ export function addTradeMessage(tradeId: string, message: string, from: string) 
   return { message: entry, status: 201 } as const;
 }
 
-export function uploadProof(tradeId: string, proof: { filename: string; data: string }) {
+export function uploadProof(
+  tradeId: string,
+  proof: { filename: string; data: string },
+) {
   if (!proof || !proof.filename || !proof.data) {
     return { error: "invalid proof", status: 400 } as const;
   }

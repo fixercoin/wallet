@@ -53,7 +53,8 @@ export default async function (request: Request): Promise<Response> {
       const adminHeader =
         request.headers.get("x-admin-wallet") || body?.adminWallet || "";
       const result = createOrUpdatePost(body || {}, adminHeader || "");
-      if ("error" in result) return jsonResponse({ error: result.error }, result.status);
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
       return jsonResponse({ post: result.post }, result.status);
     }
 
@@ -76,7 +77,8 @@ export default async function (request: Request): Promise<Response> {
       const msg = (body && body.message) || "";
       const from = (body && body.from) || "unknown";
       const result = addTradeMessage(tradeId, msg, from);
-      if ("error" in result) return jsonResponse({ error: result.error }, result.status);
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
       return jsonResponse({ message: result.message }, result.status);
     }
 
@@ -88,7 +90,8 @@ export default async function (request: Request): Promise<Response> {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/proof$/, "");
       const body = await request.json().catch(() => null);
       const result = uploadProof(tradeId, body?.proof);
-      if ("error" in result) return jsonResponse({ error: result.error }, result.status);
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
       return jsonResponse({ ok: true }, result.status);
     }
 

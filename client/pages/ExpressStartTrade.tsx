@@ -49,18 +49,22 @@ export default function ExpressStartTrade() {
 
   // Choose a matching post (for buy, need a seller post)
   const match = useMemo(() => {
-    if (!Array.isArray(posts) || !params?.token || !params?.paymentMethod) return null;
+    if (!Array.isArray(posts) || !params?.token || !params?.paymentMethod)
+      return null;
     const desiredUnits = Number(params?.tokenUnits || 0);
     const typeNeeded = params?.side === "buy" ? "sell" : "buy";
     const candidates = posts.filter(
       (p: any) =>
         p?.type === typeNeeded &&
         String(p?.token).toUpperCase() === String(params.token).toUpperCase() &&
-        String(p?.paymentMethod).toLowerCase() === String(params.paymentMethod).toLowerCase(),
+        String(p?.paymentMethod).toLowerCase() ===
+          String(params.paymentMethod).toLowerCase(),
     );
     // Prefer a post whose limits include desired units
     const within = candidates.find(
-      (p: any) => desiredUnits >= Number(p?.minToken || 0) && desiredUnits <= Number(p?.maxToken || 0),
+      (p: any) =>
+        desiredUnits >= Number(p?.minToken || 0) &&
+        desiredUnits <= Number(p?.maxToken || 0),
     );
     if (within) return within;
     // Otherwise, best-effort: pick closest by minToken not exceeding desired, else smallest max
@@ -82,10 +86,13 @@ export default function ExpressStartTrade() {
     let mounted = true;
     const load = async () => {
       try {
-        const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/messages`);
+        const resp = await fetch(
+          `/api/p2p/trade/${encodeURIComponent(tradeId)}/messages`,
+        );
         if (!resp.ok) return;
         const data = await resp.json();
-        if (mounted) setMessages(Array.isArray(data?.messages) ? data.messages : []);
+        if (mounted)
+          setMessages(Array.isArray(data?.messages) ? data.messages : []);
       } catch {}
     };
     load();
@@ -101,11 +108,14 @@ export default function ExpressStartTrade() {
     const text = message.trim();
     if (!text) return;
     try {
-      const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, from: "buyer" }),
-      });
+      const resp = await fetch(
+        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, from: "buyer" }),
+        },
+      );
       if (!resp.ok) throw new Error("send failed");
       setMessage("");
       toast({ title: "Message sent" });
@@ -117,7 +127,10 @@ export default function ExpressStartTrade() {
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);
     if (!match) return false;
-    return units >= Number(match.minToken || 0) && units <= Number(match.maxToken || 0);
+    return (
+      units >= Number(match.minToken || 0) &&
+      units <= Number(match.maxToken || 0)
+    );
   }, [match, params]);
 
   return (
@@ -143,11 +156,26 @@ export default function ExpressStartTrade() {
           <div className="rounded-2xl border border-[hsl(var(--border))] bg-card p-4">
             <h2 className="mb-2 text-base font-semibold">Order Review</h2>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between"><span>Side</span><span>{params?.side || "buy"}</span></div>
-              <div className="flex justify-between"><span>Token</span><span>{params?.token || "USDC"}</span></div>
-              <div className="flex justify-between"><span>PKR</span><span>{params?.pkrAmount?.toFixed?.(2) ?? "0.00"}</span></div>
-              <div className="flex justify-between"><span>Est. Units</span><span>{params?.tokenUnits?.toFixed?.(4) ?? "0"}</span></div>
-              <div className="flex justify-between"><span>Payment</span><span>{params?.paymentMethod || "bank"}</span></div>
+              <div className="flex justify-between">
+                <span>Side</span>
+                <span>{params?.side || "buy"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Token</span>
+                <span>{params?.token || "USDC"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>PKR</span>
+                <span>{params?.pkrAmount?.toFixed?.(2) ?? "0.00"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Est. Units</span>
+                <span>{params?.tokenUnits?.toFixed?.(4) ?? "0"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Payment</span>
+                <span>{params?.paymentMethod || "bank"}</span>
+              </div>
             </div>
 
             <div className="mt-4 rounded-lg border bg-white p-3 text-sm">
@@ -158,12 +186,24 @@ export default function ExpressStartTrade() {
                 <div className="text-destructive">{error}</div>
               ) : match ? (
                 <div className="space-y-1">
-                  <div className="flex justify-between"><span>Post ID</span><span>{match.id}</span></div>
-                  <div className="flex justify-between"><span>Type</span><span>{match.type}</span></div>
-                  <div className="flex justify-between"><span>Limits</span><span>{match.minToken} - {match.maxToken}</span></div>
+                  <div className="flex justify-between">
+                    <span>Post ID</span>
+                    <span>{match.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Type</span>
+                    <span>{match.type}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Limits</span>
+                    <span>
+                      {match.minToken} - {match.maxToken}
+                    </span>
+                  </div>
                   {!withinLimits && (
                     <div className="mt-2 rounded bg-yellow-50 p-2 text-xs text-yellow-800">
-                      Order size is outside seller limits. Adjust amount on previous page for a smoother match.
+                      Order size is outside seller limits. Adjust amount on
+                      previous page for a smoother match.
                     </div>
                   )}
                 </div>
@@ -173,7 +213,9 @@ export default function ExpressStartTrade() {
             </div>
 
             <div className="mt-4">
-              <div className="mb-1 text-xs font-medium text-muted-foreground">Send a message to the counterparty</div>
+              <div className="mb-1 text-xs font-medium text-muted-foreground">
+                Send a message to the counterparty
+              </div>
               <div className="flex gap-2">
                 <input
                   value={message}
@@ -181,7 +223,11 @@ export default function ExpressStartTrade() {
                   placeholder="Type your message…"
                   className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
                 />
-                <Button onClick={handleSend} disabled={!tradeId || !message.trim()} className="h-10 px-3">
+                <Button
+                  onClick={handleSend}
+                  disabled={!tradeId || !message.trim()}
+                  className="h-10 px-3"
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

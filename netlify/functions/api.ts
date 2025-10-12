@@ -72,7 +72,8 @@ function jsonResponse(
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Wallet",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-Admin-Wallet",
       ...headers,
     },
     body: typeof body === "string" ? body : JSON.stringify(body),
@@ -126,7 +127,8 @@ export const handler = async (event: any) => {
     return jsonResponse(204, "");
   }
 
-  const path = (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const path =
+    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {
@@ -150,36 +152,64 @@ export const handler = async (event: any) => {
       try {
         body = event.body ? JSON.parse(event.body) : {};
       } catch {}
-      const adminHeader = (event.headers?.["x-admin-wallet"] as string) || body?.adminWallet || "";
+      const adminHeader =
+        (event.headers?.["x-admin-wallet"] as string) ||
+        body?.adminWallet ||
+        "";
       const result = createOrUpdatePost(body || {}, adminHeader || "");
-      if ("error" in result) return jsonResponse(result.status, { error: result.error });
+      if ("error" in result)
+        return jsonResponse(result.status, { error: result.error });
       return jsonResponse(result.status, { post: result.post });
     }
 
-    if (path.startsWith("/p2p/trade/") && path.endsWith("/messages") && method === "GET") {
-      const tradeId = path.replace(/^\/p2p\/trade\//, "").replace(/\/messages$/, "");
+    if (
+      path.startsWith("/p2p/trade/") &&
+      path.endsWith("/messages") &&
+      method === "GET"
+    ) {
+      const tradeId = path
+        .replace(/^\/p2p\/trade\//, "")
+        .replace(/\/messages$/, "");
       return jsonResponse(200, listTradeMessages(tradeId));
     }
 
-    if (path.startsWith("/p2p/trade/") && path.endsWith("/message") && method === "POST") {
+    if (
+      path.startsWith("/p2p/trade/") &&
+      path.endsWith("/message") &&
+      method === "POST"
+    ) {
       let body: any = {};
       try {
         body = event.body ? JSON.parse(event.body) : {};
       } catch {}
-      const tradeId = path.replace(/^\/p2p\/trade\//, "").replace(/\/message$/, "");
-      const result = addTradeMessage(tradeId, body?.message || "", body?.from || "unknown");
-      if ("error" in result) return jsonResponse(result.status, { error: result.error });
+      const tradeId = path
+        .replace(/^\/p2p\/trade\//, "")
+        .replace(/\/message$/, "");
+      const result = addTradeMessage(
+        tradeId,
+        body?.message || "",
+        body?.from || "unknown",
+      );
+      if ("error" in result)
+        return jsonResponse(result.status, { error: result.error });
       return jsonResponse(result.status, { message: result.message });
     }
 
-    if (path.startsWith("/p2p/trade/") && path.endsWith("/proof") && method === "POST") {
+    if (
+      path.startsWith("/p2p/trade/") &&
+      path.endsWith("/proof") &&
+      method === "POST"
+    ) {
       let body: any = {};
       try {
         body = event.body ? JSON.parse(event.body) : {};
       } catch {}
-      const tradeId = path.replace(/^\/p2p\/trade\//, "").replace(/\/proof$/, "");
+      const tradeId = path
+        .replace(/^\/p2p\/trade\//, "")
+        .replace(/\/proof$/, "");
       const result = uploadProof(tradeId, body?.proof);
-      if ("error" in result) return jsonResponse(result.status, { error: result.error });
+      if ("error" in result)
+        return jsonResponse(result.status, { error: result.error });
       return jsonResponse(result.status, { ok: true });
     }
 

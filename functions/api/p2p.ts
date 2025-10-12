@@ -1,6 +1,23 @@
-export default async function (request: Request): Promise<Response> {
-  const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
+import {
+  listPosts,
+  getPost,
+  createOrUpdatePost,
+  listTradeMessages,
+  addTradeMessage,
+  uploadProof,
+} from "../../utils/p2pStore";
 
+function jsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
+export default async function (request: Request): Promise<Response> {
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -16,89 +33,40 @@ export default async function (request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/api\/p2p/, "");
 
-  // Initialize global in-memory store (persists during dev server lifetime)
-  const store: any = (globalThis as any).__P2P_STORE || {
-    posts: [],
-    messages: {},
-    proofs: {},
-  };
-  (globalThis as any).__P2P_STORE = store;
-
-  const jsonResponse = (data: any, status = 200) =>
-    new Response(JSON.stringify(data), {
-      status,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-
   try {
-    // List posts
     if (request.method === "GET" && (path === "/list" || path === "/")) {
-      return jsonResponse({ posts: store.posts });
+      return jsonResponse(listPosts());
     }
 
-    // Get post by id
     if (request.method === "GET" && path.startsWith("/post/")) {
       const id = path.replace("/post/", "");
-      const post = store.posts.find((p: any) => p.id === id);
+      const post = getPost(id);
       if (!post) return jsonResponse({ error: "not found" }, 404);
       return jsonResponse({ post });
     }
 
-    // Create or update post (admin only)
     if (
       (request.method === "POST" || request.method === "PUT") &&
       path === "/post"
     ) {
       const body = await request.json().catch(() => null);
       const adminHeader =
-        request.headers.get("x-admin-wallet") ||
-        (body && body.adminWallet) ||
-        "";
-      if (adminHeader !== ADMIN_WALLET) {
-        return jsonResponse({ error: "unauthorized" }, 401);
-      }
-
-      const payload = body || {};
-      const now = Date.now();
-      if (payload.id) {
-        // update
-        const idx = store.posts.findIndex((p: any) => p.id === payload.id);
-        if (idx === -1) return jsonResponse({ error: "not found" }, 404);
-        store.posts[idx] = { ...store.posts[idx], ...payload, updatedAt: now };
-        return jsonResponse({ post: store.posts[idx] });
-      }
-
-      const id = `post-${now}`;
-      const post = {
-        id,
-        type: payload.type || "buy",
-        token: payload.token || "USDC",
-        pricePkr: Number(payload.pricePkr) || 0,
-        minToken: Number(payload.minToken) || 0,
-        maxToken: Number(payload.maxToken) || 0,
-        paymentMethod: payload.paymentMethod || "bank",
-        createdAt: now,
-        updatedAt: now,
-      };
-      store.posts.unshift(post);
-      return jsonResponse({ post }, 201);
+        request.headers.get("x-admin-wallet") || body?.adminWallet || "";
+      const result = createOrUpdatePost(body || {}, adminHeader || "");
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
+      return jsonResponse({ post: result.post }, result.status);
     }
 
-    // Trade messages: list
     if (
       request.method === "GET" &&
       path.startsWith("/trade/") &&
       path.endsWith("/messages")
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/messages$/, "");
-      const msgs = store.messages[tradeId] || [];
-      return jsonResponse({ messages: msgs });
+      return jsonResponse(listTradeMessages(tradeId));
     }
 
-    // Trade messages: post a message
     if (
       request.method === "POST" &&
       path.startsWith("/trade/") &&
@@ -106,20 +74,14 @@ export default async function (request: Request): Promise<Response> {
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/message$/, "");
       const body = await request.json().catch(() => null);
-      const msg = body?.message;
-      if (!msg) return jsonResponse({ error: "invalid message" }, 400);
-      const entry = {
-        id: `m-${Date.now()}`,
-        message: msg,
-        from: body.from || "unknown",
-        ts: Date.now(),
-      };
-      store.messages[tradeId] = store.messages[tradeId] || [];
-      store.messages[tradeId].push(entry);
-      return jsonResponse({ message: entry }, 201);
+      const msg = (body && body.message) || "";
+      const from = (body && body.from) || "unknown";
+      const result = addTradeMessage(tradeId, msg, from);
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
+      return jsonResponse({ message: result.message }, result.status);
     }
 
-    // Upload proof (base64) for a trade
     if (
       request.method === "POST" &&
       path.startsWith("/trade/") &&
@@ -127,21 +89,14 @@ export default async function (request: Request): Promise<Response> {
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/proof$/, "");
       const body = await request.json().catch(() => null);
-      const proof = body?.proof; // expect { filename, data (base64) }
-      if (!proof || !proof.filename || !proof.data)
-        return jsonResponse({ error: "invalid proof" }, 400);
-      store.proofs[tradeId] = store.proofs[tradeId] || [];
-      store.proofs[tradeId].push({
-        id: `p-${Date.now()}`,
-        filename: proof.filename,
-        data: proof.data,
-        ts: Date.now(),
-      });
-      return jsonResponse({ ok: true }, 201);
+      const result = uploadProof(tradeId, body?.proof);
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
+      return jsonResponse({ ok: true }, result.status);
     }
 
     return jsonResponse({ error: "not found" }, 404);
-  } catch (err) {
-    return jsonResponse({ error: (err as any).message || String(err) }, 500);
+  } catch (err: any) {
+    return jsonResponse({ error: err?.message || String(err) }, 500);
   }
 }

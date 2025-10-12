@@ -116,6 +116,8 @@ function jsonCors(status: number, body: any) {
   });
 }
 
+import p2pHandler from "./p2p";
+
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
@@ -129,6 +131,11 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
+    // P2P routes passthrough to dedicated handler
+    if (url.pathname.startsWith("/api/p2p")) {
+      return await p2pHandler(request);
+    }
+
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);

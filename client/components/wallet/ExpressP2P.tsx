@@ -93,6 +93,30 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     if (onBack) onBack();
   };
 
+  const handleCopyAddress = async () => {
+    if (!wallet) return;
+    const success = await copyToClipboard(wallet.publicKey);
+    toast({
+      title: success ? "Address Copied" : "Copy Failed",
+      description: success
+        ? "Wallet address copied to clipboard."
+        : "Unable to copy wallet address.",
+      variant: success ? undefined : "destructive",
+    });
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      const provider = ensureFixoriumProvider();
+      await provider?.disconnect();
+    } catch (error) {
+      console.warn("Failed to disconnect provider:", error);
+    } finally {
+      logout();
+      toast({ title: "Wallet Disconnected" });
+    }
+  };
+
   // Close token menu on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {

@@ -30,6 +30,31 @@ const CurrencyBadge = ({ label }: { label: string }) => (
 const W_SOL_MINT = "So11111111111111111111111111111111111111112";
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 
+const TOKEN_MINTS = {
+  USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  SOL: W_SOL_MINT,
+  FIXERCOIN: FIXERCOIN_MINT,
+} as const;
+
+type PaymentMethodOption = {
+  id: "easypaisa" | "firstpay";
+  label: string;
+  description: string;
+};
+
+const PAYMENT_METHODS: PaymentMethodOption[] = [
+  {
+    id: "easypaisa",
+    label: "Bank Account · Easypaisa",
+    description: "Instant transfers to Easypaisa-linked bank accounts.",
+  },
+  {
+    id: "firstpay",
+    label: "Bank Account · FirstPay",
+    description: "Pay securely using FirstPay business bank accounts.",
+  },
+];
+
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const { wallet } = useWallet();

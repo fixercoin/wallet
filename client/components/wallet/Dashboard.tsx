@@ -301,14 +301,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span>My Wallet</span>
+                  <span>ALL WALLET</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onAirdrop}
                   className="flex items-center gap-2"
                 >
                   <Gift className="h-4 w-4" />
-                  <span>Token Airdrop</span>
+                  <span>DISTRIBUTION</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -316,7 +316,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />
-                  <span>Setting</span>
+                  <span>SETTING</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -368,7 +368,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 dash-btn font-semibold border-0"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
-            Send
+            SEND 
           </Button>
 
           <Button

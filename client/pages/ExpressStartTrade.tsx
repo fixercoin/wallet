@@ -323,6 +323,42 @@ export default function ExpressStartTrade() {
                     {uploading ? "Uploading…" : "Upload"}
                   </Button>
                 </div>
+
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    onClick={async () => {
+                      if (!tradeId) return;
+                      try {
+                        const resp = await fetch(
+                          `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              message: "__CONFIRMED_SETTLEMENT__",
+                              from: localRole,
+                            }),
+                          },
+                        );
+                        if (!resp.ok) throw new Error("failed");
+                        toast({ title: "You confirmed settlement" });
+                      } catch (e) {
+                        toast({ title: "Confirmation failed", variant: "destructive" });
+                      }
+                    }}
+                    className="h-10"
+                  >
+                    Confirm Settlement
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(-1)}
+                    className="h-10"
+                  >
+                    Back
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -117,22 +117,33 @@ export default function ExpressStartTrade() {
   // Notify when counterparty confirms settlement via special message
   const localRole = params?.side === "sell" ? "seller" : "buyer";
   const lastConfirmedMessageId = useRef<string | null>(null);
+  const [sellerConfirmed, setSellerConfirmed] = useState(false);
   useEffect(() => {
     if (!messages || messages.length === 0) return;
-    const confirmMsg = messages
-      .slice()
-      .reverse()
-      .find((m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__");
+    const reversed = messages.slice().reverse();
+
+    const confirmMsg = reversed.find((m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__");
     if (confirmMsg && confirmMsg.id && confirmMsg.from !== localRole) {
       if (lastConfirmedMessageId.current !== confirmMsg.id) {
-        toast({
-          title: "Order update",
-          description: "Counterparty confirmed settlement",
-        });
+        toast({ title: "Order update", description: "Counterparty confirmed settlement" });
         lastConfirmedMessageId.current = confirmMsg.id;
       }
     }
-  }, [messages, localRole, toast]);
+
+    const sellerMsg = reversed.find((m) => String(m?.message) === "__SELLER_CONFIRMED__");
+    if (sellerMsg && sellerMsg.from !== localRole) {
+      setSellerConfirmed(true);
+    }
+
+    const approvedMsg = reversed.find((m) => String(m?.message) === "__BUYER_APPROVED__");
+    if (approvedMsg && approvedMsg.from !== localRole) {
+      if (localRole === "seller") {
+        setAwaitingApproval(false);
+        toast({ title: "Buyer approved" });
+        navigate("/express");
+      }
+    }
+  }, [messages, localRole, toast, navigate]);
 
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);

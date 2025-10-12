@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Info } from "lucide-react";
+import { ArrowLeft, ChevronDown, Copy, Info, LogOut } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { dexscreenerAPI, type DexscreenerToken } from "@/lib/services/dexscreener";
+import { shortenAddress, copyToClipboard } from "@/lib/wallet";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExpressP2PProps {
   onBack?: () => void;

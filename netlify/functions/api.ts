@@ -1,5 +1,13 @@
 // Netlify Functions entry to handle /api/* routes
-// Currently implements /api/solana-rpc for wallet balances & SPL token accounts
+
+import {
+  listPosts,
+  getPost,
+  createOrUpdatePost,
+  listTradeMessages,
+  addTradeMessage,
+  uploadProof,
+} from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
@@ -44,7 +52,7 @@ async function callRpc(
       }
 
       const data = await resp.text();
-      return { ok: true, body: data };
+      return { ok: true, body: data } as const;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
     }
@@ -63,8 +71,8 @@ function jsonResponse(
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Wallet",
       ...headers,
     },
     body: typeof body === "string" ? body : JSON.stringify(body),
@@ -114,36 +122,88 @@ async function tryDexEndpoints(path: string) {
 }
 
 export const handler = async (event: any) => {
-  // Handle CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");
   }
 
-  const path =
-    (event.path || "").replace(/^\/.netlify\/functions\/api/, "") || "/";
+  const path = (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const method = event.httpMethod;
 
   try {
+    // P2P endpoints
+    if (path === "/p2p" || path === "/p2p/" || path === "/p2p/list") {
+      if (method === "GET") {
+        return jsonResponse(200, listPosts());
+      }
+      return jsonResponse(405, { error: "Method Not Allowed" });
+    }
+
+    if (path.startsWith("/p2p/post/") && method === "GET") {
+      const id = path.replace("/p2p/post/", "");
+      const post = getPost(id);
+      if (!post) return jsonResponse(404, { error: "not found" });
+      return jsonResponse(200, { post });
+    }
+
+    if (path === "/p2p/post" && (method === "POST" || method === "PUT")) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const adminHeader = (event.headers?.["x-admin-wallet"] as string) || body?.adminWallet || "";
+      const result = createOrUpdatePost(body || {}, adminHeader || "");
+      if ("error" in result) return jsonResponse(result.status, { error: result.error });
+      return jsonResponse(result.status, { post: result.post });
+    }
+
+    if (path.startsWith("/p2p/trade/") && path.endsWith("/messages") && method === "GET") {
+      const tradeId = path.replace(/^\/p2p\/trade\//, "").replace(/\/messages$/, "");
+      return jsonResponse(200, listTradeMessages(tradeId));
+    }
+
+    if (path.startsWith("/p2p/trade/") && path.endsWith("/message") && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const tradeId = path.replace(/^\/p2p\/trade\//, "").replace(/\/message$/, "");
+      const result = addTradeMessage(tradeId, body?.message || "", body?.from || "unknown");
+      if ("error" in result) return jsonResponse(result.status, { error: result.error });
+      return jsonResponse(result.status, { message: result.message });
+    }
+
+    if (path.startsWith("/p2p/trade/") && path.endsWith("/proof") && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const tradeId = path.replace(/^\/p2p\/trade\//, "").replace(/\/proof$/, "");
+      const result = uploadProof(tradeId, body?.proof);
+      if ("error" in result) return jsonResponse(result.status, { error: result.error });
+      return jsonResponse(result.status, { ok: true });
+    }
+
     // Solana RPC
-    if (path === "/solana-rpc" && event.httpMethod === "POST") {
+    if (path === "/solana-rpc" && method === "POST") {
       let body: any = {};
       try {
         body = event.body ? JSON.parse(event.body) : {};
       } catch {}
 
-      const method = body?.method;
+      const methodName = body?.method;
       const params = body?.params ?? [];
       const id = body?.id ?? Date.now();
 
-      if (!method || typeof method !== "string") {
+      if (!methodName || typeof methodName !== "string") {
         return jsonResponse(400, { error: "Missing RPC method" });
       }
 
-      const result = await callRpc(method, params, id);
+      const result = await callRpc(methodName, params, id);
       return jsonResponse(200, result.body);
     }
 
     // DexScreener: tokens
-    if (path === "/dexscreener/tokens" && event.httpMethod === "GET") {
+    if (path === "/dexscreener/tokens" && method === "GET") {
       const mints = event.queryStringParameters?.mints;
       if (!mints)
         return jsonResponse(400, { error: "Missing 'mints' query parameter" });
@@ -158,7 +218,7 @@ export const handler = async (event: any) => {
     }
 
     // DexScreener: search
-    if (path === "/dexscreener/search" && event.httpMethod === "GET") {
+    if (path === "/dexscreener/search" && method === "GET") {
       const q = event.queryStringParameters?.q;
       if (!q)
         return jsonResponse(400, { error: "Missing 'q' query parameter" });
@@ -173,7 +233,7 @@ export const handler = async (event: any) => {
     }
 
     // DexScreener: trending
-    if (path === "/dexscreener/trending" && event.httpMethod === "GET") {
+    if (path === "/dexscreener/trending" && method === "GET") {
       const data = await tryDexEndpoints(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
@@ -193,7 +253,6 @@ export const handler = async (event: any) => {
       });
     }
 
-    // Unknown API route
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

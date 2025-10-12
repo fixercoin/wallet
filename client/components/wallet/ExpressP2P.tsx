@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, Copy, Info, LogOut } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
@@ -83,6 +83,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const paymentMenuRef = useRef<HTMLDivElement | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
+
+  // DexScreener state (optional) — defined to avoid runtime ReferenceErrors
+  const [dexToken, setDexToken] = useState<any | null>(null);
+  const [loadingDexData, setLoadingDexData] = useState(false);
+  const [dexError, setDexError] = useState<string | null>(null);
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
@@ -541,84 +546,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <p className="mt-2 text-xs text-muted-foreground">
                   {selectedPaymentMethod.description}
                 </p>
-              </div>
-
-              <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-3">
-                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                  <span>DexScreener Insights</span>
-                  {dexToken?.url && (
-                    <a
-                      href={dexToken.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[hsl(var(--primary))] hover:underline"
-                    >
-                      View Pair
-                    </a>
-                  )}
-                </div>
-                <div className="mt-2 text-sm text-foreground">
-                  {loadingDexData ? (
-                    <div className="text-xs text-muted-foreground">
-                      Fetching live market data…
-                    </div>
-                  ) : dexToken ? (
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <div className="text-[10px] uppercase text-muted-foreground">
-                          Price (USD)
-                        </div>
-                        <div className="text-base font-semibold">
-                          {dexToken.priceUsd
-                            ? parseFloat(dexToken.priceUsd).toFixed(4)
-                            : tokenPriceUsd.toFixed(4)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase text-muted-foreground">
-                          24h Change
-                        </div>
-                        <div
-                          className={`text-base font-semibold ${
-                            dexToken.priceChange?.h24 &&
-                            dexToken.priceChange.h24 >= 0
-                              ? "text-emerald-600"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {dexToken.priceChange?.h24 !== undefined
-                            ? `${dexToken.priceChange.h24 >= 0 ? "+" : ""}${dexToken.priceChange.h24.toFixed(2)}%`
-                            : "—"}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase text-muted-foreground">
-                          Volume (24h)
-                        </div>
-                        <div className="text-base font-semibold">
-                          {dexToken.volume?.h24
-                            ? `$${dexToken.volume.h24.toLocaleString()}`
-                            : "—"}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase text-muted-foreground">
-                          Liquidity (USD)
-                        </div>
-                        <div className="text-base font-semibold">
-                          {dexToken.liquidity?.usd
-                            ? `$${dexToken.liquidity.usd.toLocaleString()}`
-                            : "—"}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-muted-foreground">
-                      {dexError ||
-                        "DexScreener data for this token is currently unavailable."}
-                    </div>
-                  )}
-                </div>
               </div>
 
               <Button

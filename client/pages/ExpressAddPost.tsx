@@ -110,8 +110,8 @@ export default function ExpressAddPost() {
       toast({ title: "Check min/max amounts", variant: "destructive" });
       return;
     }
-    if (!wallet) {
-      toast({ title: "Connect the authorized wallet to post offers." });
+    if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
+      toast({ title: "Only admin wallet can post offers", variant: "destructive" });
       return;
     }
 

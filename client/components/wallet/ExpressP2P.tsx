@@ -57,7 +57,8 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
+  const { wallet, logout } = useWallet();
+  const { toast } = useToast();
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [pkrAmount, setPkrAmount] = useState<string>(""); // buy: PKR -> token
@@ -74,6 +75,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [tokenPriceUsd, setTokenPriceUsd] = useState<number>(1); // default: 1 USDC = $1
   const [loadingTokenPrice, setLoadingTokenPrice] = useState(false);
   const [tokenPriceError, setTokenPriceError] = useState<string | null>(null);
+
+  const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
+  const paymentMenuRef = useRef<HTMLDivElement | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodOption>(
+    PAYMENT_METHODS[0],
+  );
+
+  const [dexToken, setDexToken] = useState<DexscreenerToken | null>(null);
+  const [loadingDexData, setLoadingDexData] = useState(false);
+  const [dexError, setDexError] = useState<string | null>(null);
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);

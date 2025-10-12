@@ -356,6 +356,33 @@ export default function ExpressStartTrade() {
                     Confirm Settlement
                   </Button>
 
+                  {localRole === "buyer" && sellerConfirmed && (
+                    <Button
+                      variant="outline"
+                      className="h-10"
+                      onClick={async () => {
+                        if (!tradeId) return;
+                        try {
+                          const resp = await fetch(
+                            `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ message: "__BUYER_APPROVED__", from: localRole }),
+                            },
+                          );
+                          if (!resp.ok) throw new Error("failed");
+                          toast({ title: "Approved" });
+                          navigate("/express");
+                        } catch (e) {
+                          toast({ title: "Failed to approve", variant: "destructive" });
+                        }
+                      }}
+                    >
+                      Approve
+                    </Button>
+                  )}
+
                   {/* Confirmation modal */}
                   {showConfirm && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

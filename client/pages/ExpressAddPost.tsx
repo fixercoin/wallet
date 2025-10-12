@@ -71,7 +71,9 @@ export default function ExpressAddPost() {
     useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
   // Availability (Online/Offline)
-  const [availability, setAvailability] = useState<"online" | "offline">("online");
+  const [availability, setAvailability] = useState<"online" | "offline">(
+    "online",
+  );
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -477,7 +479,9 @@ export default function ExpressAddPost() {
               </div>
 
               <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Availability</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Availability
+                </div>
                 <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
                   <button
                     className={`py-2 text-center text-sm font-semibold ${

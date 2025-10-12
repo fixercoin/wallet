@@ -122,20 +122,29 @@ export default function ExpressStartTrade() {
     if (!messages || messages.length === 0) return;
     const reversed = messages.slice().reverse();
 
-    const confirmMsg = reversed.find((m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__");
+    const confirmMsg = reversed.find(
+      (m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__",
+    );
     if (confirmMsg && confirmMsg.id && confirmMsg.from !== localRole) {
       if (lastConfirmedMessageId.current !== confirmMsg.id) {
-        toast({ title: "Order update", description: "Counterparty confirmed settlement" });
+        toast({
+          title: "Order update",
+          description: "Counterparty confirmed settlement",
+        });
         lastConfirmedMessageId.current = confirmMsg.id;
       }
     }
 
-    const sellerMsg = reversed.find((m) => String(m?.message) === "__SELLER_CONFIRMED__");
+    const sellerMsg = reversed.find(
+      (m) => String(m?.message) === "__SELLER_CONFIRMED__",
+    );
     if (sellerMsg && sellerMsg.from !== localRole) {
       setSellerConfirmed(true);
     }
 
-    const approvedMsg = reversed.find((m) => String(m?.message) === "__BUYER_APPROVED__");
+    const approvedMsg = reversed.find(
+      (m) => String(m?.message) === "__BUYER_APPROVED__",
+    );
     if (approvedMsg && approvedMsg.from !== localRole) {
       if (localRole === "seller") {
         setAwaitingApproval(false);
@@ -368,14 +377,20 @@ export default function ExpressStartTrade() {
                             {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ message: "__BUYER_APPROVED__", from: localRole }),
+                              body: JSON.stringify({
+                                message: "__BUYER_APPROVED__",
+                                from: localRole,
+                              }),
                             },
                           );
                           if (!resp.ok) throw new Error("failed");
                           toast({ title: "Approved" });
                           navigate("/express");
                         } catch (e) {
-                          toast({ title: "Failed to approve", variant: "destructive" });
+                          toast({
+                            title: "Failed to approve",
+                            variant: "destructive",
+                          });
                         }
                       }}
                     >
@@ -392,7 +407,9 @@ export default function ExpressStartTrade() {
                         </div>
                         {localRole === "seller" && match?.walletAddress ? (
                           <div className="mb-3 text-sm">
-                            <div className="mb-1 font-medium">Buyer Wallet Address</div>
+                            <div className="mb-1 font-medium">
+                              Buyer Wallet Address
+                            </div>
                             <div className="flex items-center gap-2 rounded-md border px-2 py-1">
                               <span className="font-mono text-xs break-all flex-1">
                                 {match.walletAddress}
@@ -400,7 +417,9 @@ export default function ExpressStartTrade() {
                               <Button
                                 variant="outline"
                                 className="h-7 px-2"
-                                onClick={() => copyToClipboard(match.walletAddress)}
+                                onClick={() =>
+                                  copyToClipboard(match.walletAddress)
+                                }
                               >
                                 Copy
                               </Button>
@@ -413,10 +432,14 @@ export default function ExpressStartTrade() {
                         <div className="mb-4 text-sm">
                           {localRole === "seller" ? (
                             <span>
-                              We will detect the transaction on the wallet address. Once detected, the Confirm button will be enabled.
+                              We will detect the transaction on the wallet
+                              address. Once detected, the Confirm button will be
+                              enabled.
                             </span>
                           ) : (
-                            <span>Confirming will notify the counterparty.</span>
+                            <span>
+                              Confirming will notify the counterparty.
+                            </span>
                           )}
                         </div>
                         <div className="flex justify-end gap-2">
@@ -448,14 +471,18 @@ export default function ExpressStartTrade() {
                                       "Content-Type": "application/json",
                                     },
                                     body: JSON.stringify({
-                                      message: localRole === "seller" ? "__SELLER_CONFIRMED__" : "__CONFIRMED_SETTLEMENT__",
+                                      message:
+                                        localRole === "seller"
+                                          ? "__SELLER_CONFIRMED__"
+                                          : "__CONFIRMED_SETTLEMENT__",
                                       from: localRole,
                                     }),
                                   },
                                 );
                                 if (!resp.ok) throw new Error("failed");
                                 setShowConfirm(false);
-                                if (localRole === "seller") setAwaitingApproval(true);
+                                if (localRole === "seller")
+                                  setAwaitingApproval(true);
                                 toast({ title: "You confirmed settlement" });
                               } catch (e) {
                                 setShowConfirm(false);

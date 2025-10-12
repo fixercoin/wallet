@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Copy } from "lucide-react";
+import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { ADMIN_WALLET } from "@/lib/p2p";
@@ -29,6 +29,7 @@ export default function ExpressStartTrade() {
   const [tradeId, setTradeId] = useState<string | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Load posts to match an order against seller listings
   useEffect(() => {
@@ -265,6 +266,18 @@ export default function ExpressStartTrade() {
                       {match.minToken} - {match.maxToken}
                     </span>
                   </div>
+                  {match?.paymentDetails?.accountName && (
+                    <div className="flex justify-between">
+                      <span>Account Name</span>
+                      <span>{match.paymentDetails.accountName}</span>
+                    </div>
+                  )}
+                  {match?.paymentDetails?.accountNumber && (
+                    <div className="flex justify-between">
+                      <span>Account Number</span>
+                      <span>{match.paymentDetails.accountNumber}</span>
+                    </div>
+                  )}
                   {!withinLimits && (
                     <div className="mt-2 rounded bg-yellow-50 p-2 text-xs text-yellow-800">
                       Order size is outside seller limits. Adjust amount on
@@ -278,35 +291,6 @@ export default function ExpressStartTrade() {
             </div>
 
             <div className="mt-4">
-              <div className="mb-1 text-xs font-medium text-muted-foreground">
-                Send a message to the counterparty
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type your message…"
-                  className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
-                />
-                <Button
-                  onClick={handleSend}
-                  disabled={!tradeId || !message.trim()}
-                  className="h-10 px-3"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="mt-2 max-h-48 overflow-auto rounded-md border bg-white p-2 text-xs">
-                {messages.length === 0 ? (
-                  <div className="text-muted-foreground">No messages yet.</div>
-                ) : (
-                  messages.map((m) => (
-                    <div key={m.id} className="mb-1">
-                      <span className="font-medium">{m.from}:</span> {m.message}
-                    </div>
-                  ))
-                )}
-              </div>
 
               <div className="mt-4">
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
@@ -370,6 +354,47 @@ export default function ExpressStartTrade() {
             </div>
           </div>
         </div>
+        {/* Floating Chat Button */}
+        <button
+          type="button"
+          onClick={() => setChatOpen((o) => !o)}
+          aria-label="Open chat"
+          className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-white shadow-xl hover:brightness-95"
+        >
+          {chatOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+        </button>
+
+        {chatOpen && (
+          <div className="fixed bottom-24 right-6 z-50 w-80 rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-2xl">
+            <div className="mb-2 text-sm font-semibold">Trade Chat</div>
+            <div className="max-h-64 overflow-auto rounded-md border bg-white p-2 text-xs">
+              {messages.length === 0 ? (
+                <div className="text-muted-foreground">No messages yet.</div>
+              ) : (
+                messages.map((m) => (
+                  <div key={m.id} className="mb-1">
+                    <span className="font-medium">{m.from}:</span> {m.message}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type your message…"
+                className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!tradeId || !message.trim()}
+                className="h-10 px-3"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

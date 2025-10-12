@@ -150,7 +150,10 @@ export const onRequest = async ({ request, env }) => {
       };
 
       // List posts
-      if (request.method === "GET" && (subPath === "/list" || subPath === "/")) {
+      if (
+        request.method === "GET" &&
+        (subPath === "/list" || subPath === "/")
+      ) {
         return jsonCors(200, { posts: store.posts });
       }
 
@@ -163,7 +166,10 @@ export const onRequest = async ({ request, env }) => {
       }
 
       // Create or update post (admin only)
-      if ((request.method === "POST" || request.method === "PUT") && subPath === "/post") {
+      if (
+        (request.method === "POST" || request.method === "PUT") &&
+        subPath === "/post"
+      ) {
         const body = (await json()) || {};
         const adminHeader =
           request.headers.get("x-admin-wallet") || body.adminWallet || "";
@@ -194,32 +200,61 @@ export const onRequest = async ({ request, env }) => {
       }
 
       // Trade messages: list
-      if (request.method === "GET" && subPath.startsWith("/trade/") && subPath.endsWith("/messages")) {
-        const tradeId = subPath.replace(/^\/trade\//, "").replace(/\/messages$/, "");
+      if (
+        request.method === "GET" &&
+        subPath.startsWith("/trade/") &&
+        subPath.endsWith("/messages")
+      ) {
+        const tradeId = subPath
+          .replace(/^\/trade\//, "")
+          .replace(/\/messages$/, "");
         const msgs = store.messages[tradeId] || [];
         return jsonCors(200, { messages: msgs });
       }
 
       // Trade messages: post
-      if (request.method === "POST" && subPath.startsWith("/trade/") && subPath.endsWith("/message")) {
-        const tradeId = subPath.replace(/^\/trade\//, "").replace(/\/message$/, "");
+      if (
+        request.method === "POST" &&
+        subPath.startsWith("/trade/") &&
+        subPath.endsWith("/message")
+      ) {
+        const tradeId = subPath
+          .replace(/^\/trade\//, "")
+          .replace(/\/message$/, "");
         const body = (await json()) || {};
         const msg = body.message;
         if (!msg) return jsonCors(400, { error: "invalid message" });
-        const entry = { id: `m-${Date.now()}`, message: msg, from: body.from || "unknown", ts: Date.now() };
+        const entry = {
+          id: `m-${Date.now()}`,
+          message: msg,
+          from: body.from || "unknown",
+          ts: Date.now(),
+        };
         store.messages[tradeId] = store.messages[tradeId] || [];
         store.messages[tradeId].push(entry);
         return jsonCors(201, { message: entry });
       }
 
       // Upload proof
-      if (request.method === "POST" && subPath.startsWith("/trade/") && subPath.endsWith("/proof")) {
-        const tradeId = subPath.replace(/^\/trade\//, "").replace(/\/proof$/, "");
+      if (
+        request.method === "POST" &&
+        subPath.startsWith("/trade/") &&
+        subPath.endsWith("/proof")
+      ) {
+        const tradeId = subPath
+          .replace(/^\/trade\//, "")
+          .replace(/\/proof$/, "");
         const body = (await json()) || {};
         const proof = body.proof;
-        if (!proof || !proof.filename || !proof.data) return jsonCors(400, { error: "invalid proof" });
+        if (!proof || !proof.filename || !proof.data)
+          return jsonCors(400, { error: "invalid proof" });
         store.proofs[tradeId] = store.proofs[tradeId] || [];
-        store.proofs[tradeId].push({ id: `p-${Date.now()}`, filename: proof.filename, data: proof.data, ts: Date.now() });
+        store.proofs[tradeId].push({
+          id: `p-${Date.now()}`,
+          filename: proof.filename,
+          data: proof.data,
+          ts: Date.now(),
+        });
         return jsonCors(201, { ok: true });
       }
 

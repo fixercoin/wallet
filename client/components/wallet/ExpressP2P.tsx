@@ -8,6 +8,7 @@ import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 interface ExpressP2PProps {
   onBack?: () => void;
@@ -274,6 +275,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         },
       });
     } else {
+      if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
+        toast({ title: "Only admin wallet can add posts", variant: "destructive" });
+        return;
+      }
       navigate("/express/add-post");
     }
   };
@@ -323,12 +328,14 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 {connecting ? "CONNECTING…" : "CONNECT WALLET"}
               </Button>
             )}
-            <Button
-              onClick={() => navigate("/express/add-post")}
-              className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
-            >
-              ADD POST
-            </Button>
+            {wallet && wallet.publicKey === ADMIN_WALLET ? (
+              <Button
+                onClick={() => navigate("/express/add-post")}
+                className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+              >
+                ADD POST
+              </Button>
+            ) : null}
           </div>
         </div>
       </header>

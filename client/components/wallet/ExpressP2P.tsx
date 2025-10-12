@@ -537,15 +537,44 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
               <div>
                 <SectionLabel>Payment Methods</SectionLabel>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
-                  aria-haspopup="listbox"
-                  aria-expanded="false"
-                >
-                  <span>Bank Account</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </button>
+                <div className="relative" ref={paymentMenuRef}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"
+                    aria-haspopup="listbox"
+                    aria-expanded={paymentMenuOpen}
+                    onClick={() => setPaymentMenuOpen((open) => !open)}
+                  >
+                    <span>{selectedPaymentMethod.label}</span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                  {paymentMenuOpen && (
+                    <div
+                      role="listbox"
+                      className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl"
+                    >
+                      {PAYMENT_METHODS.map((method) => (
+                        <button
+                          key={method.id}
+                          role="option"
+                          className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-gray-50 ${method.id === selectedPaymentMethod.id ? "bg-gray-100 font-semibold" : ""}`}
+                          onClick={() => {
+                            setSelectedPaymentMethod(method);
+                            setPaymentMenuOpen(false);
+                          }}
+                        >
+                          <span>{method.label}</span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {method.description}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {selectedPaymentMethod.description}
+                </p>
               </div>
 
               <Button

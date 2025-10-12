@@ -294,20 +294,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (onBack) onBack();
-                else navigate('/');
-              }}
-              aria-label="Back to dashboard"
-              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
+          <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
             {wallet ? (
@@ -347,6 +334,20 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
+          <div className="mb-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (onBack) onBack();
+                else navigate('/');
+              }}
+              aria-label="Back"
+              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
           {connectMsg && (
             <div className="mb-3 rounded-md border border-[hsl(var(--border))] bg-white/60 px-3 py-2 text-xs text-muted-foreground">
               {connectMsg}

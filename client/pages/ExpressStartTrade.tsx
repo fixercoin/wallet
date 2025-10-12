@@ -179,6 +179,69 @@ export default function ExpressStartTrade() {
     }
   };
 
+  // Poll for transaction detection when seller opens confirm modal
+  useEffect(() => {
+    if (!showConfirm || localRole !== "seller" || !match?.walletAddress) return;
+
+    let cancelled = false;
+
+    const fetchLatestSig = async () => {
+      try {
+        const resp = await fetch("/api/solana-rpc", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: Date.now(),
+            method: "getSignaturesForAddress",
+            params: [match.walletAddress, { limit: 1 }],
+          }),
+        });
+        const data = await resp.json();
+        const arr = data?.result || [];
+        const sig = arr?.[0]?.signature || null;
+        if (!cancelled) setBaselineSig(sig);
+      } catch {}
+    };
+
+    const poll = async () => {
+      try {
+        const resp = await fetch("/api/solana-rpc", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: Date.now(),
+            method: "getSignaturesForAddress",
+            params: [match.walletAddress, { limit: 1 }],
+          }),
+        });
+        const data = await resp.json();
+        const sig = data?.result?.[0]?.signature || null;
+        if (baselineSig && sig && sig !== baselineSig) {
+          setTxDetected(true);
+          if (pollRef.current) {
+            window.clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+        }
+      } catch {}
+    };
+
+    fetchLatestSig();
+    if (pollRef.current) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    pollRef.current = window.setInterval(poll, 5000);
+
+    return () => {
+      cancelled = true;
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [showConfirm, localRole, match?.walletAddress, baselineSig]);
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">

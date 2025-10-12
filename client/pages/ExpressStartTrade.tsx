@@ -141,7 +141,7 @@ export default function ExpressStartTrade() {
   }, [match, params]);
 
   // Send a message; if a file is attached, include it in the message payload
-  const handleSend = async () => {
+  const sendMessage = async () => {
     if (!tradeId) return;
     const text = message.trim();
     if (!text && !proofFile) return;
@@ -378,7 +378,7 @@ export default function ExpressStartTrade() {
                 className="flex-1 rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
               />
               <Button
-                onClick={handleSend}
+                onClick={sendMessage}
                 disabled={!tradeId || (!message.trim() && !proofFile)}
                 className="h-10 px-3"
               >

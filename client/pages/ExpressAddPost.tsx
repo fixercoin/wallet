@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
+import { jupiterAPI } from "@/lib/services/jupiter";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_WALLET } from "@/lib/p2p";
@@ -24,6 +26,11 @@ export default function ExpressAddPost() {
   const tokenMenuRef = useRef<HTMLDivElement | null>(null);
 
   const [pricePkr, setPricePkr] = useState<string>(""); // PKR per token
+  const [pkrPerUsd, setPkrPerUsd] = useState<number | null>(null);
+  const [tokenPriceUsd, setTokenPriceUsd] = useState<number>(1);
+  const [loadingRate, setLoadingRate] = useState(false);
+  const [loadingTokenPrice, setLoadingTokenPrice] = useState(false);
+  const lastAutoPriceRef = useRef<number | null>(null);
   const [minToken, setMinToken] = useState<string>("");
   const [maxToken, setMaxToken] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
@@ -87,6 +94,95 @@ export default function ExpressAddPost() {
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
   }, []);
+
+  // Fetch USD -> PKR rate periodically
+  useEffect(() => {
+    let abort = false;
+    const fetchRate = async () => {
+      try {
+        setLoadingRate(true);
+        const resp = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        if (!resp.ok) throw new Error("rate request failed");
+        const json = await resp.json();
+        const val = json?.rates?.PKR;
+        if (val && isFinite(val) && val > 0 && !abort) setPkrPerUsd(val);
+      } catch (e) {
+        // ignore
+      } finally {
+        if (!abort) setLoadingRate(false);
+      }
+    };
+    fetchRate();
+    const id = setInterval(fetchRate, 60_000); // refresh every minute
+    return () => {
+      abort = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  // Fetch token USD price when selected token changes
+  useEffect(() => {
+    let abort = false;
+    const loadPrice = async () => {
+      try {
+        setLoadingTokenPrice(true);
+        if (token === "USDC") {
+          if (!abort) setTokenPriceUsd(1);
+          return;
+        }
+        if (token === "SOL") {
+          try {
+            const prices = await jupiterAPI.getTokenPrices([W_SOL_MINT]);
+            const p = prices?.[W_SOL_MINT];
+            if (p && p > 0) {
+              if (!abort) setTokenPriceUsd(p);
+              return;
+            }
+          } catch {}
+          if (!abort) setTokenPriceUsd(100);
+          return;
+        }
+        if (token === "FIXERCOIN") {
+          try {
+            const fixer = await fixercoinPriceService.getFixercoinPrice().catch(() => null as any);
+            if (fixer && typeof fixer.price === "number" && fixer.price > 0) {
+              if (!abort) setTokenPriceUsd(fixer.price);
+              return;
+            }
+          } catch {}
+          try {
+            const price = await fixercoinPriceService.getPrice();
+            if (price && price > 0) {
+              if (!abort) setTokenPriceUsd(price);
+              return;
+            }
+          } catch {}
+          if (!abort) setTokenPriceUsd(0.000023);
+          return;
+        }
+      } catch {}
+      finally {
+        if (!abort) setLoadingTokenPrice(false);
+      }
+    };
+    loadPrice();
+    return () => {
+      abort = true;
+    };
+  }, [token]);
+
+  // Auto-fill PKR price based on fetched rates unless user manually edited
+  useEffect(() => {
+    if (!pkrPerUsd || !tokenPriceUsd) return;
+    const derived = tokenPriceUsd * pkrPerUsd;
+    if (!isFinite(derived) || derived <= 0) return;
+    const formatted = derived.toFixed(2);
+    const currentVal = parseFloat(pricePkr || "");
+    if (!pricePkr || (lastAutoPriceRef.current !== null && Number(currentVal) === lastAutoPriceRef.current)) {
+      setPricePkr(formatted);
+      lastAutoPriceRef.current = Number(formatted);
+    }
+  }, [pkrPerUsd, tokenPriceUsd]);
 
   const handleConnect = async () => {
     setConnectMsg("Detecting wallet … connecting to wallet");

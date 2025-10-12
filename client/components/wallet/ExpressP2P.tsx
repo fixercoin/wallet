@@ -35,21 +35,26 @@ const TOKEN_MINTS = {
 } as const;
 
 type PaymentMethodOption = {
-  id: "easypaisa" | "firstpay";
+  id: "bank" | "easypaisa" | "firstpay";
   label: string;
-  description: string;
+  description?: string;
 };
 
 const PAYMENT_METHODS: PaymentMethodOption[] = [
   {
+    id: "bank",
+    label: "BANK ACCOUNT",
+    description: "Settle using a standard bank account transfer.",
+  },
+  {
     id: "easypaisa",
-    label: "Bank Account · Easypaisa",
-    description: "Instant transfers to Easypaisa-linked bank accounts.",
+    label: "EASYPAISA",
+    description: "Use your Easypaisa account-linked bank for instant payments.",
   },
   {
     id: "firstpay",
-    label: "Bank Account · FirstPay",
-    description: "Pay securely using FirstPay business bank accounts.",
+    label: "FIRSTPAY",
+    description: "Accept and send payments via FirstPay business banking.",
   },
 ];
 

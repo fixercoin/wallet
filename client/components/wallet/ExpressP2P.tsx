@@ -85,10 +85,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     PAYMENT_METHODS[0],
   );
 
-  const [dexToken, setDexToken] = useState<DexscreenerToken | null>(null);
-  const [loadingDexData, setLoadingDexData] = useState(false);
-  const [dexError, setDexError] = useState<string | null>(null);
-
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 

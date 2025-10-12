@@ -212,7 +212,7 @@ export default function ExpressStartTrade() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-card p-4">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-4">
             <h2 className="mb-2 text-base font-semibold">Order Review</h2>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, Copy, Info, LogOut } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";

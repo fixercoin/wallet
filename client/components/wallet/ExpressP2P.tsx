@@ -29,7 +29,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { wallet } = useWallet();
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
-  const [pkrAmount, setPkrAmount] = useState<string>("");
+  const [pkrAmount, setPkrAmount] = useState<string>(""); // buy: PKR -> token
+  const [tokenAmount, setTokenAmount] = useState<string>(""); // sell: token -> PKR
   const [pkrPerUsd, setPkrPerUsd] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
@@ -107,12 +108,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               return;
             }
           } catch {}
-          if (!abort) setTokenPriceUsd(100); // conservative fallback
+          if (!abort) setTokenPriceUsd(100); // fallback
           return;
         }
         if (selectedToken === "FIXERCOIN") {
           try {
-            // Prefer dedicated service
             const fixer = await fixercoinPriceService.getFixercoinPrice().catch(() => null as any);
             if (fixer && typeof fixer.price === "number" && fixer.price > 0) {
               if (!abort) setTokenPriceUsd(fixer.price);
@@ -141,13 +141,23 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     };
   }, [selectedToken]);
 
-  const receiveAmount = useMemo(() => {
+  // Buy: PKR -> token units
+  const buyReceiveAmount = useMemo(() => {
     const amt = parseFloat(pkrAmount || "0");
     if (!pkrPerUsd || !isFinite(amt) || !tokenPriceUsd) return "0";
-    const usd = amt / pkrPerUsd; // convert PKR -> USD
-    const units = usd / tokenPriceUsd; // USD -> token
+    const usd = amt / pkrPerUsd;
+    const units = usd / tokenPriceUsd;
     return units > 0 ? units.toFixed(4) : "0";
   }, [pkrAmount, pkrPerUsd, tokenPriceUsd]);
+
+  // Sell: token units -> PKR
+  const sellReceivePkr = useMemo(() => {
+    const units = parseFloat(tokenAmount || "0");
+    if (!pkrPerUsd || !isFinite(units) || !tokenPriceUsd) return "0";
+    const usd = units * tokenPriceUsd;
+    const pkr = usd * pkrPerUsd;
+    return pkr > 0 ? pkr.toFixed(2) : "0";
+  }, [tokenAmount, pkrPerUsd, tokenPriceUsd]);
 
   const handleConnect = async () => {
     setConnectMsg("Detecting wallet … connecting to wallet");
@@ -240,71 +250,140 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             </div>
 
             <div className="space-y-3">
-              <div>
-                <SectionLabel>Spend</SectionLabel>
-                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
-                  <CurrencyBadge label="PKR" />
-                  <input
-                    value={pkrAmount}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (/^\d*\.?\d*$/.test(v)) setPkrAmount(v);
-                    }}
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                  />
-                </div>
-              </div>
+              {buyActive ? (
+                <>
+                  <div>
+                    <SectionLabel>Spend</SectionLabel>
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <CurrencyBadge label="PKR" />
+                      <input
+                        value={pkrAmount}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (/^\d*\.?\d*$/.test(v)) setPkrAmount(v);
+                        }}
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <SectionLabel>Receive</SectionLabel>
-                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
-                  <CurrencyBadge label={selectedToken} />
-                  <input
-                    value={receiveAmount}
-                    readOnly
-                    className="w-full bg-transparent text-sm outline-none"
-                  />
-                  <div className="relative" ref={tokenMenuRef}>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-white"
-                      aria-haspopup="listbox"
-                      aria-expanded={tokenMenuOpen}
-                      onClick={() => setTokenMenuOpen((o) => !o)}
-                    >
-                      {selectedToken}
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </button>
-                    {tokenMenuOpen && (
-                      <div
-                        role="listbox"
-                        className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-md border bg-white text-sm shadow-md"
-                      >
-                        {(["USDC", "SOL", "FIXERCOIN"] as const).map((tok) => (
-                          <button
-                            key={tok}
-                            role="option"
-                            className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
-                              tok === selectedToken ? "font-semibold" : ""
-                            }`}
-                            onClick={() => {
-                              setSelectedToken(tok);
-                              setTokenMenuOpen(false);
-                            }}
+                  <div>
+                    <SectionLabel>Receive</SectionLabel>
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <CurrencyBadge label={selectedToken} />
+                      <input
+                        value={buyReceiveAmount}
+                        readOnly
+                        className="w-full bg-transparent text-sm outline-none"
+                      />
+                      <div className="relative" ref={tokenMenuRef}>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-white"
+                          aria-haspopup="listbox"
+                          aria-expanded={tokenMenuOpen}
+                          onClick={() => setTokenMenuOpen((o) => !o)}
+                        >
+                          {selectedToken}
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                        {tokenMenuOpen && (
+                          <div
+                            role="listbox"
+                            className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-md border bg-white text-sm shadow-md"
                           >
-                            {tok}
-                          </button>
-                        ))}
+                            {(["USDC", "SOL", "FIXERCOIN"] as const).map((tok) => (
+                              <button
+                                key={tok}
+                                role="option"
+                                className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
+                                  tok === selectedToken ? "font-semibold" : ""
+                                }`}
+                                onClick={() => {
+                                  setSelectedToken(tok);
+                                  setTokenMenuOpen(false);
+                                }}
+                              >
+                                {tok}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+                    </div>
+                    {tokenPriceError && (
+                      <div className="mt-1 text-[10px] text-destructive">{tokenPriceError}</div>
                     )}
                   </div>
-                </div>
-                {tokenPriceError && (
-                  <div className="mt-1 text-[10px] text-destructive">{tokenPriceError}</div>
-                )}
-              </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <SectionLabel>Spend</SectionLabel>
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <CurrencyBadge label={selectedToken} />
+                      <input
+                        value={tokenAmount}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (/^\d*\.?\d*$/.test(v)) setTokenAmount(v);
+                        }}
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                      <div className="relative" ref={tokenMenuRef}>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-white"
+                          aria-haspopup="listbox"
+                          aria-expanded={tokenMenuOpen}
+                          onClick={() => setTokenMenuOpen((o) => !o)}
+                        >
+                          {selectedToken}
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                        {tokenMenuOpen && (
+                          <div
+                            role="listbox"
+                            className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-md border bg-white text-sm shadow-md"
+                          >
+                            {(["USDC", "SOL", "FIXERCOIN"] as const).map((tok) => (
+                              <button
+                                key={tok}
+                                role="option"
+                                className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
+                                  tok === selectedToken ? "font-semibold" : ""
+                                }`}
+                                onClick={() => {
+                                  setSelectedToken(tok);
+                                  setTokenMenuOpen(false);
+                                }}
+                              >
+                                {tok}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <SectionLabel>Receive</SectionLabel>
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <CurrencyBadge label="PKR" />
+                      <input
+                        value={sellReceivePkr}
+                        readOnly
+                        className="w-full bg-transparent text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5" />
@@ -329,7 +408,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
               <Button
                 onClick={handlePrimary}
-                disabled={!pkrAmount || !pkrPerUsd || parseFloat(pkrAmount) <= 0}
+                disabled={
+                  buyActive
+                    ? !pkrAmount || !pkrPerUsd || parseFloat(pkrAmount) <= 0
+                    : !tokenAmount || !pkrPerUsd || parseFloat(tokenAmount) <= 0
+                }
                 className="h-10 w-full rounded-md bg-[hsl(330,81%,60%)] text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
               >
                 {buyActive ? "Buy With PKR" : "Sell For PKR"}

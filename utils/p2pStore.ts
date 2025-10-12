@@ -6,6 +6,7 @@ export type P2PPost = {
   minToken: number;
   maxToken: number;
   paymentMethod: "bank" | "easypaisa" | "firstpay" | string;
+  walletAddress?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -54,6 +55,7 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     store.posts[idx] = {
       ...store.posts[idx],
       ...payload,
+      walletAddress: payload?.walletAddress || store.posts[idx].walletAddress,
       updatedAt: now,
     } as P2PPost;
     return { post: store.posts[idx], status: 200 } as const;
@@ -67,6 +69,7 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     minToken: Number(payload?.minToken) || 0,
     maxToken: Number(payload?.maxToken) || 0,
     paymentMethod: payload?.paymentMethod || "bank",
+    walletAddress: payload?.walletAddress || "",
     createdAt: now,
     updatedAt: now,
   };

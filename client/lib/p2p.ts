@@ -8,6 +8,7 @@ export type P2PPost = {
   minToken: number;
   maxToken: number;
   paymentMethod: string;
+  walletAddress?: string;
   createdAt: number;
   updatedAt: number;
 };

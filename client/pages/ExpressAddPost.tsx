@@ -26,6 +26,7 @@ export default function ExpressAddPost() {
   const [pricePkr, setPricePkr] = useState<string>(""); // PKR per token
   const [minToken, setMinToken] = useState<string>("");
   const [maxToken, setMaxToken] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
@@ -117,6 +118,13 @@ export default function ExpressAddPost() {
       });
       return;
     }
+    if (type === "buy" && (!walletAddress || walletAddress.length < 20)) {
+      toast({
+        title: "Enter a valid wallet address to receive assets",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const resp = await fetch(`/api/p2p/post`, {
@@ -132,6 +140,7 @@ export default function ExpressAddPost() {
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
+          walletAddress,
         }),
       });
       if (!resp.ok) {
@@ -355,6 +364,25 @@ export default function ExpressAddPost() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Wallet Address (to receive assets)
+                </div>
+                <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                  <input
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="Destination Solana address"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                {type === "buy" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Required for BUY offers so sellers can send tokens to you.
+                  </p>
+                )}
               </div>
 
               <Button

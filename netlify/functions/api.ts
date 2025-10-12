@@ -283,6 +283,45 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Binance passthrough: /api/binance/<path>
+    if (path.startsWith("/binance/")) {
+      const BINANCE_ENDPOINTS = [
+        "https://api.binance.com",
+        "https://api1.binance.com",
+        "https://api2.binance.com",
+        "https://api3.binance.com",
+      ];
+      const subPath = path.replace(/^\/binance\//, "/");
+      const search = event.rawQuery ? `?${event.rawQuery}` : "";
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
+        const base = BINANCE_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(target, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            if ([429, 502, 503].includes(resp.status)) continue;
+            const t = await resp.text().catch(() => "");
+            throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+          }
+          const text = await resp.text();
+          // Try to return JSON if possible, else text
+          try {
+            const json = JSON.parse(text);
+            return jsonResponse(200, json);
+          } catch {
+            return jsonResponse(200, text, { "Content-Type": "text/plain" });
+          }
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+        }
+      }
+      return jsonResponse(502, { error: "All Binance endpoints failed", details: lastErr });
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

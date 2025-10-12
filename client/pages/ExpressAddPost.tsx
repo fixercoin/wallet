@@ -96,7 +96,7 @@ export default function ExpressAddPost() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Basic validation
     const price = parseFloat(pricePkr || "0");
     const min = parseFloat(minToken || "0");
@@ -114,24 +114,40 @@ export default function ExpressAddPost() {
       return;
     }
 
-    const createdPost = {
-      id: `local-${Date.now()}`,
-      type: type as "buy" | "sell",
-      token,
-      pricePkr: price,
-      minToken: min,
-      maxToken: max,
-      paymentMethod: selectedPaymentMethod?.id ?? "bank",
-      createdAt: Date.now(),
-    };
-
-    toast({
-      title: "Offer posted (local)",
-      description: `${type.toUpperCase()} ${token} @ PKR ${price} (min ${min}, max ${max})`,
-    });
-
-    // Navigate to a post details page to allow editing/saving
-    navigate("/express/post", { state: { post: createdPost } });
+    try {
+      const resp = await fetch(`/api/p2p/post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Wallet": wallet.publicKey,
+        },
+        body: JSON.stringify({
+          type,
+          token,
+          pricePkr: price,
+          minToken: min,
+          maxToken: max,
+          paymentMethod: selectedPaymentMethod?.id ?? "bank",
+        }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        toast({
+          title: `Failed to post: ${err.error || resp.statusText}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      const json = await resp.json();
+      const createdPost = json.post;
+      toast({
+        title: "Offer posted",
+        description: `${type.toUpperCase()} ${token} @ PKR ${price}`,
+      });
+      navigate("/express/post", { state: { post: createdPost } });
+    } catch (e) {
+      toast({ title: "Failed to post offer", variant: "destructive" });
+    }
   };
 
   return (

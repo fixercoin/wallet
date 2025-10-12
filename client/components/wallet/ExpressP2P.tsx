@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Copy, Info, LogOut } from "lucide-react";
+import { ArrowLeft, ChevronDown, Copy, Info } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
@@ -60,7 +60,7 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const { wallet, logout } = useWallet();
+  const { wallet } = useWallet();
   const { toast } = useToast();
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
@@ -92,9 +92,27 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
-  const handleBack = () => {
-    if (onBack) onBack();
-  };
+  // P2P market posts (polled for demo realtime)
+  const [posts, setPosts] = useState<any[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const resp = await fetch("/api/p2p/list");
+        if (!resp.ok) return;
+        const j = await resp.json();
+        if (mounted) setPosts(j.posts || []);
+      } catch (e) {
+        // ignore
+      }
+    };
+    load();
+    const id = setInterval(load, 2000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -106,18 +124,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         : "Unable to copy wallet address.",
       variant: success ? undefined : "destructive",
     });
-  };
-
-  const handleDisconnect = async () => {
-    try {
-      const provider = ensureFixoriumProvider();
-      await provider?.disconnect();
-    } catch (error) {
-      console.warn("Failed to disconnect provider:", error);
-    } finally {
-      logout();
-      toast({ title: "Wallet Disconnected" });
-    }
   };
 
   // Close token menu on outside click
@@ -267,7 +273,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleBack}
+              onClick={() => {
+                if (onBack) onBack();
+                else navigate(-1);
+              }}
               aria-label="Back to dashboard"
               className="h-9 w-9 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
             >
@@ -288,15 +297,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     {shortenAddress(wallet.publicKey, 6)}
                   </span>
                   <Copy className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleDisconnect}
-                  className="h-9 rounded-md text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Disconnect
                 </Button>
               </>
             ) : (

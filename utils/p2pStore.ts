@@ -11,6 +11,8 @@ export type P2PPost = {
   paymentMethod: "bank" | "easypaisa" | "firstpay" | string;
   // For BUY offers only
   walletAddress?: string;
+  // Online/Offline visibility option
+  availability: "online" | "offline";
   // Payment account details
   paymentDetails?: {
     accountName: string;
@@ -104,6 +106,7 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
         (payload?.type ?? existing.type) === "sell"
           ? undefined
           : (payload?.walletAddress ?? existing.walletAddress),
+      availability: payload?.availability === "offline" ? "offline" : "online",
       paymentDetails: sanitizeDetails(payload) ?? existing.paymentDetails,
       updatedAt: now,
     };
@@ -124,6 +127,7 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     paymentMethod: payload?.paymentMethod || "bank",
     walletAddress:
       payload?.type === "sell" ? undefined : payload?.walletAddress || "",
+    availability: payload?.availability === "offline" ? "offline" : "online",
     paymentDetails: sanitizeDetails(payload),
     createdAt: now,
     updatedAt: now,

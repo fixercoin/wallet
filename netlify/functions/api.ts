@@ -260,7 +260,6 @@ export const handler = async (event: any) => {
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
     if (path === "/forex/rate" && method === "GET") {
-      const url = new URL(event.rawUrl || event.headers.referer || "http://localhost");
       const base = (event.queryStringParameters?.base || "USD").toUpperCase();
       const symbols = (event.queryStringParameters?.symbols || "PKR").toUpperCase();
       const firstSymbol = symbols.split(",")[0];

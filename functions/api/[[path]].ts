@@ -129,6 +129,103 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
+    // P2P endpoints (in-memory store)
+    if (normalizedPath.startsWith("/p2p")) {
+      const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
+      const store: any = (globalThis as any).__P2P_STORE || {
+        posts: [],
+        messages: {},
+        proofs: {},
+      };
+      (globalThis as any).__P2P_STORE = store;
+
+      const subPath = normalizedPath.replace(/^\/p2p/, "") || "/";
+
+      const json = async () => {
+        try {
+          return await request.json();
+        } catch (_) {
+          return null as any;
+        }
+      };
+
+      // List posts
+      if (request.method === "GET" && (subPath === "/list" || subPath === "/")) {
+        return jsonCors(200, { posts: store.posts });
+      }
+
+      // Get post by id
+      if (request.method === "GET" && subPath.startsWith("/post/")) {
+        const id = subPath.replace("/post/", "");
+        const post = store.posts.find((p: any) => p.id === id);
+        if (!post) return jsonCors(404, { error: "not found" });
+        return jsonCors(200, { post });
+      }
+
+      // Create or update post (admin only)
+      if ((request.method === "POST" || request.method === "PUT") && subPath === "/post") {
+        const body = (await json()) || {};
+        const adminHeader =
+          request.headers.get("x-admin-wallet") || body.adminWallet || "";
+        if (adminHeader !== ADMIN_WALLET) {
+          return jsonCors(401, { error: "unauthorized" });
+        }
+        const now = Date.now();
+        if (body.id) {
+          const idx = store.posts.findIndex((p: any) => p.id === body.id);
+          if (idx === -1) return jsonCors(404, { error: "not found" });
+          store.posts[idx] = { ...store.posts[idx], ...body, updatedAt: now };
+          return jsonCors(200, { post: store.posts[idx] });
+        }
+        const id = `post-${now}`;
+        const post = {
+          id,
+          type: body.type || "buy",
+          token: body.token || "USDC",
+          pricePkr: Number(body.pricePkr) || 0,
+          minToken: Number(body.minToken) || 0,
+          maxToken: Number(body.maxToken) || 0,
+          paymentMethod: body.paymentMethod || "bank",
+          createdAt: now,
+          updatedAt: now,
+        };
+        store.posts.unshift(post);
+        return jsonCors(201, { post });
+      }
+
+      // Trade messages: list
+      if (request.method === "GET" && subPath.startsWith("/trade/") && subPath.endsWith("/messages")) {
+        const tradeId = subPath.replace(/^\/trade\//, "").replace(/\/messages$/, "");
+        const msgs = store.messages[tradeId] || [];
+        return jsonCors(200, { messages: msgs });
+      }
+
+      // Trade messages: post
+      if (request.method === "POST" && subPath.startsWith("/trade/") && subPath.endsWith("/message")) {
+        const tradeId = subPath.replace(/^\/trade\//, "").replace(/\/message$/, "");
+        const body = (await json()) || {};
+        const msg = body.message;
+        if (!msg) return jsonCors(400, { error: "invalid message" });
+        const entry = { id: `m-${Date.now()}`, message: msg, from: body.from || "unknown", ts: Date.now() };
+        store.messages[tradeId] = store.messages[tradeId] || [];
+        store.messages[tradeId].push(entry);
+        return jsonCors(201, { message: entry });
+      }
+
+      // Upload proof
+      if (request.method === "POST" && subPath.startsWith("/trade/") && subPath.endsWith("/proof")) {
+        const tradeId = subPath.replace(/^\/trade\//, "").replace(/\/proof$/, "");
+        const body = (await json()) || {};
+        const proof = body.proof;
+        if (!proof || !proof.filename || !proof.data) return jsonCors(400, { error: "invalid proof" });
+        store.proofs[tradeId] = store.proofs[tradeId] || [];
+        store.proofs[tradeId].push({ id: `p-${Date.now()}`, filename: proof.filename, data: proof.data, ts: Date.now() });
+        return jsonCors(201, { ok: true });
+      }
+
+      return jsonCors(404, { error: `No P2P handler for ${subPath}` });
+    }
+
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);

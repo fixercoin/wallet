@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Copy, Info, LogOut } from "lucide-react";
+import { ChevronDown, Copy, Info } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
@@ -92,9 +92,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
-  const handleBack = () => {
-    if (onBack) onBack();
-  };
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -108,17 +105,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   };
 
-  const handleDisconnect = async () => {
-    try {
-      const provider = ensureFixoriumProvider();
-      await provider?.disconnect();
-    } catch (error) {
-      console.warn("Failed to disconnect provider:", error);
-    } finally {
-      logout();
-      toast({ title: "Wallet Disconnected" });
-    }
-  };
 
   // Close token menu on outside click
   useEffect(() => {
@@ -263,17 +249,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              aria-label="Back to dashboard"
-              className="h-9 w-9 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
 
           <div className="flex items-center gap-2">
             {wallet ? (
@@ -288,15 +264,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     {shortenAddress(wallet.publicKey, 6)}
                   </span>
                   <Copy className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleDisconnect}
-                  className="h-9 rounded-md text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Disconnect
                 </Button>
               </>
             ) : (

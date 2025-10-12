@@ -12,7 +12,9 @@ interface ExpressP2PProps {
 }
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-1 text-xs font-medium text-muted-foreground">{children}</div>
+  <div className="mb-1 text-xs font-medium text-muted-foreground">
+    {children}
+  </div>
 );
 
 const CurrencyBadge = ({ label }: { label: string }) => (
@@ -35,7 +37,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [loadingRate, setLoadingRate] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
 
-  const [selectedToken, setSelectedToken] = useState<"USDC" | "SOL" | "FIXERCOIN">("USDC");
+  const [selectedToken, setSelectedToken] = useState<
+    "USDC" | "SOL" | "FIXERCOIN"
+  >("USDC");
   const [tokenMenuOpen, setTokenMenuOpen] = useState(false);
   const tokenMenuRef = useRef<HTMLDivElement | null>(null);
   const [tokenPriceUsd, setTokenPriceUsd] = useState<number>(1); // default: 1 USDC = $1
@@ -113,7 +117,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         }
         if (selectedToken === "FIXERCOIN") {
           try {
-            const fixer = await fixercoinPriceService.getFixercoinPrice().catch(() => null as any);
+            const fixer = await fixercoinPriceService
+              .getFixercoinPrice()
+              .catch(() => null as any);
             if (fixer && typeof fixer.price === "number" && fixer.price > 0) {
               if (!abort) setTokenPriceUsd(fixer.price);
               return;
@@ -294,27 +300,31 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                             role="listbox"
                             className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-md border bg-white text-sm shadow-md"
                           >
-                            {(["USDC", "SOL", "FIXERCOIN"] as const).map((tok) => (
-                              <button
-                                key={tok}
-                                role="option"
-                                className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
-                                  tok === selectedToken ? "font-semibold" : ""
-                                }`}
-                                onClick={() => {
-                                  setSelectedToken(tok);
-                                  setTokenMenuOpen(false);
-                                }}
-                              >
-                                {tok}
-                              </button>
-                            ))}
+                            {(["USDC", "SOL", "FIXERCOIN"] as const).map(
+                              (tok) => (
+                                <button
+                                  key={tok}
+                                  role="option"
+                                  className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
+                                    tok === selectedToken ? "font-semibold" : ""
+                                  }`}
+                                  onClick={() => {
+                                    setSelectedToken(tok);
+                                    setTokenMenuOpen(false);
+                                  }}
+                                >
+                                  {tok}
+                                </button>
+                              ),
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
                     {tokenPriceError && (
-                      <div className="mt-1 text-[10px] text-destructive">{tokenPriceError}</div>
+                      <div className="mt-1 text-[10px] text-destructive">
+                        {tokenPriceError}
+                      </div>
                     )}
                   </div>
                 </>
@@ -350,21 +360,23 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                             role="listbox"
                             className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-md border bg-white text-sm shadow-md"
                           >
-                            {(["USDC", "SOL", "FIXERCOIN"] as const).map((tok) => (
-                              <button
-                                key={tok}
-                                role="option"
-                                className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
-                                  tok === selectedToken ? "font-semibold" : ""
-                                }`}
-                                onClick={() => {
-                                  setSelectedToken(tok);
-                                  setTokenMenuOpen(false);
-                                }}
-                              >
-                                {tok}
-                              </button>
-                            ))}
+                            {(["USDC", "SOL", "FIXERCOIN"] as const).map(
+                              (tok) => (
+                                <button
+                                  key={tok}
+                                  role="option"
+                                  className={`block w-full px-3 py-2 text-left hover:bg-gray-50 ${
+                                    tok === selectedToken ? "font-semibold" : ""
+                                  }`}
+                                  onClick={() => {
+                                    setSelectedToken(tok);
+                                    setTokenMenuOpen(false);
+                                  }}
+                                >
+                                  {tok}
+                                </button>
+                              ),
+                            )}
                           </div>
                         )}
                       </div>
@@ -388,7 +400,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5" />
                 <span>
-                  1 {selectedToken} ≈ {loadingRate || loadingTokenPrice ? "—" : pkrPerUsd && tokenPriceUsd ? (pkrPerUsd * tokenPriceUsd).toFixed(2) : "—"} PKR
+                  1 {selectedToken} ≈{" "}
+                  {loadingRate || loadingTokenPrice
+                    ? "—"
+                    : pkrPerUsd && tokenPriceUsd
+                      ? (pkrPerUsd * tokenPriceUsd).toFixed(2)
+                      : "—"}{" "}
+                  PKR
                 </span>
                 {rateError && <span className="ml-1">({rateError})</span>}
               </div>

@@ -76,7 +76,10 @@ export default function ExpressAddPost() {
       return;
     }
 
-    toast({ title: "Offer posted (local)", description: `${type.toUpperCase()} ${token} @ PKR ${price} (min ${min}, max ${max})` });
+    toast({
+      title: "Offer posted (local)",
+      description: `${type.toUpperCase()} ${token} @ PKR ${price} (min ${min}, max ${max})`,
+    });
     navigate(-1);
   };
 
@@ -142,7 +145,9 @@ export default function ExpressAddPost() {
 
             <div className="space-y-3">
               <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Token</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Token
+                </div>
                 <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
                   <CurrencyBadge label={token} />
                   <div className="relative ml-auto" ref={tokenMenuRef}>
@@ -183,7 +188,9 @@ export default function ExpressAddPost() {
               </div>
 
               <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Price (PKR per {token})</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Price (PKR per {token})
+                </div>
                 <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
                   <CurrencyBadge label="PKR" />
                   <input
@@ -201,7 +208,9 @@ export default function ExpressAddPost() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <div className="mb-1 text-xs font-medium text-muted-foreground">Min Amount ({token})</div>
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">
+                    Min Amount ({token})
+                  </div>
                   <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
                     <input
                       value={minToken}
@@ -216,7 +225,9 @@ export default function ExpressAddPost() {
                   </div>
                 </div>
                 <div>
-                  <div className="mb-1 text-xs font-medium text-muted-foreground">Max Amount ({token})</div>
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">
+                    Max Amount ({token})
+                  </div>
                   <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
                     <input
                       value={maxToken}
@@ -233,7 +244,9 @@ export default function ExpressAddPost() {
               </div>
 
               <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Payment Method</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Payment Method
+                </div>
                 <button
                   type="button"
                   className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-left text-sm"

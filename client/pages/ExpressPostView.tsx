@@ -108,6 +108,7 @@ export default function ExpressPostView() {
             </Button>
             <Button
               onClick={handleSave}
+              disabled={!(wallet && wallet.publicKey === ADMIN_WALLET)}
               className="bg-[hsl(330,81%,60%)] text-white"
             >
               Save

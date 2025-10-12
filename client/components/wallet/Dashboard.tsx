@@ -308,7 +308,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Gift className="h-4 w-4" />
-                  <span>DISTRIBUTION</span>
+                  <span>MULTI-SEND</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -316,7 +316,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />
-                  <span>SETTING</span>
+                  <span>SETTINGS</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

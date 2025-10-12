@@ -18,9 +18,15 @@ export default function ExpressPostView() {
     type: post?.type ?? "buy",
     token: post?.token ?? "USDC",
     pricePkr: post?.pricePkr ?? "",
+    pricePerUSDC: post?.pricePerUSDC ?? "",
+    pricePerSOL: post?.pricePerSOL ?? "",
     minToken: post?.minToken ?? "",
     maxToken: post?.maxToken ?? "",
     paymentMethod: post?.paymentMethod ?? "bank",
+    paymentDetails: {
+      accountName: post?.paymentDetails?.accountName ?? "",
+      accountNumber: post?.paymentDetails?.accountNumber ?? "",
+    },
   }));
 
   if (!post) {
@@ -180,6 +186,46 @@ export default function ExpressPostView() {
                 ) : (
                   <div className="font-semibold">PKR {post.pricePkr}</div>
                 )}
+                {form.token === "FIXERCOIN" && (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">
+                        Price per USDC (Fixercoin)
+                      </div>
+                      {editing ? (
+                        <input
+                          value={form.pricePerUSDC as any}
+                          onChange={(e) =>
+                            setForm({ ...form, pricePerUSDC: e.target.value })
+                          }
+                          className="w-full rounded-md border px-3 py-2"
+                        />
+                      ) : (
+                        <div className="text-sm">
+                          {post.pricePerUSDC ?? "—"}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">
+                        Price per SOL (Fixercoin)
+                      </div>
+                      {editing ? (
+                        <input
+                          value={form.pricePerSOL as any}
+                          onChange={(e) =>
+                            setForm({ ...form, pricePerSOL: e.target.value })
+                          }
+                          className="w-full rounded-md border px-3 py-2"
+                        />
+                      ) : (
+                        <div className="text-sm">
+                          {post.pricePerSOL ?? "—"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -232,6 +278,52 @@ export default function ExpressPostView() {
                 ) : (
                   <div className="font-semibold">{post.paymentMethod}</div>
                 )}
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Account Name
+                    </div>
+                    {editing ? (
+                      <input
+                        value={form.paymentDetails?.accountName as any}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            paymentDetails: {
+                              ...(form.paymentDetails || { accountName: "", accountNumber: "" }),
+                              accountName: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                    ) : (
+                      <div className="text-sm">{post.paymentDetails?.accountName ?? "—"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Account Number
+                    </div>
+                    {editing ? (
+                      <input
+                        value={form.paymentDetails?.accountNumber as any}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            paymentDetails: {
+                              ...(form.paymentDetails || { accountName: "", accountNumber: "" }),
+                              accountNumber: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                    ) : (
+                      <div className="text-sm">{post.paymentDetails?.accountNumber ?? "—"}</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

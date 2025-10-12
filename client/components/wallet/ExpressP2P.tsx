@@ -273,14 +273,18 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         },
       });
     } else {
-      if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
-        toast({
-          title: "Only admin wallet can add posts",
-          variant: "destructive",
-        });
-        return;
-      }
-      navigate("/express/add-post");
+      const units = parseFloat(tokenAmount || "0");
+      const pkr = parseFloat(sellReceivePkr || "0");
+      if (!units || !pkrPerUsd || units <= 0) return;
+      navigate("/express/start-trade", {
+        state: {
+          side: "sell",
+          pkrAmount: pkr,
+          token: selectedToken,
+          tokenUnits: units,
+          paymentMethod: selectedPaymentMethod.id,
+        },
+      });
     }
   };
 

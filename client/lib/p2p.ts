@@ -5,10 +5,16 @@ export type P2PPost = {
   type: "buy" | "sell";
   token: string;
   pricePkr: number;
+  pricePerUSDC?: number | null;
+  pricePerSOL?: number | null;
   minToken: number;
   maxToken: number;
   paymentMethod: string;
   walletAddress?: string;
+  paymentDetails?: {
+    accountName: string;
+    accountNumber: string;
+  };
   createdAt: number;
   updatedAt: number;
 };

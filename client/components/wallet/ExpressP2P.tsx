@@ -580,7 +580,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   <>
                     <SectionLabel>Wallet Address</SectionLabel>
                     <div className="flex items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
-                      <span className="font-mono text-xs">{shortenAddress(ADMIN_WALLET, 6)}</span>
+                      <span className="font-mono text-xs">
+                        {shortenAddress(ADMIN_WALLET, 6)}
+                      </span>
                       <Button
                         type="button"
                         variant="outline"
@@ -589,7 +591,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                           const success = await copyToClipboard(ADMIN_WALLET);
                           toast({
                             title: success ? "Address Copied" : "Copy Failed",
-                            description: success ? "Counterparty address copied." : "Unable to copy address.",
+                            description: success
+                              ? "Counterparty address copied."
+                              : "Unable to copy address.",
                             variant: success ? undefined : "destructive",
                           });
                         }}

@@ -119,7 +119,10 @@ export default function ExpressAddPost() {
       return;
     }
     if (type === "buy" && (!walletAddress || walletAddress.length < 20)) {
-      toast({ title: "Enter a valid wallet address to receive assets", variant: "destructive" });
+      toast({
+        title: "Enter a valid wallet address to receive assets",
+        variant: "destructive",
+      });
       return;
     }
 

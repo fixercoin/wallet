@@ -179,7 +179,9 @@ export default function ExpressStartTrade() {
                 <div className="flex items-center justify-between">
                   <span>Wallet Address</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">{shortenAddress(ADMIN_WALLET, 6)}</span>
+                    <span className="font-mono text-xs">
+                      {shortenAddress(ADMIN_WALLET, 6)}
+                    </span>
                     <Button
                       variant="outline"
                       size="sm"
@@ -187,7 +189,9 @@ export default function ExpressStartTrade() {
                         const ok = await copyToClipboard(ADMIN_WALLET);
                         toast({
                           title: ok ? "Address Copied" : "Copy Failed",
-                          description: ok ? "Counterparty address copied." : "Unable to copy address.",
+                          description: ok
+                            ? "Counterparty address copied."
+                            : "Unable to copy address.",
                           variant: ok ? undefined : "destructive",
                         });
                       }}

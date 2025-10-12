@@ -84,6 +84,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
+  // DexScreener state (optional) — defined to avoid runtime ReferenceErrors
+  const [dexToken, setDexToken] = useState<any | null>(null);
+  const [loadingDexData, setLoadingDexData] = useState(false);
+  const [dexError, setDexError] = useState<string | null>(null);
+
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 

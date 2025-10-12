@@ -180,7 +180,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
             <div className="px-6 pt-2">
               <div className="text-[hsl(var(--primary))] font-semibold">
-                Accounts
+            
               </div>
             </div>
             <div className="space-y-6">

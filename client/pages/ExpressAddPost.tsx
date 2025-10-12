@@ -363,6 +363,25 @@ export default function ExpressAddPost() {
                 </div>
               </div>
 
+              <div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Wallet Address (to receive assets)
+                </div>
+                <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                  <input
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="Destination Solana address"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                {type === "buy" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Required for BUY offers so sellers can send tokens to you.
+                  </p>
+                )}
+              </div>
+
               <Button
                 onClick={handleSubmit}
                 className="h-10 w-full rounded-md bg-[hsl(330,81%,60%)] text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"

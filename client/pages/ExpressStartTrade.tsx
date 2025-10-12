@@ -293,7 +293,6 @@ export default function ExpressStartTrade() {
             </div>
 
             <div className="mt-4">
-
               <div className="mt-4">
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Upload payment proof (image)
@@ -315,10 +314,7 @@ export default function ExpressStartTrade() {
                 </div>
 
                 <div className="mt-3 flex gap-2">
-                  <Button
-                    onClick={() => setShowConfirm(true)}
-                    className="h-10"
-                  >
+                  <Button onClick={() => setShowConfirm(true)} className="h-10">
                     Confirm Settlement
                   </Button>
 
@@ -326,10 +322,21 @@ export default function ExpressStartTrade() {
                   {showConfirm && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                       <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
-                        <div className="mb-3 text-lg font-semibold">Confirm Settlement</div>
-                        <div className="mb-4 text-sm">Are you sure you want to confirm settlement for this order? This will notify the counterparty.</div>
+                        <div className="mb-3 text-lg font-semibold">
+                          Confirm Settlement
+                        </div>
+                        <div className="mb-4 text-sm">
+                          Are you sure you want to confirm settlement for this
+                          order? This will notify the counterparty.
+                        </div>
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setShowConfirm(false)} className="h-9">Cancel</Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowConfirm(false)}
+                            className="h-9"
+                          >
+                            Cancel
+                          </Button>
                           <Button
                             onClick={async () => {
                               if (!tradeId) return;
@@ -338,7 +345,9 @@ export default function ExpressStartTrade() {
                                   `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
                                   {
                                     method: "POST",
-                                    headers: { "Content-Type": "application/json" },
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
                                     body: JSON.stringify({
                                       message: "__CONFIRMED_SETTLEMENT__",
                                       from: localRole,
@@ -384,7 +393,11 @@ export default function ExpressStartTrade() {
           aria-label="Open chat"
           className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-white shadow-xl hover:brightness-95"
         >
-          {chatOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+          {chatOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <MessageSquare className="h-6 w-6" />
+          )}
         </button>
 
         {chatOpen && (

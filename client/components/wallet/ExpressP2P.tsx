@@ -348,14 +348,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   size="icon"
                   onClick={() => {
                     if (onBack) onBack();
-                    else navigate('/');
+                    else navigate("/");
                   }}
                   aria-label="Back"
                   className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div className="text-sm font-semibold uppercase">EXPRESS P2P SERVICE</div>
+                <div className="text-sm font-semibold uppercase">
+                  EXPRESS P2P SERVICE
+                </div>
               </div>
             </div>
 

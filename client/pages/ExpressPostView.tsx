@@ -47,17 +47,17 @@ export default function ExpressPostView() {
         </header>
         <main className="flex-1">
           <div className="container mx-auto max-w-md px-4 py-6">
-          <div className="mb-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              aria-label="Back"
-              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
+            <div className="mb-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                aria-label="Back"
+                className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm">
               No post data was provided. Go back and create a post.
             </div>

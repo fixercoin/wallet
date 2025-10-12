@@ -260,7 +260,22 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   };
 
   const handlePrimary = () => {
-    navigate("/express/add-post");
+    if (buyActive) {
+      const amountPkr = parseFloat(pkrAmount || "0");
+      if (!amountPkr || !pkrPerUsd || amountPkr <= 0) return;
+      const units = parseFloat(buyReceiveAmount || "0");
+      navigate("/express/start-trade", {
+        state: {
+          side: "buy",
+          pkrAmount: amountPkr,
+          token: selectedToken,
+          tokenUnits: units,
+          paymentMethod: selectedPaymentMethod.id,
+        },
+      });
+    } else {
+      navigate("/express/add-post");
+    }
   };
 
   const buyActive = tab === "buy";

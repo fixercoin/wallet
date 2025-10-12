@@ -15,6 +15,7 @@ const CurrencyBadge = ({ label }: { label: string }) => (
 export default function ExpressAddPost() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
   const { toast } = useToast();
 
   const [type, setType] = useState<"buy" | "sell">("buy");

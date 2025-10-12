@@ -60,7 +60,7 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const { wallet, logout } = useWallet();
+  const { wallet } = useWallet();
   const { toast } = useToast();
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");

@@ -580,7 +580,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   <>
                     <SectionLabel>Sell Instructions</SectionLabel>
                     <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-xs text-muted-foreground">
-                      After matching with a counterparty, you'll receive payment instructions. No wallet address is required on this page.
+                      After matching with a counterparty, you'll receive payment
+                      instructions. No wallet address is required on this page.
                     </div>
                   </>
                 )}

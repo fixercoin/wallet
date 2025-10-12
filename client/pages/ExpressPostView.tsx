@@ -219,9 +219,7 @@ export default function ExpressPostView() {
                           className="w-full rounded-md border px-3 py-2"
                         />
                       ) : (
-                        <div className="text-sm">
-                          {post.pricePerSOL ?? "—"}
-                        </div>
+                        <div className="text-sm">{post.pricePerSOL ?? "—"}</div>
                       )}
                     </div>
                   </div>
@@ -290,7 +288,10 @@ export default function ExpressPostView() {
                           setForm({
                             ...form,
                             paymentDetails: {
-                              ...(form.paymentDetails || { accountName: "", accountNumber: "" }),
+                              ...(form.paymentDetails || {
+                                accountName: "",
+                                accountNumber: "",
+                              }),
                               accountName: e.target.value,
                             },
                           })
@@ -298,7 +299,9 @@ export default function ExpressPostView() {
                         className="w-full rounded-md border px-3 py-2"
                       />
                     ) : (
-                      <div className="text-sm">{post.paymentDetails?.accountName ?? "—"}</div>
+                      <div className="text-sm">
+                        {post.paymentDetails?.accountName ?? "—"}
+                      </div>
                     )}
                   </div>
                   <div>
@@ -312,7 +315,10 @@ export default function ExpressPostView() {
                           setForm({
                             ...form,
                             paymentDetails: {
-                              ...(form.paymentDetails || { accountName: "", accountNumber: "" }),
+                              ...(form.paymentDetails || {
+                                accountName: "",
+                                accountNumber: "",
+                              }),
                               accountNumber: e.target.value,
                             },
                           })
@@ -320,7 +326,9 @@ export default function ExpressPostView() {
                         className="w-full rounded-md border px-3 py-2"
                       />
                     ) : (
-                      <div className="text-sm">{post.paymentDetails?.accountNumber ?? "—"}</div>
+                      <div className="text-sm">
+                        {post.paymentDetails?.accountNumber ?? "—"}
+                      </div>
                     )}
                   </div>
                 </div>

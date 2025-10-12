@@ -85,16 +85,25 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
       ...existing,
       type: payload?.type ?? existing.type,
       token: payload?.token ?? existing.token,
-      pricePkr: payload?.pricePkr != null ? Number(payload.pricePkr) : existing.pricePkr,
+      pricePkr:
+        payload?.pricePkr != null
+          ? Number(payload.pricePkr)
+          : existing.pricePkr,
       pricePerUSDC: normPricePerUSDC ?? existing.pricePerUSDC,
       pricePerSOL: normPricePerSOL ?? existing.pricePerSOL,
-      minToken: payload?.minToken != null ? Number(payload.minToken) : existing.minToken,
-      maxToken: payload?.maxToken != null ? Number(payload.maxToken) : existing.maxToken,
+      minToken:
+        payload?.minToken != null
+          ? Number(payload.minToken)
+          : existing.minToken,
+      maxToken:
+        payload?.maxToken != null
+          ? Number(payload.maxToken)
+          : existing.maxToken,
       paymentMethod: payload?.paymentMethod ?? existing.paymentMethod,
       walletAddress:
         (payload?.type ?? existing.type) === "sell"
           ? undefined
-          : payload?.walletAddress ?? existing.walletAddress,
+          : (payload?.walletAddress ?? existing.walletAddress),
       paymentDetails: sanitizeDetails(payload) ?? existing.paymentDetails,
       updatedAt: now,
     };
@@ -113,7 +122,8 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     minToken: Number(payload?.minToken) || 0,
     maxToken: Number(payload?.maxToken) || 0,
     paymentMethod: payload?.paymentMethod || "bank",
-    walletAddress: payload?.type === "sell" ? undefined : payload?.walletAddress || "",
+    walletAddress:
+      payload?.type === "sell" ? undefined : payload?.walletAddress || "",
     paymentDetails: sanitizeDetails(payload),
     createdAt: now,
     updatedAt: now,

@@ -231,7 +231,9 @@ export default function ExpressStartTrade() {
               {params?.side === "sell" ? (
                 <div className="flex items-center justify-between">
                   <span>Sell Instructions</span>
-                  <span className="text-xs text-muted-foreground">Will be shared after match</span>
+                  <span className="text-xs text-muted-foreground">
+                    Will be shared after match
+                  </span>
                 </div>
               ) : (
                 <div className="flex justify-between">
@@ -307,7 +309,9 @@ export default function ExpressStartTrade() {
               </div>
 
               <div className="mt-4">
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Upload payment proof (image)</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Upload payment proof (image)
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
@@ -343,7 +347,10 @@ export default function ExpressStartTrade() {
                         if (!resp.ok) throw new Error("failed");
                         toast({ title: "You confirmed settlement" });
                       } catch (e) {
-                        toast({ title: "Confirmation failed", variant: "destructive" });
+                        toast({
+                          title: "Confirmation failed",
+                          variant: "destructive",
+                        });
                       }
                     }}
                     className="h-10"

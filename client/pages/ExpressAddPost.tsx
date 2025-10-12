@@ -145,8 +145,14 @@ export default function ExpressAddPost() {
           type,
           token,
           pricePkr: price,
-          pricePerUSDC: token === "FIXERCOIN" && pricePerUSDC !== "" ? Number(pricePerUSDC) : undefined,
-          pricePerSOL: token === "FIXERCOIN" && pricePerSOL !== "" ? Number(pricePerSOL) : undefined,
+          pricePerUSDC:
+            token === "FIXERCOIN" && pricePerUSDC !== ""
+              ? Number(pricePerUSDC)
+              : undefined,
+          pricePerSOL:
+            token === "FIXERCOIN" && pricePerSOL !== ""
+              ? Number(pricePerSOL)
+              : undefined,
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",

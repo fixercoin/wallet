@@ -118,6 +118,10 @@ export default function ExpressAddPost() {
       });
       return;
     }
+    if (type === "buy" && (!walletAddress || walletAddress.length < 20)) {
+      toast({ title: "Enter a valid wallet address to receive assets", variant: "destructive" });
+      return;
+    }
 
     try {
       const resp = await fetch(`/api/p2p/post`, {
@@ -133,6 +137,7 @@ export default function ExpressAddPost() {
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
+          walletAddress,
         }),
       });
       if (!resp.ok) {

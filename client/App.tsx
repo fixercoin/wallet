@@ -22,6 +22,7 @@ import TokenListing from "./pages/TokenListing";
 import ExpressAddPost from "./pages/ExpressAddPost";
 import ExpressPostView from "./pages/ExpressPostView";
 import ExpressStartTrade from "./pages/ExpressStartTrade";
+import ExpressP2P from "./components/wallet/ExpressP2P";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

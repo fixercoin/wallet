@@ -26,6 +26,7 @@ export default function ExpressAddPost() {
   const [pricePkr, setPricePkr] = useState<string>(""); // PKR per token
   const [minToken, setMinToken] = useState<string>("");
   const [maxToken, setMaxToken] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);

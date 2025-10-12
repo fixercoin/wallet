@@ -95,11 +95,24 @@ export default function ExpressAddPost() {
       return;
     }
 
+    const createdPost = {
+      id: `local-${Date.now()}`,
+      type: type as "buy" | "sell",
+      token,
+      pricePkr: price,
+      minToken: min,
+      maxToken: max,
+      paymentMethod: selectedPaymentMethod?.id ?? "bank",
+      createdAt: Date.now(),
+    };
+
     toast({
       title: "Offer posted (local)",
       description: `${type.toUpperCase()} ${token} @ PKR ${price} (min ${min}, max ${max})`,
     });
-    navigate(-1);
+
+    // Navigate to a post details page to allow editing/saving
+    navigate("/express/post", { state: { post: createdPost } });
   };
 
   return (

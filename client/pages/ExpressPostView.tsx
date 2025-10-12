@@ -50,7 +50,9 @@ export default function ExpressPostView() {
     );
   }
 
-  const handleSave = () => {
+  const { wallet } = useWallet();
+
+  const handleSave = async () => {
     // Basic validation
     const price = parseFloat(form.pricePkr || "0");
     const min = parseFloat(form.minToken || "0");
@@ -60,10 +62,29 @@ export default function ExpressPostView() {
       return;
     }
 
-    const updated = { ...post, ...form };
-    setPost(updated);
-    setEditing(false);
-    toast({ title: "Post saved" });
+    if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
+      toast({ title: "Only admin wallet can save posts", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const resp = await fetch(`/api/p2p/post`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Admin-Wallet": wallet.publicKey },
+        body: JSON.stringify({ id: post.id, ...form }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        toast({ title: `Failed to save: ${err.error || resp.statusText}`, variant: "destructive" });
+        return;
+      }
+      const data = await resp.json();
+      setPost(data.post);
+      setEditing(false);
+      toast({ title: "Post saved" });
+    } catch (e) {
+      toast({ title: "Failed to save post", variant: "destructive" });
+    }
   };
 
   return (

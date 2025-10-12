@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { WalletSetup } from "@/components/wallet/WalletSetup";

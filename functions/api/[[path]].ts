@@ -195,7 +195,7 @@ export const onRequest = async ({ request, env }) => {
         "https://api.binance.com",
         "https://api1.binance.com",
         "https://api2.binance.com",
-        "https://api3.binance.com"
+        "https://api3.binance.com",
       ];
       const subPath = normalizedPath.replace(/^\/binance\//, "/");
       const search = url.search || "";
@@ -215,7 +215,10 @@ export const onRequest = async ({ request, env }) => {
             },
             body:
               request.method !== "GET" && request.method !== "HEAD"
-                ? await request.clone().text().catch(() => undefined)
+                ? await request
+                    .clone()
+                    .text()
+                    .catch(() => undefined)
                 : undefined,
             signal: controller.signal,
           });
@@ -235,13 +238,18 @@ export const onRequest = async ({ request, env }) => {
           const text = await resp.text();
           return new Response(text, {
             status: 200,
-            headers: applyCors(new Headers({ "Content-Type": contentType || "text/plain" })),
+            headers: applyCors(
+              new Headers({ "Content-Type": contentType || "text/plain" }),
+            ),
           });
         } catch (e: any) {
           lastErr = e?.message || String(e);
         }
       }
-      return jsonCors(502, { error: "All Binance endpoints failed", details: lastErr });
+      return jsonCors(502, {
+        error: "All Binance endpoints failed",
+        details: lastErr,
+      });
     }
 
     // Jupiter: /api/jupiter/price?ids=... (comma-separated mints)

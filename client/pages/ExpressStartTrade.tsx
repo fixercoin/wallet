@@ -30,6 +30,7 @@ export default function ExpressStartTrade() {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Load posts to match an order against seller listings
   useEffect(() => {

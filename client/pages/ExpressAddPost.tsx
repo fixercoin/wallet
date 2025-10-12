@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 const CurrencyBadge = ({ label }: { label: string }) => (
   <span className="inline-flex shrink-0 items-center rounded-md bg-secondary/60 px-2 py-1 text-xs font-semibold text-foreground">
@@ -109,8 +110,11 @@ export default function ExpressAddPost() {
       toast({ title: "Check min/max amounts", variant: "destructive" });
       return;
     }
-    if (!wallet) {
-      toast({ title: "Connect the authorized wallet to post offers." });
+    if (!wallet || wallet.publicKey !== ADMIN_WALLET) {
+      toast({
+        title: "Only admin wallet can post offers",
+        variant: "destructive",
+      });
       return;
     }
 

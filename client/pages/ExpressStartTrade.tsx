@@ -31,6 +31,10 @@ export default function ExpressStartTrade() {
   const [uploading, setUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [baselineSig, setBaselineSig] = useState<string | null>(null);
+  const [txDetected, setTxDetected] = useState(false);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
+  const pollRef = useRef<number | null>(null);
 
   // Load posts to match an order against seller listings
   useEffect(() => {
@@ -255,18 +259,10 @@ export default function ExpressStartTrade() {
                       {match.minToken} - {match.maxToken}
                     </span>
                   </div>
-                  {match?.paymentDetails?.accountName && (
-                    <div className="flex justify-between">
-                      <span>Account Name</span>
-                      <span>{match.paymentDetails.accountName}</span>
-                    </div>
-                  )}
-                  {match?.paymentDetails?.accountNumber && (
-                    <div className="flex justify-between">
-                      <span>Account Number</span>
-                      <span>{match.paymentDetails.accountNumber}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span>Availability</span>
+                    <span>{match.availability || "online"}</span>
+                  </div>
                   {!withinLimits && (
                     <div className="mt-2 rounded bg-yellow-50 p-2 text-xs text-yellow-800">
                       Order size is outside seller limits. Adjust amount on
@@ -293,19 +289,53 @@ export default function ExpressStartTrade() {
                         <div className="mb-3 text-lg font-semibold">
                           Confirm Settlement
                         </div>
+                        {localRole === "seller" && match?.walletAddress ? (
+                          <div className="mb-3 text-sm">
+                            <div className="mb-1 font-medium">Buyer Wallet Address</div>
+                            <div className="flex items-center gap-2 rounded-md border px-2 py-1">
+                              <span className="font-mono text-xs break-all flex-1">
+                                {match.walletAddress}
+                              </span>
+                              <Button
+                                variant="outline"
+                                className="h-7 px-2"
+                                onClick={() => copyToClipboard(match.walletAddress)}
+                              >
+                                Copy
+                              </Button>
+                            </div>
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              Send transaction to this address, then confirm.
+                            </div>
+                          </div>
+                        ) : null}
                         <div className="mb-4 text-sm">
-                          Are you sure you want to confirm settlement for this
-                          order? This will notify the counterparty.
+                          {localRole === "seller" ? (
+                            <span>
+                              We will detect the transaction on the wallet address. Once detected, the Confirm button will be enabled.
+                            </span>
+                          ) : (
+                            <span>Confirming will notify the counterparty.</span>
+                          )}
                         </div>
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
-                            onClick={() => setShowConfirm(false)}
+                            onClick={() => {
+                              setShowConfirm(false);
+                              setBaselineSig(null);
+                              setTxDetected(false);
+                              if (pollRef.current) {
+                                window.clearInterval(pollRef.current);
+                                pollRef.current = null;
+                              }
+                            }}
                             className="h-9"
                           >
                             Cancel
                           </Button>
                           <Button
+                            disabled={localRole === "seller" && !txDetected}
                             onClick={async () => {
                               if (!tradeId) return;
                               try {
@@ -317,13 +347,14 @@ export default function ExpressStartTrade() {
                                       "Content-Type": "application/json",
                                     },
                                     body: JSON.stringify({
-                                      message: "__CONFIRMED_SETTLEMENT__",
+                                      message: localRole === "seller" ? "__SELLER_CONFIRMED__" : "__CONFIRMED_SETTLEMENT__",
                                       from: localRole,
                                     }),
                                   },
                                 );
                                 if (!resp.ok) throw new Error("failed");
                                 setShowConfirm(false);
+                                if (localRole === "seller") setAwaitingApproval(true);
                                 toast({ title: "You confirmed settlement" });
                               } catch (e) {
                                 setShowConfirm(false);
@@ -359,6 +390,15 @@ export default function ExpressStartTrade() {
             <MessageSquare className="h-6 w-6" />
           )}
         </button>
+
+        {awaitingApproval && localRole === "seller" && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center">
+            <div className="dashboard-loader-overlay">
+              <div className="dashboard-loader" />
+              <div className="text-sm">Waiting for buyer approval…</div>
+            </div>
+          </div>
+        )}
 
         {chatOpen && (
           <div className="fixed bottom-24 right-6 z-50 w-80 rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-2xl">

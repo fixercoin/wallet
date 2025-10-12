@@ -578,33 +578,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   </>
                 ) : (
                   <>
-                    <SectionLabel>Wallet Address</SectionLabel>
-                    <div className="flex items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
-                      <span className="font-mono text-xs">
-                        {shortenAddress(ADMIN_WALLET, 6)}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          const success = await copyToClipboard(ADMIN_WALLET);
-                          toast({
-                            title: success ? "Address Copied" : "Copy Failed",
-                            description: success
-                              ? "Counterparty address copied."
-                              : "Unable to copy address.",
-                            variant: success ? undefined : "destructive",
-                          });
-                        }}
-                        className="h-7"
-                      >
-                        <Copy className="h-3.5 w-3.5 mr-1" /> Copy
-                      </Button>
+                    <SectionLabel>Sell Instructions</SectionLabel>
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2 text-xs text-muted-foreground">
+                      After matching with a counterparty, you'll receive payment
+                      instructions. No wallet address is required on this page.
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Send your {selectedToken} to this address to proceed.
-                    </p>
                   </>
                 )}
               </div>

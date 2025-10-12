@@ -3,10 +3,19 @@ export type P2PPost = {
   type: "buy" | "sell";
   token: "USDC" | "SOL" | "FIXERCOIN" | string;
   pricePkr: number;
+  // Optional additional pricing for Fixercoin
+  pricePerUSDC?: number | null;
+  pricePerSOL?: number | null;
   minToken: number;
   maxToken: number;
   paymentMethod: "bank" | "easypaisa" | "firstpay" | string;
+  // For BUY offers only
   walletAddress?: string;
+  // Payment account details
+  paymentDetails?: {
+    accountName: string;
+    accountNumber: string;
+  };
   createdAt: number;
   updatedAt: number;
 };
@@ -49,27 +58,73 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     return { error: "unauthorized", status: 401 } as const;
   }
   const now = Date.now();
+
+  const normPricePerUSDC =
+    payload?.pricePerUSDC != null && payload.pricePerUSDC !== ""
+      ? Number(payload.pricePerUSDC)
+      : null;
+  const normPricePerSOL =
+    payload?.pricePerSOL != null && payload.pricePerSOL !== ""
+      ? Number(payload.pricePerSOL)
+      : null;
+  const sanitizeDetails = (p: any) => {
+    const d = p?.paymentDetails || {};
+    const accountName = String(d?.accountName || "").slice(0, 128);
+    const accountNumber = String(d?.accountNumber || "").slice(0, 64);
+    return accountName || accountNumber
+      ? { accountName, accountNumber }
+      : undefined;
+  };
+
   if (payload?.id) {
     const idx = store.posts.findIndex((p) => p.id === payload.id);
     if (idx === -1) return { error: "not found", status: 404 } as const;
-    store.posts[idx] = {
-      ...store.posts[idx],
-      ...payload,
-      walletAddress: payload?.walletAddress || store.posts[idx].walletAddress,
+
+    const existing = store.posts[idx];
+    const updated: P2PPost = {
+      ...existing,
+      type: payload?.type ?? existing.type,
+      token: payload?.token ?? existing.token,
+      pricePkr:
+        payload?.pricePkr != null
+          ? Number(payload.pricePkr)
+          : existing.pricePkr,
+      pricePerUSDC: normPricePerUSDC ?? existing.pricePerUSDC,
+      pricePerSOL: normPricePerSOL ?? existing.pricePerSOL,
+      minToken:
+        payload?.minToken != null
+          ? Number(payload.minToken)
+          : existing.minToken,
+      maxToken:
+        payload?.maxToken != null
+          ? Number(payload.maxToken)
+          : existing.maxToken,
+      paymentMethod: payload?.paymentMethod ?? existing.paymentMethod,
+      walletAddress:
+        (payload?.type ?? existing.type) === "sell"
+          ? undefined
+          : (payload?.walletAddress ?? existing.walletAddress),
+      paymentDetails: sanitizeDetails(payload) ?? existing.paymentDetails,
       updatedAt: now,
-    } as P2PPost;
+    };
+    store.posts[idx] = updated;
     return { post: store.posts[idx], status: 200 } as const;
   }
+
   const id = `post-${now}`;
   const post: P2PPost = {
     id,
     type: payload?.type || "buy",
     token: payload?.token || "USDC",
     pricePkr: Number(payload?.pricePkr) || 0,
+    pricePerUSDC: normPricePerUSDC,
+    pricePerSOL: normPricePerSOL,
     minToken: Number(payload?.minToken) || 0,
     maxToken: Number(payload?.maxToken) || 0,
     paymentMethod: payload?.paymentMethod || "bank",
-    walletAddress: payload?.walletAddress || "",
+    walletAddress:
+      payload?.type === "sell" ? undefined : payload?.walletAddress || "",
+    paymentDetails: sanitizeDetails(payload),
     createdAt: now,
     updatedAt: now,
   };

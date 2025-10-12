@@ -61,6 +61,14 @@ export default function ExpressAddPost() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
+  // Payment account details
+  const [accountName, setAccountName] = useState<string>("");
+  const [accountNumber, setAccountNumber] = useState<string>("");
+
+  // Optional Fixercoin extra pricing
+  const [pricePerUSDC, setPricePerUSDC] = useState<string>("");
+  const [pricePerSOL, setPricePerSOL] = useState<string>("");
+
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (
@@ -137,10 +145,22 @@ export default function ExpressAddPost() {
           type,
           token,
           pricePkr: price,
+          pricePerUSDC:
+            token === "FIXERCOIN" && pricePerUSDC !== ""
+              ? Number(pricePerUSDC)
+              : undefined,
+          pricePerSOL:
+            token === "FIXERCOIN" && pricePerSOL !== ""
+              ? Number(pricePerSOL)
+              : undefined,
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
-          walletAddress,
+          walletAddress: type === "buy" ? walletAddress : undefined,
+          paymentDetails: {
+            accountName,
+            accountNumber,
+          },
         }),
       });
       if (!resp.ok) {
@@ -284,6 +304,44 @@ export default function ExpressAddPost() {
                     className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   />
                 </div>
+                {token === "FIXERCOIN" && (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="mb-1 text-[10px] text-muted-foreground">
+                        Price per USDC (Fixercoin)
+                      </div>
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                        <input
+                          value={pricePerUSDC}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (/^\d*\.?\d*$/.test(v)) setPricePerUSDC(v);
+                          }}
+                          inputMode="decimal"
+                          placeholder="Optional"
+                          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="mb-1 text-[10px] text-muted-foreground">
+                        Price per SOL (Fixercoin)
+                      </div>
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                        <input
+                          value={pricePerSOL}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (/^\d*\.?\d*$/.test(v)) setPricePerSOL(v);
+                          }}
+                          inputMode="decimal"
+                          placeholder="Optional"
+                          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -364,26 +422,54 @@ export default function ExpressAddPost() {
                     </div>
                   )}
                 </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="mb-1 text-[10px] text-muted-foreground">
+                      Account Name ({selectedPaymentMethod.label})
+                    </div>
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <input
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        placeholder="e.g. ABC"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 text-[10px] text-muted-foreground">
+                      Account Number ({selectedPaymentMethod.label})
+                    </div>
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                      <input
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        placeholder="e.g. 03XXXXXXXXX / IBAN"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">
-                  Wallet Address (to receive assets)
-                </div>
-                <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
-                  <input
-                    value={walletAddress}
-                    onChange={(e) => setWalletAddress(e.target.value)}
-                    placeholder="Destination Solana address"
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                  />
-                </div>
-                {type === "buy" && (
+              {type === "buy" && (
+                <div>
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">
+                    Wallet Address (to receive assets)
+                  </div>
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-card px-3 py-2">
+                    <input
+                      value={walletAddress}
+                      onChange={(e) => setWalletAddress(e.target.value)}
+                      placeholder="Destination Solana address"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Required for BUY offers so sellers can send tokens to you.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               <Button
                 onClick={handleSubmit}

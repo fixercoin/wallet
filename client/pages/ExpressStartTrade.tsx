@@ -27,6 +27,8 @@ export default function ExpressStartTrade() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [tradeId, setTradeId] = useState<string | null>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Load posts to match an order against seller listings
   useEffect(() => {
@@ -106,6 +108,26 @@ export default function ExpressStartTrade() {
     };
   }, [tradeId]);
 
+  // Notify when counterparty confirms settlement via special message
+  const localRole = params?.side === "sell" ? "seller" : "buyer";
+  const lastConfirmedMessageId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    const confirmMsg = messages
+      .slice()
+      .reverse()
+      .find((m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__");
+    if (confirmMsg && confirmMsg.id && confirmMsg.from !== localRole) {
+      if (lastConfirmedMessageId.current !== confirmMsg.id) {
+        toast({
+          title: "Order update",
+          description: "Counterparty confirmed settlement",
+        });
+        lastConfirmedMessageId.current = confirmMsg.id;
+      }
+    }
+  }, [messages, localRole, toast]);
+
   const handleSend = async () => {
     if (!tradeId) return;
     const text = message.trim();
@@ -116,7 +138,7 @@ export default function ExpressStartTrade() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, from: "buyer" }),
+          body: JSON.stringify({ message: text, from: localRole }),
         },
       );
       if (!resp.ok) throw new Error("send failed");
@@ -135,6 +157,37 @@ export default function ExpressStartTrade() {
       units <= Number(match.maxToken || 0)
     );
   }, [match, params]);
+
+  const handleUploadProof = async () => {
+    if (!tradeId || !proofFile) return;
+    try {
+      setUploading(true);
+      // Read file as base64
+      const base64: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(proofFile);
+      });
+      const resp = await fetch(
+        `/api/p2p/trade/${encodeURIComponent(tradeId)}/proof`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            proof: { filename: proofFile.name, data: base64 },
+          }),
+        },
+      );
+      if (!resp.ok) throw new Error("upload failed");
+      setProofFile(null);
+      toast({ title: "Proof uploaded" });
+    } catch (e) {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
@@ -177,29 +230,10 @@ export default function ExpressStartTrade() {
               </div>
               {params?.side === "sell" ? (
                 <div className="flex items-center justify-between">
-                  <span>Wallet Address</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">
-                      {shortenAddress(ADMIN_WALLET, 6)}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        const ok = await copyToClipboard(ADMIN_WALLET);
-                        toast({
-                          title: ok ? "Address Copied" : "Copy Failed",
-                          description: ok
-                            ? "Counterparty address copied."
-                            : "Unable to copy address.",
-                          variant: ok ? undefined : "destructive",
-                        });
-                      }}
-                      className="h-7"
-                    >
-                      <Copy className="h-3.5 w-3.5 mr-1" /> Copy
-                    </Button>
-                  </div>
+                  <span>Sell Instructions</span>
+                  <span className="text-xs text-muted-foreground">
+                    Will be shared after match
+                  </span>
                 </div>
               ) : (
                 <div className="flex justify-between">
@@ -272,6 +306,66 @@ export default function ExpressStartTrade() {
                     </div>
                   ))
                 )}
+              </div>
+
+              <div className="mt-4">
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Upload payment proof (image)
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                    className="block w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm"
+                  />
+                  <Button
+                    onClick={handleUploadProof}
+                    disabled={!tradeId || !proofFile || uploading}
+                    className="h-10 px-3"
+                  >
+                    {uploading ? "Uploading…" : "Upload"}
+                  </Button>
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    onClick={async () => {
+                      if (!tradeId) return;
+                      try {
+                        const resp = await fetch(
+                          `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              message: "__CONFIRMED_SETTLEMENT__",
+                              from: localRole,
+                            }),
+                          },
+                        );
+                        if (!resp.ok) throw new Error("failed");
+                        toast({ title: "You confirmed settlement" });
+                      } catch (e) {
+                        toast({
+                          title: "Confirmation failed",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="h-10"
+                  >
+                    Confirm Settlement
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(-1)}
+                    className="h-10"
+                  >
+                    Back
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

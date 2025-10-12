@@ -158,112 +158,55 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     };
   }, []);
 
-  // Fetch token USD price depending on selected token and hydrate DexScreener data
+  // Fetch token USD price depending on selected token
   useEffect(() => {
     let abort = false;
     const load = async () => {
-      const mint = TOKEN_MINTS[selectedToken];
-      if (!mint) {
-        setDexToken(null);
-        setDexError("Unsupported token");
-        setTokenPriceError("Price unavailable");
-        return;
-      }
-
-      setLoadingTokenPrice(true);
-      setLoadingDexData(true);
-      setTokenPriceError(null);
-      setDexError(null);
-
       try {
-        let priceCaptured = false;
-        let dexFetchFailed = false;
-        let dexData: DexscreenerToken | null = null;
-
-        try {
-          dexData = await dexscreenerAPI.getTokenByMint(mint);
-        } catch (error) {
-          dexFetchFailed = true;
-          console.warn("DexScreener lookup failed:", error);
-        }
-
-        if (!abort) {
-          setDexToken(dexData);
-          setDexError(dexFetchFailed && !dexData ? "DexScreener data unavailable" : null);
-        }
-
-        if (!abort && dexData?.priceUsd) {
-          const dexPrice = parseFloat(dexData.priceUsd);
-          if (Number.isFinite(dexPrice) && dexPrice > 0) {
-            setTokenPriceUsd(dexPrice);
-            priceCaptured = true;
-          }
-        }
-
-        if (priceCaptured) {
-          return;
-        }
-
+        setLoadingTokenPrice(true);
+        setTokenPriceError(null);
         if (selectedToken === "USDC") {
           if (!abort) setTokenPriceUsd(1);
           return;
         }
-
         if (selectedToken === "SOL") {
           try {
             const prices = await jupiterAPI.getTokenPrices([W_SOL_MINT]);
-            const solPrice = prices?.[W_SOL_MINT];
-            if (!abort && solPrice && solPrice > 0) {
-              setTokenPriceUsd(solPrice);
-              priceCaptured = true;
+            const p = prices?.[W_SOL_MINT];
+            if (p && p > 0) {
+              if (!abort) setTokenPriceUsd(p);
               return;
             }
-          } catch (error) {
-            console.warn("Jupiter SOL price fallback failed:", error);
-          }
+          } catch {}
           if (!abort) setTokenPriceUsd(100);
           return;
         }
-
         if (selectedToken === "FIXERCOIN") {
           try {
             const fixer = await fixercoinPriceService
               .getFixercoinPrice()
               .catch(() => null as any);
-            if (!abort && fixer && typeof fixer.price === "number" && fixer.price > 0) {
-              setTokenPriceUsd(fixer.price);
-              priceCaptured = true;
+            if (fixer && typeof fixer.price === "number" && fixer.price > 0) {
+              if (!abort) setTokenPriceUsd(fixer.price);
               return;
             }
-          } catch (error) {
-            console.warn("Fixercoin price proxy failed:", error);
-          }
+          } catch {}
           try {
             const price = await fixercoinPriceService.getPrice();
-            if (!abort && price && price > 0) {
-              setTokenPriceUsd(price);
-              priceCaptured = true;
+            if (price && price > 0) {
+              if (!abort) setTokenPriceUsd(price);
               return;
             }
-          } catch (error) {
-            console.warn("Fixercoin fallback price failed:", error);
-          }
+          } catch {}
           if (!abort) setTokenPriceUsd(0.000023);
           return;
         }
-      } catch (error) {
-        if (!abort) {
-          console.warn("Token price load error:", error);
-          setTokenPriceError("Price unavailable");
-        }
+      } catch (e) {
+        if (!abort) setTokenPriceError("Price unavailable");
       } finally {
-        if (!abort) {
-          setLoadingTokenPrice(false);
-          setLoadingDexData(false);
-        }
+        if (!abort) setLoadingTokenPrice(false);
       }
     };
-
     load();
     return () => {
       abort = true;

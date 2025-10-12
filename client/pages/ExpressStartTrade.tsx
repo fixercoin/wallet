@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { shortenAddress, copyToClipboard } from "@/lib/wallet";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 interface NavState {
   side?: "buy" | "sell";
@@ -49,16 +51,17 @@ export default function ExpressStartTrade() {
 
   // Choose a matching post (for buy, need a seller post)
   const match = useMemo(() => {
-    if (!Array.isArray(posts) || !params?.token || !params?.paymentMethod)
-      return null;
+    if (!Array.isArray(posts) || !params?.token) return null;
     const desiredUnits = Number(params?.tokenUnits || 0);
     const typeNeeded = params?.side === "buy" ? "sell" : "buy";
     const candidates = posts.filter(
       (p: any) =>
         p?.type === typeNeeded &&
         String(p?.token).toUpperCase() === String(params.token).toUpperCase() &&
-        String(p?.paymentMethod).toLowerCase() ===
-          String(params.paymentMethod).toLowerCase(),
+        (params?.side === "buy"
+          ? String(p?.paymentMethod).toLowerCase() ===
+            String(params.paymentMethod || "").toLowerCase()
+          : true),
     );
     // Prefer a post whose limits include desired units
     const within = candidates.find(
@@ -172,10 +175,34 @@ export default function ExpressStartTrade() {
                 <span>Est. Units</span>
                 <span>{params?.tokenUnits?.toFixed?.(4) ?? "0"}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Payment</span>
-                <span>{params?.paymentMethod || "bank"}</span>
-              </div>
+              {params?.side === "sell" ? (
+                <div className="flex items-center justify-between">
+                  <span>Wallet Address</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs">{shortenAddress(ADMIN_WALLET, 6)}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const ok = await copyToClipboard(ADMIN_WALLET);
+                        toast({
+                          title: ok ? "Address Copied" : "Copy Failed",
+                          description: ok ? "Counterparty address copied." : "Unable to copy address.",
+                          variant: ok ? undefined : "destructive",
+                        });
+                      }}
+                      className="h-7"
+                    >
+                      <Copy className="h-3.5 w-3.5 mr-1" /> Copy
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between">
+                  <span>Payment</span>
+                  <span>{params?.paymentMethod || "bank"}</span>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 rounded-lg border bg-white p-3 text-sm">

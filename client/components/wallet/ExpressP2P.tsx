@@ -334,20 +334,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          <div className="mb-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (onBack) onBack();
-                else navigate('/');
-              }}
-              aria-label="Back"
-              className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
           {connectMsg && (
             <div className="mb-3 rounded-md border border-[hsl(var(--border))] bg-white/60 px-3 py-2 text-xs text-muted-foreground">
               {connectMsg}
@@ -355,6 +341,24 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           )}
 
           <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(330,100%,96%)] p-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (onBack) onBack();
+                    else navigate('/');
+                  }}
+                  aria-label="Back"
+                  className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="text-sm font-semibold uppercase">EXPRESS P2P SERVICE</div>
+              </div>
+            </div>
+
             <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-[hsl(330,40%,96%)]">
               <button
                 className={`py-2 text-center text-sm font-semibold ${

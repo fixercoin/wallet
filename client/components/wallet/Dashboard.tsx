@@ -144,9 +144,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(
-          "https://api.exchangerate.host/latest?base=USD&symbols=PKR",
-        );
+        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -368,7 +366,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 dash-btn font-semibold border-0"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
-            SEND 
+            SEND
           </Button>
 
           <Button

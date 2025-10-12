@@ -210,7 +210,41 @@ export const handler = async (event: any) => {
       const result = uploadProof(tradeId, body?.proof);
       if ("error" in result)
         return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { ok: true });
+
+      // Optional Supabase storage upload if configured
+      const SUPABASE_URL = process.env.SUPABASE_URL;
+      const SUPABASE_KEY =
+        process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+      let supabaseUrl: string | undefined = undefined;
+      if (
+        SUPABASE_URL &&
+        SUPABASE_KEY &&
+        body?.proof?.data &&
+        body?.proof?.filename
+      ) {
+        try {
+          const base64 = body.proof.data.includes(",")
+            ? body.proof.data.split(",").pop()!
+            : body.proof.data;
+          const binary = Buffer.from(base64, "base64");
+          const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${body.proof.filename}`;
+          const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              "Content-Type": "application/octet-stream",
+              "x-upsert": "true",
+            },
+            body: binary,
+          });
+          if (resp.ok) {
+            supabaseUrl = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;
+          }
+        } catch {}
+      }
+
+      return jsonResponse(result.status, { ok: true, url: supabaseUrl });
     }
 
     // Solana RPC
@@ -230,6 +264,77 @@ export const handler = async (event: any) => {
 
       const result = await callRpc(methodName, params, id);
       return jsonResponse(200, result.body);
+    }
+
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (path === "/forex/rate" && method === "GET") {
+      const base = (event.queryStringParameters?.base || "USD").toUpperCase();
+      const symbols = (
+        event.queryStringParameters?.symbols || "PKR"
+      ).toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const json = await resp.json();
+          const rate = p.parse(json);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return jsonResponse(200, {
+              base,
+              symbols: [firstSymbol],
+              rates: { [firstSymbol]: rate },
+            });
+          }
+          lastErr = "invalid response";
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonResponse(502, {
+        error: "Failed to fetch forex rate",
+        details: lastErr,
+      });
     }
 
     // DexScreener: tokens
@@ -280,6 +385,61 @@ export const handler = async (event: any) => {
       return jsonResponse(200, {
         schemaVersion: data?.schemaVersion || "1.0.0",
         pairs,
+      });
+    }
+
+    // Binance P2P passthrough: /api/binance-p2p/<path>
+    if (path.startsWith("/binance-p2p/")) {
+      const BINANCE_P2P_ENDPOINTS = [
+        "https://p2p.binance.com",
+        "https://c2c.binance.com",
+      ];
+      const subPath = path.replace(/^\/binance-p2p\//, "/");
+      const search = event.rawQuery ? `?${event.rawQuery}` : "";
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
+        const base = BINANCE_P2P_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(target, {
+            method: event.httpMethod,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+              clienttype: "web",
+              "cache-control": "no-cache",
+            },
+            body:
+              event.body &&
+              event.httpMethod !== "GET" &&
+              event.httpMethod !== "HEAD"
+                ? event.body
+                : undefined,
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            if ([429, 502, 503].includes(resp.status)) continue;
+            const t = await resp.text().catch(() => "");
+            return jsonResponse(resp.status, { error: t || resp.statusText });
+          }
+          const text = await resp.text();
+          try {
+            const json = JSON.parse(text);
+            return jsonResponse(200, json);
+          } catch {
+            return jsonResponse(200, text, { "Content-Type": "text/plain" });
+          }
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+        }
+      }
+      return jsonResponse(502, {
+        error: "All Binance P2P endpoints failed",
+        details: lastErr,
       });
     }
 

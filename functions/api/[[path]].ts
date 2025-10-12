@@ -133,12 +133,89 @@ export const onRequest = async ({ request, env }) => {
   try {
     // P2P routes passthrough to dedicated handler
     if (url.pathname.startsWith("/api/p2p")) {
-      return await p2pHandler(request);
+      return await p2pHandler(request, env);
     }
 
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);
+    }
+
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (normalizedPath === "/forex/rate") {
+      const base = (url.searchParams.get("base") || "USD").toUpperCase();
+      const symbols = (url.searchParams.get("symbols") || "PKR").toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const targets = [firstSymbol];
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+            },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const json = await resp.json();
+          const rate = p.parse(json);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return jsonCors(200, {
+              base,
+              symbols: targets,
+              rates: { [firstSymbol]: rate },
+            });
+          }
+          lastErr = "invalid response";
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonCors(502, {
+        error: "Failed to fetch forex rate",
+        details: lastErr,
+      });
     }
 
     // DexScreener: /api/dexscreener/tokens?mints=...
@@ -193,6 +270,67 @@ export const onRequest = async ({ request, env }) => {
       return jsonCors(200, {
         schemaVersion: data?.schemaVersion || "1.0.0",
         pairs,
+      });
+    }
+
+    // Binance P2P passthrough: /api/binance-p2p/<path>
+    if (normalizedPath.startsWith("/binance-p2p/")) {
+      const BINANCE_P2P_ENDPOINTS = [
+        "https://p2p.binance.com",
+        "https://c2c.binance.com",
+      ];
+      const subPath = normalizedPath.replace(/^\/binance-p2p\//, "/");
+      const search = url.search || "";
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
+        const base = BINANCE_P2P_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const resp = await fetch(target, {
+            method: request.method,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+              clienttype: "web",
+              "cache-control": "no-cache",
+            },
+            body:
+              request.method !== "GET" && request.method !== "HEAD"
+                ? await request
+                    .clone()
+                    .text()
+                    .catch(() => undefined)
+                : undefined,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            if (resp.status === 429 || resp.status >= 500) continue;
+            const t = await resp.text().catch(() => "");
+            return jsonCors(resp.status, { error: t || resp.statusText });
+          }
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await resp.json();
+            return jsonCors(200, data);
+          }
+          const text = await resp.text();
+          return new Response(text, {
+            status: 200,
+            headers: applyCors(
+              new Headers({ "Content-Type": contentType || "text/plain" }),
+            ),
+          });
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonCors(502, {
+        error: "All Binance P2P endpoints failed",
+        details: lastErr,
       });
     }
 

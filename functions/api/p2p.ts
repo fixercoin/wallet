@@ -17,7 +17,54 @@ function jsonResponse(data: any, status = 200) {
   });
 }
 
-export default async function (request: Request): Promise<Response> {
+async function uploadProofToSupabase(
+  env: Record<string, string | undefined> | undefined,
+  tradeId: string,
+  proof: { filename: string; data: string },
+) {
+  const url = env?.SUPABASE_URL;
+  const key = env?.SUPABASE_ANON_KEY || env?.SUPABASE_KEY;
+  if (!url || !key)
+    return { ok: false, error: "Supabase not configured" } as const;
+
+  try {
+    // Expect base64 without data URL prefix
+    const base64 = proof.data.includes(",")
+      ? proof.data.split(",").pop()!
+      : proof.data;
+    const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${proof.filename}`;
+    const endpoint = `${url.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/octet-stream",
+        "x-upsert": "true",
+      },
+      body: binary,
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => "");
+      return {
+        ok: false,
+        error: `Supabase upload failed: ${resp.status} ${resp.statusText} ${txt}`,
+      } as const;
+    }
+
+    const publicUrl = `${url.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;
+    return { ok: true, url: publicUrl } as const;
+  } catch (e: any) {
+    return { ok: false, error: e?.message || String(e) } as const;
+  }
+}
+
+export default async function (
+  request: Request,
+  env?: Record<string, string | undefined>,
+): Promise<Response> {
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -89,10 +136,17 @@ export default async function (request: Request): Promise<Response> {
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/proof$/, "");
       const body = await request.json().catch(() => null);
-      const result = uploadProof(tradeId, body?.proof);
-      if ("error" in result)
-        return jsonResponse({ error: result.error }, result.status);
-      return jsonResponse({ ok: true }, result.status);
+      const inMem = uploadProof(tradeId, body?.proof);
+      if ("error" in inMem)
+        return jsonResponse({ error: inMem.error }, inMem.status);
+
+      let supabaseUrl: string | undefined;
+      try {
+        const sup = await uploadProofToSupabase(env, tradeId, body?.proof);
+        if (sup.ok) supabaseUrl = (sup as any).url as string;
+      } catch {}
+
+      return jsonResponse({ ok: true, url: supabaseUrl }, inMem.status);
     }
 
     return jsonResponse({ error: "not found" }, 404);

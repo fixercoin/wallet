@@ -147,22 +147,37 @@ export const onRequest = async ({ request, env }) => {
       const symbols = (url.searchParams.get("symbols") || "PKR").toUpperCase();
       const firstSymbol = symbols.split(",")[0];
       const targets = [firstSymbol];
-      const providers: Array<{ url: string; parse: (j: any) => number | null }> = [
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
         {
           url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) => (j && j.rates && typeof j.rates[firstSymbol] === "number" ? j.rates[firstSymbol] : null),
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
         },
         {
           url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) => (j && j.rates && typeof j.rates[firstSymbol] === "number" ? j.rates[firstSymbol] : null),
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
         },
         {
           url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
-          parse: (j) => (j && j.rates && typeof j.rates[firstSymbol] === "number" ? j.rates[firstSymbol] : null),
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
         },
         {
           url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
-          parse: (j) => (j && typeof j[firstSymbol.toLowerCase()] === "number" ? j[firstSymbol.toLowerCase()] : null),
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
         },
       ];
       let lastErr = "";
@@ -186,14 +201,21 @@ export const onRequest = async ({ request, env }) => {
           const json = await resp.json();
           const rate = p.parse(json);
           if (typeof rate === "number" && isFinite(rate) && rate > 0) {
-            return jsonCors(200, { base, symbols: targets, rates: { [firstSymbol]: rate } });
+            return jsonCors(200, {
+              base,
+              symbols: targets,
+              rates: { [firstSymbol]: rate },
+            });
           }
           lastErr = "invalid response";
         } catch (e: any) {
           lastErr = e?.message || String(e);
         }
       }
-      return jsonCors(502, { error: "Failed to fetch forex rate", details: lastErr });
+      return jsonCors(502, {
+        error: "Failed to fetch forex rate",
+        details: lastErr,
+      });
     }
 
     // DexScreener: /api/dexscreener/tokens?mints=...
@@ -272,12 +294,15 @@ export const onRequest = async ({ request, env }) => {
               Accept: "application/json",
               "Content-Type": "application/json",
               "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-              "clienttype": "web",
+              clienttype: "web",
               "cache-control": "no-cache",
             },
             body:
               request.method !== "GET" && request.method !== "HEAD"
-                ? await request.clone().text().catch(() => undefined)
+                ? await request
+                    .clone()
+                    .text()
+                    .catch(() => undefined)
                 : undefined,
             signal: controller.signal,
           });
@@ -295,13 +320,18 @@ export const onRequest = async ({ request, env }) => {
           const text = await resp.text();
           return new Response(text, {
             status: 200,
-            headers: applyCors(new Headers({ "Content-Type": contentType || "text/plain" })),
+            headers: applyCors(
+              new Headers({ "Content-Type": contentType || "text/plain" }),
+            ),
           });
         } catch (e: any) {
           lastErr = e?.message || String(e);
         }
       }
-      return jsonCors(502, { error: "All Binance P2P endpoints failed", details: lastErr });
+      return jsonCors(502, {
+        error: "All Binance P2P endpoints failed",
+        details: lastErr,
+      });
     }
 
     // Binance passthrough: /api/binance/<path>

@@ -149,9 +149,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       try {
         setLoadingRate(true);
         setRateError(null);
-        const resp = await fetch(
-          "/api/forex/rate?base=USD&symbols=PKR",
-        );
+        const resp = await fetch("/api/forex/rate?base=USD&symbols=PKR");
         if (!resp.ok) throw new Error("rate request failed");
         const json = (await resp.json()) as { rates?: { PKR?: number } };
         const val = json?.rates?.PKR;

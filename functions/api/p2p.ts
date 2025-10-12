@@ -24,11 +24,14 @@ async function uploadProofToSupabase(
 ) {
   const url = env?.SUPABASE_URL;
   const key = env?.SUPABASE_ANON_KEY || env?.SUPABASE_KEY;
-  if (!url || !key) return { ok: false, error: "Supabase not configured" } as const;
+  if (!url || !key)
+    return { ok: false, error: "Supabase not configured" } as const;
 
   try {
     // Expect base64 without data URL prefix
-    const base64 = proof.data.includes(",") ? proof.data.split(",").pop()! : proof.data;
+    const base64 = proof.data.includes(",")
+      ? proof.data.split(",").pop()!
+      : proof.data;
     const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
     const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${proof.filename}`;
     const endpoint = `${url.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
@@ -45,7 +48,10 @@ async function uploadProofToSupabase(
 
     if (!resp.ok) {
       const txt = await resp.text().catch(() => "");
-      return { ok: false, error: `Supabase upload failed: ${resp.status} ${resp.statusText} ${txt}` } as const;
+      return {
+        ok: false,
+        error: `Supabase upload failed: ${resp.status} ${resp.statusText} ${txt}`,
+      } as const;
     }
 
     const publicUrl = `${url.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;

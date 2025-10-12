@@ -213,11 +213,19 @@ export const handler = async (event: any) => {
 
       // Optional Supabase storage upload if configured
       const SUPABASE_URL = process.env.SUPABASE_URL;
-      const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+      const SUPABASE_KEY =
+        process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
       let supabaseUrl: string | undefined = undefined;
-      if (SUPABASE_URL && SUPABASE_KEY && body?.proof?.data && body?.proof?.filename) {
+      if (
+        SUPABASE_URL &&
+        SUPABASE_KEY &&
+        body?.proof?.data &&
+        body?.proof?.filename
+      ) {
         try {
-          const base64 = body.proof.data.includes(",") ? body.proof.data.split(",").pop()! : body.proof.data;
+          const base64 = body.proof.data.includes(",")
+            ? body.proof.data.split(",").pop()!
+            : body.proof.data;
           const binary = Buffer.from(base64, "base64");
           const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${body.proof.filename}`;
           const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
@@ -261,24 +269,41 @@ export const handler = async (event: any) => {
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
     if (path === "/forex/rate" && method === "GET") {
       const base = (event.queryStringParameters?.base || "USD").toUpperCase();
-      const symbols = (event.queryStringParameters?.symbols || "PKR").toUpperCase();
+      const symbols = (
+        event.queryStringParameters?.symbols || "PKR"
+      ).toUpperCase();
       const firstSymbol = symbols.split(",")[0];
-      const providers: Array<{ url: string; parse: (j: any) => number | null }> = [
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
         {
           url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) => (j && j.rates && typeof j.rates[firstSymbol] === "number" ? j.rates[firstSymbol] : null),
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
         },
         {
           url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) => (j && j.rates && typeof j.rates[firstSymbol] === "number" ? j.rates[firstSymbol] : null),
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
         },
         {
           url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
-          parse: (j) => (j && j.rates && typeof j.rates[firstSymbol] === "number" ? j.rates[firstSymbol] : null),
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
         },
         {
           url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
-          parse: (j) => (j && typeof j[firstSymbol.toLowerCase()] === "number" ? j[firstSymbol.toLowerCase()] : null),
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
         },
       ];
       let lastErr = "";
@@ -295,14 +320,21 @@ export const handler = async (event: any) => {
           const json = await resp.json();
           const rate = p.parse(json);
           if (typeof rate === "number" && isFinite(rate) && rate > 0) {
-            return jsonResponse(200, { base, symbols: [firstSymbol], rates: { [firstSymbol]: rate } });
+            return jsonResponse(200, {
+              base,
+              symbols: [firstSymbol],
+              rates: { [firstSymbol]: rate },
+            });
           }
           lastErr = "invalid response";
         } catch (e: any) {
           lastErr = e?.message || String(e);
         }
       }
-      return jsonResponse(502, { error: "Failed to fetch forex rate", details: lastErr });
+      return jsonResponse(502, {
+        error: "Failed to fetch forex rate",
+        details: lastErr,
+      });
     }
 
     // DexScreener: tokens
@@ -377,10 +409,15 @@ export const handler = async (event: any) => {
               Accept: "application/json",
               "Content-Type": "application/json",
               "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-              "clienttype": "web",
+              clienttype: "web",
               "cache-control": "no-cache",
             },
-            body: event.body && event.httpMethod !== "GET" && event.httpMethod !== "HEAD" ? event.body : undefined,
+            body:
+              event.body &&
+              event.httpMethod !== "GET" &&
+              event.httpMethod !== "HEAD"
+                ? event.body
+                : undefined,
             signal: controller.signal,
           });
           clearTimeout(timeout);
@@ -400,7 +437,10 @@ export const handler = async (event: any) => {
           lastErr = e instanceof Error ? e.message : String(e);
         }
       }
-      return jsonResponse(502, { error: "All Binance P2P endpoints failed", details: lastErr });
+      return jsonResponse(502, {
+        error: "All Binance P2P endpoints failed",
+        details: lastErr,
+      });
     }
 
     // Binance passthrough: /api/binance/<path>

@@ -9,6 +9,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
+const W_SOL_MINT = "So11111111111111111111111111111111111111112";
+
 const CurrencyBadge = ({ label }: { label: string }) => (
   <span className="inline-flex shrink-0 items-center rounded-md bg-secondary/60 px-2 py-1 text-xs font-semibold text-foreground">
     {label}

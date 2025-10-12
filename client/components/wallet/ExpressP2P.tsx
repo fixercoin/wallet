@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Copy, Info } from "lucide-react";
+import { ArrowLeft, ChevronDown, Copy, Info } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";

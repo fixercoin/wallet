@@ -48,7 +48,9 @@ export default function ExpressPostView() {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div className="text-sm font-semibold uppercase">Post Not Found</div>
+                <div className="text-sm font-semibold uppercase">
+                  Post Not Found
+                </div>
               </div>
 
               <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm">
@@ -142,7 +144,9 @@ export default function ExpressPostView() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="text-sm font-semibold uppercase">Offer Details</div>
+              <div className="text-sm font-semibold uppercase">
+                Offer Details
+              </div>
             </div>
             <div className="space-y-3">
               <div>

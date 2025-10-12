@@ -242,7 +242,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           return `${tok}USDT`;
         };
         const symbol = mapSymbol(selectedToken);
-        const resp = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        const resp = await fetch(
+          `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`,
+        );
         if (!resp.ok) throw new Error("binance request failed");
         const json = await resp.json();
         const price = Number(json?.price);
@@ -506,16 +508,23 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       {loadingRate ? (
                         <span>Loading exchange rate…</span>
                       ) : pkrPerUsd ? (
-                        <span>Exchange rate: 1 USD ≈ {pkrPerUsd.toFixed(2)} PKR</span>
-                      ) : null}
-
-                      {" "}
+                        <span>
+                          Exchange rate: 1 USD ≈ {pkrPerUsd.toFixed(2)} PKR
+                        </span>
+                      ) : null}{" "}
                       {loadingBinance ? (
-                        <span className="inline-block ml-2">Loading Binance rate…</span>
+                        <span className="inline-block ml-2">
+                          Loading Binance rate…
+                        </span>
                       ) : binanceRatePkr ? (
-                        <span className="inline-block ml-2">Binance: 1 {selectedToken} ≈ {binanceRatePkr.toFixed(2)} PKR</span>
+                        <span className="inline-block ml-2">
+                          Binance: 1 {selectedToken} ≈{" "}
+                          {binanceRatePkr.toFixed(2)} PKR
+                        </span>
                       ) : binanceError ? (
-                        <span className="inline-block ml-2 text-destructive">Binance unavailable</span>
+                        <span className="inline-block ml-2 text-destructive">
+                          Binance unavailable
+                        </span>
                       ) : null}
                     </div>
                   </div>

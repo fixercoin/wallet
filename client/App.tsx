@@ -40,10 +40,7 @@ const App = () => (
               <Route path="/fixorium/add" element={<FixoriumAdd />} />
               <Route path="/fixorium/create-token" element={<CreateToken />} />
               <Route path="/express/add-post" element={<ExpressAddPost />} />
-              <Route
-                path="/express"
-                element={<ExpressP2P />}
-              />
+              <Route path="/express" element={<ExpressP2P />} />
               <Route
                 path="/express/start-trade"
                 element={<ExpressStartTrade />}

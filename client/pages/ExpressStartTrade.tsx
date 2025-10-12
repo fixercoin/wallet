@@ -130,7 +130,6 @@ export default function ExpressStartTrade() {
     }
   }, [messages, localRole, toast]);
 
-
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);
     if (!match) return false;
@@ -197,7 +196,9 @@ export default function ExpressStartTrade() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="text-sm font-semibold uppercase">Order Review</div>
+              <div className="text-sm font-semibold uppercase">
+                Order Review
+              </div>
             </div>
 
             <div className="space-y-1 text-sm">
@@ -370,7 +371,9 @@ export default function ExpressStartTrade() {
                   <div key={m.id} className="mb-1">
                     <span className="font-medium">{m.from}:</span> {m.message}
                     {m.proof?.filename && (
-                      <div className="mt-1 text-xs text-muted-foreground">Attachment: {m.proof.filename}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Attachment: {m.proof.filename}
+                      </div>
                     )}
                   </div>
                 ))
@@ -398,7 +401,9 @@ export default function ExpressStartTrade() {
               </Button>
             </div>
             {proofFile && (
-              <div className="mt-2 text-xs text-muted-foreground">Selected: {proofFile.name}</div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Selected: {proofFile.name}
+              </div>
             )}
           </div>
         )}

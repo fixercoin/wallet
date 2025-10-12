@@ -144,7 +144,9 @@ export default function ExpressAddPost() {
         }
         if (token === "FIXERCOIN") {
           try {
-            const fixer = await fixercoinPriceService.getFixercoinPrice().catch(() => null as any);
+            const fixer = await fixercoinPriceService
+              .getFixercoinPrice()
+              .catch(() => null as any);
             if (fixer && typeof fixer.price === "number" && fixer.price > 0) {
               if (!abort) setTokenPriceUsd(fixer.price);
               return;
@@ -160,8 +162,8 @@ export default function ExpressAddPost() {
           if (!abort) setTokenPriceUsd(0.000023);
           return;
         }
-      } catch {}
-      finally {
+      } catch {
+      } finally {
         if (!abort) setLoadingTokenPrice(false);
       }
     };
@@ -178,7 +180,11 @@ export default function ExpressAddPost() {
     if (!isFinite(derived) || derived <= 0) return;
     const formatted = derived.toFixed(2);
     const currentVal = parseFloat(pricePkr || "");
-    if (!pricePkr || (lastAutoPriceRef.current !== null && Number(currentVal) === lastAutoPriceRef.current)) {
+    if (
+      !pricePkr ||
+      (lastAutoPriceRef.current !== null &&
+        Number(currentVal) === lastAutoPriceRef.current)
+    ) {
       setPricePkr(formatted);
       lastAutoPriceRef.current = Number(formatted);
     }

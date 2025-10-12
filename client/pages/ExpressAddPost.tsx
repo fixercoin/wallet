@@ -9,6 +9,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
+const W_SOL_MINT = "So11111111111111111111111111111111111111112";
+
 const CurrencyBadge = ({ label }: { label: string }) => (
   <span className="inline-flex shrink-0 items-center rounded-md bg-secondary/60 px-2 py-1 text-xs font-semibold text-foreground">
     {label}
@@ -68,13 +70,10 @@ export default function ExpressAddPost() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
-  // Payment account details
-  const [accountName, setAccountName] = useState<string>("");
-  const [accountNumber, setAccountNumber] = useState<string>("");
-
-  // Optional Fixercoin extra pricing
-  const [pricePerUSDC, setPricePerUSDC] = useState<string>("");
-  const [pricePerSOL, setPricePerSOL] = useState<string>("");
+  // Availability (Online/Offline)
+  const [availability, setAvailability] = useState<"online" | "offline">(
+    "online",
+  );
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -247,22 +246,11 @@ export default function ExpressAddPost() {
           type,
           token,
           pricePkr: price,
-          pricePerUSDC:
-            token === "FIXERCOIN" && pricePerUSDC !== ""
-              ? Number(pricePerUSDC)
-              : undefined,
-          pricePerSOL:
-            token === "FIXERCOIN" && pricePerSOL !== ""
-              ? Number(pricePerSOL)
-              : undefined,
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
           walletAddress: type === "buy" ? walletAddress : undefined,
-          paymentDetails: {
-            accountName,
-            accountNumber,
-          },
+          availability,
         }),
       });
       if (!resp.ok) {
@@ -408,44 +396,6 @@ export default function ExpressAddPost() {
                     className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   />
                 </div>
-                {token === "FIXERCOIN" && (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="mb-1 text-[10px] text-muted-foreground">
-                        Price per USDC (Fixercoin)
-                      </div>
-                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
-                        <input
-                          value={pricePerUSDC}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            if (/^\d*\.?\d*$/.test(v)) setPricePerUSDC(v);
-                          }}
-                          inputMode="decimal"
-                          placeholder="Optional"
-                          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="mb-1 text-[10px] text-muted-foreground">
-                        Price per SOL (Fixercoin)
-                      </div>
-                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
-                        <input
-                          value={pricePerSOL}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            if (/^\d*\.?\d*$/.test(v)) setPricePerSOL(v);
-                          }}
-                          inputMode="decimal"
-                          placeholder="Optional"
-                          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -526,33 +476,35 @@ export default function ExpressAddPost() {
                     </div>
                   )}
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="mb-1 text-[10px] text-muted-foreground">
-                      Account Name ({selectedPaymentMethod.label})
-                    </div>
-                    <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
-                      <input
-                        value={accountName}
-                        onChange={(e) => setAccountName(e.target.value)}
-                        placeholder="e.g. ABC"
-                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 text-[10px] text-muted-foreground">
-                      Account Number ({selectedPaymentMethod.label})
-                    </div>
-                    <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
-                      <input
-                        value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="e.g. 03XXXXXXXXX / IBAN"
-                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
+              </div>
+
+              <div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Availability
+                </div>
+                <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
+                  <button
+                    className={`py-2 text-center text-sm font-semibold ${
+                      availability === "online"
+                        ? "bg-background text-foreground"
+                        : "bg-transparent text-muted-foreground"
+                    }`}
+                    onClick={() => setAvailability("online")}
+                    type="button"
+                  >
+                    Online
+                  </button>
+                  <button
+                    className={`py-2 text-center text-sm font-semibold ${
+                      availability === "offline"
+                        ? "bg-background text-foreground"
+                        : "bg-transparent text-muted-foreground"
+                    }`}
+                    onClick={() => setAvailability("offline")}
+                    type="button"
+                  >
+                    Offline
+                  </button>
                 </div>
               </div>
 

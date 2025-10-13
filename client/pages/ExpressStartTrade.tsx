@@ -4,7 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { shortenAddress, copyToClipboard } from "@/lib/wallet";
+import { copyToClipboard } from "@/lib/wallet";
 
 interface NavState {
   side?: "buy" | "sell";

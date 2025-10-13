@@ -39,6 +39,7 @@ export default function ExpressStartTrade() {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [manualBuyerAddr, setManualBuyerAddr] = useState("");
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [buyerMarkedPaid, setBuyerMarkedPaid] = useState(false);
   const [fiatAcknowledged, setFiatAcknowledged] = useState(false);

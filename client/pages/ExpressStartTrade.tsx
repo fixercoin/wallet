@@ -1133,31 +1133,6 @@ export default function ExpressStartTrade() {
           </div>
         </div>
 
-        {/* Waiting overlays */}
-        {awaitingApproval && localRole === "seller" && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="dashboard-loader-overlay">
-              <div className="dashboard-loader" />
-              <div className="text-sm">Waiting for buyer approval…</div>
-            </div>
-          </div>
-        )}
-
-        {awaitingApproval && localRole === "buyer" && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="dashboard-loader-overlay">
-              <div className="dashboard-loader" />
-              <div className="flex flex-col items-center gap-2">
-                <div className="text-sm">Waiting for seller confirmation…</div>
-                {!isEasypaisa && (
-                  <div className="mt-2 text-xs font-mono">
-                    Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Floating Chat Button */}
         <button

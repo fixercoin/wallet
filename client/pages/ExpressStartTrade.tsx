@@ -63,7 +63,7 @@ export default function ExpressStartTrade() {
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
-  const localRole = params?.side === "sell" ? "seller" : "buyer";
+  const localRole = (params as any)?.role || (params?.side === "sell" ? "seller" : "buyer");
 
   const effectiveTradeId = tradeId || params?.tradeId || null;
 

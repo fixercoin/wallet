@@ -111,6 +111,29 @@ export default function ExpressStartTrade() {
     setTradeId(`${base}-${Date.now()}`);
   }, [match, state]);
 
+  // Post an initial order-start event for admin monitoring
+  const orderInitSentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!tradeId || !params?.side) return;
+    if (orderInitSentRef.current === tradeId) return;
+    const side = params.side;
+    const token = params.token || "USDC";
+    const pkr = Number(params.pkrAmount || 0);
+    const units = Number(params.tokenUnits || 0);
+    const method = String(params.paymentMethod || "");
+    const msg = `__ORDER_STARTED__|side=${side};token=${token};pkr=${pkr};units=${units};method=${method}`;
+    (async () => {
+      try {
+        await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg, from: localRole }),
+        });
+      } catch {}
+    })();
+    orderInitSentRef.current = tradeId;
+  }, [tradeId, params, localRole]);
+
   // Poll messages for this trade
   useEffect(() => {
     if (!tradeId) return;

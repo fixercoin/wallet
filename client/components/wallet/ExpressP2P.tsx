@@ -756,9 +756,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          {pendingOrder?.minimized && (
-            <div className="mb-3 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs">
-              <div className="font-medium">Pending Order</div>
+          {pendingOrder && (
+            <div className="mb-3 flex flex-col gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="font-medium">
+                  Pending {pendingOrder.params?.side === "sell" ? "sell" : "buy"} order
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Continue to the review screen to manage this trade.
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -772,17 +779,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   size="sm"
                   variant="ghost"
                   className="h-7 text-xs"
-                  onClick={expandPendingOrder}
-                >
-                  Show details
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs"
                   onClick={clearPendingOrder}
                 >
-                  Dismiss
+                  Cancel
                 </Button>
               </div>
             </div>

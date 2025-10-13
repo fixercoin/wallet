@@ -102,6 +102,7 @@ export default function ExpressStartTrade() {
       finalizedRef.current = true;
       setAwaitingApproval(false);
       setBuyerMarkedPaid(false);
+      setTxDetected(false);
       setFiatAcknowledged(false);
       setSellerConfirmed(false);
       setSellerSentCrypto(false);

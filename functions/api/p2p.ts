@@ -173,6 +173,24 @@ export default async function (
       const result = createOrUpdatePost(body || {}, adminHeader || "");
       if ("error" in result)
         return jsonResponse({ error: result.error }, result.status);
+
+      // Best-effort: commit posts to GitHub if token + repo provided in env
+      try {
+        const postsData = listPosts();
+        // call helper but do not fail the request if it errors
+        const ghResult = await commitPostsToGitHub(env, postsData);
+        if (!ghResult.ok) {
+          // log but continue
+          try {
+            console.error("GitHub sync failed:", ghResult.error);
+          } catch {}
+        }
+      } catch (e) {
+        try {
+          console.error("GitHub sync exception:", (e as any)?.message || e);
+        } catch {}
+      }
+
       return jsonResponse({ post: result.post }, result.status);
     }
 

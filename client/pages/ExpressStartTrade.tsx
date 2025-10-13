@@ -204,9 +204,9 @@ export default function ExpressStartTrade() {
     }
   };
 
-  // Poll for transaction detection when seller opens confirm modal
+  // Poll for transaction detection when either party is awaiting approval (buyer paid)
   useEffect(() => {
-    if (!showConfirm || localRole !== "seller" || !match?.walletAddress) return;
+    if (!awaitingApproval || !match?.walletAddress) return;
 
     let cancelled = false;
 
@@ -243,14 +243,34 @@ export default function ExpressStartTrade() {
         const sig = data?.result?.[0]?.signature || null;
         if (baselineSig && sig && sig !== baselineSig) {
           setTxDetected(true);
+          // stop polling
           if (pollRef.current) {
             window.clearInterval(pollRef.current);
             pollRef.current = null;
+          }
+          // start auto-approve timer for buyer if not already approved
+          if (!autoApproveRef.current && params?.side === "buy") {
+            autoApproveRef.current = window.setTimeout(async () => {
+              try {
+                if (!tradeId) return;
+                await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ message: "__BUYER_APPROVED__", from: "buyer" }),
+                });
+                setAwaitingApproval(false);
+                toast({ title: "Auto-approved after timeout" });
+                navigate("/express");
+              } catch (e) {
+                // ignore
+              }
+            }, 120000) as unknown as number;
           }
         }
       } catch {}
     };
 
+    // start polling
     fetchLatestSig();
     if (pollRef.current) {
       window.clearInterval(pollRef.current);
@@ -264,8 +284,13 @@ export default function ExpressStartTrade() {
         window.clearInterval(pollRef.current);
         pollRef.current = null;
       }
+      // clear auto approve timer if any
+      if (autoApproveRef.current) {
+        window.clearTimeout(autoApproveRef.current as unknown as number);
+        autoApproveRef.current = null;
+      }
     };
-  }, [showConfirm, localRole, match?.walletAddress, baselineSig]);
+  }, [awaitingApproval, match?.walletAddress, baselineSig, params?.side, tradeId, navigate, toast]);
 
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">

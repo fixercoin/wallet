@@ -248,7 +248,10 @@ export default async function (
           try {
             const sup = await uploadProofToSupabase(env, tradeId, body.proof);
             if (sup.ok && (sup as any).url) {
-              proofMeta = { filename: body.proof.filename, url: (sup as any).url };
+              proofMeta = {
+                filename: body.proof.filename,
+                url: (sup as any).url,
+              };
             } else {
               proofMeta = { filename: body.proof.filename };
             }

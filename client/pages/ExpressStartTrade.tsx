@@ -63,7 +63,8 @@ export default function ExpressStartTrade() {
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
-  const localRole = (params as any)?.role || (params?.side === "sell" ? "seller" : "buyer");
+  const localRole =
+    (params as any)?.role || (params?.side === "sell" ? "seller" : "buyer");
 
   const effectiveTradeId = tradeId || params?.tradeId || null;
 
@@ -1038,19 +1039,33 @@ export default function ExpressStartTrade() {
                               if (!tradeId) return;
                               const v = manualBuyerAddr.trim();
                               if (v.length < 26) {
-                                toast({ title: 'Invalid address', variant: 'destructive' });
+                                toast({
+                                  title: "Invalid address",
+                                  variant: "destructive",
+                                });
                                 return;
                               }
                               try {
-                                await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ message: `__BUYER_WALLET__|addr=${v}`, from: localRole }),
-                                });
-                                setManualBuyerAddr('');
-                                toast({ title: 'Buyer address set' });
+                                await fetch(
+                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      message: `__BUYER_WALLET__|addr=${v}`,
+                                      from: localRole,
+                                    }),
+                                  },
+                                );
+                                setManualBuyerAddr("");
+                                toast({ title: "Buyer address set" });
                               } catch {
-                                toast({ title: 'Failed to set address', variant: 'destructive' });
+                                toast({
+                                  title: "Failed to set address",
+                                  variant: "destructive",
+                                });
                               }
                             }}
                           >
@@ -1065,14 +1080,25 @@ export default function ExpressStartTrade() {
                             onClick={async () => {
                               if (!tradeId) return;
                               try {
-                                await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ message: '__PROMPT_BUYER_WALLET__', from: localRole }),
-                                });
-                                toast({ title: 'Requested buyer wallet' });
+                                await fetch(
+                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      message: "__PROMPT_BUYER_WALLET__",
+                                      from: localRole,
+                                    }),
+                                  },
+                                );
+                                toast({ title: "Requested buyer wallet" });
                               } catch {
-                                toast({ title: 'Request failed', variant: 'destructive' });
+                                toast({
+                                  title: "Request failed",
+                                  variant: "destructive",
+                                });
                               }
                             }}
                           >
@@ -1132,7 +1158,6 @@ export default function ExpressStartTrade() {
             </div>
           </div>
         </div>
-
 
         {/* Floating Chat Button */}
         <button

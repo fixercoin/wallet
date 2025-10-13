@@ -156,7 +156,8 @@ export default function ExpressPendingOrders() {
   const approveAs = useCallback(
     async (tradeId: string, role: "buyer" | "seller") => {
       try {
-        const message = role === "buyer" ? "__BUYER_APPROVED__" : "__SELLER_APPROVED__";
+        const message =
+          role === "buyer" ? "__BUYER_APPROVED__" : "__SELLER_APPROVED__";
         const resp = await fetch(
           `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
           {

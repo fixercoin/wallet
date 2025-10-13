@@ -545,6 +545,45 @@ export default function ExpressStartTrade() {
           </div>
         )}
 
+        {awaitingApproval && localRole === "buyer" && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center">
+            <div className="dashboard-loader-overlay">
+              <div className="dashboard-loader" />
+              <div className="flex flex-col items-center gap-2">
+                {!txDetected ? (
+                  <div className="text-sm">Waiting for transaction…</div>
+                ) : (
+                  <div className="text-sm">Transaction detected</div>
+                )}
+                <div className="mt-2 text-xs font-mono">Buyer wallet: {buyerPublicKey || "(no wallet selected)"}</div>
+                {txDetected && (
+                  <div className="mt-3 flex gap-2">
+                    <Button onClick={async () => {
+                      try {
+                        if (!tradeId) return;
+                        const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ message: "__BUYER_APPROVED__", from: "buyer" }),
+                        });
+                        if (!resp.ok) throw new Error("failed");
+                        setAwaitingApproval(false);
+                        setTxDetected(false);
+                        if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+                        if (autoApproveRef.current) { window.clearTimeout(autoApproveRef.current as unknown as number); autoApproveRef.current = null; }
+                        toast({ title: "Approved" });
+                        navigate("/express");
+                      } catch (e) {
+                        toast({ title: "Failed to approve", variant: "destructive" });
+                      }
+                    }} className="h-9">Approve</Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {chatOpen && (
           <div className="fixed bottom-24 right-6 z-50 w-80 rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-2xl">
             <div className="mb-2 text-sm font-semibold">Trade Chat</div>

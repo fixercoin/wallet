@@ -231,46 +231,25 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   }, [pendingOrder, persistPendingOrder]);
 
-  // Auto-resume pending order on mount (from main branch)
-  const notifiedRef = useRef(false);
-  useEffect(() => {
-    if (!pendingOrder) {
-      notifiedRef.current = false;
-      return;
-    }
-
-    if (pendingOrder.status === "pending") {
-      return;
-    }
-
-    if (notifiedRef.current) return;
-    notifiedRef.current = true;
-    try {
-      const obj = {
-        ...(pendingOrder as any),
-        minimized: false,
-        ts: Date.now(),
-      };
-      localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
-    } catch {}
-    const st = (pendingOrder as any)?.params || {};
-    navigate("/express/start-trade", {
-      state: { ...(st || {}), tradeId: (pendingOrder as any)?.tradeId },
-    });
-  }, [pendingOrder, navigate]);
-
   // P2P market posts (polled for demo realtime)
   const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [postsError, setPostsError] = useState<string | null>(null);
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
+        if (!mounted) return;
+        setLoadingPosts(true);
+        setPostsError(null);
         const resp = await fetch("/api/p2p/list");
-        if (!resp.ok) return;
+        if (!resp.ok) throw new Error("failed");
         const j = await resp.json();
         if (mounted) setPosts(j.posts || []);
       } catch (e) {
-        // ignore
+        if (mounted) setPostsError("Unable to load marketplace posts");
+      } finally {
+        if (mounted) setLoadingPosts(false);
       }
     };
     load();
@@ -488,6 +467,18 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     const val = binancePriceUsd * pkrPerUsd;
     return isFinite(val) && val > 0 ? val : null;
   }, [binancePriceUsd, pkrPerUsd]);
+
+  const buyPosts = useMemo(() => {
+    return (Array.isArray(posts) ? posts : []).filter(
+      (post) => String(post?.type).toLowerCase() === "buy",
+    );
+  }, [posts]);
+
+  const sellPosts = useMemo(() => {
+    return (Array.isArray(posts) ? posts : []).filter(
+      (post) => String(post?.type).toLowerCase() === "sell",
+    );
+  }, [posts]);
 
   // Hidden fees
   const FLAT_FEE_PKR = 2.5; // flat fee for buy/sell in PKR
@@ -923,6 +914,120 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 {lastRefreshed && (
                   <div className="ml-3 text-[10px] text-muted-foreground">
                     Refreshed {new Date(lastRefreshed).toLocaleTimeString()}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mb-4 space-y-3">
+              <div className="rounded-xl border border-[hsl(var(--border))] bg-white/90 p-3">
+                <div className="flex items-center justify-between text-xs font-semibold uppercase text-muted-foreground">
+                  <span>Buyer Side</span>
+                  <span>
+                    {buyPosts.length} {buyPosts.length === 1 ? "order" : "orders"}
+                  </span>
+                </div>
+                {loadingPosts ? (
+                  <div className="mt-2 text-xs text-muted-foreground">Loading buyer orders…</div>
+                ) : postsError ? (
+                  <div className="mt-2 text-xs text-destructive">{postsError}</div>
+                ) : buyPosts.length === 0 ? (
+                  <div className="mt-2 text-xs text-muted-foreground">No buyer orders available.</div>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {buyPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="rounded-lg border border-[hsl(var(--border))] bg-white px-3 py-2 text-xs"
+                      >
+                        <div className="flex items-center justify-between text-sm font-medium">
+                          <span>{post.token}</span>
+                          <span>
+                            PKR {Number(post.pricePkr || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        <div className="mt-1 grid gap-1 text-[11px] text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>Limits</span>
+                            <span>
+                              {Number(post.minToken || 0).toLocaleString()} - {Number(post.maxToken || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Payment</span>
+                            <span className="uppercase">{post.paymentMethod || ""}</span>
+                          </div>
+                          {post.walletAddress ? (
+                            <div className="flex justify-between">
+                              <span>Wallet</span>
+                              <span className="truncate font-mono" title={post.walletAddress}>
+                                {post.walletAddress}
+                              </span>
+                            </div>
+                          ) : null}
+                          <div className="flex justify-between">
+                            <span>Status</span>
+                            <span className="capitalize">{post.availability || "online"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-[hsl(var(--border))] bg-white/90 p-3">
+                <div className="flex items-center justify-between text-xs font-semibold uppercase text-muted-foreground">
+                  <span>Seller Side</span>
+                  <span>
+                    {sellPosts.length} {sellPosts.length === 1 ? "order" : "orders"}
+                  </span>
+                </div>
+                {loadingPosts ? (
+                  <div className="mt-2 text-xs text-muted-foreground">Loading seller orders…</div>
+                ) : postsError ? (
+                  <div className="mt-2 text-xs text-destructive">{postsError}</div>
+                ) : sellPosts.length === 0 ? (
+                  <div className="mt-2 text-xs text-muted-foreground">No seller orders available.</div>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {sellPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="rounded-lg border border-[hsl(var(--border))] bg-white px-3 py-2 text-xs"
+                      >
+                        <div className="flex items-center justify-between text-sm font-medium">
+                          <span>{post.token}</span>
+                          <span>
+                            PKR {Number(post.pricePkr || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        <div className="mt-1 grid gap-1 text-[11px] text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>Limits</span>
+                            <span>
+                              {Number(post.minToken || 0).toLocaleString()} - {Number(post.maxToken || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Payment</span>
+                            <span className="uppercase">{post.paymentMethod || ""}</span>
+                          </div>
+                          {post.paymentDetails?.accountName || post.paymentDetails?.accountNumber ? (
+                            <div className="flex justify-between">
+                              <span>Account</span>
+                              <span className="truncate" title={`${post.paymentDetails?.accountName || ""} ${post.paymentDetails?.accountNumber || ""}`.trim()}>
+                                {post.paymentDetails?.accountName || post.paymentDetails?.accountNumber}
+                              </span>
+                            </div>
+                          ) : null}
+                          <div className="flex justify-between">
+                            <span>Status</span>
+                            <span className="capitalize">{post.availability || "online"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

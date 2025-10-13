@@ -3,6 +3,7 @@ import {
   getPost,
   createOrUpdatePost,
   listTradeMessages,
+  listRecentTradeMessages,
   addTradeMessage,
   uploadProof,
 } from "../../utils/p2pStore";

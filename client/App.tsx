@@ -47,7 +47,10 @@ const App = () => (
                 element={<ExpressStartTrade />}
               />
               <Route path="/express/post" element={<ExpressPostView />} />
-              <Route path="/express/post-order-detail" element={<ExpressPostOrderDetail />} />
+              <Route
+                path="/express/post-order-detail"
+                element={<ExpressPostOrderDetail />}
+              />
               <Route
                 path="/fixorium/token-listing"
                 element={<TokenListing />}

@@ -1,7 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, Save, ToggleLeft, ToggleRight, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Save,
+  ToggleLeft,
+  ToggleRight,
+  Plus,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { ADMIN_WALLET } from "@/lib/p2p";
@@ -35,7 +42,7 @@ export default function ExpressPostOrderDetail() {
 
   const isAdmin = useMemo(
     () => Boolean(wallet && wallet.publicKey === ADMIN_WALLET),
-    [wallet]
+    [wallet],
   );
 
   const load = async () => {
@@ -91,11 +98,16 @@ export default function ExpressPostOrderDetail() {
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast({ title: `Save failed: ${err.error || resp.statusText}` , variant: "destructive"});
+        toast({
+          title: `Save failed: ${err.error || resp.statusText}`,
+          variant: "destructive",
+        });
         return;
       }
       const data = await resp.json();
-      setPosts((prev) => prev.map((p) => (p.id === data.post.id ? data.post : p)));
+      setPosts((prev) =>
+        prev.map((p) => (p.id === data.post.id ? data.post : p)),
+      );
       setEditingId(null);
       setDraft({});
       toast({ title: "Saved" });
@@ -104,7 +116,10 @@ export default function ExpressPostOrderDetail() {
     }
   };
 
-  const setAvailability = async (p: P2PPost, availability: "online" | "offline") => {
+  const setAvailability = async (
+    p: P2PPost,
+    availability: "online" | "offline",
+  ) => {
     if (!isAdmin) {
       toast({ title: "Only admin can change status", variant: "destructive" });
       return;
@@ -120,7 +135,10 @@ export default function ExpressPostOrderDetail() {
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast({ title: `Update failed: ${err.error || resp.statusText}`, variant: "destructive" });
+        toast({
+          title: `Update failed: ${err.error || resp.statusText}`,
+          variant: "destructive",
+        });
         return;
       }
       const data = await resp.json();
@@ -140,30 +158,54 @@ export default function ExpressPostOrderDetail() {
             {p.type.toUpperCase()} {p.token} • PKR {p.pricePkr}
           </div>
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-medium ${p.availability === "online" ? "text-green-600" : "text-gray-500"}`}>
+            <span
+              className={`text-xs font-medium ${p.availability === "online" ? "text-green-600" : "text-gray-500"}`}
+            >
               {p.availability.toUpperCase()}
             </span>
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setAvailability(p, p.availability === "online" ? "offline" : "online")}
+              onClick={() =>
+                setAvailability(
+                  p,
+                  p.availability === "online" ? "offline" : "online",
+                )
+              }
               className="h-8"
             >
               {p.availability === "online" ? (
-                <span className="inline-flex items-center gap-1"><ToggleLeft className="h-4 w-4" /> Offline</span>
+                <span className="inline-flex items-center gap-1">
+                  <ToggleLeft className="h-4 w-4" /> Offline
+                </span>
               ) : (
-                <span className="inline-flex items-center gap-1"><ToggleRight className="h-4 w-4" /> Online</span>
+                <span className="inline-flex items-center gap-1">
+                  <ToggleRight className="h-4 w-4" /> Online
+                </span>
               )}
             </Button>
-            <Button size="sm" onClick={() => navigate("/express/post", { state: { post: p } })} className="h-8">
+            <Button
+              size="sm"
+              onClick={() => navigate("/express/post", { state: { post: p } })}
+              className="h-8"
+            >
               <Pencil className="mr-1 h-4 w-4" /> Edit
             </Button>
             {isEditing ? (
-              <Button size="sm" onClick={saveEdit} className="h-8 bg-[hsl(330,81%,60%)] text-white">
+              <Button
+                size="sm"
+                onClick={saveEdit}
+                className="h-8 bg-[hsl(330,81%,60%)] text-white"
+              >
                 <Save className="mr-1 h-4 w-4" /> Save
               </Button>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => beginEdit(p)} className="h-8">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => beginEdit(p)}
+                className="h-8"
+              >
                 Inline Edit
               </Button>
             )}
@@ -177,7 +219,12 @@ export default function ExpressPostOrderDetail() {
               <input
                 className="w-full rounded-md border px-2 py-1"
                 value={(draft.minToken as any) ?? p.minToken}
-                onChange={(e) => setDraft((d) => ({ ...d, minToken: Number(e.target.value || 0) }))}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    minToken: Number(e.target.value || 0),
+                  }))
+                }
               />
             ) : (
               <div className="font-medium">{p.minToken}</div>
@@ -189,7 +236,12 @@ export default function ExpressPostOrderDetail() {
               <input
                 className="w-full rounded-md border px-2 py-1"
                 value={(draft.maxToken as any) ?? p.maxToken}
-                onChange={(e) => setDraft((d) => ({ ...d, maxToken: Number(e.target.value || 0) }))}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    maxToken: Number(e.target.value || 0),
+                  }))
+                }
               />
             ) : (
               <div className="font-medium">{p.maxToken}</div>
@@ -201,7 +253,9 @@ export default function ExpressPostOrderDetail() {
               <select
                 className="w-full rounded-md border px-2 py-1"
                 value={(draft.paymentMethod as any) ?? p.paymentMethod}
-                onChange={(e) => setDraft((d) => ({ ...d, paymentMethod: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, paymentMethod: e.target.value }))
+                }
               >
                 <option value="bank">Bank Account</option>
                 <option value="easypaisa">Easypaisa</option>
@@ -217,7 +271,12 @@ export default function ExpressPostOrderDetail() {
               <input
                 className="w-full rounded-md border px-2 py-1"
                 value={(draft.pricePkr as any) ?? p.pricePkr}
-                onChange={(e) => setDraft((d) => ({ ...d, pricePkr: Number(e.target.value || 0) }))}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    pricePkr: Number(e.target.value || 0),
+                  }))
+                }
               />
             ) : (
               <div className="font-medium">{p.pricePkr}</div>
@@ -226,24 +285,40 @@ export default function ExpressPostOrderDetail() {
           {p.token === "FIXERCOIN" && (
             <>
               <div>
-                <div className="text-[11px] text-muted-foreground">Price/USDC</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Price/USDC
+                </div>
                 {isEditing ? (
                   <input
                     className="w-full rounded-md border px-2 py-1"
-                    value={(draft.pricePerUSDC as any) ?? (p.pricePerUSDC ?? "")}
-                    onChange={(e) => setDraft((d) => ({ ...d, pricePerUSDC: e.target.value === "" ? null : Number(e.target.value) }))}
+                    value={(draft.pricePerUSDC as any) ?? p.pricePerUSDC ?? ""}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        pricePerUSDC:
+                          e.target.value === "" ? null : Number(e.target.value),
+                      }))
+                    }
                   />
                 ) : (
                   <div className="font-medium">{p.pricePerUSDC ?? "—"}</div>
                 )}
               </div>
               <div>
-                <div className="text-[11px] text-muted-foreground">Price/SOL</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Price/SOL
+                </div>
                 {isEditing ? (
                   <input
                     className="w-full rounded-md border px-2 py-1"
-                    value={(draft.pricePerSOL as any) ?? (p.pricePerSOL ?? "")}
-                    onChange={(e) => setDraft((d) => ({ ...d, pricePerSOL: e.target.value === "" ? null : Number(e.target.value) }))}
+                    value={(draft.pricePerSOL as any) ?? p.pricePerSOL ?? ""}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        pricePerSOL:
+                          e.target.value === "" ? null : Number(e.target.value),
+                      }))
+                    }
                   />
                 ) : (
                   <div className="font-medium">{p.pricePerSOL ?? "—"}</div>
@@ -273,7 +348,10 @@ export default function ExpressPostOrderDetail() {
             <div className="text-sm font-semibold uppercase">Post Orders</div>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/express/add-post")} className="h-8">
+            <Button
+              onClick={() => navigate("/express/add-post")}
+              className="h-8"
+            >
               <Plus className="mr-1 h-4 w-4" /> Add Post
             </Button>
           </div>
@@ -283,17 +361,20 @@ export default function ExpressPostOrderDetail() {
       <main className="flex-1">
         <div className="container mx-auto max-w-3xl px-4 py-6">
           <div className="mb-3 rounded-xl border bg-slate-50 p-3 text-xs text-muted-foreground">
-            Manage all posts. Toggle online/offline, edit inline then save, or open detailed edit.
+            Manage all posts. Toggle online/offline, edit inline then save, or
+            open detailed edit.
           </div>
 
           {loading ? (
-            <div className="rounded-xl border bg-white p-6 text-center text-sm">Loading…</div>
-          ) : posts.length === 0 ? (
-            <div className="rounded-xl border bg-white p-6 text-center text-sm">No posts yet.</div>
-          ) : (
-            <div className="space-y-3">
-              {posts.map(renderRow)}
+            <div className="rounded-xl border bg-white p-6 text-center text-sm">
+              Loading…
             </div>
+          ) : posts.length === 0 ? (
+            <div className="rounded-xl border bg-white p-6 text-center text-sm">
+              No posts yet.
+            </div>
+          ) : (
+            <div className="space-y-3">{posts.map(renderRow)}</div>
           )}
         </div>
       </main>

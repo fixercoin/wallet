@@ -258,7 +258,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         setBinancePriceUsd(null);
 
         // Only fetch for tokens that Binance P2P supports; USDC/USDT are commonly supported.
-        const asset = selectedToken === "USDC" ? "USDC" : selectedToken === "SOL" ? "SOL" : selectedToken;
+        const asset =
+          selectedToken === "USDC"
+            ? "USDC"
+            : selectedToken === "SOL"
+              ? "SOL"
+              : selectedToken;
 
         // Use Binance P2P search endpoint via server proxy to avoid CORS issues
         const body = JSON.stringify({
@@ -270,13 +275,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           tradeType: "SELL",
         });
 
-        const resp = await fetch(`/api/binance-p2p/bapi/c2c/v2/friendly/c2c/adv/search`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const resp = await fetch(
+          `/api/binance-p2p/bapi/c2c/v2/friendly/c2c/adv/search`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body,
           },
-          body,
-        });
+        );
 
         if (!resp.ok) {
           // fallback to standard Binance REST API proxied via /api/binance
@@ -308,7 +316,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           return `${tok}USDT`;
         };
         const symbol = mapSymbol(selectedToken);
-        const fallbackResp = await fetch(`/api/binance/api/v3/ticker/price?symbol=${symbol}`);
+        const fallbackResp = await fetch(
+          `/api/binance/api/v3/ticker/price?symbol=${symbol}`,
+        );
         if (!fallbackResp.ok) throw new Error("binance fallback failed");
         const fj = await fallbackResp.json();
         const price = Number(fj?.price);

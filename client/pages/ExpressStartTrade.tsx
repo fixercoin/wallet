@@ -207,8 +207,7 @@ export default function ExpressStartTrade() {
     finalizedRef.current = false;
   }, [tradeId]);
 
-  // Notify when counterparty confirms settlement via special message
-  const lastConfirmedMessageId = useRef<string | null>(null);
+  // Handle trade state updates received via prompt messages
   useEffect(() => {
     if (!messages || messages.length === 0) return;
     const reversed = messages.slice().reverse();
@@ -232,48 +231,111 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const cancelMsg = reversed.find(
+      (m) => String(m?.message) === "__ORDER_CANCELLED__",
+    );
+    if (
+      cancelMsg &&
+      cancelMsg.id &&
+      cancelMsg.from !== localRole &&
+      lastCancelledMessageId.current !== cancelMsg.id
+    ) {
+      lastCancelledMessageId.current = cancelMsg.id;
+      setOrderCancelledByCounterparty(true);
+      toast({
+        title: "Order cancelled",
+        description: "Counterparty cancelled this trade.",
+        variant: "destructive",
+      });
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      setAwaitingApproval(false);
+      setTxDetected(false);
+      finalizedRef.current = true;
+      navigate("/express");
+      return;
+    }
+
     const confirmMsg = reversed.find(
       (m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__",
     );
-    if (confirmMsg && confirmMsg.id && confirmMsg.from !== localRole) {
-      if (lastConfirmedMessageId.current !== confirmMsg.id) {
+    if (confirmMsg && confirmMsg.id) {
+      if (confirmMsg.from === localRole) {
+        setBuyerMarkedPaid(true);
+      } else if (lastBuyerPaidMessageId.current !== confirmMsg.id) {
+        lastBuyerPaidMessageId.current = confirmMsg.id;
+        setBuyerMarkedPaid(true);
         toast({
-          title: "Order update",
-          description: "Counterparty confirmed settlement",
+          title: "Buyer marked payment",
+          description: "Fiat payment has been marked as sent.",
         });
-        lastConfirmedMessageId.current = confirmMsg.id;
+      }
+    }
+
+    const ackMsg = reversed.find(
+      (m) => String(m?.message) === "__SELLER_RECEIVED_FIAT__",
+    );
+    if (ackMsg && ackMsg.id) {
+      if (ackMsg.from === localRole) {
+        setFiatAcknowledged(true);
+      } else if (lastFiatAckMessageId.current !== ackMsg.id) {
+        lastFiatAckMessageId.current = ackMsg.id;
+        setFiatAcknowledged(true);
+        toast({
+          title: "Seller confirmed payment",
+          description: "Counterparty confirmed receiving fiat.",
+        });
       }
     }
 
     const sellerMsg = reversed.find(
       (m) => String(m?.message) === "__SELLER_CONFIRMED__",
     );
-    if (sellerMsg && sellerMsg.from !== localRole) {
-      setSellerConfirmed(true);
+    if (sellerMsg && sellerMsg.id) {
+      if (sellerMsg.from === localRole) {
+        setSellerSentCrypto(true);
+      } else {
+        setSellerConfirmed(true);
+        setSellerSentCrypto(true);
+      }
     }
 
-    const approvedMsg = reversed.find(
-      (m) => String(m?.message) === "__BUYER_APPROVED__",
+    const sellerApprovedMsg = reversed.find(
+      (m) => String(m?.message) === "__SELLER_APPROVED__",
     );
-    if (approvedMsg && approvedMsg.from !== localRole) {
-      if (localRole === "seller") {
-        setAwaitingApproval(false);
-        toast({ title: "Buyer approved" });
-        try {
-          localStorage.removeItem("expressPendingOrder");
-        } catch {}
-        try {
-          localStorage.setItem(
-            "expressLastOrder",
-            JSON.stringify({ tradeId, params, ts: Date.now() }),
-          );
-        } catch {}
-        navigate("/express/order-complete", {
-          state: { tradeId, params, ts: Date.now() },
+    if (
+      sellerApprovedMsg &&
+      sellerApprovedMsg.id &&
+      sellerApprovedMsg.from !== localRole &&
+      lastSellerApprovedMessageId.current !== sellerApprovedMsg.id
+    ) {
+      lastSellerApprovedMessageId.current = sellerApprovedMsg.id;
+      setSellerApproved(true);
+      if (localRole === "buyer") {
+        finalizeOrder("seller", {
+          toastTitle: "Seller approved",
+          toastDescription: "Check your wallet to confirm receipt.",
         });
       }
     }
-  }, [messages, localRole, toast]);
+
+    const buyerApprovedMsg = reversed.find(
+      (m) => String(m?.message) === "__BUYER_APPROVED__",
+    );
+    if (
+      buyerApprovedMsg &&
+      buyerApprovedMsg.id &&
+      buyerApprovedMsg.from !== localRole &&
+      localRole === "seller"
+    ) {
+      finalizeOrder("buyer", { toastTitle: "Buyer approved" });
+    }
+  }, [messages, localRole, toast, finalizeOrder, navigate]);
 
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);

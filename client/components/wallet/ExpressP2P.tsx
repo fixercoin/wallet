@@ -818,6 +818,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
                 />
               </div>
+              <div>
+                <div className="mb-1 text-xs">Wallet address (optional)</div>
+                <input
+                  value={walletAddressInput}
+                  onChange={(e) => setWalletAddressInput(e.target.value)}
+                  placeholder="Your Solana wallet address"
+                  className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none font-mono"
+                />
+              </div>
               <div className="text-xs text-muted-foreground">
                 Detected method:{" "}
                 <span className="font-medium">

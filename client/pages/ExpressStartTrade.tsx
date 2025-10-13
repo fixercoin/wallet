@@ -637,11 +637,50 @@ export default function ExpressStartTrade() {
                           ? "Easypaisa payment detected for seller account 03107044833."
                           : "Waiting for Easypaisa confirmation for seller account 03107044833…"}
                       </div>
-                      {fiatDetected && (
-                        <Button onClick={handleBuyerConfirm} className="h-9">
-                          Confirm
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {fiatDetected && (
+                          <Button onClick={handleBuyerConfirm} className="h-9">
+                            Confirm
+                          </Button>
+                        )}
+                        {!fiatDetected && (
+                          <Button
+                            variant="outline"
+                            onClick={async () => {
+                              if (!tradeId) return;
+                              setManualPaid(true);
+                              try {
+                                const resp = await fetch(
+                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                  {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      message: "__CONFIRMED_SETTLEMENT__",
+                                      from: localRole,
+                                    }),
+                                  },
+                                );
+                                if (resp.ok) {
+                                  setAwaitingApproval(true);
+                                  const raw = localStorage.getItem("expressPendingOrder");
+                                  const obj = raw ? JSON.parse(raw) : {};
+                                  obj.minimized = false;
+                                  obj.status = "awaiting_approval";
+                                  obj.params = params;
+                                  obj.tradeId = tradeId;
+                                  obj.ts = Date.now();
+                                  localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
+                                  toast({ title: "Marked as paid. Waiting for seller." });
+                                }
+                              } catch {}
+                            }}
+                            className="h-9"
+                          >
+                            I've Paid
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">

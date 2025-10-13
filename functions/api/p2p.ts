@@ -240,7 +240,28 @@ export default async function (
       const body = await request.json().catch(() => null);
       const msg = (body && body.message) || "";
       const from = (body && body.from) || "unknown";
-      const result = addTradeMessage(tradeId, msg, from);
+
+      let proofMeta: { filename: string; url?: string } | undefined;
+      if (body?.proof && body.proof.filename && body.proof.data) {
+        const inMem = uploadProof(tradeId, body.proof);
+        if (!("error" in inMem)) {
+          try {
+            const sup = await uploadProofToSupabase(env, tradeId, body.proof);
+            if (sup.ok && (sup as any).url) {
+              proofMeta = {
+                filename: body.proof.filename,
+                url: (sup as any).url,
+              };
+            } else {
+              proofMeta = { filename: body.proof.filename };
+            }
+          } catch {
+            proofMeta = { filename: body.proof.filename };
+          }
+        }
+      }
+
+      const result = addTradeMessage(tradeId, msg, from, proofMeta);
       if ("error" in result)
         return jsonResponse({ error: result.error }, result.status);
       return jsonResponse({ message: result.message }, result.status);

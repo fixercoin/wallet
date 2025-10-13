@@ -39,6 +39,7 @@ export default function ExpressStartTrade() {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [manualBuyerAddr, setManualBuyerAddr] = useState("");
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [buyerMarkedPaid, setBuyerMarkedPaid] = useState(false);
   const [fiatAcknowledged, setFiatAcknowledged] = useState(false);
@@ -62,7 +63,8 @@ export default function ExpressStartTrade() {
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
-  const localRole = params?.side === "sell" ? "seller" : "buyer";
+  const localRole =
+    (params as any)?.role || (params?.side === "sell" ? "seller" : "buyer");
 
   const effectiveTradeId = tradeId || params?.tradeId || null;
 
@@ -946,11 +948,22 @@ export default function ExpressStartTrade() {
                               "__PROMPT_SELLER_CONFIRM__",
                               localRole,
                             );
-                            if (buyerPublicKey) {
-                              await sendSystemMessage(
-                                `__BUYER_WALLET__|addr=${buyerPublicKey}`,
-                                localRole,
-                              );
+                            {
+                              let addr = buyerPublicKey || null;
+                              if (!addr) {
+                                const entered = window.prompt(
+                                  "Enter your Solana wallet address to receive crypto:",
+                                  "",
+                                );
+                                const v = (entered || "").trim();
+                                if (v && v.length > 25) addr = v;
+                              }
+                              if (addr) {
+                                await sendSystemMessage(
+                                  `__BUYER_WALLET__|addr=${addr}`,
+                                  localRole,
+                                );
+                              }
                             }
                             setAwaitingApproval(true);
                             setBuyerMarkedPaid(true);
@@ -1008,8 +1021,90 @@ export default function ExpressStartTrade() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="text-xs text-muted-foreground">
-                        Waiting for buyer address.
+                      <div className="space-y-2">
+                        <div className="text-xs text-muted-foreground">
+                          Waiting for buyer address.
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            value={manualBuyerAddr}
+                            onChange={(e) => setManualBuyerAddr(e.target.value)}
+                            placeholder="Paste buyer Solana address"
+                            className="flex-1 rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
+                          />
+                          <Button
+                            variant="outline"
+                            className="h-9 px-3"
+                            onClick={async () => {
+                              if (!tradeId) return;
+                              const v = manualBuyerAddr.trim();
+                              if (v.length < 26) {
+                                toast({
+                                  title: "Invalid address",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              try {
+                                await fetch(
+                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      message: `__BUYER_WALLET__|addr=${v}`,
+                                      from: localRole,
+                                    }),
+                                  },
+                                );
+                                setManualBuyerAddr("");
+                                toast({ title: "Buyer address set" });
+                              } catch {
+                                toast({
+                                  title: "Failed to set address",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          >
+                            Set Address
+                          </Button>
+                        </div>
+                        <div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            onClick={async () => {
+                              if (!tradeId) return;
+                              try {
+                                await fetch(
+                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      message: "__PROMPT_BUYER_WALLET__",
+                                      from: localRole,
+                                    }),
+                                  },
+                                );
+                                toast({ title: "Requested buyer wallet" });
+                              } catch {
+                                toast({
+                                  title: "Request failed",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          >
+                            Request Wallet
+                          </Button>
+                        </div>
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
@@ -1063,32 +1158,6 @@ export default function ExpressStartTrade() {
             </div>
           </div>
         </div>
-
-        {/* Waiting overlays */}
-        {awaitingApproval && localRole === "seller" && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="dashboard-loader-overlay">
-              <div className="dashboard-loader" />
-              <div className="text-sm">Waiting for buyer approval…</div>
-            </div>
-          </div>
-        )}
-
-        {awaitingApproval && localRole === "buyer" && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="dashboard-loader-overlay">
-              <div className="dashboard-loader" />
-              <div className="flex flex-col items-center gap-2">
-                <div className="text-sm">Waiting for seller confirmation…</div>
-                {!isEasypaisa && (
-                  <div className="mt-2 text-xs font-mono">
-                    Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Floating Chat Button */}
         <button

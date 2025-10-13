@@ -145,7 +145,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     if (!pendingOrder || notifiedRef.current) return;
     if (String(pendingOrder?.status || "") === "awaiting_approval") {
       notifiedRef.current = true;
-      toast({ title: "New order", description: "Order awaiting your approval" });
+      toast({
+        title: "New order",
+        description: "Order awaiting your approval",
+      });
     }
   }, [pendingOrder, toast]);
 

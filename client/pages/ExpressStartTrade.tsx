@@ -199,7 +199,9 @@ export default function ExpressStartTrade() {
             JSON.stringify({ tradeId, params, ts: Date.now() }),
           );
         } catch {}
-        navigate("/express/order-complete", { state: { tradeId, params, ts: Date.now() } });
+        navigate("/express/order-complete", {
+          state: { tradeId, params, ts: Date.now() },
+        });
       }
     }
   }, [messages, localRole, toast]);
@@ -490,14 +492,21 @@ export default function ExpressStartTrade() {
           JSON.stringify({ tradeId, params, ts: Date.now() }),
         );
       } catch {}
-      navigate("/express/order-complete", { state: { tradeId, params, ts: Date.now() } });
+      navigate("/express/order-complete", {
+        state: { tradeId, params, ts: Date.now() },
+      });
     } catch (e) {
       toast({ title: "Failed to approve", variant: "destructive" });
     }
   };
 
   useEffect(() => {
-    if (isEasypaisa && localRole === "buyer" && fiatDetected && !autoConfirmed) {
+    if (
+      isEasypaisa &&
+      localRole === "buyer" &&
+      fiatDetected &&
+      !autoConfirmed
+    ) {
       setAutoConfirmed(true);
       handleBuyerConfirm();
     }
@@ -666,7 +675,9 @@ export default function ExpressStartTrade() {
                                   `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
                                   {
                                     method: "POST",
-                                    headers: { "Content-Type": "application/json" },
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
                                     body: JSON.stringify({
                                       message: "__CONFIRMED_SETTLEMENT__",
                                       from: localRole,
@@ -675,15 +686,23 @@ export default function ExpressStartTrade() {
                                 );
                                 if (resp.ok) {
                                   setAwaitingApproval(true);
-                                  const raw = localStorage.getItem("expressPendingOrder");
+                                  const raw = localStorage.getItem(
+                                    "expressPendingOrder",
+                                  );
                                   const obj = raw ? JSON.parse(raw) : {};
                                   obj.minimized = false;
                                   obj.status = "awaiting_approval";
                                   obj.params = params;
                                   obj.tradeId = tradeId;
                                   obj.ts = Date.now();
-                                  localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
-                                  toast({ title: "Marked as paid. Waiting for seller." });
+                                  localStorage.setItem(
+                                    "expressPendingOrder",
+                                    JSON.stringify(obj),
+                                  );
+                                  toast({
+                                    title:
+                                      "Marked as paid. Waiting for seller.",
+                                  });
                                 }
                               } catch {}
                             }}

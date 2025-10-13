@@ -16,27 +16,50 @@ export default function ExpressOrderComplete() {
         <div className="container mx-auto max-w-md px-4 py-8">
           <div className="rounded-2xl border bg-white p-5">
             <div className="text-lg font-semibold">Order Completed</div>
-            <div className="mt-1 text-sm text-muted-foreground">Your trade has been confirmed.</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Your trade has been confirmed.
+            </div>
             <div className="mt-4 space-y-1 text-sm">
               {tradeId && (
-                <div className="flex justify-between"><span>Trade ID</span><span className="font-mono text-xs">{tradeId}</span></div>
+                <div className="flex justify-between">
+                  <span>Trade ID</span>
+                  <span className="font-mono text-xs">{tradeId}</span>
+                </div>
               )}
               {params?.side && (
-                <div className="flex justify-between"><span>Side</span><span>{params.side}</span></div>
+                <div className="flex justify-between">
+                  <span>Side</span>
+                  <span>{params.side}</span>
+                </div>
               )}
               {params?.token && (
-                <div className="flex justify-between"><span>Token</span><span>{params.token}</span></div>
+                <div className="flex justify-between">
+                  <span>Token</span>
+                  <span>{params.token}</span>
+                </div>
               )}
               {typeof params?.tokenUnits === "number" && (
-                <div className="flex justify-between"><span>Units</span><span>{params.tokenUnits.toFixed(4)}</span></div>
+                <div className="flex justify-between">
+                  <span>Units</span>
+                  <span>{params.tokenUnits.toFixed(4)}</span>
+                </div>
               )}
               {typeof params?.pkrAmount === "number" && (
-                <div className="flex justify-between"><span>PKR</span><span>{params.pkrAmount.toFixed(2)}</span></div>
+                <div className="flex justify-between">
+                  <span>PKR</span>
+                  <span>{params.pkrAmount.toFixed(2)}</span>
+                </div>
               )}
               {params?.paymentMethod && (
-                <div className="flex justify-between"><span>Method</span><span>{String(params.paymentMethod).toUpperCase()}</span></div>
+                <div className="flex justify-between">
+                  <span>Method</span>
+                  <span>{String(params.paymentMethod).toUpperCase()}</span>
+                </div>
               )}
-              <div className="flex justify-between"><span>Completed</span><span>{new Date(doneTs).toLocaleString()}</span></div>
+              <div className="flex justify-between">
+                <span>Completed</span>
+                <span>{new Date(doneTs).toLocaleString()}</span>
+              </div>
             </div>
             <div className="mt-6 flex gap-2">
               <button

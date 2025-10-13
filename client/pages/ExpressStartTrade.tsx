@@ -980,7 +980,6 @@ export default function ExpressStartTrade() {
                         I've Paid
                       </Button>
                     )}
-
                   </div>
                 </div>
               ) : (
@@ -1008,7 +1007,8 @@ export default function ExpressStartTrade() {
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
-                      Once the buyer marks as paid, verify you received fiat and click “I have received payment” to complete the order.
+                      Once the buyer marks as paid, verify you received fiat and
+                      click “I have received payment” to complete the order.
                     </div>
                   </div>
 
@@ -1031,7 +1031,8 @@ export default function ExpressStartTrade() {
                           if (!resp.ok) throw new Error("failed");
                           finalizeOrder("seller", {
                             toastTitle: "Order completed",
-                            toastDescription: "You confirmed receiving payment.",
+                            toastDescription:
+                              "You confirmed receiving payment.",
                           });
                         } catch (e) {
                           toast({

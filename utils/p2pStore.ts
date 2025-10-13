@@ -27,6 +27,7 @@ export type TradeMessage = {
   message: string;
   from: string;
   ts: number;
+  proof?: { filename: string; url?: string };
 };
 
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
@@ -255,6 +256,7 @@ export function addTradeMessage(
   tradeId: string,
   message: string,
   from: string,
+  proof?: { filename: string; url?: string },
 ) {
   if (!message) return { error: "invalid message", status: 400 } as const;
   const entry: TradeMessage = {
@@ -262,6 +264,7 @@ export function addTradeMessage(
     message,
     from: from || "unknown",
     ts: Date.now(),
+    proof,
   };
   store.messages[tradeId] = store.messages[tradeId] || [];
   store.messages[tradeId].push(entry);

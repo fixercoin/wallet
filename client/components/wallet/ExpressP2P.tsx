@@ -632,6 +632,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="text-sm font-semibold uppercase">
                   EXPRESS P2P SERVICE
                 </div>
+                {lastRefreshed && (
+                  <div className="ml-3 text-[10px] text-muted-foreground">
+                    Refreshed {new Date(lastRefreshed).toLocaleTimeString()}
+                  </div>
+                )}
               </div>
             </div>
 

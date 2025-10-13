@@ -85,6 +85,19 @@ export default async function (
       return jsonResponse(listPosts());
     }
 
+    // Export posts as downloadable JSON
+    if (request.method === "GET" && path === "/export") {
+      const data = listPosts();
+      return new Response(JSON.stringify(data, null, 2), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Disposition": 'attachment; filename="p2p-posts.json"',
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
     if (request.method === "GET" && path.startsWith("/post/")) {
       const id = path.replace("/post/", "");
       const post = getPost(id);

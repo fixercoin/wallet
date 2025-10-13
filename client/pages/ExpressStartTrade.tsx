@@ -49,6 +49,7 @@ export default function ExpressStartTrade() {
   const [txDetected, setTxDetected] = useState(false);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const pollRef = useRef<number | null>(null);
+  const finalizedRef = useRef(false);
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
@@ -132,6 +133,10 @@ export default function ExpressStartTrade() {
 
   // Post an initial order-start event for admin monitoring
   const orderInitSentRef = useRef<string | null>(null);
+  const lastCancelledMessageId = useRef<string | null>(null);
+  const lastBuyerPaidMessageId = useRef<string | null>(null);
+  const lastFiatAckMessageId = useRef<string | null>(null);
+  const lastSellerApprovedMessageId = useRef<string | null>(null);
   useEffect(() => {
     if (!tradeId || !params?.side) return;
     if (orderInitSentRef.current === tradeId) return;

@@ -267,12 +267,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
         // Use Binance P2P search endpoint via server proxy to avoid CORS issues
         const body = JSON.stringify({
-          asset: asset,
-          fiat: "PKR",
-          merchantCheck: false,
           page: 1,
           rows: 20,
+          payTypes: [],
+          countries: [],
+          asset: asset,
           tradeType: "SELL",
+          fiat: "PKR",
+          publisherType: null,
+          merchantCheck: false,
         });
 
         const resp = await fetch(

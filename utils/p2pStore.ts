@@ -39,6 +39,16 @@ import path from "path";
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
 
+type EasypaisaPayment = {
+  id: string;
+  msisdn: string;
+  amount: number;
+  currency?: string;
+  reference?: string;
+  sender?: string;
+  ts: number;
+};
+
 const store: {
   posts: P2PPost[];
   messages: Record<string, TradeMessage[]>;
@@ -46,10 +56,12 @@ const store: {
     string,
     { id: string; filename: string; data: string; ts: number }[]
   >;
+  easypaisa: EasypaisaPayment[];
 } = (globalThis as any).__P2P_STORE || {
   posts: [],
   messages: {},
   proofs: {},
+  easypaisa: [],
 };
 (globalThis as any).__P2P_STORE = store;
 
@@ -59,7 +71,12 @@ async function saveStoreToFile() {
     await fsPromises.writeFile(
       DATA_FILE,
       JSON.stringify(
-        { posts: store.posts, messages: store.messages, proofs: store.proofs },
+        {
+          posts: store.posts,
+          messages: store.messages,
+          proofs: store.proofs,
+          easypaisa: store.easypaisa,
+        },
         null,
         2,
       ),
@@ -84,6 +101,8 @@ try {
         store.messages = parsed.messages;
       if (parsed.proofs && typeof parsed.proofs === "object")
         store.proofs = parsed.proofs;
+      if (Array.isArray(parsed.easypaisa))
+        store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
     }
   }
 } catch (e) {
@@ -222,4 +241,35 @@ export function uploadProof(
   });
   void saveStoreToFile();
   return { ok: true, status: 201 } as const;
+}
+
+export function addEasypaisaPayment(p: {
+  msisdn: string;
+  amount: number;
+  currency?: string;
+  reference?: string;
+  sender?: string;
+  ts?: number;
+}) {
+  const entry: EasypaisaPayment = {
+    id: `ep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    msisdn: String(p.msisdn),
+    amount: Number(p.amount),
+    currency: p.currency,
+    reference: p.reference,
+    sender: p.sender,
+    ts: p.ts ?? Date.now(),
+  };
+  store.easypaisa.push(entry);
+  if (store.easypaisa.length > 500) store.easypaisa.shift();
+  void saveStoreToFile();
+  return { payment: entry, status: 201 } as const;
+}
+
+export function listEasypaisaPayments(filters: { msisdn?: string; since?: number }) {
+  let arr = store.easypaisa.slice();
+  if (filters.msisdn) arr = arr.filter((p) => p.msisdn === filters.msisdn);
+  if (filters.since) arr = arr.filter((p) => p.ts >= Number(filters.since));
+  arr.sort((a, b) => b.ts - a.ts);
+  return { payments: arr } as const;
 }

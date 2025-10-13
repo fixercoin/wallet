@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, Copy, Info, Plus } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
@@ -183,7 +189,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     if (!pendingOrder) return;
     const params = pendingOrder.params || {};
     navigate("/express/start-trade", {
-      state: { ...(params as Record<string, any>), tradeId: pendingOrder.tradeId },
+      state: {
+        ...(params as Record<string, any>),
+        tradeId: pendingOrder.tradeId,
+      },
     });
   }, [navigate, pendingOrder]);
 
@@ -671,7 +680,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="text-sm font-semibold uppercase">
-                      Pending {pendingOrder.params?.side === "sell" ? "Sell" : "Buy"} Order
+                      Pending{" "}
+                      {pendingOrder.params?.side === "sell" ? "Sell" : "Buy"}{" "}
+                      Order
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {pendingOrder.params?.side === "sell"
@@ -692,10 +703,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     <span>PKR Value</span>
                     <span>
                       {typeof pendingOrder.params?.pkrAmount === "number"
-                        ? pendingOrder.params.pkrAmount.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })
+                        ? pendingOrder.params.pkrAmount.toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )
                         : "—"}
                     </span>
                   </div>
@@ -703,10 +717,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     <span>Token Units</span>
                     <span>
                       {typeof pendingOrder.params?.tokenUnits === "number"
-                        ? pendingOrder.params.tokenUnits.toLocaleString(undefined, {
-                            minimumFractionDigits: 4,
-                            maximumFractionDigits: 4,
-                          })
+                        ? pendingOrder.params.tokenUnits.toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 4,
+                              maximumFractionDigits: 4,
+                            },
+                          )
                         : "—"}
                     </span>
                   </div>
@@ -718,21 +735,25 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       </span>
                     </div>
                   )}
-                  {(pendingOrder.params?.accountName || pendingOrder.params?.accountNumber) && (
+                  {(pendingOrder.params?.accountName ||
+                    pendingOrder.params?.accountNumber) && (
                     <div className="rounded-md bg-wallet-purple-50 px-3 py-2 text-xs text-muted-foreground">
                       {pendingOrder.params?.accountName && (
                         <div>
-                          <span className="font-medium">Account:</span> {pendingOrder.params.accountName}
+                          <span className="font-medium">Account:</span>{" "}
+                          {pendingOrder.params.accountName}
                         </div>
                       )}
                       {pendingOrder.params?.accountNumber && (
                         <div>
-                          <span className="font-medium">Number:</span> {pendingOrder.params.accountNumber}
+                          <span className="font-medium">Number:</span>{" "}
+                          {pendingOrder.params.accountNumber}
                         </div>
                       )}
                       {pendingOrder.params?.walletAddress && (
                         <div className="font-mono">
-                          <span className="font-medium">Wallet:</span> {pendingOrder.params.walletAddress}
+                          <span className="font-medium">Wallet:</span>{" "}
+                          {pendingOrder.params.walletAddress}
                         </div>
                       )}
                     </div>
@@ -752,7 +773,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   >
                     Hide for later
                   </Button>
-                  <Button variant="ghost" onClick={clearPendingOrder} className="h-9">
+                  <Button
+                    variant="ghost"
+                    onClick={clearPendingOrder}
+                    className="h-9"
+                  >
                     Cancel order
                   </Button>
                 </div>

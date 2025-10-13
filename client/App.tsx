@@ -25,6 +25,7 @@ import ExpressPostView from "./pages/ExpressPostView";
 import ExpressStartTrade from "./pages/ExpressStartTrade";
 import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
 import ExpressP2P from "./components/wallet/ExpressP2P";
+import ExpressOrderComplete from "./pages/ExpressOrderComplete";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -106,6 +107,7 @@ const App = () => (
                 path="/express/start-trade"
                 element={<ExpressStartTrade />}
               />
+              <Route path="/express/order-complete" element={<ExpressOrderComplete />} />
               <Route path="/express/post" element={<ExpressPostView />} />
               <Route
                 path="/express/post-order-detail"

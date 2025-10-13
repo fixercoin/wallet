@@ -202,6 +202,25 @@ export default function ExpressStartTrade() {
     );
   }, [match, params]);
 
+  const sellerPaymentDetails = useMemo(() => {
+    if (!match) return null;
+    if (match.paymentDetails) {
+      return {
+        accountName: match.paymentDetails.accountName,
+        accountNumber: match.paymentDetails.accountNumber,
+        method: params?.paymentMethod || match.paymentMethod,
+      };
+    }
+    if (isEasypaisa) {
+      return {
+        accountName: "Seller Easypaisa Account",
+        accountNumber: "03107044833",
+        method: params?.paymentMethod || match.paymentMethod || "easypaisa",
+      };
+    }
+    return null;
+  }, [match, params?.paymentMethod, isEasypaisa]);
+
   // Easypaisa auto-detect polling (buy/sell payment method)
   useEffect(() => {
     if (!isEasypaisa) return;

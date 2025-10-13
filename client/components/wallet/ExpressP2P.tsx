@@ -420,7 +420,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   }, []);
 
   const saveDetails = () => {
-    const payload = { accountName, accountNumber };
+    const payload = { accountName, accountNumber, walletAddress: walletAddressInput };
     localStorage.setItem("expressp2pPaymentDetails", JSON.stringify(payload));
     setDetailsOpen(false);
   };

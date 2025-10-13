@@ -181,7 +181,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       mounted = false;
       clearInterval(id);
     };
-  }, []);
+  }, [refreshTick]);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

@@ -336,6 +336,42 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const timeoutMsg = reversed.find(
+      (m) => String(m?.message) === "__AUTO_CLOSE_TIMEOUT__",
+    );
+    if (
+      timeoutMsg &&
+      timeoutMsg.id &&
+      timeoutMsg.from !== localRole &&
+      lastTimeoutMessageId.current !== timeoutMsg.id
+    ) {
+      lastTimeoutMessageId.current = timeoutMsg.id;
+      if (sellerConfirmTimeoutRef.current) {
+        window.clearTimeout(sellerConfirmTimeoutRef.current);
+        sellerConfirmTimeoutRef.current = null;
+      }
+      toast({
+        title: "Trade closed",
+        description:
+          "Counterparty closed this trade automatically after waiting 5 minutes.",
+        variant: "destructive",
+      });
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      setAwaitingApproval(false);
+      setBuyerMarkedPaid(false);
+      setTxDetected(false);
+      setOrderCancelledByCounterparty(true);
+      finalizedRef.current = true;
+      navigate("/express");
+      return;
+    }
+
     const cancelMsg = reversed.find(
       (m) => String(m?.message) === "__ORDER_CANCELLED__",
     );

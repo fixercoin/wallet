@@ -12,6 +12,8 @@ import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/wallet";
 
+const SELLER_CONFIRM_TIMEOUT_MS = 5 * 60 * 1000;
+
 interface NavState {
   side?: "buy" | "sell";
   pkrAmount?: number;
@@ -44,42 +46,86 @@ export default function ExpressStartTrade() {
   const [sellerApproved, setSellerApproved] = useState(false);
   const [orderCancelledByCounterparty, setOrderCancelledByCounterparty] =
     useState(false);
+  const [remoteSellerDetails, setRemoteSellerDetails] = useState<{
+    accountName?: string;
+    accountNumber?: string;
+    method?: string;
+  } | null>(null);
 
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const pollRef = useRef<number | null>(null);
   const finalizedRef = useRef(false);
+  const sellerConfirmTimeoutRef = useRef<number | null>(null);
+  const lastTimeoutMessageId = useRef<string | null>(null);
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
   const localRole = params?.side === "sell" ? "seller" : "buyer";
 
+  const effectiveTradeId = tradeId || params?.tradeId || null;
+
+  const sendSystemMessage = useCallback(
+    async (message: string, fromOverride?: string) => {
+      if (!effectiveTradeId) {
+        throw new Error("Missing trade context");
+      }
+      const resp = await fetch(
+        `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            from: fromOverride ?? localRole,
+          }),
+        },
+      );
+      if (!resp.ok) {
+        throw new Error("Failed to send trade message");
+      }
+    },
+    [effectiveTradeId, localRole],
+  );
+
+  const cancelOrder = useCallback(
+    (options?: {
+      message?: string;
+      toastTitle?: string;
+      toastDescription?: string;
+      variant?: "default" | "destructive";
+    }) => {
+      if (sellerConfirmTimeoutRef.current) {
+        window.clearTimeout(sellerConfirmTimeoutRef.current);
+        sellerConfirmTimeoutRef.current = null;
+      }
+      const messageToSend = options?.message ?? "__ORDER_CANCELLED__";
+      sendSystemMessage(messageToSend).catch(() => undefined);
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      finalizedRef.current = true;
+      setAwaitingApproval(false);
+      setBuyerMarkedPaid(false);
+      setTxDetected(false);
+      setFiatAcknowledged(false);
+      setSellerConfirmed(false);
+      setSellerSentCrypto(false);
+      setSellerApproved(false);
+      toast({
+        title: options?.toastTitle ?? "Order cancelled",
+        description: options?.toastDescription,
+        variant: options?.variant,
+      });
+      navigate("/express");
+    },
+    [effectiveTradeId, navigate, sendSystemMessage, toast],
+  );
+
   const handleCancelOrder = useCallback(() => {
-    const effectiveTradeId = tradeId || params?.tradeId;
-    if (effectiveTradeId) {
-      (async () => {
-        try {
-          await fetch(
-            `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message: "__ORDER_CANCELLED__",
-                from: localRole,
-              }),
-            },
-          );
-        } catch {}
-      })();
-    }
-    try {
-      localStorage.removeItem("expressPendingOrder");
-    } catch {}
-    toast({ title: "Order cancelled" });
-    navigate("/express");
-  }, [navigate, toast, tradeId, params?.tradeId, localRole]);
+    cancelOrder();
+  }, [cancelOrder]);
   const isEasypaisa = useMemo(
     () => String(params?.paymentMethod || "").toLowerCase() === "easypaisa",
     [params?.paymentMethod],
@@ -155,6 +201,9 @@ export default function ExpressStartTrade() {
   const lastBuyerPaidMessageId = useRef<string | null>(null);
   const lastFiatAckMessageId = useRef<string | null>(null);
   const lastSellerApprovedMessageId = useRef<string | null>(null);
+  const lastPromptSellerMessageId = useRef<string | null>(null);
+  const lastPromptBuyerMessageId = useRef<string | null>(null);
+  const lastSellerDetailsMessageId = useRef<string | null>(null);
   useEffect(() => {
     if (!tradeId || !params?.side) return;
     if (orderInitSentRef.current === tradeId) return;
@@ -225,6 +274,42 @@ export default function ExpressStartTrade() {
     finalizedRef.current = false;
   }, [tradeId]);
 
+  const finalizeOrder = useCallback(
+    (
+      source: "buyer" | "seller" | "system",
+      options?: { toastTitle?: string; toastDescription?: string },
+    ) => {
+      if (finalizedRef.current) return;
+      finalizedRef.current = true;
+      setAwaitingApproval(false);
+      setTxDetected(false);
+      setSellerApproved(true);
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      try {
+        localStorage.setItem(
+          "expressLastOrder",
+          JSON.stringify({ tradeId, params, ts: Date.now(), source }),
+        );
+      } catch {}
+      if (options?.toastTitle) {
+        toast({
+          title: options.toastTitle,
+          description: options.toastDescription,
+        });
+      }
+      navigate("/express/order-complete", {
+        state: { tradeId, params, ts: Date.now(), source },
+      });
+    },
+    [navigate, params, toast, tradeId],
+  );
+
   // Handle trade state updates received via prompt messages
   useEffect(() => {
     if (!messages || messages.length === 0) return;
@@ -249,6 +334,42 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const timeoutMsg = reversed.find(
+      (m) => String(m?.message) === "__AUTO_CLOSE_TIMEOUT__",
+    );
+    if (
+      timeoutMsg &&
+      timeoutMsg.id &&
+      timeoutMsg.from !== localRole &&
+      lastTimeoutMessageId.current !== timeoutMsg.id
+    ) {
+      lastTimeoutMessageId.current = timeoutMsg.id;
+      if (sellerConfirmTimeoutRef.current) {
+        window.clearTimeout(sellerConfirmTimeoutRef.current);
+        sellerConfirmTimeoutRef.current = null;
+      }
+      toast({
+        title: "Trade closed",
+        description:
+          "Counterparty closed this trade automatically after waiting 5 minutes.",
+        variant: "destructive",
+      });
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      setAwaitingApproval(false);
+      setBuyerMarkedPaid(false);
+      setTxDetected(false);
+      setOrderCancelledByCounterparty(true);
+      finalizedRef.current = true;
+      navigate("/express");
+      return;
+    }
+
     const cancelMsg = reversed.find(
       (m) => String(m?.message) === "__ORDER_CANCELLED__",
     );
@@ -259,6 +380,10 @@ export default function ExpressStartTrade() {
       lastCancelledMessageId.current !== cancelMsg.id
     ) {
       lastCancelledMessageId.current = cancelMsg.id;
+      if (sellerConfirmTimeoutRef.current) {
+        window.clearTimeout(sellerConfirmTimeoutRef.current);
+        sellerConfirmTimeoutRef.current = null;
+      }
       setOrderCancelledByCounterparty(true);
       toast({
         title: "Order cancelled",
@@ -295,6 +420,23 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const promptSellerMsg = reversed.find(
+      (m) => String(m?.message) === "__PROMPT_SELLER_CONFIRM__",
+    );
+    if (
+      promptSellerMsg &&
+      promptSellerMsg.id &&
+      promptSellerMsg.from !== localRole &&
+      localRole === "seller" &&
+      lastPromptSellerMessageId.current !== promptSellerMsg.id
+    ) {
+      lastPromptSellerMessageId.current = promptSellerMsg.id;
+      toast({
+        title: "Buyer reported payment",
+        description: "Please verify the payment and confirm the trade.",
+      });
+    }
+
     const ackMsg = reversed.find(
       (m) => String(m?.message) === "__SELLER_RECEIVED_FIAT__",
     );
@@ -320,7 +462,72 @@ export default function ExpressStartTrade() {
       } else {
         setSellerConfirmed(true);
         setSellerSentCrypto(true);
+        if (localRole === "buyer") {
+          toast({
+            title: "Seller confirmed transaction",
+            description: "Check your wallet balance and complete the order.",
+          });
+        }
       }
+    }
+
+    const sellerDetailsMsg = reversed.find(
+      (m) =>
+        typeof m?.message === "string" &&
+        m.message.startsWith("__SELLER_PAYMENT_DETAILS__|"),
+    );
+    if (
+      sellerDetailsMsg &&
+      sellerDetailsMsg.id &&
+      sellerDetailsMsg.from !== localRole &&
+      lastSellerDetailsMessageId.current !== sellerDetailsMsg.id
+    ) {
+      lastSellerDetailsMessageId.current = sellerDetailsMsg.id;
+      const raw = String(sellerDetailsMsg.message).split("|")[1] || "";
+      const parsed = Object.fromEntries(
+        raw
+          .split(";")
+          .map((s) => s.split("=").map((x) => x.trim()))
+          .filter((parts) => parts.length === 2),
+      ) as Record<string, string>;
+      const detailRecord = {
+        accountName: parsed.name || parsed.accountName || "",
+        accountNumber: parsed.account || parsed.accountNumber || "",
+        method: parsed.method || "",
+      };
+      setRemoteSellerDetails(detailRecord);
+      if (localRole === "buyer") {
+        const summary = [
+          detailRecord.accountName ? `Name: ${detailRecord.accountName}` : null,
+          detailRecord.accountNumber
+            ? `Account: ${detailRecord.accountNumber}`
+            : null,
+          detailRecord.method ? `Method: ${detailRecord.method}` : null,
+        ]
+          .filter(Boolean)
+          .join(" • ");
+        toast({
+          title: "Seller payment details",
+          description: summary || "Seller shared payment instructions.",
+        });
+      }
+    }
+
+    const promptBuyerMsg = reversed.find(
+      (m) => String(m?.message) === "__PROMPT_BUYER_COMPLETE__",
+    );
+    if (
+      promptBuyerMsg &&
+      promptBuyerMsg.id &&
+      promptBuyerMsg.from !== localRole &&
+      localRole === "buyer" &&
+      lastPromptBuyerMessageId.current !== promptBuyerMsg.id
+    ) {
+      lastPromptBuyerMessageId.current = promptBuyerMsg.id;
+      toast({
+        title: "Seller confirmed",
+        description: "Check your wallet and finish the order when ready.",
+      });
     }
 
     const sellerApprovedMsg = reversed.find(
@@ -383,9 +590,14 @@ export default function ExpressStartTrade() {
     return null;
   }, [match, params?.paymentMethod, isEasypaisa]);
 
+  const displayedSellerPaymentDetails = useMemo(
+    () => remoteSellerDetails ?? sellerPaymentDetails,
+    [remoteSellerDetails, sellerPaymentDetails],
+  );
+
   const sellerPaymentMethodLabel = useMemo(() => {
     const raw =
-      sellerPaymentDetails?.method ||
+      displayedSellerPaymentDetails?.method ||
       params?.paymentMethod ||
       match?.paymentMethod ||
       "";
@@ -393,7 +605,7 @@ export default function ExpressStartTrade() {
     const value = String(raw);
     return value.charAt(0).toUpperCase() + value.slice(1);
   }, [
-    sellerPaymentDetails?.method,
+    displayedSellerPaymentDetails?.method,
     params?.paymentMethod,
     match?.paymentMethod,
   ]);
@@ -426,42 +638,6 @@ export default function ExpressStartTrade() {
     }
     return buyerPublicKey || null; // buyer's own wallet
   }, [localRole, counterpartyBuyerAddress, buyerPublicKey]);
-
-  const finalizeOrder = useCallback(
-    (
-      source: "buyer" | "seller" | "system",
-      options?: { toastTitle?: string; toastDescription?: string },
-    ) => {
-      if (finalizedRef.current) return;
-      finalizedRef.current = true;
-      setAwaitingApproval(false);
-      setTxDetected(false);
-      setSellerApproved(true);
-      try {
-        localStorage.removeItem("expressPendingOrder");
-      } catch {}
-      if (pollRef.current) {
-        window.clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-      try {
-        localStorage.setItem(
-          "expressLastOrder",
-          JSON.stringify({ tradeId, params, ts: Date.now(), source }),
-        );
-      } catch {}
-      if (options?.toastTitle) {
-        toast({
-          title: options.toastTitle,
-          description: options.toastDescription,
-        });
-      }
-      navigate("/express/order-complete", {
-        state: { tradeId, params, ts: Date.now(), source },
-      });
-    },
-    [navigate, params, toast, tradeId],
-  );
 
   // Poll for transaction detection
   useEffect(() => {
@@ -718,17 +894,17 @@ export default function ExpressStartTrade() {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">Seller Payment Details</div>
-                    {sellerPaymentDetails ? (
+                    {displayedSellerPaymentDetails ? (
                       <div className="mt-1 space-y-1">
-                        {sellerPaymentDetails.accountName && (
+                        {displayedSellerPaymentDetails.accountName && (
                           <div>
                             <span className="font-semibold">Name: </span>
-                            {sellerPaymentDetails.accountName}
+                            {displayedSellerPaymentDetails.accountName}
                           </div>
                         )}
                         <div>
                           <span className="font-semibold">Account: </span>
-                          {sellerPaymentDetails.accountNumber}
+                          {displayedSellerPaymentDetails.accountNumber || "—"}
                         </div>
                         <div>
                           <span className="font-semibold">Method: </span>
@@ -737,7 +913,8 @@ export default function ExpressStartTrade() {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        Seller payment details will be provided by the seller.
+                        Seller payment details will appear once the seller
+                        shares them.
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
@@ -751,23 +928,26 @@ export default function ExpressStartTrade() {
                     {!awaitingApproval && (
                       <Button
                         onClick={async () => {
-                          if (!tradeId) return;
+                          if (!effectiveTradeId) {
+                            toast({
+                              title: "Trade not ready",
+                              description:
+                                "Please wait for the trade to initialise.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
                           try {
-                            const resp = await fetch(
-                              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                              {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                  message: "__CONFIRMED_SETTLEMENT__",
-                                  from: localRole,
-                                }),
-                              },
+                            await sendSystemMessage(
+                              "__CONFIRMED_SETTLEMENT__",
+                              localRole,
                             );
-                            if (!resp.ok) throw new Error("failed");
+                            await sendSystemMessage(
+                              "__PROMPT_SELLER_CONFIRM__",
+                              localRole,
+                            );
                             setAwaitingApproval(true);
+                            setBuyerMarkedPaid(true);
                             try {
                               const raw = localStorage.getItem(
                                 "expressPendingOrder",
@@ -776,7 +956,7 @@ export default function ExpressStartTrade() {
                               obj.minimized = false;
                               obj.status = "awaiting_approval";
                               obj.params = params;
-                              obj.tradeId = tradeId;
+                              obj.tradeId = effectiveTradeId;
                               obj.ts = Date.now();
                               localStorage.setItem(
                                 "expressPendingOrder",
@@ -784,7 +964,9 @@ export default function ExpressStartTrade() {
                               );
                             } catch {}
                             toast({
-                              title: "Marked as paid. Waiting for transaction.",
+                              title: "Marked as paid",
+                              description:
+                                "Seller notified. Waiting for confirmation.",
                             });
                           } catch (e) {
                             toast({

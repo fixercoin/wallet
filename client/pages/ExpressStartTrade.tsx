@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,14 @@ export default function ExpressStartTrade() {
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
   const localRole = params?.side === "sell" ? "seller" : "buyer";
+
+  const handleCancelOrder = useCallback(() => {
+    try {
+      localStorage.removeItem("expressPendingOrder");
+    } catch {}
+    toast({ title: "Order cancelled" });
+    navigate("/express");
+  }, [navigate, toast]);
   const isEasypaisa = useMemo(
     () => String(params?.paymentMethod || "").toLowerCase() === "easypaisa",
     [params?.paymentMethod],
@@ -585,7 +593,17 @@ export default function ExpressStartTrade() {
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2"></div>
+          <div className="flex items-center gap-2" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleCancelOrder}
+            aria-label="Cancel order"
+            className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 

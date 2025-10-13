@@ -288,7 +288,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => {
       abort = true;
     };
-  }, [selectedToken]);
+  }, [selectedToken, refreshTick]);
 
   // Fetch Binance P2P price (server proxied) for selected token when needed to avoid CORS
   useEffect(() => {

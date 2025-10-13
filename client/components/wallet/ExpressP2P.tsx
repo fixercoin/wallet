@@ -294,24 +294,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   }, [navigate, pendingOrder]);
 
-  const minimizePendingOrder = useCallback(() => {
-    if (!pendingOrder) return;
-    persistPendingOrder({
-      ...pendingOrder,
-      minimized: true,
-      ts: Date.now(),
-    });
-  }, [pendingOrder, persistPendingOrder]);
-
-  const expandPendingOrder = useCallback(() => {
-    if (!pendingOrder) return;
-    persistPendingOrder({
-      ...pendingOrder,
-      minimized: false,
-      ts: Date.now(),
-    });
-  }, [pendingOrder, persistPendingOrder]);
-
   const handleCopyAddress = async () => {
     if (!wallet) return;
     const success = await copyToClipboard(wallet.publicKey);

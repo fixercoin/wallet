@@ -190,6 +190,23 @@ export default function ExpressStartTrade() {
     if (!messages || messages.length === 0) return;
     const reversed = messages.slice().reverse();
 
+    // Parse buyer wallet address if provided via message
+    const buyerAddrMsg = reversed.find((m) =>
+      typeof m?.message === "string" && m.message.startsWith("__BUYER_WALLET__|"),
+    );
+    if (buyerAddrMsg) {
+      const part = String(buyerAddrMsg.message).split("|")[1] || "";
+      const kv = Object.fromEntries(
+        part
+          .split(";")
+          .map((s) => s.split("=").map((x) => x.trim()))
+          .filter((p) => p.length === 2),
+      ) as any;
+      if (kv.addr && typeof kv.addr === "string" && kv.addr.length > 20) {
+        setCounterpartyBuyerAddress(kv.addr);
+      }
+    }
+
     const confirmMsg = reversed.find(
       (m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__",
     );

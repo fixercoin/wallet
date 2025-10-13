@@ -536,7 +536,10 @@ export default function ExpressAddPost() {
 
               <div className="mt-1 text-center text-xs text-muted-foreground">
                 SEND{" "}
-                <a href="mailto:info@fixorium.com.pk" className="text-[hsl(var(--primary))] underline">
+                <a
+                  href="mailto:info@fixorium.com.pk"
+                  className="text-[hsl(var(--primary))] underline"
+                >
                   APPEAL
                 </a>
               </div>

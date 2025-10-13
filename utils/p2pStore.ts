@@ -42,7 +42,10 @@ const DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
 const store: {
   posts: P2PPost[];
   messages: Record<string, TradeMessage[]>;
-  proofs: Record<string, { id: string; filename: string; data: string; ts: number }[]>;
+  proofs: Record<
+    string,
+    { id: string; filename: string; data: string; ts: number }[]
+  >;
 } = (globalThis as any).__P2P_STORE || {
   posts: [],
   messages: {},
@@ -55,7 +58,11 @@ async function saveStoreToFile() {
     await fsPromises.mkdir(DATA_DIR, { recursive: true });
     await fsPromises.writeFile(
       DATA_FILE,
-      JSON.stringify({ posts: store.posts, messages: store.messages, proofs: store.proofs }, null, 2),
+      JSON.stringify(
+        { posts: store.posts, messages: store.messages, proofs: store.proofs },
+        null,
+        2,
+      ),
       "utf-8",
     );
   } catch (e) {
@@ -73,8 +80,10 @@ try {
     const parsed = JSON.parse(raw || "{}");
     if (parsed && typeof parsed === "object") {
       if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
-      if (parsed.messages && typeof parsed.messages === "object") store.messages = parsed.messages;
-      if (parsed.proofs && typeof parsed.proofs === "object") store.proofs = parsed.proofs;
+      if (parsed.messages && typeof parsed.messages === "object")
+        store.messages = parsed.messages;
+      if (parsed.proofs && typeof parsed.proofs === "object")
+        store.proofs = parsed.proofs;
     }
   }
 } catch (e) {
@@ -108,7 +117,9 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     const d = p?.paymentDetails || {};
     const accountName = String(d?.accountName || "").slice(0, 128);
     const accountNumber = String(d?.accountNumber || "").slice(0, 64);
-    return accountName || accountNumber ? { accountName, accountNumber } : undefined;
+    return accountName || accountNumber
+      ? { accountName, accountNumber }
+      : undefined;
   };
 
   if (payload?.id) {
@@ -120,13 +131,25 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
       ...existing,
       type: payload?.type ?? existing.type,
       token: payload?.token ?? existing.token,
-      pricePkr: payload?.pricePkr != null ? Number(payload.pricePkr) : existing.pricePkr,
+      pricePkr:
+        payload?.pricePkr != null
+          ? Number(payload.pricePkr)
+          : existing.pricePkr,
       pricePerUSDC: normPricePerUSDC ?? existing.pricePerUSDC,
       pricePerSOL: normPricePerSOL ?? existing.pricePerSOL,
-      minToken: payload?.minToken != null ? Number(payload.minToken) : existing.minToken,
-      maxToken: payload?.maxToken != null ? Number(payload.maxToken) : existing.maxToken,
+      minToken:
+        payload?.minToken != null
+          ? Number(payload.minToken)
+          : existing.minToken,
+      maxToken:
+        payload?.maxToken != null
+          ? Number(payload.maxToken)
+          : existing.maxToken,
       paymentMethod: payload?.paymentMethod ?? existing.paymentMethod,
-      walletAddress: (payload?.type ?? existing.type) === "sell" ? undefined : payload?.walletAddress ?? existing.walletAddress,
+      walletAddress:
+        (payload?.type ?? existing.type) === "sell"
+          ? undefined
+          : (payload?.walletAddress ?? existing.walletAddress),
       availability: payload?.availability === "offline" ? "offline" : "online",
       paymentDetails: sanitizeDetails(payload) ?? existing.paymentDetails,
       updatedAt: now,
@@ -148,7 +171,8 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     minToken: Number(payload?.minToken) || 0,
     maxToken: Number(payload?.maxToken) || 0,
     paymentMethod: payload?.paymentMethod || "bank",
-    walletAddress: payload?.type === "sell" ? undefined : payload?.walletAddress || "",
+    walletAddress:
+      payload?.type === "sell" ? undefined : payload?.walletAddress || "",
     availability: payload?.availability === "offline" ? "offline" : "online",
     paymentDetails: sanitizeDetails(payload),
     createdAt: now,
@@ -164,7 +188,11 @@ export function listTradeMessages(tradeId: string) {
   return { messages };
 }
 
-export function addTradeMessage(tradeId: string, message: string, from: string) {
+export function addTradeMessage(
+  tradeId: string,
+  message: string,
+  from: string,
+) {
   if (!message) return { error: "invalid message", status: 400 } as const;
   const entry: TradeMessage = {
     id: `m-${Date.now()}`,
@@ -178,7 +206,10 @@ export function addTradeMessage(tradeId: string, message: string, from: string) 
   return { message: entry, status: 201 } as const;
 }
 
-export function uploadProof(tradeId: string, proof: { filename: string; data: string }) {
+export function uploadProof(
+  tradeId: string,
+  proof: { filename: string; data: string },
+) {
   if (!proof || !proof.filename || !proof.data) {
     return { error: "invalid proof", status: 400 } as const;
   }

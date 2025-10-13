@@ -61,14 +61,19 @@ async function uploadProofToSupabase(
   }
 }
 
-async function commitPostsToGitHub(env: Record<string, string | undefined> | undefined, postsData: any) {
+async function commitPostsToGitHub(
+  env: Record<string, string | undefined> | undefined,
+  postsData: any,
+) {
   try {
-    const token = env?.GITHUB_TOKEN || env?.GITHUB_PAT || env?.GITHUB_TOKEN_SECRET;
+    const token =
+      env?.GITHUB_TOKEN || env?.GITHUB_PAT || env?.GITHUB_TOKEN_SECRET;
     const repo = env?.GITHUB_REPO || "fixercoin/wallet"; // owner/repo
     const branch = env?.GITHUB_BRANCH || "zen-works";
     if (!token) return { ok: false, error: "no_github_token" } as const;
     const [owner, repoName] = repo.split("/");
-    if (!owner || !repoName) return { ok: false, error: "invalid_repo" } as const;
+    if (!owner || !repoName)
+      return { ok: false, error: "invalid_repo" } as const;
     const filePath = "data/p2p-store.json";
     const content = JSON.stringify(postsData, null, 2);
     const base64Content = Buffer.from(content).toString("base64");
@@ -110,7 +115,10 @@ async function commitPostsToGitHub(env: Record<string, string | undefined> | und
 
     if (!putResp.ok) {
       const txt = await putResp.text().catch(() => "");
-      return { ok: false, error: `github_put_failed ${putResp.status} ${txt}` } as const;
+      return {
+        ok: false,
+        error: `github_put_failed ${putResp.status} ${txt}`,
+      } as const;
     }
 
     return { ok: true } as const;

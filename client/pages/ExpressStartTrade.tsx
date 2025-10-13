@@ -36,6 +36,7 @@ export default function ExpressStartTrade() {
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
+  const [fiatConfirmationSent, setFiatConfirmationSent] = useState(false);
 
   const pollRef = useRef<number | null>(null);
   const easypayPollRef = useRef<number | null>(null);
@@ -45,6 +46,10 @@ export default function ExpressStartTrade() {
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
   const localRole = params?.side === "sell" ? "seller" : "buyer";
+  const isEasypaisa = useMemo(
+    () => String(params?.paymentMethod || "").toLowerCase() === "easypaisa",
+    [params?.paymentMethod],
+  );
 
   // Load posts to match an order against seller/buyer listings
   useEffect(() => {

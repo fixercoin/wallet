@@ -898,17 +898,17 @@ export default function ExpressStartTrade() {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">Seller Payment Details</div>
-                    {sellerPaymentDetails ? (
+                    {displayedSellerPaymentDetails ? (
                       <div className="mt-1 space-y-1">
-                        {sellerPaymentDetails.accountName && (
+                        {displayedSellerPaymentDetails.accountName && (
                           <div>
                             <span className="font-semibold">Name: </span>
-                            {sellerPaymentDetails.accountName}
+                            {displayedSellerPaymentDetails.accountName}
                           </div>
                         )}
                         <div>
                           <span className="font-semibold">Account: </span>
-                          {sellerPaymentDetails.accountNumber}
+                          {displayedSellerPaymentDetails.accountNumber || "—"}
                         </div>
                         <div>
                           <span className="font-semibold">Method: </span>

@@ -215,7 +215,9 @@ export default async function (
     if (request.method === "GET" && path === "/trades/recent") {
       const since = Number(url.searchParams.get("since") || 0);
       const limit = Number(url.searchParams.get("limit") || 100);
-      const data = (listRecentTradeMessages({ since, limit }) as any) || { messages: [] };
+      const data = (listRecentTradeMessages({ since, limit }) as any) || {
+        messages: [],
+      };
       return jsonResponse({ messages: data.messages || [] });
     }
 

@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Copy, Info, Plus, RotateCw } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Copy,
+  Info,
+  Plus,
+  RotateCw,
+} from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";

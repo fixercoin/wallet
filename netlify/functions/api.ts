@@ -229,7 +229,9 @@ export const handler = async (event: any) => {
     if (path === "/p2p/trades/recent" && method === "GET") {
       const since = Number(event.queryStringParameters?.since || 0);
       const limit = Number(event.queryStringParameters?.limit || 100);
-      const data = (listRecentTradeMessages({ since, limit }) as any) || { messages: [] };
+      const data = (listRecentTradeMessages({ since, limit }) as any) || {
+        messages: [],
+      };
       return jsonResponse(200, { messages: data.messages || [] });
     }
 

@@ -207,19 +207,36 @@ export function listTradeMessages(tradeId: string) {
   return { messages };
 }
 
-export function listRecentTradeMessages(options?: { since?: number; limit?: number }) {
+export function listRecentTradeMessages(options?: {
+  since?: number;
+  limit?: number;
+}) {
   const since = options?.since ?? 0;
   const limit = options?.limit ?? 100;
-  const flattened: Array<{ tradeId: string; id: string; message: string; from: string; ts: number }> = [];
+  const flattened: Array<{
+    tradeId: string;
+    id: string;
+    message: string;
+    from: string;
+    ts: number;
+  }> = [];
   for (const [tradeId, msgs] of Object.entries(store.messages)) {
     for (const m of msgs) {
       if (!since || m.ts > since) {
-        flattened.push({ tradeId, id: m.id, message: m.message, from: m.from, ts: m.ts });
+        flattened.push({
+          tradeId,
+          id: m.id,
+          message: m.message,
+          from: m.from,
+          ts: m.ts,
+        });
       }
     }
   }
   flattened.sort((a, b) => a.ts - b.ts);
-  return { messages: flattened.slice(Math.max(0, flattened.length - limit)) } as const;
+  return {
+    messages: flattened.slice(Math.max(0, flattened.length - limit)),
+  } as const;
 }
 
 export function addTradeMessage(

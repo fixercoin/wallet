@@ -26,6 +26,7 @@ import ExpressStartTrade from "./pages/ExpressStartTrade";
 import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
 import ExpressP2P from "./components/wallet/ExpressP2P";
 import ExpressOrderComplete from "./pages/ExpressOrderComplete";
+import ExpressPendingOrders from "./pages/ExpressPendingOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="/fixorium/create-token" element={<CreateToken />} />
               <Route path="/express/add-post" element={<ExpressAddPost />} />
               <Route path="/express" element={<ExpressP2P />} />
+              <Route path="/express/pending" element={<ExpressPendingOrders />} />
               <Route
                 path="/express/start-trade"
                 element={<ExpressStartTrade />}

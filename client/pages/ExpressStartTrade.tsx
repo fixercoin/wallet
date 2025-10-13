@@ -46,13 +46,11 @@ export default function ExpressStartTrade() {
   const [sellerApproved, setSellerApproved] = useState(false);
   const [orderCancelledByCounterparty, setOrderCancelledByCounterparty] =
     useState(false);
-  const [remoteSellerDetails, setRemoteSellerDetails] = useState<
-    {
-      accountName?: string;
-      accountNumber?: string;
-      method?: string;
-    } | null
-  >(null);
+  const [remoteSellerDetails, setRemoteSellerDetails] = useState<{
+    accountName?: string;
+    accountNumber?: string;
+    method?: string;
+  } | null>(null);
 
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);
@@ -500,9 +498,7 @@ export default function ExpressStartTrade() {
       setRemoteSellerDetails(detailRecord);
       if (localRole === "buyer") {
         const summary = [
-          detailRecord.accountName
-            ? `Name: ${detailRecord.accountName}`
-            : null,
+          detailRecord.accountName ? `Name: ${detailRecord.accountName}` : null,
           detailRecord.accountNumber
             ? `Account: ${detailRecord.accountNumber}`
             : null,
@@ -917,7 +913,8 @@ export default function ExpressStartTrade() {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        Seller payment details will appear once the seller shares them.
+                        Seller payment details will appear once the seller
+                        shares them.
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
@@ -934,14 +931,21 @@ export default function ExpressStartTrade() {
                           if (!effectiveTradeId) {
                             toast({
                               title: "Trade not ready",
-                              description: "Please wait for the trade to initialise.",
+                              description:
+                                "Please wait for the trade to initialise.",
                               variant: "destructive",
                             });
                             return;
                           }
                           try {
-                            await sendSystemMessage("__CONFIRMED_SETTLEMENT__", localRole);
-                            await sendSystemMessage("__PROMPT_SELLER_CONFIRM__", localRole);
+                            await sendSystemMessage(
+                              "__CONFIRMED_SETTLEMENT__",
+                              localRole,
+                            );
+                            await sendSystemMessage(
+                              "__PROMPT_SELLER_CONFIRM__",
+                              localRole,
+                            );
                             setAwaitingApproval(true);
                             setBuyerMarkedPaid(true);
                             try {

@@ -270,6 +270,7 @@ export default function ExpressPendingOrders() {
                             tokenUnits: o.units,
                             paymentMethod: o.method,
                             tradeId: o.tradeId,
+                            role: "seller",
                           },
                         })
                       }

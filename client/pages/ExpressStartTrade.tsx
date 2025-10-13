@@ -199,6 +199,12 @@ export default function ExpressStartTrade() {
   useEffect(() => {
     setAwaitingApproval(false);
     setTxDetected(false);
+    setBuyerMarkedPaid(false);
+    setFiatAcknowledged(false);
+    setSellerSentCrypto(false);
+    setSellerApproved(false);
+    setOrderCancelledByCounterparty(false);
+    finalizedRef.current = false;
   }, [tradeId]);
 
   // Notify when counterparty confirms settlement via special message

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Copy, Info } from "lucide-react";
+import { ArrowLeft, ChevronDown, Copy, Info, Plus } from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
@@ -9,15 +9,21 @@ import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_WALLET } from "@/lib/p2p";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ExpressP2PProps {
   onBack?: () => void;
 }
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-1 text-xs font-medium text-muted-foreground">
-    {children}
-  </div>
+  <div className="mb-1 text-xs font-medium text-muted-foreground">{children}</div>
 );
 
 const CurrencyBadge = ({ label }: { label: string }) => (
@@ -35,8 +41,10 @@ const TOKEN_MINTS = {
   FIXERCOIN: FIXERCOIN_MINT,
 } as const;
 
+type PaymentMethodId = "bank" | "easypaisa" | "firstpay";
+
 type PaymentMethodOption = {
-  id: "bank" | "easypaisa" | "firstpay";
+  id: PaymentMethodId;
   label: string;
   description?: string;
 };
@@ -58,6 +66,15 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
     description: "Accept and send payments via FirstPay business banking.",
   },
 ];
+
+function detectPaymentMethod(accountNumber: string): PaymentMethodId {
+  const v = String(accountNumber || "").trim();
+  const phoneLike = /^(?:\+?92|0)3\d{2}\d{7}$/.test(v) || /^92\d{10}$/.test(v) || /^03\d{9}$/.test(v);
+  if (phoneLike) return "easypaisa";
+  if (/^FP/i.test(v) || /firstpay/i.test(v)) return "firstpay";
+  if (/^PK/i.test(v) || /\d{10,}/.test(v)) return "bank";
+  return "bank";
+}
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
@@ -85,10 +102,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [loadingBinance, setLoadingBinance] = useState(false);
   const [binanceError, setBinanceError] = useState<string | null>(null);
 
+  // Removed manual selection UI; keep state for potential future use
   const [paymentMenuOpen, setPaymentMenuOpen] = useState(false);
   const paymentMenuRef = useRef<HTMLDivElement | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethodOption>(PAYMENT_METHODS[0]);
 
   // DexScreener state (optional) — defined to avoid runtime ReferenceErrors
   const [dexToken, setDexToken] = useState<any | null>(null);
@@ -132,7 +148,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   };
 
-  // Close token menu on outside click
+  // Close token/payment menus on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -305,7 +321,32 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     }
   };
 
+  // User payment details (added via + button)
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [accountName, setAccountName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("expressp2pPaymentDetails");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setAccountName(String(parsed?.accountName || ""));
+        setAccountNumber(String(parsed?.accountNumber || ""));
+      }
+    } catch {}
+  }, []);
+
+  const saveDetails = () => {
+    const payload = { accountName, accountNumber };
+    localStorage.setItem("expressp2pPaymentDetails", JSON.stringify(payload));
+    setDetailsOpen(false);
+  };
+
+  const detectedMethod: PaymentMethodId = detectPaymentMethod(accountNumber);
+
   const handlePrimary = () => {
+    const paymentMethodId: PaymentMethodId = detectedMethod || "bank";
     if (buyActive) {
       const amountPkr = parseFloat(pkrAmount || "0");
       if (!amountPkr || !pkrPerUsd || amountPkr <= 0) return;
@@ -316,7 +357,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           pkrAmount: amountPkr,
           token: selectedToken,
           tokenUnits: units,
-          paymentMethod: selectedPaymentMethod.id,
+          paymentMethod: paymentMethodId,
         },
       });
     } else {
@@ -329,7 +370,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           pkrAmount: pkr,
           token: selectedToken,
           tokenUnits: units,
-          paymentMethod: selectedPaymentMethod.id,
+          paymentMethod: paymentMethodId,
         },
       });
     }
@@ -344,6 +385,19 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
+            {/* Add details (+) button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setDetailsOpen(true)}
+              className="h-9 w-9 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
+              aria-label="Add payment details"
+              title="Add payment details"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+
             {wallet ? (
               <>
                 <Button
@@ -498,35 +552,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       </div>
                     </div>
                     {tokenPriceError && (
-                      <div className="mt-1 text-[10px] text-destructive">
-                        {tokenPriceError}
-                      </div>
+                      <div className="mt-1 text-[10px] text-destructive">{tokenPriceError}</div>
                     )}
-
-                    {/* Show exchange and Binance-derived PKR rates */}
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {loadingRate ? (
-                        <span>Loading exchange rate…</span>
-                      ) : pkrPerUsd ? (
-                        <span>
-                          Exchange rate: 1 USD ≈ {pkrPerUsd.toFixed(2)} PKR
-                        </span>
-                      ) : null}{" "}
-                      {loadingBinance ? (
-                        <span className="inline-block ml-2">
-                          Loading Binance rate…
-                        </span>
-                      ) : binanceRatePkr ? (
-                        <span className="inline-block ml-2">
-                          Binance: 1 {selectedToken} ≈{" "}
-                          {binanceRatePkr.toFixed(2)} PKR
-                        </span>
-                      ) : binanceError ? (
-                        <span className="inline-block ml-2 text-destructive">
-                          Binance unavailable
-                        </span>
-                      ) : null}
-                    </div>
                   </div>
                 </>
               ) : (
@@ -601,13 +628,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5" />
                 <span>
-                  1 {selectedToken} ≈{" "}
-                  {loadingRate || loadingTokenPrice
-                    ? "—"
-                    : pkrPerUsd && tokenPriceUsd
-                      ? (pkrPerUsd * tokenPriceUsd).toFixed(2)
-                      : "—"}{" "}
-                  PKR
+                  1 {selectedToken} ≈ {loadingRate || loadingTokenPrice ? "—" : pkrPerUsd && tokenPriceUsd ? (pkrPerUsd * tokenPriceUsd).toFixed(2) : "—"} PKR
                 </span>
                 {rateError && <span className="ml-1">({rateError})</span>}
               </div>
@@ -615,52 +636,31 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <div>
                 {buyActive ? (
                   <>
-                    <SectionLabel>Payment Methods</SectionLabel>
-                    <div className="relative" ref={paymentMenuRef}>
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-left text-sm"
-                        aria-haspopup="listbox"
-                        aria-expanded={paymentMenuOpen}
-                        onClick={() => setPaymentMenuOpen((open) => !open)}
-                      >
-                        <span>{selectedPaymentMethod.label}</span>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                      {paymentMenuOpen && (
-                        <div
-                          role="listbox"
-                          className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-lg border bg-white text-sm shadow-xl"
-                        >
-                          {PAYMENT_METHODS.map((method) => (
-                            <button
-                              key={method.id}
-                              role="option"
-                              className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-gray-50 ${method.id === selectedPaymentMethod.id ? "bg-gray-100 font-semibold" : ""}`}
-                              onClick={() => {
-                                setSelectedPaymentMethod(method);
-                                setPaymentMenuOpen(false);
-                              }}
-                            >
-                              <span>{method.label}</span>
-                              <span className="text-xs font-normal text-muted-foreground">
-                                {method.description}
-                              </span>
-                            </button>
-                          ))}
+                    <SectionLabel>Payment Details</SectionLabel>
+                    {accountName || accountNumber ? (
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium">{accountName || "Unnamed"}</div>
+                          <span className="rounded-full bg-white px-2 py-0.5 text-xs">{detectedMethod.toUpperCase()}</span>
                         </div>
-                      )}
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {selectedPaymentMethod.description}
-                    </p>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Account: {accountNumber || "—"}
+                        </div>
+                        <div className="mt-2">
+                          <Button variant="outline" className="h-8 text-xs" onClick={() => setDetailsOpen(true)}>Edit</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-xs text-muted-foreground">
+                        No payment details added. Use the + button at the top to add your name and account number.
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
                     <SectionLabel>Sell Instructions</SectionLabel>
                     <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-xs text-muted-foreground">
-                      After matching with a counterparty, you'll receive payment
-                      instructions. No wallet address is required on this page.
+                      After matching with a counterparty, you'll receive payment instructions. No wallet address is required on this page.
                     </div>
                   </>
                 )}
@@ -684,6 +684,43 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             </div>
           </div>
         </div>
+
+        {/* Add/Edit Payment Details Dialog */}
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Payment details</DialogTitle>
+              <DialogDescription>Add your name and account number. Method will be auto-detected.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <div className="mb-1 text-xs">Account name</div>
+                <input
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs">Account number</div>
+                <input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="03XXXXXXXXX or IBAN"
+                  className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Detected method: <span className="font-medium">{detectedMethod.toUpperCase()}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailsOpen(false)}>Cancel</Button>
+              <Button onClick={saveDetails}>Save</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

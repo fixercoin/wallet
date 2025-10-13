@@ -416,6 +416,56 @@ export default function ExpressStartTrade() {
     }
   };
 
+  const handleBuyerConfirm = async () => {
+    if (!tradeId) return;
+    try {
+      if (localRole === "buyer" && isEasypaisa && !fiatConfirmationSent) {
+        try {
+          await fetch(
+            `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: "__CONFIRMED_SETTLEMENT__",
+                from: localRole,
+              }),
+            },
+          );
+          setFiatConfirmationSent(true);
+        } catch {}
+      }
+
+      const resp = await fetch(
+        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: "__BUYER_APPROVED__",
+            from: "buyer",
+          }),
+        },
+      );
+      if (!resp.ok) throw new Error("failed");
+      setAwaitingApproval(false);
+      setTxDetected(false);
+      if (isEasypaisa) {
+        setFiatDetected(false);
+      }
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      toast({ title: "Approved" });
+    } catch (e) {
+      toast({ title: "Failed to approve", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">

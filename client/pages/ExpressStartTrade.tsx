@@ -38,6 +38,12 @@ export default function ExpressStartTrade() {
   const [uploading, setUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
+  const [buyerMarkedPaid, setBuyerMarkedPaid] = useState(false);
+  const [fiatAcknowledged, setFiatAcknowledged] = useState(false);
+  const [sellerSentCrypto, setSellerSentCrypto] = useState(false);
+  const [sellerApproved, setSellerApproved] = useState(false);
+  const [orderCancelledByCounterparty, setOrderCancelledByCounterparty] =
+    useState(false);
 
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);

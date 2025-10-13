@@ -931,23 +931,19 @@ export default function ExpressStartTrade() {
                     {!awaitingApproval && (
                       <Button
                         onClick={async () => {
-                          if (!tradeId) return;
+                          if (!effectiveTradeId) {
+                            toast({
+                              title: "Trade not ready",
+                              description: "Please wait for the trade to initialise.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
                           try {
-                            const resp = await fetch(
-                              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                              {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                  message: "__CONFIRMED_SETTLEMENT__",
-                                  from: localRole,
-                                }),
-                              },
-                            );
-                            if (!resp.ok) throw new Error("failed");
+                            await sendSystemMessage("__CONFIRMED_SETTLEMENT__", localRole);
+                            await sendSystemMessage("__PROMPT_SELLER_CONFIRM__", localRole);
                             setAwaitingApproval(true);
+                            setBuyerMarkedPaid(true);
                             try {
                               const raw = localStorage.getItem(
                                 "expressPendingOrder",
@@ -956,7 +952,7 @@ export default function ExpressStartTrade() {
                               obj.minimized = false;
                               obj.status = "awaiting_approval";
                               obj.params = params;
-                              obj.tradeId = tradeId;
+                              obj.tradeId = effectiveTradeId;
                               obj.ts = Date.now();
                               localStorage.setItem(
                                 "expressPendingOrder",
@@ -964,7 +960,9 @@ export default function ExpressStartTrade() {
                               );
                             } catch {}
                             toast({
-                              title: "Marked as paid. Waiting for transaction.",
+                              title: "Marked as paid",
+                              description:
+                                "Seller notified. Waiting for confirmation.",
                             });
                           } catch (e) {
                             toast({

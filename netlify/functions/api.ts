@@ -122,6 +122,53 @@ async function tryDexEndpoints(path: string) {
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
 }
 
+type BinanceCacheEntry = {
+  expiresAt: number;
+  data: any;
+};
+
+const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
+const BINANCE_P2P_CACHE_TTL = 30000;
+
+function uniqueId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function encodeToBase64(value: string): string {
+  const globalObj = globalThis as any;
+  if (typeof globalObj?.btoa === "function") {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return globalObj.btoa(binary);
+  }
+  if (globalObj?.Buffer) {
+    return globalObj.Buffer.from(value, "utf-8").toString("base64");
+  }
+  throw new Error("Base64 encoding not supported in this environment");
+}
+
+function buildDeviceInfoPayload(userAgent: string): string {
+  const payload = {
+    deviceName: "Chrome",
+    deviceVersion: "124.0.0.0",
+    osName: "windows",
+    osVersion: "10",
+    platform: "web",
+    screenHeight: 1080,
+    screenWidth: 1920,
+    systemLang: "en-US",
+    timeZone: "UTC",
+    userAgent,
+  };
+  return encodeToBase64(JSON.stringify(payload));
+}
+
 export const handler = async (event: any) => {
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");

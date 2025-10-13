@@ -847,7 +847,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               </div>
             </div>
 
-
             <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
               <button
                 className={`py-2 text-center text-sm font-semibold ${

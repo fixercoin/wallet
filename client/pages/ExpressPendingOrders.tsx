@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCw, Trash2 } from "lucide-react";
@@ -124,11 +130,17 @@ export default function ExpressPendingOrders() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: "__ORDER_CANCELLED__", from: role }),
+            body: JSON.stringify({
+              message: "__ORDER_CANCELLED__",
+              from: role,
+            }),
           },
         );
         if (!resp.ok) throw new Error("cancel_failed");
-        toast({ title: "Order cancelled", description: `Cancelled as ${role}` });
+        toast({
+          title: "Order cancelled",
+          description: `Cancelled as ${role}`,
+        });
         triggerRefresh();
       } catch (e) {
         toast({
@@ -155,7 +167,9 @@ export default function ExpressPendingOrders() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm font-semibold uppercase">Pending Orders</div>
+            <div className="text-sm font-semibold uppercase">
+              Pending Orders
+            </div>
             {lastRefreshed && (
               <div className="ml-3 text-[10px] text-muted-foreground">
                 Refreshed {new Date(lastRefreshed).toLocaleTimeString()}
@@ -181,13 +195,17 @@ export default function ExpressPendingOrders() {
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
           <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/90 p-3">
-            <SectionLabel>All open orders started but not yet approved or cancelled</SectionLabel>
+            <SectionLabel>
+              All open orders started but not yet approved or cancelled
+            </SectionLabel>
             {error && (
               <div className="mt-2 text-xs text-destructive">{error}</div>
             )}
             <div className="mt-2 space-y-2 max-h-[70vh] overflow-auto custom-scrollbar">
               {orders.length === 0 && !loading ? (
-                <div className="text-xs text-muted-foreground">No pending orders.</div>
+                <div className="text-xs text-muted-foreground">
+                  No pending orders.
+                </div>
               ) : null}
               {orders.map((o) => (
                 <div
@@ -196,12 +214,22 @@ export default function ExpressPendingOrders() {
                 >
                   <div className="flex-1">
                     <div className="font-medium">
-                      {(o.side?.toUpperCase?.() || "ORDER") + " " + (o.token || "")}
+                      {(o.side?.toUpperCase?.() || "ORDER") +
+                        " " +
+                        (o.token || "")}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      PKR {o.pkr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      {" "}• Units {o.units.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
-                      {" "}• {o.method?.toUpperCase?.() || "—"}
+                      PKR{" "}
+                      {o.pkr.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      • Units{" "}
+                      {o.units.toLocaleString(undefined, {
+                        minimumFractionDigits: 4,
+                        maximumFractionDigits: 4,
+                      })}{" "}
+                      • {o.method?.toUpperCase?.() || "—"}
                     </div>
                     <div className="text-[10px] text-muted-foreground font-mono break-all">
                       {o.tradeId}

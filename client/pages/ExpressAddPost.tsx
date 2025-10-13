@@ -283,7 +283,7 @@ export default function ExpressAddPost() {
             <Button
               onClick={handleConnect}
               disabled={connecting}
-              className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+              className="h-9 rounded-md bg-wallet-purple-500 px-4 py-2 text-white hover:bg-wallet-purple-600"
             >
               {wallet ? "CONNECTED" : "CONNECT WALLET"}
             </Button>
@@ -311,8 +311,8 @@ export default function ExpressAddPost() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-3">
-            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-3">
+            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
               <button
                 className={`py-2 text-center text-sm font-semibold ${
                   type === "buy"
@@ -340,7 +340,7 @@ export default function ExpressAddPost() {
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Token
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                   <CurrencyBadge label={token} />
                   <div className="relative ml-auto" ref={tokenMenuRef}>
                     <button
@@ -383,7 +383,7 @@ export default function ExpressAddPost() {
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Price (PKR per {token})
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                   <CurrencyBadge label="PKR" />
                   <input
                     value={pricePkr}
@@ -403,7 +403,7 @@ export default function ExpressAddPost() {
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
                     Min Amount ({token})
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                     <input
                       value={minToken}
                       onChange={(e) => {
@@ -420,7 +420,7 @@ export default function ExpressAddPost() {
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
                     Max Amount ({token})
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                     <input
                       value={maxToken}
                       onChange={(e) => {
@@ -442,7 +442,7 @@ export default function ExpressAddPost() {
                 <div className="relative" ref={paymentMenuRef}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-left text-sm"
+                    className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2 text-left text-sm"
                     aria-haspopup="listbox"
                     aria-expanded={paymentMenuOpen}
                     onClick={() => setPaymentMenuOpen((o) => !o)}
@@ -482,7 +482,7 @@ export default function ExpressAddPost() {
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
                   Availability
                 </div>
-                <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
+                <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
                   <button
                     className={`py-2 text-center text-sm font-semibold ${
                       availability === "online"
@@ -513,7 +513,7 @@ export default function ExpressAddPost() {
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
                     Wallet Address (to receive assets)
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                     <input
                       value={walletAddress}
                       onChange={(e) => setWalletAddress(e.target.value)}
@@ -529,13 +529,16 @@ export default function ExpressAddPost() {
 
               <Button
                 onClick={handleSubmit}
-                className="h-10 w-full rounded-md bg-[hsl(330,81%,60%)] text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+                className="h-10 w-full rounded-md bg-wallet-purple-500 text-white hover:bg-wallet-purple-600"
               >
                 Post Offer
               </Button>
 
               <div className="mt-1 text-center text-xs text-muted-foreground">
-                Connect the authorized wallet to post offers.
+                SEND{" "}
+                <a href="mailto:info@fixorium.com.pk" className="text-[hsl(var(--primary))] underline">
+                  APPEAL
+                </a>
               </div>
             </div>
           </div>

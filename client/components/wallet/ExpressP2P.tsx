@@ -502,7 +502,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <Button
                 onClick={handleConnect}
                 disabled={connecting}
-                className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+                className="h-9 rounded-md bg-wallet-purple-500 px-4 py-2 text-white hover:bg-wallet-purple-600"
               >
                 {connecting ? "CONNECTING…" : "CONNECT WALLET"}
               </Button>
@@ -510,7 +510,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             {wallet && wallet.publicKey === ADMIN_WALLET ? (
               <Button
                 onClick={() => navigate("/express/add-post")}
-                className="h-9 rounded-md bg-[hsl(330,81%,60%)] px-4 py-2 text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+                className="h-9 rounded-md bg-wallet-purple-500 px-4 py-2 text-white hover:bg-wallet-purple-600"
               >
                 ADD POST
               </Button>
@@ -527,7 +527,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             </div>
           )}
 
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-3">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-3">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <Button
@@ -548,7 +548,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               </div>
             </div>
 
-            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-slate-100">
+            <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
               <button
                 className={`py-2 text-center text-sm font-semibold ${
                   buyActive
@@ -576,7 +576,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <>
                   <div>
                     <SectionLabel>Spend</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                       <CurrencyBadge label="PKR" />
                       <input
                         value={pkrAmount}
@@ -593,7 +593,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
                   <div>
                     <SectionLabel>Receive</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                       <CurrencyBadge label={selectedToken} />
                       <input
                         value={buyReceiveAmount}
@@ -648,7 +648,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <>
                   <div>
                     <SectionLabel>Spend</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                       <CurrencyBadge label={selectedToken} />
                       <input
                         value={tokenAmount}
@@ -701,7 +701,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
                   <div>
                     <SectionLabel>Receive</SectionLabel>
-                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                       <CurrencyBadge label="PKR" />
                       <input
                         value={sellReceivePkr}
@@ -732,7 +732,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   <>
                     <SectionLabel>Payment Details</SectionLabel>
                     {accountName || accountNumber || walletAddressInput ? (
-                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-sm">
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 p-3 text-sm">
                         <div className="flex items-center justify-between">
                           <div className="font-medium">
                             {accountName || "Unnamed"}
@@ -758,7 +758,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         </div>
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-xs text-muted-foreground">
+                      <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 p-3 text-xs text-muted-foreground">
                         No payment details added. Use the + button at the top to
                         add your name and account number.
                       </div>
@@ -767,7 +767,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 ) : (
                   <>
                     <SectionLabel>Sell Instructions</SectionLabel>
-                    <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-xs text-muted-foreground">
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2 text-xs text-muted-foreground">
                       After matching with a counterparty, you'll receive payment
                       instructions. No wallet address is required on this page.
                     </div>
@@ -782,13 +782,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     ? !pkrAmount || !pkrPerUsd || parseFloat(pkrAmount) <= 0
                     : !tokenAmount || !pkrPerUsd || parseFloat(tokenAmount) <= 0
                 }
-                className="h-10 w-full rounded-md bg-[hsl(330,81%,60%)] text-[hsl(210,40%,98%)] hover:bg-[hsl(330,81%,55%)]"
+                className="h-10 w-full rounded-md bg-wallet-purple-500 text-white hover:bg-wallet-purple-600"
               >
                 {buyActive ? "Buy With PKR" : "Review Sell"}
               </Button>
 
               <div className="mt-1 text-center text-xs text-muted-foreground">
-                Connect the authorized wallet to post offers.
+                SEND{" "}
+                <a href="mailto:info@fixorium.com.pk" className="text-[hsl(var(--primary))] underline">
+                  APPEAL
+                </a>
               </div>
             </div>
           </div>

@@ -37,7 +37,7 @@ export default function ExpressPostView() {
         </header>
         <main className="flex-1">
           <div className="container mx-auto max-w-md px-4 py-6">
-            <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-4">
+            <div className="rounded-2xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-4">
               <div className="mb-3 flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -53,7 +53,7 @@ export default function ExpressPostView() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[hsl(var(--border))] bg-slate-50 p-4 text-sm">
+              <div className="rounded-xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-4 text-sm">
                 No post data was provided. Go back and create a post.
               </div>
             </div>
@@ -124,7 +124,7 @@ export default function ExpressPostView() {
             <Button
               onClick={handleSave}
               disabled={!(wallet && wallet.publicKey === ADMIN_WALLET)}
-              className="bg-[hsl(330,81%,60%)] text-white"
+              className="bg-wallet-purple-500 hover:bg-wallet-purple-600 text-white"
             >
               Save
             </Button>
@@ -134,7 +134,7 @@ export default function ExpressPostView() {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-slate-50 p-4">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-4">
             <div className="mb-3 flex items-center gap-3">
               <Button
                 variant="ghost"

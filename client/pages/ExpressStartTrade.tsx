@@ -62,20 +62,23 @@ export default function ExpressStartTrade() {
 
   const sendSystemMessage = useCallback(
     async (message: string, fromOverride?: string) => {
-      if (!effectiveTradeId) return;
-      try {
-        await fetch(
-          `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              message,
-              from: fromOverride ?? localRole,
-            }),
-          },
-        );
-      } catch {}
+      if (!effectiveTradeId) {
+        throw new Error("Missing trade context");
+      }
+      const resp = await fetch(
+        `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            from: fromOverride ?? localRole,
+          }),
+        },
+      );
+      if (!resp.ok) {
+        throw new Error("Failed to send trade message");
+      }
     },
     [effectiveTradeId, localRole],
   );

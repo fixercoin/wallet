@@ -645,17 +645,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={triggerRefresh}
-              className="h-9 w-9 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
-              aria-label="Refresh"
-              title="Refresh"
-            >
-              <RotateCw className="h-4 w-4" />
-            </Button>
             {/* Add details (+) button */}
             <Button
               type="button"
@@ -875,6 +864,19 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     Refreshed {new Date(lastRefreshed).toLocaleTimeString()}
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={triggerRefresh}
+                  className="h-8 w-8 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
+                  aria-label="Refresh"
+                  title="Refresh"
+                >
+                  <RotateCw className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 

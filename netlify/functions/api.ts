@@ -5,8 +5,11 @@ import {
   getPost,
   createOrUpdatePost,
   listTradeMessages,
+  listRecentTradeMessages,
   addTradeMessage,
   uploadProof,
+  addEasypaisaPayment,
+  listEasypaisaPayments,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
@@ -223,6 +226,15 @@ export const handler = async (event: any) => {
       return jsonResponse(200, listTradeMessages(tradeId));
     }
 
+    if (path === "/p2p/trades/recent" && method === "GET") {
+      const since = Number(event.queryStringParameters?.since || 0);
+      const limit = Number(event.queryStringParameters?.limit || 100);
+      const data = (listRecentTradeMessages({ since, limit }) as any) || {
+        messages: [],
+      };
+      return jsonResponse(200, { messages: data.messages || [] });
+    }
+
     if (
       path.startsWith("/p2p/trade/") &&
       path.endsWith("/message") &&
@@ -295,6 +307,72 @@ export const handler = async (event: any) => {
       }
 
       return jsonResponse(result.status, { ok: true, url: supabaseUrl });
+    }
+
+    // Easypaisa webhook ingestion (best-effort schema)
+    if (path === "/easypaisa/webhook" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
+      const providedSecret =
+        event.headers?.["x-webhook-secret"] ||
+        event.headers?.["x-easypay-secret"] ||
+        body?.secret ||
+        "";
+      if (configuredSecret && providedSecret !== configuredSecret) {
+        return jsonResponse(401, { error: "unauthorized" });
+      }
+
+      const msisdn = String(
+        body?.msisdn ||
+          body?.receiverMsisdn ||
+          body?.account ||
+          process.env.EASYPAY_MSISDN ||
+          "",
+      );
+      const amount = Number(
+        body?.amount ?? body?.txnAmount ?? body?.transactionAmount ?? 0,
+      );
+      const currency = String(body?.currency || "PKR");
+      const reference = String(
+        body?.reference ||
+          body?.trxId ||
+          body?.transactionId ||
+          body?.remarks ||
+          body?.narration ||
+          "",
+      );
+      const sender = String(
+        body?.senderMsisdn || body?.payer || body?.from || "",
+      );
+      const tsRaw = body?.ts ?? body?.timestamp ?? body?.date ?? Date.now();
+      const ts = typeof tsRaw === "number" ? tsRaw : Date.parse(tsRaw);
+
+      if (!msisdn || !amount || !isFinite(amount)) {
+        return jsonResponse(400, { error: "invalid payload" });
+      }
+
+      const result = addEasypaisaPayment({
+        msisdn,
+        amount,
+        currency,
+        reference,
+        sender,
+        ts: isFinite(ts) ? ts : Date.now(),
+      });
+      return jsonResponse(result.status, { payment: result.payment });
+    }
+
+    // Easypaisa payments query
+    if (path === "/easypaisa/payments" && method === "GET") {
+      const msisdn =
+        event.queryStringParameters?.msisdn || process.env.EASYPAY_MSISDN || "";
+      const since = Number(event.queryStringParameters?.since || 0);
+      const data = listEasypaisaPayments({ msisdn, since });
+      return jsonResponse(200, data);
     }
 
     // Solana RPC
@@ -535,7 +613,9 @@ export const handler = async (event: any) => {
         }
       }
       BINANCE_P2P_CACHE.delete(cacheKey);
-      return jsonResponse(502, {
+      // Graceful fallback: return empty data set so client can fallback without network error noise
+      return jsonResponse(200, {
+        data: [],
         error: "All Binance P2P endpoints failed",
         details: lastErr,
       });

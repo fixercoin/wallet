@@ -6,7 +6,14 @@ import React, {
   useCallback,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Copy, Info, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Copy,
+  Info,
+  Plus,
+  RotateCw,
+} from "lucide-react";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
@@ -100,6 +107,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { wallet } = useWallet();
   const { toast } = useToast();
 
+  // Manual refresh system
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState<number | null>(null);
+  const triggerRefresh = () => {
+    setRefreshTick((x) => x + 1);
+    setLastRefreshed(Date.now());
+    toast({ title: "Refreshed" });
+  };
+
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [pkrAmount, setPkrAmount] = useState<string>(""); // buy: PKR -> token
   const [tokenAmount, setTokenAmount] = useState<string>(""); // sell: token -> PKR
@@ -181,6 +197,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // Handle pending order actions
   const clearPendingOrder = useCallback(() => {
     persistPendingOrder(null);
   }, [persistPendingOrder]);
@@ -214,6 +231,25 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   }, [pendingOrder, persistPendingOrder]);
 
+  // Auto-resume pending order on mount (from main branch)
+  const notifiedRef = useRef(false);
+  useEffect(() => {
+    if (!pendingOrder || notifiedRef.current) return;
+    notifiedRef.current = true;
+    try {
+      const obj = {
+        ...(pendingOrder as any),
+        minimized: false,
+        ts: Date.now(),
+      };
+      localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
+    } catch {}
+    const st = (pendingOrder as any)?.params || {};
+    navigate("/express/start-trade", {
+      state: { ...(st || {}), tradeId: (pendingOrder as any)?.tradeId },
+    });
+  }, [pendingOrder, navigate]);
+
   // P2P market posts (polled for demo realtime)
   const [posts, setPosts] = useState<any[]>([]);
   useEffect(() => {
@@ -234,7 +270,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
       mounted = false;
       clearInterval(id);
     };
-  }, []);
+  }, [refreshTick]);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -286,7 +322,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => {
       abort = true;
     };
-  }, []);
+  }, [refreshTick]);
 
   // Fetch token USD price depending on selected token
   useEffect(() => {
@@ -341,7 +377,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => {
       abort = true;
     };
-  }, [selectedToken]);
+  }, [selectedToken, refreshTick]);
 
   // Fetch Binance P2P price (server proxied) for selected token when needed to avoid CORS
   useEffect(() => {
@@ -436,7 +472,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => {
       abort = true;
     };
-  }, [selectedToken]);
+  }, [selectedToken, refreshTick]);
 
   const binanceRatePkr = useMemo(() => {
     if (!binancePriceUsd || !pkrPerUsd) return null;
@@ -579,6 +615,70 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const buyActive = tab === "buy";
 
+  // Admin-only: notify on new orders
+  const isAdmin = !!(wallet && wallet.publicKey === ADMIN_WALLET);
+  const recentSinceRef = useRef<number>(Date.now());
+  const seenMsgIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!isAdmin) return;
+    let active = true;
+    const poll = async () => {
+      try {
+        const since = recentSinceRef.current || 0;
+        const resp = await fetch(
+          `/api/p2p/trades/recent?since=${encodeURIComponent(String(since))}&limit=100`,
+        );
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const arr = Array.isArray(data?.messages) ? data.messages : [];
+        let maxTs = since;
+        for (const m of arr) {
+          if (!active) break;
+          if (m && typeof m.id === "string") {
+            if (seenMsgIdsRef.current.has(m.id)) {
+              maxTs = Math.max(maxTs, Number(m.ts || 0));
+              continue;
+            }
+            seenMsgIdsRef.current.add(m.id);
+          }
+          const txt = String(m?.message || "");
+          if (txt.startsWith("__ORDER_STARTED__")) {
+            const details = txt.split("|")[1] || "";
+            const parts = Object.fromEntries(
+              details
+                .split(";")
+                .map((kv) => kv.split("=").map((s) => s.trim()))
+                .filter((p) => p.length === 2),
+            ) as any;
+            const side = String(parts.side || "").toLowerCase();
+            const token = String(parts.token || "");
+            const pkr = Number(parts.pkr || 0);
+            const units = Number(parts.units || 0);
+            const method = String(parts.method || "");
+            const nextSide = side === "buy" ? "sell" : "buy";
+            navigate("/express/start-trade", {
+              state: {
+                side: nextSide,
+                token,
+                pkrAmount: pkr,
+                tokenUnits: units,
+                paymentMethod: method,
+              },
+            });
+          }
+          maxTs = Math.max(maxTs, Number(m.ts || 0));
+        }
+        if (maxTs > since) recentSinceRef.current = maxTs;
+      } catch {}
+    };
+    const id = setInterval(poll, 2000);
+    poll();
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [isAdmin, toast]);
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
@@ -586,6 +686,17 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={triggerRefresh}
+              className="h-9 w-9 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
+              aria-label="Refresh"
+              title="Refresh"
+            >
+              <RotateCw className="h-4 w-4" />
+            </Button>
             {/* Add details (+) button */}
             <Button
               type="button"
@@ -800,6 +911,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="text-sm font-semibold uppercase">
                   EXPRESS P2P SERVICE
                 </div>
+                {lastRefreshed && (
+                  <div className="ml-3 text-[10px] text-muted-foreground">
+                    Refreshed {new Date(lastRefreshed).toLocaleTimeString()}
+                  </div>
+                )}
               </div>
             </div>
 

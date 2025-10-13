@@ -382,6 +382,10 @@ export default function ExpressStartTrade() {
       lastCancelledMessageId.current !== cancelMsg.id
     ) {
       lastCancelledMessageId.current = cancelMsg.id;
+      if (sellerConfirmTimeoutRef.current) {
+        window.clearTimeout(sellerConfirmTimeoutRef.current);
+        sellerConfirmTimeoutRef.current = null;
+      }
       setOrderCancelledByCounterparty(true);
       toast({
         title: "Order cancelled",

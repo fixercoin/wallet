@@ -161,7 +161,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     if (!pendingOrder || notifiedRef.current) return;
     notifiedRef.current = true;
     try {
-      const obj = { ...(pendingOrder as any), minimized: false, ts: Date.now() };
+      const obj = {
+        ...(pendingOrder as any),
+        minimized: false,
+        ts: Date.now(),
+      };
       localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
     } catch {}
     const st = (pendingOrder as any)?.params || {};

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

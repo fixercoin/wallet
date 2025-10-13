@@ -92,11 +92,7 @@ export default function ExpressStartTrade() {
         sellerConfirmTimeoutRef.current = null;
       }
       const messageToSend = options?.message ?? "__ORDER_CANCELLED__";
-      if (effectiveTradeId) {
-        (async () => {
-          await sendSystemMessage(messageToSend);
-        })();
-      }
+      sendSystemMessage(messageToSend);
       try {
         localStorage.removeItem("expressPendingOrder");
       } catch {}

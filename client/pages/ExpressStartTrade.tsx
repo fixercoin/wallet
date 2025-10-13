@@ -12,6 +12,8 @@ import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/wallet";
 
+const SELLER_CONFIRM_TIMEOUT_MS = 5 * 60 * 1000;
+
 interface NavState {
   side?: "buy" | "sell";
   pkrAmount?: number;
@@ -50,6 +52,7 @@ export default function ExpressStartTrade() {
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const pollRef = useRef<number | null>(null);
   const finalizedRef = useRef(false);
+  const sellerConfirmTimeoutRef = useRef<number | null>(null);
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;

@@ -147,6 +147,12 @@ export default function ExpressStartTrade() {
     } catch {}
   }, [tradeId, params]);
 
+  useEffect(() => {
+    setFiatDetected(false);
+    setFiatConfirmationSent(false);
+    setAwaitingApproval(false);
+  }, [tradeId]);
+
   // Notify when counterparty confirms settlement via special message
   const lastConfirmedMessageId = useRef<string | null>(null);
   useEffect(() => {

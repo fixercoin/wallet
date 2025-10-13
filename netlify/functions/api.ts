@@ -535,7 +535,9 @@ export const handler = async (event: any) => {
         }
       }
       BINANCE_P2P_CACHE.delete(cacheKey);
-      return jsonResponse(502, {
+      // Graceful fallback: return empty data set so client can fallback without network error noise
+      return jsonResponse(200, {
+        data: [],
         error: "All Binance P2P endpoints failed",
         details: lastErr,
       });

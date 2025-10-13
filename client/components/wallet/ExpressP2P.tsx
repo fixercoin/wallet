@@ -924,15 +924,22 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="flex items-center justify-between text-xs font-semibold uppercase text-muted-foreground">
                   <span>Buyer Side</span>
                   <span>
-                    {buyPosts.length} {buyPosts.length === 1 ? "order" : "orders"}
+                    {buyPosts.length}{" "}
+                    {buyPosts.length === 1 ? "order" : "orders"}
                   </span>
                 </div>
                 {loadingPosts ? (
-                  <div className="mt-2 text-xs text-muted-foreground">Loading buyer orders…</div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Loading buyer orders…
+                  </div>
                 ) : postsError ? (
-                  <div className="mt-2 text-xs text-destructive">{postsError}</div>
+                  <div className="mt-2 text-xs text-destructive">
+                    {postsError}
+                  </div>
                 ) : buyPosts.length === 0 ? (
-                  <div className="mt-2 text-xs text-muted-foreground">No buyer orders available.</div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    No buyer orders available.
+                  </div>
                 ) : (
                   <div className="mt-3 space-y-2">
                     {buyPosts.map((post) => (
@@ -943,31 +950,46 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         <div className="flex items-center justify-between text-sm font-medium">
                           <span>{post.token}</span>
                           <span>
-                            PKR {Number(post.pricePkr || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            PKR{" "}
+                            {Number(post.pricePkr || 0).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
                           </span>
                         </div>
                         <div className="mt-1 grid gap-1 text-[11px] text-muted-foreground">
                           <div className="flex justify-between">
                             <span>Limits</span>
                             <span>
-                              {Number(post.minToken || 0).toLocaleString()} - {Number(post.maxToken || 0).toLocaleString()}
+                              {Number(post.minToken || 0).toLocaleString()} -{" "}
+                              {Number(post.maxToken || 0).toLocaleString()}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Payment</span>
-                            <span className="uppercase">{post.paymentMethod || ""}</span>
+                            <span className="uppercase">
+                              {post.paymentMethod || ""}
+                            </span>
                           </div>
                           {post.walletAddress ? (
                             <div className="flex justify-between">
                               <span>Wallet</span>
-                              <span className="truncate font-mono" title={post.walletAddress}>
+                              <span
+                                className="truncate font-mono"
+                                title={post.walletAddress}
+                              >
                                 {post.walletAddress}
                               </span>
                             </div>
                           ) : null}
                           <div className="flex justify-between">
                             <span>Status</span>
-                            <span className="capitalize">{post.availability || "online"}</span>
+                            <span className="capitalize">
+                              {post.availability || "online"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -980,15 +1002,22 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="flex items-center justify-between text-xs font-semibold uppercase text-muted-foreground">
                   <span>Seller Side</span>
                   <span>
-                    {sellPosts.length} {sellPosts.length === 1 ? "order" : "orders"}
+                    {sellPosts.length}{" "}
+                    {sellPosts.length === 1 ? "order" : "orders"}
                   </span>
                 </div>
                 {loadingPosts ? (
-                  <div className="mt-2 text-xs text-muted-foreground">Loading seller orders…</div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Loading seller orders…
+                  </div>
                 ) : postsError ? (
-                  <div className="mt-2 text-xs text-destructive">{postsError}</div>
+                  <div className="mt-2 text-xs text-destructive">
+                    {postsError}
+                  </div>
                 ) : sellPosts.length === 0 ? (
-                  <div className="mt-2 text-xs text-muted-foreground">No seller orders available.</div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    No seller orders available.
+                  </div>
                 ) : (
                   <div className="mt-3 space-y-2">
                     {sellPosts.map((post) => (
@@ -999,31 +1028,48 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         <div className="flex items-center justify-between text-sm font-medium">
                           <span>{post.token}</span>
                           <span>
-                            PKR {Number(post.pricePkr || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            PKR{" "}
+                            {Number(post.pricePkr || 0).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
                           </span>
                         </div>
                         <div className="mt-1 grid gap-1 text-[11px] text-muted-foreground">
                           <div className="flex justify-between">
                             <span>Limits</span>
                             <span>
-                              {Number(post.minToken || 0).toLocaleString()} - {Number(post.maxToken || 0).toLocaleString()}
+                              {Number(post.minToken || 0).toLocaleString()} -{" "}
+                              {Number(post.maxToken || 0).toLocaleString()}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Payment</span>
-                            <span className="uppercase">{post.paymentMethod || ""}</span>
+                            <span className="uppercase">
+                              {post.paymentMethod || ""}
+                            </span>
                           </div>
-                          {post.paymentDetails?.accountName || post.paymentDetails?.accountNumber ? (
+                          {post.paymentDetails?.accountName ||
+                          post.paymentDetails?.accountNumber ? (
                             <div className="flex justify-between">
                               <span>Account</span>
-                              <span className="truncate" title={`${post.paymentDetails?.accountName || ""} ${post.paymentDetails?.accountNumber || ""}`.trim()}>
-                                {post.paymentDetails?.accountName || post.paymentDetails?.accountNumber}
+                              <span
+                                className="truncate"
+                                title={`${post.paymentDetails?.accountName || ""} ${post.paymentDetails?.accountNumber || ""}`.trim()}
+                              >
+                                {post.paymentDetails?.accountName ||
+                                  post.paymentDetails?.accountNumber}
                               </span>
                             </div>
                           ) : null}
                           <div className="flex justify-between">
                             <span>Status</span>
-                            <span className="capitalize">{post.availability || "online"}</span>
+                            <span className="capitalize">
+                              {post.availability || "online"}
+                            </span>
                           </div>
                         </div>
                       </div>

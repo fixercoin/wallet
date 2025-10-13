@@ -856,15 +856,15 @@ export default function ExpressStartTrade() {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">Buyer Wallet Address</div>
-                    {match?.walletAddress ? (
+                    {match?.walletAddress || counterpartyBuyerAddress ? (
                       <div className="mt-1 flex items-center gap-2 rounded-md border px-2 py-1">
                         <span className="font-mono text-xs break-all flex-1">
-                          {match.walletAddress}
+                          {match?.walletAddress || counterpartyBuyerAddress}
                         </span>
                         <Button
                           variant="outline"
                           className="h-7 px-2"
-                          onClick={() => copyToClipboard(match.walletAddress)}
+                          onClick={() => copyToClipboard(match?.walletAddress || counterpartyBuyerAddress || "")}
                         >
                           Copy
                         </Button>

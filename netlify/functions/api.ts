@@ -7,6 +7,8 @@ import {
   listTradeMessages,
   addTradeMessage,
   uploadProof,
+  addEasypaisaPayment,
+  listEasypaisaPayments,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [

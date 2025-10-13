@@ -780,14 +780,22 @@ export default function ExpressStartTrade() {
             <div className="dashboard-loader-overlay">
               <div className="dashboard-loader" />
               <div className="flex flex-col items-center gap-2">
-                {!txDetected ? (
-                  <div className="text-sm">Waiting for transaction…</div>
+                {isEasypaisa ? (
+                  <div className="text-sm">
+                    {fiatDetected
+                      ? "Easypaisa payment confirmed."
+                      : "Waiting for Easypaisa confirmation…"}
+                  </div>
                 ) : (
-                  <div className="text-sm">Transaction detected</div>
+                  <div className="text-sm">
+                    {!txDetected ? "Waiting for transaction…" : "Transaction detected"}
+                  </div>
                 )}
-                <div className="mt-2 text-xs font-mono">
-                  Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
-                </div>
+                {!isEasypaisa && (
+                  <div className="mt-2 text-xs font-mono">
+                    Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
+                  </div>
+                )}
               </div>
             </div>
           </div>

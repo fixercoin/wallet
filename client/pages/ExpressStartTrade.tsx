@@ -35,7 +35,11 @@ export default function ExpressStartTrade() {
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
+  const [paymentInProgress, setPaymentInProgress] = useState(false);
   const pollRef = useRef<number | null>(null);
+  const autoApproveRef = useRef<number | null>(null);
+  const { wallet } = useWallet();
+  const buyerPublicKey = wallet?.publicKey || null;
 
   // Load posts to match an order against seller listings
   useEffect(() => {

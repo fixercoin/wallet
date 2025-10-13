@@ -408,9 +408,15 @@ export const handler = async (event: any) => {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               clienttype: "web",
               "cache-control": "no-cache",
+              Origin: "https://p2p.binance.com",
+              Referer: "https://p2p.binance.com/en",
+              lang: "en",
+              platform: "web",
+              "Accept-Language": "en-US,en;q=0.9",
+              "X-Requested-With": "XMLHttpRequest",
             },
             body:
               event.body &&

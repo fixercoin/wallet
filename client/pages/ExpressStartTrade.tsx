@@ -221,6 +221,17 @@ export default function ExpressStartTrade() {
     return null;
   }, [match, params?.paymentMethod, isEasypaisa]);
 
+  const sellerPaymentMethodLabel = useMemo(() => {
+    const raw =
+      sellerPaymentDetails?.method ||
+      params?.paymentMethod ||
+      match?.paymentMethod ||
+      "";
+    if (!raw) return "";
+    const value = String(raw);
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }, [sellerPaymentDetails?.method, params?.paymentMethod, match?.paymentMethod]);
+
   // Easypaisa auto-detect polling (buy/sell payment method)
   useEffect(() => {
     if (!isEasypaisa) return;

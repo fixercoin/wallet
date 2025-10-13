@@ -5,6 +5,7 @@ import {
   getPost,
   createOrUpdatePost,
   listTradeMessages,
+  listRecentTradeMessages,
   addTradeMessage,
   uploadProof,
   addEasypaisaPayment,
@@ -223,6 +224,15 @@ export const handler = async (event: any) => {
         .replace(/^\/p2p\/trade\//, "")
         .replace(/\/messages$/, "");
       return jsonResponse(200, listTradeMessages(tradeId));
+    }
+
+    if (path === "/p2p/trades/recent" && method === "GET") {
+      const since = Number(event.queryStringParameters?.since || 0);
+      const limit = Number(event.queryStringParameters?.limit || 100);
+      const data = (listRecentTradeMessages({ since, limit }) as any) || {
+        messages: [],
+      };
+      return jsonResponse(200, { messages: data.messages || [] });
     }
 
     if (

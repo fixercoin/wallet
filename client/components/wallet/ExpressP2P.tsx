@@ -143,7 +143,10 @@ const ACTION_LABELS: Record<string, string> = {
   accept: "Accept Order",
 };
 
-const ACTION_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+const ACTION_VARIANTS: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   mark_paid: "default",
   mark_received: "default",
   cancel: "destructive",
@@ -216,7 +219,9 @@ function parseOrderStatus(value: unknown): OrderPhase {
   if (["buyer_paid", "payment_submitted"].includes(normalized)) {
     return "buyer_paid";
   }
-  if (["seller_confirmed", "released", "seller_released"].includes(normalized)) {
+  if (
+    ["seller_confirmed", "released", "seller_released"].includes(normalized)
+  ) {
     return "seller_confirmed";
   }
   if (["completed", "settled", "done"].includes(normalized)) {
@@ -268,8 +273,9 @@ function toAttachment(value: any): OrderAttachment | null {
     typeof value.id === "string" && value.id
       ? value.id
       : generateId("attachment");
-  const uploadedAtRaw =
-    Number(value.uploadedAt ?? value.ts ?? value.timestamp ?? Date.now());
+  const uploadedAtRaw = Number(
+    value.uploadedAt ?? value.ts ?? value.timestamp ?? Date.now(),
+  );
   const uploadedAt = Number.isFinite(uploadedAtRaw)
     ? uploadedAtRaw
     : Date.now();
@@ -404,8 +410,9 @@ function normalizeOrderPayload(
       : typeof raw.method === "string" && raw.method
         ? raw.method
         : undefined;
-  const lastEventAtRaw =
-    Number(raw.lastEventAt ?? raw.updatedAt ?? raw.ts ?? Date.now());
+  const lastEventAtRaw = Number(
+    raw.lastEventAt ?? raw.updatedAt ?? raw.ts ?? Date.now(),
+  );
   return {
     orderId,
     status,
@@ -436,9 +443,7 @@ function normalizeOrderPayload(
 function toChatMessage(value: any): ChatMessage | null {
   if (!value || typeof value !== "object") return null;
   const id =
-    typeof value.id === "string" && value.id
-      ? value.id
-      : generateId("message");
+    typeof value.id === "string" && value.id ? value.id : generateId("message");
   const sender = normalizeRole(value.sender ?? value.role ?? value.from);
   const bodyCandidate =
     typeof value.body === "string"
@@ -450,7 +455,9 @@ function toChatMessage(value: any): ChatMessage | null {
   if (!bodyCandidate && attachments.length === 0) {
     return null;
   }
-  const tsRaw = Number(value.ts ?? value.timestamp ?? value.createdAt ?? Date.now());
+  const tsRaw = Number(
+    value.ts ?? value.timestamp ?? value.createdAt ?? Date.now(),
+  );
   const ts = Number.isFinite(tsRaw) ? tsRaw : Date.now();
   return {
     id,
@@ -520,7 +527,9 @@ function deriveAvailableActions(
   serverActions: string[] | null,
 ): string[] {
   if (serverActions && serverActions.length > 0) {
-    return Array.from(new Set(serverActions.map((action) => action.toString())));
+    return Array.from(
+      new Set(serverActions.map((action) => action.toString())),
+    );
   }
   if (!snapshot || !role) {
     return [];
@@ -589,7 +598,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
   const outboundQueueRef = useRef<WorkerOutboundMessage[]>([]);
 
   const [connectionState, setConnectionState] = useState<ConnectionState>(
-    session ? { phase: "connecting", attempts: 0, error: null } : defaultConnectionState,
+    session
+      ? { phase: "connecting", attempts: 0, error: null }
+      : defaultConnectionState,
   );
   const [connectionNonce, setConnectionNonce] = useState(0);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -678,7 +689,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
           );
           setOrder(snapshot);
           if (Array.isArray(payload?.availableActions)) {
-            setServerActions(payload.availableActions.map((action: any) => String(action)));
+            setServerActions(
+              payload.availableActions.map((action: any) => String(action)),
+            );
           } else {
             setServerActions(null);
           }
@@ -704,11 +717,17 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
             payload,
             sessionRef.current?.orderId,
           );
-          setOrder((prev) => mergeOrderSnapshot(prev, normalized, sessionRef.current?.orderId));
+          setOrder((prev) =>
+            mergeOrderSnapshot(prev, normalized, sessionRef.current?.orderId),
+          );
           if (Array.isArray(payload?.availableActions)) {
-            setServerActions(payload.availableActions.map((action: any) => String(action)));
+            setServerActions(
+              payload.availableActions.map((action: any) => String(action)),
+            );
           } else if (Array.isArray(payload?.allowed)) {
-            setServerActions(payload.allowed.map((action: any) => String(action)));
+            setServerActions(
+              payload.allowed.map((action: any) => String(action)),
+            );
           }
           setPendingAction(null);
           return;
@@ -717,7 +736,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
           if (Array.isArray(payload)) {
             setServerActions(payload.map((action: any) => String(action)));
           } else if (Array.isArray(payload?.allowed)) {
-            setServerActions(payload.allowed.map((action: any) => String(action)));
+            setServerActions(
+              payload.allowed.map((action: any) => String(action)),
+            );
           }
           return;
         }
@@ -746,7 +767,10 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
             setOrder((prev) =>
               mergeOrderSnapshot(
                 prev,
-                { attachments: [attachment], lastEventAt: attachment.uploadedAt },
+                {
+                  attachments: [attachment],
+                  lastEventAt: attachment.uploadedAt,
+                },
                 sessionRef.current?.orderId,
               ),
             );
@@ -896,7 +920,11 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
         wsRef.current = null;
         if (manualCloseRef.current || event.code === 1000) {
           manualCloseRef.current = false;
-          setConnectionState({ phase: "closed", attempts: retryCountRef.current, error: null });
+          setConnectionState({
+            phase: "closed",
+            attempts: retryCountRef.current,
+            error: null,
+          });
           return;
         }
         scheduleReconnect();
@@ -918,11 +946,18 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
         wsRef.current = null;
       }
     };
-  }, [session?.orderId, session?.token, connectionNonce, flushPendingQueue, handleInbound]);
+  }, [
+    session?.orderId,
+    session?.token,
+    connectionNonce,
+    flushPendingQueue,
+    handleInbound,
+  ]);
 
   useEffect(() => {
     if (!messageViewportRef.current) return;
-    messageViewportRef.current.scrollTop = messageViewportRef.current.scrollHeight;
+    messageViewportRef.current.scrollTop =
+      messageViewportRef.current.scrollHeight;
   }, [chatMessages]);
 
   const availableActions = useMemo(
@@ -950,7 +985,10 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
     }
     const fiatAmount = Number(createForm.fiatAmount);
     const tokenAmount = Number(createForm.tokenAmount);
-    if ((!Number.isFinite(fiatAmount) || fiatAmount <= 0) && (!Number.isFinite(tokenAmount) || tokenAmount <= 0)) {
+    if (
+      (!Number.isFinite(fiatAmount) || fiatAmount <= 0) &&
+      (!Number.isFinite(tokenAmount) || tokenAmount <= 0)
+    ) {
       toast({
         title: "Invalid amounts",
         description: "Enter a fiat amount or token amount greater than zero.",
@@ -982,7 +1020,11 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
       }
       const data = await response.json();
       const orderId = String(
-        data?.orderId ?? data?.id ?? data?.order?.id ?? data?.result?.orderId ?? "",
+        data?.orderId ??
+          data?.id ??
+          data?.order?.id ??
+          data?.result?.orderId ??
+          "",
       );
       const token = String(
         data?.token ??
@@ -1011,8 +1053,13 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
         description: "Share the order ID securely with your counterparty.",
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create order.";
-      toast({ title: "Order creation failed", description: message, variant: "destructive" });
+      const message =
+        error instanceof Error ? error.message : "Failed to create order.";
+      toast({
+        title: "Order creation failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setCreatingOrder(false);
     }
@@ -1184,7 +1231,8 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
           description: "Counterparty has been notified.",
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Upload failed.";
+        const message =
+          error instanceof Error ? error.message : "Upload failed.";
         toast({
           title: "Upload failed",
           description: message,
@@ -1261,12 +1309,16 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
         <div>
           <h1 className="text-xl font-semibold md:text-2xl">Express P2P</h1>
           <p className="text-sm text-muted-foreground">
-            Real-time peer-to-peer trading powered by Cloudflare Workers and Durable Objects.
+            Real-time peer-to-peer trading powered by Cloudflare Workers and
+            Durable Objects.
           </p>
         </div>
         {session && (
           <div className="ml-auto flex items-center gap-2">
-            <Badge variant={connectionBadgeVariant} className="flex items-center gap-1">
+            <Badge
+              variant={connectionBadgeVariant}
+              className="flex items-center gap-1"
+            >
               <PlugZap className="h-3.5 w-3.5" />
               {connectionPhaseLabel}
             </Badge>
@@ -1290,7 +1342,8 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
             <CardHeader>
               <CardTitle>Create a buyer order</CardTitle>
               <CardDescription>
-                Generate a new order Durable Object instance. Share the returned order ID securely with your counterparty.
+                Generate a new order Durable Object instance. Share the returned
+                order ID securely with your counterparty.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1428,7 +1481,8 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
             <CardHeader>
               <CardTitle>Join an existing order</CardTitle>
               <CardDescription>
-                Sellers join the Durable Object room with the order ID and short-lived session token.
+                Sellers join the Durable Object room with the order ID and
+                short-lived session token.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1498,9 +1552,7 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                     {order ? order.status.replace(/_/g, " ") : "pending"}
                   </Badge>
                 </CardTitle>
-                <CardDescription>
-                  Order #{session.orderId}
-                </CardDescription>
+                <CardDescription>Order #{session.orderId}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div className="grid grid-cols-2 gap-3">
@@ -1509,7 +1561,8 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                       Token amount
                     </div>
                     <div className="text-lg font-medium">
-                      {formatAmount(order?.tokenAmount, 6)} {order?.assetSymbol ?? createForm.assetSymbol}
+                      {formatAmount(order?.tokenAmount, 6)}{" "}
+                      {order?.assetSymbol ?? createForm.assetSymbol}
                     </div>
                   </div>
                   <div className="rounded-md border border-border/60 bg-background/60 p-3">
@@ -1517,18 +1570,23 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                       Fiat value
                     </div>
                     <div className="text-lg font-medium">
-                      {formatAmount(order?.fiatAmount, 2)} {order?.fiatCurrency ?? createForm.fiatCurrency}
+                      {formatAmount(order?.fiatAmount, 2)}{" "}
+                      {order?.fiatCurrency ?? createForm.fiatCurrency}
                     </div>
                   </div>
                 </div>
                 <div className="grid gap-1">
-                  <div className="text-xs uppercase text-muted-foreground">Payment method</div>
+                  <div className="text-xs uppercase text-muted-foreground">
+                    Payment method
+                  </div>
                   <div className="font-medium uppercase">
                     {order?.paymentMethod ?? createForm.paymentMethod}
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <div className="text-xs uppercase text-muted-foreground">Participants</div>
+                  <div className="text-xs uppercase text-muted-foreground">
+                    Participants
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <div className="font-semibold">Buyer</div>
@@ -1561,7 +1619,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleCopy(order.escrowAddress!, "Escrow address")}
+                      onClick={() =>
+                        handleCopy(order.escrowAddress!, "Escrow address")
+                      }
                       className="break-all text-left text-xs text-[hsl(var(--primary))] hover:underline"
                     >
                       {order.escrowAddress}
@@ -1569,7 +1629,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                   </div>
                 )}
                 <div className="grid gap-1">
-                  <div className="text-xs uppercase text-muted-foreground">Session token</div>
+                  <div className="text-xs uppercase text-muted-foreground">
+                    Session token
+                  </div>
                   <button
                     type="button"
                     onClick={() => handleCopy(session.token, "Session token")}
@@ -1578,15 +1640,22 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                     {session.token}
                   </button>
                   <span className="text-xs text-muted-foreground">
-                    Keep this token secret. Share it only with the intended counterparty.
+                    Keep this token secret. Share it only with the intended
+                    counterparty.
                   </span>
                 </div>
                 <div className="grid gap-1">
-                  <div className="text-xs uppercase text-muted-foreground">Last event</div>
-                  <div>{order ? describeRelativeTime(order.lastEventAt) : "—"}</div>
+                  <div className="text-xs uppercase text-muted-foreground">
+                    Last event
+                  </div>
+                  <div>
+                    {order ? describeRelativeTime(order.lastEventAt) : "—"}
+                  </div>
                 </div>
                 <div className="grid gap-2">
-                  <div className="text-xs uppercase text-muted-foreground">Attachments</div>
+                  <div className="text-xs uppercase text-muted-foreground">
+                    Attachments
+                  </div>
                   {attachments.length === 0 ? (
                     <div className="rounded-md border border-dashed border-border/70 bg-background/60 p-3 text-xs text-muted-foreground">
                       No proof attachments uploaded yet.
@@ -1601,10 +1670,14 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                           rel="noreferrer"
                           className="flex items-center justify-between rounded-md border border-border/60 bg-background/60 px-3 py-2 text-xs hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                         >
-                          <span className="truncate font-medium">{attachment.name}</span>
+                          <span className="truncate font-medium">
+                            {attachment.name}
+                          </span>
                           <span className="flex items-center gap-2 text-muted-foreground">
                             {attachment.uploadedBy !== "system" && (
-                              <span className="capitalize">{attachment.uploadedBy}</span>
+                              <span className="capitalize">
+                                {attachment.uploadedBy}
+                              </span>
                             )}
                             {formatFileSize(attachment.size)}
                           </span>
@@ -1639,7 +1712,11 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                     onChange={handleFileInputChange}
                   />
                 </div>
-                <Button variant="ghost" onClick={handleLeaveOrder} className="w-full">
+                <Button
+                  variant="ghost"
+                  onClick={handleLeaveOrder}
+                  className="w-full"
+                >
                   <XCircle className="h-4 w-4" />
                   Leave order
                 </Button>
@@ -1660,19 +1737,26 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
             <CardHeader>
               <CardTitle>Room activity</CardTitle>
               <CardDescription>
-                Chat and state changes are synchronised with the Durable Object in real time.
+                Chat and state changes are synchronised with the Durable Object
+                in real time.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex h-[520px] flex-col gap-4">
               <ScrollArea className="flex-1 rounded-md border border-border/60 bg-background/60 p-3">
-                <div ref={messageViewportRef} className="flex h-full flex-col gap-3">
+                <div
+                  ref={messageViewportRef}
+                  className="flex h-full flex-col gap-3"
+                >
                   {chatMessages.length === 0 ? (
                     <div className="mt-10 text-center text-sm text-muted-foreground">
-                      No messages yet. Start the conversation to coordinate the trade.
+                      No messages yet. Start the conversation to coordinate the
+                      trade.
                     </div>
                   ) : (
                     chatMessages.map((message) => {
-                      const normalized = message.sender.toString().toLowerCase();
+                      const normalized = message.sender
+                        .toString()
+                        .toLowerCase();
                       const isSelf = normalized === session.role;
                       const isSystem = normalized === "system";
                       return (
@@ -1681,7 +1765,8 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                           className={cn(
                             "rounded-md border px-3 py-2 text-sm shadow-sm",
                             isSystem && "border-dashed text-muted-foreground",
-                            isSelf && "border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/5",
+                            isSelf &&
+                              "border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/5",
                           )}
                         >
                           <div className="mb-1 flex items-center justify-between text-xs uppercase text-muted-foreground">
@@ -1690,7 +1775,11 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                             </span>
                             <span>{describeRelativeTime(message.ts)}</span>
                           </div>
-                          {message.body && <div className="whitespace-pre-wrap text-sm">{message.body}</div>}
+                          {message.body && (
+                            <div className="whitespace-pre-wrap text-sm">
+                              {message.body}
+                            </div>
+                          )}
                           {message.attachments.length > 0 && (
                             <div className="mt-2 space-y-1">
                               {message.attachments.map((attachment) => (
@@ -1702,7 +1791,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                                   className="flex items-center gap-2 rounded-md border border-border/50 bg-background/80 px-2 py-1 text-xs hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                                 >
                                   <Paperclip className="h-3.5 w-3.5" />
-                                  <span className="truncate">{attachment.name}</span>
+                                  <span className="truncate">
+                                    {attachment.name}
+                                  </span>
                                   <span className="ml-auto shrink-0 text-muted-foreground">
                                     {formatFileSize(attachment.size)}
                                   </span>
@@ -1730,13 +1821,16 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                       {availableActions.map((action) => {
                         const normalized = action.toLowerCase();
                         const label = ACTION_LABELS[normalized] ?? action;
-                        const variant = ACTION_VARIANTS[normalized] ?? "outline";
+                        const variant =
+                          ACTION_VARIANTS[normalized] ?? "outline";
                         const loading = pendingAction === action;
                         return (
                           <Button
                             key={action}
                             variant={variant}
-                            disabled={loading || connectionState.phase === "error"}
+                            disabled={
+                              loading || connectionState.phase === "error"
+                            }
                             onClick={() => handleAction(action)}
                           >
                             {loading ? (
@@ -1777,7 +1871,9 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                   </div>
                   <Button
                     type="submit"
-                    disabled={!chatInput.trim() || connectionState.phase === "error"}
+                    disabled={
+                      !chatInput.trim() || connectionState.phase === "error"
+                    }
                     className="shrink-0"
                   >
                     <Send className="h-4 w-4" />

@@ -140,8 +140,9 @@ function encodeToBase64(value: string): string {
     }
     return btoa(binary);
   }
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(value, "utf-8").toString("base64");
+  const globalBuffer = (globalThis as any)?.Buffer;
+  if (globalBuffer) {
+    return globalBuffer.from(value, "utf-8").toString("base64");
   }
   throw new Error("Base64 encoding not supported in this environment");
 }

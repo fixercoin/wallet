@@ -53,6 +53,10 @@ export default function ExpressStartTrade() {
     [params?.paymentMethod],
   );
 
+  // Counterparty-provided buyer address (via trade message fallback)
+  const [counterpartyBuyerAddress, setCounterpartyBuyerAddress] = useState<string | null>(null);
+  const buyerAddrSentRef = useRef<string | null>(null);
+
   // Load posts to match an order against seller/buyer listings
   useEffect(() => {
     let mounted = true;

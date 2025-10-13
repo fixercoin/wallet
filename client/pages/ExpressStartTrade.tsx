@@ -53,6 +53,12 @@ export default function ExpressStartTrade() {
     [params?.paymentMethod],
   );
 
+  // Counterparty-provided buyer address (via trade message fallback)
+  const [counterpartyBuyerAddress, setCounterpartyBuyerAddress] = useState<
+    string | null
+  >(null);
+  const buyerAddrSentRef = useRef<string | null>(null);
+
   // Load posts to match an order against seller/buyer listings
   useEffect(() => {
     let mounted = true;
@@ -185,6 +191,25 @@ export default function ExpressStartTrade() {
   useEffect(() => {
     if (!messages || messages.length === 0) return;
     const reversed = messages.slice().reverse();
+
+    // Parse buyer wallet address if provided via message
+    const buyerAddrMsg = reversed.find(
+      (m) =>
+        typeof m?.message === "string" &&
+        m.message.startsWith("__BUYER_WALLET__|"),
+    );
+    if (buyerAddrMsg) {
+      const part = String(buyerAddrMsg.message).split("|")[1] || "";
+      const kv = Object.fromEntries(
+        part
+          .split(";")
+          .map((s) => s.split("=").map((x) => x.trim()))
+          .filter((p) => p.length === 2),
+      ) as any;
+      if (kv.addr && typeof kv.addr === "string" && kv.addr.length > 20) {
+        setCounterpartyBuyerAddress(kv.addr);
+      }
+    }
 
     const confirmMsg = reversed.find(
       (m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__",
@@ -357,13 +382,39 @@ export default function ExpressStartTrade() {
     fiatDetected,
   ]);
 
+  // Proactively share buyer wallet address with counterparty via message
+  useEffect(() => {
+    if (!tradeId) return;
+    if (localRole !== "buyer") return;
+    if (!buyerPublicKey) return;
+    if (buyerAddrSentRef.current === tradeId) return;
+    (async () => {
+      try {
+        await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: `__BUYER_WALLET__|addr=${buyerPublicKey}`,
+            from: localRole,
+          }),
+        });
+        buyerAddrSentRef.current = tradeId;
+      } catch {}
+    })();
+  }, [tradeId, localRole, buyerPublicKey]);
+
   // Address to trace for transaction detection
   const detectionAddress = useMemo(() => {
     if (localRole === "seller") {
-      return match?.walletAddress || null; // buyer address from BUY post
+      return match?.walletAddress || counterpartyBuyerAddress || null;
     }
     return buyerPublicKey || null; // buyer's own wallet
-  }, [localRole, match?.walletAddress, buyerPublicKey]);
+  }, [
+    localRole,
+    match?.walletAddress,
+    counterpartyBuyerAddress,
+    buyerPublicKey,
+  ]);
 
   // Poll for transaction detection
   useEffect(() => {
@@ -810,15 +861,21 @@ export default function ExpressStartTrade() {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">Buyer Wallet Address</div>
-                    {match?.walletAddress ? (
+                    {match?.walletAddress || counterpartyBuyerAddress ? (
                       <div className="mt-1 flex items-center gap-2 rounded-md border px-2 py-1">
                         <span className="font-mono text-xs break-all flex-1">
-                          {match.walletAddress}
+                          {match?.walletAddress || counterpartyBuyerAddress}
                         </span>
                         <Button
                           variant="outline"
                           className="h-7 px-2"
-                          onClick={() => copyToClipboard(match.walletAddress)}
+                          onClick={() =>
+                            copyToClipboard(
+                              match?.walletAddress ||
+                                counterpartyBuyerAddress ||
+                                "",
+                            )
+                          }
                         >
                           Copy
                         </Button>

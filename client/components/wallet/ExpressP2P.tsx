@@ -766,7 +766,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <div className="mb-3 flex flex-col gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="font-medium">
-                  Pending {pendingOrder.params?.side === "sell" ? "sell" : "buy"} order
+                  Pending{" "}
+                  {pendingOrder.params?.side === "sell" ? "sell" : "buy"} order
                 </div>
                 <div className="text-xs text-muted-foreground">
                   Continue to the review screen to manage this trade.

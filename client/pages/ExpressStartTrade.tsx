@@ -451,7 +451,10 @@ export default function ExpressStartTrade() {
         );
       } catch {}
       if (options?.toastTitle) {
-        toast({ title: options.toastTitle, description: options.toastDescription });
+        toast({
+          title: options.toastTitle,
+          description: options.toastDescription,
+        });
       }
       navigate("/express/order-complete", {
         state: { tradeId, params, ts: Date.now(), source },

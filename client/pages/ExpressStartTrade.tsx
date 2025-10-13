@@ -58,31 +58,62 @@ export default function ExpressStartTrade() {
   const buyerPublicKey = wallet?.publicKey || null;
   const localRole = params?.side === "sell" ? "seller" : "buyer";
 
+  const effectiveTradeId = tradeId || params?.tradeId || null;
+
+  const sendSystemMessage = useCallback(
+    async (message: string, fromOverride?: string) => {
+      if (!effectiveTradeId) return;
+      try {
+        await fetch(
+          `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message,
+              from: fromOverride ?? localRole,
+            }),
+          },
+        );
+      } catch {}
+    },
+    [effectiveTradeId, localRole],
+  );
+
+  const cancelOrder = useCallback(
+    (options?: {
+      message?: string;
+      toastTitle?: string;
+      toastDescription?: string;
+      variant?: "default" | "destructive" | "success" | "info";
+    }) => {
+      if (sellerConfirmTimeoutRef.current) {
+        window.clearTimeout(sellerConfirmTimeoutRef.current);
+        sellerConfirmTimeoutRef.current = null;
+      }
+      const messageToSend = options?.message ?? "__ORDER_CANCELLED__";
+      if (effectiveTradeId) {
+        (async () => {
+          await sendSystemMessage(messageToSend);
+        })();
+      }
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      finalizedRef.current = true;
+      toast({
+        title: options?.toastTitle ?? "Order cancelled",
+        description: options?.toastDescription,
+        variant: options?.variant,
+      });
+      navigate("/express");
+    },
+    [effectiveTradeId, navigate, sendSystemMessage, toast],
+  );
+
   const handleCancelOrder = useCallback(() => {
-    const effectiveTradeId = tradeId || params?.tradeId;
-    if (effectiveTradeId) {
-      (async () => {
-        try {
-          await fetch(
-            `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message: "__ORDER_CANCELLED__",
-                from: localRole,
-              }),
-            },
-          );
-        } catch {}
-      })();
-    }
-    try {
-      localStorage.removeItem("expressPendingOrder");
-    } catch {}
-    toast({ title: "Order cancelled" });
-    navigate("/express");
-  }, [navigate, toast, tradeId, params?.tradeId, localRole]);
+    cancelOrder();
+  }, [cancelOrder]);
   const isEasypaisa = useMemo(
     () => String(params?.paymentMethod || "").toLowerCase() === "easypaisa",
     [params?.paymentMethod],

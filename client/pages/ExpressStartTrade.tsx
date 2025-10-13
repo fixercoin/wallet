@@ -478,6 +478,7 @@ export default function ExpressStartTrade() {
         pollRef.current = null;
       }
       toast({ title: "Approved" });
+      navigate("/express");
     } catch (e) {
       toast({ title: "Failed to approve", variant: "destructive" });
     }

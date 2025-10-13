@@ -231,7 +231,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   }, [pendingOrder, persistPendingOrder]);
 
-
   const handleCopyAddress = async () => {
     if (!wallet) return;
     const success = await copyToClipboard(wallet.publicKey);
@@ -439,7 +438,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     const val = binancePriceUsd * pkrPerUsd;
     return isFinite(val) && val > 0 ? val : null;
   }, [binancePriceUsd, pkrPerUsd]);
-
 
   // Hidden fees
   const FLAT_FEE_PKR = 2.5; // flat fee for buy/sell in PKR
@@ -879,7 +877,6 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 </Button>
               </div>
             </div>
-
 
             <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
               <button

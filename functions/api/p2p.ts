@@ -173,10 +173,7 @@ export default async function (
       return jsonResponse({ post });
     }
 
-    if (
-      request.method === "DELETE" &&
-      path.startsWith("/post/")
-    ) {
+    if (request.method === "DELETE" && path.startsWith("/post/")) {
       const id = path.replace("/post/", "");
       const adminHeader = request.headers.get("x-admin-wallet") || "";
       const result = deletePost(id, adminHeader);

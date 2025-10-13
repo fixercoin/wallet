@@ -199,13 +199,19 @@ export default function ExpressPostOrderDetail() {
                 onClick={async () => {
                   if (!window.confirm("Delete this post?")) return;
                   try {
-                    const resp = await fetch(`/api/p2p/post/${encodeURIComponent(p.id)}`, {
-                      method: "DELETE",
-                      headers: { "X-Admin-Wallet": wallet?.publicKey || "" },
-                    });
+                    const resp = await fetch(
+                      `/api/p2p/post/${encodeURIComponent(p.id)}`,
+                      {
+                        method: "DELETE",
+                        headers: { "X-Admin-Wallet": wallet?.publicKey || "" },
+                      },
+                    );
                     if (!resp.ok) {
                       const err = await resp.json().catch(() => ({}));
-                      toast({ title: `Delete failed: ${err.error || resp.statusText}`, variant: "destructive" });
+                      toast({
+                        title: `Delete failed: ${err.error || resp.statusText}`,
+                        variant: "destructive",
+                      });
                       return;
                     }
                     setPosts((prev) => prev.filter((x) => x.id !== p.id));

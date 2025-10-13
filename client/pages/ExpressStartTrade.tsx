@@ -301,7 +301,6 @@ export default function ExpressStartTrade() {
     match?.paymentMethod,
   ]);
 
-
   // Proactively share buyer wallet address with counterparty via message
   useEffect(() => {
     if (!tradeId) return;
@@ -472,7 +471,6 @@ export default function ExpressStartTrade() {
     }
   };
 
-
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
@@ -610,7 +608,9 @@ export default function ExpressStartTrade() {
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
-                      {'Send the agreed fiat payment to the seller using the details above. Once you have sent payment, click "I\'ve Paid".'}
+                      {
+                        'Send the agreed fiat payment to the seller using the details above. Once you have sent payment, click "I\'ve Paid".'
+                      }
                     </div>
                   </div>
 
@@ -768,7 +768,9 @@ export default function ExpressStartTrade() {
               <div className="dashboard-loader" />
               <div className="flex flex-col items-center gap-2">
                 <div className="text-sm">
-                  {!txDetected ? "Waiting for transaction…" : "Transaction detected"}
+                  {!txDetected
+                    ? "Waiting for transaction…"
+                    : "Transaction detected"}
                 </div>
                 {!isEasypaisa && (
                   <div className="mt-2 text-xs font-mono">

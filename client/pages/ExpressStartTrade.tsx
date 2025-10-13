@@ -54,7 +54,9 @@ export default function ExpressStartTrade() {
   );
 
   // Counterparty-provided buyer address (via trade message fallback)
-  const [counterpartyBuyerAddress, setCounterpartyBuyerAddress] = useState<string | null>(null);
+  const [counterpartyBuyerAddress, setCounterpartyBuyerAddress] = useState<
+    string | null
+  >(null);
   const buyerAddrSentRef = useRef<string | null>(null);
 
   // Load posts to match an order against seller/buyer listings
@@ -191,8 +193,10 @@ export default function ExpressStartTrade() {
     const reversed = messages.slice().reverse();
 
     // Parse buyer wallet address if provided via message
-    const buyerAddrMsg = reversed.find((m) =>
-      typeof m?.message === "string" && m.message.startsWith("__BUYER_WALLET__|"),
+    const buyerAddrMsg = reversed.find(
+      (m) =>
+        typeof m?.message === "string" &&
+        m.message.startsWith("__BUYER_WALLET__|"),
     );
     if (buyerAddrMsg) {
       const part = String(buyerAddrMsg.message).split("|")[1] || "";
@@ -402,14 +406,15 @@ export default function ExpressStartTrade() {
   // Address to trace for transaction detection
   const detectionAddress = useMemo(() => {
     if (localRole === "seller") {
-      return (
-        match?.walletAddress ||
-        counterpartyBuyerAddress ||
-        null
-      );
+      return match?.walletAddress || counterpartyBuyerAddress || null;
     }
     return buyerPublicKey || null; // buyer's own wallet
-  }, [localRole, match?.walletAddress, counterpartyBuyerAddress, buyerPublicKey]);
+  }, [
+    localRole,
+    match?.walletAddress,
+    counterpartyBuyerAddress,
+    buyerPublicKey,
+  ]);
 
   // Poll for transaction detection
   useEffect(() => {
@@ -864,7 +869,13 @@ export default function ExpressStartTrade() {
                         <Button
                           variant="outline"
                           className="h-7 px-2"
-                          onClick={() => copyToClipboard(match?.walletAddress || counterpartyBuyerAddress || "")}
+                          onClick={() =>
+                            copyToClipboard(
+                              match?.walletAddress ||
+                                counterpartyBuyerAddress ||
+                                "",
+                            )
+                          }
                         >
                           Copy
                         </Button>

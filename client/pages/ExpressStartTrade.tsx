@@ -153,6 +153,8 @@ export default function ExpressStartTrade() {
     setFiatDetected(false);
     setFiatConfirmationSent(false);
     setAwaitingApproval(false);
+    setManualPaid(false);
+    setAutoConfirmed(false);
   }, [tradeId]);
 
   // Notify when counterparty confirms settlement via special message

@@ -293,7 +293,8 @@ export const onRequest = async ({ request, env }) => {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               clienttype: "web",
               "cache-control": "no-cache",
               Origin: "https://p2p.binance.com",

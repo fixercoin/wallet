@@ -253,11 +253,17 @@ export default function ExpressStartTrade() {
             autoApproveRef.current = window.setTimeout(async () => {
               try {
                 if (!tradeId) return;
-                await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ message: "__BUYER_APPROVED__", from: "buyer" }),
-                });
+                await fetch(
+                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      message: "__BUYER_APPROVED__",
+                      from: "buyer",
+                    }),
+                  },
+                );
                 setAwaitingApproval(false);
                 toast({ title: "Auto-approved after timeout" });
                 navigate("/express");
@@ -290,7 +296,15 @@ export default function ExpressStartTrade() {
         autoApproveRef.current = null;
       }
     };
-  }, [awaitingApproval, match?.walletAddress, baselineSig, params?.side, tradeId, navigate, toast]);
+  }, [
+    awaitingApproval,
+    match?.walletAddress,
+    baselineSig,
+    params?.side,
+    tradeId,
+    navigate,
+    toast,
+  ]);
 
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
@@ -437,81 +451,162 @@ export default function ExpressStartTrade() {
                         </div>
                         {localRole === "seller" && match?.walletAddress ? (
                           <div className="mb-3 text-sm">
-                            <div className="mb-1 font-medium">Buyer Wallet Address</div>
-                            <div className="flex items-center gap-2 rounded-md border px-2 py-1">
-                              <span className="font-mono text-xs break-all flex-1">{match.walletAddress}</span>
-                              <Button variant="outline" className="h-7 px-2" onClick={() => copyToClipboard(match.walletAddress)}>Copy</Button>
+                            <div className="mb-1 font-medium">
+                              Buyer Wallet Address
                             </div>
-                            <div className="mt-2 text-xs text-muted-foreground">Send transaction to this address, then confirm.</div>
+                            <div className="flex items-center gap-2 rounded-md border px-2 py-1">
+                              <span className="font-mono text-xs break-all flex-1">
+                                {match.walletAddress}
+                              </span>
+                              <Button
+                                variant="outline"
+                                className="h-7 px-2"
+                                onClick={() =>
+                                  copyToClipboard(match.walletAddress)
+                                }
+                              >
+                                Copy
+                              </Button>
+                            </div>
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              Send transaction to this address, then confirm.
+                            </div>
                           </div>
                         ) : null}
 
                         <div className="mb-4 text-sm">
                           {localRole === "buyer" ? (
                             <div className="space-y-2">
-                              <div className="mb-1 font-medium">Seller Payment Details</div>
+                              <div className="mb-1 font-medium">
+                                Seller Payment Details
+                              </div>
                               {match?.paymentDetails ? (
                                 <div className="text-sm">
-                                  <div><span className="font-semibold">Name: </span>{match.paymentDetails.accountName}</div>
-                                  <div><span className="font-semibold">Account: </span>{match.paymentDetails.accountNumber}</div>
+                                  <div>
+                                    <span className="font-semibold">
+                                      Name:{" "}
+                                    </span>
+                                    {match.paymentDetails.accountName}
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">
+                                      Account:{" "}
+                                    </span>
+                                    {match.paymentDetails.accountNumber}
+                                  </div>
                                 </div>
                               ) : (
-                                <div className="text-xs text-muted-foreground">Seller payment details will be provided by the seller shortly.</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Seller payment details will be provided by the
+                                  seller shortly.
+                                </div>
                               )}
-                              <div className="mt-2 text-xs text-muted-foreground">Send the agreed fiat payment to the seller using the details above. Once you have sent payment, click "I've Paid".</div>
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Send the agreed fiat payment to the seller using
+                                the details above. Once you have sent payment,
+                                click "I've Paid".
+                              </div>
                             </div>
                           ) : (
                             <span>
-                              We will detect the transaction on the wallet address. Once detected, the Confirm button will be enabled.
+                              We will detect the transaction on the wallet
+                              address. Once detected, the Confirm button will be
+                              enabled.
                             </span>
                           )}
                         </div>
 
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => {
-                            setShowConfirm(false);
-                            setBaselineSig(null);
-                            setTxDetected(false);
-                            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
-                          }} className="h-9">Cancel</Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowConfirm(false);
+                              setBaselineSig(null);
+                              setTxDetected(false);
+                              if (pollRef.current) {
+                                window.clearInterval(pollRef.current);
+                                pollRef.current = null;
+                              }
+                            }}
+                            className="h-9"
+                          >
+                            Cancel
+                          </Button>
 
                           {localRole === "buyer" ? (
-                            <Button onClick={async () => {
-                              if (!tradeId) return;
-                              try {
-                                const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ message: "__CONFIRMED_SETTLEMENT__", from: localRole }),
-                                });
-                                if (!resp.ok) throw new Error("failed");
-                                setShowConfirm(false);
-                                setAwaitingApproval(true);
-                                setPaymentInProgress(true);
-                                toast({ title: "Marked as paid. Waiting for transaction detection." });
-                              } catch (e) {
-                                setShowConfirm(false);
-                                toast({ title: "Failed to notify", variant: "destructive" });
-                              }
-                            }} className="h-9">I've Paid</Button>
+                            <Button
+                              onClick={async () => {
+                                if (!tradeId) return;
+                                try {
+                                  const resp = await fetch(
+                                    `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        message: "__CONFIRMED_SETTLEMENT__",
+                                        from: localRole,
+                                      }),
+                                    },
+                                  );
+                                  if (!resp.ok) throw new Error("failed");
+                                  setShowConfirm(false);
+                                  setAwaitingApproval(true);
+                                  setPaymentInProgress(true);
+                                  toast({
+                                    title:
+                                      "Marked as paid. Waiting for transaction detection.",
+                                  });
+                                } catch (e) {
+                                  setShowConfirm(false);
+                                  toast({
+                                    title: "Failed to notify",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="h-9"
+                            >
+                              I've Paid
+                            </Button>
                           ) : (
-                            <Button disabled={localRole === "seller" && !txDetected} onClick={async () => {
-                              if (!tradeId) return;
-                              try {
-                                const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ message: "__SELLER_CONFIRMED__", from: localRole }),
-                                });
-                                if (!resp.ok) throw new Error("failed");
-                                setShowConfirm(false);
-                                if (localRole === "seller") setAwaitingApproval(true);
-                                toast({ title: "You confirmed settlement" });
-                              } catch (e) {
-                                setShowConfirm(false);
-                                toast({ title: "Confirmation failed", variant: "destructive" });
-                              }
-                            }} className="h-9">Confirm</Button>
+                            <Button
+                              disabled={localRole === "seller" && !txDetected}
+                              onClick={async () => {
+                                if (!tradeId) return;
+                                try {
+                                  const resp = await fetch(
+                                    `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        message: "__SELLER_CONFIRMED__",
+                                        from: localRole,
+                                      }),
+                                    },
+                                  );
+                                  if (!resp.ok) throw new Error("failed");
+                                  setShowConfirm(false);
+                                  if (localRole === "seller")
+                                    setAwaitingApproval(true);
+                                  toast({ title: "You confirmed settlement" });
+                                } catch (e) {
+                                  setShowConfirm(false);
+                                  toast({
+                                    title: "Confirmation failed",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="h-9"
+                            >
+                              Confirm
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -555,28 +650,52 @@ export default function ExpressStartTrade() {
                 ) : (
                   <div className="text-sm">Transaction detected</div>
                 )}
-                <div className="mt-2 text-xs font-mono">Buyer wallet: {buyerPublicKey || "(no wallet selected)"}</div>
+                <div className="mt-2 text-xs font-mono">
+                  Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
+                </div>
                 {txDetected && (
                   <div className="mt-3 flex gap-2">
-                    <Button onClick={async () => {
-                      try {
-                        if (!tradeId) return;
-                        const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ message: "__BUYER_APPROVED__", from: "buyer" }),
-                        });
-                        if (!resp.ok) throw new Error("failed");
-                        setAwaitingApproval(false);
-                        setTxDetected(false);
-                        if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
-                        if (autoApproveRef.current) { window.clearTimeout(autoApproveRef.current as unknown as number); autoApproveRef.current = null; }
-                        toast({ title: "Approved" });
-                        navigate("/express");
-                      } catch (e) {
-                        toast({ title: "Failed to approve", variant: "destructive" });
-                      }
-                    }} className="h-9">Approve</Button>
+                    <Button
+                      onClick={async () => {
+                        try {
+                          if (!tradeId) return;
+                          const resp = await fetch(
+                            `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                message: "__BUYER_APPROVED__",
+                                from: "buyer",
+                              }),
+                            },
+                          );
+                          if (!resp.ok) throw new Error("failed");
+                          setAwaitingApproval(false);
+                          setTxDetected(false);
+                          if (pollRef.current) {
+                            window.clearInterval(pollRef.current);
+                            pollRef.current = null;
+                          }
+                          if (autoApproveRef.current) {
+                            window.clearTimeout(
+                              autoApproveRef.current as unknown as number,
+                            );
+                            autoApproveRef.current = null;
+                          }
+                          toast({ title: "Approved" });
+                          navigate("/express");
+                        } catch (e) {
+                          toast({
+                            title: "Failed to approve",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="h-9"
+                    >
+                      Approve
+                    </Button>
                   </div>
                 )}
               </div>

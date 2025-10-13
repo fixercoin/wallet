@@ -125,7 +125,10 @@ const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
 const BINANCE_P2P_CACHE_TTL = 30000;
 
 function uniqueId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -392,7 +395,11 @@ export const onRequest = async ({ request, env }) => {
           const resp = await fetch(target, init);
           clearTimeout(timeoutId);
           if (!resp.ok) {
-            if (resp.status === 403 || resp.status === 429 || resp.status >= 500) {
+            if (
+              resp.status === 403 ||
+              resp.status === 429 ||
+              resp.status >= 500
+            ) {
               lastErr = `${resp.status} ${resp.statusText}`;
               await new Promise((resolve) => setTimeout(resolve, 150));
               continue;

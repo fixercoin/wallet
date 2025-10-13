@@ -131,7 +131,10 @@ const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
 const BINANCE_P2P_CACHE_TTL = 30000;
 
 function uniqueId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -446,7 +449,7 @@ export const handler = async (event: any) => {
       const search = event.rawQuery ? `?${event.rawQuery}` : "";
       const requestBody =
         event.httpMethod !== "GET" && event.httpMethod !== "HEAD"
-          ? event.body ?? undefined
+          ? (event.body ?? undefined)
           : undefined;
       const cacheKey = `${event.httpMethod}:${subPath}${search}:${requestBody ?? ""}`;
       const cached = BINANCE_P2P_CACHE.get(cacheKey);

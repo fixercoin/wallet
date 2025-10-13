@@ -38,6 +38,9 @@ export default function ExpressStartTrade() {
   const [awaitingApproval, setAwaitingApproval] = useState(false);
 
   const pollRef = useRef<number | null>(null);
+  const easypayPollRef = useRef<number | null>(null);
+  const orderStartRef = useRef<number>(Date.now());
+  const [fiatDetected, setFiatDetected] = useState(false);
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;

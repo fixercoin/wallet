@@ -46,6 +46,13 @@ export default function ExpressStartTrade() {
   const [sellerApproved, setSellerApproved] = useState(false);
   const [orderCancelledByCounterparty, setOrderCancelledByCounterparty] =
     useState(false);
+  const [remoteSellerDetails, setRemoteSellerDetails] = useState<
+    {
+      accountName?: string;
+      accountNumber?: string;
+      method?: string;
+    } | null
+  >(null);
 
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);
@@ -53,6 +60,7 @@ export default function ExpressStartTrade() {
   const pollRef = useRef<number | null>(null);
   const finalizedRef = useRef(false);
   const sellerConfirmTimeoutRef = useRef<number | null>(null);
+  const lastTimeoutMessageId = useRef<string | null>(null);
 
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;

@@ -8,6 +8,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
@@ -191,6 +192,40 @@ export default function ExpressPostOrderDetail() {
             >
               <Pencil className="mr-1 h-4 w-4" /> Edit
             </Button>
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={async () => {
+                  if (!window.confirm("Delete this post?")) return;
+                  try {
+                    const resp = await fetch(
+                      `/api/p2p/post/${encodeURIComponent(p.id)}`,
+                      {
+                        method: "DELETE",
+                        headers: { "X-Admin-Wallet": wallet?.publicKey || "" },
+                      },
+                    );
+                    if (!resp.ok) {
+                      const err = await resp.json().catch(() => ({}));
+                      toast({
+                        title: `Delete failed: ${err.error || resp.statusText}`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setPosts((prev) => prev.filter((x) => x.id !== p.id));
+                    toast({ title: "Post deleted" });
+                  } catch (e) {
+                    toast({ title: "Delete failed", variant: "destructive" });
+                  }
+                }}
+                className="h-8"
+                aria-label="Delete post"
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> Delete
+              </Button>
+            )}
             {isEditing ? (
               <Button
                 size="sm"

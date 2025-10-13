@@ -113,6 +113,18 @@ export function listPosts() {
   return { posts: store.posts };
 }
 
+export function deletePost(id: string, adminWalletHeader?: string) {
+  const admin = adminWalletHeader || "";
+  if (admin !== ADMIN_WALLET) {
+    return { error: "unauthorized", status: 401 } as const;
+  }
+  const idx = store.posts.findIndex((p) => p.id === id);
+  if (idx === -1) return { error: "not_found", status: 404 } as const;
+  const removed = store.posts.splice(idx, 1)[0];
+  void saveStoreToFile();
+  return { ok: true, post: removed, status: 200 } as const;
+}
+
 export function getPost(id: string) {
   return store.posts.find((p) => p.id === id) || null;
 }

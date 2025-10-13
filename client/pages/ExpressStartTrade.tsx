@@ -517,6 +517,23 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const promptBuyerMsg = reversed.find(
+      (m) => String(m?.message) === "__PROMPT_BUYER_COMPLETE__",
+    );
+    if (
+      promptBuyerMsg &&
+      promptBuyerMsg.id &&
+      promptBuyerMsg.from !== localRole &&
+      localRole === "buyer" &&
+      lastPromptBuyerMessageId.current !== promptBuyerMsg.id
+    ) {
+      lastPromptBuyerMessageId.current = promptBuyerMsg.id;
+      toast({
+        title: "Seller confirmed",
+        description: "Check your wallet and finish the order when ready.",
+      });
+    }
+
     const sellerApprovedMsg = reversed.find(
       (m) => String(m?.message) === "__SELLER_APPROVED__",
     );

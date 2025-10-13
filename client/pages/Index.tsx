@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { WalletSetup } from "@/components/wallet/WalletSetup";
 import { Dashboard } from "@/components/wallet/Dashboard";

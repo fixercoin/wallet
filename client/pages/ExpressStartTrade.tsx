@@ -875,7 +875,9 @@ export default function ExpressStartTrade() {
                   <div className="text-sm">
                     {fiatDetected
                       ? "Easypaisa payment confirmed."
-                      : "Waiting for Easypaisa confirmation…"}
+                      : !txDetected
+                        ? "Waiting for transaction…"
+                        : "Transaction detected"}
                   </div>
                 ) : (
                   <div className="text-sm">

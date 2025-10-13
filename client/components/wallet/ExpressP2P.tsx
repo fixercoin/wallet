@@ -209,10 +209,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           const pkr = Number(parts.pkr || 0);
           const units = Number(parts.units || 0);
           const method = String(parts.method || "");
-          const lastTs = Math.max(
-            ...arr.map((m: any) => Number(m.ts || 0)),
-            0,
-          );
+          const lastTs = Math.max(...arr.map((m: any) => Number(m.ts || 0)), 0);
           orders.push({
             tradeId: tid,
             side,
@@ -965,20 +962,42 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             {recentOrders.length > 0 && (
               <div className="mb-3 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <div className="text-sm font-semibold uppercase">Pending Orders</div>
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={triggerRefresh}>
+                  <div className="text-sm font-semibold uppercase">
+                    Pending Orders
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={triggerRefresh}
+                  >
                     Refresh
                   </Button>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-auto custom-scrollbar">
                   {recentOrders.map((o) => (
-                    <div key={o.tradeId} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                    <div
+                      key={o.tradeId}
+                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    >
                       <div className="flex-1">
                         <div className="font-medium">
-                          {(o.side?.toUpperCase?.() || "ORDER") + " " + (o.token || "")}
+                          {(o.side?.toUpperCase?.() || "ORDER") +
+                            " " +
+                            (o.token || "")}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          PKR {o.pkr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Units {o.units.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} • {o.method?.toUpperCase?.() || "—"}
+                          PKR{" "}
+                          {o.pkr.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          • Units{" "}
+                          {o.units.toLocaleString(undefined, {
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: 4,
+                          })}{" "}
+                          • {o.method?.toUpperCase?.() || "—"}
                         </div>
                         <div className="text-[10px] text-muted-foreground font-mono break-all">
                           {o.tradeId}

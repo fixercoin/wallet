@@ -153,6 +153,28 @@ export default function ExpressPendingOrders() {
     [toast, triggerRefresh],
   );
 
+  const approveAs = useCallback(
+    async (tradeId: string, role: "buyer" | "seller") => {
+      try {
+        const message = role === "buyer" ? "__BUYER_APPROVED__" : "__SELLER_APPROVED__";
+        const resp = await fetch(
+          `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, from: role }),
+          },
+        );
+        if (!resp.ok) throw new Error("approve_failed");
+        toast({ title: `Approved as ${role}` });
+        triggerRefresh();
+      } catch (e) {
+        toast({ title: "Approve failed", variant: "destructive" });
+      }
+    },
+    [toast, triggerRefresh],
+  );
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
@@ -253,6 +275,24 @@ export default function ExpressPendingOrders() {
                       }
                     >
                       Open
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8"
+                      variant="outline"
+                      onClick={() => approveAs(o.tradeId, "buyer")}
+                      title="Approve as buyer"
+                    >
+                      Approve Buyer
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8"
+                      variant="secondary"
+                      onClick={() => approveAs(o.tradeId, "seller")}
+                      title="Approve as seller"
+                    >
+                      Approve Seller
                     </Button>
                     <Button
                       size="sm"

@@ -211,6 +211,13 @@ export default async function (
       return jsonResponse(listTradeMessages(tradeId));
     }
 
+    if (request.method === "GET" && path === "/trades/recent") {
+      const since = Number(url.searchParams.get("since") || 0);
+      const limit = Number(url.searchParams.get("limit") || 100);
+      const data = (listRecentTradeMessages({ since, limit }) as any) || { messages: [] };
+      return jsonResponse({ messages: data.messages || [] });
+    }
+
     if (
       request.method === "POST" &&
       path.startsWith("/trade/") &&

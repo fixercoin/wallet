@@ -521,7 +521,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     const paymentMethodId: PaymentMethodId = detectedMethod || "bank";
     const makeSnapshot = (params: Record<string, any>) => {
       const snapshot: PendingOrderSnapshot = {
-        tradeId: pendingOrder?.tradeId || `express-${Date.now()}`,
+        tradeId: `express-${Date.now()}`,
         minimized: false,
         status: "pending",
         params,

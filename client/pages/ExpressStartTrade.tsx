@@ -917,7 +917,7 @@ export default function ExpressStartTrade() {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        Seller payment details will be provided by the seller.
+                        Seller payment details will appear once the seller shares them.
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">

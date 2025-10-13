@@ -422,6 +422,23 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const promptSellerMsg = reversed.find(
+      (m) => String(m?.message) === "__PROMPT_SELLER_CONFIRM__",
+    );
+    if (
+      promptSellerMsg &&
+      promptSellerMsg.id &&
+      promptSellerMsg.from !== localRole &&
+      localRole === "seller" &&
+      lastPromptSellerMessageId.current !== promptSellerMsg.id
+    ) {
+      lastPromptSellerMessageId.current = promptSellerMsg.id;
+      toast({
+        title: "Buyer reported payment",
+        description: "Please verify the payment and confirm the trade.",
+      });
+    }
+
     const ackMsg = reversed.find(
       (m) => String(m?.message) === "__SELLER_RECEIVED_FIAT__",
     );

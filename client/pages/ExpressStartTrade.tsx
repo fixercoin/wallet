@@ -406,15 +406,10 @@ export default function ExpressStartTrade() {
   // Address to trace for transaction detection
   const detectionAddress = useMemo(() => {
     if (localRole === "seller") {
-      return match?.walletAddress || counterpartyBuyerAddress || null;
+      return counterpartyBuyerAddress || null;
     }
     return buyerPublicKey || null; // buyer's own wallet
-  }, [
-    localRole,
-    match?.walletAddress,
-    counterpartyBuyerAddress,
-    buyerPublicKey,
-  ]);
+  }, [localRole, counterpartyBuyerAddress, buyerPublicKey]);
 
   // Poll for transaction detection
   useEffect(() => {
@@ -861,20 +856,16 @@ export default function ExpressStartTrade() {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">Buyer Wallet Address</div>
-                    {match?.walletAddress || counterpartyBuyerAddress ? (
+                    {counterpartyBuyerAddress ? (
                       <div className="mt-1 flex items-center gap-2 rounded-md border px-2 py-1">
                         <span className="font-mono text-xs break-all flex-1">
-                          {match?.walletAddress || counterpartyBuyerAddress}
+                          {counterpartyBuyerAddress}
                         </span>
                         <Button
                           variant="outline"
                           className="h-7 px-2"
                           onClick={() =>
-                            copyToClipboard(
-                              match?.walletAddress ||
-                                counterpartyBuyerAddress ||
-                                "",
-                            )
+                            copyToClipboard(counterpartyBuyerAddress)
                           }
                         >
                           Copy

@@ -212,7 +212,7 @@ export default function ExpressStartTrade() {
     const pkr = Number(params.pkrAmount || 0);
     const units = Number(params.tokenUnits || 0);
     const method = String(params.paymentMethod || "");
-    const msg = `__ORDER_STARTED__|side=${side};token=${token};pkr=${pkr};units=${units};method=${method}`;
+    const msg = `__ORDER_STARTED__|side=${side};token=${token};pkr=${pkr};units=${units};method=${method};tid=${tradeId}`;
     (async () => {
       try {
         await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
@@ -946,6 +946,12 @@ export default function ExpressStartTrade() {
                               "__PROMPT_SELLER_CONFIRM__",
                               localRole,
                             );
+                            if (buyerPublicKey) {
+                              await sendSystemMessage(
+                                `__BUYER_WALLET__|addr=${buyerPublicKey}`,
+                                localRole,
+                              );
+                            }
                             setAwaitingApproval(true);
                             setBuyerMarkedPaid(true);
                             try {

@@ -683,6 +683,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             const pkr = Number(parts.pkr || 0);
             const units = Number(parts.units || 0);
             const method = String(parts.method || "");
+            const tid = String(parts.tid || "");
             const nextSide = side === "buy" ? "sell" : "buy";
             navigate("/express/start-trade", {
               state: {
@@ -691,6 +692,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 pkrAmount: pkr,
                 tokenUnits: units,
                 paymentMethod: method,
+                tradeId: tid || undefined,
               },
             });
           }

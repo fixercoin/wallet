@@ -440,57 +440,98 @@ export const handler = async (event: any) => {
       const BINANCE_P2P_ENDPOINTS = [
         "https://p2p.binance.com",
         "https://c2c.binance.com",
+        "https://www.binance.com",
       ];
       const subPath = path.replace(/^\/binance-p2p\//, "/");
       const search = event.rawQuery ? `?${event.rawQuery}` : "";
+      const requestBody =
+        event.httpMethod !== "GET" && event.httpMethod !== "HEAD"
+          ? event.body ?? undefined
+          : undefined;
+      const cacheKey = `${event.httpMethod}:${subPath}${search}:${requestBody ?? ""}`;
+      const cached = BINANCE_P2P_CACHE.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return jsonResponse(200, cached.data);
+      }
+
+      const headersLower = event.headers || {};
+      const uaHeader =
+        headersLower["user-agent"] ||
+        headersLower["User-Agent"] ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+      const traceId = uniqueId().replace(/-/g, "");
+      const sessionId = uniqueId().replace(/-/g, "");
+      const deviceInfo = buildDeviceInfoPayload(uaHeader);
+
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": uaHeader,
+        clienttype: "web",
+        "cache-control": "no-cache",
+        Origin: "https://p2p.binance.com",
+        Referer: "https://p2p.binance.com/en",
+        lang: "en",
+        platform: "web",
+        "Accept-Language": "en-US,en;q=0.9",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Trace-Id": traceId,
+        "device-info": deviceInfo,
+        "bnc-uuid": sessionId,
+        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
+        csrftoken: traceId,
+        "X-CSRF-TOKEN": traceId,
+        timezone: "UTC",
+      };
+
+      if (requestBody === undefined) {
+        delete baseHeaders["Content-Type"];
+      }
+
       let lastErr = "";
       for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
         const base = BINANCE_P2P_ENDPOINTS[i];
         const target = `${base}${subPath}${search}`;
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
-          const resp = await fetch(target, {
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          const init: RequestInit = {
             method: event.httpMethod,
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              clienttype: "web",
-              "cache-control": "no-cache",
-              Origin: "https://p2p.binance.com",
-              Referer: "https://p2p.binance.com/en",
-              lang: "en",
-              platform: "web",
-              "Accept-Language": "en-US,en;q=0.9",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-            body:
-              event.body &&
-              event.httpMethod !== "GET" &&
-              event.httpMethod !== "HEAD"
-                ? event.body
-                : undefined,
+            headers: baseHeaders,
             signal: controller.signal,
-          });
+          };
+          if (requestBody !== undefined) {
+            init.body = requestBody;
+          }
+          const resp = await fetch(target, init);
           clearTimeout(timeout);
           if (!resp.ok) {
-            if ([429, 502, 503].includes(resp.status)) continue;
+            if ([403, 429, 502, 503].includes(resp.status)) {
+              lastErr = `${resp.status} ${resp.statusText}`;
+              await new Promise((resolve) => setTimeout(resolve, 150));
+              continue;
+            }
             const t = await resp.text().catch(() => "");
             return jsonResponse(resp.status, { error: t || resp.statusText });
           }
-          const text = await resp.text();
-          try {
-            const json = JSON.parse(text);
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const json = await resp.json();
+            BINANCE_P2P_CACHE.set(cacheKey, {
+              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
+              data: json,
+            });
             return jsonResponse(200, json);
-          } catch {
-            return jsonResponse(200, text, { "Content-Type": "text/plain" });
           }
+          const text = await resp.text();
+          return jsonResponse(200, text, {
+            "Content-Type": contentType || "text/plain",
+          });
         } catch (e) {
           lastErr = e instanceof Error ? e.message : String(e);
         }
       }
+      BINANCE_P2P_CACHE.delete(cacheKey);
       return jsonResponse(502, {
         error: "All Binance P2P endpoints failed",
         details: lastErr,

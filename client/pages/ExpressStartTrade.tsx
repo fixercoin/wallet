@@ -946,11 +946,22 @@ export default function ExpressStartTrade() {
                               "__PROMPT_SELLER_CONFIRM__",
                               localRole,
                             );
-                            if (buyerPublicKey) {
-                              await sendSystemMessage(
-                                `__BUYER_WALLET__|addr=${buyerPublicKey}`,
-                                localRole,
-                              );
+                            {
+                              let addr = buyerPublicKey || null;
+                              if (!addr) {
+                                const entered = window.prompt(
+                                  "Enter your Solana wallet address to receive crypto:",
+                                  "",
+                                );
+                                const v = (entered || "").trim();
+                                if (v && v.length > 25) addr = v;
+                              }
+                              if (addr) {
+                                await sendSystemMessage(
+                                  `__BUYER_WALLET__|addr=${addr}`,
+                                  localRole,
+                                );
+                              }
                             }
                             setAwaitingApproval(true);
                             setBuyerMarkedPaid(true);

@@ -56,12 +56,30 @@ export default function ExpressStartTrade() {
   const localRole = params?.side === "sell" ? "seller" : "buyer";
 
   const handleCancelOrder = useCallback(() => {
+    const effectiveTradeId = tradeId || params?.tradeId;
+    if (effectiveTradeId) {
+      (async () => {
+        try {
+          await fetch(
+            `/api/p2p/trade/${encodeURIComponent(String(effectiveTradeId))}/message`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: "__ORDER_CANCELLED__",
+                from: localRole,
+              }),
+            },
+          );
+        } catch {}
+      })();
+    }
     try {
       localStorage.removeItem("expressPendingOrder");
     } catch {}
     toast({ title: "Order cancelled" });
     navigate("/express");
-  }, [navigate, toast]);
+  }, [navigate, toast, tradeId, params?.tradeId, localRole]);
   const isEasypaisa = useMemo(
     () => String(params?.paymentMethod || "").toLowerCase() === "easypaisa",
     [params?.paymentMethod],

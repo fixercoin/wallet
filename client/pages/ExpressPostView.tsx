@@ -104,6 +104,7 @@ export default function ExpressPostView() {
       setPost(data.post);
       setEditing(false);
       toast({ title: "Post saved" });
+      navigate("/express/post-order-detail");
     } catch (e) {
       toast({ title: "Failed to save post", variant: "destructive" });
     }

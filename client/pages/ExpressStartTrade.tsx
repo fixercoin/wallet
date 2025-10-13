@@ -205,6 +205,7 @@ export default function ExpressStartTrade() {
   const lastSellerApprovedMessageId = useRef<string | null>(null);
   const lastPromptSellerMessageId = useRef<string | null>(null);
   const lastPromptBuyerMessageId = useRef<string | null>(null);
+  const lastSellerDetailsMessageId = useRef<string | null>(null);
   useEffect(() => {
     if (!tradeId || !params?.side) return;
     if (orderInitSentRef.current === tradeId) return;

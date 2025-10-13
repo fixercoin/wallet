@@ -594,9 +594,14 @@ export default function ExpressStartTrade() {
     return null;
   }, [match, params?.paymentMethod, isEasypaisa]);
 
+  const displayedSellerPaymentDetails = useMemo(
+    () => remoteSellerDetails ?? sellerPaymentDetails,
+    [remoteSellerDetails, sellerPaymentDetails],
+  );
+
   const sellerPaymentMethodLabel = useMemo(() => {
     const raw =
-      sellerPaymentDetails?.method ||
+      displayedSellerPaymentDetails?.method ||
       params?.paymentMethod ||
       match?.paymentMethod ||
       "";

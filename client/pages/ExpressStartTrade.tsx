@@ -981,15 +981,6 @@ export default function ExpressStartTrade() {
                       </Button>
                     )}
 
-                    {txDetected && (
-                      <Button
-                        variant="outline"
-                        onClick={handleBuyerConfirm}
-                        className="h-9"
-                      >
-                        Confirm
-                      </Button>
-                    )}
                   </div>
                 </div>
               ) : (
@@ -1017,15 +1008,12 @@ export default function ExpressStartTrade() {
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
-                      Send the tokens to the buyer wallet address above. Once
-                      the transaction is confirmed on-chain, the Confirm button
-                      will appear.
+                      Once the buyer marks as paid, verify you received fiat and click “I have received payment” to complete the order.
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      disabled={!txDetected}
                       onClick={async () => {
                         if (!tradeId) return;
                         try {
@@ -1035,14 +1023,16 @@ export default function ExpressStartTrade() {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({
-                                message: "__SELLER_CONFIRMED__",
+                                message: "__SELLER_APPROVED__",
                                 from: "seller",
                               }),
                             },
                           );
                           if (!resp.ok) throw new Error("failed");
-                          setAwaitingApproval(true);
-                          toast({ title: "You confirmed settlement" });
+                          finalizeOrder("seller", {
+                            toastTitle: "Order completed",
+                            toastDescription: "You confirmed receiving payment.",
+                          });
                         } catch (e) {
                           toast({
                             title: "Confirmation failed",
@@ -1052,7 +1042,7 @@ export default function ExpressStartTrade() {
                       }}
                       className="h-9"
                     >
-                      Confirm
+                      I have received payment
                     </Button>
 
                     {sellerConfirmed && (
@@ -1082,11 +1072,7 @@ export default function ExpressStartTrade() {
             <div className="dashboard-loader-overlay">
               <div className="dashboard-loader" />
               <div className="flex flex-col items-center gap-2">
-                <div className="text-sm">
-                  {!txDetected
-                    ? "Waiting for transaction…"
-                    : "Transaction detected"}
-                </div>
+                <div className="text-sm">Waiting for seller confirmation…</div>
                 {!isEasypaisa && (
                   <div className="mt-2 text-xs font-mono">
                     Buyer wallet: {buyerPublicKey || "(no wallet selected)"}

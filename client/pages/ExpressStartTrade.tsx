@@ -473,6 +473,50 @@ export default function ExpressStartTrade() {
       }
     }
 
+    const sellerDetailsMsg = reversed.find(
+      (m) =>
+        typeof m?.message === "string" &&
+        m.message.startsWith("__SELLER_PAYMENT_DETAILS__|"),
+    );
+    if (
+      sellerDetailsMsg &&
+      sellerDetailsMsg.id &&
+      sellerDetailsMsg.from !== localRole &&
+      lastSellerDetailsMessageId.current !== sellerDetailsMsg.id
+    ) {
+      lastSellerDetailsMessageId.current = sellerDetailsMsg.id;
+      const raw = String(sellerDetailsMsg.message).split("|")[1] || "";
+      const parsed = Object.fromEntries(
+        raw
+          .split(";")
+          .map((s) => s.split("=").map((x) => x.trim()))
+          .filter((parts) => parts.length === 2),
+      ) as Record<string, string>;
+      const detailRecord = {
+        accountName: parsed.name || parsed.accountName || "",
+        accountNumber: parsed.account || parsed.accountNumber || "",
+        method: parsed.method || "",
+      };
+      setRemoteSellerDetails(detailRecord);
+      if (localRole === "buyer") {
+        const summary = [
+          detailRecord.accountName
+            ? `Name: ${detailRecord.accountName}`
+            : null,
+          detailRecord.accountNumber
+            ? `Account: ${detailRecord.accountNumber}`
+            : null,
+          detailRecord.method ? `Method: ${detailRecord.method}` : null,
+        ]
+          .filter(Boolean)
+          .join(" • ");
+        toast({
+          title: "Seller payment details",
+          description: summary || "Seller shared payment instructions.",
+        });
+      }
+    }
+
     const sellerApprovedMsg = reversed.find(
       (m) => String(m?.message) === "__SELLER_APPROVED__",
     );

@@ -85,7 +85,7 @@ export default function ExpressStartTrade() {
       message?: string;
       toastTitle?: string;
       toastDescription?: string;
-      variant?: "default" | "destructive" | "success" | "info";
+      variant?: "default" | "destructive";
     }) => {
       if (sellerConfirmTimeoutRef.current) {
         window.clearTimeout(sellerConfirmTimeoutRef.current);

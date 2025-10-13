@@ -279,7 +279,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         });
 
         const resp = await fetch(
-          `/api/binance-p2p/bapi/c2c/v2/friendly/c2c/adv/search`,
+          `/api/binance-p2p/bapi/c2c/v2/public/c2c/adv/search`,
           {
             method: "POST",
             headers: {

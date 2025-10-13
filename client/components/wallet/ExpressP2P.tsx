@@ -405,6 +405,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [walletAddressInput, setWalletAddressInput] = useState("");
 
   useEffect(() => {
     try {

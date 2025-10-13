@@ -230,7 +230,11 @@ export default function ExpressStartTrade() {
     if (!raw) return "";
     const value = String(raw);
     return value.charAt(0).toUpperCase() + value.slice(1);
-  }, [sellerPaymentDetails?.method, params?.paymentMethod, match?.paymentMethod]);
+  }, [
+    sellerPaymentDetails?.method,
+    params?.paymentMethod,
+    match?.paymentMethod,
+  ]);
 
   // Easypaisa auto-detect polling (buy/sell payment method)
   useEffect(() => {
@@ -432,17 +436,14 @@ export default function ExpressStartTrade() {
     try {
       if (localRole === "buyer" && isEasypaisa && !fiatConfirmationSent) {
         try {
-          await fetch(
-            `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message: "__CONFIRMED_SETTLEMENT__",
-                from: localRole,
-              }),
-            },
-          );
+          await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: "__CONFIRMED_SETTLEMENT__",
+              from: localRole,
+            }),
+          });
           setFiatConfirmationSent(true);
         } catch {}
       }
@@ -640,7 +641,9 @@ export default function ExpressStartTrade() {
                                 `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
                                 {
                                   method: "POST",
-                                  headers: { "Content-Type": "application/json" },
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
                                   body: JSON.stringify({
                                     message: "__CONFIRMED_SETTLEMENT__",
                                     from: localRole,
@@ -665,7 +668,8 @@ export default function ExpressStartTrade() {
                                 );
                               } catch {}
                               toast({
-                                title: "Marked as paid. Waiting for transaction.",
+                                title:
+                                  "Marked as paid. Waiting for transaction.",
                               });
                             } catch (e) {
                               toast({
@@ -788,7 +792,9 @@ export default function ExpressStartTrade() {
                   </div>
                 ) : (
                   <div className="text-sm">
-                    {!txDetected ? "Waiting for transaction…" : "Transaction detected"}
+                    {!txDetected
+                      ? "Waiting for transaction…"
+                      : "Transaction detected"}
                   </div>
                 )}
                 {!isEasypaisa && (

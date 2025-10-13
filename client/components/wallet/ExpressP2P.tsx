@@ -248,14 +248,67 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     };
   }, [selectedToken]);
 
-  // Fetch Binance price for selected token when needed
+  // Fetch Binance P2P price (server proxied) for selected token when needed to avoid CORS
   useEffect(() => {
     let abort = false;
-    const loadBinance = async () => {
+    const loadBinanceP2P = async () => {
       try {
         setLoadingBinance(true);
         setBinanceError(null);
         setBinancePriceUsd(null);
+
+        // Only fetch for tokens that Binance P2P supports; USDC/USDT are commonly supported.
+        const asset =
+          selectedToken === "USDC"
+            ? "USDC"
+            : selectedToken === "SOL"
+              ? "SOL"
+              : selectedToken;
+
+        // Use Binance P2P search endpoint via server proxy to avoid CORS issues
+        const body = JSON.stringify({
+          asset: asset,
+          fiat: "PKR",
+          merchantCheck: false,
+          page: 1,
+          rows: 20,
+          tradeType: "SELL",
+        });
+
+        const resp = await fetch(
+          `/api/binance-p2p/bapi/c2c/v2/friendly/c2c/adv/search`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body,
+          },
+        );
+
+        if (!resp.ok) {
+          // fallback to standard Binance REST API proxied via /api/binance
+          throw new Error("p2p proxy failed");
+        }
+
+        const json = await resp.json().catch(() => null as any);
+        const data = json?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          // each item has adv.price and adv.tradeMethods etc. Compute median price
+          const prices = data
+            .map((d: any) => Number(d?.adv?.price))
+            .filter((p: number) => isFinite(p) && p > 0)
+            .slice(0, 10);
+          if (prices.length > 0) {
+            // average
+            const sum = prices.reduce((a: number, b: number) => a + b, 0);
+            const avg = sum / prices.length;
+            if (!abort) setBinancePriceUsd(avg);
+            return;
+          }
+        }
+
+        // fallback: use Binance spot ticker proxied
         const mapSymbol = (tok: string) => {
           if (tok === "USDC") return "USDCUSDT";
           if (tok === "SOL") return "SOLUSDT";
@@ -263,22 +316,25 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           return `${tok}USDT`;
         };
         const symbol = mapSymbol(selectedToken);
-        const resp = await fetch(
-          `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`,
+        const fallbackResp = await fetch(
+          `/api/binance/api/v3/ticker/price?symbol=${symbol}`,
         );
-        if (!resp.ok) throw new Error("binance request failed");
-        const json = await resp.json();
-        const price = Number(json?.price);
+        if (!fallbackResp.ok) throw new Error("binance fallback failed");
+        const fj = await fallbackResp.json();
+        const price = Number(fj?.price);
         if (!abort && price && isFinite(price) && price > 0) {
           setBinancePriceUsd(price);
+          return;
         }
+
+        if (!abort) setBinanceError("Binance price unavailable");
       } catch (e) {
         if (!abort) setBinanceError("Binance price unavailable");
       } finally {
         if (!abort) setLoadingBinance(false);
       }
     };
-    loadBinance();
+    loadBinanceP2P();
     return () => {
       abort = true;
     };
@@ -290,23 +346,39 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return isFinite(val) && val > 0 ? val : null;
   }, [binancePriceUsd, pkrPerUsd]);
 
-  // Buy: PKR -> token units
+  // Hidden fees
+  const FLAT_FEE_PKR = 2.5; // flat fee for buy/sell in PKR
+  const FIXERCOIN_FEE_PCT = 0.05; // 5% for Fixercoin
+
+  // Buy: PKR -> token units (apply hidden fees: flat PKR and optional Fixercoin %)
   const buyReceiveAmount = useMemo(() => {
     const amt = parseFloat(pkrAmount || "0");
     if (!pkrPerUsd || !isFinite(amt) || !tokenPriceUsd) return "0";
-    const usd = amt / pkrPerUsd;
+    // Apply flat fee
+    let effectivePkr = Math.max(0, amt - FLAT_FEE_PKR);
+    // If buying Fixercoin, charge 5% of the PKR amount
+    if (selectedToken === "FIXERCOIN") {
+      effectivePkr = Math.max(0, effectivePkr - amt * FIXERCOIN_FEE_PCT);
+    }
+    const usd = effectivePkr / pkrPerUsd;
     const units = usd / tokenPriceUsd;
     return units > 0 ? units.toFixed(4) : "0";
-  }, [pkrAmount, pkrPerUsd, tokenPriceUsd]);
+  }, [pkrAmount, pkrPerUsd, tokenPriceUsd, selectedToken]);
 
-  // Sell: token units -> PKR
+  // Sell: token units -> PKR (apply hidden fees)
   const sellReceivePkr = useMemo(() => {
     const units = parseFloat(tokenAmount || "0");
     if (!pkrPerUsd || !isFinite(units) || !tokenPriceUsd) return "0";
     const usd = units * tokenPriceUsd;
-    const pkr = usd * pkrPerUsd;
+    let pkr = usd * pkrPerUsd;
+    // Apply flat fee
+    pkr = Math.max(0, pkr - FLAT_FEE_PKR);
+    // If selling Fixercoin, charge 5% of the PKR amount
+    if (selectedToken === "FIXERCOIN") {
+      pkr = Math.max(0, pkr - pkr * FIXERCOIN_FEE_PCT);
+    }
     return pkr > 0 ? pkr.toFixed(2) : "0";
-  }, [tokenAmount, pkrPerUsd, tokenPriceUsd]);
+  }, [tokenAmount, pkrPerUsd, tokenPriceUsd, selectedToken]);
 
   const handleConnect = async () => {
     setConnectMsg("Detecting wallet … connecting to wallet");

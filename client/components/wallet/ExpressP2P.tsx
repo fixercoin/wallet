@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -27,6 +33,14 @@ import {
 
 interface ExpressP2PProps {
   onBack?: () => void;
+}
+
+interface PendingOrderSnapshot {
+  tradeId: string;
+  minimized: boolean;
+  status?: string;
+  params: Record<string, any>;
+  ts?: number;
 }
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
@@ -136,14 +150,41 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
   // Pending order (resume if interrupted)
-  const [pendingOrder, setPendingOrder] = useState<any | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<PendingOrderSnapshot | null>(
+    null,
+  );
+
+  const persistPendingOrder = useCallback(
+    (snapshot: PendingOrderSnapshot | null) => {
+      if (!snapshot) {
+        try {
+          localStorage.removeItem("expressPendingOrder");
+        } catch {}
+        setPendingOrder(null);
+        return;
+      }
+      try {
+        localStorage.setItem("expressPendingOrder", JSON.stringify(snapshot));
+      } catch {}
+      setPendingOrder(snapshot);
+    },
+    [],
+  );
+
   useEffect(() => {
     const read = () => {
       try {
         const raw = localStorage.getItem("expressPendingOrder");
-        if (!raw) return setPendingOrder(null);
-        const parsed = JSON.parse(raw);
-        setPendingOrder(parsed || null);
+        if (!raw) {
+          setPendingOrder(null);
+          return;
+        }
+        const parsed = JSON.parse(raw) as PendingOrderSnapshot;
+        if (parsed && typeof parsed === "object" && parsed.tradeId) {
+          setPendingOrder(parsed);
+        } else {
+          setPendingOrder(null);
+        }
       } catch {
         setPendingOrder(null);
       }
@@ -156,6 +197,41 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // Handle pending order actions
+  const clearPendingOrder = useCallback(() => {
+    persistPendingOrder(null);
+  }, [persistPendingOrder]);
+
+  const resumePendingOrder = useCallback(() => {
+    if (!pendingOrder) return;
+    const params = pendingOrder.params || {};
+    navigate("/express/start-trade", {
+      state: {
+        ...(params as Record<string, any>),
+        tradeId: pendingOrder.tradeId,
+      },
+    });
+  }, [navigate, pendingOrder]);
+
+  const minimizePendingOrder = useCallback(() => {
+    if (!pendingOrder) return;
+    persistPendingOrder({
+      ...pendingOrder,
+      minimized: true,
+      ts: Date.now(),
+    });
+  }, [pendingOrder, persistPendingOrder]);
+
+  const expandPendingOrder = useCallback(() => {
+    if (!pendingOrder) return;
+    persistPendingOrder({
+      ...pendingOrder,
+      minimized: false,
+      ts: Date.now(),
+    });
+  }, [pendingOrder, persistPendingOrder]);
+
+  // Auto-resume pending order on mount (from main branch)
   const notifiedRef = useRef(false);
   useEffect(() => {
     if (!pendingOrder || notifiedRef.current) return;
@@ -488,31 +564,51 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const handlePrimary = () => {
     const paymentMethodId: PaymentMethodId = detectedMethod || "bank";
+    const makeSnapshot = (params: Record<string, any>) => {
+      const snapshot: PendingOrderSnapshot = {
+        tradeId: `express-${Date.now()}`,
+        minimized: false,
+        status: "pending",
+        params,
+        ts: Date.now(),
+      };
+      persistPendingOrder(snapshot);
+      toast({
+        title: "Pending order created",
+        description:
+          params.side === "sell"
+            ? "Share the summary with the buyer before proceeding."
+            : "Review the pending order before continuing to trade.",
+      });
+    };
+
     if (buyActive) {
       const amountPkr = parseFloat(pkrAmount || "0");
       if (!amountPkr || !pkrPerUsd || amountPkr <= 0) return;
       const units = parseFloat(buyReceiveAmount || "0");
-      navigate("/express/start-trade", {
-        state: {
-          side: "buy",
-          pkrAmount: amountPkr,
-          token: selectedToken,
-          tokenUnits: units,
-          paymentMethod: paymentMethodId,
-        },
+      makeSnapshot({
+        side: "buy",
+        pkrAmount: amountPkr,
+        token: selectedToken,
+        tokenUnits: units,
+        paymentMethod: paymentMethodId,
+        accountName: accountName || undefined,
+        accountNumber: accountNumber || undefined,
+        walletAddress: walletAddressInput || undefined,
       });
     } else {
       const units = parseFloat(tokenAmount || "0");
       const pkr = parseFloat(sellReceivePkr || "0");
       if (!units || !pkrPerUsd || units <= 0) return;
-      navigate("/express/start-trade", {
-        state: {
-          side: "sell",
-          pkrAmount: pkr,
-          token: selectedToken,
-          tokenUnits: units,
-          paymentMethod: paymentMethodId,
-        },
+      makeSnapshot({
+        side: "sell",
+        pkrAmount: pkr,
+        token: selectedToken,
+        tokenUnits: units,
+        paymentMethod: paymentMethodId,
+        accountName: accountName || undefined,
+        accountNumber: accountNumber || undefined,
+        walletAddress: walletAddressInput || undefined,
       });
     }
   };
@@ -651,7 +747,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          {pendingOrder && (
+          {pendingOrder?.minimized && (
             <div className="mb-3 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs">
               <div className="font-medium">Pending Order</div>
               <div className="flex gap-2">
@@ -659,12 +755,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs"
-                  onClick={() => {
-                    const st = (pendingOrder && pendingOrder.params) || {};
-                    navigate("/express/start-trade", {
-                      state: { ...(st || {}), tradeId: pendingOrder?.tradeId },
-                    });
-                  }}
+                  onClick={resumePendingOrder}
                 >
                   Continue
                 </Button>
@@ -672,12 +763,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   size="sm"
                   variant="ghost"
                   className="h-7 text-xs"
-                  onClick={() => {
-                    try {
-                      localStorage.removeItem("expressPendingOrder");
-                    } catch {}
-                    setPendingOrder(null);
-                  }}
+                  onClick={expandPendingOrder}
+                >
+                  Show details
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={clearPendingOrder}
                 >
                   Dismiss
                 </Button>
@@ -692,6 +786,114 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           )}
 
           <div className="rounded-2xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-3">
+            {!pendingOrder?.minimized && pendingOrder && (
+              <div className="mb-4 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-4 text-sm">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold uppercase">
+                      Pending{" "}
+                      {pendingOrder.params?.side === "sell" ? "Sell" : "Buy"}{" "}
+                      Order
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {pendingOrder.params?.side === "sell"
+                        ? "Share payment instructions with the buyer before you continue."
+                        : "Review the summary and continue when both sides are ready."}
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground font-mono break-all">
+                    {pendingOrder.tradeId}
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Token</span>
+                    <span>{pendingOrder.params?.token ?? "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>PKR Value</span>
+                    <span>
+                      {typeof pendingOrder.params?.pkrAmount === "number"
+                        ? pendingOrder.params.pkrAmount.toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Token Units</span>
+                    <span>
+                      {typeof pendingOrder.params?.tokenUnits === "number"
+                        ? pendingOrder.params.tokenUnits.toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 4,
+                              maximumFractionDigits: 4,
+                            },
+                          )
+                        : "—"}
+                    </span>
+                  </div>
+                  {pendingOrder.params?.paymentMethod && (
+                    <div className="flex justify-between">
+                      <span>Payment Method</span>
+                      <span className="uppercase">
+                        {String(pendingOrder.params.paymentMethod)}
+                      </span>
+                    </div>
+                  )}
+                  {(pendingOrder.params?.accountName ||
+                    pendingOrder.params?.accountNumber) && (
+                    <div className="rounded-md bg-wallet-purple-50 px-3 py-2 text-xs text-muted-foreground">
+                      {pendingOrder.params?.accountName && (
+                        <div>
+                          <span className="font-medium">Account:</span>{" "}
+                          {pendingOrder.params.accountName}
+                        </div>
+                      )}
+                      {pendingOrder.params?.accountNumber && (
+                        <div>
+                          <span className="font-medium">Number:</span>{" "}
+                          {pendingOrder.params.accountNumber}
+                        </div>
+                      )}
+                      {pendingOrder.params?.walletAddress && (
+                        <div className="font-mono">
+                          <span className="font-medium">Wallet:</span>{" "}
+                          {pendingOrder.params.walletAddress}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    onClick={resumePendingOrder}
+                    className="h-9 rounded-md bg-wallet-purple-500 px-4 py-2 text-white hover:bg-wallet-purple-600"
+                  >
+                    Continue to Review
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={minimizePendingOrder}
+                    className="h-9"
+                  >
+                    Hide for later
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={clearPendingOrder}
+                    className="h-9"
+                  >
+                    Cancel order
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <Button

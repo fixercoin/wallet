@@ -609,7 +609,7 @@ export default function ExpressStartTrade() {
     const value = String(raw);
     return value.charAt(0).toUpperCase() + value.slice(1);
   }, [
-    sellerPaymentDetails?.method,
+    displayedSellerPaymentDetails?.method,
     params?.paymentMethod,
     match?.paymentMethod,
   ]);

@@ -347,6 +347,39 @@ export default function ExpressStartTrade() {
     return buyerPublicKey || null; // buyer's own wallet
   }, [localRole, counterpartyBuyerAddress, buyerPublicKey]);
 
+  const finalizeOrder = useCallback(
+    (
+      source: "buyer" | "seller" | "system",
+      options?: { toastTitle?: string; toastDescription?: string },
+    ) => {
+      if (finalizedRef.current) return;
+      finalizedRef.current = true;
+      setAwaitingApproval(false);
+      setTxDetected(false);
+      setSellerApproved(true);
+      try {
+        localStorage.removeItem("expressPendingOrder");
+      } catch {}
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      try {
+        localStorage.setItem(
+          "expressLastOrder",
+          JSON.stringify({ tradeId, params, ts: Date.now(), source }),
+        );
+      } catch {}
+      if (options?.toastTitle) {
+        toast({ title: options.toastTitle, description: options.toastDescription });
+      }
+      navigate("/express/order-complete", {
+        state: { tradeId, params, ts: Date.now(), source },
+      });
+    },
+    [navigate, params, toast, tradeId],
+  );
+
   // Poll for transaction detection
   useEffect(() => {
     const shouldPoll =

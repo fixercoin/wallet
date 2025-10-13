@@ -196,6 +196,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     });
   }, [pendingOrder, persistPendingOrder]);
 
+  const expandPendingOrder = useCallback(() => {
+    if (!pendingOrder) return;
+    persistPendingOrder({
+      ...pendingOrder,
+      minimized: false,
+      ts: Date.now(),
+    });
+  }, [pendingOrder, persistPendingOrder]);
+
   // P2P market posts (polled for demo realtime)
   const [posts, setPosts] = useState<any[]>([]);
   useEffect(() => {
@@ -618,7 +627,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
-          {pendingOrder && (
+          {pendingOrder?.minimized && (
             <div className="mb-3 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs">
               <div className="font-medium">Pending Order</div>
               <div className="flex gap-2">
@@ -634,9 +643,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   size="sm"
                   variant="ghost"
                   className="h-7 text-xs"
-                  onClick={minimizePendingOrder}
+                  onClick={expandPendingOrder}
                 >
-                  Hide
+                  Show details
                 </Button>
                 <Button
                   size="sm"

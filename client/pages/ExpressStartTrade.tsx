@@ -191,6 +191,55 @@ export default function ExpressStartTrade() {
     );
   }, [match, params]);
 
+  // Easypaisa auto-detect polling (buy/sell payment method)
+  useEffect(() => {
+    const isEasypaisa = String(params?.paymentMethod || "").toLowerCase() === "easypaisa";
+    if (!isEasypaisa) return;
+
+    const msisdn = (window as any)?.EASYPAY_MSISDN || "03107044833";
+    const since = orderStartRef.current - 10 * 60 * 1000;
+
+    const tick = async () => {
+      try {
+        const resp = await fetch(
+          `/api/easypaisa/payments?msisdn=${encodeURIComponent(msisdn)}&since=${since}`,
+        );
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const arr = Array.isArray(data?.payments) ? data.payments : [];
+        const expected = Number(params?.pkrAmount || 0);
+        if (!expected) return;
+        const tol = Math.max(1, expected * 0.01);
+        const hit = arr.find((p: any) => Math.abs(Number(p.amount) - expected) <= tol);
+        if (hit) {
+          if (!fiatDetected) setFiatDetected(true);
+          if (localRole === "buyer" && !awaitingApproval && tradeId) {
+            await fetch(
+              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: "__CONFIRMED_SETTLEMENT__", from: localRole }),
+              },
+            ).catch(() => {});
+            setAwaitingApproval(true);
+          }
+        }
+      } catch {}
+    };
+
+    tick();
+    if (easypayPollRef.current) clearInterval(easypayPollRef.current);
+    easypayPollRef.current = window.setInterval(tick, 5000);
+
+    return () => {
+      if (easypayPollRef.current) {
+        clearInterval(easypayPollRef.current);
+        easypayPollRef.current = null;
+      }
+    };
+  }, [params?.paymentMethod, params?.pkrAmount, localRole, awaitingApproval, tradeId]);
+
   // Address to trace for transaction detection
   const detectionAddress = useMemo(() => {
     if (localRole === "seller") {

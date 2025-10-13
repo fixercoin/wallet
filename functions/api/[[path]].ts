@@ -167,6 +167,7 @@ function buildDeviceInfoPayload(userAgent: string): string {
 }
 
 import p2pHandler from "./p2p";
+import { addEasypaisaPayment, listEasypaisaPayments } from "../../utils/p2pStore";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);

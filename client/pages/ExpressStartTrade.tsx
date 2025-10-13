@@ -452,6 +452,11 @@ export default function ExpressStartTrade() {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">Seller Payment Details</div>
+                    {fiatDetected && (
+                      <div className="mt-1 rounded bg-green-50 p-2 text-green-700 text-xs">
+                        Easypaisa payment detected for this order.
+                      </div>
+                    )}
                     {match?.paymentDetails ? (
                       <div className="mt-1 space-y-1">
                         <div>

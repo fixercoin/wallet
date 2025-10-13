@@ -378,13 +378,38 @@ export default function ExpressStartTrade() {
     fiatDetected,
   ]);
 
+  // Proactively share buyer wallet address with counterparty via message
+  useEffect(() => {
+    if (!tradeId) return;
+    if (localRole !== "buyer") return;
+    if (!buyerPublicKey) return;
+    if (buyerAddrSentRef.current === tradeId) return;
+    (async () => {
+      try {
+        await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: `__BUYER_WALLET__|addr=${buyerPublicKey}`,
+            from: localRole,
+          }),
+        });
+        buyerAddrSentRef.current = tradeId;
+      } catch {}
+    })();
+  }, [tradeId, localRole, buyerPublicKey]);
+
   // Address to trace for transaction detection
   const detectionAddress = useMemo(() => {
     if (localRole === "seller") {
-      return match?.walletAddress || null; // buyer address from BUY post
+      return (
+        match?.walletAddress ||
+        counterpartyBuyerAddress ||
+        null
+      );
     }
     return buyerPublicKey || null; // buyer's own wallet
-  }, [localRole, match?.walletAddress, buyerPublicKey]);
+  }, [localRole, match?.walletAddress, counterpartyBuyerAddress, buyerPublicKey]);
 
   // Poll for transaction detection
   useEffect(() => {

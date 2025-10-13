@@ -23,7 +23,9 @@ interface ExpressP2PProps {
 }
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-1 text-xs font-medium text-muted-foreground">{children}</div>
+  <div className="mb-1 text-xs font-medium text-muted-foreground">
+    {children}
+  </div>
 );
 
 const CurrencyBadge = ({ label }: { label: string }) => (
@@ -69,7 +71,10 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
 
 function detectPaymentMethod(accountNumber: string): PaymentMethodId {
   const v = String(accountNumber || "").trim();
-  const phoneLike = /^(?:\+?92|0)3\d{2}\d{7}$/.test(v) || /^92\d{10}$/.test(v) || /^03\d{9}$/.test(v);
+  const phoneLike =
+    /^(?:\+?92|0)3\d{2}\d{7}$/.test(v) ||
+    /^92\d{10}$/.test(v) ||
+    /^03\d{9}$/.test(v);
   if (phoneLike) return "easypaisa";
   if (/^FP/i.test(v) || /firstpay/i.test(v)) return "firstpay";
   if (/^PK/i.test(v) || /\d{10,}/.test(v)) return "bank";
@@ -552,7 +557,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       </div>
                     </div>
                     {tokenPriceError && (
-                      <div className="mt-1 text-[10px] text-destructive">{tokenPriceError}</div>
+                      <div className="mt-1 text-[10px] text-destructive">
+                        {tokenPriceError}
+                      </div>
                     )}
                   </div>
                 </>
@@ -628,7 +635,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5" />
                 <span>
-                  1 {selectedToken} ≈ {loadingRate || loadingTokenPrice ? "—" : pkrPerUsd && tokenPriceUsd ? (pkrPerUsd * tokenPriceUsd).toFixed(2) : "—"} PKR
+                  1 {selectedToken} ≈{" "}
+                  {loadingRate || loadingTokenPrice
+                    ? "—"
+                    : pkrPerUsd && tokenPriceUsd
+                      ? (pkrPerUsd * tokenPriceUsd).toFixed(2)
+                      : "—"}{" "}
+                  PKR
                 </span>
                 {rateError && <span className="ml-1">({rateError})</span>}
               </div>
@@ -640,19 +653,30 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     {accountName || accountNumber ? (
                       <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-sm">
                         <div className="flex items-center justify-between">
-                          <div className="font-medium">{accountName || "Unnamed"}</div>
-                          <span className="rounded-full bg-white px-2 py-0.5 text-xs">{detectedMethod.toUpperCase()}</span>
+                          <div className="font-medium">
+                            {accountName || "Unnamed"}
+                          </div>
+                          <span className="rounded-full bg-white px-2 py-0.5 text-xs">
+                            {detectedMethod.toUpperCase()}
+                          </span>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           Account: {accountNumber || "—"}
                         </div>
                         <div className="mt-2">
-                          <Button variant="outline" className="h-8 text-xs" onClick={() => setDetailsOpen(true)}>Edit</Button>
+                          <Button
+                            variant="outline"
+                            className="h-8 text-xs"
+                            onClick={() => setDetailsOpen(true)}
+                          >
+                            Edit
+                          </Button>
                         </div>
                       </div>
                     ) : (
                       <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-xs text-muted-foreground">
-                        No payment details added. Use the + button at the top to add your name and account number.
+                        No payment details added. Use the + button at the top to
+                        add your name and account number.
                       </div>
                     )}
                   </>
@@ -660,7 +684,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   <>
                     <SectionLabel>Sell Instructions</SectionLabel>
                     <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 px-3 py-2 text-xs text-muted-foreground">
-                      After matching with a counterparty, you'll receive payment instructions. No wallet address is required on this page.
+                      After matching with a counterparty, you'll receive payment
+                      instructions. No wallet address is required on this page.
                     </div>
                   </>
                 )}
@@ -690,7 +715,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Payment details</DialogTitle>
-              <DialogDescription>Add your name and account number. Method will be auto-detected.</DialogDescription>
+              <DialogDescription>
+                Add your name and account number. Method will be auto-detected.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div>
@@ -712,11 +739,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 />
               </div>
               <div className="text-xs text-muted-foreground">
-                Detected method: <span className="font-medium">{detectedMethod.toUpperCase()}</span>
+                Detected method:{" "}
+                <span className="font-medium">
+                  {detectedMethod.toUpperCase()}
+                </span>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDetailsOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setDetailsOpen(false)}>
+                Cancel
+              </Button>
               <Button onClick={saveDetails}>Save</Button>
             </DialogFooter>
           </DialogContent>

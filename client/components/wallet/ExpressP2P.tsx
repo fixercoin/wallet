@@ -86,6 +86,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const { wallet } = useWallet();
   const { toast } = useToast();
 
+  // Manual refresh system
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState<number | null>(null);
+  const triggerRefresh = () => {
+    setRefreshTick((x) => x + 1);
+    setLastRefreshed(Date.now());
+    toast({ title: "Refreshed" });
+  };
+
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [pkrAmount, setPkrAmount] = useState<string>(""); // buy: PKR -> token
   const [tokenAmount, setTokenAmount] = useState<string>(""); // sell: token -> PKR

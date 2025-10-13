@@ -204,8 +204,6 @@ export default function ExpressStartTrade() {
 
   // Easypaisa auto-detect polling (buy/sell payment method)
   useEffect(() => {
-    const isEasypaisa =
-      String(params?.paymentMethod || "").toLowerCase() === "easypaisa";
     if (!isEasypaisa) return;
 
     const msisdn = (window as any)?.EASYPAY_MSISDN || "03107044833";
@@ -227,26 +225,49 @@ export default function ExpressStartTrade() {
         );
         if (hit) {
           if (!fiatDetected) setFiatDetected(true);
-          if (localRole === "buyer" && !awaitingApproval && tradeId) {
-            await fetch(
-              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  message: "__CONFIRMED_SETTLEMENT__",
-                  from: localRole,
-                }),
-              },
-            ).catch(() => {});
-            setAwaitingApproval(true);
+          if (localRole === "buyer") {
+            if (!fiatConfirmationSent && tradeId) {
+              try {
+                await fetch(
+                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      message: "__CONFIRMED_SETTLEMENT__",
+                      from: localRole,
+                    }),
+                  },
+                );
+                setFiatConfirmationSent(true);
+              } catch {}
+            }
+            if (!awaitingApproval) {
+              setAwaitingApproval(true);
+              try {
+                const raw = localStorage.getItem("expressPendingOrder");
+                const obj = raw ? JSON.parse(raw) : {};
+                obj.minimized = false;
+                obj.status = "awaiting_approval";
+                obj.params = params;
+                obj.tradeId = tradeId;
+                obj.ts = Date.now();
+                localStorage.setItem(
+                  "expressPendingOrder",
+                  JSON.stringify(obj),
+                );
+              } catch {}
+            }
           }
         }
       } catch {}
     };
 
     tick();
-    if (easypayPollRef.current) clearInterval(easypayPollRef.current);
+    if (easypayPollRef.current) {
+      clearInterval(easypayPollRef.current);
+      easypayPollRef.current = null;
+    }
     easypayPollRef.current = window.setInterval(tick, 5000);
 
     return () => {
@@ -256,11 +277,13 @@ export default function ExpressStartTrade() {
       }
     };
   }, [
-    params?.paymentMethod,
+    isEasypaisa,
     params?.pkrAmount,
     localRole,
     awaitingApproval,
     tradeId,
+    fiatConfirmationSent,
+    params,
   ]);
 
   // Address to trace for transaction detection

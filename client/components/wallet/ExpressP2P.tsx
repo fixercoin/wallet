@@ -196,7 +196,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           const approved = arr.find(
             (m) => String(m?.message) === "__BUYER_APPROVED__",
           );
-          if (!started || approved) return; // only pending
+          const sellerApproved = arr.find(
+            (m) => String(m?.message) === "__SELLER_APPROVED__",
+          );
+          const cancelledTrade = arr.find(
+            (m) => String(m?.message) === "__ORDER_CANCELLED__",
+          );
+          if (!started || approved || sellerApproved || cancelledTrade) return; // only pending
           const part = String(started.message).split("|")[1] || "";
           const parts = Object.fromEntries(
             part

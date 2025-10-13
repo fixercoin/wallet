@@ -100,6 +100,12 @@ export default function ExpressStartTrade() {
         localStorage.removeItem("expressPendingOrder");
       } catch {}
       finalizedRef.current = true;
+      setAwaitingApproval(false);
+      setBuyerMarkedPaid(false);
+      setFiatAcknowledged(false);
+      setSellerConfirmed(false);
+      setSellerSentCrypto(false);
+      setSellerApproved(false);
       toast({
         title: options?.toastTitle ?? "Order cancelled",
         description: options?.toastDescription,

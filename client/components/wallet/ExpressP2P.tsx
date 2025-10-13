@@ -234,7 +234,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   // Auto-resume pending order on mount (from main branch)
   const notifiedRef = useRef(false);
   useEffect(() => {
-    if (!pendingOrder || notifiedRef.current) return;
+    if (!pendingOrder) {
+      notifiedRef.current = false;
+      return;
+    }
+
+    if (pendingOrder.status === "pending") {
+      return;
+    }
+
+    if (notifiedRef.current) return;
     notifiedRef.current = true;
     try {
       const obj = {

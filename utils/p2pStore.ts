@@ -266,7 +266,10 @@ export function addEasypaisaPayment(p: {
   return { payment: entry, status: 201 } as const;
 }
 
-export function listEasypaisaPayments(filters: { msisdn?: string; since?: number }) {
+export function listEasypaisaPayments(filters: {
+  msisdn?: string;
+  since?: number;
+}) {
   let arr = store.easypaisa.slice();
   if (filters.msisdn) arr = arr.filter((p) => p.msisdn === filters.msisdn);
   if (filters.since) arr = arr.filter((p) => p.ts >= Number(filters.since));

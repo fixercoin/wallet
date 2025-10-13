@@ -308,22 +308,36 @@ export const handler = async (event: any) => {
 
       const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
       const providedSecret =
-        event.headers?.["x-webhook-secret"] || event.headers?.["x-easypay-secret"] || body?.secret || "";
+        event.headers?.["x-webhook-secret"] ||
+        event.headers?.["x-easypay-secret"] ||
+        body?.secret ||
+        "";
       if (configuredSecret && providedSecret !== configuredSecret) {
         return jsonResponse(401, { error: "unauthorized" });
       }
 
       const msisdn = String(
-        body?.msisdn || body?.receiverMsisdn || body?.account || process.env.EASYPAY_MSISDN || "",
+        body?.msisdn ||
+          body?.receiverMsisdn ||
+          body?.account ||
+          process.env.EASYPAY_MSISDN ||
+          "",
       );
       const amount = Number(
         body?.amount ?? body?.txnAmount ?? body?.transactionAmount ?? 0,
       );
       const currency = String(body?.currency || "PKR");
       const reference = String(
-        body?.reference || body?.trxId || body?.transactionId || body?.remarks || body?.narration || "",
+        body?.reference ||
+          body?.trxId ||
+          body?.transactionId ||
+          body?.remarks ||
+          body?.narration ||
+          "",
       );
-      const sender = String(body?.senderMsisdn || body?.payer || body?.from || "");
+      const sender = String(
+        body?.senderMsisdn || body?.payer || body?.from || "",
+      );
       const tsRaw = body?.ts ?? body?.timestamp ?? body?.date ?? Date.now();
       const ts = typeof tsRaw === "number" ? tsRaw : Date.parse(tsRaw);
 
@@ -344,7 +358,8 @@ export const handler = async (event: any) => {
 
     // Easypaisa payments query
     if (path === "/easypaisa/payments" && method === "GET") {
-      const msisdn = event.queryStringParameters?.msisdn || process.env.EASYPAY_MSISDN || "";
+      const msisdn =
+        event.queryStringParameters?.msisdn || process.env.EASYPAY_MSISDN || "";
       const since = Number(event.queryStringParameters?.since || 0);
       const data = listEasypaisaPayments({ msisdn, since });
       return jsonResponse(200, data);

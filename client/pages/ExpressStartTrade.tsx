@@ -193,7 +193,8 @@ export default function ExpressStartTrade() {
 
   // Easypaisa auto-detect polling (buy/sell payment method)
   useEffect(() => {
-    const isEasypaisa = String(params?.paymentMethod || "").toLowerCase() === "easypaisa";
+    const isEasypaisa =
+      String(params?.paymentMethod || "").toLowerCase() === "easypaisa";
     if (!isEasypaisa) return;
 
     const msisdn = (window as any)?.EASYPAY_MSISDN || "03107044833";
@@ -210,7 +211,9 @@ export default function ExpressStartTrade() {
         const expected = Number(params?.pkrAmount || 0);
         if (!expected) return;
         const tol = Math.max(1, expected * 0.01);
-        const hit = arr.find((p: any) => Math.abs(Number(p.amount) - expected) <= tol);
+        const hit = arr.find(
+          (p: any) => Math.abs(Number(p.amount) - expected) <= tol,
+        );
         if (hit) {
           if (!fiatDetected) setFiatDetected(true);
           if (localRole === "buyer" && !awaitingApproval && tradeId) {
@@ -219,7 +222,10 @@ export default function ExpressStartTrade() {
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: "__CONFIRMED_SETTLEMENT__", from: localRole }),
+                body: JSON.stringify({
+                  message: "__CONFIRMED_SETTLEMENT__",
+                  from: localRole,
+                }),
               },
             ).catch(() => {});
             setAwaitingApproval(true);
@@ -238,7 +244,13 @@ export default function ExpressStartTrade() {
         easypayPollRef.current = null;
       }
     };
-  }, [params?.paymentMethod, params?.pkrAmount, localRole, awaitingApproval, tradeId]);
+  }, [
+    params?.paymentMethod,
+    params?.pkrAmount,
+    localRole,
+    awaitingApproval,
+    tradeId,
+  ]);
 
   // Address to trace for transaction detection
   const detectionAddress = useMemo(() => {
@@ -371,7 +383,9 @@ export default function ExpressStartTrade() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="text-sm font-semibold uppercase">Order Review</div>
+              <div className="text-sm font-semibold uppercase">
+                Order Review
+              </div>
             </div>
 
             <div className="space-y-1 text-sm">
@@ -479,7 +493,8 @@ export default function ExpressStartTrade() {
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
                       Send the agreed fiat payment to the seller using the
-                      details above. Once you have sent payment, click "I've Paid".
+                      details above. Once you have sent payment, click "I've
+                      Paid".
                     </div>
                   </div>
 
@@ -616,8 +631,9 @@ export default function ExpressStartTrade() {
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground">
-                      Send the tokens to the buyer wallet address above. Once the
-                      transaction is confirmed on-chain, the Confirm button will appear.
+                      Send the tokens to the buyer wallet address above. Once
+                      the transaction is confirmed on-chain, the Confirm button
+                      will appear.
                     </div>
                   </div>
 

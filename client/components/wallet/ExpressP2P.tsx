@@ -159,14 +159,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const notifiedRef = useRef(false);
   useEffect(() => {
     if (!pendingOrder || notifiedRef.current) return;
-    if (String(pendingOrder?.status || "") === "awaiting_approval") {
-      notifiedRef.current = true;
-      toast({
-        title: "New order",
-        description: "Order awaiting your approval",
-      });
-    }
-  }, [pendingOrder, toast]);
+    notifiedRef.current = true;
+    try {
+      const obj = { ...(pendingOrder as any), minimized: false, ts: Date.now() };
+      localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
+    } catch {}
+    const st = (pendingOrder as any)?.params || {};
+    navigate("/express/start-trade", {
+      state: { ...(st || {}), tradeId: (pendingOrder as any)?.tradeId },
+    });
+  }, [pendingOrder, navigate]);
 
   // P2P market posts (polled for demo realtime)
   const [posts, setPosts] = useState<any[]>([]);
@@ -552,9 +554,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             const token = String(parts.token || "");
             const pkr = Number(parts.pkr || 0);
             const units = Number(parts.units || 0);
-            toast({
-              title: side === "sell" ? "New sell order" : "New buy order",
-              description: `${token} ${units || 0} • PKR ${pkr || 0}`,
+            const method = String(parts.method || "");
+            const nextSide = side === "buy" ? "sell" : "buy";
+            navigate("/express/start-trade", {
+              state: {
+                side: nextSide,
+                token,
+                pkrAmount: pkr,
+                tokenUnits: units,
+                paymentMethod: method,
+              },
             });
           }
           maxTs = Math.max(maxTs, Number(m.ts || 0));

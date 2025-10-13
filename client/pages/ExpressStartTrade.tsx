@@ -356,6 +356,12 @@ export default function ExpressStartTrade() {
       } else {
         setSellerConfirmed(true);
         setSellerSentCrypto(true);
+        if (localRole === "buyer") {
+          toast({
+            title: "Seller confirmed transaction",
+            description: "Check your wallet balance and complete the order.",
+          });
+        }
       }
     }
 

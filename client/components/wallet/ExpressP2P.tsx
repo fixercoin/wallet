@@ -383,7 +383,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => {
       abort = true;
     };
-  }, [selectedToken]);
+  }, [selectedToken, refreshTick]);
 
   const binanceRatePkr = useMemo(() => {
     if (!binancePriceUsd || !pkrPerUsd) return null;

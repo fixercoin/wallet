@@ -57,7 +57,11 @@ function PendingOrderMinBar() {
           className="rounded-md border border-[hsl(var(--border))] bg-white px-2 py-1"
           onClick={() => {
             try {
-              const next = { ...(data || {}), minimized: false, ts: Date.now() };
+              const next = {
+                ...(data || {}),
+                minimized: false,
+                ts: Date.now(),
+              };
               localStorage.setItem("expressPendingOrder", JSON.stringify(next));
             } catch {}
             navigate("/express/start-trade", {
@@ -70,7 +74,9 @@ function PendingOrderMinBar() {
         <button
           className="rounded-md px-2 py-1"
           onClick={() => {
-            try { localStorage.removeItem("expressPendingOrder"); } catch {}
+            try {
+              localStorage.removeItem("expressPendingOrder");
+            } catch {}
             setData(null);
           }}
         >

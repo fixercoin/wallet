@@ -92,15 +92,15 @@ export default function ExpressStartTrade() {
   }, [posts, params]);
 
   // Create or reuse a tradeId for messaging scope
-useEffect(() => {
-  const incomingTradeId = (state as any)?.tradeId as string | undefined;
-  if (incomingTradeId) {
-    setTradeId(incomingTradeId);
-    return;
-  }
-  const base = match?.id || "no-post";
-  setTradeId(`${base}-${Date.now()}`);
-}, [match, state]);
+  useEffect(() => {
+    const incomingTradeId = (state as any)?.tradeId as string | undefined;
+    if (incomingTradeId) {
+      setTradeId(incomingTradeId);
+      return;
+    }
+    const base = match?.id || "no-post";
+    setTradeId(`${base}-${Date.now()}`);
+  }, [match, state]);
 
   // Poll messages for this trade
   useEffect(() => {
@@ -125,20 +125,20 @@ useEffect(() => {
     };
   }, [tradeId]);
 
-// Persist a pending order snapshot so users can resume
-useEffect(() => {
-  if (!tradeId) return;
-  const payload = {
-    tradeId,
-    minimized: false,
-    status: "review",
-    params,
-    ts: Date.now(),
-  } as any;
-  try {
-    localStorage.setItem("expressPendingOrder", JSON.stringify(payload));
-  } catch {}
-}, [tradeId]);
+  // Persist a pending order snapshot so users can resume
+  useEffect(() => {
+    if (!tradeId) return;
+    const payload = {
+      tradeId,
+      minimized: false,
+      status: "review",
+      params,
+      ts: Date.now(),
+    } as any;
+    try {
+      localStorage.setItem("expressPendingOrder", JSON.stringify(payload));
+    } catch {}
+  }, [tradeId]);
 
   // Notify when counterparty confirms settlement via special message
   const localRole = params?.side === "sell" ? "seller" : "buyer";
@@ -175,7 +175,9 @@ useEffect(() => {
       if (localRole === "seller") {
         setAwaitingApproval(false);
         toast({ title: "Buyer approved" });
-        try { localStorage.removeItem("expressPendingOrder"); } catch {}
+        try {
+          localStorage.removeItem("expressPendingOrder");
+        } catch {}
         navigate("/express");
       }
     }
@@ -451,7 +453,9 @@ useEffect(() => {
                           );
                           if (!resp.ok) throw new Error("failed");
                           toast({ title: "Approved" });
-                          try { localStorage.removeItem("expressPendingOrder"); } catch {}
+                          try {
+                            localStorage.removeItem("expressPendingOrder");
+                          } catch {}
                           navigate("/express");
                         } catch (e) {
                           toast({
@@ -470,20 +474,27 @@ useEffect(() => {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                       <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
                         <div className="mb-3 flex items-center justify-between">
-                          <div className="text-lg font-semibold">Confirm Settlement</div>
+                          <div className="text-lg font-semibold">
+                            Confirm Settlement
+                          </div>
                           <button
                             aria-label="Minimize"
                             className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-[hsl(var(--border))] hover:bg-gray-50"
                             onClick={() => {
                               try {
-                                const raw = localStorage.getItem("expressPendingOrder");
+                                const raw = localStorage.getItem(
+                                  "expressPendingOrder",
+                                );
                                 const obj = raw ? JSON.parse(raw) : {};
                                 obj.minimized = true;
                                 obj.status = "in_progress";
                                 obj.params = params;
                                 obj.tradeId = tradeId;
                                 obj.ts = Date.now();
-                                localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
+                                localStorage.setItem(
+                                  "expressPendingOrder",
+                                  JSON.stringify(obj),
+                                );
                               } catch {}
                               setShowConfirm(false);
                               navigate("/");
@@ -599,14 +610,19 @@ useEffect(() => {
                                   setAwaitingApproval(true);
                                   setPaymentInProgress(true);
                                   try {
-                                    const raw = localStorage.getItem("expressPendingOrder");
+                                    const raw = localStorage.getItem(
+                                      "expressPendingOrder",
+                                    );
                                     const obj = raw ? JSON.parse(raw) : {};
                                     obj.minimized = false;
                                     obj.status = "awaiting_approval";
                                     obj.params = params;
                                     obj.tradeId = tradeId;
                                     obj.ts = Date.now();
-                                    localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
+                                    localStorage.setItem(
+                                      "expressPendingOrder",
+                                      JSON.stringify(obj),
+                                    );
                                   } catch {}
                                   toast({
                                     title:
@@ -645,16 +661,25 @@ useEffect(() => {
                                   );
                                   if (!resp.ok) throw new Error("failed");
                                   setShowConfirm(false);
-                                  if (localRole === "seller") setAwaitingApproval(true);
+                                  if (localRole === "seller")
+                                    setAwaitingApproval(true);
                                   try {
-                                    const raw = localStorage.getItem("expressPendingOrder");
+                                    const raw = localStorage.getItem(
+                                      "expressPendingOrder",
+                                    );
                                     const obj = raw ? JSON.parse(raw) : {};
                                     obj.minimized = false;
-                                    obj.status = localRole === "seller" ? "awaiting_approval" : "confirmed";
+                                    obj.status =
+                                      localRole === "seller"
+                                        ? "awaiting_approval"
+                                        : "confirmed";
                                     obj.params = params;
                                     obj.tradeId = tradeId;
                                     obj.ts = Date.now();
-                                    localStorage.setItem("expressPendingOrder", JSON.stringify(obj));
+                                    localStorage.setItem(
+                                      "expressPendingOrder",
+                                      JSON.stringify(obj),
+                                    );
                                   } catch {}
                                   toast({ title: "You confirmed settlement" });
                                 } catch (e) {
@@ -735,7 +760,9 @@ useEffect(() => {
                           if (!resp.ok) throw new Error("failed");
                           setAwaitingApproval(false);
                           setTxDetected(false);
-                          try { localStorage.removeItem("expressPendingOrder"); } catch {}
+                          try {
+                            localStorage.removeItem("expressPendingOrder");
+                          } catch {}
                           if (pollRef.current) {
                             window.clearInterval(pollRef.current);
                             pollRef.current = null;

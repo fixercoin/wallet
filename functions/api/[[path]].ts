@@ -116,6 +116,56 @@ function jsonCors(status: number, body: any) {
   });
 }
 
+type BinanceCacheEntry = {
+  expiresAt: number;
+  data: any;
+};
+
+const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
+const BINANCE_P2P_CACHE_TTL = 30000;
+
+function uniqueId() {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function encodeToBase64(value: string): string {
+  if (typeof btoa === "function") {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
+  }
+  const globalBuffer = (globalThis as any)?.Buffer;
+  if (globalBuffer) {
+    return globalBuffer.from(value, "utf-8").toString("base64");
+  }
+  throw new Error("Base64 encoding not supported in this environment");
+}
+
+function buildDeviceInfoPayload(userAgent: string): string {
+  const payload = {
+    deviceName: "Chrome",
+    deviceVersion: "124.0.0.0",
+    osName: "windows",
+    osVersion: "10",
+    platform: "web",
+    screenHeight: 1080,
+    screenWidth: 1920,
+    systemLang: "en-US",
+    timeZone: "UTC",
+    userAgent,
+  };
+  return encodeToBase64(JSON.stringify(payload));
+}
+
 import p2pHandler from "./p2p";
 
 export const onRequest = async ({ request, env }) => {
@@ -278,9 +328,55 @@ export const onRequest = async ({ request, env }) => {
       const BINANCE_P2P_ENDPOINTS = [
         "https://p2p.binance.com",
         "https://c2c.binance.com",
+        "https://www.binance.com",
       ];
       const subPath = normalizedPath.replace(/^\/binance-p2p\//, "/");
       const search = url.search || "";
+      const requestBody =
+        request.method !== "GET" && request.method !== "HEAD"
+          ? await request
+              .clone()
+              .text()
+              .catch(() => undefined)
+          : undefined;
+      const cacheKey = `${request.method}:${subPath}${search}:${requestBody ?? ""}`;
+      const cached = BINANCE_P2P_CACHE.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return jsonCors(200, cached.data);
+      }
+
+      const uaHeader =
+        request.headers.get("user-agent") ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+      const traceId = uniqueId().replace(/-/g, "");
+      const sessionId = uniqueId().replace(/-/g, "");
+      const deviceInfo = buildDeviceInfoPayload(uaHeader);
+
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": uaHeader,
+        clienttype: "web",
+        "cache-control": "no-cache",
+        Origin: "https://p2p.binance.com",
+        Referer: "https://p2p.binance.com/en",
+        lang: "en",
+        platform: "web",
+        "Accept-Language": "en-US,en;q=0.9",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Trace-Id": traceId,
+        "device-info": deviceInfo,
+        "bnc-uuid": sessionId,
+        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
+        csrftoken: traceId,
+        "X-CSRF-TOKEN": traceId,
+        timezone: "UTC",
+      };
+
+      if (requestBody === undefined) {
+        delete baseHeaders["Content-Type"];
+      }
+
       let lastErr = "";
       for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
         const base = BINANCE_P2P_ENDPOINTS[i];
@@ -288,40 +384,36 @@ export const onRequest = async ({ request, env }) => {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
-          const resp = await fetch(target, {
+          const init: RequestInit = {
             method: request.method,
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              clienttype: "web",
-              "cache-control": "no-cache",
-              Origin: "https://p2p.binance.com",
-              Referer: "https://p2p.binance.com/en",
-              lang: "en",
-              platform: "web",
-              "Accept-Language": "en-US,en;q=0.9",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-            body:
-              request.method !== "GET" && request.method !== "HEAD"
-                ? await request
-                    .clone()
-                    .text()
-                    .catch(() => undefined)
-                : undefined,
+            headers: baseHeaders,
             signal: controller.signal,
-          });
+          };
+          if (requestBody !== undefined) {
+            init.body = requestBody;
+          }
+          const resp = await fetch(target, init);
           clearTimeout(timeoutId);
           if (!resp.ok) {
-            if (resp.status === 429 || resp.status >= 500) continue;
+            if (
+              resp.status === 403 ||
+              resp.status === 429 ||
+              resp.status >= 500
+            ) {
+              lastErr = `${resp.status} ${resp.statusText}`;
+              await new Promise((resolve) => setTimeout(resolve, 150));
+              continue;
+            }
             const t = await resp.text().catch(() => "");
             return jsonCors(resp.status, { error: t || resp.statusText });
           }
           const contentType = resp.headers.get("content-type") || "";
           if (contentType.includes("application/json")) {
             const data = await resp.json();
+            BINANCE_P2P_CACHE.set(cacheKey, {
+              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
+              data,
+            });
             return jsonCors(200, data);
           }
           const text = await resp.text();
@@ -335,6 +427,7 @@ export const onRequest = async ({ request, env }) => {
           lastErr = e?.message || String(e);
         }
       }
+      BINANCE_P2P_CACHE.delete(cacheKey);
       return jsonCors(502, {
         error: "All Binance P2P endpoints failed",
         details: lastErr,

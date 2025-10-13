@@ -267,12 +267,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
         // Use Binance P2P search endpoint via server proxy to avoid CORS issues
         const body = JSON.stringify({
-          asset: asset,
-          fiat: "PKR",
-          merchantCheck: false,
           page: 1,
           rows: 20,
+          payTypes: [],
+          countries: [],
+          asset: asset,
           tradeType: "SELL",
+          fiat: "PKR",
+          publisherType: null,
+          merchantCheck: false,
         });
 
         const resp = await fetch(
@@ -402,6 +405,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [walletAddressInput, setWalletAddressInput] = useState("");
 
   useEffect(() => {
     try {
@@ -410,12 +414,17 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         const parsed = JSON.parse(raw);
         setAccountName(String(parsed?.accountName || ""));
         setAccountNumber(String(parsed?.accountNumber || ""));
+        setWalletAddressInput(String(parsed?.walletAddress || ""));
       }
     } catch {}
   }, []);
 
   const saveDetails = () => {
-    const payload = { accountName, accountNumber };
+    const payload = {
+      accountName,
+      accountNumber,
+      walletAddress: walletAddressInput,
+    };
     localStorage.setItem("expressp2pPaymentDetails", JSON.stringify(payload));
     setDetailsOpen(false);
   };
@@ -722,7 +731,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 {buyActive ? (
                   <>
                     <SectionLabel>Payment Details</SectionLabel>
-                    {accountName || accountNumber ? (
+                    {accountName || accountNumber || walletAddressInput ? (
                       <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-sm">
                         <div className="flex items-center justify-between">
                           <div className="font-medium">
@@ -734,6 +743,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           Account: {accountNumber || "—"}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground break-all">
+                          Wallet: {walletAddressInput || "—"}
                         </div>
                         <div className="mt-2">
                           <Button
@@ -808,6 +820,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   onChange={(e) => setAccountNumber(e.target.value)}
                   placeholder="03XXXXXXXXX or IBAN"
                   className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs">Wallet address (optional)</div>
+                <input
+                  value={walletAddressInput}
+                  onChange={(e) => setWalletAddressInput(e.target.value)}
+                  placeholder="Your Solana wallet address"
+                  className="w-full rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none font-mono"
                 />
               </div>
               <div className="text-xs text-muted-foreground">

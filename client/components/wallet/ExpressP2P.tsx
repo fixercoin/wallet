@@ -140,6 +140,15 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  const notifiedRef = useRef(false);
+  useEffect(() => {
+    if (!pendingOrder || notifiedRef.current) return;
+    if (String(pendingOrder?.status || "") === "awaiting_approval") {
+      notifiedRef.current = true;
+      toast({ title: "New order", description: "Order awaiting your approval" });
+    }
+  }, [pendingOrder, toast]);
+
   // P2P market posts (polled for demo realtime)
   const [posts, setPosts] = useState<any[]>([]);
   useEffect(() => {

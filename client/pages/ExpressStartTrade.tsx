@@ -193,7 +193,13 @@ export default function ExpressStartTrade() {
         try {
           localStorage.removeItem("expressPendingOrder");
         } catch {}
-        navigate("/express");
+        try {
+          localStorage.setItem(
+            "expressLastOrder",
+            JSON.stringify({ tradeId, params, ts: Date.now() }),
+          );
+        } catch {}
+        navigate("/express/order-complete", { state: { tradeId, params, ts: Date.now() } });
       }
     }
   }, [messages, localRole, toast]);
@@ -478,7 +484,13 @@ export default function ExpressStartTrade() {
         pollRef.current = null;
       }
       toast({ title: "Approved" });
-      navigate("/express");
+      try {
+        localStorage.setItem(
+          "expressLastOrder",
+          JSON.stringify({ tradeId, params, ts: Date.now() }),
+        );
+      } catch {}
+      navigate("/express/order-complete", { state: { tradeId, params, ts: Date.now() } });
     } catch (e) {
       toast({ title: "Failed to approve", variant: "destructive" });
     }

@@ -119,6 +119,27 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
+  // Pending order (resume if interrupted)
+  const [pendingOrder, setPendingOrder] = useState<any | null>(null);
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem("expressPendingOrder");
+        if (!raw) return setPendingOrder(null);
+        const parsed = JSON.parse(raw);
+        setPendingOrder(parsed || null);
+      } catch {
+        setPendingOrder(null);
+      }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "expressPendingOrder") read();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   // P2P market posts (polled for demo realtime)
   const [posts, setPosts] = useState<any[]>([]);
   useEffect(() => {
@@ -521,6 +542,40 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-md px-4 py-6">
+          {pendingOrder && (
+            <div className="mb-3 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs">
+              <div className="font-medium">Pending Order</div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    const st = (pendingOrder && pendingOrder.params) || {};
+                    navigate("/express/start-trade", {
+                      state: { ...(st || {}), tradeId: pendingOrder?.tradeId },
+                    });
+                  }}
+                >
+                  Continue
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem("expressPendingOrder");
+                    } catch {}
+                    setPendingOrder(null);
+                  }}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          )}
+
           {connectMsg && (
             <div className="mb-3 rounded-md border border-[hsl(var(--border))] bg-white/60 px-3 py-2 text-xs text-muted-foreground">
               {connectMsg}

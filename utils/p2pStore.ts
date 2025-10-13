@@ -31,7 +31,14 @@ export type TradeMessage = {
 
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
-// In-memory store (per serverless instance)
+// In-memory store (per server instance) with on-disk persistence to data/p2p-store.json
+import fs from "fs";
+import fsPromises from "fs/promises";
+import path from "path";
+
+const DATA_DIR = path.resolve(process.cwd(), "data");
+const DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
+
 const store: {
   posts: P2PPost[];
   messages: Record<string, TradeMessage[]>;
@@ -45,6 +52,43 @@ const store: {
   proofs: {},
 };
 (globalThis as any).__P2P_STORE = store;
+
+async function saveStoreToFile() {
+  try {
+    await fsPromises.mkdir(DATA_DIR, { recursive: true });
+    await fsPromises.writeFile(
+      DATA_FILE,
+      JSON.stringify(
+        { posts: store.posts, messages: store.messages, proofs: store.proofs },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+  } catch (e) {
+    // best-effort; do not crash server
+    try {
+      console.error("Failed to persist P2P store:", (e as any)?.message || e);
+    } catch {}
+  }
+}
+
+// Load persisted data on startup (best-effort)
+try {
+  if (fs.existsSync(DATA_FILE)) {
+    const raw = fs.readFileSync(DATA_FILE, "utf-8");
+    const parsed = JSON.parse(raw || "{}");
+    if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
+      if (parsed.messages && typeof parsed.messages === "object")
+        store.messages = parsed.messages;
+      if (parsed.proofs && typeof parsed.proofs === "object")
+        store.proofs = parsed.proofs;
+    }
+  }
+} catch (e) {
+  // ignore
+}
 
 export function listPosts() {
   return { posts: store.posts };
@@ -111,6 +155,8 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
       updatedAt: now,
     };
     store.posts[idx] = updated;
+    // persist
+    void saveStoreToFile();
     return { post: store.posts[idx], status: 200 } as const;
   }
 
@@ -133,6 +179,7 @@ export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
     updatedAt: now,
   };
   store.posts.unshift(post);
+  void saveStoreToFile();
   return { post, status: 201 } as const;
 }
 
@@ -155,6 +202,7 @@ export function addTradeMessage(
   };
   store.messages[tradeId] = store.messages[tradeId] || [];
   store.messages[tradeId].push(entry);
+  void saveStoreToFile();
   return { message: entry, status: 201 } as const;
 }
 
@@ -172,5 +220,6 @@ export function uploadProof(
     data: proof.data,
     ts: Date.now(),
   });
+  void saveStoreToFile();
   return { ok: true, status: 201 } as const;
 }

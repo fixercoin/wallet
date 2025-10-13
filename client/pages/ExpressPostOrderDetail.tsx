@@ -195,7 +195,7 @@ export default function ExpressPostOrderDetail() {
               <Button
                 size="sm"
                 onClick={saveEdit}
-                className="h-8 bg-[hsl(330,81%,60%)] text-white"
+                className="h-8 bg-wallet-purple-500 hover:bg-wallet-purple-600 text-white"
               >
                 <Save className="mr-1 h-4 w-4" /> Save
               </Button>
@@ -360,7 +360,7 @@ export default function ExpressPostOrderDetail() {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-3xl px-4 py-6">
-          <div className="mb-3 rounded-xl border bg-slate-50 p-3 text-xs text-muted-foreground">
+          <div className="mb-3 rounded-xl border bg-wallet-purple-50 p-3 text-xs text-muted-foreground">
             Manage all posts. Toggle online/offline, edit inline then save, or
             open detailed edit.
           </div>

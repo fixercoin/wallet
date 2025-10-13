@@ -61,6 +61,72 @@ async function uploadProofToSupabase(
   }
 }
 
+async function commitPostsToGitHub(
+  env: Record<string, string | undefined> | undefined,
+  postsData: any,
+) {
+  try {
+    const token =
+      env?.GITHUB_TOKEN || env?.GITHUB_PAT || env?.GITHUB_TOKEN_SECRET;
+    const repo = env?.GITHUB_REPO || "fixercoin/wallet"; // owner/repo
+    const branch = env?.GITHUB_BRANCH || "zen-works";
+    if (!token) return { ok: false, error: "no_github_token" } as const;
+    const [owner, repoName] = repo.split("/");
+    if (!owner || !repoName)
+      return { ok: false, error: "invalid_repo" } as const;
+    const filePath = "data/p2p-store.json";
+    const content = JSON.stringify(postsData, null, 2);
+    const base64Content = Buffer.from(content).toString("base64");
+
+    const getUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeURIComponent(filePath)}?ref=${encodeURIComponent(branch)}`;
+    const commonHeaders = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    } as Record<string, string>;
+
+    let sha: string | undefined = undefined;
+    try {
+      const getResp = await fetch(getUrl, { headers: commonHeaders });
+      if (getResp.ok) {
+        const data = await getResp.json().catch(() => null);
+        if (data && data.sha) sha = data.sha;
+      }
+    } catch (e) {
+      // ignore - we'll try to create
+    }
+
+    const putUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeURIComponent(filePath)}`;
+    const body: any = {
+      message: `Update p2p posts ${new Date().toISOString()}`,
+      content: base64Content,
+      branch,
+    };
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(putUrl, {
+      method: "PUT",
+      headers: {
+        ...commonHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!putResp.ok) {
+      const txt = await putResp.text().catch(() => "");
+      return {
+        ok: false,
+        error: `github_put_failed ${putResp.status} ${txt}`,
+      } as const;
+    }
+
+    return { ok: true } as const;
+  } catch (e: any) {
+    return { ok: false, error: e?.message || String(e) } as const;
+  }
+}
+
 export default async function (
   request: Request,
   env?: Record<string, string | undefined>,
@@ -85,6 +151,19 @@ export default async function (
       return jsonResponse(listPosts());
     }
 
+    // Export posts as downloadable JSON
+    if (request.method === "GET" && path === "/export") {
+      const data = listPosts();
+      return new Response(JSON.stringify(data, null, 2), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Disposition": 'attachment; filename="p2p-posts.json"',
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
     if (request.method === "GET" && path.startsWith("/post/")) {
       const id = path.replace("/post/", "");
       const post = getPost(id);
@@ -102,6 +181,24 @@ export default async function (
       const result = createOrUpdatePost(body || {}, adminHeader || "");
       if ("error" in result)
         return jsonResponse({ error: result.error }, result.status);
+
+      // Best-effort: commit posts to GitHub if token + repo provided in env
+      try {
+        const postsData = listPosts();
+        // call helper but do not fail the request if it errors
+        const ghResult = await commitPostsToGitHub(env, postsData);
+        if (!ghResult.ok) {
+          // log but continue
+          try {
+            console.error("GitHub sync failed:", ghResult.error);
+          } catch {}
+        }
+      } catch (e) {
+        try {
+          console.error("GitHub sync exception:", (e as any)?.message || e);
+        } catch {}
+      }
+
       return jsonResponse({ post: result.post }, result.status);
     }
 

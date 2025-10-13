@@ -284,6 +284,7 @@ export default function ExpressStartTrade() {
     tradeId,
     fiatConfirmationSent,
     params,
+    fiatDetected,
   ]);
 
   // Address to trace for transaction detection

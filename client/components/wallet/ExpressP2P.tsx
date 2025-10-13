@@ -336,23 +336,39 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return isFinite(val) && val > 0 ? val : null;
   }, [binancePriceUsd, pkrPerUsd]);
 
-  // Buy: PKR -> token units
+  // Hidden fees
+  const FLAT_FEE_PKR = 2.5; // flat fee for buy/sell in PKR
+  const FIXERCOIN_FEE_PCT = 0.05; // 5% for Fixercoin
+
+  // Buy: PKR -> token units (apply hidden fees: flat PKR and optional Fixercoin %)
   const buyReceiveAmount = useMemo(() => {
     const amt = parseFloat(pkrAmount || "0");
     if (!pkrPerUsd || !isFinite(amt) || !tokenPriceUsd) return "0";
-    const usd = amt / pkrPerUsd;
+    // Apply flat fee
+    let effectivePkr = Math.max(0, amt - FLAT_FEE_PKR);
+    // If buying Fixercoin, charge 5% of the PKR amount
+    if (selectedToken === "FIXERCOIN") {
+      effectivePkr = Math.max(0, effectivePkr - amt * FIXERCOIN_FEE_PCT);
+    }
+    const usd = effectivePkr / pkrPerUsd;
     const units = usd / tokenPriceUsd;
     return units > 0 ? units.toFixed(4) : "0";
-  }, [pkrAmount, pkrPerUsd, tokenPriceUsd]);
+  }, [pkrAmount, pkrPerUsd, tokenPriceUsd, selectedToken]);
 
-  // Sell: token units -> PKR
+  // Sell: token units -> PKR (apply hidden fees)
   const sellReceivePkr = useMemo(() => {
     const units = parseFloat(tokenAmount || "0");
     if (!pkrPerUsd || !isFinite(units) || !tokenPriceUsd) return "0";
     const usd = units * tokenPriceUsd;
-    const pkr = usd * pkrPerUsd;
+    let pkr = usd * pkrPerUsd;
+    // Apply flat fee
+    pkr = Math.max(0, pkr - FLAT_FEE_PKR);
+    // If selling Fixercoin, charge 5% of the PKR amount
+    if (selectedToken === "FIXERCOIN") {
+      pkr = Math.max(0, pkr - pkr * FIXERCOIN_FEE_PCT);
+    }
     return pkr > 0 ? pkr.toFixed(2) : "0";
-  }, [tokenAmount, pkrPerUsd, tokenPriceUsd]);
+  }, [tokenAmount, pkrPerUsd, tokenPriceUsd, selectedToken]);
 
   const handleConnect = async () => {
     setConnectMsg("Detecting wallet … connecting to wallet");

@@ -428,7 +428,9 @@ export const onRequest = async ({ request, env }) => {
         }
       }
       BINANCE_P2P_CACHE.delete(cacheKey);
-      return jsonCors(502, {
+      // Graceful fallback: return empty data to allow client-side fallback without 502 network error
+      return jsonCors(200, {
+        data: [],
         error: "All Binance P2P endpoints failed",
         details: lastErr,
       });

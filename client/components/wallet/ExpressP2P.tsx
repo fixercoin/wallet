@@ -233,7 +233,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     return () => {
       abort = true;
     };
-  }, []);
+  }, [refreshTick]);
 
   // Fetch token USD price depending on selected token
   useEffect(() => {

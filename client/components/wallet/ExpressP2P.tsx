@@ -414,6 +414,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
         const parsed = JSON.parse(raw);
         setAccountName(String(parsed?.accountName || ""));
         setAccountNumber(String(parsed?.accountNumber || ""));
+        setWalletAddressInput(String(parsed?.walletAddress || ""));
       }
     } catch {}
   }, []);

@@ -193,6 +193,7 @@ export default function ExpressStartTrade() {
         try {
           localStorage.removeItem("expressPendingOrder");
         } catch {}
+        navigate("/express");
       }
     }
   }, [messages, localRole, toast]);

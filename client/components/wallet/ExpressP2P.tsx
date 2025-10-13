@@ -43,6 +43,17 @@ interface PendingOrderSnapshot {
   ts?: number;
 }
 
+interface OrderSummary {
+  tradeId: string;
+  side: "buy" | "sell" | string;
+  token: string;
+  pkr: number;
+  units: number;
+  method?: string;
+  lastTs: number;
+  done: boolean;
+}
+
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <div className="mb-1 text-xs font-medium text-muted-foreground">
     {children}
@@ -153,6 +164,76 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [pendingOrder, setPendingOrder] = useState<PendingOrderSnapshot | null>(
     null,
   );
+
+  // Recent orders from server messages (global pending orders)
+  const [recentOrders, setRecentOrders] = useState<OrderSummary[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoadingOrders(true);
+        setOrdersError(null);
+        const resp = await fetch(`/api/p2p/trades/recent?since=0&limit=200`);
+        if (!resp.ok) throw new Error("failed");
+        const data = await resp.json().catch(() => null as any);
+        const msgs = Array.isArray(data?.messages) ? data.messages : [];
+        const groups = new Map<string, any[]>();
+        for (const m of msgs) {
+          const tid = String(m?.tradeId || "");
+          if (!tid) continue;
+          if (!groups.has(tid)) groups.set(tid, []);
+          groups.get(tid)!.push(m);
+        }
+        const orders: OrderSummary[] = [];
+        groups.forEach((arr, tid) => {
+          arr.sort((a, b) => Number(a.ts || 0) - Number(b.ts || 0));
+          const started = arr.find((m) =>
+            String(m?.message || "").startsWith("__ORDER_STARTED__|"),
+          );
+          const approved = arr.find(
+            (m) => String(m?.message) === "__BUYER_APPROVED__",
+          );
+          if (!started || approved) return; // only pending
+          const part = String(started.message).split("|")[1] || "";
+          const parts = Object.fromEntries(
+            part
+              .split(";")
+              .map((s) => s.split("=").map((x) => x.trim()))
+              .filter((p) => p.length === 2),
+          ) as any;
+          const side = String(parts.side || "");
+          const token = String(parts.token || "");
+          const pkr = Number(parts.pkr || 0);
+          const units = Number(parts.units || 0);
+          const method = String(parts.method || "");
+          const lastTs = Math.max(...arr.map((m: any) => Number(m.ts || 0)), 0);
+          orders.push({
+            tradeId: tid,
+            side,
+            token,
+            pkr,
+            units,
+            method,
+            lastTs,
+            done: false,
+          });
+        });
+        orders.sort((a, b) => b.lastTs - a.lastTs);
+        if (!cancelled) setRecentOrders(orders);
+      } catch (e) {
+        if (!cancelled) setOrdersError("Failed to load pending orders");
+      } finally {
+        if (!cancelled) setLoadingOrders(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTick]);
 
   const persistPendingOrder = useCallback(
     (snapshot: PendingOrderSnapshot | null) => {
@@ -877,6 +958,76 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 </Button>
               </div>
             </div>
+
+            {recentOrders.length > 0 && (
+              <div className="mb-3 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="text-sm font-semibold uppercase">
+                    Pending Orders
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={triggerRefresh}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-auto custom-scrollbar">
+                  {recentOrders.map((o) => (
+                    <div
+                      key={o.tradeId}
+                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {(o.side?.toUpperCase?.() || "ORDER") +
+                            " " +
+                            (o.token || "")}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          PKR{" "}
+                          {o.pkr.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          • Units{" "}
+                          {o.units.toLocaleString(undefined, {
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: 4,
+                          })}{" "}
+                          • {o.method?.toUpperCase?.() || "—"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-mono break-all">
+                          {o.tradeId}
+                        </div>
+                      </div>
+                      <div className="ml-3 flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="h-8"
+                          onClick={() =>
+                            navigate("/express/start-trade", {
+                              state: {
+                                side: o.side as any,
+                                token: o.token,
+                                pkrAmount: o.pkr,
+                                tokenUnits: o.units,
+                                paymentMethod: o.method,
+                                tradeId: o.tradeId,
+                              },
+                            })
+                          }
+                        >
+                          Open
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
               <button

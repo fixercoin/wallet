@@ -437,95 +437,82 @@ export default function ExpressStartTrade() {
                         </div>
                         {localRole === "seller" && match?.walletAddress ? (
                           <div className="mb-3 text-sm">
-                            <div className="mb-1 font-medium">
-                              Buyer Wallet Address
-                            </div>
+                            <div className="mb-1 font-medium">Buyer Wallet Address</div>
                             <div className="flex items-center gap-2 rounded-md border px-2 py-1">
-                              <span className="font-mono text-xs break-all flex-1">
-                                {match.walletAddress}
-                              </span>
-                              <Button
-                                variant="outline"
-                                className="h-7 px-2"
-                                onClick={() =>
-                                  copyToClipboard(match.walletAddress)
-                                }
-                              >
-                                Copy
-                              </Button>
+                              <span className="font-mono text-xs break-all flex-1">{match.walletAddress}</span>
+                              <Button variant="outline" className="h-7 px-2" onClick={() => copyToClipboard(match.walletAddress)}>Copy</Button>
                             </div>
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              Send transaction to this address, then confirm.
-                            </div>
+                            <div className="mt-2 text-xs text-muted-foreground">Send transaction to this address, then confirm.</div>
                           </div>
                         ) : null}
+
                         <div className="mb-4 text-sm">
-                          {localRole === "seller" ? (
-                            <span>
-                              We will detect the transaction on the wallet
-                              address. Once detected, the Confirm button will be
-                              enabled.
-                            </span>
+                          {localRole === "buyer" ? (
+                            <div className="space-y-2">
+                              <div className="mb-1 font-medium">Seller Payment Details</div>
+                              {match?.paymentDetails ? (
+                                <div className="text-sm">
+                                  <div><span className="font-semibold">Name: </span>{match.paymentDetails.accountName}</div>
+                                  <div><span className="font-semibold">Account: </span>{match.paymentDetails.accountNumber}</div>
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground">Seller payment details will be provided by the seller shortly.</div>
+                              )}
+                              <div className="mt-2 text-xs text-muted-foreground">Send the agreed fiat payment to the seller using the details above. Once you have sent payment, click "I've Paid".</div>
+                            </div>
                           ) : (
                             <span>
-                              Confirming will notify the counterparty.
+                              We will detect the transaction on the wallet address. Once detected, the Confirm button will be enabled.
                             </span>
                           )}
                         </div>
+
                         <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setShowConfirm(false);
-                              setBaselineSig(null);
-                              setTxDetected(false);
-                              if (pollRef.current) {
-                                window.clearInterval(pollRef.current);
-                                pollRef.current = null;
-                              }
-                            }}
-                            className="h-9"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            disabled={localRole === "seller" && !txDetected}
-                            onClick={async () => {
+                          <Button variant="outline" onClick={() => {
+                            setShowConfirm(false);
+                            setBaselineSig(null);
+                            setTxDetected(false);
+                            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+                          }} className="h-9">Cancel</Button>
+
+                          {localRole === "buyer" ? (
+                            <Button onClick={async () => {
                               if (!tradeId) return;
                               try {
-                                const resp = await fetch(
-                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                                  {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      message:
-                                        localRole === "seller"
-                                          ? "__SELLER_CONFIRMED__"
-                                          : "__CONFIRMED_SETTLEMENT__",
-                                      from: localRole,
-                                    }),
-                                  },
-                                );
+                                const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ message: "__CONFIRMED_SETTLEMENT__", from: localRole }),
+                                });
                                 if (!resp.ok) throw new Error("failed");
                                 setShowConfirm(false);
-                                if (localRole === "seller")
-                                  setAwaitingApproval(true);
+                                setAwaitingApproval(true);
+                                setPaymentInProgress(true);
+                                toast({ title: "Marked as paid. Waiting for transaction detection." });
+                              } catch (e) {
+                                setShowConfirm(false);
+                                toast({ title: "Failed to notify", variant: "destructive" });
+                              }
+                            }} className="h-9">I've Paid</Button>
+                          ) : (
+                            <Button disabled={localRole === "seller" && !txDetected} onClick={async () => {
+                              if (!tradeId) return;
+                              try {
+                                const resp = await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ message: "__SELLER_CONFIRMED__", from: localRole }),
+                                });
+                                if (!resp.ok) throw new Error("failed");
+                                setShowConfirm(false);
+                                if (localRole === "seller") setAwaitingApproval(true);
                                 toast({ title: "You confirmed settlement" });
                               } catch (e) {
                                 setShowConfirm(false);
-                                toast({
-                                  title: "Confirmation failed",
-                                  variant: "destructive",
-                                });
+                                toast({ title: "Confirmation failed", variant: "destructive" });
                               }
-                            }}
-                            className="h-9"
-                          >
-                            Confirm
-                          </Button>
+                            }} className="h-9">Confirm</Button>
+                          )}
                         </div>
                       </div>
                     </div>

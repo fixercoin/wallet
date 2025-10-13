@@ -506,6 +506,63 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const buyActive = tab === "buy";
 
+  // Admin-only: notify on new orders
+  const isAdmin = !!(wallet && wallet.publicKey === ADMIN_WALLET);
+  const recentSinceRef = useRef<number>(Date.now());
+  const seenMsgIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!isAdmin) return;
+    let active = true;
+    const poll = async () => {
+      try {
+        const since = recentSinceRef.current || 0;
+        const resp = await fetch(
+          `/api/p2p/trades/recent?since=${encodeURIComponent(String(since))}&limit=100`,
+        );
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const arr = Array.isArray(data?.messages) ? data.messages : [];
+        let maxTs = since;
+        for (const m of arr) {
+          if (!active) break;
+          if (m && typeof m.id === "string") {
+            if (seenMsgIdsRef.current.has(m.id)) {
+              maxTs = Math.max(maxTs, Number(m.ts || 0));
+              continue;
+            }
+            seenMsgIdsRef.current.add(m.id);
+          }
+          const txt = String(m?.message || "");
+          if (txt.startsWith("__ORDER_STARTED__")) {
+            const details = txt.split("|")[1] || "";
+            const parts = Object.fromEntries(
+              details
+                .split(";")
+                .map((kv) => kv.split("=").map((s) => s.trim()))
+                .filter((p) => p.length === 2),
+            ) as any;
+            const side = String(parts.side || "").toLowerCase();
+            const token = String(parts.token || "");
+            const pkr = Number(parts.pkr || 0);
+            const units = Number(parts.units || 0);
+            toast({
+              title: side === "sell" ? "New sell order" : "New buy order",
+              description: `${token} ${units || 0} • PKR ${pkr || 0}`,
+            });
+          }
+          maxTs = Math.max(maxTs, Number(m.ts || 0));
+        }
+        if (maxTs > since) recentSinceRef.current = maxTs;
+      } catch {}
+    };
+    const id = setInterval(poll, 2000);
+    poll();
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [isAdmin, toast]);
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">

@@ -6,6 +6,7 @@ import {
   listRecentTradeMessages,
   addTradeMessage,
   uploadProof,
+  deletePost,
 } from "../../utils/p2pStore";
 
 function jsonResponse(data: any, status = 200) {
@@ -137,7 +138,7 @@ export default async function (
       status: 204,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
         "Access-Control-Allow-Headers":
           "Content-Type,Authorization,X-Admin-Wallet",
       },
@@ -170,6 +171,18 @@ export default async function (
       const post = getPost(id);
       if (!post) return jsonResponse({ error: "not found" }, 404);
       return jsonResponse({ post });
+    }
+
+    if (
+      request.method === "DELETE" &&
+      path.startsWith("/post/")
+    ) {
+      const id = path.replace("/post/", "");
+      const adminHeader = request.headers.get("x-admin-wallet") || "";
+      const result = deletePost(id, adminHeader);
+      if ("error" in result)
+        return jsonResponse({ error: result.error }, result.status);
+      return jsonResponse({ ok: true }, result.status);
     }
 
     if (

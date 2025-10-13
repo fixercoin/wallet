@@ -727,7 +727,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 {buyActive ? (
                   <>
                     <SectionLabel>Payment Details</SectionLabel>
-                    {accountName || accountNumber ? (
+                    {accountName || accountNumber || walletAddressInput ? (
                       <div className="rounded-xl border border-[hsl(var(--input))] bg-slate-50 p-3 text-sm">
                         <div className="flex items-center justify-between">
                           <div className="font-medium">
@@ -739,6 +739,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           Account: {accountNumber || "—"}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground break-all">
+                          Wallet: {walletAddressInput || "—"}
                         </div>
                         <div className="mt-2">
                           <Button

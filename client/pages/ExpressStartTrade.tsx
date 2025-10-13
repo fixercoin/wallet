@@ -656,15 +656,19 @@ export default function ExpressStartTrade() {
                       >
                         {fiatDetected
                           ? "Easypaisa payment detected for seller account 03107044833."
-                          : "Waiting for Easypaisa confirmation for seller account 03107044833…"}
+                          : awaitingApproval
+                            ? !txDetected
+                              ? "Waiting for transaction to your wallet…"
+                              : "Transaction detected. You can confirm now."
+                            : "Waiting for Easypaisa confirmation for seller account 03107044833…"}
                       </div>
                       <div className="flex gap-2">
-                        {fiatDetected && (
+                        {(fiatDetected || txDetected || manualPaid) && (
                           <Button onClick={handleBuyerConfirm} className="h-9">
                             Confirm
                           </Button>
                         )}
-                        {!fiatDetected && (
+                        {!fiatDetected && !awaitingApproval && (
                           <Button
                             variant="outline"
                             onClick={async () => {

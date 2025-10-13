@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Copy, MessageSquare, X, Minus } from "lucide-react";
+import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { shortenAddress, copyToClipboard } from "@/lib/wallet";
-import { ADMIN_WALLET } from "@/lib/p2p";
+import { copyToClipboard } from "@/lib/wallet";
 
 interface NavState {
   side?: "buy" | "sell";
@@ -32,17 +31,22 @@ export default function ExpressStartTrade() {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [sellerConfirmed, setSellerConfirmed] = useState(false);
+
   const [baselineSig, setBaselineSig] = useState<string | null>(null);
   const [txDetected, setTxDetected] = useState(false);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
-  const [paymentInProgress, setPaymentInProgress] = useState(false);
+
   const pollRef = useRef<number | null>(null);
-  const autoApproveRef = useRef<number | null>(null);
+  const easypayPollRef = useRef<number | null>(null);
+  const orderStartRef = useRef<number>(Date.now());
+  const [fiatDetected, setFiatDetected] = useState(false);
+
   const { wallet } = useWallet();
   const buyerPublicKey = wallet?.publicKey || null;
+  const localRole = params?.side === "sell" ? "seller" : "buyer";
 
-  // Load posts to match an order against seller listings
+  // Load posts to match an order against seller/buyer listings
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -63,7 +67,7 @@ export default function ExpressStartTrade() {
     };
   }, []);
 
-  // Choose a matching post (for buy, need a seller post)
+  // Choose a matching post
   const match = useMemo(() => {
     if (!Array.isArray(posts) || !params?.token) return null;
     const desiredUnits = Number(params?.tokenUnits || 0);
@@ -77,14 +81,12 @@ export default function ExpressStartTrade() {
             String(params.paymentMethod || "").toLowerCase()
           : true),
     );
-    // Prefer a post whose limits include desired units
     const within = candidates.find(
       (p: any) =>
         desiredUnits >= Number(p?.minToken || 0) &&
         desiredUnits <= Number(p?.maxToken || 0),
     );
     if (within) return within;
-    // Otherwise, best-effort: pick closest by minToken not exceeding desired, else smallest max
     const eligible = candidates
       .slice()
       .sort((a: any, b: any) => Number(a.minToken) - Number(b.minToken));
@@ -98,7 +100,7 @@ export default function ExpressStartTrade() {
       setTradeId(incomingTradeId);
       return;
     }
-    const base = match?.id || "no-post";
+    const base = (match?.id || "no-post") + "";
     setTradeId(`${base}-${Date.now()}`);
   }, [match, state]);
 
@@ -138,12 +140,10 @@ export default function ExpressStartTrade() {
     try {
       localStorage.setItem("expressPendingOrder", JSON.stringify(payload));
     } catch {}
-  }, [tradeId]);
+  }, [tradeId, params]);
 
   // Notify when counterparty confirms settlement via special message
-  const localRole = params?.side === "sell" ? "seller" : "buyer";
   const lastConfirmedMessageId = useRef<string | null>(null);
-  const [sellerConfirmed, setSellerConfirmed] = useState(false);
   useEffect(() => {
     if (!messages || messages.length === 0) return;
     const reversed = messages.slice().reverse();
@@ -178,10 +178,9 @@ export default function ExpressStartTrade() {
         try {
           localStorage.removeItem("expressPendingOrder");
         } catch {}
-        navigate("/express");
       }
     }
-  }, [messages, localRole, toast, navigate]);
+  }, [messages, localRole, toast]);
 
   const withinLimits = useMemo(() => {
     const units = Number(params?.tokenUnits || 0);
@@ -192,7 +191,142 @@ export default function ExpressStartTrade() {
     );
   }, [match, params]);
 
-  // Send a message; if a file is attached, include it in the message payload
+  // Easypaisa auto-detect polling (buy/sell payment method)
+  useEffect(() => {
+    const isEasypaisa =
+      String(params?.paymentMethod || "").toLowerCase() === "easypaisa";
+    if (!isEasypaisa) return;
+
+    const msisdn = (window as any)?.EASYPAY_MSISDN || "03107044833";
+    const since = orderStartRef.current - 10 * 60 * 1000;
+
+    const tick = async () => {
+      try {
+        const resp = await fetch(
+          `/api/easypaisa/payments?msisdn=${encodeURIComponent(msisdn)}&since=${since}`,
+        );
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const arr = Array.isArray(data?.payments) ? data.payments : [];
+        const expected = Number(params?.pkrAmount || 0);
+        if (!expected) return;
+        const tol = Math.max(1, expected * 0.01);
+        const hit = arr.find(
+          (p: any) => Math.abs(Number(p.amount) - expected) <= tol,
+        );
+        if (hit) {
+          if (!fiatDetected) setFiatDetected(true);
+          if (localRole === "buyer" && !awaitingApproval && tradeId) {
+            await fetch(
+              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  message: "__CONFIRMED_SETTLEMENT__",
+                  from: localRole,
+                }),
+              },
+            ).catch(() => {});
+            setAwaitingApproval(true);
+          }
+        }
+      } catch {}
+    };
+
+    tick();
+    if (easypayPollRef.current) clearInterval(easypayPollRef.current);
+    easypayPollRef.current = window.setInterval(tick, 5000);
+
+    return () => {
+      if (easypayPollRef.current) {
+        clearInterval(easypayPollRef.current);
+        easypayPollRef.current = null;
+      }
+    };
+  }, [
+    params?.paymentMethod,
+    params?.pkrAmount,
+    localRole,
+    awaitingApproval,
+    tradeId,
+  ]);
+
+  // Address to trace for transaction detection
+  const detectionAddress = useMemo(() => {
+    if (localRole === "seller") {
+      return match?.walletAddress || null; // buyer address from BUY post
+    }
+    return buyerPublicKey || null; // buyer's own wallet
+  }, [localRole, match?.walletAddress, buyerPublicKey]);
+
+  // Poll for transaction detection
+  useEffect(() => {
+    const shouldPoll =
+      (localRole === "seller" && !!detectionAddress) ||
+      (localRole === "buyer" && awaitingApproval && !!detectionAddress);
+
+    if (!shouldPoll) return;
+
+    let cancelled = false;
+
+    const fetchLatestSig = async () => {
+      try {
+        const resp = await fetch("/api/solana-rpc", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: Date.now(),
+            method: "getSignaturesForAddress",
+            params: [detectionAddress, { limit: 1 }],
+          }),
+        });
+        const data = await resp.json();
+        const arr = data?.result || [];
+        const sig = arr?.[0]?.signature || null;
+        if (!cancelled) setBaselineSig(sig);
+      } catch {}
+    };
+
+    const poll = async () => {
+      try {
+        const resp = await fetch("/api/solana-rpc", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: Date.now(),
+            method: "getSignaturesForAddress",
+            params: [detectionAddress, { limit: 1 }],
+          }),
+        });
+        const data = await resp.json();
+        const sig = data?.result?.[0]?.signature || null;
+        if (baselineSig && sig && sig !== baselineSig) {
+          setTxDetected(true);
+          if (pollRef.current) {
+            window.clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+        }
+      } catch {}
+    };
+
+    fetchLatestSig();
+    if (pollRef.current) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    pollRef.current = window.setInterval(poll, 5000);
+
+    return () => {
+      cancelled = true;
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [awaitingApproval, localRole, detectionAddress, baselineSig]);
+
   const sendMessage = async () => {
     if (!tradeId) return;
     const text = message.trim();
@@ -227,108 +361,6 @@ export default function ExpressStartTrade() {
       setUploading(false);
     }
   };
-
-  // Poll for transaction detection when either party is awaiting approval (buyer paid)
-  useEffect(() => {
-    if (!awaitingApproval || !match?.walletAddress) return;
-
-    let cancelled = false;
-
-    const fetchLatestSig = async () => {
-      try {
-        const resp = await fetch("/api/solana-rpc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: Date.now(),
-            method: "getSignaturesForAddress",
-            params: [match.walletAddress, { limit: 1 }],
-          }),
-        });
-        const data = await resp.json();
-        const arr = data?.result || [];
-        const sig = arr?.[0]?.signature || null;
-        if (!cancelled) setBaselineSig(sig);
-      } catch {}
-    };
-
-    const poll = async () => {
-      try {
-        const resp = await fetch("/api/solana-rpc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: Date.now(),
-            method: "getSignaturesForAddress",
-            params: [match.walletAddress, { limit: 1 }],
-          }),
-        });
-        const data = await resp.json();
-        const sig = data?.result?.[0]?.signature || null;
-        if (baselineSig && sig && sig !== baselineSig) {
-          setTxDetected(true);
-          // stop polling
-          if (pollRef.current) {
-            window.clearInterval(pollRef.current);
-            pollRef.current = null;
-          }
-          // start auto-approve timer for buyer if not already approved
-          if (!autoApproveRef.current && params?.side === "buy") {
-            autoApproveRef.current = window.setTimeout(async () => {
-              try {
-                if (!tradeId) return;
-                await fetch(
-                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      message: "__BUYER_APPROVED__",
-                      from: "buyer",
-                    }),
-                  },
-                );
-                setAwaitingApproval(false);
-                toast({ title: "Auto-approved after timeout" });
-                navigate("/express");
-              } catch (e) {
-                // ignore
-              }
-            }, 120000) as unknown as number;
-          }
-        }
-      } catch {}
-    };
-
-    // start polling
-    fetchLatestSig();
-    if (pollRef.current) {
-      window.clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-    pollRef.current = window.setInterval(poll, 5000);
-
-    return () => {
-      cancelled = true;
-      if (pollRef.current) {
-        window.clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-      // clear auto approve timer if any
-      if (autoApproveRef.current) {
-        window.clearTimeout(autoApproveRef.current as unknown as number);
-        autoApproveRef.current = null;
-      }
-    };
-  }, [
-    awaitingApproval,
-    match?.walletAddress,
-    baselineSig,
-    params?.side,
-    tradeId,
-    navigate,
-    toast,
-  ]);
 
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
@@ -426,17 +458,188 @@ export default function ExpressStartTrade() {
               )}
             </div>
 
-            <div className="mt-4">
-              <div className="mt-4">
-                <div className="mt-3 flex gap-2">
-                  <Button onClick={() => setShowConfirm(true)} className="h-10">
-                    Confirm Settlement
-                  </Button>
+            {/* Settlement section (inline, persistent) */}
+            <div className="mt-4 rounded-lg border bg-white p-3 text-sm">
+              <div className="mb-2 font-medium">Settlement</div>
 
-                  {localRole === "buyer" && sellerConfirmed && (
+              {localRole === "buyer" ? (
+                <div className="space-y-3">
+                  <div>
+                    <div className="font-medium">Seller Payment Details</div>
+                    {fiatDetected && (
+                      <div className="mt-1 rounded bg-green-50 p-2 text-green-700 text-xs">
+                        Easypaisa payment detected for this order.
+                      </div>
+                    )}
+                    {match?.paymentDetails ? (
+                      <div className="mt-1 space-y-1">
+                        <div>
+                          <span className="font-semibold">Name: </span>
+                          {match.paymentDetails.accountName}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Account: </span>
+                          {match.paymentDetails.accountNumber}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Method: </span>
+                          {params?.paymentMethod || match.paymentMethod}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">
+                        Seller payment details will be provided by the seller.
+                      </div>
+                    )}
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Send the agreed fiat payment to the seller using the
+                      details above. Once you have sent payment, click "I've
+                      Paid".
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="font-medium">Your Wallet Address</div>
+                    <div className="mt-1 flex items-center gap-2 rounded-md border px-2 py-1">
+                      <span className="font-mono text-xs break-all flex-1">
+                        {buyerPublicKey || "(connect wallet)"}
+                      </span>
+                      {buyerPublicKey && (
+                        <Button
+                          variant="outline"
+                          className="h-7 px-2"
+                          onClick={() => copyToClipboard(buyerPublicKey)}
+                        >
+                          Copy
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {!awaitingApproval && (
+                      <Button
+                        onClick={async () => {
+                          if (!tradeId) return;
+                          try {
+                            const resp = await fetch(
+                              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  message: "__CONFIRMED_SETTLEMENT__",
+                                  from: localRole,
+                                }),
+                              },
+                            );
+                            if (!resp.ok) throw new Error("failed");
+                            setAwaitingApproval(true);
+                            try {
+                              const raw = localStorage.getItem(
+                                "expressPendingOrder",
+                              );
+                              const obj = raw ? JSON.parse(raw) : {};
+                              obj.minimized = false;
+                              obj.status = "awaiting_approval";
+                              obj.params = params;
+                              obj.tradeId = tradeId;
+                              obj.ts = Date.now();
+                              localStorage.setItem(
+                                "expressPendingOrder",
+                                JSON.stringify(obj),
+                              );
+                            } catch {}
+                            toast({
+                              title: "Marked as paid. Waiting for transaction.",
+                            });
+                          } catch (e) {
+                            toast({
+                              title: "Failed to notify",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="h-9"
+                      >
+                        I've Paid
+                      </Button>
+                    )}
+
+                    {txDetected && (
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          if (!tradeId) return;
+                          try {
+                            const resp = await fetch(
+                              `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  message: "__BUYER_APPROVED__",
+                                  from: "buyer",
+                                }),
+                              },
+                            );
+                            if (!resp.ok) throw new Error("failed");
+                            setAwaitingApproval(false);
+                            setTxDetected(false);
+                            try {
+                              localStorage.removeItem("expressPendingOrder");
+                            } catch {}
+                            if (pollRef.current) {
+                              window.clearInterval(pollRef.current);
+                              pollRef.current = null;
+                            }
+                            toast({ title: "Approved" });
+                          } catch (e) {
+                            toast({
+                              title: "Failed to approve",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="h-9"
+                      >
+                        Confirm
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <div className="font-medium">Buyer Wallet Address</div>
+                    {match?.walletAddress ? (
+                      <div className="mt-1 flex items-center gap-2 rounded-md border px-2 py-1">
+                        <span className="font-mono text-xs break-all flex-1">
+                          {match.walletAddress}
+                        </span>
+                        <Button
+                          variant="outline"
+                          className="h-7 px-2"
+                          onClick={() => copyToClipboard(match.walletAddress)}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">
+                        Waiting for buyer address.
+                      </div>
+                    )}
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Send the tokens to the buyer wallet address above. Once
+                      the transaction is confirmed on-chain, the Confirm button
+                      will appear.
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
                     <Button
-                      variant="outline"
-                      className="h-10"
+                      disabled={!txDetected}
                       onClick={async () => {
                         if (!tradeId) return;
                         try {
@@ -446,278 +649,39 @@ export default function ExpressStartTrade() {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({
-                                message: "__BUYER_APPROVED__",
-                                from: localRole,
+                                message: "__SELLER_CONFIRMED__",
+                                from: "seller",
                               }),
                             },
                           );
                           if (!resp.ok) throw new Error("failed");
-                          toast({ title: "Approved" });
-                          try {
-                            localStorage.removeItem("expressPendingOrder");
-                          } catch {}
-                          navigate("/express");
+                          setAwaitingApproval(true);
+                          toast({ title: "You confirmed settlement" });
                         } catch (e) {
                           toast({
-                            title: "Failed to approve",
+                            title: "Confirmation failed",
                             variant: "destructive",
                           });
                         }
                       }}
+                      className="h-9"
                     >
-                      Approve
+                      Confirm
                     </Button>
-                  )}
 
-                  {/* Confirmation modal */}
-                  {showConfirm && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                      <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
-                        <div className="mb-3 flex items-center justify-between">
-                          <div className="text-lg font-semibold">
-                            Confirm Settlement
-                          </div>
-                          <button
-                            aria-label="Minimize"
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-[hsl(var(--border))] hover:bg-gray-50"
-                            onClick={() => {
-                              try {
-                                const raw = localStorage.getItem(
-                                  "expressPendingOrder",
-                                );
-                                const obj = raw ? JSON.parse(raw) : {};
-                                obj.minimized = true;
-                                obj.status = "in_progress";
-                                obj.params = params;
-                                obj.tradeId = tradeId;
-                                obj.ts = Date.now();
-                                localStorage.setItem(
-                                  "expressPendingOrder",
-                                  JSON.stringify(obj),
-                                );
-                              } catch {}
-                              setShowConfirm(false);
-                              navigate("/");
-                            }}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                        </div>
-                        {localRole === "seller" && match?.walletAddress ? (
-                          <div className="mb-3 text-sm">
-                            <div className="mb-1 font-medium">
-                              Buyer Wallet Address
-                            </div>
-                            <div className="flex items-center gap-2 rounded-md border px-2 py-1">
-                              <span className="font-mono text-xs break-all flex-1">
-                                {match.walletAddress}
-                              </span>
-                              <Button
-                                variant="outline"
-                                className="h-7 px-2"
-                                onClick={() =>
-                                  copyToClipboard(match.walletAddress)
-                                }
-                              >
-                                Copy
-                              </Button>
-                            </div>
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              Send transaction to this address, then confirm.
-                            </div>
-                          </div>
-                        ) : null}
-
-                        <div className="mb-4 text-sm">
-                          {localRole === "buyer" ? (
-                            <div className="space-y-2">
-                              <div className="mb-1 font-medium">
-                                Seller Payment Details
-                              </div>
-                              {match?.paymentDetails ? (
-                                <div className="text-sm">
-                                  <div>
-                                    <span className="font-semibold">
-                                      Name:{" "}
-                                    </span>
-                                    {match.paymentDetails.accountName}
-                                  </div>
-                                  <div>
-                                    <span className="font-semibold">
-                                      Account:{" "}
-                                    </span>
-                                    {match.paymentDetails.accountNumber}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="text-xs text-muted-foreground">
-                                  Seller payment details will be provided by the
-                                  seller shortly.
-                                </div>
-                              )}
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                Send the agreed fiat payment to the seller using
-                                the details above. Once you have sent payment,
-                                click "I've Paid".
-                              </div>
-                            </div>
-                          ) : (
-                            <span>
-                              We will detect the transaction on the wallet
-                              address. Once detected, the Confirm button will be
-                              enabled.
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setShowConfirm(false);
-                              setBaselineSig(null);
-                              setTxDetected(false);
-                              if (pollRef.current) {
-                                window.clearInterval(pollRef.current);
-                                pollRef.current = null;
-                              }
-                            }}
-                            className="h-9"
-                          >
-                            Cancel
-                          </Button>
-
-                          {localRole === "buyer" ? (
-                            <Button
-                              onClick={async () => {
-                                if (!tradeId) return;
-                                try {
-                                  const resp = await fetch(
-                                    `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                                    {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        message: "__CONFIRMED_SETTLEMENT__",
-                                        from: localRole,
-                                      }),
-                                    },
-                                  );
-                                  if (!resp.ok) throw new Error("failed");
-                                  setShowConfirm(false);
-                                  setAwaitingApproval(true);
-                                  setPaymentInProgress(true);
-                                  try {
-                                    const raw = localStorage.getItem(
-                                      "expressPendingOrder",
-                                    );
-                                    const obj = raw ? JSON.parse(raw) : {};
-                                    obj.minimized = false;
-                                    obj.status = "awaiting_approval";
-                                    obj.params = params;
-                                    obj.tradeId = tradeId;
-                                    obj.ts = Date.now();
-                                    localStorage.setItem(
-                                      "expressPendingOrder",
-                                      JSON.stringify(obj),
-                                    );
-                                  } catch {}
-                                  toast({
-                                    title:
-                                      "Marked as paid. Waiting for transaction detection.",
-                                  });
-                                } catch (e) {
-                                  setShowConfirm(false);
-                                  toast({
-                                    title: "Failed to notify",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                              className="h-9"
-                            >
-                              I've Paid
-                            </Button>
-                          ) : (
-                            <Button
-                              disabled={localRole === "seller" && !txDetected}
-                              onClick={async () => {
-                                if (!tradeId) return;
-                                try {
-                                  const resp = await fetch(
-                                    `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                                    {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        message: "__SELLER_CONFIRMED__",
-                                        from: localRole,
-                                      }),
-                                    },
-                                  );
-                                  if (!resp.ok) throw new Error("failed");
-                                  setShowConfirm(false);
-                                  if (localRole === "seller")
-                                    setAwaitingApproval(true);
-                                  try {
-                                    const raw = localStorage.getItem(
-                                      "expressPendingOrder",
-                                    );
-                                    const obj = raw ? JSON.parse(raw) : {};
-                                    obj.minimized = false;
-                                    obj.status =
-                                      localRole === "seller"
-                                        ? "awaiting_approval"
-                                        : "confirmed";
-                                    obj.params = params;
-                                    obj.tradeId = tradeId;
-                                    obj.ts = Date.now();
-                                    localStorage.setItem(
-                                      "expressPendingOrder",
-                                      JSON.stringify(obj),
-                                    );
-                                  } catch {}
-                                  toast({ title: "You confirmed settlement" });
-                                } catch (e) {
-                                  setShowConfirm(false);
-                                  toast({
-                                    title: "Confirmation failed",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                              className="h-9"
-                            >
-                              Confirm
-                            </Button>
-                          )}
-                        </div>
+                    {sellerConfirmed && (
+                      <div className="text-xs text-muted-foreground">
+                        Waiting for buyer approval…
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
-        {/* Floating Chat Button */}
-        <button
-          type="button"
-          onClick={() => setChatOpen((o) => !o)}
-          aria-label="Open chat"
-          className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-white shadow-xl hover:brightness-95"
-        >
-          {chatOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <MessageSquare className="h-6 w-6" />
-          )}
-        </button>
 
+        {/* Waiting overlays */}
         {awaitingApproval && localRole === "seller" && (
           <div className="fixed inset-0 z-40 flex items-center justify-center">
             <div className="dashboard-loader-overlay">
@@ -740,58 +704,24 @@ export default function ExpressStartTrade() {
                 <div className="mt-2 text-xs font-mono">
                   Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
                 </div>
-                {txDetected && (
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      onClick={async () => {
-                        try {
-                          if (!tradeId) return;
-                          const resp = await fetch(
-                            `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                message: "__BUYER_APPROVED__",
-                                from: "buyer",
-                              }),
-                            },
-                          );
-                          if (!resp.ok) throw new Error("failed");
-                          setAwaitingApproval(false);
-                          setTxDetected(false);
-                          try {
-                            localStorage.removeItem("expressPendingOrder");
-                          } catch {}
-                          if (pollRef.current) {
-                            window.clearInterval(pollRef.current);
-                            pollRef.current = null;
-                          }
-                          if (autoApproveRef.current) {
-                            window.clearTimeout(
-                              autoApproveRef.current as unknown as number,
-                            );
-                            autoApproveRef.current = null;
-                          }
-                          toast({ title: "Approved" });
-                          navigate("/express");
-                        } catch (e) {
-                          toast({
-                            title: "Failed to approve",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="h-9"
-                    >
-                      Approve
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         )}
+
+        {/* Floating Chat Button */}
+        <button
+          type="button"
+          onClick={() => setChatOpen((o) => !o)}
+          aria-label="Open chat"
+          className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-white shadow-xl hover:brightness-95"
+        >
+          {chatOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <MessageSquare className="h-6 w-6" />
+          )}
+        </button>
 
         {chatOpen && (
           <div className="fixed bottom-24 right-6 z-50 w-80 rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-2xl">

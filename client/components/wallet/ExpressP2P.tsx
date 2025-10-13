@@ -836,78 +836,16 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 >
                   <RotateCw className="h-4 w-4" />
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/express/pending")}
+                  className="h-8 rounded-md border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--foreground))] hover:bg-white"
+                >
+                  Pending Orders
+                </Button>
               </div>
             </div>
-
-            {recentOrders.length > 0 && (
-              <div className="mb-3 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="text-sm font-semibold uppercase">
-                    Pending Orders
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={triggerRefresh}
-                  >
-                    Refresh
-                  </Button>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-auto custom-scrollbar">
-                  {recentOrders.map((o) => (
-                    <div
-                      key={o.tradeId}
-                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {(o.side?.toUpperCase?.() || "ORDER") +
-                            " " +
-                            (o.token || "")}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          PKR{" "}
-                          {o.pkr.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                          • Units{" "}
-                          {o.units.toLocaleString(undefined, {
-                            minimumFractionDigits: 4,
-                            maximumFractionDigits: 4,
-                          })}{" "}
-                          • {o.method?.toUpperCase?.() || "—"}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground font-mono break-all">
-                          {o.tradeId}
-                        </div>
-                      </div>
-                      <div className="ml-3 flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          className="h-8"
-                          onClick={() =>
-                            navigate("/express/start-trade", {
-                              state: {
-                                side: o.side as any,
-                                token: o.token,
-                                pkrAmount: o.pkr,
-                                tokenUnits: o.units,
-                                paymentMethod: o.method,
-                                tradeId: o.tradeId,
-                              },
-                            })
-                          }
-                        >
-                          Open
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="mb-3 grid grid-cols-2 overflow-hidden rounded-xl bg-wallet-purple-100">
               <button

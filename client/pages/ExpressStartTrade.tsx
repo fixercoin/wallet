@@ -483,6 +483,13 @@ export default function ExpressStartTrade() {
     }
   };
 
+  useEffect(() => {
+    if (isEasypaisa && localRole === "buyer" && fiatDetected && !autoConfirmed) {
+      setAutoConfirmed(true);
+      handleBuyerConfirm();
+    }
+  }, [isEasypaisa, localRole, fiatDetected, autoConfirmed]);
+
   return (
     <div className="flex min-h-screen w-screen flex-col bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">

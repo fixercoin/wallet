@@ -148,6 +148,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const [notes, setNotes] = useState(
     "Confirm receipt within chat before releasing escrow on either side.",
   );
+  const [adminToken, setAdminToken] = useState("");
+  const P2P_BASE = (import.meta as any).env?.VITE_P2P_URL ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "") : "";
+  const { events } = useDurableRoom("global", P2P_BASE);
 
   useEffect(() => {
     const interval = window.setInterval(() => {

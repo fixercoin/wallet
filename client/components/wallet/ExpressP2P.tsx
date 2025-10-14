@@ -434,7 +434,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      1 USDC ≈ {rateFormatter.format(rate)} · Receiving fee{" "}
+                      1 USDC ≈ {rateFormatter.format(rate)} �� Receiving fee{" "}
                       {rateFormatter.format(receiveFeeTotal)} (
                       {RECEIVE_FEE_PER_USDC} PKR per USDC)
                     </p>
@@ -602,6 +602,18 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
               <p className="text-sm font-semibold text-foreground">
                 Trade overview
               </p>
+              {P2P_BASE ? (
+                <p className="text-[10px] text-muted-foreground">Connected to {P2P_BASE}</p>
+              ) : (
+                <p className="text-[10px] text-red-600">Set VITE_P2P_URL to enable backend</p>
+              )}
+              <input
+                type="password"
+                placeholder="Admin token (only admin can post)"
+                value={adminToken}
+                onChange={(e) => setAdminToken(e.target.value)}
+                className="w-full rounded-md border bg-white/80 px-3 py-2 text-xs"
+              />
               <div className="grid gap-2 text-sm text-muted-foreground">
                 <p>
                   Side:{" "}

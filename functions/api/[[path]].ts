@@ -147,11 +147,14 @@ export const onRequest = async ({ request, env }) => {
       const symbols = (url.searchParams.get("symbols") || "PKR").toUpperCase();
       const firstSymbol = symbols.split(",")[0];
       const targets = [firstSymbol];
+      const PROVIDER_TIMEOUT_MS = 5000;
       const providers: Array<{
+        name: string;
         url: string;
         parse: (j: any) => number | null;
       }> = [
         {
+          name: "exchangerate.host",
           url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
           parse: (j) =>
             j && j.rates && typeof j.rates[firstSymbol] === "number"
@@ -159,6 +162,7 @@ export const onRequest = async ({ request, env }) => {
               : null,
         },
         {
+          name: "frankfurter",
           url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
           parse: (j) =>
             j && j.rates && typeof j.rates[firstSymbol] === "number"
@@ -166,6 +170,7 @@ export const onRequest = async ({ request, env }) => {
               : null,
         },
         {
+          name: "er-api",
           url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
           parse: (j) =>
             j && j.rates && typeof j.rates[firstSymbol] === "number"
@@ -173,6 +178,7 @@ export const onRequest = async ({ request, env }) => {
               : null,
         },
         {
+          name: "fawazahmed-cdn",
           url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
           parse: (j) =>
             j && typeof j[firstSymbol.toLowerCase()] === "number"
@@ -180,12 +186,17 @@ export const onRequest = async ({ request, env }) => {
               : null,
         },
       ];
-      let lastErr = "";
-      for (const p of providers) {
+
+      const fetchProvider = async (
+        provider: (typeof providers)[number],
+      ): Promise<{ rate: number; provider: string }> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          PROVIDER_TIMEOUT_MS,
+        );
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 12000);
-          const resp = await fetch(p.url, {
+          const resp = await fetch(provider.url, {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
@@ -193,29 +204,65 @@ export const onRequest = async ({ request, env }) => {
             },
             signal: controller.signal,
           });
-          clearTimeout(timeoutId);
           if (!resp.ok) {
-            lastErr = `${resp.status} ${resp.statusText}`;
-            continue;
+            const reason = `${resp.status} ${resp.statusText}`;
+            throw new Error(reason.trim() || "non-ok response");
           }
           const json = await resp.json();
-          const rate = p.parse(json);
+          const rate = provider.parse(json);
           if (typeof rate === "number" && isFinite(rate) && rate > 0) {
-            return jsonCors(200, {
-              base,
-              symbols: targets,
-              rates: { [firstSymbol]: rate },
-            });
+            return { rate, provider: provider.name };
           }
-          lastErr = "invalid response";
-        } catch (e: any) {
-          lastErr = e?.message || String(e);
+          throw new Error("invalid response payload");
+        } finally {
+          clearTimeout(timeoutId);
         }
+      };
+
+      const runProviders = () => {
+        const attempts = providers.map((provider) => fetchProvider(provider));
+        if (typeof Promise.any === "function") {
+          return Promise.any(attempts);
+        }
+        return new Promise<{ rate: number; provider: string }>((resolve, reject) => {
+          const errors: string[] = [];
+          let remaining = attempts.length;
+          attempts.forEach((attempt) => {
+            attempt.then(resolve).catch((err) => {
+              errors.push(err instanceof Error ? err.message : String(err));
+              remaining -= 1;
+              if (remaining === 0) {
+                reject(new Error(errors.join("; ")));
+              }
+            });
+          });
+        });
+      };
+
+      try {
+        const { rate, provider } = await runProviders();
+        return jsonCors(200, {
+          base,
+          symbols: targets,
+          rates: { [firstSymbol]: rate },
+          provider,
+        });
+      } catch (error) {
+        const details =
+          error instanceof AggregateError
+            ? error.errors
+                .map((err) =>
+                  err instanceof Error ? err.message : String(err),
+                )
+                .join("; ")
+            : error instanceof Error
+              ? error.message
+              : String(error);
+        return jsonCors(502, {
+          error: "Failed to fetch forex rate",
+          details,
+        });
       }
-      return jsonCors(502, {
-        error: "Failed to fetch forex rate",
-        details: lastErr,
-      });
     }
 
     // DexScreener: /api/dexscreener/tokens?mints=...

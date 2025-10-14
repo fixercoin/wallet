@@ -80,7 +80,7 @@ const ixCreateAtaIdempotent = (
       { pubkey: ata, isSigner: false, isWritable: true },
       { pubkey: owner, isSigner: false, isWritable: false },
       { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: PublicKey.default, isSigner: false, isWritable: false }, // SystemProgram
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data: Buffer.from(data),
@@ -187,7 +187,21 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
     const destAta = deriveAta(recipientPk, LOCKER);
 
     const tx = new Transaction();
-    // Create destination ATA if needed (idempotent)
+    // Ensure source and destination ATAs (idempotent)
+    tx.add(
+      new TransactionInstruction({
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+        keys: [
+          { pubkey: rewardOwner, isSigner: true, isWritable: true },
+          { pubkey: sourceAta, isSigner: false, isWritable: true },
+          { pubkey: rewardOwner, isSigner: false, isWritable: false },
+          { pubkey: LOCKER, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        ],
+        data: Buffer.from(new Uint8Array([1])),
+      }),
+    );
     tx.add(
       new TransactionInstruction({
         programId: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -196,7 +210,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
           { pubkey: destAta, isSigner: false, isWritable: true },
           { pubkey: recipientPk, isSigner: false, isWritable: false },
           { pubkey: LOCKER, isSigner: false, isWritable: false },
-          { pubkey: PublicKey.default, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
           { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
         data: Buffer.from(new Uint8Array([1])),

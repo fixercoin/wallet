@@ -275,6 +275,73 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   };
 
   const headerLabel = side === "buy" ? "Buy" : "Sell";
+  const primaryText = side === "buy" ? "Buy With PKR" : "Sell For PKR";
+
+  // Compact card-only UI
+  if (true) {
+    return (
+      <div className="min-h-screen bg-gray-50 text-[hsl(var(--foreground))] p-4">
+        <div className="mx-auto w-full max-w-md">
+          <Card className="rounded-2xl border border-gray-200 bg-white shadow-xl">
+            <CardHeader className="pb-2">
+              <Tabs value={side} onValueChange={(v) => setSide(v as TradeSide)}>
+                <TabsList className="grid grid-cols-2 rounded-xl bg-gray-100 p-1">
+                  <TabsTrigger value="buy" className="rounded-lg text-base">Buy</TabsTrigger>
+                  <TabsTrigger value="sell" className="rounded-lg text-base">Sell</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Spend</Label>
+                <div className="rounded-xl border bg-white px-4 py-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>PKR amount</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium">PKR</span>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={pkAmount}
+                    onChange={(e) => setPkAmount(e.target.value)}
+                    className="mt-2 border-0 bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Receive ≈</Label>
+                <div className="rounded-xl border bg-white px-4 py-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>USDT amount (before fees)</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">USDT</span>
+                  </div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight">{usdcFormatter.format(usdcValue)}</div>
+                </div>
+                <p className="text-xs text-muted-foreground">1 USDT ≈ {rateFormatter.format(rate)}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Payment Methods</Label>
+                <Select value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}>
+                  <SelectTrigger className="rounded-lg border bg-white">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easypaisa">Easypaisa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button onClick={handleRequest} className="h-11 w-full rounded-lg bg-yellow-500 font-semibold text-white hover:bg-yellow-600">
+                {primaryText}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 text-[hsl(var(--foreground))] p-4">

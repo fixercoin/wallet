@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Flame } from "lucide-react";
@@ -262,48 +261,49 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="wallet-card">
-          <CardHeader>
-            <CardTitle>Burn FIXERCOIN for Rewards</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Amount (FIXERCOIN)</label>
-              <Input
-                placeholder="0.0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+        <div className="container">
+          <div className="card_box text-white">
+            <span></span>
+            <div className="space-y-3">
+              <div className="text-sm font-semibold tracking-wide">Burn FIXERCOIN for Rewards</div>
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">Amount (FIXERCOIN)</label>
+                <Input
+                  placeholder="0.0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  disabled={isLoading || !wallet}
+                />
+              </div>
+              <Button
+                className="w-full h-10 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
+                onClick={handleBurn}
                 disabled={isLoading || !wallet}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                Available: {maxFixer.toLocaleString()} FIXERCOIN
-              </div>
+              >
+                {isLoading ? "Processing..." : "Burn and Claim Reward"}
+              </Button>
             </div>
+          </div>
+        </div>
 
-            <Button
-              className="w-full h-12 dash-btn font-semibold border-0"
-              onClick={handleBurn}
-              disabled={isLoading || !wallet}
-            >
-              {isLoading ? "Processing..." : "Burn and Claim Reward"}
-            </Button>
-
-            {txSig ? (
-              <div className="text-xs break-all text-gray-600">
-                Burn tx: <a className="underline" href={`https://solscan.io/tx/${txSig}`} target="_blank" rel="noreferrer">{txSig}</a>
-              </div>
-            ) : null}
-            {rewardSig ? (
-              <div className="text-xs break-all text-gray-600">
-                Reward tx: <a className="underline" href={`https://solscan.io/tx/${rewardSig}`} target="_blank" rel="noreferrer">{rewardSig}</a>
-              </div>
-            ) : null}
-
-            <div className="text-xs text-gray-500">
-              You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount, paid from wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
+        <div className="mt-4 space-y-2">
+          <div className="text-xs text-gray-500">
+            Available: {maxFixer.toLocaleString()} FIXERCOIN
+          </div>
+          {txSig ? (
+            <div className="text-xs break-all text-gray-600">
+              Burn tx: <a className="underline" href={`https://solscan.io/tx/${txSig}`} target="_blank" rel="noreferrer">{txSig}</a>
             </div>
-          </CardContent>
-        </Card>
+          ) : null}
+          {rewardSig ? (
+            <div className="text-xs break-all text-gray-600">
+              Reward tx: <a className="underline" href={`https://solscan.io/tx/${rewardSig}`} target="_blank" rel="noreferrer">{rewardSig}</a>
+            </div>
+          ) : null}
+          <div className="text-xs text-gray-500">
+            You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount, paid from wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
+          </div>
+        </div>
       </div>
     </div>
   );

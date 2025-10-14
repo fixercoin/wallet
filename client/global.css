@@ -319,4 +319,43 @@
       transform: translateY(0);
     }
   }
+
+  .express-p2p-loader {
+    width: 300px;
+    height: 300px;
+    border-radius: 9999px;
+    border: 12px dotted hsl(var(--primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.35),
+      transparent 65%
+    );
+    animation: express-p2p-spin 1.4s linear infinite;
+  }
+
+  @keyframes express-p2p-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .express-detecting-text {
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    animation: express-detecting-wave 1.25s ease-in-out infinite alternate;
+  }
+
+  @keyframes express-detecting-wave {
+    from {
+      transform: translateX(-8px);
+      opacity: 0.75;
+    }
+    to {
+      transform: translateX(8px);
+      opacity: 1;
+    }
+  }
 }

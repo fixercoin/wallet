@@ -102,7 +102,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
             ) : null}
           </div>
 
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-2 w-[300px] max-w-[60vw] shrink-0">
             <Input
               value={wallet?.publicKey || ""}
               placeholder="No wallet"
@@ -121,8 +123,6 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               </Button>
             ) : null}
           </div>
-
-          <div className="h-9 w-9" aria-hidden="true" />
         </div>
       </div>
 

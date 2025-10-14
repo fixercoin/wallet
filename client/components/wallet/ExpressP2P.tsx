@@ -39,6 +39,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { createOrder } from "@/lib/p2p";
 
 type TradeSide = "buy" | "sell";
 

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
-import { shortenAddress, copyToClipboard } from "@/lib/wallet";
+import { copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Copy, Plus, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";

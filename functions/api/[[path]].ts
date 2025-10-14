@@ -228,19 +228,21 @@ export const onRequest = async ({ request, env }) => {
         if (typeof Promise.any === "function") {
           return Promise.any(attempts);
         }
-        return new Promise<{ rate: number; provider: string }>((resolve, reject) => {
-          const errors: string[] = [];
-          let remaining = attempts.length;
-          attempts.forEach((attempt) => {
-            attempt.then(resolve).catch((err) => {
-              errors.push(err instanceof Error ? err.message : String(err));
-              remaining -= 1;
-              if (remaining === 0) {
-                reject(new Error(errors.join("; ")));
-              }
+        return new Promise<{ rate: number; provider: string }>(
+          (resolve, reject) => {
+            const errors: string[] = [];
+            let remaining = attempts.length;
+            attempts.forEach((attempt) => {
+              attempt.then(resolve).catch((err) => {
+                errors.push(err instanceof Error ? err.message : String(err));
+                remaining -= 1;
+                if (remaining === 0) {
+                  reject(new Error(errors.join("; ")));
+                }
+              });
             });
-          });
-        });
+          },
+        );
       };
 
       try {

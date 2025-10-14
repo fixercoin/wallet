@@ -514,8 +514,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     <Label className="text-sm font-semibold">Send</Label>
                     <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>USDC to release</span>
-                        <span className="font-semibold">USDC</span>
+                        <span>USDT to release</span>
+                        <span className="font-semibold">USDT</span>
                       </div>
                       <div className="mt-2 text-3xl font-semibold tracking-tight">
                         {usdcFormatter.format(usdcValue)}

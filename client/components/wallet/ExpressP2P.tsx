@@ -18,6 +18,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
   const [checkingOrders, setCheckingOrders] = useState(true);
+  const [detectedOrder, setDetectedOrder] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +28,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
       try {
         const res = await listOrders("global");
         if (cancelled) return;
-        if (Array.isArray(res?.orders) && res.orders.length > 0) {
+        const orders = Array.isArray(res?.orders) ? res.orders : [];
+        const buy = orders.find((o: any) => String(o.side || o.type).toLowerCase() === "buy") || orders[0];
+        if (buy) {
+          setDetectedOrder(buy);
           setCheckingOrders(false);
           return; // stop polling on first detection
         }
@@ -111,7 +115,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
       <div className="max-w-md mx-auto px-4 py-8">
         <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
-          {checkingOrders && (
+          {checkingOrders ? (
             <>
               <div
                 className="express-p2p-loader"
@@ -130,7 +134,22 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 detecting orders
               </p>
             </>
-          )}
+          ) : detectedOrder ? (
+            <button
+              type="button"
+              onClick={() => navigate("/express/buy-trade", { state: { order: detectedOrder } })}
+              className="w-full text-left rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center justify-between"
+            >
+              <div>
+                <p className="text-sm text-gray-500">Buy order detected</p>
+                <p className="font-semibold">{String(detectedOrder?.quoteAsset || detectedOrder?.token || "Token").toUpperCase()}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500">Price (PKR)</p>
+                <p className="font-medium">{detectedOrder?.pricePKRPerQuote ?? "—"}</p>
+              </div>
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

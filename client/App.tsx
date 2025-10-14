@@ -22,6 +22,7 @@ import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
 import NotFound from "./pages/NotFound";
 import ExpressAddPost from "./pages/ExpressAddPost";
+import BuyTrade from "./pages/BuyTrade";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
                 element={<TokenListing />}
               />
               <Route path="/express/add-post" element={<ExpressAddPost />} />
+              <Route path="/express/buy-trade" element={<BuyTrade />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

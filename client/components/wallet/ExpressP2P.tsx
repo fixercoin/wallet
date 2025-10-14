@@ -187,7 +187,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
   const method = PAYMENT_METHODS.find((item) => item.id === selectedMethod)!;
 
-  const handleRequest = () => {
+  const handleRequest = async () => {
     if (numericPk <= 0) {
       toast({
         title: "Add a PKR amount",

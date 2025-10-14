@@ -696,14 +696,12 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
         <div className="wallet-card rounded-2xl p-6 space-y-5">
           <Card className="wallet-card">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <LockIcon className="h-5 w-5 text-purple-500" />
-                <CardTitle className="text-sm font-semibold">
-                  Create new lock
-                </CardTitle>
-              </div>
-            </CardHeader>
+          <div className="flex items-center gap-2">
+            <LockIcon className="h-5 w-5 text-purple-500" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              Create new lock
+            </span>
+          </div>
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-xs text-[hsl(var(--muted-foreground))]">

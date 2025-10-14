@@ -261,7 +261,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="container">
+        <div className="cardbox-container">
           <div className="card_box text-white">
             <span></span>
             <div className="space-y-3">

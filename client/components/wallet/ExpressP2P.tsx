@@ -204,7 +204,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           {
             side,
             amountPKR: numericPk,
-            quoteAsset: "USDC",
+            quoteAsset: "USDT",
             pricePKRPerQuote: rate,
             paymentMethod: "easypaisa",
             roomId: "global",

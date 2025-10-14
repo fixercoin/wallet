@@ -1,6 +1,37 @@
+// ---------------------------
+// 🔧 Configuration Constants
+// ---------------------------
 export const API_BASE = (import.meta as any).env?.VITE_P2P_URL
   ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "")
   : "";
+
+export const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
+
+// ---------------------------
+// 🧩 Types
+// ---------------------------
+export type P2PPost = {
+  id: string;
+  type: "buy" | "sell";
+  token: string;
+  pricePkr: number;
+  pricePerUSDC?: number | null;
+  pricePerSOL?: number | null;
+  minToken: number;
+  maxToken: number;
+  paymentMethod: string;
+  walletAddress?: string;
+  paymentDetails?: {
+    accountName: string;
+    accountNumber: string;
+  };
+  createdAt: number;
+  updatedAt: number;
+};
+
+// ---------------------------
+// 📡 API Functions
+// ---------------------------
 
 export async function listOrders(roomId: string = "global") {
   const base = API_BASE;
@@ -34,3 +65,4 @@ export async function createOrder(
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+

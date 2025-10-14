@@ -144,9 +144,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(
-          "https://api.exchangerate.host/latest?base=USD&symbols=PKR",
-        );
+        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -301,14 +299,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span>My Wallet</span>
+                  <span>ALL WALLET</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onAirdrop}
                   className="flex items-center gap-2"
                 >
                   <Gift className="h-4 w-4" />
-                  <span>Token Airdrop</span>
+                  <span>MULTI-SEND</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -316,7 +314,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />
-                  <span>Setting</span>
+                  <span>SETTINGS</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -368,7 +366,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 dash-btn font-semibold border-0"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
-            Send
+            SEND
           </Button>
 
           <Button

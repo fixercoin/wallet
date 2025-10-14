@@ -1,5 +1,16 @@
 // Netlify Functions entry to handle /api/* routes
-// Currently implements /api/solana-rpc for wallet balances & SPL token accounts
+
+import {
+  listPosts,
+  getPost,
+  createOrUpdatePost,
+  listTradeMessages,
+  listRecentTradeMessages,
+  addTradeMessage,
+  uploadProof,
+  addEasypaisaPayment,
+  listEasypaisaPayments,
+} from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
@@ -44,7 +55,7 @@ async function callRpc(
       }
 
       const data = await resp.text();
-      return { ok: true, body: data };
+      return { ok: true, body: data } as const;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
     }
@@ -63,8 +74,9 @@ function jsonResponse(
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-Admin-Wallet",
       ...headers,
     },
     body: typeof body === "string" ? body : JSON.stringify(body),
@@ -113,37 +125,348 @@ async function tryDexEndpoints(path: string) {
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
 }
 
+type BinanceCacheEntry = {
+  expiresAt: number;
+  data: any;
+};
+
+const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
+const BINANCE_P2P_CACHE_TTL = 30000;
+
+function uniqueId() {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function encodeToBase64(value: string): string {
+  const globalObj = globalThis as any;
+  if (typeof globalObj?.btoa === "function") {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return globalObj.btoa(binary);
+  }
+  if (globalObj?.Buffer) {
+    return globalObj.Buffer.from(value, "utf-8").toString("base64");
+  }
+  throw new Error("Base64 encoding not supported in this environment");
+}
+
+function buildDeviceInfoPayload(userAgent: string): string {
+  const payload = {
+    deviceName: "Chrome",
+    deviceVersion: "124.0.0.0",
+    osName: "windows",
+    osVersion: "10",
+    platform: "web",
+    screenHeight: 1080,
+    screenWidth: 1920,
+    systemLang: "en-US",
+    timeZone: "UTC",
+    userAgent,
+  };
+  return encodeToBase64(JSON.stringify(payload));
+}
+
 export const handler = async (event: any) => {
-  // Handle CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");
   }
 
   const path =
-    (event.path || "").replace(/^\/.netlify\/functions\/api/, "") || "/";
+    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const method = event.httpMethod;
 
   try {
-    // Solana RPC
-    if (path === "/solana-rpc" && event.httpMethod === "POST") {
+    // P2P endpoints
+    if (path === "/p2p" || path === "/p2p/" || path === "/p2p/list") {
+      if (method === "GET") {
+        return jsonResponse(200, listPosts());
+      }
+      return jsonResponse(405, { error: "Method Not Allowed" });
+    }
+
+    if (path.startsWith("/p2p/post/") && method === "GET") {
+      const id = path.replace("/p2p/post/", "");
+      const post = getPost(id);
+      if (!post) return jsonResponse(404, { error: "not found" });
+      return jsonResponse(200, { post });
+    }
+
+    if (path === "/p2p/post" && (method === "POST" || method === "PUT")) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const adminHeader =
+        (event.headers?.["x-admin-wallet"] as string) ||
+        body?.adminWallet ||
+        "";
+      const result = createOrUpdatePost(body || {}, adminHeader || "");
+      if ("error" in result)
+        return jsonResponse(result.status, { error: result.error });
+      return jsonResponse(result.status, { post: result.post });
+    }
+
+    if (
+      path.startsWith("/p2p/trade/") &&
+      path.endsWith("/messages") &&
+      method === "GET"
+    ) {
+      const tradeId = path
+        .replace(/^\/p2p\/trade\//, "")
+        .replace(/\/messages$/, "");
+      return jsonResponse(200, listTradeMessages(tradeId));
+    }
+
+    if (path === "/p2p/trades/recent" && method === "GET") {
+      const since = Number(event.queryStringParameters?.since || 0);
+      const limit = Number(event.queryStringParameters?.limit || 100);
+      const data = (listRecentTradeMessages({ since, limit }) as any) || {
+        messages: [],
+      };
+      return jsonResponse(200, { messages: data.messages || [] });
+    }
+
+    if (
+      path.startsWith("/p2p/trade/") &&
+      path.endsWith("/message") &&
+      method === "POST"
+    ) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const tradeId = path
+        .replace(/^\/p2p\/trade\//, "")
+        .replace(/\/message$/, "");
+      const result = addTradeMessage(
+        tradeId,
+        body?.message || "",
+        body?.from || "unknown",
+      );
+      if ("error" in result)
+        return jsonResponse(result.status, { error: result.error });
+      return jsonResponse(result.status, { message: result.message });
+    }
+
+    if (
+      path.startsWith("/p2p/trade/") &&
+      path.endsWith("/proof") &&
+      method === "POST"
+    ) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const tradeId = path
+        .replace(/^\/p2p\/trade\//, "")
+        .replace(/\/proof$/, "");
+      const result = uploadProof(tradeId, body?.proof);
+      if ("error" in result)
+        return jsonResponse(result.status, { error: result.error });
+
+      // Optional Supabase storage upload if configured
+      const SUPABASE_URL = process.env.SUPABASE_URL;
+      const SUPABASE_KEY =
+        process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+      let supabaseUrl: string | undefined = undefined;
+      if (
+        SUPABASE_URL &&
+        SUPABASE_KEY &&
+        body?.proof?.data &&
+        body?.proof?.filename
+      ) {
+        try {
+          const base64 = body.proof.data.includes(",")
+            ? body.proof.data.split(",").pop()!
+            : body.proof.data;
+          const binary = Buffer.from(base64, "base64");
+          const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${body.proof.filename}`;
+          const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              "Content-Type": "application/octet-stream",
+              "x-upsert": "true",
+            },
+            body: binary,
+          });
+          if (resp.ok) {
+            supabaseUrl = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;
+          }
+        } catch {}
+      }
+
+      return jsonResponse(result.status, { ok: true, url: supabaseUrl });
+    }
+
+    // Easypaisa webhook ingestion (best-effort schema)
+    if (path === "/easypaisa/webhook" && method === "POST") {
       let body: any = {};
       try {
         body = event.body ? JSON.parse(event.body) : {};
       } catch {}
 
-      const method = body?.method;
+      const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
+      const providedSecret =
+        event.headers?.["x-webhook-secret"] ||
+        event.headers?.["x-easypay-secret"] ||
+        body?.secret ||
+        "";
+      if (configuredSecret && providedSecret !== configuredSecret) {
+        return jsonResponse(401, { error: "unauthorized" });
+      }
+
+      const msisdn = String(
+        body?.msisdn ||
+          body?.receiverMsisdn ||
+          body?.account ||
+          process.env.EASYPAY_MSISDN ||
+          "",
+      );
+      const amount = Number(
+        body?.amount ?? body?.txnAmount ?? body?.transactionAmount ?? 0,
+      );
+      const currency = String(body?.currency || "PKR");
+      const reference = String(
+        body?.reference ||
+          body?.trxId ||
+          body?.transactionId ||
+          body?.remarks ||
+          body?.narration ||
+          "",
+      );
+      const sender = String(
+        body?.senderMsisdn || body?.payer || body?.from || "",
+      );
+      const tsRaw = body?.ts ?? body?.timestamp ?? body?.date ?? Date.now();
+      const ts = typeof tsRaw === "number" ? tsRaw : Date.parse(tsRaw);
+
+      if (!msisdn || !amount || !isFinite(amount)) {
+        return jsonResponse(400, { error: "invalid payload" });
+      }
+
+      const result = addEasypaisaPayment({
+        msisdn,
+        amount,
+        currency,
+        reference,
+        sender,
+        ts: isFinite(ts) ? ts : Date.now(),
+      });
+      return jsonResponse(result.status, { payment: result.payment });
+    }
+
+    // Easypaisa payments query
+    if (path === "/easypaisa/payments" && method === "GET") {
+      const msisdn =
+        event.queryStringParameters?.msisdn || process.env.EASYPAY_MSISDN || "";
+      const since = Number(event.queryStringParameters?.since || 0);
+      const data = listEasypaisaPayments({ msisdn, since });
+      return jsonResponse(200, data);
+    }
+
+    // Solana RPC
+    if (path === "/solana-rpc" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const methodName = body?.method;
       const params = body?.params ?? [];
       const id = body?.id ?? Date.now();
 
-      if (!method || typeof method !== "string") {
+      if (!methodName || typeof methodName !== "string") {
         return jsonResponse(400, { error: "Missing RPC method" });
       }
 
-      const result = await callRpc(method, params, id);
+      const result = await callRpc(methodName, params, id);
       return jsonResponse(200, result.body);
     }
 
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (path === "/forex/rate" && method === "GET") {
+      const base = (event.queryStringParameters?.base || "USD").toUpperCase();
+      const symbols = (
+        event.queryStringParameters?.symbols || "PKR"
+      ).toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const json = await resp.json();
+          const rate = p.parse(json);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return jsonResponse(200, {
+              base,
+              symbols: [firstSymbol],
+              rates: { [firstSymbol]: rate },
+            });
+          }
+          lastErr = "invalid response";
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonResponse(502, {
+        error: "Failed to fetch forex rate",
+        details: lastErr,
+      });
+    }
+
     // DexScreener: tokens
-    if (path === "/dexscreener/tokens" && event.httpMethod === "GET") {
+    if (path === "/dexscreener/tokens" && method === "GET") {
       const mints = event.queryStringParameters?.mints;
       if (!mints)
         return jsonResponse(400, { error: "Missing 'mints' query parameter" });
@@ -158,7 +481,7 @@ export const handler = async (event: any) => {
     }
 
     // DexScreener: search
-    if (path === "/dexscreener/search" && event.httpMethod === "GET") {
+    if (path === "/dexscreener/search" && method === "GET") {
       const q = event.queryStringParameters?.q;
       if (!q)
         return jsonResponse(400, { error: "Missing 'q' query parameter" });
@@ -173,7 +496,7 @@ export const handler = async (event: any) => {
     }
 
     // DexScreener: trending
-    if (path === "/dexscreener/trending" && event.httpMethod === "GET") {
+    if (path === "/dexscreener/trending" && method === "GET") {
       const data = await tryDexEndpoints(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
@@ -193,7 +516,153 @@ export const handler = async (event: any) => {
       });
     }
 
-    // Unknown API route
+    // Binance P2P passthrough: /api/binance-p2p/<path>
+    if (path.startsWith("/binance-p2p/")) {
+      const BINANCE_P2P_ENDPOINTS = [
+        "https://p2p.binance.com",
+        "https://c2c.binance.com",
+        "https://www.binance.com",
+      ];
+      const subPath = path.replace(/^\/binance-p2p\//, "/");
+      const search = event.rawQuery ? `?${event.rawQuery}` : "";
+      const requestBody =
+        event.httpMethod !== "GET" && event.httpMethod !== "HEAD"
+          ? (event.body ?? undefined)
+          : undefined;
+      const cacheKey = `${event.httpMethod}:${subPath}${search}:${requestBody ?? ""}`;
+      const cached = BINANCE_P2P_CACHE.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return jsonResponse(200, cached.data);
+      }
+
+      const headersLower = event.headers || {};
+      const uaHeader =
+        headersLower["user-agent"] ||
+        headersLower["User-Agent"] ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+      const traceId = uniqueId().replace(/-/g, "");
+      const sessionId = uniqueId().replace(/-/g, "");
+      const deviceInfo = buildDeviceInfoPayload(uaHeader);
+
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": uaHeader,
+        clienttype: "web",
+        "cache-control": "no-cache",
+        Origin: "https://p2p.binance.com",
+        Referer: "https://p2p.binance.com/en",
+        lang: "en",
+        platform: "web",
+        "Accept-Language": "en-US,en;q=0.9",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Trace-Id": traceId,
+        "device-info": deviceInfo,
+        "bnc-uuid": sessionId,
+        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
+        csrftoken: traceId,
+        "X-CSRF-TOKEN": traceId,
+        timezone: "UTC",
+      };
+
+      if (requestBody === undefined) {
+        delete baseHeaders["Content-Type"];
+      }
+
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
+        const base = BINANCE_P2P_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          const init: RequestInit = {
+            method: event.httpMethod,
+            headers: baseHeaders,
+            signal: controller.signal,
+          };
+          if (requestBody !== undefined) {
+            init.body = requestBody;
+          }
+          const resp = await fetch(target, init);
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            if ([403, 429, 502, 503].includes(resp.status)) {
+              lastErr = `${resp.status} ${resp.statusText}`;
+              await new Promise((resolve) => setTimeout(resolve, 150));
+              continue;
+            }
+            const t = await resp.text().catch(() => "");
+            return jsonResponse(resp.status, { error: t || resp.statusText });
+          }
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const json = await resp.json();
+            BINANCE_P2P_CACHE.set(cacheKey, {
+              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
+              data: json,
+            });
+            return jsonResponse(200, json);
+          }
+          const text = await resp.text();
+          return jsonResponse(200, text, {
+            "Content-Type": contentType || "text/plain",
+          });
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+        }
+      }
+      BINANCE_P2P_CACHE.delete(cacheKey);
+      // Graceful fallback: return empty data set so client can fallback without network error noise
+      return jsonResponse(200, {
+        data: [],
+        error: "All Binance P2P endpoints failed",
+        details: lastErr,
+      });
+    }
+
+    // Binance passthrough: /api/binance/<path>
+    if (path.startsWith("/binance/")) {
+      const BINANCE_ENDPOINTS = [
+        "https://api.binance.com",
+        "https://api1.binance.com",
+        "https://api2.binance.com",
+        "https://api3.binance.com",
+      ];
+      const subPath = path.replace(/^\/binance\//, "/");
+      const search = event.rawQuery ? `?${event.rawQuery}` : "";
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
+        const base = BINANCE_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(target, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            if ([429, 502, 503].includes(resp.status)) continue;
+            const t = await resp.text().catch(() => "");
+            throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+          }
+          const text = await resp.text();
+          // Try to return JSON if possible, else text
+          try {
+            const json = JSON.parse(text);
+            return jsonResponse(200, json);
+          } catch {
+            return jsonResponse(200, text, { "Content-Type": "text/plain" });
+          }
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+        }
+      }
+      return jsonResponse(502, {
+        error: "All Binance endpoints failed",
+        details: lastErr,
+      });
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

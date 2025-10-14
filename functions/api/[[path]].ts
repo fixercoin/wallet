@@ -116,6 +116,62 @@ function jsonCors(status: number, body: any) {
   });
 }
 
+type BinanceCacheEntry = {
+  expiresAt: number;
+  data: any;
+};
+
+const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
+const BINANCE_P2P_CACHE_TTL = 30000;
+
+function uniqueId() {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function encodeToBase64(value: string): string {
+  if (typeof btoa === "function") {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
+  }
+  const globalBuffer = (globalThis as any)?.Buffer;
+  if (globalBuffer) {
+    return globalBuffer.from(value, "utf-8").toString("base64");
+  }
+  throw new Error("Base64 encoding not supported in this environment");
+}
+
+function buildDeviceInfoPayload(userAgent: string): string {
+  const payload = {
+    deviceName: "Chrome",
+    deviceVersion: "124.0.0.0",
+    osName: "windows",
+    osVersion: "10",
+    platform: "web",
+    screenHeight: 1080,
+    screenWidth: 1920,
+    systemLang: "en-US",
+    timeZone: "UTC",
+    userAgent,
+  };
+  return encodeToBase64(JSON.stringify(payload));
+}
+
+import p2pHandler from "./p2p";
+import {
+  addEasypaisaPayment,
+  listEasypaisaPayments,
+} from "../../utils/p2pStore";
+
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
@@ -129,9 +185,156 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
+    // P2P routes passthrough to dedicated handler
+    if (url.pathname.startsWith("/api/p2p")) {
+      return await p2pHandler(request, env);
+    }
+
+    // Easypaisa webhook ingestion (best-effort schema)
+    if (normalizedPath === "/easypaisa/webhook" && request.method === "POST") {
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+
+      const configuredSecret = (env as any)?.EASYPAY_WEBHOOK_SECRET;
+      const providedSecret =
+        request.headers.get("x-webhook-secret") ||
+        request.headers.get("x-easypay-secret") ||
+        body?.secret ||
+        "";
+      if (configuredSecret && providedSecret !== configuredSecret) {
+        return jsonCors(401, { error: "unauthorized" });
+      }
+
+      const msisdn = String(
+        body?.msisdn ||
+          body?.receiverMsisdn ||
+          body?.account ||
+          (env as any)?.EASYPAY_MSISDN ||
+          "",
+      );
+      const amount = Number(
+        body?.amount ?? body?.txnAmount ?? body?.transactionAmount ?? 0,
+      );
+      const currency = String(body?.currency || "PKR");
+      const reference = String(
+        body?.reference ||
+          body?.trxId ||
+          body?.transactionId ||
+          body?.remarks ||
+          body?.narration ||
+          "",
+      );
+      const sender = String(
+        body?.senderMsisdn || body?.payer || body?.from || "",
+      );
+      const tsRaw = body?.ts ?? body?.timestamp ?? body?.date ?? Date.now();
+      const ts = typeof tsRaw === "number" ? tsRaw : Date.parse(tsRaw);
+
+      if (!msisdn || !amount || !isFinite(amount)) {
+        return jsonCors(400, { error: "invalid payload" });
+      }
+
+      const result = addEasypaisaPayment({
+        msisdn,
+        amount,
+        currency,
+        reference,
+        sender,
+        ts: isFinite(ts) ? ts : Date.now(),
+      });
+      return jsonCors(result.status, { payment: result.payment });
+    }
+
+    if (normalizedPath === "/easypaisa/payments" && request.method === "GET") {
+      const msisdn =
+        url.searchParams.get("msisdn") || (env as any)?.EASYPAY_MSISDN || "";
+      const since = Number(url.searchParams.get("since") || 0);
+      const data = listEasypaisaPayments({ msisdn, since });
+      return jsonCors(200, data);
+    }
+
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);
+    }
+
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (normalizedPath === "/forex/rate") {
+      const base = (url.searchParams.get("base") || "USD").toUpperCase();
+      const symbols = (url.searchParams.get("symbols") || "PKR").toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const targets = [firstSymbol];
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+            },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const json = await resp.json();
+          const rate = p.parse(json);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return jsonCors(200, {
+              base,
+              symbols: targets,
+              rates: { [firstSymbol]: rate },
+            });
+          }
+          lastErr = "invalid response";
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonCors(502, {
+        error: "Failed to fetch forex rate",
+        details: lastErr,
+      });
     }
 
     // DexScreener: /api/dexscreener/tokens?mints=...
@@ -186,6 +389,182 @@ export const onRequest = async ({ request, env }) => {
       return jsonCors(200, {
         schemaVersion: data?.schemaVersion || "1.0.0",
         pairs,
+      });
+    }
+
+    // Binance P2P passthrough: /api/binance-p2p/<path>
+    if (normalizedPath.startsWith("/binance-p2p/")) {
+      const BINANCE_P2P_ENDPOINTS = [
+        "https://p2p.binance.com",
+        "https://c2c.binance.com",
+        "https://www.binance.com",
+      ];
+      const subPath = normalizedPath.replace(/^\/binance-p2p\//, "/");
+      const search = url.search || "";
+      const requestBody =
+        request.method !== "GET" && request.method !== "HEAD"
+          ? await request
+              .clone()
+              .text()
+              .catch(() => undefined)
+          : undefined;
+      const cacheKey = `${request.method}:${subPath}${search}:${requestBody ?? ""}`;
+      const cached = BINANCE_P2P_CACHE.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return jsonCors(200, cached.data);
+      }
+
+      const uaHeader =
+        request.headers.get("user-agent") ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+      const traceId = uniqueId().replace(/-/g, "");
+      const sessionId = uniqueId().replace(/-/g, "");
+      const deviceInfo = buildDeviceInfoPayload(uaHeader);
+
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": uaHeader,
+        clienttype: "web",
+        "cache-control": "no-cache",
+        Origin: "https://p2p.binance.com",
+        Referer: "https://p2p.binance.com/en",
+        lang: "en",
+        platform: "web",
+        "Accept-Language": "en-US,en;q=0.9",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Trace-Id": traceId,
+        "device-info": deviceInfo,
+        "bnc-uuid": sessionId,
+        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
+        csrftoken: traceId,
+        "X-CSRF-TOKEN": traceId,
+        timezone: "UTC",
+      };
+
+      if (requestBody === undefined) {
+        delete baseHeaders["Content-Type"];
+      }
+
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
+        const base = BINANCE_P2P_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const init: RequestInit = {
+            method: request.method,
+            headers: baseHeaders,
+            signal: controller.signal,
+          };
+          if (requestBody !== undefined) {
+            init.body = requestBody;
+          }
+          const resp = await fetch(target, init);
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            if (
+              resp.status === 403 ||
+              resp.status === 429 ||
+              resp.status >= 500
+            ) {
+              lastErr = `${resp.status} ${resp.statusText}`;
+              await new Promise((resolve) => setTimeout(resolve, 150));
+              continue;
+            }
+            const t = await resp.text().catch(() => "");
+            return jsonCors(resp.status, { error: t || resp.statusText });
+          }
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await resp.json();
+            BINANCE_P2P_CACHE.set(cacheKey, {
+              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
+              data,
+            });
+            return jsonCors(200, data);
+          }
+          const text = await resp.text();
+          return new Response(text, {
+            status: 200,
+            headers: applyCors(
+              new Headers({ "Content-Type": contentType || "text/plain" }),
+            ),
+          });
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      BINANCE_P2P_CACHE.delete(cacheKey);
+      // Graceful fallback: return empty data to allow client-side fallback without 502 network error
+      return jsonCors(200, {
+        data: [],
+        error: "All Binance P2P endpoints failed",
+        details: lastErr,
+      });
+    }
+
+    // Binance passthrough: /api/binance/<path>
+    if (normalizedPath.startsWith("/binance/")) {
+      const BINANCE_ENDPOINTS = [
+        "https://api.binance.com",
+        "https://api1.binance.com",
+        "https://api2.binance.com",
+        "https://api3.binance.com",
+      ];
+      const subPath = normalizedPath.replace(/^\/binance\//, "/");
+      const search = url.search || "";
+      let lastErr = "";
+      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
+        const base = BINANCE_ENDPOINTS[i];
+        const target = `${base}${subPath}${search}`;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const resp = await fetch(target, {
+            method: request.method,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+            },
+            body:
+              request.method !== "GET" && request.method !== "HEAD"
+                ? await request
+                    .clone()
+                    .text()
+                    .catch(() => undefined)
+                : undefined,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            // try next if rate limited or server error
+            if (resp.status === 429 || resp.status >= 500) continue;
+            const t = await resp.text().catch(() => "");
+            return jsonCors(resp.status, { error: t || resp.statusText });
+          }
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await resp.json();
+            return jsonCors(200, data);
+          }
+          // Non-JSON: return as text
+          const text = await resp.text();
+          return new Response(text, {
+            status: 200,
+            headers: applyCors(
+              new Headers({ "Content-Type": contentType || "text/plain" }),
+            ),
+          });
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return jsonCors(502, {
+        error: "All Binance endpoints failed",
+        details: lastErr,
       });
     }
 

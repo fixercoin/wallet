@@ -172,7 +172,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            Accounts
+            ACCOUNTS
           </h1>
         </div>
 
@@ -180,13 +180,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
             <div className="px-6 pt-2">
               <div className="text-[hsl(var(--primary))] font-semibold">
-                Accounts
+            
               </div>
             </div>
             <div className="space-y-6">
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  All Accounts
+                  SELECT ACCOUNT
                 </div>
                 <div className="flex items-center">
                   <select
@@ -225,7 +225,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
                   <Key className="h-5 w-5" />
-                  <span className="font-medium">Secrets</span>
+                  <span className="font-medium">SECRETS</span>
                 </div>
                 <div className="space-y-2">
                   <div className="p-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg">
@@ -240,8 +240,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         }
                         className="flex-1 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-2 rounded-md border border-[hsl(var(--border))] font-mono"
                       >
-                        <option value="recovery">Recovery Phrase</option>
-                        <option value="private">Private Key</option>
+                        <option value="recovery">RECOVERY PHRASE</option>
+                        <option value="private">PRIVATE KEY</option>
                       </select>
 
                       <select
@@ -376,7 +376,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  Account
+                  
                 </div>
                 <div className="space-y-3">
                   <Button

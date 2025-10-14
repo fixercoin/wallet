@@ -282,14 +282,17 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               >
                 {isLoading ? "Processing..." : "Burn and Claim Reward"}
               </Button>
+              <div className="text-xs text-gray-300">
+                Available: {maxFixer.toLocaleString()} FIXERCOIN
+              </div>
+              <div className="text-[10px] text-gray-300">
+                You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount, paid from wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
+              </div>
             </div>
           </div>
         </div>
 
         <div className="mt-4 space-y-2">
-          <div className="text-xs text-gray-500">
-            Available: {maxFixer.toLocaleString()} FIXERCOIN
-          </div>
           {txSig ? (
             <div className="text-xs break-all text-gray-600">
               Burn tx: <a className="underline" href={`https://solscan.io/tx/${txSig}`} target="_blank" rel="noreferrer">{txSig}</a>
@@ -300,9 +303,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               Reward tx: <a className="underline" href={`https://solscan.io/tx/${rewardSig}`} target="_blank" rel="noreferrer">{rewardSig}</a>
             </div>
           ) : null}
-          <div className="text-xs text-gray-500">
-            You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount, paid from wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
-          </div>
         </div>
       </div>
     </div>

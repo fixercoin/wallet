@@ -12,6 +12,7 @@ import { Airdrop } from "@/components/wallet/Airdrop";
 import { Accounts } from "@/components/wallet/Accounts";
 import { ExpressP2P } from "@/components/wallet/ExpressP2P";
 import { TokenLock } from "@/components/wallet/TokenLock";
+import { BurnToken } from "@/components/wallet/BurnToken";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -27,7 +28,8 @@ type Screen =
   | "accounts"
   | "airdrop"
   | "p2p"
-  | "lock";
+  | "lock"
+  | "burn";
 
 interface ScreenState {
   screen: Screen;
@@ -152,6 +154,9 @@ export default function Index() {
     case "lock":
       return <TokenLock onBack={navigateToDashboard} />;
 
+    case "burn":
+      return <BurnToken onBack={navigateToDashboard} />;
+
     case "dashboard":
     default:
       return (
@@ -167,6 +172,7 @@ export default function Index() {
           onAccounts={() => navigateToScreen("accounts")}
           onP2P={() => navigateToScreen("p2p")}
           onLock={() => navigateToScreen("lock")}
+          onBurn={() => navigateToScreen("burn")}
         />
       );
   }

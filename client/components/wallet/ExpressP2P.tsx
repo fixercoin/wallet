@@ -569,6 +569,8 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                     </span>
                   </div>
                 </div>
+
+                <button onClick={handleRequest} className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md transition-colors">Sell For PKR</button>
               </TabsContent>
             </Tabs>
           </CardContent>

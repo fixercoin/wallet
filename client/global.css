@@ -321,24 +321,61 @@
   }
 
   .express-p2p-loader {
+    position: relative;
     width: 300px;
     height: 300px;
     border-radius: 9999px;
-    border: 12px dotted hsl(var(--primary));
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: radial-gradient(
       circle at center,
-      rgba(255, 255, 255, 0.35),
-      transparent 65%
+      rgba(255, 255, 255, 0.2),
+      transparent 62%
     );
-    animation: express-p2p-spin 1.4s linear infinite;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
   }
 
-  @keyframes express-p2p-spin {
+  .express-p2p-loader::before,
+  .express-p2p-loader::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+  }
+
+  .express-p2p-loader::before {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 22px hsla(var(--primary) / 0.45);
+    transform: translate(-50%, -50%) rotate(0deg) translate(140px);
+    animation: express-p2p-dot 1.4s linear infinite;
+  }
+
+  .express-p2p-loader::after {
+    width: 150px;
+    height: 12px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      90deg,
+      hsla(var(--primary) / 0),
+      hsla(var(--primary) / 0.65),
+      hsla(var(--primary) / 0.95)
+    );
+    filter: blur(0.4px);
+    transform: translate(-50%, -50%) rotate(0deg) translate(70px);
+    animation: express-p2p-tail 1.4s linear infinite;
+  }
+
+  @keyframes express-p2p-dot {
     to {
-      transform: rotate(360deg);
+      transform: translate(-50%, -50%) rotate(360deg) translate(140px);
+    }
+  }
+
+  @keyframes express-p2p-tail {
+    to {
+      transform: translate(-50%, -50%) rotate(360deg) translate(70px);
     }
   }
 

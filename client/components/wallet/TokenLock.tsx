@@ -695,14 +695,13 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         </div>
 
         <div className="wallet-card rounded-2xl p-6 space-y-5">
-          <Card className="wallet-card">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
               Create new lock
             </span>
           </div>
-            <CardContent className="space-y-4">
+          <div className="space-y-4">
               <div>
                 <Label className="text-xs text-[hsl(var(--muted-foreground))]">
                   Select token
@@ -786,8 +785,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                   </>
                 )}
               </Button>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
         <div className="wallet-card rounded-2xl p-6 space-y-4">

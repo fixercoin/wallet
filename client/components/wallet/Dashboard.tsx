@@ -48,6 +48,7 @@ interface DashboardProps {
   onOpenSetup?: () => void;
   onAccounts?: () => void;
   onLock: () => void;
+  onBurn: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -62,6 +63,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenSetup,
   onAccounts,
   onLock,
+  onBurn,
 }) => {
   const {
     wallet,
@@ -312,7 +314,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Gift className="h-4 w-4" />
                   <span>MULTI-SEND</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 text-xs">
+                <DropdownMenuItem
+                  onSelect={onBurn}
+                  className="flex items-center gap-2 text-xs"
+                >
                   <Flame className="h-4 w-4" />
                   <span>BURNING</span>
                 </DropdownMenuItem>

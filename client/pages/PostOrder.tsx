@@ -151,8 +151,7 @@ export default function PostOrder() {
       } else {
         if (!sellMinTokenAmount || !sellMaxTokenAmount || !sellTokenPricePKR)
           return;
-        const maxPkr =
-          Number(sellMaxTokenAmount) * Number(sellTokenPricePKR);
+        const maxPkr = Number(sellMaxTokenAmount) * Number(sellTokenPricePKR);
         await createOrder(
           {
             side: "sell",

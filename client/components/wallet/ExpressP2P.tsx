@@ -7,7 +7,14 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type ExpressP2PProps = {
   onBack: () => void;
@@ -214,7 +221,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold">
-                      {String(o?.quoteAsset || o?.token || "Token").toUpperCase()}
+                      {String(
+                        o?.quoteAsset || o?.token || "Token",
+                      ).toUpperCase()}
                     </p>
                     <p className="text-xs text-gray-500">
                       {String(o?.side || o?.type || "").toUpperCase()}

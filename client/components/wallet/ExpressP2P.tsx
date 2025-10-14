@@ -24,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { createOrder } from "@/lib/p2p";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -50,15 +52,8 @@ const ASSET_OPTIONS = [
 const PAYMENT_OPTIONS = [
   { value: "bank", label: "Bank Transfer" },
   { value: "easypaisa", label: "Easypaisa" },
-  { value: "firstpay", label: "FirstPay" },
-];
-
-const FIAT_OPTIONS = [
-  { value: "PKR", label: "PKR" },
-  { value: "USD", label: "USD" },
-];
-
-type OrderRole = "buyer" | "seller";
+  { value: "firstpay", label: "FirstPay
+ OrderRole = "buyer" | "seller";
 
 type OrderPhase =
   | "awaiting_counterparty"
@@ -114,13 +109,21 @@ interface ChatMessage {
   attachments: OrderAttachment[];
 }
 
+const PAYMENT_METHODS: PaymentMethod[] = [
+  {
+    id: "easypaisa",
+    label: "Easypaisa",
+    description:
+      "Manual wallet transfer. Share the payment receipt in chat before requesting release.",
+  },
+];
+
 interface ConnectionState {
   phase: "idle" | "connecting" | "open" | "reconnecting" | "error" | "closed";
   attempts: number;
   error: string | null;
 }
-
-interface WorkerOutboundMessage {
+terface WorkerOutboundMessage {
   type: string;
   payload?: unknown;
 }
@@ -561,10 +564,13 @@ const defaultConnectionState: ConnectionState = {
   error: null,
 };
 
-function ExpressP2P({ onBack }: ExpressP2PProps) {
+export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const { wallet } = useWallet();
-  const { toast } = useToast();
+
+  const bannerUrl =
+    "https://cdn.builder.io/api/v1/image/assets%2Fb5a8e7e2eb7e43a19f3227053e3cfaeb%2Ff096d75efa5346eca92c8e28c02f3406?format=webp&width=800";
+t { toast } = useToast();
 
   const [session, setSession] = useState<OrderSession | null>(() => {
     if (typeof window === "undefined") return null;
@@ -602,6 +608,12 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
       ? { phase: "connecting", attempts: 0, error: null }
       : defaultConnectionState,
   );
+  const [adminToken, setAdminToken] = useState("");
+  const P2P_BASE = (import.meta as any).env?.VITE_P2P_URL
+    ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "")
+    : "";
+  const { events } = useDurableRoom("global", P2P_BASE);
+
   const [connectionNonce, setConnectionNonce] = useState(0);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
@@ -632,8 +644,7 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
   const [uploadingProof, setUploadingProof] = useState(false);
 
   const hasWallet = Boolean(wallet?.publicKey);
-
-  useEffect(() => {
+seEffect(() => {
     if (typeof window === "undefined") return;
     if (!session) {
       window.localStorage.removeItem(ORDER_SESSION_KEY);
@@ -965,6 +976,14 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
     [order, session?.role, serverActions],
   );
 
+  const handleRequest = async () => {
+    if (numericPk <= 0) {
+      // likely your pulse-field logic goes here
+      return;
+    }
+    // TODO: implement specific request logic if needed
+  };
+
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -990,6 +1009,15 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
       (!Number.isFinite(tokenAmount) || tokenAmount <= 0)
     ) {
       toast({
+        title: "Invalid input",
+        description: "Enter a valid fiat or token amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // rest of create order logic here...
+  };
+oast({
         title: "Invalid amounts",
         description: "Enter a fiat amount or token amount greater than zero.",
         variant: "destructive",
@@ -1065,6 +1093,52 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
     }
   };
 
+  const handleRequest = async (side: "buy" | "sell", numericPk: number, rate: number, usdcValue: number, method: any) => {
+    const action = side === "buy" ? "Buy" : "Sell";
+
+    if (adminToken && P2P_BASE) {
+      try {
+        await createOrder(
+          {
+            side,
+            amountPKR: numericPk,
+            quoteAsset: "USDT",
+            pricePKRPerQuote: rate,
+            paymentMethod: "easypaisa",
+            roomId: "global",
+            createdBy: "admin",
+          },
+          adminToken,
+        );
+        toast({
+          title: `Order posted to room`,
+          description: `${action} ${usdcFormatter.format(usdcValue)} USDC via Easypaisa`,
+        });
+      } catch (err: any) {
+        toast({
+          title: "Order post failed",
+          description: String(err?.message || err),
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: `${action} request created`,
+        description: `${action} ${usdcFormatter.format(usdcValue)} USDC using ${method.label}.`,
+      });
+    }
+
+    setChat((previous) => [
+      ...previous,
+      {
+        id: createId(),
+        sender: "you",
+        content: `${action} request submitted for ${usdcFormatter.format(usdcValue)} USDC via ${method.label}. Awaiting approval.`,
+        createdAt: Date.now(),
+      },
+    ]);
+  };
+
   const handleJoinOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedId = joinOrderId.trim();
@@ -1094,6 +1168,7 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
       setJoinLoading(false);
     }
   };
+;
 
   const handleLeaveOrder = () => {
     manualCloseRef.current = true;
@@ -1268,6 +1343,94 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
     }
   };
 
+  const headerLabel = side === "buy" ? "Buy" : "Sell";
+  const primaryText = side === "buy" ? "Buy With PKR" : "Sell For PKR";
+
+  // Compact card-only UI for creating Buy/Sell request
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-gray-50 text-[hsl(var(--foreground))] p-4">
+        <div className="mx-auto w-full max-w-md">
+          <Card className="rounded-2xl border border-gray-200 bg-white shadow-xl">
+            <CardHeader className="pb-2">
+              <Tabs value={side} onValueChange={(v) => setSide(v as TradeSide)}>
+                <TabsList className="grid grid-cols-2 rounded-xl bg-gray-100 p-1">
+                  <TabsTrigger value="buy" className="rounded-lg text-base">
+                    Buy
+                  </TabsTrigger>
+                  <TabsTrigger value="sell" className="rounded-lg text-base">
+                    Sell
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Spend</Label>
+                <div className="rounded-xl border bg-white px-4 py-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>PKR amount</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium">
+                      PKR
+                    </span>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={pkAmount}
+                    onChange={(e) => setPkAmount(e.target.value)}
+                    className="mt-2 border-0 bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Receive ≈</Label>
+                <div className="rounded-xl border bg-white px-4 py-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>USDT amount (before fees)</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                      USDT
+                    </span>
+                  </div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight">
+                    {usdcFormatter.format(usdcValue)}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  1 USDT ≈ {rateFormatter.format(rate)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Payment Methods</Label>
+                <Select
+                  value={selectedMethod}
+                  onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}
+                >
+                  <SelectTrigger className="rounded-lg border bg-white">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easypaisa">Easypaisa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={handleRequest}
+                className="h-11 w-full rounded-lg bg-yellow-500 font-semibold text-white hover:bg-yellow-600"
+              >
+                {primaryText}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Connection and chat interface (active order view)
   const connectionPhaseLabel = (() => {
     switch (connectionState.phase) {
       case "open":
@@ -1293,8 +1456,7 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
         : "secondary";
 
   const attachments = order?.attachments ?? [];
-
-  return (
+eturn (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
       <div className="flex flex-wrap items-center gap-3">
         <Button
@@ -1336,72 +1498,102 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
         )}
       </div>
 
-      {!session && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border border-border/70 bg-card/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle>Create a buyer order</CardTitle>
-              <CardDescription>
-                Generate a new order Durable Object instance. Share the returned
-                order ID securely with your counterparty.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-4" onSubmit={handleCreateOrder}>
-                <div className="grid gap-2">
-                  <Label htmlFor="assetSymbol">Asset</Label>
-                  <select
-                    id="assetSymbol"
-                    value={createForm.assetSymbol}
-                    onChange={(event) =>
-                      setCreateForm((current) => ({
-                        ...current,
-                        assetSymbol: event.target.value,
-                      }))
-                    }
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    {ASSET_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="fiatAmount">Fiat amount</Label>
-                  <div className="grid grid-cols-[1fr_auto] gap-2">
-                    <Input
-                      id="fiatAmount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={createForm.fiatAmount}
-                      onChange={(event) =>
-                        setCreateForm((current) => ({
-                          ...current,
-                          fiatAmount: event.target.value,
-                        }))
-                      }
-                    />
-                    <select
-                      value={createForm.fiatCurrency}
-                      onChange={(event) =>
-                        setCreateForm((current) => ({
-                          ...current,
-                          fiatCurrency: event.target.value,
-                        }))
-                      }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      {FIAT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+<Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur overflow-hidden">
+  <div className="h-28 w-full overflow-hidden bg-gray-50">
+    <img
+      src={bannerUrl}
+      alt="P2P banner"
+      className="h-full w-full object-cover"
+    />
+  </div>
+
+  <CardHeader className="pb-0">
+    <CardTitle className="flex items-center gap-2 text-lg">
+      <ArrowRightLeft className="h-4 w-4" /> {headerLabel} flow
+    </CardTitle>
+    <CardDescription>
+      Enter the amount, review live conversion, and keep currency fixed
+      to USDC for settlements.
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent className="pt-6">
+    <Tabs
+      value={side}
+      onValueChange={(value) => setSide(value as TradeSide)}
+    >
+      <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted/60 p-1">
+        <TabsTrigger value="buy" className="rounded-xl text-base">
+          Buy
+        </TabsTrigger>
+        <TabsTrigger value="sell" className="rounded-xl text-base">
+          Sell
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="buy" className="mt-6 space-y-5">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Spend</Label>
+            <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>PKR amount</span>
+                <span className="font-semibold">PKR</span>
+              </div>
+              <Input
+                type="number"
+                min={0}
+                value={pkAmount}
+                onChange={(event) => setPkAmount(event.target.value)}
+                className="mt-2 border-0 bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Receive ≈</Label>
+            <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>USDT amount (before fees)</span>
+                <span className="font-semibold">USDT</span>
+              </div>
+              <div className="mt-2 text-3xl font-semibold tracking-tight">
+                {usdcFormatter.format(usdcValue)}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              1 USDC ≈ {rateFormatter.format(rate)} | Receiving fee{" "}
+              {rateFormatter.format(receiveFeeTotal)} ({RECEIVE_FEE_PER_USDC} PKR per USDC)
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Payment Method</Label>
+          <Select
+            value={selectedMethod}
+            onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}
+          >
+            <SelectTrigger className="rounded-lg border bg-white">
+              <SelectValue placeholder="Select method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="easypaisa">Easypaisa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          onClick={handleRequest}
+          className="h-11 w-full rounded-lg bg-yellow-500 font-semibold text-white hover:bg-yellow-600"
+        >
+          {primaryText}
+        </Button>
+      </TabsContent>
+    </Tabs>
+  </CardContent>
+</Card>
+/div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="tokenAmount">Token amount</Label>
@@ -1583,16 +1775,70 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                     {order?.paymentMethod ?? createForm.paymentMethod}
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <div className="text-xs uppercase text-muted-foreground">
-                    Participants
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="font-semibold">Buyer</div>
-                      <div className="text-muted-foreground">
-                        {order?.buyer?.displayName ?? "Pending"}
-                      </div>
+<button
+  onClick={handleRequest}
+  className="w-full h-12 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md transition-colors"
+>
+  Buy With PKR
+</button>
+</TabsContent>
+
+<TabsContent value="sell" className="mt-6 space-y-5">
+  <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-3">
+      <Label className="text-sm font-semibold">Receive</Label>
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>PKR amount</span>
+          <span className="font-semibold">PKR</span>
+        </div>
+        <div className="mt-2 text-3xl font-semibold tracking-tight">
+          {numericPk.toLocaleString()}
+        </div>
+      </div>
+    </div>
+
+    <div className="space-y-3">
+      <Label className="text-sm font-semibold">Send</Label>
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-4 shadow-sm">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>USDT to release</span>
+          <span className="font-semibold">USDT</span>
+        </div>
+        <div className="mt-2 text-3xl font-semibold tracking-tight">
+          {usdcFormatter.format(usdcValue)}
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        1 USDC ≈ {rateFormatter.format(rate)} | Sending fee{" "}
+        {rateFormatter.format(receiveFeeTotal)} ({RECEIVE_FEE_PER_USDC} PKR per USDC)
+      </p>
+    </div>
+  </div>
+
+  <div className="space-y-2">
+    <Label className="text-sm font-semibold">Payment Method</Label>
+    <Select
+      value={selectedMethod}
+      onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}
+    >
+      <SelectTrigger className="rounded-lg border bg-white">
+        <SelectValue placeholder="Select method" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="easypaisa">Easypaisa</SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+
+  <button
+    onClick={handleRequest}
+    className="w-full h-12 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md transition-colors"
+  >
+    Sell For PKR
+  </button>
+</TabsContent>
+iv>
                       {order?.buyer?.address && (
                         <div className="break-all text-xs text-muted-foreground">
                           {order.buyer.address}
@@ -1686,165 +1932,230 @@ function ExpressP2P({ onBack }: ExpressP2PProps) {
                     </div>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingProof}
-                  >
-                    {uploadingProof ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Uploading proof…
-                      </>
-                    ) : (
-                      <>
-                        <Paperclip className="h-4 w-4" />
-                        Upload proof
-                      </>
-                    )}
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                    onChange={handleFileInputChange}
-                  />
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={handleLeaveOrder}
-                  className="w-full"
-                >
-                  <XCircle className="h-4 w-4" />
-                  Leave order
-                </Button>
-              </CardContent>
-            </Card>
-            {connectionError && (
-              <div className="flex items-start gap-2 rounded-md border border-destructive/60 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                <ShieldAlert className="mt-0.5 h-4 w-4" />
-                <div>
-                  <div className="font-semibold">Connection warning</div>
-                  <div>{connectionError}</div>
-                </div>
+<button
+  onClick={handleRequest}
+  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md transition-colors"
+>
+  Sell For PKR
+</button>
+</TabsContent>
+</Tabs>
+</CardContent>
+</Card>
+
+<Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2 text-lg">
+      <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Confirmation & summary
+    </CardTitle>
+    <CardDescription>
+      Snapshot of the settlement plus space for any manual validation
+      notes. Actions remain in the menu above.
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-3 rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
+      <p className="text-sm font-semibold text-foreground">Trade overview</p>
+      {P2P_BASE ? (
+        <p className="text-[10px] text-muted-foreground">
+          Connected to {P2P_BASE}
+        </p>
+      ) : (
+        <p className="text-[10px] text-red-600">
+          Set VITE_P2P_URL to enable backend
+        </p>
+      )}
+
+      <input
+        type="password"
+        placeholder="Admin token (only admin can post)"
+        value={adminToken}
+        onChange={(e) => setAdminToken(e.target.value)}
+        className="w-full rounded-md border bg-white/80 px-3 py-2 text-xs"
+      />
+
+      <div className="grid gap-2 text-sm text-muted-foreground">
+        <p>
+          Side:{" "}
+          <span className="font-medium capitalize text-foreground">{side}</span>
+        </p>
+        <p>
+          PKR amount:{" "}
+          <span className="font-medium text-foreground">
+            {numericPk.toLocaleString()}
+          </span>
+        </p>
+        <p>
+          USDC amount:{" "}
+          <span className="font-medium text-foreground">
+            {usdcFormatter.format(usdcValue)}
+          </span>
+        </p>
+        <p>
+          Method:{" "}
+          <span className="font-medium text-foreground">{method.label}</span>
+        </p>
+      </div>
+
+      <Textarea
+        value={notes}
+        onChange={(event) => setNotes(event.target.value)}
+        className="min-h-[110px] resize-none"
+        placeholder="Add any confirmation notes for the counterparty."
+      />
+    </div>
+
+    <div className="grid gap-3">
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">Fee breakdown</p>
+        <div className="mt-2 space-y-1.5">
+          <p>
+            Receiving USDC: {rateFormatter.format(receiveFeeTotal)} fee (
+            {RECEIVE_FEE_PER_USDC} PKR per USDC)
+          </p>
+          <p>
+            Releasing USDC: PKR {RELEASE_USDC_BASE_FEE} extra + PKR{" "}
+            {RELEASE_USDC_SERVICE_FEE} service = PKR {releaseUsdcTotalFee}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-white/80 p-4 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">Estimated total</p>
+        <p className="mt-2 text-lg font-semibold text-foreground">
+          {rateFormatter.format(rate * numericPk)}
+        </p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
               </div>
             )}
           </div>
 
-          <Card className="border border-border/70 bg-card/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle>Room activity</CardTitle>
-              <CardDescription>
-                Chat and state changes are synchronised with the Durable Object
-                in real time.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex h-[520px] flex-col gap-4">
-              <ScrollArea className="flex-1 rounded-md border border-border/60 bg-background/60 p-3">
-                <div
-                  ref={messageViewportRef}
-                  className="flex h-full flex-col gap-3"
-                >
-                  {chatMessages.length === 0 ? (
-                    <div className="mt-10 text-center text-sm text-muted-foreground">
-                      No messages yet. Start the conversation to coordinate the
-                      trade.
-                    </div>
-                  ) : (
-                    chatMessages.map((message) => {
-                      const normalized = message.sender
-                        .toString()
-                        .toLowerCase();
-                      const isSelf = normalized === session.role;
-                      const isSystem = normalized === "system";
-                      return (
-                        <div
-                          key={message.id}
-                          className={cn(
-                            "rounded-md border px-3 py-2 text-sm shadow-sm",
-                            isSystem && "border-dashed text-muted-foreground",
-                            isSelf &&
-                              "border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/5",
-                          )}
-                        >
-                          <div className="mb-1 flex items-center justify-between text-xs uppercase text-muted-foreground">
-                            <span className="font-semibold">
-                              {isSystem ? "System" : message.sender}
-                            </span>
-                            <span>{describeRelativeTime(message.ts)}</span>
-                          </div>
-                          {message.body && (
-                            <div className="whitespace-pre-wrap text-sm">
-                              {message.body}
-                            </div>
-                          )}
-                          {message.attachments.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              {message.attachments.map((attachment) => (
-                                <a
-                                  key={attachment.id}
-                                  href={attachment.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="flex items-center gap-2 rounded-md border border-border/50 bg-background/80 px-2 py-1 text-xs hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
-                                >
-                                  <Paperclip className="h-3.5 w-3.5" />
-                                  <span className="truncate">
-                                    {attachment.name}
-                                  </span>
-                                  <span className="ml-auto shrink-0 text-muted-foreground">
-                                    {formatFileSize(attachment.size)}
-                                  </span>
-                                </a>
-                              ))}
-                            </div>
-                          )}
+        <Card
+          id="settlement-chat"
+          className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur"
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MessageSquareMore className="h-5 w-5 text-[hsl(var(--primary))]" />{" "}
+              Room Activity
+            </CardTitle>
+            <CardDescription>
+              Chat and state changes are synchronized with the Durable Object in real time.
+              Use this space to coordinate trades and keep proof of discussion.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="flex h-[520px] flex-col gap-4">
+            <ScrollArea className="flex-1 rounded-md border border-[hsl(var(--border))] bg-slate-50/70 p-4">
+              <div
+                ref={messageViewportRef}
+                className="flex h-full flex-col gap-3"
+              >
+                {chatMessages.length === 0 ? (
+                  <div className="mt-10 text-center text-sm text-muted-foreground">
+                    No messages yet. Start the conversation to coordinate the trade.
+                  </div>
+                ) : (
+                  chatMessages.map((message) => {
+                    const normalized = message.sender.toString().toLowerCase();
+                    const isSelf = normalized === session.role;
+                    const isSystem = normalized === "system";
+                    return (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "rounded-md border px-3 py-2 text-sm shadow-sm",
+                          isSystem && "border-dashed text-muted-foreground",
+                          isSelf &&
+                            "border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/5",
+                        )}
+                      >
+                        <div className="mb-1 flex items-center justify-between text-xs uppercase text-muted-foreground">
+                          <span className="font-semibold">
+                            {isSystem ? "System" : message.sender}
+                          </span>
+                          <span>{describeRelativeTime(message.ts)}</span>
                         </div>
+                        {message.body && (
+                          <div className="whitespace-pre-wrap text-sm">
+                            {message.body}
+                          </div>
+                        )}
+                        {message.attachments.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {message.attachments.map((attachment) => (
+                              <a
+                                key={attachment.id}
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-2 rounded-md border border-border/50 bg-background/80 px-2 py-1 text-xs hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
+                              >
+                                <Paperclip className="h-3.5 w-3.5" />
+                                <span className="truncate">
+                                  {attachment.name}
+                                </span>
+                                <span className="ml-auto shrink-0 text-muted-foreground">
+                                  {formatFileSize(attachment.size)}
+                                </span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
+
+            <div className="grid gap-3">
+              <div className="grid gap-2">
+                <Label className="text-xs uppercase text-muted-foreground">
+                  Available actions
+                </Label>
+                {availableActions.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
+                    Waiting for the next order state update.
+                  </div>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {availableActions.map((action) => {
+                      const normalized = action.toLowerCase();
+                      const label = ACTION_LABELS[normalized] ?? action;
+                      const variant = ACTION_VARIANTS[normalized] ?? "outline";
+                      const loading = pendingAction === action;
+                      return (
+                        <Button
+                          key={action}
+                          variant={variant}
+                          disabled={loading || connectionState.phase === "error"}
+                          onClick={() => handleAction(action)}
+                        >
+                          {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : normalized === "cancel" ? (
+                            <XCircle className="h-4 w-4" />
+                          ) : normalized === "appeal" ? (
+                            <ShieldAlert className="h-4 w-4" />
+                          ) : (
+                            <PlugZap className="h-4 w-4" />
+                          )}
+                          {label}
+                        </Button>
                       );
-                    })
-                  )}
-                </div>
-              </ScrollArea>
-              <div className="grid gap-3">
-                <div className="grid gap-2">
-                  <Label className="text-xs uppercase text-muted-foreground">
-                    Available actions
-                  </Label>
-                  {availableActions.length === 0 ? (
-                    <div className="rounded-md border border-dashed border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
-                      Waiting for the next order state update.
-                    </div>
-                  ) : (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {availableActions.map((action) => {
-                        const normalized = action.toLowerCase();
-                        const label = ACTION_LABELS[normalized] ?? action;
-                        const variant =
-                          ACTION_VARIANTS[normalized] ?? "outline";
-                        const loading = pendingAction === action;
-                        return (
-                          <Button
-                            key={action}
-                            variant={variant}
-                            disabled={
-                              loading || connectionState.phase === "error"
-                            }
-                            onClick={() => handleAction(action)}
-                          >
-                            {loading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : normalized === "cancel" ? (
-                              <XCircle className="h-4 w-4" />
-                            ) : normalized === "appeal" ? (
-                              <ShieldAlert className="h-4 w-4" />
-                            ) : (
-                              <PlugZap className="h-4 w-4" />
-                            )}
-                            {label}
-                          </Button>
-                        );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
                       })}
                     </div>
                   )}

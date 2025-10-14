@@ -66,24 +66,6 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     description:
       "Manual wallet transfer. Share the payment receipt in chat before requesting release.",
   },
-  {
-    id: "firstpay",
-    label: "FirstPay",
-    description:
-      "Complete a FirstPay wallet transfer and upload confirmation for the counterparty.",
-  },
-  {
-    id: "sadapay",
-    label: "SadaPay",
-    description:
-      "Use SadaPay instant transfer. Double-check the recipient handle before submitting proof.",
-  },
-  {
-    id: "nayapay",
-    label: "NayaPay",
-    description:
-      "Send via NayaPay wallet. Include EXPRESS-P2P in the reference and update the chat log.",
-  },
 ];
 
 const rateFormatter = new Intl.NumberFormat("en-PK", {

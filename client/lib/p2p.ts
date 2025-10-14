@@ -66,3 +66,36 @@ export async function createOrder(
   return res.json();
 }
 
+export async function updateOrder(
+  id: string,
+  patch: Partial<{
+    side: "buy" | "sell";
+    amountPKR: number;
+    quoteAsset: string;
+    pricePKRPerQuote: number;
+    paymentMethod: string;
+  }>,
+  adminToken: string,
+) {
+  const base = API_BASE;
+  const res = await fetch(`${base}/api/orders/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${adminToken}`,
+    },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function deleteOrder(id: string, adminToken: string) {
+  const base = API_BASE;
+  const res = await fetch(`${base}/api/orders/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${adminToken}` },
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

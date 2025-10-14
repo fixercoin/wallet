@@ -11,6 +11,8 @@ import { AutoBot } from "@/components/wallet/AutoBot";
 import { Airdrop } from "@/components/wallet/Airdrop";
 import { Accounts } from "@/components/wallet/Accounts";
 import { ExpressP2P } from "@/components/wallet/ExpressP2P";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 type Screen =
   | "dashboard"
@@ -36,6 +38,19 @@ export default function Index() {
     screen: "dashboard",
   });
   const [isAutoBotActive, setIsAutoBotActive] = useState(false);
+  const location = useLocation();
+  useEffect(() => {
+    const anyLoc: any = location as any;
+    if (anyLoc?.state?.goP2P) {
+      setCurrentScreen({ screen: "p2p" });
+      // Clear the state by navigating in place without it
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + window.location.search,
+      );
+    }
+  }, [location]);
 
   // If no wallet is set up, show the wallet setup screen
   if (!wallet) {

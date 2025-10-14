@@ -9,6 +9,8 @@ export interface Order {
   paymentMethod: string; // only easypaisa
   createdAt: number;
   createdBy: string;
+  accountName?: string;
+  accountNumber?: string;
 }
 
 type Client = { ws: WebSocket; id: string };
@@ -79,7 +81,7 @@ export class DurableRoom implements DurableObject {
     }
 
     if (url.pathname.endsWith("/orders") && request.method === "POST") {
-      const body = await request.json<Order>().catch(() => null);
+      const body = await request.json<any>().catch(() => null);
       if (!body)
         return Response.json({ error: "Invalid JSON" }, { status: 400 });
       const orders = (await this.state.storage.get<Order[]>("orders")) || [];
@@ -92,11 +94,40 @@ export class DurableRoom implements DurableObject {
         paymentMethod: String(body.paymentMethod || "easypaisa"),
         createdAt: Date.now(),
         createdBy: String(body.createdBy || "admin"),
+        accountName: body.accountName,
+        accountNumber: body.accountNumber,
       };
       orders.unshift(order);
       await this.state.storage.put("orders", orders);
       await this.broadcast("order:new", order);
       return Response.json(order, { status: 201 });
+    }
+
+    const idMatch = url.pathname.match(/\/orders\/(.+)$/);
+    if (idMatch) {
+      const id = decodeURIComponent(idMatch[1]);
+      const orders = (await this.state.storage.get<Order[]>("orders")) || [];
+      const idx = orders.findIndex((o) => o.id === id);
+      if (idx === -1)
+        return Response.json({ error: "Not found" }, { status: 404 });
+      if (request.method === "GET") {
+        return Response.json(orders[idx]);
+      }
+      if (request.method === "PUT") {
+        const patch = await request.json<any>().catch(() => ({}));
+        const updated = { ...orders[idx], ...patch } as Order;
+        orders[idx] = updated;
+        await this.state.storage.put("orders", orders);
+        await this.broadcast("order:updated", updated);
+        return Response.json(updated);
+      }
+      if (request.method === "DELETE") {
+        const removed = orders.splice(idx, 1)[0];
+        await this.state.storage.put("orders", orders);
+        await this.broadcast("order:deleted", { id: removed.id });
+        return Response.json({ ok: true });
+      }
+      return Response.json({ error: "Method not allowed" }, { status: 405 });
     }
 
     // passthrough for other room-scoped paths as needed

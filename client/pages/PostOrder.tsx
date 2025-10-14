@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";

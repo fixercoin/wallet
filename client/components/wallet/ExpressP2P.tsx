@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Copy, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type ExpressP2PProps = {
   onBack: () => void;
@@ -11,6 +12,8 @@ type ExpressP2PProps = {
 export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
   const handleCopyAddress = async () => {
     if (!wallet) {
@@ -31,15 +34,28 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
-            aria-label="Back to dashboard"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+              aria-label="Back to dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            {wallet?.publicKey === adminAddress ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/express/add-post")}
+                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+                aria-label="Add post"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            ) : null}
+          </div>
 
           <div className="flex items-center justify-center gap-2 flex-1">
             <span className="font-mono text-sm">

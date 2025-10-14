@@ -458,6 +458,11 @@
   }
 
   /* From Uiverse.io by mrhyddenn */
+  .cardbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .card_box {
     width: 200px;
     height: 250px;

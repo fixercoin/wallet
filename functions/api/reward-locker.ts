@@ -1,5 +1,5 @@
 import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
-import { PublicKey, Keypair, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, Keypair, Transaction, TransactionInstruction, SystemProgram } from "@solana/web3.js";
 import bs58 from "bs58";
 
 const TOKEN_PROGRAM_ID = new PublicKey(

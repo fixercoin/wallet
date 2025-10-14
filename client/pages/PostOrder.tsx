@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +10,100 @@ import { createOrder } from "@/lib/p2p";
 export default function PostOrder() {
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [usdToPkr, setUsdToPkr] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRate() {
+      try {
+        const cached = localStorage.getItem("usd_to_pkr");
+        if (cached) {
+          try {
+            const { rate, ts } = JSON.parse(cached);
+            if (typeof rate === "number" && Date.now() - ts < 60 * 60 * 1000) {
+              if (!cancelled) setUsdToPkr(rate);
+            }
+          } catch {}
+        }
+
+        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        if (!res.ok) return;
+        const data = await res.json();
+        const rate = data?.rates?.PKR;
+        if (typeof rate === "number" && isFinite(rate) && !cancelled) {
+          setUsdToPkr(rate);
+          try {
+            localStorage.setItem(
+              "usd_to_pkr",
+              JSON.stringify({ rate, ts: Date.now() }),
+            );
+          } catch {}
+        }
+      } catch {}
+    }
+
+    loadRate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const getPkRFromUsd = (usd: number): number | null => {
+    const rate = usdToPkr;
+    if (!rate || !isFinite(rate) || !isFinite(usd)) return null;
+    return Math.round(usd * rate * 100) / 100;
+  };
+
+  const fetchDexPriceUsd = async (symbol: string): Promise<number | null> => {
+    try {
+      const pairs = await dexscreenerAPI.searchTokens(symbol);
+      const solPairs = pairs.filter((p) => p.chainId === "solana");
+      const candidates = solPairs.filter(
+        (p) => p.baseToken?.symbol?.toUpperCase() === symbol.toUpperCase(),
+      );
+      const list = candidates.length > 0 ? candidates : solPairs;
+      const ranked = list
+        .filter((p) => p.priceUsd && isFinite(parseFloat(p.priceUsd)))
+        .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0));
+      const top = ranked[0];
+      if (!top) return null;
+      return parseFloat(top.priceUsd!);
+    } catch {
+      return null;
+    }
+  };
+
+  const applyDexPriceToBuy = async () => {
+    const usd = await fetchDexPriceUsd(buyToken);
+    if (usd == null) {
+      toast({ title: "DexScreener price unavailable", variant: "destructive" });
+      return;
+    }
+    const pkr = getPkRFromUsd(usd);
+    if (pkr == null) {
+      toast({ title: "PKR rate unavailable", variant: "destructive" });
+      return;
+    }
+    setBuyPrice(pkr);
+    toast({ title: "Price filled from DexScreener" });
+  };
+
+  const applyDexPriceToSell = async () => {
+    const usd = await fetchDexPriceUsd(sellToken);
+    if (usd == null) {
+      toast({ title: "DexScreener price unavailable", variant: "destructive" });
+      return;
+    }
+    const pkr = getPkRFromUsd(usd);
+    if (pkr == null) {
+      toast({ title: "PKR rate unavailable", variant: "destructive" });
+      return;
+    }
+    setSellTokenPricePKR(pkr);
+    toast({ title: "Price filled from DexScreener" });
+  };
 
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [adminToken, setAdminToken] = useState("");
@@ -168,18 +264,29 @@ export default function PostOrder() {
                 <label className="block text-xs text-gray-500 mb-1">
                   Token price (PKR)
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={buyPrice}
-                  onChange={(e) =>
-                    setBuyPrice(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
-                  placeholder="0"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={buyPrice}
+                    onChange={(e) =>
+                      setBuyPrice(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={applyDexPriceToBuy}
+                    className="px-3"
+                    title="Fill from DexScreener"
+                  >
+                    Use Dex
+                  </Button>
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
@@ -229,18 +336,29 @@ export default function PostOrder() {
                 <label className="block text-xs text-gray-500 mb-1">
                   Token price (PKR)
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={sellTokenPricePKR}
-                  onChange={(e) =>
-                    setSellTokenPricePKR(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
-                  placeholder="0"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={sellTokenPricePKR}
+                    onChange={(e) =>
+                      setSellTokenPricePKR(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={applyDexPriceToSell}
+                    className="px-3"
+                    title="Fill from DexScreener"
+                  >
+                    Use Dex
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

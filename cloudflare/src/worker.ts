@@ -81,6 +81,37 @@ export default {
       return json({ error: "Method not allowed" }, { status: 405 });
     }
 
+    // Order item routes: /api/orders/:id
+    const orderIdMatch = pathname.match(/^\/api\/orders\/([^/]+)$/);
+    if (orderIdMatch) {
+      const id = decodeURIComponent(orderIdMatch[1]);
+      if (req.method === "GET") {
+        const roomId = searchParams.get("roomId") ?? "global";
+        const stub = getRoomStub(env, roomId);
+        return stub.fetch(new Request(`https://do/orders/${id}`, req));
+      }
+      if (req.method === "PUT") {
+        await requireAdmin(req, env);
+        const roomId = searchParams.get("roomId") ?? "global";
+        const stub = getRoomStub(env, roomId);
+        const body = await parseJSON(req);
+        return stub.fetch(
+          new Request(`https://do/orders/${id}`, {
+            method: "PUT",
+            headers: req.headers,
+            body: JSON.stringify(body || {}),
+          }),
+        );
+      }
+      if (req.method === "DELETE") {
+        await requireAdmin(req, env);
+        const roomId = searchParams.get("roomId") ?? "global";
+        const stub = getRoomStub(env, roomId);
+        return stub.fetch(new Request(`https://do/orders/${id}`, { method: "DELETE", headers: req.headers }));
+      }
+      return json({ error: "Method not allowed" }, { status: 405 });
+    }
+
     // Room-scoped REST helpers proxied to DO
     const roomMatch = pathname.match(/^\/api\/rooms\/(.+)/);
     if (roomMatch) {

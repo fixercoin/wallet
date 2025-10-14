@@ -693,6 +693,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
+              {P2P_BASE && (
+                <div className="text-[10px] text-muted-foreground">
+                  Live events: {" "}
+                  <code>{JSON.stringify(events.slice(-5))}</code>
+                </div>
+              )}
               {chat.map((message) => (
                 <div key={message.id} className="space-y-1">
                   <div className="flex items-center gap-2">

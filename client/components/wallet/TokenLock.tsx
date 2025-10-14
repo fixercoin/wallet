@@ -685,7 +685,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               SPL Token Lock
             </div>
             <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-              Lock your SPL tokens
+            
             </h1>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
               Securely hold tokens without rewards. Unlocks automatically when

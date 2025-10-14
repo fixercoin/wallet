@@ -694,7 +694,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-purple-100/70 bg-white/60 p-1">
+        <div className="wallet-card rounded-2xl p-6 space-y-5">
           <Card className="wallet-card">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">

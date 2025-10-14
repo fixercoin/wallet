@@ -21,6 +21,7 @@ import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
 import NotFound from "./pages/NotFound";
+import ExpressAddPost from "./pages/ExpressAddPost";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
                 path="/fixorium/token-listing"
                 element={<TokenListing />}
               />
+              <Route path="/express/add-post" element={<ExpressAddPost />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

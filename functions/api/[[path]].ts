@@ -214,6 +214,10 @@ export const onRequest = async ({ request, env }) => {
             return { rate, provider: provider.name };
           }
           throw new Error("invalid response payload");
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          throw new Error(`[${provider.name}] ${message}`);
         } finally {
           clearTimeout(timeoutId);
         }

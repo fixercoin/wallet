@@ -787,142 +787,144 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </Card>
         </div>
 
-        <Card className="wallet-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-purple-500" />
-                <CardTitle className="text-sm font-semibold">
-                  Active locks
-                </CardTitle>
+        <div className="rounded-2xl border border-purple-100/70 bg-white/60 p-1">
+          <Card className="wallet-card">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-purple-500" />
+                  <CardTitle className="text-sm font-semibold">
+                    Active locks
+                  </CardTitle>
+                </div>
+                <Badge variant="secondary" className="text-[10px]">
+                  {locks.filter((lock) => lock.status !== "withdrawn").length} active
+                </Badge>
               </div>
-              <Badge variant="secondary" className="text-[10px]">
-                {locks.filter((lock) => lock.status !== "withdrawn").length} active
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {locks.length === 0 ? (
-              <div className="text-center py-6 text-sm text-gray-500">
-                No token locks yet. Create one above to get started.
-              </div>
-            ) : (
-              locks.map((lock) => {
-                const timeRemaining = formatTimeRemaining(lock.unlockAt);
-                const progress = progressForLock(lock);
-                const isUnlocked = timeRemaining === "Unlocked";
-                const isWithdrawn = lock.status === "withdrawn";
-                const canWithdraw =
-                  !isWithdrawn && lock.status !== "withdrawing" && isUnlocked;
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {locks.length === 0 ? (
+                <div className="text-center py-6 text-sm text-gray-500">
+                  No token locks yet. Create one above to get started.
+                </div>
+              ) : (
+                locks.map((lock) => {
+                  const timeRemaining = formatTimeRemaining(lock.unlockAt);
+                  const progress = progressForLock(lock);
+                  const isUnlocked = timeRemaining === "Unlocked";
+                  const isWithdrawn = lock.status === "withdrawn";
+                  const canWithdraw =
+                    !isWithdrawn && lock.status !== "withdrawing" && isUnlocked;
 
-                return (
-                  <div
-                    key={lock.id}
-                    className="p-4 rounded-xl border border-white/40 bg-white/70 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                          {lock.amount} {lock.symbol}
-                        </div>
-                        <div className="text-[10px] text-gray-500">
-                          Locked on {formatDateTime(lock.createdAt)}
-                        </div>
-                      </div>
-                      <Badge
-                        className="uppercase text-[10px]"
-                        variant={
-                          lock.status === "withdrawn"
-                            ? "default"
-                            : lock.status === "withdrawing"
-                            ? "outline"
-                            : lock.error
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {lock.status === "withdrawing"
-                          ? "Withdrawing"
-                          : lock.status === "withdrawn"
-                          ? "Withdrawn"
-                          : lock.error
-                          ? "Action needed"
-                          : "Locked"}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-gray-500">
-                        <span>Progress</span>
-                        <span>{Math.round(progress)}%</span>
-                      </div>
-                      <Progress value={progress} className="h-2" />
-                      <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
+                  return (
+                    <div
+                      key={lock.id}
+                      className="p-4 rounded-xl border border-white/40 bg-white/70 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
                         <div>
-                          Unlocks on {formatDateTime(lock.unlockAt)}
-                        </div>
-                        <div className="text-right">
-                          {isUnlocked ? "Ready to withdraw" : `${timeRemaining} remaining`}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={lock.autoWithdraw}
-                          onCheckedChange={(value) =>
-                            updateLockAutoWithdraw(lock.id, value)
-                          }
-                          disabled={isWithdrawn || lock.status === "withdrawing"}
-                        />
-                        <div>
-                          <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">
-                            Auto-withdraw
+                          <div className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                            {lock.amount} {lock.symbol}
                           </div>
                           <div className="text-[10px] text-gray-500">
-                            {lock.autoWithdraw ? "Enabled" : "Disabled"}
+                            Locked on {formatDateTime(lock.createdAt)}
+                          </div>
+                        </div>
+                        <Badge
+                          className="uppercase text-[10px]"
+                          variant={
+                            lock.status === "withdrawn"
+                              ? "default"
+                              : lock.status === "withdrawing"
+                              ? "outline"
+                              : lock.error
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
+                          {lock.status === "withdrawing"
+                            ? "Withdrawing"
+                            : lock.status === "withdrawn"
+                            ? "Withdrawn"
+                            : lock.error
+                            ? "Action needed"
+                            : "Locked"}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-gray-500">
+                          <span>Progress</span>
+                          <span>{Math.round(progress)}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                        <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
+                          <div>
+                            Unlocks on {formatDateTime(lock.unlockAt)}
+                          </div>
+                          <div className="text-right">
+                            {isUnlocked ? "Ready to withdraw" : `${timeRemaining} remaining`}
                           </div>
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        className="dash-btn h-9 px-4 text-xs font-semibold"
-                        onClick={() => performWithdraw(lock)}
-                        disabled={!canWithdraw}
-                      >
-                        {lock.status === "withdrawing" ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : isWithdrawn ? (
-                          <CheckCircle2 className="h-4 w-4" />
-                        ) : (
-                          <LockIcon className="h-4 w-4" />
-                        )}
-                        <span className="ml-2">
-                          {isWithdrawn
-                            ? "Complete"
-                            : lock.status === "withdrawing"
-                            ? "Processing"
-                            : "Withdraw"}
-                        </span>
-                      </Button>
-                    </div>
 
-                    {lock.error ? (
-                      <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
-                        <AlertTriangle className="h-4 w-4" />
-                        <div>
-                          <div className="font-medium">Last attempt failed</div>
-                          <div className="opacity-80">{lock.error}</div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={lock.autoWithdraw}
+                            onCheckedChange={(value) =>
+                              updateLockAutoWithdraw(lock.id, value)
+                            }
+                            disabled={isWithdrawn || lock.status === "withdrawing"}
+                          />
+                          <div>
+                            <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">
+                              Auto-withdraw
+                            </div>
+                            <div className="text-[10px] text-gray-500">
+                              {lock.autoWithdraw ? "Enabled" : "Disabled"}
+                            </div>
+                          </div>
                         </div>
+                        <Button
+                          size="sm"
+                          className="dash-btn h-9 px-4 text-xs font-semibold"
+                          onClick={() => performWithdraw(lock)}
+                          disabled={!canWithdraw}
+                        >
+                          {lock.status === "withdrawing" ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : isWithdrawn ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : (
+                            <LockIcon className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">
+                            {isWithdrawn
+                              ? "Complete"
+                              : lock.status === "withdrawing"
+                              ? "Processing"
+                              : "Withdraw"}
+                          </span>
+                        </Button>
                       </div>
-                    ) : null}
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
+
+                      {lock.error ? (
+                        <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">Last attempt failed</div>
+                            <div className="opacity-80">{lock.error}</div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

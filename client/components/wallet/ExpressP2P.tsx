@@ -182,3 +182,5 @@ export const ExpressP2P: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     </div>
   );
 };
+
+export default ExpressP2P;

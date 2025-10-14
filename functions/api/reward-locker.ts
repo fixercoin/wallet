@@ -1,5 +1,11 @@
 import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
-import { PublicKey, Keypair, Transaction, TransactionInstruction, SystemProgram } from "@solana/web3.js";
+import {
+  PublicKey,
+  Keypair,
+  Transaction,
+  TransactionInstruction,
+  SystemProgram,
+} from "@solana/web3.js";
 import bs58 from "bs58";
 
 const TOKEN_PROGRAM_ID = new PublicKey(
@@ -18,19 +24,31 @@ const LOCKER_MINT = new PublicKey(
 
 function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With",
+  );
   headers.set("Vary", "Origin");
   return headers;
 }
 
 function jsonCors(status: number, body: any) {
-  const headers = applyCors(new Headers({ "Content-Type": "application/json" }));
-  return new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers });
+  const headers = applyCors(
+    new Headers({ "Content-Type": "application/json" }),
+  );
+  return new Response(typeof body === "string" ? body : JSON.stringify(body), {
+    status,
+    headers,
+  });
 }
 
 function pickRpcUrl(env: Record<string, any>): string {
-  if (env.HELIUS_API_KEY) return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  if (env.HELIUS_API_KEY)
+    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
   if (env.ALCHEMY_RPC_URL) return env.ALCHEMY_RPC_URL;
   return ALCHEMY_RPC_URL;
 }
@@ -121,9 +139,18 @@ const ixTransferChecked = (
   });
 };
 
-export const onRequestPost = async ({ request, env }: { request: Request; env: Record<string, any> }) => {
+export const onRequestPost = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Record<string, any>;
+}) => {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: applyCors(new Headers()) });
+    return new Response(null, {
+      status: 204,
+      headers: applyCors(new Headers()),
+    });
   }
 
   const rpcUrl = pickRpcUrl(env);
@@ -140,7 +167,9 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
   const lockerMintStr = String(body?.lockerMint || LOCKER_MINT.toBase58());
 
   if (!recipient || !burnSignature || !amountRawStr) {
-    return jsonCors(400, { error: "recipient, burnSignature and amountRaw are required" });
+    return jsonCors(400, {
+      error: "recipient, burnSignature and amountRaw are required",
+    });
   }
 
   const rewardSecret = env.REWARD_WALLET_SECRET;
@@ -151,7 +180,12 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
   let rewardKey: Keypair;
   try {
     const bytes = /^[0-9,\s]+$/.test(rewardSecret)
-      ? Uint8Array.from(rewardSecret.split(/[,\s]+/).filter(Boolean).map((x: string) => Number(x)))
+      ? Uint8Array.from(
+          rewardSecret
+            .split(/[,\s]+/)
+            .filter(Boolean)
+            .map((x: string) => Number(x)),
+        )
       : bs58.decode(rewardSecret);
     rewardKey = Keypair.fromSecretKey(bytes);
   } catch (e) {
@@ -164,7 +198,10 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
 
   // Verify burn signature reduced user's FIXER balance by amountRaw
   try {
-    const tx = await rpcCall(rpcUrl, "getParsedTransaction", [burnSignature, { maxSupportedTransactionVersion: 0 }]);
+    const tx = await rpcCall(rpcUrl, "getParsedTransaction", [
+      burnSignature,
+      { maxSupportedTransactionVersion: 0 },
+    ]);
     if (!tx || !tx.meta) throw new Error("Transaction not found");
     const pre = (tx.meta.preTokenBalances || []) as any[];
     const post = (tx.meta.postTokenBalances || []) as any[];
@@ -206,7 +243,11 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
           { pubkey: sourceAta, isSigner: false, isWritable: true },
           { pubkey: rewardOwner, isSigner: false, isWritable: false },
           { pubkey: LOCKER, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          {
+            pubkey: SystemProgram.programId,
+            isSigner: false,
+            isWritable: false,
+          },
           { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
         data: Buffer.from(new Uint8Array([1])),
@@ -220,7 +261,11 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
           { pubkey: destAta, isSigner: false, isWritable: true },
           { pubkey: recipientPk, isSigner: false, isWritable: false },
           { pubkey: LOCKER, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          {
+            pubkey: SystemProgram.programId,
+            isSigner: false,
+            isWritable: false,
+          },
           { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
         data: Buffer.from(new Uint8Array([1])),
@@ -228,7 +273,9 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
     );
 
     // Transfer LOCKER to recipient
-    tx.add(ixTransferChecked(sourceAta, LOCKER, destAta, rewardOwner, rewardRaw, 6));
+    tx.add(
+      ixTransferChecked(sourceAta, LOCKER, destAta, rewardOwner, rewardRaw, 6),
+    );
 
     const bh = await rpcCall(rpcUrl, "getLatestBlockhash", []);
     const blockhash = bh?.value?.blockhash || bh?.blockhash || bh;

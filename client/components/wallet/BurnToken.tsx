@@ -113,7 +113,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   const { toast } = useToast();
 
   const fixerToken = useMemo(
-    () => tokens.find((t) => t.mint === FIXER_MINT.toBase58() || t.symbol === "FIXERCOIN"),
+    () =>
+      tokens.find(
+        (t) => t.mint === FIXER_MINT.toBase58() || t.symbol === "FIXERCOIN",
+      ),
     [tokens],
   );
   const [amount, setAmount] = useState<string>("");
@@ -151,7 +154,13 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       const sender = Keypair.fromSecretKey(sk);
 
       const ata = deriveAta(new PublicKey(wallet.publicKey), FIXER_MINT);
-      const burnIx = ixBurnChecked(ata, FIXER_MINT, sender.publicKey, amtRaw, fixerDecimals);
+      const burnIx = ixBurnChecked(
+        ata,
+        FIXER_MINT,
+        sender.publicKey,
+        amtRaw,
+        fixerDecimals,
+      );
 
       const tx = new Transaction().add(burnIx);
       const blockhash = await getLatestBlockhashProxy();
@@ -250,7 +259,12 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 p-0 text-[hsl(var(--foreground))]">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="h-8 w-8 p-0 text-[hsl(var(--foreground))]"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">
@@ -265,9 +279,13 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           <div className="card_box text-white">
             <span></span>
             <div className="space-y-3">
-              <div className="text-sm font-semibold tracking-wide">Burn FIXERCOIN for Rewards</div>
+              <div className="text-sm font-semibold tracking-wide">
+                Burn FIXERCOIN for Rewards
+              </div>
               <div>
-                <label className="block text-xs text-gray-300 mb-1">Amount (FIXERCOIN)</label>
+                <label className="block text-xs text-gray-300 mb-1">
+                  Amount (FIXERCOIN)
+                </label>
                 <Input
                   placeholder="0.0"
                   value={amount}
@@ -286,7 +304,9 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 Available: {maxFixer.toLocaleString()} FIXERCOIN
               </div>
               <div className="text-[10px] text-gray-300">
-                You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount, paid from wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
+                You will receive LOCKER tokens equal to 110% of the burned
+                FIXERCOIN amount, paid from wallet
+                Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
               </div>
             </div>
           </div>
@@ -295,12 +315,28 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         <div className="mt-4 space-y-2">
           {txSig ? (
             <div className="text-xs break-all text-gray-600">
-              Burn tx: <a className="underline" href={`https://solscan.io/tx/${txSig}`} target="_blank" rel="noreferrer">{txSig}</a>
+              Burn tx:{" "}
+              <a
+                className="underline"
+                href={`https://solscan.io/tx/${txSig}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {txSig}
+              </a>
             </div>
           ) : null}
           {rewardSig ? (
             <div className="text-xs break-all text-gray-600">
-              Reward tx: <a className="underline" href={`https://solscan.io/tx/${rewardSig}`} target="_blank" rel="noreferrer">{rewardSig}</a>
+              Reward tx:{" "}
+              <a
+                className="underline"
+                href={`https://solscan.io/tx/${rewardSig}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {rewardSig}
+              </a>
             </div>
           ) : null}
         </div>

@@ -48,6 +48,16 @@ async function rpcCall(rpcUrl: string, method: string, params: any[]) {
   return j?.result ?? j;
 }
 
+function base64FromBytes(bytes: Uint8Array): string {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    const slice = bytes.subarray(i, i + chunk);
+    binary += String.fromCharCode.apply(null, Array.from(slice) as any);
+  }
+  return btoa(binary);
+}
+
 const u64LE = (n: bigint): Uint8Array => {
   const out = new Uint8Array(8);
   let x = n;
@@ -236,7 +246,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
         id: Date.now(),
         method: "sendTransaction",
         params: [
-          Buffer.from(raw).toString("base64"),
+          base64FromBytes(raw),
           { skipPreflight: false, preflightCommitment: "confirmed" },
         ],
       };

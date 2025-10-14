@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Copy, Plus } from "lucide-react";
+import { ArrowLeft, Copy, Plus, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { listOrders } from "@/lib/p2p";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 type ExpressP2PProps = {
   onBack: () => void;
@@ -19,6 +21,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
   const [checkingOrders, setCheckingOrders] = useState(true);
   const [detectedOrder, setDetectedOrder] = useState<any | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersDialogOpen, setOrdersDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,13 +33,15 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
       try {
         const res = await listOrders("global");
         if (cancelled) return;
-        const orders = Array.isArray(res?.orders) ? res.orders : [];
+        const list = Array.isArray(res?.orders) ? res.orders : [];
+        setOrders(list);
         const buy =
-          orders.find(
+          list.find(
             (o: any) => String(o.side || o.type).toLowerCase() === "buy",
-          ) || orders[0];
+          ) || list[0];
         if (buy) {
           setDetectedOrder(buy);
+          setSelectedOrder(buy);
           setCheckingOrders(false);
           return; // stop polling on first detection
         }
@@ -95,10 +102,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
             ) : null}
           </div>
 
-          <div className="flex items-center justify-center gap-2 flex-1">
-            <span className="font-mono text-sm">
-              {wallet ? shortenAddress(wallet.publicKey, 6) : "No wallet"}
-            </span>
+          <div className="flex items-center gap-2 flex-1">
+            <Input
+              value={wallet?.publicKey || ""}
+              placeholder="No wallet"
+              readOnly
+              className="h-9 font-mono text-sm"
+            />
             {wallet ? (
               <Button
                 variant="ghost"
@@ -138,35 +148,106 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               </p>
             </>
           ) : detectedOrder ? (
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/express/buy-trade", {
-                  state: { order: detectedOrder },
-                })
-              }
-              className="w-full text-left rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center justify-between"
-            >
-              <div>
-                <p className="text-sm text-gray-500">Buy order detected</p>
-                <p className="font-semibold">
-                  {String(
-                    detectedOrder?.quoteAsset ||
-                      detectedOrder?.token ||
-                      "Token",
-                  ).toUpperCase()}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Price (PKR)</p>
-                <p className="font-medium">
-                  {detectedOrder?.pricePKRPerQuote ?? "—"}
-                </p>
-              </div>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setOrdersDialogOpen(true)}
+                className="w-full rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center gap-3"
+              >
+                <MessageSquare className="h-4 w-4 text-[hsl(var(--primary))]" />
+                <span className="text-sm font-medium">Detected orders</span>
+                <span className="ml-auto inline-flex items-center justify-center rounded-full bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-0.5">
+                  {orders.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/express/buy-trade", {
+                    state: { order: detectedOrder },
+                  })
+                }
+                className="w-full text-left rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-sm text-gray-500">Buy order detected</p>
+                  <p className="font-semibold">
+                    {String(
+                      detectedOrder?.quoteAsset ||
+                        detectedOrder?.token ||
+                        "Token",
+                    ).toUpperCase()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Price (PKR)</p>
+                  <p className="font-medium">
+                    {detectedOrder?.pricePKRPerQuote ?? "—"}
+                  </p>
+                </div>
+              </button>
+            </>
           ) : null}
         </div>
       </div>
+
+      <Dialog open={ordersDialogOpen} onOpenChange={setOrdersDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Available Orders</DialogTitle>
+            <DialogDescription>Select an order to continue</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 overflow-auto space-y-2">
+            {orders.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setSelectedOrder(o)}
+                className={
+                  "w-full text-left rounded-lg border p-3 bg-white " +
+                  (selectedOrder?.id === o.id
+                    ? "ring-2 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]"
+                    : "hover:bg-gray-50")
+                }
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">
+                      {String(o?.quoteAsset || o?.token || "Token").toUpperCase()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {String(o?.side || o?.type || "").toUpperCase()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Price (PKR)</p>
+                    <p className="font-medium">{o?.pricePKRPerQuote ?? "—"}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+            {orders.length === 0 ? (
+              <p className="text-sm text-gray-500">No orders available.</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              className="w-full"
+              onClick={() => {
+                const o = selectedOrder || orders[0];
+                if (o) {
+                  setOrdersDialogOpen(false);
+                  navigate("/express/buy-trade", { state: { order: o } });
+                }
+              }}
+              disabled={!selectedOrder && orders.length === 0}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

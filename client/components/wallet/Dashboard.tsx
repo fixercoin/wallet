@@ -20,6 +20,8 @@ import {
   Plus,
   MoreVertical,
   Gift,
+  Flame,
+  Lock,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -296,22 +298,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Wallet className="h-4 w-4" />
                   <span>ALL WALLET</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onAirdrop}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Gift className="h-4 w-4" />
                   <span>MULTI-SEND</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center gap-2 text-xs">
+                  <Flame className="h-4 w-4" />
+                  <span>BURNING</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center gap-2 text-xs">
+                  <Lock className="h-4 w-4" />
+                  <span>LOCKING</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={onSettings}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Settings className="h-4 w-4" />
                   <span>SETTINGS</span>
@@ -424,12 +434,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-xs">
                           <span className="font-semibold text-[hsl(var(--foreground))] text-sm">
                             {token.symbol}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-xs">
                           <span className="text-xs text-[hsl(var(--muted-foreground))]">
                             ${formatTokenPriceDisplay(token.price)}
                           </span>

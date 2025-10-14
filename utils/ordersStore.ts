@@ -25,7 +25,9 @@ type OrderStoreShape = {
 
 function getGlobalStore(): OrderStoreShape {
   const globalKey = "__EXPRESS_ORDER_STORE";
-  const existing = (globalThis as any)[globalKey] as OrderStoreShape | undefined;
+  const existing = (globalThis as any)[globalKey] as
+    | OrderStoreShape
+    | undefined;
   if (existing && existing.rooms instanceof Map) {
     return existing;
   }
@@ -61,13 +63,9 @@ function normalizeOrder(input: StoredOrder): StoredOrder {
     amountPKR: Number(input.amountPKR) || 0,
     pricePKRPerQuote: Number(input.pricePKRPerQuote) || 0,
     minQuoteAmount:
-      input.minQuoteAmount != null
-        ? Number(input.minQuoteAmount)
-        : undefined,
+      input.minQuoteAmount != null ? Number(input.minQuoteAmount) : undefined,
     maxQuoteAmount:
-      input.maxQuoteAmount != null
-        ? Number(input.maxQuoteAmount)
-        : undefined,
+      input.maxQuoteAmount != null ? Number(input.maxQuoteAmount) : undefined,
   };
 }
 
@@ -80,7 +78,9 @@ function getRoomOrders(roomId: string): StoredOrder[] {
   return store.rooms.get(key)!;
 }
 
-export function listOrders(roomId: string = "global"): { orders: StoredOrder[] } {
+export function listOrders(roomId: string = "global"): {
+  orders: StoredOrder[];
+} {
   const orders = [...getRoomOrders(roomId)].sort(
     (a, b) => b.createdAt - a.createdAt,
   );
@@ -118,8 +118,7 @@ export function createOrder(
     accountNumber: input.accountNumber
       ? String(input.accountNumber)
       : undefined,
-    minQuoteAmount:
-      toNumber(input.minQuoteAmount) ?? undefined,
+    minQuoteAmount: toNumber(input.minQuoteAmount) ?? undefined,
     maxQuoteAmount: toNumber(input.maxQuoteAmount) ?? undefined,
   });
 
@@ -154,8 +153,7 @@ export function updateOrder(
   const updated: StoredOrder = normalizeOrder({
     ...existing,
     side: patch.side ?? existing.side,
-    amountPKR:
-      toNumber(patch.amountPKR) ?? existing.amountPKR,
+    amountPKR: toNumber(patch.amountPKR) ?? existing.amountPKR,
     quoteAsset: patch.quoteAsset
       ? String(patch.quoteAsset).toUpperCase()
       : existing.quoteAsset,

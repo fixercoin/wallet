@@ -58,27 +58,42 @@ export const ExpressP2P: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const handleCreateOrder = async (e: FormEvent) => {
     e.preventDefault();
     if (!wallet?.publicKey) {
-      toast({ title: "Wallet required", description: "Connect a wallet first.", variant: "destructive" });
+      toast({
+        title: "Wallet required",
+        description: "Connect a wallet first.",
+        variant: "destructive",
+      });
       return;
     }
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: wallet.publicKey, role: "buyer" }),
+        body: JSON.stringify({
+          walletAddress: wallet.publicKey,
+          role: "buyer",
+        }),
       });
       if (!res.ok) throw new Error(`Failed to create order (${res.status})`);
       const data = await res.json();
       const id = String(data?.orderId ?? data?.id ?? "");
       const token = String(data?.token ?? data?.jwt ?? "");
       if (!id || !token) {
-        toast({ title: "Order creation failed", description: "Missing order ID or token.", variant: "destructive" });
+        toast({
+          title: "Order creation failed",
+          description: "Missing order ID or token.",
+          variant: "destructive",
+        });
         return;
       }
       setSession({ orderId: id, token, role: "buyer" });
       toast({ title: "Order created", description: `Order ${id} created.` });
     } catch (err: any) {
-      toast({ title: "Order creation failed", description: String(err?.message || err), variant: "destructive" });
+      toast({
+        title: "Order creation failed",
+        description: String(err?.message || err),
+        variant: "destructive",
+      });
     }
   };
 
@@ -87,7 +102,11 @@ export const ExpressP2P: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const id = orderIdRef.current?.value?.trim() ?? "";
     const token = tokenRef.current?.value?.trim() ?? "";
     if (!id || !token) {
-      toast({ title: "Missing data", description: "Enter both order ID and token.", variant: "destructive" });
+      toast({
+        title: "Missing data",
+        description: "Enter both order ID and token.",
+        variant: "destructive",
+      });
       return;
     }
     setSession({ orderId: id, token, role: "seller" });
@@ -96,7 +115,10 @@ export const ExpressP2P: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   const handleLeave = () => {
     setSession(null);
-    toast({ title: "Left order", description: "Disconnected from order room." });
+    toast({
+      title: "Left order",
+      description: "Disconnected from order room.",
+    });
   };
 
   return (
@@ -104,7 +126,9 @@ export const ExpressP2P: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-semibold">Express P2P</h1>
-          <p className="text-sm text-muted-foreground">Simple, fixed UI while repairing the file.</p>
+          <p className="text-sm text-muted-foreground">
+            Simple, fixed UI while repairing the file.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge>{wallet?.publicKey ? "Wallet connected" : "No wallet"}</Badge>
@@ -122,7 +146,10 @@ export const ExpressP2P: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateOrder} className="space-y-3">
-                <Label>Creating an order will call the /api/orders endpoint and persist a session.</Label>
+                <Label>
+                  Creating an order will call the /api/orders endpoint and
+                  persist a session.
+                </Label>
                 <div className="flex gap-2">
                   <Button type="submit" className="w-full">
                     Create Order

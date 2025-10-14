@@ -300,7 +300,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             ) : null}
 
             <div className="text-xs text-gray-500">
-              You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount in wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
+              You will receive LOCKER tokens equal to 110% of the burned FIXERCOIN amount, paid from wallet Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA.
             </div>
           </CardContent>
         </Card>

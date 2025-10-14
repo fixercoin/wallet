@@ -68,7 +68,15 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
             className="express-p2p-loader"
             role="status"
             aria-label="Scanning for express P2P orders"
-          />
+          >
+            <div className="express-p2p-loader__inner" />
+            <div className="express-p2p-loader__orbit">
+              <span className="express-p2p-loader__dot" />
+              <span className="express-p2p-loader__dot" />
+              <span className="express-p2p-loader__dot" />
+              <span className="express-p2p-loader__dot" />
+            </div>
+          </div>
           <p className="text-base font-semibold text-center express-detecting-text">
             detecting orders
           </p>

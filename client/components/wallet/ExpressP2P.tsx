@@ -4,6 +4,8 @@ import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Copy, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { listOrders } from "@/lib/p2p";
 
 type ExpressP2PProps = {
   onBack: () => void;
@@ -14,6 +16,35 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
+
+  const [checkingOrders, setCheckingOrders] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+
+    async function poll() {
+      try {
+        const res = await listOrders("global");
+        if (cancelled) return;
+        if (Array.isArray(res?.orders) && res.orders.length > 0) {
+          setCheckingOrders(false);
+          return; // stop polling on first detection
+        }
+      } catch {
+        // ignore errors and keep polling
+      }
+      if (!cancelled) {
+        timer = window.setTimeout(poll, 2500);
+      }
+    }
+
+    poll();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
 
   const handleCopyAddress = async () => {
     if (!wallet) {
@@ -80,22 +111,26 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
       <div className="max-w-md mx-auto px-4 py-8">
         <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
-          <div
-            className="express-p2p-loader"
-            role="status"
-            aria-label="Scanning for express P2P orders"
-          >
-            <div className="express-p2p-loader__inner" />
-            <div className="express-p2p-loader__orbit">
-              <span className="express-p2p-loader__dot" />
-              <span className="express-p2p-loader__dot" />
-              <span className="express-p2p-loader__dot" />
-              <span className="express-p2p-loader__dot" />
-            </div>
-          </div>
-          <p className="text-base font-semibold text-center express-detecting-text">
-            detecting orders
-          </p>
+          {checkingOrders && (
+            <>
+              <div
+                className="express-p2p-loader"
+                role="status"
+                aria-label="Scanning for express P2P orders"
+              >
+                <div className="express-p2p-loader__inner" />
+                <div className="express-p2p-loader__orbit">
+                  <span className="express-p2p-loader__dot" />
+                  <span className="express-p2p-loader__dot" />
+                  <span className="express-p2p-loader__dot" />
+                  <span className="express-p2p-loader__dot" />
+                </div>
+              </div>
+              <p className="text-base font-semibold text-center express-detecting-text">
+                detecting orders
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

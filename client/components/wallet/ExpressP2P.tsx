@@ -119,6 +119,7 @@ interface ExpressP2PProps {
 }
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
+  const bannerUrl = "https://cdn.builder.io/api/v1/image/assets%2Fb5a8e7e2eb7e43a19f3227053e3cfaeb%2Ff096d75efa5346eca92c8e28c02f3406?format=webp&width=800";
   const { toast } = useToast();
   const [side, setSide] = useState<TradeSide>("buy");
   const [pkAmount, setPkAmount] = useState("25000");

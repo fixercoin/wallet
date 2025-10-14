@@ -16,7 +16,11 @@ export default function OrderBook() {
       const res = await listOrders("global");
       setOrders(res.orders || []);
     } catch (e: any) {
-      toast({ title: "Failed to load", description: String(e?.message || e), variant: "destructive" });
+      toast({
+        title: "Failed to load",
+        description: String(e?.message || e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -31,16 +35,24 @@ export default function OrderBook() {
         return;
       }
       const o = orders[idx];
-      await updateOrder(o.id, {
-        amountPKR: Number(o.amountPKR),
-        quoteAsset: String(o.quoteAsset),
-        pricePKRPerQuote: Number(o.pricePKRPerQuote),
-        paymentMethod: String(o.paymentMethod || "easypaisa"),
-      }, adminToken);
+      await updateOrder(
+        o.id,
+        {
+          amountPKR: Number(o.amountPKR),
+          quoteAsset: String(o.quoteAsset),
+          pricePKRPerQuote: Number(o.pricePKRPerQuote),
+          paymentMethod: String(o.paymentMethod || "easypaisa"),
+        },
+        adminToken,
+      );
       toast({ title: "Order saved" });
       load();
     } catch (e: any) {
-      toast({ title: "Save failed", description: String(e?.message || e), variant: "destructive" });
+      toast({
+        title: "Save failed",
+        description: String(e?.message || e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -54,7 +66,11 @@ export default function OrderBook() {
       toast({ title: "Order deleted" });
       setOrders((prev) => prev.filter((o) => o.id !== id));
     } catch (e: any) {
-      toast({ title: "Delete failed", description: String(e?.message || e), variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: String(e?.message || e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -80,7 +96,9 @@ export default function OrderBook() {
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Admin token</label>
+          <label className="block text-xs text-gray-500 mb-1">
+            Admin token
+          </label>
           <input
             type="password"
             value={adminToken}
@@ -92,21 +110,39 @@ export default function OrderBook() {
 
         {orders.map((o, idx) => (
           <div key={o.id} className="wallet-card rounded-2xl p-4 space-y-3">
-            <div className="text-xs text-gray-500">ID: <span className="font-mono">{o.id}</span></div>
+            <div className="text-xs text-gray-500">
+              ID: <span className="font-mono">{o.id}</span>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Amount (PKR)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Amount (PKR)
+                </label>
                 <input
                   value={o.amountPKR}
-                  onChange={(e) => setOrders((prev) => prev.map((x, i) => i === idx ? { ...x, amountPKR: e.target.value } : x))}
+                  onChange={(e) =>
+                    setOrders((prev) =>
+                      prev.map((x, i) =>
+                        i === idx ? { ...x, amountPKR: e.target.value } : x,
+                      ),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token
+                </label>
                 <select
                   value={o.quoteAsset}
-                  onChange={(e) => setOrders((prev) => prev.map((x, i) => i === idx ? { ...x, quoteAsset: e.target.value } : x))}
+                  onChange={(e) =>
+                    setOrders((prev) =>
+                      prev.map((x, i) =>
+                        i === idx ? { ...x, quoteAsset: e.target.value } : x,
+                      ),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                 >
                   <option value="USDC">USDC</option>
@@ -115,21 +151,47 @@ export default function OrderBook() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token price (PKR)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token price (PKR)
+                </label>
                 <input
                   value={o.pricePKRPerQuote}
-                  onChange={(e) => setOrders((prev) => prev.map((x, i) => i === idx ? { ...x, pricePKRPerQuote: e.target.value } : x))}
+                  onChange={(e) =>
+                    setOrders((prev) =>
+                      prev.map((x, i) =>
+                        i === idx
+                          ? { ...x, pricePKRPerQuote: e.target.value }
+                          : x,
+                      ),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Payment method</label>
-                <input disabled className="w-full border rounded-xl px-3 py-2 bg-gray-50" value="easypaisa" />
+                <label className="block text-xs text-gray-500 mb-1">
+                  Payment method
+                </label>
+                <input
+                  disabled
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-50"
+                  value="easypaisa"
+                />
               </div>
             </div>
             <div className="flex gap-2 justify-end">
-              <Button onClick={() => onSave(idx)} className="wallet-button-secondary flex items-center gap-1"><Save className="h-4 w-4" /> Save</Button>
-              <Button onClick={() => onDelete(o.id)} className="wallet-button-primary flex items-center gap-1"><Trash2 className="h-4 w-4" /> Delete</Button>
+              <Button
+                onClick={() => onSave(idx)}
+                className="wallet-button-secondary flex items-center gap-1"
+              >
+                <Save className="h-4 w-4" /> Save
+              </Button>
+              <Button
+                onClick={() => onDelete(o.id)}
+                className="wallet-button-primary flex items-center gap-1"
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </Button>
             </div>
           </div>
         ))}

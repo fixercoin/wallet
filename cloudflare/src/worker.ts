@@ -107,7 +107,12 @@ export default {
         await requireAdmin(req, env);
         const roomId = searchParams.get("roomId") ?? "global";
         const stub = getRoomStub(env, roomId);
-        return stub.fetch(new Request(`https://do/orders/${id}`, { method: "DELETE", headers: req.headers }));
+        return stub.fetch(
+          new Request(`https://do/orders/${id}`, {
+            method: "DELETE",
+            headers: req.headers,
+          }),
+        );
       }
       return json({ error: "Method not allowed" }, { status: 405 });
     }

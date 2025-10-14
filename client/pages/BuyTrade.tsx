@@ -27,7 +27,11 @@ export default function BuyTrade() {
 
   const [phase, setPhase] = useState<Phase>("entry");
   const [unread, setUnread] = useState(false);
-  const [sellerInfo, setSellerInfo] = useState<{ accountName: string; accountNumber: string; paymentMethod?: string } | null>(null);
+  const [sellerInfo, setSellerInfo] = useState<{
+    accountName: string;
+    accountNumber: string;
+    paymentMethod?: string;
+  } | null>(null);
   const [failMsg, setFailMsg] = useState<string>("");
 
   const [amountPKR, setAmountPKR] = useState<number | "">("");
@@ -49,12 +53,23 @@ export default function BuyTrade() {
     return Number(amountPKR) / pricePKR;
   }, [amountPKR, pricePKR]);
 
-  const canConfirm = Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
+  const canConfirm =
+    Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
 
   const handleConfirm = () => {
     if (!canConfirm) return;
-    send?.({ type: "chat", text: JSON.stringify({ type: "buyer_confirm", amountPKR: Number(amountPKR), token }) });
-    toast({ title: "Trade request sent", description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}` });
+    send?.({
+      type: "chat",
+      text: JSON.stringify({
+        type: "buyer_confirm",
+        amountPKR: Number(amountPKR),
+        token,
+      }),
+    });
+    toast({
+      title: "Trade request sent",
+      description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
+    });
     setPhase("awaiting_seller_approval");
   };
 
@@ -82,16 +97,27 @@ export default function BuyTrade() {
       setSellerInfo({
         accountName: String(payload.accountName || ""),
         accountNumber: String(payload.accountNumber || ""),
-        paymentMethod: String(payload.paymentMethod || order?.paymentMethod || ""),
+        paymentMethod: String(
+          payload.paymentMethod || order?.paymentMethod || "",
+        ),
       });
       setPhase("seller_approved");
-      toast({ title: "Seller approved", description: "Payment details received" });
+      toast({
+        title: "Seller approved",
+        description: "Payment details received",
+      });
     } else if (payload.type === "seller_verified") {
       setPhase("seller_verified");
-      toast({ title: "Seller verified payment", description: "Proceed to transfer" });
+      toast({
+        title: "Seller verified payment",
+        description: "Proceed to transfer",
+      });
     } else if (payload.type === "seller_transferred") {
       setPhase("seller_transferred");
-      toast({ title: "Transfer complete", description: "Check assets in wallet" });
+      toast({
+        title: "Transfer complete",
+        description: "Check assets in wallet",
+      });
       setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
     } else if (payload.type === "order_failed") {
       setFailMsg(String(payload.reason || "Order could not complete"));
@@ -117,9 +143,21 @@ export default function BuyTrade() {
       }),
     });
   };
-  const sellerVerified = () => send?.({ type: "chat", text: JSON.stringify({ type: "seller_verified" }) });
-  const sellerTransferred = () => send?.({ type: "chat", text: JSON.stringify({ type: "seller_transferred" }) });
-  const sellerFail = () => send?.({ type: "chat", text: JSON.stringify({ type: "order_failed", reason: "Seller cancelled" }) });
+  const sellerVerified = () =>
+    send?.({ type: "chat", text: JSON.stringify({ type: "seller_verified" }) });
+  const sellerTransferred = () =>
+    send?.({
+      type: "chat",
+      text: JSON.stringify({ type: "seller_transferred" }),
+    });
+  const sellerFail = () =>
+    send?.({
+      type: "chat",
+      text: JSON.stringify({
+        type: "order_failed",
+        reason: "Seller cancelled",
+      }),
+    });
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
@@ -157,19 +195,27 @@ export default function BuyTrade() {
           {phase === "entry" && (
             <>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">PKR Amount</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  PKR Amount
+                </label>
                 <input
                   type="number"
                   min={0}
                   value={amountPKR}
-                  onChange={(e) => setAmountPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setAmountPKR(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Select Token</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Select Token
+                </label>
                 <select
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
@@ -188,7 +234,9 @@ export default function BuyTrade() {
                 </div>
                 <div className="p-3 rounded-lg border bg-white">
                   <div className="text-xs text-gray-500">Estimated tokens</div>
-                  <div className="font-semibold mt-1">{estimatedTokens ? estimatedTokens.toFixed(6) : "0"}</div>
+                  <div className="font-semibold mt-1">
+                    {estimatedTokens ? estimatedTokens.toFixed(6) : "0"}
+                  </div>
                 </div>
               </div>
 
@@ -204,8 +252,15 @@ export default function BuyTrade() {
 
           {phase === "awaiting_seller_approval" && (
             <div className="space-y-4 text-center">
-              <p className="text-sm text-gray-600">Waiting for seller approval…</p>
-              <Button onClick={notifySeller} className="wallet-button-secondary">Notify seller</Button>
+              <p className="text-sm text-gray-600">
+                Waiting for seller approval…
+              </p>
+              <Button
+                onClick={notifySeller}
+                className="wallet-button-secondary"
+              >
+                Notify seller
+              </Button>
             </div>
           )}
 
@@ -217,21 +272,35 @@ export default function BuyTrade() {
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <div>
                     <div className="text-xs text-gray-500">Account name</div>
-                    <div className="font-semibold">{sellerInfo?.accountName || "—"}</div>
+                    <div className="font-semibold">
+                      {sellerInfo?.accountName || "—"}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Account number</div>
-                    <div className="font-semibold">{sellerInfo?.accountNumber || "—"}</div>
+                    <div className="font-semibold">
+                      {sellerInfo?.accountNumber || "—"}
+                    </div>
                   </div>
                 </div>
-                <div className="mt-3 text-sm">Payment method: {sellerInfo?.paymentMethod || order?.paymentMethod || "—"}</div>
+                <div className="mt-3 text-sm">
+                  Payment method:{" "}
+                  {sellerInfo?.paymentMethod || order?.paymentMethod || "—"}
+                </div>
               </div>
-              <Button onClick={notifySeller} className="wallet-button-primary w-full">Notify seller</Button>
+              <Button
+                onClick={notifySeller}
+                className="wallet-button-primary w-full"
+              >
+                Notify seller
+              </Button>
             </div>
           )}
 
           {phase === "awaiting_seller_verified" && (
-            <p className="text-sm text-gray-600 text-center">Waiting for seller to verify payment…</p>
+            <p className="text-sm text-gray-600 text-center">
+              Waiting for seller to verify payment…
+            </p>
           )}
 
           {phase === "seller_verified" && (
@@ -239,7 +308,9 @@ export default function BuyTrade() {
               <div className="p-4 rounded-xl border bg-white">
                 <div className="text-xs text-gray-500">Your wallet address</div>
                 <div className="flex items-center justify-between mt-1">
-                  <code className="font-mono text-sm">{wallet ? shortenAddress(wallet.publicKey, 8) : "No wallet"}</code>
+                  <code className="font-mono text-sm">
+                    {wallet ? shortenAddress(wallet.publicKey, 8) : "No wallet"}
+                  </code>
                   {wallet && (
                     <Button
                       variant="ghost"
@@ -255,7 +326,9 @@ export default function BuyTrade() {
                   )}
                 </div>
               </div>
-              <p className="text-sm text-gray-600">After transfer is sent, you will receive a completion message.</p>
+              <p className="text-sm text-gray-600">
+                After transfer is sent, you will receive a completion message.
+              </p>
             </div>
           )}
 
@@ -265,8 +338,18 @@ export default function BuyTrade() {
                 {failMsg}
               </div>
               <div className="flex gap-2">
-                <Button className="wallet-button-secondary flex-1" onClick={() => setPhase("awaiting_seller_approval")}>Continue</Button>
-                <Button className="wallet-button-primary flex-1" onClick={() => navigate("/", { state: { goP2P: true } })}>Delete</Button>
+                <Button
+                  className="wallet-button-secondary flex-1"
+                  onClick={() => setPhase("awaiting_seller_approval")}
+                >
+                  Continue
+                </Button>
+                <Button
+                  className="wallet-button-primary flex-1"
+                  onClick={() => navigate("/", { state: { goP2P: true } })}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
           )}
@@ -289,10 +372,27 @@ export default function BuyTrade() {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={sellerApprove} className="wallet-button-secondary">Approve</Button>
-                <Button onClick={sellerVerified} className="wallet-button-secondary">Verified</Button>
-                <Button onClick={sellerTransferred} className="wallet-button-secondary">I have transferred</Button>
-                <Button onClick={sellerFail} className="wallet-button-primary">Fail order</Button>
+                <Button
+                  onClick={sellerApprove}
+                  className="wallet-button-secondary"
+                >
+                  Approve
+                </Button>
+                <Button
+                  onClick={sellerVerified}
+                  className="wallet-button-secondary"
+                >
+                  Verified
+                </Button>
+                <Button
+                  onClick={sellerTransferred}
+                  className="wallet-button-secondary"
+                >
+                  I have transferred
+                </Button>
+                <Button onClick={sellerFail} className="wallet-button-primary">
+                  Fail order
+                </Button>
               </div>
             </div>
           )}

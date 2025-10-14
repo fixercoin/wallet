@@ -108,7 +108,8 @@ export class DurableRoom implements DurableObject {
       const id = decodeURIComponent(idMatch[1]);
       const orders = (await this.state.storage.get<Order[]>("orders")) || [];
       const idx = orders.findIndex((o) => o.id === id);
-      if (idx === -1) return Response.json({ error: "Not found" }, { status: 404 });
+      if (idx === -1)
+        return Response.json({ error: "Not found" }, { status: 404 });
       if (request.method === "GET") {
         return Response.json(orders[idx]);
       }

@@ -44,7 +44,11 @@ export default function Index() {
     if (anyLoc?.state?.goP2P) {
       setCurrentScreen({ screen: "p2p" });
       // Clear the state by navigating in place without it
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + window.location.search,
+      );
     }
   }, [location]);
 

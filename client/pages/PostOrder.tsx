@@ -65,7 +65,11 @@ export default function PostOrder() {
       toast({ title: "Order saved" });
       navigate("/express/orderbook");
     } catch (e: any) {
-      toast({ title: "Failed to save", description: String(e?.message || e), variant: "destructive" });
+      toast({
+        title: "Failed to save",
+        description: String(e?.message || e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -115,7 +119,9 @@ export default function PostOrder() {
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Admin token</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Admin token
+            </label>
             <input
               type="password"
               value={adminToken}
@@ -128,18 +134,26 @@ export default function PostOrder() {
           {mode === "buy" ? (
             <>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Amount (PKR)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Amount (PKR)
+                </label>
                 <input
                   type="number"
                   min={0}
                   value={buyAmountPKR}
-                  onChange={(e) => setBuyAmountPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setBuyAmountPKR(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token
+                </label>
                 <select
                   value={buyToken}
                   onChange={(e) => setBuyToken(e.target.value)}
@@ -151,36 +165,56 @@ export default function PostOrder() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token price (PKR)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token price (PKR)
+                </label>
                 <input
                   type="number"
                   min={0}
                   value={buyPrice}
-                  onChange={(e) => setBuyPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setBuyPrice(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Payment method</label>
-                <input disabled className="w-full border rounded-xl px-3 py-2 bg-gray-50" value="easypaisa" />
+                <label className="block text-xs text-gray-500 mb-1">
+                  Payment method
+                </label>
+                <input
+                  disabled
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-50"
+                  value="easypaisa"
+                />
               </div>
             </>
           ) : (
             <>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token amount</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token amount
+                </label>
                 <input
                   type="number"
                   min={0}
                   value={sellTokenAmount}
-                  onChange={(e) => setSellTokenAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setSellTokenAmount(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token
+                </label>
                 <select
                   value={sellToken}
                   onChange={(e) => setSellToken(e.target.value)}
@@ -192,19 +226,27 @@ export default function PostOrder() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Token price (PKR)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Token price (PKR)
+                </label>
                 <input
                   type="number"
                   min={0}
                   value={sellTokenPricePKR}
-                  onChange={(e) => setSellTokenPricePKR(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setSellTokenPricePKR(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Account name</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account name
+                  </label>
                   <input
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
@@ -213,7 +255,9 @@ export default function PostOrder() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Account number</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account number
+                  </label>
                   <input
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
@@ -223,8 +267,14 @@ export default function PostOrder() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Payment method</label>
-                <input disabled className="w-full border rounded-xl px-3 py-2 bg-gray-50" value="easypaisa" />
+                <label className="block text-xs text-gray-500 mb-1">
+                  Payment method
+                </label>
+                <input
+                  disabled
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-50"
+                  value="easypaisa"
+                />
               </div>
               <div className="p-3 rounded-lg border bg-white">
                 <div className="text-xs text-gray-500">Amount (PKR)</div>

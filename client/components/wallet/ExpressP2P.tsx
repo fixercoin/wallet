@@ -29,7 +29,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         const res = await listOrders("global");
         if (cancelled) return;
         const orders = Array.isArray(res?.orders) ? res.orders : [];
-        const buy = orders.find((o: any) => String(o.side || o.type).toLowerCase() === "buy") || orders[0];
+        const buy =
+          orders.find(
+            (o: any) => String(o.side || o.type).toLowerCase() === "buy",
+          ) || orders[0];
         if (buy) {
           setDetectedOrder(buy);
           setCheckingOrders(false);
@@ -137,16 +140,28 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
           ) : detectedOrder ? (
             <button
               type="button"
-              onClick={() => navigate("/express/buy-trade", { state: { order: detectedOrder } })}
+              onClick={() =>
+                navigate("/express/buy-trade", {
+                  state: { order: detectedOrder },
+                })
+              }
               className="w-full text-left rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center justify-between"
             >
               <div>
                 <p className="text-sm text-gray-500">Buy order detected</p>
-                <p className="font-semibold">{String(detectedOrder?.quoteAsset || detectedOrder?.token || "Token").toUpperCase()}</p>
+                <p className="font-semibold">
+                  {String(
+                    detectedOrder?.quoteAsset ||
+                      detectedOrder?.token ||
+                      "Token",
+                  ).toUpperCase()}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-500">Price (PKR)</p>
-                <p className="font-medium">{detectedOrder?.pricePKRPerQuote ?? "—"}</p>
+                <p className="font-medium">
+                  {detectedOrder?.pricePKRPerQuote ?? "—"}
+                </p>
               </div>
             </button>
           ) : null}

@@ -216,7 +216,9 @@ const rpcCall = async (method: string, params: any[]): Promise<any> => {
 };
 
 const getLatestBlockhashProxy = async (): Promise<string> => {
-  const res = await rpcCall("getLatestBlockhash", [{ commitment: "confirmed" }]);
+  const res = await rpcCall("getLatestBlockhash", [
+    { commitment: "confirmed" },
+  ]);
   if (res?.value?.blockhash) return res.value.blockhash;
   if (res?.blockhash) return res.blockhash;
   throw new Error("Failed to fetch blockhash");
@@ -331,7 +333,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   useEffect(() => {
     if (!wallet) return;
     try {
-      const stored = localStorage.getItem(storageKeyForWallet(wallet.publicKey));
+      const stored = localStorage.getItem(
+        storageKeyForWallet(wallet.publicKey),
+      );
       if (stored) {
         const parsed = JSON.parse(stored) as TokenLockRecord[];
         setLocks(parsed);
@@ -685,7 +689,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               Lock your SPL tokens
             </h1>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
-              Securely hold tokens without rewards. Unlocks automatically when the lock completes.
+              Securely hold tokens without rewards. Unlocks automatically when
+              the lock completes.
             </p>
           </div>
         </div>
@@ -718,7 +723,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       <SelectItem key={token.mint} value={token.mint}>
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">
-                            {token.symbol || token.name || token.mint.slice(0, 6)}
+                            {token.symbol ||
+                              token.name ||
+                              token.mint.slice(0, 6)}
                           </span>
                           <span className="text-[10px] text-gray-500 uppercase">
                             Balance: {(token.balance || 0).toLocaleString()}
@@ -743,9 +750,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 />
                 {selectedToken ? (
                   <p className="text-[10px] text-gray-500 mt-1">
-                    Available: {(selectedToken.balance || 0).toLocaleString()} {
-                      selectedToken.symbol
-                    }
+                    Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
+                    {selectedToken.symbol}
                   </p>
                 ) : null}
               </div>
@@ -798,7 +804,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                   </CardTitle>
                 </div>
                 <Badge variant="secondary" className="text-[10px]">
-                  {locks.filter((lock) => lock.status !== "withdrawn").length} active
+                  {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
+                  active
                 </Badge>
               </div>
             </CardHeader>
@@ -836,19 +843,19 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                             lock.status === "withdrawn"
                               ? "default"
                               : lock.status === "withdrawing"
-                              ? "outline"
-                              : lock.error
-                              ? "destructive"
-                              : "secondary"
+                                ? "outline"
+                                : lock.error
+                                  ? "destructive"
+                                  : "secondary"
                           }
                         >
                           {lock.status === "withdrawing"
                             ? "Withdrawing"
                             : lock.status === "withdrawn"
-                            ? "Withdrawn"
-                            : lock.error
-                            ? "Action needed"
-                            : "Locked"}
+                              ? "Withdrawn"
+                              : lock.error
+                                ? "Action needed"
+                                : "Locked"}
                         </Badge>
                       </div>
 
@@ -859,11 +866,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         </div>
                         <Progress value={progress} className="h-2" />
                         <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
-                          <div>
-                            Unlocks on {formatDateTime(lock.unlockAt)}
-                          </div>
+                          <div>Unlocks on {formatDateTime(lock.unlockAt)}</div>
                           <div className="text-right">
-                            {isUnlocked ? "Ready to withdraw" : `${timeRemaining} remaining`}
+                            {isUnlocked
+                              ? "Ready to withdraw"
+                              : `${timeRemaining} remaining`}
                           </div>
                         </div>
                       </div>
@@ -875,7 +882,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                             onCheckedChange={(value) =>
                               updateLockAutoWithdraw(lock.id, value)
                             }
-                            disabled={isWithdrawn || lock.status === "withdrawing"}
+                            disabled={
+                              isWithdrawn || lock.status === "withdrawing"
+                            }
                           />
                           <div>
                             <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">
@@ -903,8 +912,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                             {isWithdrawn
                               ? "Complete"
                               : lock.status === "withdrawing"
-                              ? "Processing"
-                              : "Withdraw"}
+                                ? "Processing"
+                                : "Withdraw"}
                           </span>
                         </Button>
                       </div>
@@ -913,7 +922,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
                           <AlertTriangle className="h-4 w-4" />
                           <div>
-                            <div className="font-medium">Last attempt failed</div>
+                            <div className="font-medium">
+                              Last attempt failed
+                            </div>
                             <div className="opacity-80">{lock.error}</div>
                           </div>
                         </div>

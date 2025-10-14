@@ -47,6 +47,7 @@ interface DashboardProps {
   onSettings: () => void;
   onOpenSetup?: () => void;
   onAccounts?: () => void;
+  onLock: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -60,6 +61,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSettings,
   onOpenSetup,
   onAccounts,
+  onLock,
 }) => {
   const {
     wallet,
@@ -314,7 +316,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Flame className="h-4 w-4" />
                   <span>BURNING</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 text-xs">
+                <DropdownMenuItem
+                  onSelect={onLock}
+                  className="flex items-center gap-2 text-xs"
+                >
                   <Lock className="h-4 w-4" />
                   <span>LOCKING</span>
                 </DropdownMenuItem>

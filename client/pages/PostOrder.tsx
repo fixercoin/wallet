@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -74,35 +74,44 @@ export default function PostOrder() {
     }
   };
 
-  const applyDexPriceToBuy = async () => {
-    const usd = await fetchDexPriceUsd(buyToken);
-    if (usd == null) {
-      toast({ title: "DexScreener price unavailable", variant: "destructive" });
-      return;
-    }
-    const pkr = getPkRFromUsd(usd);
-    if (pkr == null) {
-      toast({ title: "PKR rate unavailable", variant: "destructive" });
-      return;
-    }
-    setBuyPrice(pkr);
-    toast({ title: "Price filled from DexScreener" });
-  };
+  // Auto-fill token price (PKR) via DexScreener for Buy and Sell sections
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!usdToPkr) return;
+      try {
+        const sym = buyToken;
+        const usd = await fetchDexPriceUsd(sym);
+        if (usd == null) return;
+        const pkr = getPkRFromUsd(usd);
+        if (pkr == null) return;
+        if (!cancelled) setBuyPrice(pkr);
+      } catch {}
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [buyToken, usdToPkr]);
 
-  const applyDexPriceToSell = async () => {
-    const usd = await fetchDexPriceUsd(sellToken);
-    if (usd == null) {
-      toast({ title: "DexScreener price unavailable", variant: "destructive" });
-      return;
-    }
-    const pkr = getPkRFromUsd(usd);
-    if (pkr == null) {
-      toast({ title: "PKR rate unavailable", variant: "destructive" });
-      return;
-    }
-    setSellTokenPricePKR(pkr);
-    toast({ title: "Price filled from DexScreener" });
-  };
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!usdToPkr) return;
+      try {
+        const sym = sellToken;
+        const usd = await fetchDexPriceUsd(sym);
+        if (usd == null) return;
+        const pkr = getPkRFromUsd(usd);
+        if (pkr == null) return;
+        if (!cancelled) setSellTokenPricePKR(pkr);
+      } catch {}
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [sellToken, usdToPkr]);
 
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [adminToken, setAdminToken] = useState("");
@@ -114,15 +123,11 @@ export default function PostOrder() {
 
   // Sell form
   const [sellToken, setSellToken] = useState("USDC");
-  const [sellTokenAmount, setSellTokenAmount] = useState<number | "">("");
+  const [sellMinTokenAmount, setSellMinTokenAmount] = useState<number | "">("");
+  const [sellMaxTokenAmount, setSellMaxTokenAmount] = useState<number | "">("");
   const [sellTokenPricePKR, setSellTokenPricePKR] = useState<number | "">("");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-
-  const sellAmountPKR = useMemo(() => {
-    if (!sellTokenAmount || !sellTokenPricePKR) return 0;
-    return Number(sellTokenAmount) * Number(sellTokenPricePKR);
-  }, [sellTokenAmount, sellTokenPricePKR]);
 
   const handleSave = async () => {
     try {
@@ -144,11 +149,14 @@ export default function PostOrder() {
           adminToken,
         );
       } else {
-        if (!sellTokenAmount || !sellTokenPricePKR) return;
+        if (!sellMinTokenAmount || !sellMaxTokenAmount || !sellTokenPricePKR)
+          return;
+        const maxPkr =
+          Number(sellMaxTokenAmount) * Number(sellTokenPricePKR);
         await createOrder(
           {
             side: "sell",
-            amountPKR: Number(sellAmountPKR),
+            amountPKR: Number(maxPkr),
             quoteAsset: sellToken,
             pricePKRPerQuote: Number(sellTokenPricePKR),
             paymentMethod: "easypaisa",
@@ -263,29 +271,18 @@ export default function PostOrder() {
                 <label className="block text-xs text-gray-500 mb-1">
                   Token price (PKR)
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    value={buyPrice}
-                    onChange={(e) =>
-                      setBuyPrice(
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className="w-full border rounded-xl px-3 py-2 bg-white"
-                    placeholder="0"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={applyDexPriceToBuy}
-                    className="px-3"
-                    title="Fill from DexScreener"
-                  >
-                    Use Dex
-                  </Button>
-                </div>
+                <input
+                  type="number"
+                  min={0}
+                  value={buyPrice}
+                  onChange={(e) =>
+                    setBuyPrice(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  className="w-full border rounded-xl px-3 py-2 bg-white"
+                  placeholder="0"
+                />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
@@ -300,22 +297,41 @@ export default function PostOrder() {
             </>
           ) : (
             <>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Token amount
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={sellTokenAmount}
-                  onChange={(e) =>
-                    setSellTokenAmount(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
-                  placeholder="0"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Minimum token amount
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={sellMinTokenAmount}
+                    onChange={(e) =>
+                      setSellMinTokenAmount(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Maximum token amount
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={sellMaxTokenAmount}
+                    onChange={(e) =>
+                      setSellMaxTokenAmount(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
@@ -335,29 +351,18 @@ export default function PostOrder() {
                 <label className="block text-xs text-gray-500 mb-1">
                   Token price (PKR)
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    value={sellTokenPricePKR}
-                    onChange={(e) =>
-                      setSellTokenPricePKR(
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className="w-full border rounded-xl px-3 py-2 bg-white"
-                    placeholder="0"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={applyDexPriceToSell}
-                    className="px-3"
-                    title="Fill from DexScreener"
-                  >
-                    Use Dex
-                  </Button>
-                </div>
+                <input
+                  type="number"
+                  min={0}
+                  value={sellTokenPricePKR}
+                  onChange={(e) =>
+                    setSellTokenPricePKR(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  className="w-full border rounded-xl px-3 py-2 bg-white"
+                  placeholder="0"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -392,10 +397,6 @@ export default function PostOrder() {
                   className="w-full border rounded-xl px-3 py-2 bg-gray-50"
                   value="easypaisa"
                 />
-              </div>
-              <div className="p-3 rounded-lg border bg-white">
-                <div className="text-xs text-gray-500">Amount (PKR)</div>
-                <div className="font-semibold mt-1">{sellAmountPKR}</div>
               </div>
             </>
           )}

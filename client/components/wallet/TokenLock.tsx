@@ -14,7 +14,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -695,246 +694,235 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-purple-100/70 bg-white/60 p-1">
-          <Card className="wallet-card">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <LockIcon className="h-5 w-5 text-purple-500" />
-                <CardTitle className="text-sm font-semibold">
-                  Create new lock
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Select token
-                </Label>
-                <Select
-                  value={selectedMint}
-                  onValueChange={(value) => setSelectedMint(value)}
-                  disabled={isFormDisabled}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Choose token" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableTokens.map((token) => (
-                      <SelectItem key={token.mint} value={token.mint}>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm">
-                            {token.symbol ||
-                              token.name ||
-                              token.mint.slice(0, 6)}
-                          </span>
-                          <span className="text-[10px] text-gray-500 uppercase">
-                            Balance: {(token.balance || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Amount to lock
-                </Label>
-                <Input
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  placeholder="0.0"
-                  disabled={isFormDisabled}
-                  className="mt-1"
-                />
-                {selectedToken ? (
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
-                    {selectedToken.symbol}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-medium text-[hsl(var(--foreground))]">
-                    Auto-withdraw
-                  </div>
-                  <p className="text-[10px] text-gray-500">
-                    Release tokens automatically after the lock ends.
-                  </p>
-                </div>
-                <Switch
-                  checked={autoWithdraw}
-                  onCheckedChange={setAutoWithdraw}
-                  disabled={isFormDisabled}
-                />
-              </div>
-
-              <Button
-                className="w-full h-11 dash-btn font-semibold border-0"
-                onClick={handleSubmit}
+        <div className="wallet-card rounded-2xl p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <LockIcon className="h-5 w-5 text-purple-500" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              Create new lock
+            </span>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Select token
+              </Label>
+              <Select
+                value={selectedMint}
+                onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Locking tokens...
-                  </>
-                ) : (
-                  <>
-                    <LockIcon className="h-4 w-4 mr-2" />
-                    Lock tokens
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose token" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTokens.map((token) => (
+                    <SelectItem key={token.mint} value={token.mint}>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">
+                          {token.symbol || token.name || token.mint.slice(0, 6)}
+                        </span>
+                        <span className="text-[10px] text-gray-500 uppercase">
+                          Balance: {(token.balance || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Amount to lock
+              </Label>
+              <Input
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder="0.0"
+                disabled={isFormDisabled}
+                className="mt-1"
+              />
+              {selectedToken ? (
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
+                  {selectedToken.symbol}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-medium text-[hsl(var(--foreground))]">
+                  Auto-withdraw
+                </div>
+                <p className="text-[10px] text-gray-500">
+                  Release tokens automatically after the lock ends.
+                </p>
+              </div>
+              <Switch
+                checked={autoWithdraw}
+                onCheckedChange={setAutoWithdraw}
+                disabled={isFormDisabled}
+              />
+            </div>
+
+            <Button
+              className="w-full h-11 dash-btn font-semibold border-0"
+              onClick={handleSubmit}
+              disabled={isFormDisabled}
+            >
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Locking tokens...
+                </>
+              ) : (
+                <>
+                  <LockIcon className="h-4 w-4 mr-2" />
+                  Lock tokens
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-purple-100/70 bg-white/60 p-1">
-          <Card className="wallet-card">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-purple-500" />
-                  <CardTitle className="text-sm font-semibold">
-                    Active locks
-                  </CardTitle>
-                </div>
-                <Badge variant="secondary" className="text-[10px]">
-                  {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
-                  active
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {locks.length === 0 ? (
-                <div className="text-center py-6 text-sm text-gray-500">
-                  No token locks yet. Create one above to get started.
-                </div>
-              ) : (
-                locks.map((lock) => {
-                  const timeRemaining = formatTimeRemaining(lock.unlockAt);
-                  const progress = progressForLock(lock);
-                  const isUnlocked = timeRemaining === "Unlocked";
-                  const isWithdrawn = lock.status === "withdrawn";
-                  const canWithdraw =
-                    !isWithdrawn && lock.status !== "withdrawing" && isUnlocked;
+        <div className="wallet-card rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-purple-500" />
+              <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                Active locks
+              </span>
+            </div>
+            <Badge variant="secondary" className="text-[10px]">
+              {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
+              active
+            </Badge>
+          </div>
 
-                  return (
-                    <div
-                      key={lock.id}
-                      className="p-4 rounded-xl border border-white/40 bg-white/70 space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
+          <div className="space-y-4">
+            {locks.length === 0 ? (
+              <div className="text-center py-6 text-sm text-gray-500">
+                No token locks yet. Create one above to get started.
+              </div>
+            ) : (
+              locks.map((lock) => {
+                const timeRemaining = formatTimeRemaining(lock.unlockAt);
+                const progress = progressForLock(lock);
+                const isUnlocked = timeRemaining === "Unlocked";
+                const isWithdrawn = lock.status === "withdrawn";
+                const canWithdraw =
+                  !isWithdrawn && lock.status !== "withdrawing" && isUnlocked;
+
+                return (
+                  <div
+                    key={lock.id}
+                    className="p-4 rounded-xl border border-white/40 bg-white/70 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                          {lock.amount} {lock.symbol}
+                        </div>
+                        <div className="text-[10px] text-gray-500">
+                          Locked on {formatDateTime(lock.createdAt)}
+                        </div>
+                      </div>
+                      <Badge
+                        className="uppercase text-[10px]"
+                        variant={
+                          lock.status === "withdrawn"
+                            ? "default"
+                            : lock.status === "withdrawing"
+                              ? "outline"
+                              : lock.error
+                                ? "destructive"
+                                : "secondary"
+                        }
+                      >
+                        {lock.status === "withdrawing"
+                          ? "Withdrawing"
+                          : lock.status === "withdrawn"
+                            ? "Withdrawn"
+                            : lock.error
+                              ? "Action needed"
+                              : "Locked"}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-gray-500">
+                        <span>Progress</span>
+                        <span>{Math.round(progress)}%</span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                      <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
+                        <div>Unlocks on {formatDateTime(lock.unlockAt)}</div>
+                        <div className="text-right">
+                          {isUnlocked
+                            ? "Ready to withdraw"
+                            : `${timeRemaining} remaining`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={lock.autoWithdraw}
+                          onCheckedChange={(value) =>
+                            updateLockAutoWithdraw(lock.id, value)
+                          }
+                          disabled={
+                            isWithdrawn || lock.status === "withdrawing"
+                          }
+                        />
                         <div>
-                          <div className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                            {lock.amount} {lock.symbol}
+                          <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">
+                            Auto-withdraw
                           </div>
                           <div className="text-[10px] text-gray-500">
-                            Locked on {formatDateTime(lock.createdAt)}
-                          </div>
-                        </div>
-                        <Badge
-                          className="uppercase text-[10px]"
-                          variant={
-                            lock.status === "withdrawn"
-                              ? "default"
-                              : lock.status === "withdrawing"
-                                ? "outline"
-                                : lock.error
-                                  ? "destructive"
-                                  : "secondary"
-                          }
-                        >
-                          {lock.status === "withdrawing"
-                            ? "Withdrawing"
-                            : lock.status === "withdrawn"
-                              ? "Withdrawn"
-                              : lock.error
-                                ? "Action needed"
-                                : "Locked"}
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-gray-500">
-                          <span>Progress</span>
-                          <span>{Math.round(progress)}%</span>
-                        </div>
-                        <Progress value={progress} className="h-2" />
-                        <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
-                          <div>Unlocks on {formatDateTime(lock.unlockAt)}</div>
-                          <div className="text-right">
-                            {isUnlocked
-                              ? "Ready to withdraw"
-                              : `${timeRemaining} remaining`}
+                            {lock.autoWithdraw ? "Enabled" : "Disabled"}
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={lock.autoWithdraw}
-                            onCheckedChange={(value) =>
-                              updateLockAutoWithdraw(lock.id, value)
-                            }
-                            disabled={
-                              isWithdrawn || lock.status === "withdrawing"
-                            }
-                          />
-                          <div>
-                            <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">
-                              Auto-withdraw
-                            </div>
-                            <div className="text-[10px] text-gray-500">
-                              {lock.autoWithdraw ? "Enabled" : "Disabled"}
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          className="dash-btn h-9 px-4 text-xs font-semibold"
-                          onClick={() => performWithdraw(lock)}
-                          disabled={!canWithdraw}
-                        >
-                          {lock.status === "withdrawing" ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : isWithdrawn ? (
-                            <CheckCircle2 className="h-4 w-4" />
-                          ) : (
-                            <LockIcon className="h-4 w-4" />
-                          )}
-                          <span className="ml-2">
-                            {isWithdrawn
-                              ? "Complete"
-                              : lock.status === "withdrawing"
-                                ? "Processing"
-                                : "Withdraw"}
-                          </span>
-                        </Button>
-                      </div>
-
-                      {lock.error ? (
-                        <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
-                          <AlertTriangle className="h-4 w-4" />
-                          <div>
-                            <div className="font-medium">
-                              Last attempt failed
-                            </div>
-                            <div className="opacity-80">{lock.error}</div>
-                          </div>
-                        </div>
-                      ) : null}
+                      <Button
+                        size="sm"
+                        className="dash-btn h-9 px-4 text-xs font-semibold"
+                        onClick={() => performWithdraw(lock)}
+                        disabled={!canWithdraw}
+                      >
+                        {lock.status === "withdrawing" ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : isWithdrawn ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <LockIcon className="h-4 w-4" />
+                        )}
+                        <span className="ml-2">
+                          {isWithdrawn
+                            ? "Complete"
+                            : lock.status === "withdrawing"
+                              ? "Processing"
+                              : "Withdraw"}
+                        </span>
+                      </Button>
                     </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
+
+                    {lock.error ? (
+                      <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Last attempt failed</div>
+                          <div className="opacity-80">{lock.error}</div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>

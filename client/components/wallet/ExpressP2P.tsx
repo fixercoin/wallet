@@ -197,10 +197,39 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     }
 
     const action = side === "buy" ? "Buy" : "Sell";
-    toast({
-      title: `${action} request created`,
-      description: `${action} ${usdcFormatter.format(usdcValue)} USDC using ${method.label}.`,
-    });
+
+    if (adminToken && P2P_BASE) {
+      try {
+        await createOrder(
+          {
+            side,
+            amountPKR: numericPk,
+            quoteAsset: "USDC",
+            pricePKRPerQuote: rate,
+            paymentMethod: "easypaisa",
+            roomId: "global",
+            createdBy: "admin",
+          },
+          adminToken,
+        );
+        toast({
+          title: `Order posted to room`,
+          description: `${action} ${usdcFormatter.format(usdcValue)} USDC via Easypaisa`,
+        });
+      } catch (err: any) {
+        toast({
+          title: "Order post failed",
+          description: String(err?.message || err),
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: `${action} request created`,
+        description: `${action} ${usdcFormatter.format(usdcValue)} USDC using ${method.label}.`,
+      });
+    }
+
     setChat((previous) => [
       ...previous,
       {

@@ -364,7 +364,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur">
+        <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur overflow-hidden">
+          <div className="h-28 w-full overflow-hidden bg-gray-50">
+            <img src={bannerUrl} alt="P2P banner" className="h-full w-full object-cover" />
+          </div>
           <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 text-lg">
               <ArrowRightLeft className="h-4 w-4" /> {headerLabel} flow

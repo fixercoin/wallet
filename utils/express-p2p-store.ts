@@ -138,7 +138,10 @@ const CLEANUP_AFTER_MS = 1000 * 60 * 60 * 4; // 4 hours
 const CLEANUP_INTERVAL_MS = 1000 * 60 * 15; // 15 minutes
 
 function randomId(prefix: string): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return `${prefix}-${crypto.randomUUID()}`;
   }
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -156,7 +159,10 @@ function normalizeString(value: unknown, fallback = ""): string {
     : fallback;
 }
 
-function deriveAvailableActions(status: OrderPhase, role: SessionRole): string[] {
+function deriveAvailableActions(
+  status: OrderPhase,
+  role: SessionRole,
+): string[] {
   if (!role) return [];
   switch (status) {
     case "awaiting_counterparty":
@@ -221,7 +227,10 @@ function safeJsonParse<T = any>(raw: unknown): T | null {
 
 class ExpressP2PStore {
   private rooms = new Map<string, OrderRoom>();
-  private tokenIndex = new Map<string, { orderId: string; roleHint: SessionRole }>();
+  private tokenIndex = new Map<
+    string,
+    { orderId: string; roleHint: SessionRole }
+  >();
   private uploads = new Map<string, StoredUpload>();
   private lastCleanup = 0;
 
@@ -240,7 +249,8 @@ class ExpressP2PStore {
       tokenAmount: normalizeNumber(input.tokenAmount, 0),
       fiatAmount: normalizeNumber(input.fiatAmount, 0),
       fiatCurrency: normalizeString(input.fiatCurrency?.toUpperCase(), "PKR"),
-      paymentMethod: normalizeString(input.paymentMethod, undefined as any) || undefined,
+      paymentMethod:
+        normalizeString(input.paymentMethod, undefined as any) || undefined,
       memo: normalizeString(input.memo, undefined as any) || undefined,
       buyer: input.walletAddress
         ? {
@@ -279,7 +289,10 @@ class ExpressP2PStore {
     };
   }
 
-  createPresignedUpload(token: string | null, payload: PresignInput): PresignResult {
+  createPresignedUpload(
+    token: string | null,
+    payload: PresignInput,
+  ): PresignResult {
     if (!token) {
       throw Object.assign(new Error("Missing session token"), { status: 401 });
     }
@@ -303,7 +316,8 @@ class ExpressP2PStore {
       orderId: room.order.orderId,
       filename: normalizeString(payload.filename, uploadId),
       size: normalizeNumber(payload.size, undefined as any) || undefined,
-      contentType: normalizeString(payload.contentType, undefined as any) || undefined,
+      contentType:
+        normalizeString(payload.contentType, undefined as any) || undefined,
       uploadedBy: roomEntry.roleHint,
       data: null,
       createdAt: now,
@@ -321,7 +335,11 @@ class ExpressP2PStore {
     };
   }
 
-  storeUploadData(uploadId: string, data: Uint8Array, contentType?: string): { ok: boolean; status: number; message?: string } {
+  storeUploadData(
+    uploadId: string,
+    data: Uint8Array,
+    contentType?: string,
+  ): { ok: boolean; status: number; message?: string } {
     const upload = this.uploads.get(uploadId);
     if (!upload) {
       return { ok: false, status: 404, message: "Upload not found" };
@@ -338,7 +356,11 @@ class ExpressP2PStore {
     return upload;
   }
 
-  acceptWebSocketConnection(params: { orderId: string; token: string | null; socket: WebSocketLike }): AcceptResult {
+  acceptWebSocketConnection(params: {
+    orderId: string;
+    token: string | null;
+    socket: WebSocketLike;
+  }): AcceptResult {
     const { orderId, token, socket } = params;
     if (!token) {
       return { ok: false, status: 401, message: "Missing session token" };
@@ -381,7 +403,11 @@ class ExpressP2PStore {
     return { ok: true };
   }
 
-  private handleSocketMessage(room: OrderRoom, connection: OrderConnection, event: WebSocketMessageEvent) {
+  private handleSocketMessage(
+    room: OrderRoom,
+    connection: OrderConnection,
+    event: WebSocketMessageEvent,
+  ) {
     const message = safeJsonParse<{ type?: string; payload?: any }>(event.data);
     if (!message || typeof message.type !== "string") {
       this.sendError(connection, "Invalid message format");
@@ -390,11 +416,18 @@ class ExpressP2PStore {
 
     switch (message.type) {
       case "session.identify": {
-        const role = normalizeString(message.payload?.role, "").toLowerCase() as OrderRole;
+        const role = normalizeString(
+          message.payload?.role,
+          "",
+        ).toLowerCase() as OrderRole;
         if (role === "buyer" || role === "seller") {
           connection.role = role;
-          connection.address = normalizeString(message.payload?.address, undefined as any) || undefined;
-          connection.displayName = normalizeString(message.payload?.displayName, undefined as any) || undefined;
+          connection.address =
+            normalizeString(message.payload?.address, undefined as any) ||
+            undefined;
+          connection.displayName =
+            normalizeString(message.payload?.displayName, undefined as any) ||
+            undefined;
           this.updateParticipant(room, role, connection);
           this.broadcastOrderUpdate(room);
           this.sendSystemNotice(connection, `Role set to ${role}.`);
@@ -436,7 +469,10 @@ class ExpressP2PStore {
           return;
         }
         if (!connection.role) {
-          this.sendError(connection, "Identify session before performing actions");
+          this.sendError(
+            connection,
+            "Identify session before performing actions",
+          );
           return;
         }
         const result = this.performAction(room, connection.role, action);
@@ -450,9 +486,16 @@ class ExpressP2PStore {
           this.sendError(connection, "Identify session before uploading");
           return;
         }
-        const attachment = this.registerAttachment(room, connection, message.payload || {});
+        const attachment = this.registerAttachment(
+          room,
+          connection,
+          message.payload || {},
+        );
         if (attachment) {
-          this.broadcast(room, { type: "attachment.added", payload: attachment });
+          this.broadcast(room, {
+            type: "attachment.added",
+            payload: attachment,
+          });
           const chatMessage: ChatMessage = {
             id: `attachment-${attachment.id}`,
             sender: connection.role,
@@ -483,10 +526,16 @@ class ExpressP2PStore {
     const payload = {
       ...room.order,
       attachments: room.order.attachments.slice(),
-      availableActions: deriveAvailableActions(room.order.status, connection.role),
+      availableActions: deriveAvailableActions(
+        room.order.status,
+        connection.role,
+      ),
       chat: room.chat.slice(),
     };
-    this.safeSend(connection.socket, JSON.stringify({ type: "order.snapshot", payload }));
+    this.safeSend(
+      connection.socket,
+      JSON.stringify({ type: "order.snapshot", payload }),
+    );
   }
 
   private sendChatHistory(connection: OrderConnection, room: OrderRoom) {
@@ -539,7 +588,11 @@ class ExpressP2PStore {
     }
   }
 
-  private updateParticipant(room: OrderRoom, role: OrderRole, connection: OrderConnection) {
+  private updateParticipant(
+    room: OrderRoom,
+    role: OrderRole,
+    connection: OrderConnection,
+  ) {
     const summary: ParticipantSummary = {
       displayName:
         connection.displayName ||
@@ -569,7 +622,11 @@ class ExpressP2PStore {
     room.order.lastEventAt = message.ts;
   }
 
-  private performAction(room: OrderRoom, role: OrderRole, action: string): { ok: boolean; message?: string } {
+  private performAction(
+    room: OrderRoom,
+    role: OrderRole,
+    action: string,
+  ): { ok: boolean; message?: string } {
     const normalized = action.toLowerCase();
     const now = Date.now();
     const order = room.order;
@@ -577,7 +634,8 @@ class ExpressP2PStore {
 
     switch (normalized) {
       case "accept": {
-        if (role !== "seller") return { ok: false, message: "Only sellers can accept" };
+        if (role !== "seller")
+          return { ok: false, message: "Only sellers can accept" };
         if (order.status !== "awaiting_counterparty") {
           return { ok: false, message: "Order already accepted" };
         }
@@ -585,7 +643,8 @@ class ExpressP2PStore {
         break;
       }
       case "mark_paid": {
-        if (role !== "buyer") return { ok: false, message: "Only buyers can mark payment" };
+        if (role !== "buyer")
+          return { ok: false, message: "Only buyers can mark payment" };
         if (order.status !== "awaiting_payment") {
           return { ok: false, message: "Cannot mark paid in current state" };
         }
@@ -593,29 +652,30 @@ class ExpressP2PStore {
         break;
       }
       case "mark_received": {
-        if (role !== "seller") return { ok: false, message: "Only sellers can confirm receipt" };
+        if (role !== "seller")
+          return { ok: false, message: "Only sellers can confirm receipt" };
         if (order.status !== "buyer_paid") {
-          return { ok: false, message: "Cannot confirm receipt before buyer pays" };
+          return {
+            ok: false,
+            message: "Cannot confirm receipt before buyer pays",
+          };
         }
         order.status = "seller_confirmed";
         break;
       }
       case "cancel": {
-        if (![
-          "awaiting_counterparty",
-          "awaiting_payment",
-          "buyer_paid",
-        ].includes(order.status)) {
+        if (
+          !["awaiting_counterparty", "awaiting_payment", "buyer_paid"].includes(
+            order.status,
+          )
+        ) {
           return { ok: false, message: "Cannot cancel at this stage" };
         }
         order.status = "cancelled";
         break;
       }
       case "appeal": {
-        if (![
-          "buyer_paid",
-          "seller_confirmed",
-        ].includes(order.status)) {
+        if (!["buyer_paid", "seller_confirmed"].includes(order.status)) {
           return { ok: false, message: "Appeals only allowed after payment" };
         }
         order.status = "appealed";
@@ -637,7 +697,10 @@ class ExpressP2PStore {
     this.addChatMessage(room, systemMessage);
     this.broadcast(room, { type: "chat.message", payload: systemMessage });
 
-    if (previous === "seller_confirmed" && order.status === "seller_confirmed") {
+    if (
+      previous === "seller_confirmed" &&
+      order.status === "seller_confirmed"
+    ) {
       // Automatically mark completed shortly after seller confirmation
       order.status = "completed";
       order.lastEventAt = now;
@@ -658,12 +721,17 @@ class ExpressP2PStore {
       this.sendError(connection, "Attachment URL missing");
       return null;
     }
-    const name = normalizeString(payload?.name, payload?.filename) || "Attachment";
+    const name =
+      normalizeString(payload?.name, payload?.filename) || "Attachment";
     const size = normalizeNumber(payload?.size, undefined as any) || undefined;
-    const contentType = normalizeString(payload?.contentType, undefined as any) || undefined;
+    const contentType =
+      normalizeString(payload?.contentType, undefined as any) || undefined;
 
     const idFromUrlMatch = url.match(/([^/]+)$/);
-    const attachmentId = normalizeString(payload?.id, idFromUrlMatch ? idFromUrlMatch[1] : randomId("file"));
+    const attachmentId = normalizeString(
+      payload?.id,
+      idFromUrlMatch ? idFromUrlMatch[1] : randomId("file"),
+    );
 
     const attachment: OrderAttachment = {
       id: attachmentId,
@@ -675,13 +743,18 @@ class ExpressP2PStore {
       uploadedAt: now,
     };
 
-    const existingIdx = room.order.attachments.findIndex((item) => item.id === attachment.id);
+    const existingIdx = room.order.attachments.findIndex(
+      (item) => item.id === attachment.id,
+    );
     if (existingIdx >= 0) {
       room.order.attachments[existingIdx] = attachment;
     } else {
       room.order.attachments.push(attachment);
       if (room.order.attachments.length > MAX_ATTACHMENTS) {
-        room.order.attachments.splice(0, room.order.attachments.length - MAX_ATTACHMENTS);
+        room.order.attachments.splice(
+          0,
+          room.order.attachments.length - MAX_ATTACHMENTS,
+        );
       }
     }
     room.order.lastEventAt = now;
@@ -734,7 +807,13 @@ function getSingleton(): ExpressP2PStore {
 }
 
 export const expressP2PStore = getSingleton();
-export type { OrderRole, OrderPhase, OrderAttachment, ChatMessage, OrderSnapshot };
+export type {
+  OrderRole,
+  OrderPhase,
+  OrderAttachment,
+  ChatMessage,
+  OrderSnapshot,
+};
 export type {
   CreateOrderInput,
   CreateOrderResult,

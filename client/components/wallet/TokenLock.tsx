@@ -33,6 +33,7 @@ import type { TokenInfo } from "@/lib/wallet";
 import {
   Keypair,
   PublicKey,
+  SystemProgram,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
@@ -163,7 +164,7 @@ const ixCreateAtaIdempotent = (
       { pubkey: ata, isSigner: false, isWritable: true },
       { pubkey: owner, isSigner: false, isWritable: false },
       { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: PublicKey.default, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data: Buffer.from(data),

@@ -10,7 +10,8 @@ export function useDurableRoom(roomId: string, httpBase: string = "") {
   const [events, setEvents] = useState<EventMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const wsUrl = useMemo(() => {
-    const base = httpBase || (typeof window !== "undefined" ? window.location.origin : "");
+    const base =
+      httpBase || (typeof window !== "undefined" ? window.location.origin : "");
     const wsb = base.replace(/^http/, "ws");
     return `${wsb}/ws/${encodeURIComponent(roomId)}`;
   }, [roomId, httpBase]);

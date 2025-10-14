@@ -47,9 +47,15 @@ export class DurableRoom implements DurableObject {
 
       server.addEventListener("message", async (evt) => {
         try {
-          const msg = JSON.parse(typeof evt.data === "string" ? evt.data : String(evt.data));
+          const msg = JSON.parse(
+            typeof evt.data === "string" ? evt.data : String(evt.data),
+          );
           if (msg?.type === "chat") {
-            await this.broadcast("chat", { id: cid, text: String(msg.text || ""), at: Date.now() });
+            await this.broadcast("chat", {
+              id: cid,
+              text: String(msg.text || ""),
+              at: Date.now(),
+            });
           } else if (msg?.type === "ping") {
             server.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
           }
@@ -74,7 +80,8 @@ export class DurableRoom implements DurableObject {
 
     if (url.pathname.endsWith("/orders") && request.method === "POST") {
       const body = await request.json<Order>().catch(() => null);
-      if (!body) return Response.json({ error: "Invalid JSON" }, { status: 400 });
+      if (!body)
+        return Response.json({ error: "Invalid JSON" }, { status: 400 });
       const orders = (await this.state.storage.get<Order[]>("orders")) || [];
       const order: Order = {
         id: crypto.randomUUID(),

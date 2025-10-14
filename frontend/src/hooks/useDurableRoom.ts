@@ -10,8 +10,12 @@ export function useDurableRoom(roomId: string, baseUrl: string = "") {
   const [events, setEvents] = useState<EventMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const wsUrl = useMemo(() => {
-    const loc = typeof window !== "undefined" ? window.location : { protocol: "https:", host: "" } as any;
-    const base = baseUrl || `${loc.protocol === "https:" ? "wss" : "ws"}://${loc.host}`;
+    const loc =
+      typeof window !== "undefined"
+        ? window.location
+        : ({ protocol: "https:", host: "" } as any);
+    const base =
+      baseUrl || `${loc.protocol === "https:" ? "wss" : "ws"}://${loc.host}`;
     return `${base}/ws/${encodeURIComponent(roomId)}`;
   }, [roomId, baseUrl]);
 

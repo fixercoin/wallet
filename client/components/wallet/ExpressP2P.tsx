@@ -119,7 +119,8 @@ interface ExpressP2PProps {
 }
 
 export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
-  const bannerUrl = "https://cdn.builder.io/api/v1/image/assets%2Fb5a8e7e2eb7e43a19f3227053e3cfaeb%2Ff096d75efa5346eca92c8e28c02f3406?format=webp&width=800";
+  const bannerUrl =
+    "https://cdn.builder.io/api/v1/image/assets%2Fb5a8e7e2eb7e43a19f3227053e3cfaeb%2Ff096d75efa5346eca92c8e28c02f3406?format=webp&width=800";
   const { toast } = useToast();
   const [side, setSide] = useState<TradeSide>("buy");
   const [pkAmount, setPkAmount] = useState("25000");
@@ -132,7 +133,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
     "Confirm receipt within chat before releasing escrow on either side.",
   );
   const [adminToken, setAdminToken] = useState("");
-  const P2P_BASE = (import.meta as any).env?.VITE_P2P_URL ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "") : "";
+  const P2P_BASE = (import.meta as any).env?.VITE_P2P_URL
+    ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "")
+    : "";
   const { events } = useDurableRoom("global", P2P_BASE);
 
   useEffect(() => {
@@ -286,8 +289,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <CardHeader className="pb-2">
               <Tabs value={side} onValueChange={(v) => setSide(v as TradeSide)}>
                 <TabsList className="grid grid-cols-2 rounded-xl bg-gray-100 p-1">
-                  <TabsTrigger value="buy" className="rounded-lg text-base">Buy</TabsTrigger>
-                  <TabsTrigger value="sell" className="rounded-lg text-base">Sell</TabsTrigger>
+                  <TabsTrigger value="buy" className="rounded-lg text-base">
+                    Buy
+                  </TabsTrigger>
+                  <TabsTrigger value="sell" className="rounded-lg text-base">
+                    Sell
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </CardHeader>
@@ -297,7 +304,9 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="rounded-xl border bg-white px-4 py-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>PKR amount</span>
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium">PKR</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium">
+                      PKR
+                    </span>
                   </div>
                   <Input
                     type="number"
@@ -314,16 +323,25 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 <div className="rounded-xl border bg-white px-4 py-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>USDT amount (before fees)</span>
-                    <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">USDT</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                      USDT
+                    </span>
                   </div>
-                  <div className="mt-2 text-3xl font-semibold tracking-tight">{usdcFormatter.format(usdcValue)}</div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight">
+                    {usdcFormatter.format(usdcValue)}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">1 USDT ≈ {rateFormatter.format(rate)}</p>
+                <p className="text-xs text-muted-foreground">
+                  1 USDT ≈ {rateFormatter.format(rate)}
+                </p>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Payment Methods</Label>
-                <Select value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}>
+                <Select
+                  value={selectedMethod}
+                  onValueChange={(v) => setSelectedMethod(v as PaymentMethodId)}
+                >
                   <SelectTrigger className="rounded-lg border bg-white">
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
@@ -333,7 +351,10 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 </Select>
               </div>
 
-              <Button onClick={handleRequest} className="h-11 w-full rounded-lg bg-yellow-500 font-semibold text-white hover:bg-yellow-600">
+              <Button
+                onClick={handleRequest}
+                className="h-11 w-full rounded-lg bg-yellow-500 font-semibold text-white hover:bg-yellow-600"
+              >
                 {primaryText}
               </Button>
             </CardContent>
@@ -433,7 +454,11 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
 
         <Card className="border border-[hsl(var(--border))] bg-white/90 shadow-lg backdrop-blur overflow-hidden">
           <div className="h-28 w-full overflow-hidden bg-gray-50">
-            <img src={bannerUrl} alt="P2P banner" className="h-full w-full object-cover" />
+            <img
+              src={bannerUrl}
+              alt="P2P banner"
+              className="h-full w-full object-cover"
+            />
           </div>
           <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -548,7 +573,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   </div>
                 </div>
 
-                <button onClick={handleRequest} className="w-full h-12 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md transition-colors">Buy With PKR</button>
+                <button
+                  onClick={handleRequest}
+                  className="w-full h-12 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md transition-colors"
+                >
+                  Buy With PKR
+                </button>
               </TabsContent>
 
               <TabsContent value="sell" className="mt-6 space-y-5">
@@ -637,7 +667,12 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                   </div>
                 </div>
 
-                <button onClick={handleRequest} className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md transition-colors">Sell For PKR</button>
+                <button
+                  onClick={handleRequest}
+                  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md transition-colors"
+                >
+                  Sell For PKR
+                </button>
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -660,9 +695,13 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
                 Trade overview
               </p>
               {P2P_BASE ? (
-                <p className="text-[10px] text-muted-foreground">Connected to {P2P_BASE}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Connected to {P2P_BASE}
+                </p>
               ) : (
-                <p className="text-[10px] text-red-600">Set VITE_P2P_URL to enable backend</p>
+                <p className="text-[10px] text-red-600">
+                  Set VITE_P2P_URL to enable backend
+                </p>
               )}
               <input
                 type="password"
@@ -752,8 +791,7 @@ export const ExpressP2P: React.FC<ExpressP2PProps> = ({ onBack }) => {
             <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-[hsl(var(--border))] bg-slate-50/70 p-4">
               {P2P_BASE && (
                 <div className="text-[10px] text-muted-foreground">
-                  Live events: {" "}
-                  <code>{JSON.stringify(events.slice(-5))}</code>
+                  Live events: <code>{JSON.stringify(events.slice(-5))}</code>
                 </div>
               )}
               {chat.map((message) => (

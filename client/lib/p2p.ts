@@ -1,4 +1,6 @@
-export const API_BASE = (import.meta as any).env?.VITE_P2P_URL ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "") : "";
+export const API_BASE = (import.meta as any).env?.VITE_P2P_URL
+  ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "")
+  : "";
 
 export async function listOrders(roomId: string = "global") {
   const base = API_BASE;
@@ -8,15 +10,18 @@ export async function listOrders(roomId: string = "global") {
   return res.json() as Promise<{ orders: any[] }>;
 }
 
-export async function createOrder(input: {
-  side: "buy" | "sell";
-  amountPKR: number;
-  quoteAsset: string;
-  pricePKRPerQuote: number;
-  paymentMethod: string; // only easypaisa allowed by server
-  roomId?: string;
-  createdBy?: string;
-}, adminToken: string) {
+export async function createOrder(
+  input: {
+    side: "buy" | "sell";
+    amountPKR: number;
+    quoteAsset: string;
+    pricePKRPerQuote: number;
+    paymentMethod: string; // only easypaisa allowed by server
+    roomId?: string;
+    createdBy?: string;
+  },
+  adminToken: string,
+) {
   const base = API_BASE;
   const res = await fetch(`${base}/api/orders`, {
     method: "POST",

@@ -13,7 +13,11 @@ function getRoomStub(env: Env, roomId: string) {
 }
 
 export default {
-  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(
+    req: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     const url = new URL(req.url);
     const { pathname, searchParams } = url;
 
@@ -38,7 +42,9 @@ export default {
     if (req.method === "GET" && wsMatch) {
       const roomId = decodeURIComponent(wsMatch[1]);
       const stub = getRoomStub(env, roomId);
-      return stub.fetch(new Request(`https://do/ws?${searchParams.toString()}`, req));
+      return stub.fetch(
+        new Request(`https://do/ws?${searchParams.toString()}`, req),
+      );
     }
 
     // Orders collection (admin create, anyone list)
@@ -51,13 +57,26 @@ export default {
       if (req.method === "POST") {
         await requireAdmin(req, env);
         const body = await parseJSON(req);
-        if (!body || typeof body !== "object") return json({ error: "Invalid body" }, { status: 400 });
-        if (String(body.paymentMethod).toLowerCase() !== String(env.ALLOWED_PAYMENT || "easypaisa")) {
-          return json({ error: `Only ${env.ALLOWED_PAYMENT || "easypaisa"} is allowed` }, { status: 400 });
+        if (!body || typeof body !== "object")
+          return json({ error: "Invalid body" }, { status: 400 });
+        if (
+          String(body.paymentMethod).toLowerCase() !==
+          String(env.ALLOWED_PAYMENT || "easypaisa")
+        ) {
+          return json(
+            { error: `Only ${env.ALLOWED_PAYMENT || "easypaisa"} is allowed` },
+            { status: 400 },
+          );
         }
         const roomId = String(body.roomId || "global");
         const stub = getRoomStub(env, roomId);
-        return stub.fetch(new Request("https://do/orders", { method: "POST", headers: req.headers, body: JSON.stringify(body) }));
+        return stub.fetch(
+          new Request("https://do/orders", {
+            method: "POST",
+            headers: req.headers,
+            body: JSON.stringify(body),
+          }),
+        );
       }
       return json({ error: "Method not allowed" }, { status: 405 });
     }

@@ -20,13 +20,6 @@ import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
-import ExpressAddPost from "./pages/ExpressAddPost";
-import ExpressPostView from "./pages/ExpressPostView";
-import ExpressStartTrade from "./pages/ExpressStartTrade";
-import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
-import ExpressP2P from "./components/wallet/ExpressP2P";
-import ExpressOrderComplete from "./pages/ExpressOrderComplete";
-import ExpressPendingOrders from "./pages/ExpressPendingOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -102,25 +95,6 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/fixorium/add" element={<FixoriumAdd />} />
               <Route path="/fixorium/create-token" element={<CreateToken />} />
-              <Route path="/express/add-post" element={<ExpressAddPost />} />
-              <Route path="/express" element={<ExpressP2P />} />
-              <Route
-                path="/express/pending"
-                element={<ExpressPendingOrders />}
-              />
-              <Route
-                path="/express/start-trade"
-                element={<ExpressStartTrade />}
-              />
-              <Route
-                path="/express/order-complete"
-                element={<ExpressOrderComplete />}
-              />
-              <Route path="/express/post" element={<ExpressPostView />} />
-              <Route
-                path="/express/post-order-detail"
-                element={<ExpressPostOrderDetail />}
-              />
               <Route
                 path="/fixorium/token-listing"
                 element={<TokenListing />}

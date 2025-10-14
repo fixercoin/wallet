@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -166,8 +167,6 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
     });
   };
 
-  const headerPlaceholder = useMemo(() => <div className="h-9 w-9" />, []);
-
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
@@ -252,7 +251,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               </DialogContent>
             </Dialog>
           ) : (
-            headerPlaceholder
+            <div className="h-9 w-9" aria-hidden="true" />
           )}
         </div>
       </div>

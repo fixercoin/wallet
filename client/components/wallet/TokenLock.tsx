@@ -44,7 +44,7 @@ interface TokenLockProps {
   onBack: () => void;
 }
 
-type LockStatus = "locked" | "withdrawing" | "withdrawn" | "failed";
+type LockStatus = "locked" | "withdrawing" | "withdrawn";
 
 interface TokenLockRecord {
   id: string;
@@ -834,7 +834,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                             ? "default"
                             : lock.status === "withdrawing"
                             ? "outline"
-                            : lock.status === "failed"
+                            : lock.error
                             ? "destructive"
                             : "secondary"
                         }
@@ -843,8 +843,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           ? "Withdrawing"
                           : lock.status === "withdrawn"
                           ? "Withdrawn"
-                          : lock.status === "failed"
-                          ? "Failed"
+                          : lock.error
+                          ? "Action needed"
                           : "Locked"}
                       </Badge>
                     </div>

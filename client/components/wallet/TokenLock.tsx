@@ -702,89 +702,87 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </span>
           </div>
           <div className="space-y-4">
-              <div>
-                <Label className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Select token
-                </Label>
-                <Select
-                  value={selectedMint}
-                  onValueChange={(value) => setSelectedMint(value)}
-                  disabled={isFormDisabled}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Choose token" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableTokens.map((token) => (
-                      <SelectItem key={token.mint} value={token.mint}>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm">
-                            {token.symbol ||
-                              token.name ||
-                              token.mint.slice(0, 6)}
-                          </span>
-                          <span className="text-[10px] text-gray-500 uppercase">
-                            Balance: {(token.balance || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Amount to lock
-                </Label>
-                <Input
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  placeholder="0.0"
-                  disabled={isFormDisabled}
-                  className="mt-1"
-                />
-                {selectedToken ? (
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
-                    {selectedToken.symbol}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-medium text-[hsl(var(--foreground))]">
-                    Auto-withdraw
-                  </div>
-                  <p className="text-[10px] text-gray-500">
-                    Release tokens automatically after the lock ends.
-                  </p>
-                </div>
-                <Switch
-                  checked={autoWithdraw}
-                  onCheckedChange={setAutoWithdraw}
-                  disabled={isFormDisabled}
-                />
-              </div>
-
-              <Button
-                className="w-full h-11 dash-btn font-semibold border-0"
-                onClick={handleSubmit}
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Select token
+              </Label>
+              <Select
+                value={selectedMint}
+                onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Locking tokens...
-                  </>
-                ) : (
-                  <>
-                    <LockIcon className="h-4 w-4 mr-2" />
-                    Lock tokens
-                  </>
-                )}
-              </Button>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose token" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTokens.map((token) => (
+                    <SelectItem key={token.mint} value={token.mint}>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">
+                          {token.symbol || token.name || token.mint.slice(0, 6)}
+                        </span>
+                        <span className="text-[10px] text-gray-500 uppercase">
+                          Balance: {(token.balance || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Amount to lock
+              </Label>
+              <Input
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder="0.0"
+                disabled={isFormDisabled}
+                className="mt-1"
+              />
+              {selectedToken ? (
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
+                  {selectedToken.symbol}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-medium text-[hsl(var(--foreground))]">
+                  Auto-withdraw
+                </div>
+                <p className="text-[10px] text-gray-500">
+                  Release tokens automatically after the lock ends.
+                </p>
+              </div>
+              <Switch
+                checked={autoWithdraw}
+                onCheckedChange={setAutoWithdraw}
+                disabled={isFormDisabled}
+              />
+            </div>
+
+            <Button
+              className="w-full h-11 dash-btn font-semibold border-0"
+              onClick={handleSubmit}
+              disabled={isFormDisabled}
+            >
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Locking tokens...
+                </>
+              ) : (
+                <>
+                  <LockIcon className="h-4 w-4 mr-2" />
+                  Lock tokens
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -797,7 +795,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               </span>
             </div>
             <Badge variant="secondary" className="text-[10px]">
-              {locks.filter((lock) => lock.status !== "withdrawn").length} active
+              {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
+              active
             </Badge>
           </div>
 
@@ -874,7 +873,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           onCheckedChange={(value) =>
                             updateLockAutoWithdraw(lock.id, value)
                           }
-                          disabled={isWithdrawn || lock.status === "withdrawing"}
+                          disabled={
+                            isWithdrawn || lock.status === "withdrawing"
+                          }
                         />
                         <div>
                           <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">

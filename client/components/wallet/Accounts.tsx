@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Copy, Plus } from "lucide-react";
+import { ArrowLeft, Copy, Plus, Edit2, Save, X } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 

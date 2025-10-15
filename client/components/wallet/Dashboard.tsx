@@ -52,6 +52,8 @@ interface DashboardProps {
   onBurn: () => void;
 }
 
+import { useNavigate } from "react-router-dom";
+
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
   onReceive,

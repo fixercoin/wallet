@@ -351,9 +351,18 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 </div>
                 <Button
                   className="w-full wallet-button-secondary"
-                  onClick={() => navigate("/")}
+                  onClick={() => {
+                    const sell =
+                      orders.find((o) => String(o.side || o.type).toLowerCase() === "sell") ||
+                      selectedOrder;
+                    if (sell) {
+                      navigate("/express/buy-trade", { state: { order: sell } });
+                    } else {
+                      setOrdersDialogOpen(true);
+                    }
+                  }}
                 >
-                  Create sell offer
+                  Continue
                 </Button>
               </div>
             )}

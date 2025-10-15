@@ -637,7 +637,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         amountRaw: amountRaw.toString(),
         decimals: selectedToken.decimals ?? 0,
         createdAt: new Date().toISOString(),
-        unlockAt: new Date(Date.now() + LOCK_DURATION_MS).toISOString(),
+        unlockAt: new Date(Date.now() + durationMs).toISOString(),
         autoWithdraw,
         escrowPublicKey: escrowKeypair.publicKey.toBase58(),
         escrowSecretKey: base64FromBytes(escrowKeypair.secretKey),

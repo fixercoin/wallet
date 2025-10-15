@@ -757,6 +757,26 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               ) : null}
             </div>
 
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">Lock duration</Label>
+              <Select
+                value={selectedLockOption}
+                onValueChange={(val) => setSelectedLockOption(val)}
+                disabled={isFormDisabled}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOCK_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-[hsl(var(--foreground))]">

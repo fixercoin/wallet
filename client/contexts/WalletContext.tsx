@@ -256,7 +256,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const updateWalletLabel = (publicKey: string, label: string) => {
-    setWallets((prev) => prev.map((w) => (w.publicKey === publicKey ? { ...w, label } : w)));
+    setWallets((prev) =>
+      prev.map((w) => (w.publicKey === publicKey ? { ...w, label } : w)),
+    );
   };
 
   const refreshBalance = async () => {

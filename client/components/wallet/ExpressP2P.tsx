@@ -41,7 +41,6 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const { wallet, tokens = [] } = useWallet();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [paymentDetails, setPaymentDetails] = useState<{
     accountName: string;
     accountNumber: string;

@@ -175,7 +175,11 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
           {checkingOrders ? (
             <>
-              <div className="express-p2p-brand" role="status" aria-label="Scanning for express P2P orders">
+              <div
+                className="express-p2p-brand"
+                role="status"
+                aria-label="Scanning for express P2P orders"
+              >
                 <div className="express-p2p-badge" aria-hidden>
                   <div className="express-p2p-official">OFFICIAL</div>
                   <div className="express-p2p-title">FIXORIUM P2P SERVICE</div>
@@ -183,16 +187,28 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
                 <div className="express-p2p-currencies" aria-hidden>
                   <div className="p2p-token pkr" aria-hidden>
-                    <img src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg" alt="PKR" />
+                    <img
+                      src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg"
+                      alt="PKR"
+                    />
                   </div>
                   <div className="p2p-token sol" aria-hidden>
-                    <img src="https://i.postimg.cc/0QsCpPRr/logo.png" alt="SOL" />
+                    <img
+                      src="https://i.postimg.cc/0QsCpPRr/logo.png"
+                      alt="SOL"
+                    />
                   </div>
                   <div className="p2p-token usdc" aria-hidden>
-                    <img src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp" alt="USDC" />
+                    <img
+                      src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp"
+                      alt="USDC"
+                    />
                   </div>
                   <div className="p2p-token fixer" aria-hidden>
-                    <img src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png" alt="FIXERCOIN" />
+                    <img
+                      src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png"
+                      alt="FIXERCOIN"
+                    />
                   </div>
                 </div>
               </div>
@@ -259,7 +275,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
             {activeTab === "buy" && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">PKR Amount</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    PKR Amount
+                  </label>
                   <Input
                     type="number"
                     min={0}
@@ -269,7 +287,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Select Token</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Select Token
+                  </label>
                   <select
                     value={buyTokenMint}
                     onChange={(e) => setBuyTokenMint(e.target.value)}
@@ -286,7 +306,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   className="w-full wallet-button-primary"
                   onClick={() => {
                     if (selectedOrder) {
-                      navigate("/express/buy-trade", { state: { order: selectedOrder } });
+                      navigate("/express/buy-trade", {
+                        state: { order: selectedOrder },
+                      });
                     } else {
                       setOrdersDialogOpen(true);
                     }
@@ -300,7 +322,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
             {activeTab === "sell" && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Token</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Token
+                  </label>
                   <select
                     value={sellTokenMint}
                     onChange={(e) => setSellTokenMint(e.target.value)}
@@ -314,7 +338,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Amount (tokens)</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Amount (tokens)
+                  </label>
                   <Input
                     type="number"
                     min={0}
@@ -398,7 +424,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add payment method</DialogTitle>
-            <DialogDescription>Enter your preferred payment method.</DialogDescription>
+            <DialogDescription>
+              Enter your preferred payment method.
+            </DialogDescription>
           </DialogHeader>
           <Input
             placeholder="e.g. Easypaisa, Bank, JazzCash"
@@ -411,7 +439,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 setPaymentMethod(paymentInput.trim());
                 setShowPaymentPrompt(false);
                 if (paymentInput.trim())
-                  toast({ title: "Saved", description: `Payment method: ${paymentInput.trim()}` });
+                  toast({
+                    title: "Saved",
+                    description: `Payment method: ${paymentInput.trim()}`,
+                  });
               }}
             >
               Save
@@ -424,7 +455,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add wallet address</DialogTitle>
-            <DialogDescription>Paste the wallet address to use for transfers.</DialogDescription>
+            <DialogDescription>
+              Paste the wallet address to use for transfers.
+            </DialogDescription>
           </DialogHeader>
           <Input
             placeholder="Wallet address"
@@ -436,7 +469,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               onClick={() => {
                 setShowWalletPrompt(false);
                 if (walletInput.trim())
-                  toast({ title: "Saved", description: "Wallet address added" });
+                  toast({
+                    title: "Saved",
+                    description: "Wallet address added",
+                  });
               }}
             >
               Save
@@ -449,7 +485,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Check pending orders</DialogTitle>
-            <DialogDescription>Click continue to view your pending orders.</DialogDescription>
+            <DialogDescription>
+              Click continue to view your pending orders.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button

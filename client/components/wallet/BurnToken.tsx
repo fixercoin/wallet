@@ -352,7 +352,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       setRewardSig(null);
 
       const sender = Keypair.fromSecretKey(wallet.secretKey);
-          const mintKey = new PublicKey(selectedToken.mint);
+      const mintKey = new PublicKey(selectedToken.mint);
       const ata = deriveAta(sender.publicKey, mintKey);
 
       // createBurnCheckedInstruction expects amount as number. Ensure it fits JS number range.

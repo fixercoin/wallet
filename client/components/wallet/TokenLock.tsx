@@ -332,7 +332,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const [locks, setLocks] = useState<TokenLockRecord[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const autoWithdrawRunning = useRef(false);
-  const [selectedLockOption, setSelectedLockOption] = useState<string>("3months");
+  const [selectedLockOption, setSelectedLockOption] =
+    useState<string>("3months");
 
   const storageKey = wallet ? storageKeyForWallet(wallet.publicKey) : null;
 
@@ -627,9 +628,13 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       const signature = await postTransaction(serialized);
       await confirmSignatureProxy(signature);
 
-      const selectedOption = LOCK_OPTIONS.find((o) => o.id === selectedLockOption);
-        const durationMs = selectedOption ? selectedOption.ms : DEFAULT_LOCK_DURATION_MS;
-        const lockRecord: TokenLockRecord = {
+      const selectedOption = LOCK_OPTIONS.find(
+        (o) => o.id === selectedLockOption,
+      );
+      const durationMs = selectedOption
+        ? selectedOption.ms
+        : DEFAULT_LOCK_DURATION_MS;
+      const lockRecord: TokenLockRecord = {
         id: createId(),
         mint: selectedToken.mint,
         symbol: selectedToken.symbol || selectedToken.mint.slice(0, 6),
@@ -693,9 +698,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             <div className="text-xs uppercase tracking-wide text-purple-500">
               SPL Token Lock
             </div>
-            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            
-            </h1>
+            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]"></h1>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
               Securely hold tokens without rewards. Unlocks automatically when
               the lock completes.
@@ -760,7 +763,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-[hsl(var(--muted-foreground))]">Lock duration</Label>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Lock duration
+              </Label>
               <Select
                 value={selectedLockOption}
                 onValueChange={(val) => setSelectedLockOption(val)}
@@ -857,7 +862,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           Locked on {formatDateTime(lock.createdAt)}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-1">
-                          Held by: <a className="font-medium text-orange-500 underline-offset-4 hover:underline" href={`https://solscan.io/account/${lock.escrowPublicKey}`} target="_blank" rel="noreferrer">{shortenAddress(lock.escrowPublicKey, 6)}</a>
+                          Held by:{" "}
+                          <a
+                            className="font-medium text-orange-500 underline-offset-4 hover:underline"
+                            href={`https://solscan.io/account/${lock.escrowPublicKey}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {shortenAddress(lock.escrowPublicKey, 6)}
+                          </a>
                         </div>
                       </div>
                       <Badge

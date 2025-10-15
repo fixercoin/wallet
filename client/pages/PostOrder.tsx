@@ -261,23 +261,35 @@ export default function PostOrder() {
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Minimum (PKR)</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Minimum (PKR)
+                  </label>
                   <input
                     type="number"
                     min={0}
                     value={buyMinPKR}
-                    onChange={(e) => setBuyMinPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={(e) =>
+                      setBuyMinPKR(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
                     className="w-full border rounded-xl px-3 py-2 bg-white"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Maximum (PKR)</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Maximum (PKR)
+                  </label>
                   <input
                     type="number"
                     min={0}
                     value={buyMaxPKR}
-                    onChange={(e) => setBuyMaxPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={(e) =>
+                      setBuyMaxPKR(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
                     className="w-full border rounded-xl px-3 py-2 bg-white"
                     placeholder="0"
                   />
@@ -285,7 +297,9 @@ export default function PostOrder() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Select Token</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Select Token
+                </label>
                 <select
                   value={buyToken}
                   onChange={(e) => setBuyToken(e.target.value)}
@@ -298,12 +312,18 @@ export default function PostOrder() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Price per token (PKR)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Price per token (PKR)
+                </label>
                 <input
                   type="number"
                   min={0}
                   value={buyPrice}
-                  onChange={(e) => setBuyPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setBuyPrice(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
@@ -311,7 +331,9 @@ export default function PostOrder() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Account name</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account name
+                  </label>
                   <input
                     value={buyAccountName}
                     onChange={(e) => setBuyAccountName(e.target.value)}
@@ -320,7 +342,9 @@ export default function PostOrder() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Account number</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account number
+                  </label>
                   <input
                     value={buyAccountNumber}
                     onChange={(e) => setBuyAccountNumber(e.target.value)}
@@ -331,8 +355,14 @@ export default function PostOrder() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Payment channel</label>
-                <input disabled className="w-full border rounded-xl px-3 py-2 bg-gray-50" value={buyPaymentChannel} />
+                <label className="block text-xs text-gray-500 mb-1">
+                  Payment channel
+                </label>
+                <input
+                  disabled
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-50"
+                  value={buyPaymentChannel}
+                />
               </div>
             </>
           ) : (
@@ -406,7 +436,9 @@ export default function PostOrder() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Account name</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account name
+                  </label>
                   <input
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
@@ -415,7 +447,9 @@ export default function PostOrder() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Account number</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account number
+                  </label>
                   <input
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
@@ -426,7 +460,9 @@ export default function PostOrder() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Wallet address</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Wallet address
+                </label>
                 <input
                   value={sellWalletAddress}
                   onChange={(e) => setSellWalletAddress(e.target.value)}
@@ -436,7 +472,9 @@ export default function PostOrder() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Network / details</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Network / details
+                </label>
                 <input
                   value={sellNetwork}
                   onChange={(e) => setSellNetwork(e.target.value)}
@@ -446,7 +484,9 @@ export default function PostOrder() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Payment method</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Payment method
+                </label>
                 <input
                   disabled
                   className="w-full border rounded-xl px-3 py-2 bg-gray-50"

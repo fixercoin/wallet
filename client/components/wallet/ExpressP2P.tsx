@@ -50,7 +50,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   // Pricing state
   const [usdToPkr, setUsdToPkr] = useState<number | null>(null);
   const [buyTokenPriceUsd, setBuyTokenPriceUsd] = useState<number | null>(null);
-  const [sellTokenPriceUsd, setSellTokenPriceUsd] = useState<number | null>(null);
+  const [sellTokenPriceUsd, setSellTokenPriceUsd] = useState<number | null>(
+    null,
+  );
 
   const navigate = useNavigate();
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
@@ -140,7 +142,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         const cached = localStorage.getItem("usd_to_pkr");
         if (cached) {
           const { rate, ts } = JSON.parse(cached);
-          if (typeof rate === "number" && Date.now() - ts < 6 * 60 * 60 * 1000) {
+          if (
+            typeof rate === "number" &&
+            Date.now() - ts < 6 * 60 * 60 * 1000
+          ) {
             if (!cancelled) setUsdToPkr(rate);
           }
         }
@@ -182,7 +187,8 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
       }
       try {
         const dex = await dexscreenerAPI.getTokenByMint(mint);
-        if (!cancelled) setBuyTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
+        if (!cancelled)
+          setBuyTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
       } catch {
         if (!cancelled) setBuyTokenPriceUsd(null);
       }
@@ -207,7 +213,8 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
       }
       try {
         const dex = await dexscreenerAPI.getTokenByMint(mint);
-        if (!cancelled) setSellTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
+        if (!cancelled)
+          setSellTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
       } catch {
         if (!cancelled) setSellTokenPriceUsd(null);
       }
@@ -430,8 +437,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       {buyEstimate.toLocaleString(undefined, {
-                        maximumFractionDigits: buyTokenMint === "FIXERCOIN" ? 8 : 6,
-                      })} {buyTokenMint}
+                        maximumFractionDigits:
+                          buyTokenMint === "FIXERCOIN" ? 8 : 6,
+                      })}{" "}
+                      {buyTokenMint}
                     </div>
                   </div>
                 ) : null}
@@ -485,7 +494,12 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 {sellEstimatePKR !== null ? (
                   <div className="p-3 rounded-lg border bg-white/90">
                     <div className="text-xs text-gray-500">Estimate</div>
-                    <div className="font-semibold mt-1">PKR {sellEstimatePKR.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                    <div className="font-semibold mt-1">
+                      PKR{" "}
+                      {sellEstimatePKR.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
                   </div>
                 ) : null}
                 <Button

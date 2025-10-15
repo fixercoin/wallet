@@ -70,7 +70,13 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
-const LOCK_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
+const DEFAULT_LOCK_DURATION_MS = 90 * 24 * 60 * 60 * 1000; // 3 months default
+const LOCK_OPTIONS: { label: string; ms: number; id: string }[] = [
+  { label: "10 minutes", ms: 10 * 60 * 1000, id: "10min" },
+  { label: "1 week", ms: 7 * 24 * 60 * 60 * 1000, id: "1week" },
+  { label: "1 month", ms: 30 * 24 * 60 * 60 * 1000, id: "1month" },
+  { label: "3 months", ms: 90 * 24 * 60 * 60 * 1000, id: "3months" },
+];
 
 const storageKeyForWallet = (walletPubkey: string) =>
   `spl_token_locks_${walletPubkey}`;

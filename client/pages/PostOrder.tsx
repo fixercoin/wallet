@@ -141,35 +141,53 @@ export default function PostOrder() {
         toast({ title: "Admin token required", variant: "destructive" });
         return;
       }
+
       if (mode === "buy") {
-        if (!buyAmountPKR || !buyPrice) return;
-        await createOrder(
-          {
-            side: "buy",
-            amountPKR: Number(buyAmountPKR),
-            quoteAsset: buyToken,
-            pricePKRPerQuote: Number(buyPrice),
-            paymentMethod: "easypaisa",
-            roomId: "global",
-          },
-          adminToken,
-        );
-      } else {
-        if (!sellMinTokenAmount || !sellMaxTokenAmount || !sellTokenPricePKR)
+        if (!buyMinPKR || !buyMaxPKR || !buyPrice) {
+          toast({ title: "Please complete buy form", variant: "destructive" });
           return;
+        }
+        // Use max PKR as total amount for server while storing min/max in metadata
+        const payload: any = {
+          side: "buy",
+          amountPKR: Number(buyMaxPKR),
+          quoteAsset: buyToken,
+          pricePKRPerQuote: Number(buyPrice),
+          paymentMethod: String(buyPaymentChannel || "easypaisa"),
+          roomId: "global",
+          meta: {
+            minPKR: Number(buyMinPKR),
+            maxPKR: Number(buyMaxPKR),
+          },
+          paymentDetails: {
+            accountName: String(buyAccountName || ""),
+            accountNumber: String(buyAccountNumber || ""),
+          },
+        };
+        await createOrder(payload, adminToken);
+      } else {
+        if (!sellMinTokenAmount || !sellMaxTokenAmount || !sellTokenPricePKR) {
+          toast({ title: "Please complete sell form", variant: "destructive" });
+          return;
+        }
         const maxPkr = Number(sellMaxTokenAmount) * Number(sellTokenPricePKR);
-        await createOrder(
-          {
-            side: "sell",
-            amountPKR: Number(maxPkr),
-            quoteAsset: sellToken,
-            pricePKRPerQuote: Number(sellTokenPricePKR),
-            paymentMethod: "easypaisa",
-            roomId: "global",
-          } as any,
-          adminToken,
-        );
+        const payload: any = {
+          side: "sell",
+          amountPKR: Number(maxPkr),
+          quoteAsset: sellToken,
+          pricePKRPerQuote: Number(sellTokenPricePKR),
+          paymentMethod: "easypaisa",
+          roomId: "global",
+          walletAddress: String(sellWalletAddress || ""),
+          network: String(sellNetwork || ""),
+          meta: {
+            minToken: Number(sellMinTokenAmount),
+            maxToken: Number(sellMaxTokenAmount),
+          },
+        };
+        await createOrder(payload as any, adminToken);
       }
+
       toast({ title: "Order saved" });
       navigate("/express/orderbook");
     } catch (e: any) {

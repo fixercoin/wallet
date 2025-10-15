@@ -91,7 +91,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
               aria-label="Back to dashboard"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -150,7 +150,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <span className="express-p2p-loader__dot" />
                 </div>
               </div>
-              <p className="text-base font-semibold text-center express-detecting-text">
+              <p className="text-base font-semibold text-center express-detecting-text text-[hsl(var(--foreground))]">
                 detecting orders
               </p>
             </>
@@ -159,7 +159,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               <button
                 type="button"
                 onClick={() => setOrdersDialogOpen(true)}
-                className="w-full rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center gap-3"
+                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center gap-3"
               >
                 <MessageSquare className="h-4 w-4 text-[hsl(var(--primary))]" />
                 <span className="text-sm font-medium">Detected orders</span>
@@ -175,7 +175,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     state: { order: detectedOrder },
                   })
                 }
-                className="w-full text-left rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center justify-between"
+                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center justify-between"
               >
                 <div>
                   <p className="text-sm text-gray-500">Buy order detected</p>
@@ -212,10 +212,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 type="button"
                 onClick={() => setSelectedOrder(o)}
                 className={
-                  "w-full text-left rounded-lg border p-3 bg-white " +
+                  "w-full text-left rounded-lg border border-white/50 p-3 bg-white/80 " +
                   (selectedOrder?.id === o.id
                     ? "ring-2 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]"
-                    : "hover:bg-gray-50")
+                    : "hover:bg-white/90")
                 }
               >
                 <div className="flex items-center justify-between">

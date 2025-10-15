@@ -41,7 +41,11 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const { wallet, tokens = [] } = useWallet();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [paymentDetails, setPaymentDetails] = useState<{
+    accountName: string;
+    accountNumber: string;
+    method: "easypaisa" | "bank_account";
+  } | null>(null);
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [buyTokenMint, setBuyTokenMint] = useState<string>("USDC");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
@@ -65,10 +69,22 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
   // Prompt dialogs
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
-  const [paymentInput, setPaymentInput] = useState("");
+  const [paymentAccountName, setPaymentAccountName] = useState("");
+  const [paymentAccountNumber, setPaymentAccountNumber] = useState("");
+  const [paymentMethodChoice, setPaymentMethodChoice] = useState<
+    "easypaisa" | "bank_account"
+  >("easypaisa");
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [walletInput, setWalletInput] = useState("");
   const [showPendingPrompt, setShowPendingPrompt] = useState(false);
+
+  useEffect(() => {
+    if (showPaymentPrompt) {
+      setPaymentAccountName(paymentDetails?.accountName ?? "");
+      setPaymentAccountNumber(paymentDetails?.accountNumber ?? "");
+      setPaymentMethodChoice(paymentDetails?.method ?? "easypaisa");
+    }
+  }, [showPaymentPrompt, paymentDetails]);
 
   useEffect(() => {
     let cancelled = false;
@@ -594,22 +610,71 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               Enter your preferred payment method.
             </DialogDescription>
           </DialogHeader>
-          <Input
-            placeholder="e.g. Easypaisa, Bank, JazzCash"
-            value={paymentInput}
-            onChange={(e) => setPaymentInput(e.target.value)}
-          />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="payment-account-name">Account name</Label>
+              <Input
+                id="payment-account-name"
+                placeholder="Account holder name"
+                value={paymentAccountName}
+                onChange={(e) => setPaymentAccountName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-account-number">Account number</Label>
+              <Input
+                id="payment-account-number"
+                placeholder="e.g. 03001234567"
+                value={paymentAccountNumber}
+                inputMode="numeric"
+                onChange={(e) => setPaymentAccountNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Payment method</Label>
+              <Select
+                value={paymentMethodChoice}
+                onValueChange={(value: "easypaisa" | "bank_account") =>
+                  setPaymentMethodChoice(value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easypaisa">Easypaisa</SelectItem>
+                  <SelectItem value="bank_account">Bank account</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <DialogFooter>
             <Button
               onClick={() => {
-                setPaymentMethod(paymentInput.trim());
+                const trimmedName = paymentAccountName.trim();
+                const trimmedNumber = paymentAccountNumber.trim();
+                if (!trimmedName || !trimmedNumber) {
+                  return;
+                }
+                const details = {
+                  accountName: trimmedName,
+                  accountNumber: trimmedNumber,
+                  method: paymentMethodChoice,
+                } as const;
+                setPaymentDetails(details);
                 setShowPaymentPrompt(false);
-                if (paymentInput.trim())
-                  toast({
-                    title: "Saved",
-                    description: `Payment method: ${paymentInput.trim()}`,
-                  });
+                toast({
+                  title: "Saved",
+                  description: `${
+                    paymentMethodChoice === "easypaisa"
+                      ? "Easypaisa"
+                      : "Bank account"
+                  } • ${trimmedName} (${trimmedNumber})`,
+                });
               }}
+              disabled={
+                !paymentAccountName.trim() || !paymentAccountNumber.trim()
+              }
             >
               Save
             </Button>

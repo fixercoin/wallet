@@ -4,6 +4,18 @@ import { copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, MessageSquare, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
@@ -21,8 +33,14 @@ type ExpressP2PProps = {
 };
 
 export function ExpressP2P({ onBack }: ExpressP2PProps) {
-  const { wallet } = useWallet();
+  const { wallet, tokens = [] } = useWallet();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+  const [paymentMethod, setPaymentMethod] = useState("bank");
+  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [buyTokenMint, setBuyTokenMint] = useState<string>("");
+  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [sellTokenMint, setSellTokenMint] = useState<string>("");
   const navigate = useNavigate();
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 

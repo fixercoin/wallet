@@ -627,7 +627,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       const signature = await postTransaction(serialized);
       await confirmSignatureProxy(signature);
 
-      const lockRecord: TokenLockRecord = {
+      const selectedOption = LOCK_OPTIONS.find((o) => o.id === selectedLockOption);
+        const durationMs = selectedOption ? selectedOption.ms : DEFAULT_LOCK_DURATION_MS;
+        const lockRecord: TokenLockRecord = {
         id: createId(),
         mint: selectedToken.mint,
         symbol: selectedToken.symbol || selectedToken.mint.slice(0, 6),

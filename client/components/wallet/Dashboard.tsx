@@ -22,6 +22,7 @@ import {
   Gift,
   Flame,
   Lock,
+  Coins,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";

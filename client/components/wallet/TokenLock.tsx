@@ -332,6 +332,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const [locks, setLocks] = useState<TokenLockRecord[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const autoWithdrawRunning = useRef(false);
+  const [selectedLockOption, setSelectedLockOption] = useState<string>("3months");
 
   const storageKey = wallet ? storageKeyForWallet(wallet.publicKey) : null;
 

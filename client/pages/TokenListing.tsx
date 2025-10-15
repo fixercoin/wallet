@@ -122,7 +122,9 @@ export default function TokenListing() {
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="wallet-card rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Token Listing</span>
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              Token Listing
+            </span>
           </div>
 
           <Alert>

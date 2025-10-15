@@ -15,7 +15,13 @@ import {
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
@@ -144,14 +150,28 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs">Payment Method</DropdownMenuLabel>
-                <DropdownMenuRadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <DropdownMenuRadioItem value="bank">Bank Transfer</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="easypaisa">Easypaisa</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="jazzcash">JazzCash</DropdownMenuRadioItem>
+                <DropdownMenuLabel className="text-xs">
+                  Payment Method
+                </DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                >
+                  <DropdownMenuRadioItem value="bank">
+                    Bank Transfer
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="easypaisa">
+                    Easypaisa
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="jazzcash">
+                    JazzCash
+                  </DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={handleCopyAddress} disabled={!wallet}>
+                <DropdownMenuItem
+                  onSelect={handleCopyAddress}
+                  disabled={!wallet}
+                >
                   Wallet Address
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setOrdersDialogOpen(true)}>

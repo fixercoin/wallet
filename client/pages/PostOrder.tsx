@@ -259,27 +259,33 @@ export default function PostOrder() {
 
           {mode === "buy" ? (
             <>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Amount (PKR)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={buyAmountPKR}
-                  onChange={(e) =>
-                    setBuyAmountPKR(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
-                  placeholder="0"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Minimum (PKR)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={buyMinPKR}
+                    onChange={(e) => setBuyMinPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Maximum (PKR)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={buyMaxPKR}
+                    onChange={(e) => setBuyMaxPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Token
-                </label>
+                <label className="block text-xs text-gray-500 mb-1">Select Token</label>
                 <select
                   value={buyToken}
                   onChange={(e) => setBuyToken(e.target.value)}
@@ -290,32 +296,43 @@ export default function PostOrder() {
                   <option value="FIXERCOIN">FIXERCOIN</option>
                 </select>
               </div>
+
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Token price (PKR)
-                </label>
+                <label className="block text-xs text-gray-500 mb-1">Price per token (PKR)</label>
                 <input
                   type="number"
                   min={0}
                   value={buyPrice}
-                  onChange={(e) =>
-                    setBuyPrice(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
+                  onChange={(e) => setBuyPrice(e.target.value === "" ? "" : Number(e.target.value))}
                   className="w-full border rounded-xl px-3 py-2 bg-white"
                   placeholder="0"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Account name</label>
+                  <input
+                    value={buyAccountName}
+                    onChange={(e) => setBuyAccountName(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="Name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Account number</label>
+                  <input
+                    value={buyAccountNumber}
+                    onChange={(e) => setBuyAccountNumber(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0000000000"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Payment method
-                </label>
-                <input
-                  disabled
-                  className="w-full border rounded-xl px-3 py-2 bg-gray-50"
-                  value="easypaisa"
-                />
+                <label className="block text-xs text-gray-500 mb-1">Payment channel</label>
+                <input disabled className="w-full border rounded-xl px-3 py-2 bg-gray-50" value={buyPaymentChannel} />
               </div>
             </>
           ) : (

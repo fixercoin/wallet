@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Copy, Plus } from "lucide-react";
+import { ArrowLeft, Copy, Plus, Edit2, Save, X } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { Input } from "@/components/ui/input";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 
 interface AccountsProps {
@@ -10,7 +11,9 @@ interface AccountsProps {
 }
 
 export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
-  const { wallet, wallets, selectWallet } = useWallet();
+  const { wallet, wallets, selectWallet, updateWalletLabel } = useWallet();
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [labelInput, setLabelInput] = useState<string>("");
 
   const handleCopy = async () => {
     if (!wallet) return;
@@ -66,27 +69,85 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             </div>
           </div>
 
-          {wallets.length > 1 && (
-            <div>
-              <div className="text-sm mb-2 text-[hsl(var(--foreground))] font-medium">
-                All Accounts
-              </div>
-              <div className="space-y-2">
-                {wallets.map((w) => (
+          <div>
+            <div className="text-sm mb-2 text-[hsl(var(--foreground))] font-medium">
+              All Accounts
+            </div>
+            <div className="space-y-2">
+              {wallets.map((w) => (
+                <div
+                  key={w.publicKey}
+                  className="w-full p-3 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-md flex items-center gap-2"
+                >
                   <button
-                    key={w.publicKey}
                     onClick={() => {
                       selectWallet(w.publicKey);
                       onBack();
                     }}
-                    className="w-full text-left p-3 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-md"
+                    className="text-left flex-1"
+                    title="Select this wallet"
                   >
-                    {shortenAddress(w.publicKey, 8)}
+                    <div className="font-medium">
+                      {w.label ? w.label : shortenAddress(w.publicKey, 8)}
+                    </div>
+                    {w.label ? (
+                      <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                        {shortenAddress(w.publicKey, 8)}
+                      </div>
+                    ) : null}
                   </button>
-                ))}
-              </div>
+
+                  {editingKey === w.publicKey ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={labelInput}
+                        onChange={(e) => setLabelInput(e.target.value)}
+                        placeholder="Enter name"
+                        className="h-8 w-36"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          updateWalletLabel(w.publicKey, labelInput.trim());
+                          setEditingKey(null);
+                          setLabelInput("");
+                        }}
+                        className="h-8 px-2"
+                        aria-label="Save"
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingKey(null);
+                          setLabelInput("");
+                        }}
+                        className="h-8 px-2"
+                        aria-label="Cancel"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingKey(w.publicKey);
+                        setLabelInput(w.label || "");
+                      }}
+                      className="h-8 px-2"
+                      aria-label="Edit name"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

@@ -35,6 +35,7 @@ interface WalletContextType {
   refreshTokens: () => Promise<void>;
   addCustomToken: (token: TokenInfo) => void;
   logout: () => void;
+  updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
 }
 
@@ -252,6 +253,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       setActivePublicKey(publicKey);
     }
+  };
+
+  const updateWalletLabel = (publicKey: string, label: string) => {
+    setWallets((prev) =>
+      prev.map((w) => (w.publicKey === publicKey ? { ...w, label } : w)),
+    );
   };
 
   const refreshBalance = async () => {
@@ -519,6 +526,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     refreshTokens,
     addCustomToken,
     logout,
+    updateWalletLabel,
     connection: globalConnection,
   };
 

@@ -130,7 +130,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate("/express/post-order")}
+                onClick={() => navigate("/")}
                 className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
                 aria-label="Add post"
               >
@@ -351,9 +351,22 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 </div>
                 <Button
                   className="w-full wallet-button-secondary"
-                  onClick={() => navigate("/express/post-order")}
+                  onClick={() => {
+                    const sell =
+                      orders.find(
+                        (o) =>
+                          String(o.side || o.type).toLowerCase() === "sell",
+                      ) || selectedOrder;
+                    if (sell) {
+                      navigate("/express/buy-trade", {
+                        state: { order: sell },
+                      });
+                    } else {
+                      setOrdersDialogOpen(true);
+                    }
+                  }}
                 >
-                  Create sell offer
+                  Continue
                 </Button>
               </div>
             )}

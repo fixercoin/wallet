@@ -44,6 +44,7 @@ export interface WalletData {
   publicKey: string;
   secretKey: Uint8Array;
   mnemonic?: string;
+  label?: string;
 }
 
 export interface TokenInfo {

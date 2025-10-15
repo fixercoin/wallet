@@ -21,8 +21,6 @@ import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
 import NotFound from "./pages/NotFound";
-import PostOrder from "./pages/PostOrder";
-import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
 
@@ -43,11 +41,6 @@ const App = () => (
               <Route
                 path="/fixorium/token-listing"
                 element={<TokenListing />}
-              />
-              <Route path="/express/post-order" element={<PostOrder />} />
-              <Route
-                path="/express/post-order/detail"
-                element={<ExpressPostOrderDetail />}
               />
               <Route path="/express/orderbook" element={<OrderBook />} />
               <Route path="/express/buy-trade" element={<BuyTrade />} />

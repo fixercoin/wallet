@@ -22,6 +22,7 @@ import {
   Gift,
   Flame,
   Lock,
+  Coins,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -51,6 +52,8 @@ interface DashboardProps {
   onBurn: () => void;
 }
 
+import { useNavigate } from "react-router-dom";
+
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
   onReceive,
@@ -77,6 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
+  const navigate = useNavigate();
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -327,6 +331,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 >
                   <Lock className="h-4 w-4" />
                   <span>LOCKING</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => navigate("/fixorium/token-listing")}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Coins className="h-4 w-4" />
+                  <span>TOKEN-LIST</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

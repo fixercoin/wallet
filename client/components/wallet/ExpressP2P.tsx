@@ -2,8 +2,26 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Copy, Plus, MessageSquare } from "lucide-react";
+import { ArrowLeft, Plus, MessageSquare, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
@@ -21,8 +39,14 @@ type ExpressP2PProps = {
 };
 
 export function ExpressP2P({ onBack }: ExpressP2PProps) {
-  const { wallet } = useWallet();
+  const { wallet, tokens = [] } = useWallet();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+  const [paymentMethod, setPaymentMethod] = useState("bank");
+  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [buyTokenMint, setBuyTokenMint] = useState<string>("");
+  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [sellTokenMint, setSellTokenMint] = useState<string>("");
   const navigate = useNavigate();
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
@@ -91,7 +115,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
               aria-label="Back to dashboard"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -111,24 +135,50 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
           <div className="flex-1" />
 
-          <div className="flex items-center gap-2 w-[300px] max-w-[60vw] shrink-0">
-            <Input
-              value={wallet?.publicKey || ""}
-              placeholder="No wallet"
-              readOnly
-              className="h-9 font-mono text-sm"
-            />
-            {wallet ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopyAddress}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
-                aria-label="Copy wallet address"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            ) : null}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  aria-label="Menu"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs">
+                  Payment Method
+                </DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                >
+                  <DropdownMenuRadioItem value="bank">
+                    Bank Transfer
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="easypaisa">
+                    Easypaisa
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="jazzcash">
+                    JazzCash
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={handleCopyAddress}
+                  disabled={!wallet}
+                >
+                  Wallet Address
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setOrdersDialogOpen(true)}>
+                  Pending Orders
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -150,7 +200,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <span className="express-p2p-loader__dot" />
                 </div>
               </div>
-              <p className="text-base font-semibold text-center express-detecting-text">
+              <p className="text-base font-semibold text-center express-detecting-text text-[hsl(var(--foreground))]">
                 detecting orders
               </p>
             </>
@@ -159,7 +209,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               <button
                 type="button"
                 onClick={() => setOrdersDialogOpen(true)}
-                className="w-full rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center gap-3"
+                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center gap-3"
               >
                 <MessageSquare className="h-4 w-4 text-[hsl(var(--primary))]" />
                 <span className="text-sm font-medium">Detected orders</span>
@@ -175,7 +225,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     state: { order: detectedOrder },
                   })
                 }
-                className="w-full text-left rounded-xl border bg-white p-4 shadow hover:shadow-md transition flex items-center justify-between"
+                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center justify-between"
               >
                 <div>
                   <p className="text-sm text-gray-500">Buy order detected</p>
@@ -212,10 +262,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 type="button"
                 onClick={() => setSelectedOrder(o)}
                 className={
-                  "w-full text-left rounded-lg border p-3 bg-white " +
+                  "w-full text-left rounded-lg border border-white/50 p-3 bg-white/80 " +
                   (selectedOrder?.id === o.id
                     ? "ring-2 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]"
-                    : "hover:bg-gray-50")
+                    : "hover:bg-white/90")
                 }
               >
                 <div className="flex items-center justify-between">

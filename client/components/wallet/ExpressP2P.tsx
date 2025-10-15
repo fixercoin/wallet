@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useMemo, useState } from "react";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,6 +46,14 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const [buyTokenMint, setBuyTokenMint] = useState<string>("USDC");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
   const [sellTokenMint, setSellTokenMint] = useState<string>("USDC");
+
+  // Pricing state
+  const [usdToPkr, setUsdToPkr] = useState<number | null>(null);
+  const [buyTokenPriceUsd, setBuyTokenPriceUsd] = useState<number | null>(null);
+  const [sellTokenPriceUsd, setSellTokenPriceUsd] = useState<number | null>(
+    null,
+  );
+
   const navigate = useNavigate();
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
@@ -111,6 +120,127 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
     for (const t of tokens) set.add(String(t.symbol || "").toUpperCase());
     return Array.from(set);
   }, [tokens]);
+
+  // Resolve symbol to known Solana mint
+  const symbolToMint = (sym: string): string | null => {
+    const s = String(sym || "").toUpperCase();
+    const known: Record<string, string> = {
+      SOL: "So11111111111111111111111111111111111111112",
+      USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    };
+    if (known[s]) return known[s];
+    const t = tokens.find((x) => String(x.symbol || "").toUpperCase() === s);
+    return t?.mint || null;
+  };
+
+  // Load USD→PKR rate (cached)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const cached = localStorage.getItem("usd_to_pkr");
+        if (cached) {
+          const { rate, ts } = JSON.parse(cached);
+          if (
+            typeof rate === "number" &&
+            Date.now() - ts < 6 * 60 * 60 * 1000
+          ) {
+            if (!cancelled) setUsdToPkr(rate);
+          }
+        }
+      } catch {}
+      try {
+        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        if (!res.ok) return;
+        const data = await res.json();
+        const rate = data?.rates?.PKR;
+        if (typeof rate === "number" && isFinite(rate) && !cancelled) {
+          setUsdToPkr(rate);
+          try {
+            localStorage.setItem(
+              "usd_to_pkr",
+              JSON.stringify({ rate, ts: Date.now() }),
+            );
+          } catch {}
+        }
+      } catch {}
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load token USD price for buy and sell symbols
+  useEffect(() => {
+    let cancelled = false;
+    const loadBuy = async () => {
+      const mint = symbolToMint(buyTokenMint);
+      if (!mint) {
+        setBuyTokenPriceUsd(null);
+        return;
+      }
+      if (buyTokenMint.toUpperCase() === "USDC") {
+        setBuyTokenPriceUsd(1);
+        return;
+      }
+      try {
+        const dex = await dexscreenerAPI.getTokenByMint(mint);
+        if (!cancelled)
+          setBuyTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
+      } catch {
+        if (!cancelled) setBuyTokenPriceUsd(null);
+      }
+    };
+    loadBuy();
+    return () => {
+      cancelled = true;
+    };
+  }, [buyTokenMint, tokens]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSell = async () => {
+      const mint = symbolToMint(sellTokenMint);
+      if (!mint) {
+        setSellTokenPriceUsd(null);
+        return;
+      }
+      if (sellTokenMint.toUpperCase() === "USDC") {
+        setSellTokenPriceUsd(1);
+        return;
+      }
+      try {
+        const dex = await dexscreenerAPI.getTokenByMint(mint);
+        if (!cancelled)
+          setSellTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
+      } catch {
+        if (!cancelled) setSellTokenPriceUsd(null);
+      }
+    };
+    loadSell();
+    return () => {
+      cancelled = true;
+    };
+  }, [sellTokenMint, tokens]);
+
+  const buyEstimate = useMemo(() => {
+    const amt = Number(amountPKR);
+    if (!isFinite(amt) || amt <= 0) return null;
+    if (!usdToPkr || !buyTokenPriceUsd || buyTokenPriceUsd <= 0) return null;
+    const pricePKR = buyTokenPriceUsd * usdToPkr;
+    if (pricePKR <= 0) return null;
+    return amt / pricePKR;
+  }, [amountPKR, usdToPkr, buyTokenPriceUsd]);
+
+  const sellEstimatePKR = useMemo(() => {
+    const qty = Number(sellAmountTokens);
+    if (!isFinite(qty) || qty <= 0) return null;
+    if (!usdToPkr || !sellTokenPriceUsd || sellTokenPriceUsd <= 0) return null;
+    const pricePKR = sellTokenPriceUsd * usdToPkr;
+    return qty * pricePKR;
+  }, [sellAmountTokens, usdToPkr, sellTokenPriceUsd]);
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
@@ -302,6 +432,18 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     ))}
                   </select>
                 </div>
+                {buyEstimate !== null ? (
+                  <div className="p-3 rounded-lg border bg-white/90">
+                    <div className="text-xs text-gray-500">Estimate</div>
+                    <div className="font-semibold mt-1">
+                      {buyEstimate.toLocaleString(undefined, {
+                        maximumFractionDigits:
+                          buyTokenMint === "FIXERCOIN" ? 8 : 6,
+                      })}{" "}
+                      {buyTokenMint}
+                    </div>
+                  </div>
+                ) : null}
                 <Button
                   className="w-full wallet-button-primary"
                   onClick={() => {
@@ -349,6 +491,17 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     placeholder="0"
                   />
                 </div>
+                {sellEstimatePKR !== null ? (
+                  <div className="p-3 rounded-lg border bg-white/90">
+                    <div className="text-xs text-gray-500">Estimate</div>
+                    <div className="font-semibold mt-1">
+                      PKR{" "}
+                      {sellEstimatePKR.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                ) : null}
                 <Button
                   className="w-full wallet-button-secondary"
                   onClick={() => {

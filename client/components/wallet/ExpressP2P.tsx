@@ -70,7 +70,10 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
   // Prompt dialogs
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
-  const [paymentInput, setPaymentInput] = useState("");
+  const [paymentAccountName, setPaymentAccountName] = useState("");
+  const [paymentAccountNumber, setPaymentAccountNumber] = useState("");
+  const [paymentMethodChoice, setPaymentMethodChoice] =
+    useState<"easypaisa" | "bank_account">("easypaisa");
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [walletInput, setWalletInput] = useState("");
   const [showPendingPrompt, setShowPendingPrompt] = useState(false);

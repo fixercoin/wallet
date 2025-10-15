@@ -565,11 +565,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     </a>
                   </div>
                 </div>
-                {isFixerSelected ? (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-[11px] text-orange-600">
-                    Burning FIXERCOIN grants a 110% LOCKER reward automatically.
-                  </div>
-                ) : null}
               </div>
             ) : null}
 

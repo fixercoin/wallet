@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet";
 import {
   Keypair,
@@ -201,7 +202,7 @@ const ixTransferChecked = (
 };
 
 const rpcCall = async (method: string, params: any[]): Promise<any> => {
-  const resp = await fetch("/api/solana-rpc", {
+  const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -257,7 +258,7 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
     params: [b64, { skipPreflight: false, preflightCommitment: "confirmed" }],
     id: Date.now(),
   };
-  const resp = await fetch("/api/solana-rpc", {
+  const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -280,7 +281,7 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
           { skipPreflight: false, preflightCommitment: "confirmed" },
         ],
       };
-      const fallback = await fetch("/api/solana-rpc", {
+      const fallback = await fetch(resolveApiUrl("/api/solana-rpc"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fallbackPayload),
@@ -585,6 +586,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
     if (!wallet || !selectedToken) return;
 
     setIsSubmitting(true);
+    // Optimistic save: create lock entry immediately to avoid data loss on crash
+    // If transaction fails before submission, we'll remove this entry.
+    let lockId = createId();
+    let submittedSignature: string | null = null;
+    let escrowKeypair: Keypair | null = null;
     try {
       const walletSecret = coerceSecretKey(wallet.secretKey);
       if (!walletSecret) throw new Error("Missing wallet secret key");
@@ -592,10 +598,33 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       const amountRaw = toBaseUnits(amount, selectedToken.decimals ?? 0);
       if (amountRaw <= BigInt(0)) throw new Error("Invalid amount");
 
-      const escrowKeypair = Keypair.generate();
+      escrowKeypair = Keypair.generate();
       const mint = new PublicKey(selectedToken.mint);
       const sourceAta = deriveAta(walletKeypair.publicKey, mint);
       const destinationAta = deriveAta(escrowKeypair.publicKey, mint);
+
+      const selectedOption = LOCK_OPTIONS.find((o) => o.id === selectedLockOption);
+      const durationMs = selectedOption ? selectedOption.ms : DEFAULT_LOCK_DURATION_MS;
+
+      const provisional: TokenLockRecord = {
+        id: lockId,
+        mint: selectedToken.mint,
+        symbol: selectedToken.symbol || selectedToken.mint.slice(0, 6),
+        amount,
+        amountRaw: amountRaw.toString(),
+        decimals: selectedToken.decimals ?? 0,
+        createdAt: new Date().toISOString(),
+        unlockAt: new Date(Date.now() + durationMs).toISOString(),
+        autoWithdraw,
+        escrowPublicKey: escrowKeypair.publicKey.toBase58(),
+        escrowSecretKey: base64FromBytes(escrowKeypair.secretKey),
+        status: "locked",
+        lockSignature: undefined,
+        withdrawSignature: undefined,
+        error: null,
+        lastAttemptAt: null,
+      };
+      setLocks((prev) => [provisional, ...prev]);
 
       const instructions: TransactionInstruction[] = [];
       instructions.push(
@@ -625,43 +654,35 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       transaction.sign(walletKeypair, escrowKeypair);
 
       const serialized = transaction.serialize();
-      const signature = await postTransaction(serialized);
-      await confirmSignatureProxy(signature);
+      submittedSignature = await postTransaction(serialized);
+      await confirmSignatureProxy(submittedSignature);
 
-      const selectedOption = LOCK_OPTIONS.find(
-        (o) => o.id === selectedLockOption,
+      // Update the saved lock with the confirmed signature
+      setLocks((prev) =>
+        prev.map((l) =>
+          l.id === lockId
+            ? { ...l, lockSignature: submittedSignature, error: null }
+            : l,
+        ),
       );
-      const durationMs = selectedOption
-        ? selectedOption.ms
-        : DEFAULT_LOCK_DURATION_MS;
-      const lockRecord: TokenLockRecord = {
-        id: createId(),
-        mint: selectedToken.mint,
-        symbol: selectedToken.symbol || selectedToken.mint.slice(0, 6),
-        amount,
-        amountRaw: amountRaw.toString(),
-        decimals: selectedToken.decimals ?? 0,
-        createdAt: new Date().toISOString(),
-        unlockAt: new Date(Date.now() + durationMs).toISOString(),
-        autoWithdraw,
-        escrowPublicKey: escrowKeypair.publicKey.toBase58(),
-        escrowSecretKey: base64FromBytes(escrowKeypair.secretKey),
-        status: "locked",
-        lockSignature: signature,
-        withdrawSignature: undefined,
-        error: null,
-        lastAttemptAt: null,
-      };
 
-      setLocks((prev) => [lockRecord, ...prev]);
       await refreshTokens();
       toast({
         title: "Tokens locked",
-        description: `${amount} ${lockRecord.symbol} locked for ${selectedOption ? selectedOption.label : "3 months"}`,
+        description: `${amount} ${provisional.symbol} locked for ${selectedOption ? selectedOption.label : "3 months"}`,
       });
       setAmount("");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      // If we never submitted the tx, remove the optimistic entry
+      if (!submittedSignature) {
+        setLocks((prev) => prev.filter((l) => l.id !== lockId));
+      } else {
+        // Keep the entry but mark error so user can retry/withdraw later
+        setLocks((prev) =>
+          prev.map((l) => (l.id === lockId ? { ...l, error: message } : l)),
+        );
+      }
       toast({
         title: "Lock failed",
         description: message,

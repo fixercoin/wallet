@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Copy, Plus } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";

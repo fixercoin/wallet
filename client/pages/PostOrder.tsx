@@ -406,9 +406,7 @@ export default function PostOrder() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Account name
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Account name</label>
                   <input
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
@@ -417,9 +415,7 @@ export default function PostOrder() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Account number
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Account number</label>
                   <input
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
@@ -428,10 +424,29 @@ export default function PostOrder() {
                   />
                 </div>
               </div>
+
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Payment method
-                </label>
+                <label className="block text-xs text-gray-500 mb-1">Wallet address</label>
+                <input
+                  value={sellWalletAddress}
+                  onChange={(e) => setSellWalletAddress(e.target.value)}
+                  className="w-full border rounded-xl px-3 py-2 bg-white"
+                  placeholder="Enter wallet address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Network / details</label>
+                <input
+                  value={sellNetwork}
+                  onChange={(e) => setSellNetwork(e.target.value)}
+                  className="w-full border rounded-xl px-3 py-2 bg-white"
+                  placeholder="e.g. Solana"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Payment method</label>
                 <input
                   disabled
                   className="w-full border rounded-xl px-3 py-2 bg-gray-50"

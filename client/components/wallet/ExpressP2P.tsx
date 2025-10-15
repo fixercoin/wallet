@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Copy, Plus, MessageSquare } from "lucide-react";
+import { ArrowLeft, Plus, MessageSquare, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { listOrders } from "@/lib/p2p";

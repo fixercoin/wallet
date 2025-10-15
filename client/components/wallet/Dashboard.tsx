@@ -332,6 +332,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Lock className="h-4 w-4" />
                   <span>LOCKING</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => navigate("/fixorium/token-listing")}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Coins className="h-4 w-4" />
+                  <span>TOKEN-LIST</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={onSettings}

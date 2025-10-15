@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Copy, Plus, Edit2, Save, X } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { Input } from "@/components/ui/input";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 
 interface AccountsProps {

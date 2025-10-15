@@ -182,16 +182,20 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 </div>
 
                 <div className="express-p2p-currencies" aria-hidden>
-                  <div className="p2p-currency">PKR</div>
-                  <div className="p2p-token sol">SOL</div>
-                  <div className="p2p-token usdc">USDC</div>
-                  <div className="p2p-token fixer">FIXER</div>
+                  <div className="p2p-token pkr" aria-hidden>
+                    <img src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg" alt="PKR" />
+                  </div>
+                  <div className="p2p-token sol" aria-hidden>
+                    <img src="https://i.postimg.cc/0QsCpPRr/logo.png" alt="SOL" />
+                  </div>
+                  <div className="p2p-token usdc" aria-hidden>
+                    <img src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp" alt="USDC" />
+                  </div>
+                  <div className="p2p-token fixer" aria-hidden>
+                    <img src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png" alt="FIXERCOIN" />
+                  </div>
                 </div>
               </div>
-
-              <p className="text-base font-semibold text-center express-detecting-text text-[hsl(var(--foreground))]">
-                detecting orders
-              </p>
             </>
           ) : detectedOrder ? (
             <>

@@ -133,7 +133,8 @@ const ixBurnChecked = (
   });
 };
 
-const normalizeNumberInput = (value: string): string => value.replace(/,/g, "").trim();
+const normalizeNumberInput = (value: string): string =>
+  value.replace(/,/g, "").trim();
 
 const toBaseUnits = (value: string, decimals: number): bigint => {
   const normalized = normalizeNumberInput(value);
@@ -148,7 +149,9 @@ const toBaseUnits = (value: string, decimals: number): bigint => {
   if (decimalsClamped === 0) {
     return wholePart;
   }
-  const fraction = fractionRaw.slice(0, decimalsClamped).padEnd(decimalsClamped, "0");
+  const fraction = fractionRaw
+    .slice(0, decimalsClamped)
+    .padEnd(decimalsClamped, "0");
   const fractionPart = fraction ? BigInt(fraction) : BigInt(0);
   return wholePart * pow + fractionPart;
 };
@@ -219,7 +222,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
     [splTokens, selectedMint],
   );
 
-  const availableRaw = useMemo(() => getTokenBalanceRaw(selectedToken), [selectedToken]);
+  const availableRaw = useMemo(
+    () => getTokenBalanceRaw(selectedToken),
+    [selectedToken],
+  );
   const isFixerSelected = selectedToken?.mint === FIXER_MINT_ADDRESS;
 
   const amountError = useMemo(() => {
@@ -324,9 +330,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
     if (fraction.length > decimals) {
       toast({
         title: "Invalid amount",
-        description: decimals === 0
-          ? "This token does not support fractional amounts."
-          : `Token supports up to ${decimals} decimal${decimals === 1 ? "" : "s"}.`,
+        description:
+          decimals === 0
+            ? "This token does not support fractional amounts."
+            : `Token supports up to ${decimals} decimal${decimals === 1 ? "" : "s"}.`,
         variant: "destructive",
       });
       return;
@@ -394,7 +401,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           body: JSON.stringify(payload),
         });
         const result = await response.json();
-        if (result && result.error) throw new Error(result.error.message || "RPC error");
+        if (result && result.error)
+          throw new Error(result.error.message || "RPC error");
         signature = result?.result || result;
       } catch (error) {
         const base58 = bs58.encode(serialized);
@@ -413,7 +421,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           body: JSON.stringify(payload),
         });
         const result = await response.json();
-        if (result && result.error) throw new Error(result.error.message || "RPC error");
+        if (result && result.error)
+          throw new Error(result.error.message || "RPC error");
         signature = result?.result || result;
       }
 
@@ -421,20 +430,25 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       setTxSig(signature);
 
       if (isFixerSelected) {
-        const rewardResponse = await fetch(resolveApiUrl("/api/reward-locker"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recipient: wallet.publicKey,
-            burnSignature: signature,
-            amountRaw: amtRaw.toString(),
-            fixerMint: FIXER_MINT_ADDRESS,
-            lockerMint: LOCKER_MINT_ADDRESS,
-          }),
-        });
+        const rewardResponse = await fetch(
+          resolveApiUrl("/api/reward-locker"),
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recipient: wallet.publicKey,
+              burnSignature: signature,
+              amountRaw: amtRaw.toString(),
+              fixerMint: FIXER_MINT_ADDRESS,
+              lockerMint: LOCKER_MINT_ADDRESS,
+            }),
+          },
+        );
         if (!rewardResponse.ok) {
           const text = await rewardResponse.text().catch(() => "");
-          throw new Error(text || `Reward request failed: ${rewardResponse.status}`);
+          throw new Error(
+            text || `Reward request failed: ${rewardResponse.status}`,
+          );
         }
         const rewardJson = await rewardResponse.json().catch(() => ({}));
         if (rewardJson?.signature) setRewardSig(rewardJson.signature);
@@ -493,7 +507,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               Burn tokens you control
             </CardTitle>
             <CardDescription className="text-slate-300">
-              Select an SPL token in your wallet, choose the amount, and confirm to burn. This action cannot be undone.
+              Select an SPL token in your wallet, choose the amount, and confirm
+              to burn. This action cannot be undone.
             </CardDescription>
           </CardHeader>
 
@@ -511,9 +526,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 <SelectContent className="border border-slate-700 bg-slate-900 text-white">
                   <SelectGroup>
                     {splTokens.map((token) => (
-                      <SelectItem key={token.mint} value={token.mint} className="text-white">
+                      <SelectItem
+                        key={token.mint}
+                        value={token.mint}
+                        className="text-white"
+                      >
                         <div className="flex w-full items-center justify-between">
-                          <span className="font-medium">{token.symbol || "Token"}</span>
+                          <span className="font-medium">
+                            {token.symbol || "Token"}
+                          </span>
                           <span className="text-xs text-slate-400">
                             {formatNumber(token.balance, token.decimals ?? 0)}
                           </span>
@@ -525,7 +546,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </Select>
               {splTokens.length === 0 ? (
                 <p className="text-sm text-slate-400">
-                  Add or receive SPL tokens with a positive balance to burn them from this wallet.
+                  Add or receive SPL tokens with a positive balance to burn them
+                  from this wallet.
                 </p>
               ) : null}
             </div>
@@ -534,9 +556,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               <div className="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Selected token</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                      Selected token
+                    </p>
                     <p className="text-lg font-semibold text-white">
-                      {selectedToken.symbol} · {formatNumber(selectedToken.balance, selectedToken.decimals ?? 0)}
+                      {selectedToken.symbol} ·{" "}
+                      {formatNumber(
+                        selectedToken.balance,
+                        selectedToken.decimals ?? 0,
+                      )}
                     </p>
                   </div>
                   <div className="text-right text-xs text-slate-400 sm:text-left">
@@ -586,7 +614,12 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>
-                  Available: {formatNumber(selectedToken?.balance, selectedToken?.decimals ?? 0)} {selectedToken?.symbol}
+                  Available:{" "}
+                  {formatNumber(
+                    selectedToken?.balance,
+                    selectedToken?.decimals ?? 0,
+                  )}{" "}
+                  {selectedToken?.symbol}
                 </span>
                 <span>Decimals: {selectedToken?.decimals ?? 0}</span>
               </div>
@@ -599,7 +632,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/70 p-4 text-xs text-slate-300">
                 {txSig ? (
                   <div className="break-all">
-                    Burn transaction: {" "}
+                    Burn transaction:{" "}
                     <a
                       className="text-slate-100 underline-offset-4 hover:underline"
                       href={`https://solscan.io/tx/${txSig}`}
@@ -612,7 +645,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 ) : null}
                 {rewardSig ? (
                   <div className="break-all">
-                    Reward transaction: {" "}
+                    Reward transaction:{" "}
                     <a
                       className="text-slate-100 underline-offset-4 hover:underline"
                       href={`https://solscan.io/tx/${rewardSig}`}
@@ -636,7 +669,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               {isLoading ? "Processing..." : "Confirm Burn"}
             </Button>
             <p className="text-center text-xs text-slate-400">
-              Burning permanently removes the selected tokens from circulation and cannot be reversed.
+              Burning permanently removes the selected tokens from circulation
+              and cannot be reversed.
             </p>
           </CardFooter>
         </Card>

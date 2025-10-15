@@ -80,6 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
+  const navigate = useNavigate();
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

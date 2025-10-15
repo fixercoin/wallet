@@ -1,20 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Flame } from "lucide-react";
+import { ArrowLeft, Flame, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -478,74 +469,69 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
-      <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-4">
+    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
+            className="h-10 w-10 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm"
             onClick={onBack}
-            className="h-9 w-9 rounded-full border border-slate-800 bg-slate-900/60 text-slate-200 hover:bg-slate-800"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex flex-col">
-            <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-300">
-              <Flame className="h-4 w-4 text-orange-400" /> Burn SPL Tokens
-            </span>
-            <span className="text-xs text-slate-400">
-              Permanently destroy tokens held by this wallet.
-            </span>
+          <div>
+            <div className="text-xs uppercase tracking-wide text-orange-500">
+              Burn SPL Tokens
+            </div>
+            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
+              Destroy tokens securely
+            </h1>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              Permanently remove SPL tokens from your wallet balance.
+            </p>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <Card className="border border-slate-800 bg-slate-900/80 shadow-2xl backdrop-blur">
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-xl font-semibold text-white">
+        <div className="wallet-card rounded-2xl p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <Flame className="h-5 w-5 text-orange-500" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
               Burn tokens you control
-            </CardTitle>
-            <CardDescription className="text-slate-300">
-              Select an SPL token in your wallet, choose the amount, and confirm
-              to burn. This action cannot be undone.
-            </CardDescription>
-          </CardHeader>
+            </span>
+          </div>
 
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label className="text-slate-200">Token</Label>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Select token
+              </Label>
               <Select
                 value={selectedMint}
                 onValueChange={setSelectedMint}
                 disabled={!splTokens.length || isLoading}
               >
-                <SelectTrigger className="h-11 rounded-lg border-slate-700 bg-slate-900/60 text-left text-white">
-                  <SelectValue placeholder="Select a token" />
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
-                <SelectContent className="border border-slate-700 bg-slate-900 text-white">
-                  <SelectGroup>
-                    {splTokens.map((token) => (
-                      <SelectItem
-                        key={token.mint}
-                        value={token.mint}
-                        className="text-white"
-                      >
-                        <div className="flex w-full items-center justify-between">
-                          <span className="font-medium">
-                            {token.symbol || "Token"}
-                          </span>
-                          <span className="text-xs text-slate-400">
-                            {formatNumber(token.balance, token.decimals ?? 0)}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
+                <SelectContent>
+                  {splTokens.map((token) => (
+                    <SelectItem key={token.mint} value={token.mint}>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {token.symbol || token.mint.slice(0, 6)}
+                        </span>
+                        <span className="text-[10px] text-gray-500 uppercase">
+                          Balance:{" "}
+                          {formatNumber(token.balance, token.decimals ?? 0)}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {splTokens.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="mt-2 text-[11px] text-gray-500">
                   Add or receive SPL tokens with a positive balance to burn them
                   from this wallet.
                 </p>
@@ -553,24 +539,24 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </div>
 
             {selectedToken ? (
-              <div className="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="rounded-xl border border-white/50 bg-white/80 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">
                       Selected token
                     </p>
-                    <p className="text-lg font-semibold text-white">
-                      {selectedToken.symbol} ·{" "}
+                    <p className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                      {selectedToken.symbol || selectedToken.mint.slice(0, 6)} ·{" "}
                       {formatNumber(
                         selectedToken.balance,
                         selectedToken.decimals ?? 0,
                       )}
                     </p>
                   </div>
-                  <div className="text-right text-xs text-slate-400 sm:text-left">
+                  <div className="text-right text-[11px] text-gray-500">
                     <p>Mint address</p>
                     <a
-                      className="font-medium text-slate-200 underline-offset-4 hover:underline"
+                      className="font-medium text-orange-500 underline-offset-4 hover:underline"
                       href={`https://solscan.io/token/${selectedToken.mint}`}
                       target="_blank"
                       rel="noreferrer"
@@ -580,18 +566,21 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   </div>
                 </div>
                 {isFixerSelected ? (
-                  <div className="mt-3 rounded-md border border-purple-500/40 bg-purple-500/10 p-3 text-sm text-purple-100">
+                  <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-[11px] text-orange-600">
                     Burning FIXERCOIN grants a 110% LOCKER reward automatically.
                   </div>
                 ) : null}
               </div>
             ) : null}
 
-            <div className="space-y-2">
-              <Label htmlFor="burn-amount" className="text-slate-200">
+            <div>
+              <Label
+                htmlFor="burn-amount"
+                className="text-xs text-[hsl(var(--muted-foreground))]"
+              >
                 Amount to burn
               </Label>
-              <div className="flex items-center gap-3">
+              <div className="mt-1 flex items-center gap-3">
                 <Input
                   id="burn-amount"
                   value={amount}
@@ -600,80 +589,99 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   disabled={isLoading || !selectedToken}
                   placeholder="0.0"
                   inputMode="decimal"
-                  className="h-11 rounded-lg border-slate-700 bg-slate-900/60 text-white placeholder:text-slate-500"
+                  className="h-11"
                 />
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={handleUseMax}
                   disabled={isLoading || !selectedToken}
-                  className="h-11 rounded-lg border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                  className="wallet-button-secondary h-11 rounded-full px-4 text-sm"
                 >
                   Max
                 </Button>
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>
-                  Available:{" "}
-                  {formatNumber(
-                    selectedToken?.balance,
-                    selectedToken?.decimals ?? 0,
-                  )}{" "}
-                  {selectedToken?.symbol}
-                </span>
-                <span>Decimals: {selectedToken?.decimals ?? 0}</span>
-              </div>
+              {selectedToken ? (
+                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500">
+                  <span>
+                    Available:{" "}
+                    {formatNumber(
+                      selectedToken.balance,
+                      selectedToken.decimals ?? 0,
+                    )}{" "}
+                    {selectedToken.symbol || selectedToken.mint.slice(0, 6)}
+                  </span>
+                  <span>Decimals: {selectedToken.decimals ?? 0}</span>
+                </div>
+              ) : null}
               {amountError ? (
-                <p className="text-sm text-red-400">{amountError}</p>
+                <p className="mt-2 text-sm text-red-500">{amountError}</p>
               ) : null}
             </div>
 
-            {txSig || rewardSig ? (
-              <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/70 p-4 text-xs text-slate-300">
-                {txSig ? (
-                  <div className="break-all">
-                    Burn transaction:{" "}
-                    <a
-                      className="text-slate-100 underline-offset-4 hover:underline"
-                      href={`https://solscan.io/tx/${txSig}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {txSig}
-                    </a>
-                  </div>
-                ) : null}
-                {rewardSig ? (
-                  <div className="break-all">
-                    Reward transaction:{" "}
-                    <a
-                      className="text-slate-100 underline-offset-4 hover:underline"
-                      href={`https://solscan.io/tx/${rewardSig}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {rewardSig}
-                    </a>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </CardContent>
-
-          <CardFooter className="flex flex-col gap-3">
             <Button
-              className="h-11 w-full rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg transition hover:from-purple-500 hover:to-blue-500"
+              className="h-11 w-full border-0 font-semibold dash-btn"
               onClick={handleBurn}
               disabled={isConfirmDisabled}
             >
-              {isLoading ? "Processing..." : "Confirm Burn"}
+              {isLoading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Processing burn...
+                </>
+              ) : (
+                <>
+                  <Flame className="mr-2 h-4 w-4" />
+                  Confirm burn
+                </>
+              )}
             </Button>
-            <p className="text-center text-xs text-slate-400">
+
+            <p className="text-center text-[11px] text-gray-500">
               Burning permanently removes the selected tokens from circulation
               and cannot be reversed.
             </p>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
+
+        {txSig || rewardSig ? (
+          <div className="wallet-card rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                Recent burn
+              </span>
+            </div>
+            <div className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+              {txSig ? (
+                <div className="break-all">
+                  Burn transaction:{" "}
+                  <a
+                    className="font-medium text-orange-500 underline-offset-4 hover:underline"
+                    href={`https://solscan.io/tx/${txSig}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {txSig}
+                  </a>
+                </div>
+              ) : null}
+              {rewardSig ? (
+                <div className="break-all">
+                  Reward transaction:{" "}
+                  <a
+                    className="font-medium text-orange-500 underline-offset-4 hover:underline"
+                    href={`https://solscan.io/tx/${rewardSig}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {rewardSig}
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

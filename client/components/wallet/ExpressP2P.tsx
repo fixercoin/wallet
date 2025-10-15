@@ -129,24 +129,36 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
           <div className="flex-1" />
 
-          <div className="flex items-center gap-2 w-[300px] max-w-[60vw] shrink-0">
-            <Input
-              value={wallet?.publicKey || ""}
-              placeholder="No wallet"
-              readOnly
-              className="h-9 font-mono text-sm"
-            />
-            {wallet ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopyAddress}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
-                aria-label="Copy wallet address"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            ) : null}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  aria-label="Menu"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs">Payment Method</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <DropdownMenuRadioItem value="bank">Bank Transfer</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="easypaisa">Easypaisa</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="jazzcash">JazzCash</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleCopyAddress} disabled={!wallet}>
+                  Wallet Address
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setOrdersDialogOpen(true)}>
+                  Pending Orders
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

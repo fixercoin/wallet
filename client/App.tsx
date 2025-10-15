@@ -45,7 +45,10 @@ const App = () => (
                 element={<TokenListing />}
               />
               <Route path="/express/post-order" element={<PostOrder />} />
-              <Route path="/express/post-order/detail" element={<ExpressPostOrderDetail />} />
+              <Route
+                path="/express/post-order/detail"
+                element={<ExpressPostOrderDetail />}
+              />
               <Route path="/express/orderbook" element={<OrderBook />} />
               <Route path="/express/buy-trade" element={<BuyTrade />} />
               <Route path="*" element={<NotFound />} />

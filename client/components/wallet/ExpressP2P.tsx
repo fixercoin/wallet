@@ -661,7 +661,6 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   method: paymentMethodChoice,
                 } as const;
                 setPaymentDetails(details);
-                setPaymentMethod(paymentMethodChoice);
                 setShowPaymentPrompt(false);
                 toast({
                   title: "Saved",

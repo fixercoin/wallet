@@ -652,7 +652,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       await refreshTokens();
       toast({
         title: "Tokens locked",
-        description: `${amount} ${lockRecord.symbol} locked for 3 months`,
+        description: `${amount} ${lockRecord.symbol} locked for ${selectedOption ? selectedOption.label : "3 months"}`,
       });
       setAmount("");
     } catch (error) {

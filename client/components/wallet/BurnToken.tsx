@@ -15,12 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
-import {
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
+import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { createBurnCheckedInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 
 interface BurnTokenProps {
@@ -358,12 +354,25 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       const sender = Keypair.fromSecretKey(wallet.secretKey);
       const mintKey = new PublicKey(selectedToken.mint);
       const ata = deriveAta(sender.publicKey, mintKey);
-      const burnIx = ixBurnChecked(
+
+      // createBurnCheckedInstruction expects amount as number. Ensure it fits JS number range.
+      let amountNumber: number;
+      try {
+        amountNumber = Number(amtRaw);
+        if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+          throw new Error("Amount out of range");
+        }
+      } catch (err) {
+        throw new Error("Amount too large to handle in client transaction");
+      }
+
+      const burnIx = createBurnCheckedInstruction(
         ata,
         mintKey,
         sender.publicKey,
-        amtRaw,
+        amountNumber,
         decimals,
+        TOKEN_PROGRAM_ID,
       );
 
       const tx = new Transaction().add(burnIx);

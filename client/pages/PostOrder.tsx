@@ -117,9 +117,13 @@ export default function PostOrder() {
   const [adminToken, setAdminToken] = useState("");
 
   // Buy form
-  const [buyAmountPKR, setBuyAmountPKR] = useState<number | "">("");
+  const [buyMinPKR, setBuyMinPKR] = useState<number | "">("");
+  const [buyMaxPKR, setBuyMaxPKR] = useState<number | "">("");
   const [buyToken, setBuyToken] = useState("USDC");
   const [buyPrice, setBuyPrice] = useState<number | "">("");
+  const [buyAccountName, setBuyAccountName] = useState("");
+  const [buyAccountNumber, setBuyAccountNumber] = useState("");
+  const [buyPaymentChannel, setBuyPaymentChannel] = useState("easypaisa");
 
   // Sell form
   const [sellToken, setSellToken] = useState("USDC");
@@ -128,6 +132,8 @@ export default function PostOrder() {
   const [sellTokenPricePKR, setSellTokenPricePKR] = useState<number | "">("");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [sellWalletAddress, setSellWalletAddress] = useState("");
+  const [sellNetwork, setSellNetwork] = useState("");
 
   const handleSave = async () => {
     try {
@@ -135,35 +141,53 @@ export default function PostOrder() {
         toast({ title: "Admin token required", variant: "destructive" });
         return;
       }
+
       if (mode === "buy") {
-        if (!buyAmountPKR || !buyPrice) return;
-        await createOrder(
-          {
-            side: "buy",
-            amountPKR: Number(buyAmountPKR),
-            quoteAsset: buyToken,
-            pricePKRPerQuote: Number(buyPrice),
-            paymentMethod: "easypaisa",
-            roomId: "global",
-          },
-          adminToken,
-        );
-      } else {
-        if (!sellMinTokenAmount || !sellMaxTokenAmount || !sellTokenPricePKR)
+        if (!buyMinPKR || !buyMaxPKR || !buyPrice) {
+          toast({ title: "Please complete buy form", variant: "destructive" });
           return;
+        }
+        // Use max PKR as total amount for server while storing min/max in metadata
+        const payload: any = {
+          side: "buy",
+          amountPKR: Number(buyMaxPKR),
+          quoteAsset: buyToken,
+          pricePKRPerQuote: Number(buyPrice),
+          paymentMethod: String(buyPaymentChannel || "easypaisa"),
+          roomId: "global",
+          meta: {
+            minPKR: Number(buyMinPKR),
+            maxPKR: Number(buyMaxPKR),
+          },
+          paymentDetails: {
+            accountName: String(buyAccountName || ""),
+            accountNumber: String(buyAccountNumber || ""),
+          },
+        };
+        await createOrder(payload, adminToken);
+      } else {
+        if (!sellMinTokenAmount || !sellMaxTokenAmount || !sellTokenPricePKR) {
+          toast({ title: "Please complete sell form", variant: "destructive" });
+          return;
+        }
         const maxPkr = Number(sellMaxTokenAmount) * Number(sellTokenPricePKR);
-        await createOrder(
-          {
-            side: "sell",
-            amountPKR: Number(maxPkr),
-            quoteAsset: sellToken,
-            pricePKRPerQuote: Number(sellTokenPricePKR),
-            paymentMethod: "easypaisa",
-            roomId: "global",
-          } as any,
-          adminToken,
-        );
+        const payload: any = {
+          side: "sell",
+          amountPKR: Number(maxPkr),
+          quoteAsset: sellToken,
+          pricePKRPerQuote: Number(sellTokenPricePKR),
+          paymentMethod: "easypaisa",
+          roomId: "global",
+          walletAddress: String(sellWalletAddress || ""),
+          network: String(sellNetwork || ""),
+          meta: {
+            minToken: Number(sellMinTokenAmount),
+            maxToken: Number(sellMaxTokenAmount),
+          },
+        };
+        await createOrder(payload as any, adminToken);
       }
+
       toast({ title: "Order saved" });
       navigate("/express/orderbook");
     } catch (e: any) {
@@ -235,26 +259,46 @@ export default function PostOrder() {
 
           {mode === "buy" ? (
             <>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Amount (PKR)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={buyAmountPKR}
-                  onChange={(e) =>
-                    setBuyAmountPKR(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
-                  placeholder="0"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Minimum (PKR)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={buyMinPKR}
+                    onChange={(e) =>
+                      setBuyMinPKR(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Maximum (PKR)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={buyMaxPKR}
+                    onChange={(e) =>
+                      setBuyMaxPKR(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0"
+                  />
+                </div>
               </div>
+
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  Token
+                  Select Token
                 </label>
                 <select
                   value={buyToken}
@@ -266,9 +310,10 @@ export default function PostOrder() {
                   <option value="FIXERCOIN">FIXERCOIN</option>
                 </select>
               </div>
+
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  Token price (PKR)
+                  Price per token (PKR)
                 </label>
                 <input
                   type="number"
@@ -283,14 +328,40 @@ export default function PostOrder() {
                   placeholder="0"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account name
+                  </label>
+                  <input
+                    value={buyAccountName}
+                    onChange={(e) => setBuyAccountName(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="Name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account number
+                  </label>
+                  <input
+                    value={buyAccountNumber}
+                    onChange={(e) => setBuyAccountNumber(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    placeholder="0000000000"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  Payment method
+                  Payment channel
                 </label>
                 <input
                   disabled
                   className="w-full border rounded-xl px-3 py-2 bg-gray-50"
-                  value="easypaisa"
+                  value={buyPaymentChannel}
                 />
               </div>
             </>
@@ -387,6 +458,31 @@ export default function PostOrder() {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Wallet address
+                </label>
+                <input
+                  value={sellWalletAddress}
+                  onChange={(e) => setSellWalletAddress(e.target.value)}
+                  className="w-full border rounded-xl px-3 py-2 bg-white"
+                  placeholder="Enter wallet address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Network / details
+                </label>
+                <input
+                  value={sellNetwork}
+                  onChange={(e) => setSellNetwork(e.target.value)}
+                  className="w-full border rounded-xl px-3 py-2 bg-white"
+                  placeholder="e.g. Solana"
+                />
+              </div>
+
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
                   Payment method

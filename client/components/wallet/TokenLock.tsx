@@ -70,7 +70,13 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
-const LOCK_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
+const DEFAULT_LOCK_DURATION_MS = 90 * 24 * 60 * 60 * 1000; // 3 months default
+const LOCK_OPTIONS: { label: string; ms: number; id: string }[] = [
+  { label: "10 minutes", ms: 10 * 60 * 1000, id: "10min" },
+  { label: "1 week", ms: 7 * 24 * 60 * 60 * 1000, id: "1week" },
+  { label: "1 month", ms: 30 * 24 * 60 * 60 * 1000, id: "1month" },
+  { label: "3 months", ms: 90 * 24 * 60 * 60 * 1000, id: "3months" },
+];
 
 const storageKeyForWallet = (walletPubkey: string) =>
   `spl_token_locks_${walletPubkey}`;
@@ -326,6 +332,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const [locks, setLocks] = useState<TokenLockRecord[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const autoWithdrawRunning = useRef(false);
+  const [selectedLockOption, setSelectedLockOption] =
+    useState<string>("3months");
 
   const storageKey = wallet ? storageKeyForWallet(wallet.publicKey) : null;
 
@@ -620,6 +628,12 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       const signature = await postTransaction(serialized);
       await confirmSignatureProxy(signature);
 
+      const selectedOption = LOCK_OPTIONS.find(
+        (o) => o.id === selectedLockOption,
+      );
+      const durationMs = selectedOption
+        ? selectedOption.ms
+        : DEFAULT_LOCK_DURATION_MS;
       const lockRecord: TokenLockRecord = {
         id: createId(),
         mint: selectedToken.mint,
@@ -628,7 +642,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         amountRaw: amountRaw.toString(),
         decimals: selectedToken.decimals ?? 0,
         createdAt: new Date().toISOString(),
-        unlockAt: new Date(Date.now() + LOCK_DURATION_MS).toISOString(),
+        unlockAt: new Date(Date.now() + durationMs).toISOString(),
         autoWithdraw,
         escrowPublicKey: escrowKeypair.publicKey.toBase58(),
         escrowSecretKey: base64FromBytes(escrowKeypair.secretKey),
@@ -643,7 +657,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       await refreshTokens();
       toast({
         title: "Tokens locked",
-        description: `${amount} ${lockRecord.symbol} locked for 3 months`,
+        description: `${amount} ${lockRecord.symbol} locked for ${selectedOption ? selectedOption.label : "3 months"}`,
       });
       setAmount("");
     } catch (error) {
@@ -684,9 +698,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             <div className="text-xs uppercase tracking-wide text-purple-500">
               SPL Token Lock
             </div>
-            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            
-            </h1>
+            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]"></h1>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
               Securely hold tokens without rewards. Unlocks automatically when
               the lock completes.
@@ -748,6 +760,28 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                   {selectedToken.symbol}
                 </p>
               ) : null}
+            </div>
+
+            <div>
+              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+                Lock duration
+              </Label>
+              <Select
+                value={selectedLockOption}
+                onValueChange={(val) => setSelectedLockOption(val)}
+                disabled={isFormDisabled}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOCK_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center justify-between">
@@ -826,6 +860,17 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         </div>
                         <div className="text-[10px] text-gray-500">
                           Locked on {formatDateTime(lock.createdAt)}
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          Held by:{" "}
+                          <a
+                            className="font-medium text-orange-500 underline-offset-4 hover:underline"
+                            href={`https://solscan.io/account/${lock.escrowPublicKey}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {shortenAddress(lock.escrowPublicKey, 6)}
+                          </a>
                         </div>
                       </div>
                       <Badge

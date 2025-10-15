@@ -11,8 +11,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,11 +40,11 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const { wallet, tokens = [] } = useWallet();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
-  const [paymentMethod, setPaymentMethod] = useState("bank");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [amountPKR, setAmountPKR] = useState<string>("");
-  const [buyTokenMint, setBuyTokenMint] = useState<string>("");
+  const [buyTokenMint, setBuyTokenMint] = useState<string>("USDC");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
-  const [sellTokenMint, setSellTokenMint] = useState<string>("");
+  const [sellTokenMint, setSellTokenMint] = useState<string>("USDC");
   const navigate = useNavigate();
   const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
@@ -55,6 +53,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const [orders, setOrders] = useState<any[]>([]);
   const [ordersDialogOpen, setOrdersDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+
+  // Prompt dialogs
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+  const [paymentInput, setPaymentInput] = useState("");
+  const [showWalletPrompt, setShowWalletPrompt] = useState(false);
+  const [walletInput, setWalletInput] = useState("");
+  const [showPendingPrompt, setShowPendingPrompt] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,11 +79,9 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
           setDetectedOrder(buy);
           setSelectedOrder(buy);
           setCheckingOrders(false);
-          return; // stop polling on first detection
+          return;
         }
-      } catch {
-        // ignore errors and keep polling
-      }
+      } catch {}
       if (!cancelled) {
         timer = window.setTimeout(poll, 2500);
       }
@@ -92,10 +95,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   }, []);
 
   const handleCopyAddress = async () => {
-    if (!wallet) {
-      return;
-    }
-
+    if (!wallet) return;
     const success = await copyToClipboard(wallet.publicKey);
     toast({
       title: success ? "Address copied" : "Copy failed",
@@ -105,6 +105,12 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
       variant: success ? "default" : "destructive",
     });
   };
+
+  const tokenOptions = useMemo(() => {
+    const set = new Set<string>(["USDC", "SOL", "FIXERCOIN"]);
+    for (const t of tokens) set.add(String(t.symbol || "").toUpperCase());
+    return Array.from(set);
+  }, [tokens]);
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
@@ -150,32 +156,14 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs">
-                  Payment Method
-                </DropdownMenuLabel>
-                <DropdownMenuRadioGroup
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                >
-                  <DropdownMenuRadioItem value="bank">
-                    Bank Transfer
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="easypaisa">
-                    Easypaisa
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="jazzcash">
-                    JazzCash
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={handleCopyAddress}
-                  disabled={!wallet}
-                >
-                  Wallet Address
+                <DropdownMenuItem onSelect={() => setShowPaymentPrompt(true)}>
+                  Payment method
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setOrdersDialogOpen(true)}>
-                  Pending Orders
+                <DropdownMenuItem onSelect={() => setShowWalletPrompt(true)}>
+                  Wallet address
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setShowPendingPrompt(true)}>
+                  Pending orders
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -188,21 +176,42 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
           {checkingOrders ? (
             <>
               <div
-                className="express-p2p-loader"
+                className="express-p2p-brand"
                 role="status"
                 aria-label="Scanning for express P2P orders"
               >
-                <div className="express-p2p-loader__inner" />
-                <div className="express-p2p-loader__orbit">
-                  <span className="express-p2p-loader__dot" />
-                  <span className="express-p2p-loader__dot" />
-                  <span className="express-p2p-loader__dot" />
-                  <span className="express-p2p-loader__dot" />
+                <div className="express-p2p-badge" aria-hidden>
+                  <div className="express-p2p-official">OFFICIAL</div>
+                  <div className="express-p2p-title">FIXORIUM P2P SERVICE</div>
+                </div>
+
+                <div className="express-p2p-currencies" aria-hidden>
+                  <div className="p2p-token pkr" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg"
+                      alt="PKR"
+                    />
+                  </div>
+                  <div className="p2p-token sol" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/0QsCpPRr/logo.png"
+                      alt="SOL"
+                    />
+                  </div>
+                  <div className="p2p-token usdc" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp"
+                      alt="USDC"
+                    />
+                  </div>
+                  <div className="p2p-token fixer" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png"
+                      alt="FIXERCOIN"
+                    />
+                  </div>
                 </div>
               </div>
-              <p className="text-base font-semibold text-center express-detecting-text text-[hsl(var(--foreground))]">
-                detecting orders
-              </p>
             </>
           ) : detectedOrder ? (
             <>
@@ -246,6 +255,109 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               </button>
             </>
           ) : null}
+
+          <div className="w-full border-t border-white/30 pt-4">
+            <div className="flex gap-2 mb-4">
+              <button
+                className={`flex-1 py-2 rounded-lg ${activeTab === "buy" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                onClick={() => setActiveTab("buy")}
+              >
+                Buy
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg ${activeTab === "sell" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                onClick={() => setActiveTab("sell")}
+              >
+                Sell
+              </button>
+            </div>
+
+            {activeTab === "buy" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    PKR Amount
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={amountPKR}
+                    onChange={(e) => setAmountPKR(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Select Token
+                  </label>
+                  <select
+                    value={buyTokenMint}
+                    onChange={(e) => setBuyTokenMint(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                  >
+                    {tokenOptions.map((sym) => (
+                      <option key={sym} value={sym}>
+                        {sym}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  className="w-full wallet-button-primary"
+                  onClick={() => {
+                    if (selectedOrder) {
+                      navigate("/express/buy-trade", {
+                        state: { order: selectedOrder },
+                      });
+                    } else {
+                      setOrdersDialogOpen(true);
+                    }
+                  }}
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
+
+            {activeTab === "sell" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Token
+                  </label>
+                  <select
+                    value={sellTokenMint}
+                    onChange={(e) => setSellTokenMint(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                  >
+                    {tokenOptions.map((sym) => (
+                      <option key={sym} value={sym}>
+                        {sym}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Amount (tokens)
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={sellAmountTokens}
+                    onChange={(e) => setSellAmountTokens(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+                <Button
+                  className="w-full wallet-button-secondary"
+                  onClick={() => navigate("/express/post-order")}
+                >
+                  Create sell offer
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -301,6 +413,88 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 }
               }}
               disabled={!selectedOrder && orders.length === 0}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPaymentPrompt} onOpenChange={setShowPaymentPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add payment method</DialogTitle>
+            <DialogDescription>
+              Enter your preferred payment method.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="e.g. Easypaisa, Bank, JazzCash"
+            value={paymentInput}
+            onChange={(e) => setPaymentInput(e.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setPaymentMethod(paymentInput.trim());
+                setShowPaymentPrompt(false);
+                if (paymentInput.trim())
+                  toast({
+                    title: "Saved",
+                    description: `Payment method: ${paymentInput.trim()}`,
+                  });
+              }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWalletPrompt} onOpenChange={setShowWalletPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add wallet address</DialogTitle>
+            <DialogDescription>
+              Paste the wallet address to use for transfers.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Wallet address"
+            value={walletInput}
+            onChange={(e) => setWalletInput(e.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowWalletPrompt(false);
+                if (walletInput.trim())
+                  toast({
+                    title: "Saved",
+                    description: "Wallet address added",
+                  });
+              }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPendingPrompt} onOpenChange={setShowPendingPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check pending orders</DialogTitle>
+            <DialogDescription>
+              Click continue to view your pending orders.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowPendingPrompt(false);
+                setOrdersDialogOpen(true);
+              }}
             >
               Continue
             </Button>

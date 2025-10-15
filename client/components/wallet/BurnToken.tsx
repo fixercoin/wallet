@@ -535,7 +535,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               Rewards &amp; dead wallet
             </p>
             <p className="text-xs text-orange-700">
-              All rewards and dead tokens are routed to this address. Individual users do not receive reward payouts.
+              All rewards and dead tokens are routed to this address. Individual
+              users do not receive reward payouts.
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <code className="rounded bg-white/80 px-2 py-1 text-[11px] font-mono text-orange-700">

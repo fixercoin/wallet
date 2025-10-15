@@ -155,9 +155,10 @@ const toBaseUnits = (value: string, decimals: number): bigint => {
 
 const formatNumber = (value: number | undefined, decimals: number): string => {
   if (typeof value !== "number" || !isFinite(value)) return "0";
+  const safeDecimals = Math.max(0, Math.min(decimals, 9));
   return value.toLocaleString("en-US", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: Math.min(Math.max(decimals, 0), 9),
+    maximumFractionDigits: safeDecimals,
     useGrouping: false,
   });
 };
@@ -165,8 +166,16 @@ const formatNumber = (value: number | undefined, decimals: number): string => {
 const getTokenBalanceRaw = (token: TokenInfo | null): bigint => {
   if (!token) return BigInt(0);
   const decimals = Math.max(0, token.decimals ?? 0);
-  const balanceFormatted = formatNumber(token.balance ?? 0, decimals);
-  return toBaseUnits(balanceFormatted, decimals);
+  const balance = token.balance ?? 0;
+  if (!isFinite(balance) || balance <= 0) return BigInt(0);
+  const decimalsForFormat = Math.min(decimals, 20);
+  const formatted = balance.toFixed(decimalsForFormat);
+  const base = toBaseUnits(formatted, decimalsForFormat);
+  if (decimals > decimalsForFormat) {
+    const scale = BigInt(10) ** BigInt(decimals - decimalsForFormat);
+    return base * scale;
+  }
+  return base;
 };
 
 export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {

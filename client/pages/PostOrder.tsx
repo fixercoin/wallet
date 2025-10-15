@@ -117,9 +117,13 @@ export default function PostOrder() {
   const [adminToken, setAdminToken] = useState("");
 
   // Buy form
-  const [buyAmountPKR, setBuyAmountPKR] = useState<number | "">("");
+  const [buyMinPKR, setBuyMinPKR] = useState<number | "">("");
+  const [buyMaxPKR, setBuyMaxPKR] = useState<number | "">("");
   const [buyToken, setBuyToken] = useState("USDC");
   const [buyPrice, setBuyPrice] = useState<number | "">("");
+  const [buyAccountName, setBuyAccountName] = useState("");
+  const [buyAccountNumber, setBuyAccountNumber] = useState("");
+  const [buyPaymentChannel, setBuyPaymentChannel] = useState("easypaisa");
 
   // Sell form
   const [sellToken, setSellToken] = useState("USDC");
@@ -128,6 +132,8 @@ export default function PostOrder() {
   const [sellTokenPricePKR, setSellTokenPricePKR] = useState<number | "">("");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [sellWalletAddress, setSellWalletAddress] = useState("");
+  const [sellNetwork, setSellNetwork] = useState("");
 
   const handleSave = async () => {
     try {

@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useCallback,
-  useRef,
-} from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
   Lock as LockIcon,
@@ -328,11 +322,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   const [selectedMint, setSelectedMint] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
-  const [autoWithdraw, setAutoWithdraw] = useState<boolean>(true);
+  const [autoWithdraw, setAutoWithdraw] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [locks, setLocks] = useState<TokenLockRecord[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
-  const autoWithdrawRunning = useRef(false);
   const [selectedLockOption, setSelectedLockOption] =
     useState<string>("3months");
 
@@ -535,43 +528,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             variant: "destructive",
           });
         }
-        throw error;
       }
     },
     [wallet, refreshTokens, toast],
   );
-
-  const runAutoWithdraw = useCallback(async () => {
-    if (!wallet) return;
-    if (autoWithdrawRunning.current) return;
-    autoWithdrawRunning.current = true;
-    try {
-      const readyLocks = locks.filter((lock) => {
-        if (lock.status !== "locked" || !lock.autoWithdraw) return false;
-        const unlockAt = new Date(lock.unlockAt).getTime();
-        return Date.now() >= unlockAt;
-      });
-      for (const lock of readyLocks) {
-        try {
-          await performWithdraw(lock, { auto: true });
-        } catch (error) {
-          console.error("Auto-withdraw failed", error);
-        }
-      }
-    } finally {
-      autoWithdrawRunning.current = false;
-    }
-  }, [wallet, locks, performWithdraw]);
-
-  useEffect(() => {
-    if (!wallet) return;
-    const interval = setInterval(() => {
-      runAutoWithdraw().catch((error) =>
-        console.error("Auto-withdraw tick failed", error),
-      );
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [wallet, runAutoWithdraw]);
 
   const handleSubmit = async () => {
     const validationError = validateForm();
@@ -603,8 +563,12 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       const sourceAta = deriveAta(walletKeypair.publicKey, mint);
       const destinationAta = deriveAta(escrowKeypair.publicKey, mint);
 
-      const selectedOption = LOCK_OPTIONS.find((o) => o.id === selectedLockOption);
-      const durationMs = selectedOption ? selectedOption.ms : DEFAULT_LOCK_DURATION_MS;
+      const selectedOption = LOCK_OPTIONS.find(
+        (o) => o.id === selectedLockOption,
+      );
+      const durationMs = selectedOption
+        ? selectedOption.ms
+        : DEFAULT_LOCK_DURATION_MS;
 
       const provisional: TokenLockRecord = {
         id: lockId,
@@ -615,7 +579,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         decimals: selectedToken.decimals ?? 0,
         createdAt: new Date().toISOString(),
         unlockAt: new Date(Date.now() + durationMs).toISOString(),
-        autoWithdraw,
+        autoWithdraw: false,
         escrowPublicKey: escrowKeypair.publicKey.toBase58(),
         escrowSecretKey: base64FromBytes(escrowKeypair.secretKey),
         status: "locked",
@@ -721,8 +685,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
             <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]"></h1>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
-              Securely hold tokens without rewards. Unlocks automatically when
-              the lock completes.
+              Securely hold tokens without rewards. Unlock manually after the
+              lock ends.
             </p>
           </div>
         </div>
@@ -805,22 +769,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               </Select>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-[hsl(var(--foreground))]">
-                  Auto-withdraw
-                </div>
-                <p className="text-[10px] text-gray-500">
-                  Release tokens automatically after the lock ends.
-                </p>
-              </div>
-              <Switch
-                checked={autoWithdraw}
-                onCheckedChange={setAutoWithdraw}
-                disabled={isFormDisabled}
-              />
-            </div>
-
             <Button
               className="w-full h-11 dash-btn font-semibold border-0"
               onClick={handleSubmit}
@@ -894,6 +842,37 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           </a>
                         </div>
                       </div>
+                      {lock.lockSignature || lock.withdrawSignature ? (
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          {lock.lockSignature ? (
+                            <>
+                              Lock tx:{" "}
+                              <a
+                                className="font-medium text-blue-600 underline-offset-4 hover:underline"
+                                href={`https://solscan.io/tx/${lock.lockSignature}`}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {shortenAddress(lock.lockSignature, 6)}
+                              </a>
+                            </>
+                          ) : null}
+                          {lock.withdrawSignature ? (
+                            <>
+                              <span className="mx-1">•</span>
+                              Withdraw tx:{" "}
+                              <a
+                                className="font-medium text-blue-600 underline-offset-4 hover:underline"
+                                href={`https://solscan.io/tx/${lock.withdrawSignature}`}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {shortenAddress(lock.withdrawSignature, 6)}
+                              </a>
+                            </>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <Badge
                         className="uppercase text-[10px]"
                         variant={
@@ -933,25 +912,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={lock.autoWithdraw}
-                          onCheckedChange={(value) =>
-                            updateLockAutoWithdraw(lock.id, value)
-                          }
-                          disabled={
-                            isWithdrawn || lock.status === "withdrawing"
-                          }
-                        />
-                        <div>
-                          <div className="text-[11px] font-medium text-[hsl(var(--foreground))]">
-                            Auto-withdraw
-                          </div>
-                          <div className="text-[10px] text-gray-500">
-                            {lock.autoWithdraw ? "Enabled" : "Disabled"}
-                          </div>
-                        </div>
-                      </div>
+                      <div></div>
                       <Button
                         size="sm"
                         className="dash-btn h-9 px-4 text-xs font-semibold"

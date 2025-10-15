@@ -125,6 +125,30 @@ async function tryDexEndpoints(path: string) {
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
 }
 
+// In-memory cache and inflight dedupe (best-effort per function instance)
+const DEX_CACHE_TTL_MS = 30_000;
+const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const DEX_INFLIGHT = new Map<string, Promise<any>>();
+
+async function fetchDexData(path: string) {
+  const now = Date.now();
+  const cached = DEX_CACHE.get(path);
+  if (cached && cached.expiresAt > now) return cached.data;
+  const existing = DEX_INFLIGHT.get(path);
+  if (existing) return existing;
+  const request = (async () => {
+    try {
+      const data = await tryDexEndpoints(path);
+      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
+      return data;
+    } finally {
+      DEX_INFLIGHT.delete(path);
+    }
+  })();
+  DEX_INFLIGHT.set(path, request);
+  return request;
+}
+
 type BinanceCacheEntry = {
   expiresAt: number;
   data: any;
@@ -470,7 +494,14 @@ export const handler = async (event: any) => {
       const mints = event.queryStringParameters?.mints;
       if (!mints)
         return jsonResponse(400, { error: "Missing 'mints' query parameter" });
-      const data = await tryDexEndpoints(`/tokens/${mints}`);
+      const rawMints = String(mints)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const uniqSorted = Array.from(new Set(rawMints)).sort();
+      if (uniqSorted.length === 0)
+        return jsonResponse(400, { error: "No valid token mints provided" });
+      const data = await fetchDexData(`/tokens/${uniqSorted.join(",")}`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs.filter((p: any) => p?.chainId === "solana")
         : [];
@@ -485,7 +516,7 @@ export const handler = async (event: any) => {
       const q = event.queryStringParameters?.q;
       if (!q)
         return jsonResponse(400, { error: "Missing 'q' query parameter" });
-      const data = await tryDexEndpoints(`/search/?q=${encodeURIComponent(q)}`);
+      const data = await fetchDexData(`/search/?q=${encodeURIComponent(q)}`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20)
         : [];
@@ -497,7 +528,7 @@ export const handler = async (event: any) => {
 
     // DexScreener: trending
     if (path === "/dexscreener/trending" && method === "GET") {
-      const data = await tryDexEndpoints(`/pairs/solana`);
+      const data = await fetchDexData(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
             .filter(

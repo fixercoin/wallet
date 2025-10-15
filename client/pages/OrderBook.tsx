@@ -81,7 +81,7 @@ export default function OrderBook() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/express/post-order")}
+            onClick={() => navigate("/")}
             className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))]"
             aria-label="Back"
           >

@@ -42,6 +42,11 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [paymentDetails, setPaymentDetails] = useState<{
+    accountName: string;
+    accountNumber: string;
+    method: "easypaisa" | "bank_account";
+  } | null>(null);
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [buyTokenMint, setBuyTokenMint] = useState<string>("USDC");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");

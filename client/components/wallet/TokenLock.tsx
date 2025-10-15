@@ -856,6 +856,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         <div className="text-[10px] text-gray-500">
                           Locked on {formatDateTime(lock.createdAt)}
                         </div>
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          Held by: <a className="font-medium text-orange-500 underline-offset-4 hover:underline" href={`https://solscan.io/account/${lock.escrowPublicKey}`} target="_blank" rel="noreferrer">{shortenAddress(lock.escrowPublicKey, 6)}</a>
+                        </div>
                       </div>
                       <Badge
                         className="uppercase text-[10px]"

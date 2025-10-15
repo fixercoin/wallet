@@ -79,6 +79,14 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const [showPendingPrompt, setShowPendingPrompt] = useState(false);
 
   useEffect(() => {
+    if (showPaymentPrompt) {
+      setPaymentAccountName(paymentDetails?.accountName ?? "");
+      setPaymentAccountNumber(paymentDetails?.accountNumber ?? "");
+      setPaymentMethodChoice(paymentDetails?.method ?? "easypaisa");
+    }
+  }, [showPaymentPrompt, paymentDetails]);
+
+  useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
 

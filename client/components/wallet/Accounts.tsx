@@ -11,7 +11,9 @@ interface AccountsProps {
 }
 
 export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
-  const { wallet, wallets, selectWallet } = useWallet();
+  const { wallet, wallets, selectWallet, updateWalletLabel } = useWallet();
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [labelInput, setLabelInput] = useState<string>("");
 
   const handleCopy = async () => {
     if (!wallet) return;

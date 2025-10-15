@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useCallback,
-  
-} from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
   Lock as LockIcon,
@@ -569,8 +563,12 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       const sourceAta = deriveAta(walletKeypair.publicKey, mint);
       const destinationAta = deriveAta(escrowKeypair.publicKey, mint);
 
-      const selectedOption = LOCK_OPTIONS.find((o) => o.id === selectedLockOption);
-      const durationMs = selectedOption ? selectedOption.ms : DEFAULT_LOCK_DURATION_MS;
+      const selectedOption = LOCK_OPTIONS.find(
+        (o) => o.id === selectedLockOption,
+      );
+      const durationMs = selectedOption
+        ? selectedOption.ms
+        : DEFAULT_LOCK_DURATION_MS;
 
       const provisional: TokenLockRecord = {
         id: lockId,
@@ -687,7 +685,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
             <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]"></h1>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
-              Securely hold tokens without rewards. Unlock manually after the lock ends.
+              Securely hold tokens without rewards. Unlock manually after the
+              lock ends.
             </p>
           </div>
         </div>
@@ -769,7 +768,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 </SelectContent>
               </Select>
             </div>
-
 
             <Button
               className="w-full h-11 dash-btn font-semibold border-0"

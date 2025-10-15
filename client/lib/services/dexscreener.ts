@@ -58,7 +58,10 @@ class DexscreenerAPI {
   // Using server proxy routes to avoid CORS issues
   private readonly baseUrl = "/api/dexscreener";
   private static TOKEN_CACHE_TTL_MS = 30_000;
-  private static tokenCache = new Map<string, { token: DexscreenerToken; expiresAt: number }>();
+  private static tokenCache = new Map<
+    string,
+    { token: DexscreenerToken; expiresAt: number }
+  >();
 
   // Helper method to extract prices from DexScreener data
   getTokenPrices(tokens: DexscreenerToken[]): Record<string, number> {
@@ -78,7 +81,9 @@ class DexscreenerAPI {
   }
 
   async getTokensByMints(mints: string[]): Promise<DexscreenerToken[]> {
-    const normalizedMints = Array.from(new Set((mints || []).map((m) => m.trim()).filter(Boolean))).sort();
+    const normalizedMints = Array.from(
+      new Set((mints || []).map((m) => m.trim()).filter(Boolean)),
+    ).sort();
     console.log(
       `DexScreener: Fetching tokens via proxy for ${normalizedMints.length} mints`,
     );

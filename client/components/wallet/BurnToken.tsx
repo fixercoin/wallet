@@ -522,7 +522,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           {token.symbol || token.mint.slice(0, 6)}
                         </span>
                         <span className="text-[10px] text-gray-500 uppercase">
-                          Balance: {" "}
+                          Balance:{" "}
                           {formatNumber(token.balance, token.decimals ?? 0)}
                         </span>
                       </div>
@@ -546,7 +546,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                       Selected token
                     </p>
                     <p className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                      {selectedToken.symbol || selectedToken.mint.slice(0, 6)} · {" "}
+                      {selectedToken.symbol || selectedToken.mint.slice(0, 6)} ·{" "}
                       {formatNumber(
                         selectedToken.balance,
                         selectedToken.decimals ?? 0,
@@ -604,7 +604,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               {selectedToken ? (
                 <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500">
                   <span>
-                    Available: {" "}
+                    Available:{" "}
                     {formatNumber(
                       selectedToken.balance,
                       selectedToken.decimals ?? 0,
@@ -655,7 +655,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             <div className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
               {txSig ? (
                 <div className="break-all">
-                  Burn transaction: {" "}
+                  Burn transaction:{" "}
                   <a
                     className="font-medium text-orange-500 underline-offset-4 hover:underline"
                     href={`https://solscan.io/tx/${txSig}`}
@@ -668,7 +668,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               ) : null}
               {rewardSig ? (
                 <div className="break-all">
-                  Reward transaction: {" "}
+                  Reward transaction:{" "}
                   <a
                     className="font-medium text-orange-500 underline-offset-4 hover:underline"
                     href={`https://solscan.io/tx/${rewardSig}`}

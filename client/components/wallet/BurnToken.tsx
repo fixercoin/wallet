@@ -449,31 +449,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       await confirmSignatureProxy(signature);
       setTxSig(signature);
 
-      if (isFixerSelected) {
-        const rewardResponse = await fetch(
-          resolveApiUrl("/api/reward-locker"),
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              recipient: REWARD_SINK_WALLET,
-              burnSignature: signature,
-              amountRaw: amtRaw.toString(),
-              fixerMint: FIXER_MINT_ADDRESS,
-              lockerMint: LOCKER_MINT_ADDRESS,
-            }),
-          },
-        );
-        if (!rewardResponse.ok) {
-          const text = await rewardResponse.text().catch(() => "");
-          throw new Error(
-            text || `Reward request failed: ${rewardResponse.status}`,
-          );
-        }
-        const rewardJson = await rewardResponse.json().catch(() => ({}));
-        if (rewardJson?.signature) setRewardSig(rewardJson.signature);
-      }
-
+      // Show success toast immediately after burn is confirmed
       toast({
         title: "Burn complete",
         description: `${amount} ${selectedToken.symbol} burned successfully.`,
@@ -484,6 +460,43 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       setTimeout(() => {
         refreshTokens();
       }, 1500);
+
+      // Attempt to route rewards (non-fatal). If it fails, show a non-destructive toast.
+      if (isFixerSelected) {
+        try {
+          const rewardResponse = await fetch(
+            resolveApiUrl("/api/reward-locker"),
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: REWARD_SINK_WALLET,
+                burnSignature: signature,
+                amountRaw: amtRaw.toString(),
+                fixerMint: FIXER_MINT_ADDRESS,
+                lockerMint: LOCKER_MINT_ADDRESS,
+              }),
+            },
+          );
+          if (!rewardResponse.ok) {
+            const text = await rewardResponse.text().catch(() => "");
+            console.error("Reward request failed:", text || rewardResponse.status);
+            toast({
+              title: "Reward routing failed",
+              description: text || `Reward request failed: ${rewardResponse.status}`,
+            });
+          } else {
+            const rewardJson = await rewardResponse.json().catch(() => ({}));
+            if (rewardJson?.signature) setRewardSig(rewardJson.signature);
+          }
+        } catch (err) {
+          console.error("Reward routing error:", err);
+          toast({
+            title: "Reward routing failed",
+            description: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
     } catch (error) {
       console.error(error);
       const message = error instanceof Error ? error.message : String(error);

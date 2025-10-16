@@ -280,15 +280,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      {isLoading ? (
-        <div className="dashboard-loader-overlay">
-          <div
-            className="dashboard-loader"
-            role="status"
-            aria-label="Loading dashboard data"
-          />
-        </div>
-      ) : null}
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">

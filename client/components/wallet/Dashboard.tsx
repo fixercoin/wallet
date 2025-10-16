@@ -79,6 +79,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
+  const [showDotLoader, setShowDotLoader] = useState(false);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowDotLoader(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -347,6 +353,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+
+          {/* Centered three-dots loader (appears after 2s) */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {showDotLoader ? (
+              <div className="three-dots" role="status" aria-label="Dashboard loading">
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

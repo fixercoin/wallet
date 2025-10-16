@@ -257,9 +257,9 @@
     justify-content: center;
     align-items: center;
     --color: hsl(var(--primary));
-    --animation: 2s ease-in-out infinite;
+    --animation: 1.6s ease-in-out infinite;
     background-color: white;
-    padding: 4px;
+    padding: 2px;
     border-radius: 9999px;
   }
 
@@ -268,11 +268,11 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    width: 20px;
-    height: 20px;
-    border: solid 2px var(--color);
+    width: 14px;
+    height: 14px;
+    border: solid 1.5px var(--color);
     border-radius: 50%;
-    margin: 0 6px;
+    margin: 0 4px;
     background-color: transparent;
     animation: circle-keys var(--animation);
   }
@@ -280,8 +280,8 @@
   .loader .circle .dot {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: var(--color);
     animation: dot-keys var(--animation);
@@ -290,8 +290,8 @@
   .loader .circle .outline {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     animation: outline-keys var(--animation);
   }

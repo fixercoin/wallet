@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { shortenAddress } from "@/lib/wallet";
 import type { TokenInfo } from "@/lib/wallet";
 import {
   Keypair,
@@ -632,8 +633,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
       await refreshTokens();
       toast({
-        title: "Tokens locked",
-        description: `${amount} ${provisional.symbol} locked for ${selectedOption ? selectedOption.label : "3 months"}`,
+        title: "Success",
+        description: `You have locked your SPL tokens - ${amount} ${provisional.symbol}`,
       });
       setAmount("");
     } catch (error) {

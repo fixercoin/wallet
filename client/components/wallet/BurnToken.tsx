@@ -173,24 +173,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   const { wallet, tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
 
-  const handleCopyRewardWallet = useCallback(async () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(REWARD_SINK_WALLET);
-        toast({
-          title: "Rewards wallet copied",
-          description: "Address copied to clipboard.",
-        });
-        return;
-      } catch (error) {
-        // Fallback toast below when automatic copy fails
-      }
-    }
-    toast({
-      title: "Rewards wallet address",
-      description: REWARD_SINK_WALLET,
-    });
-  }, [toast]);
 
   const splTokens = useMemo(
     () =>

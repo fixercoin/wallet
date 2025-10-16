@@ -366,7 +366,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
         </div>
       </div>
 

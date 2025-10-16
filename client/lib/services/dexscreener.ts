@@ -121,7 +121,9 @@ class DexscreenerAPI {
       }
     });
 
-    console.log(`DexScreener: Extracted ${Object.keys(prices).length} prices`);
+    console.log(
+      `[DexScreener] Extracted ${Object.keys(prices).length} prices from ${tokens.length} tokens`
+    );
     return prices;
   }
 
@@ -212,9 +214,15 @@ class DexscreenerAPI {
       }
     });
 
-    return normalizedMints
+    const result = normalizedMints
       .map((m) => allTokensMap.get(m))
       .filter((t): t is DexscreenerToken => Boolean(t));
+
+    console.log(
+      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"})`
+    );
+
+    return result;
   }
 
   async getTokenByMint(mint: string): Promise<DexscreenerToken | null> {

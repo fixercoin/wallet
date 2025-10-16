@@ -6,6 +6,7 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
+import { BuySellLine } from "./token-detail/BuySellLine";
 
 interface TokenDetailProps {
   tokenMint: string;

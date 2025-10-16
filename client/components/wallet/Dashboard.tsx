@@ -294,9 +294,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-1 ml-auto">
             {/* Loader placed next to dropdown menus (left of dropdown) */}
             {showDotLoader ? (
-              <div className="mr-2 three-dots pointer-events-none" role="status" aria-label="Dashboard loading">
-                <span className="dot" />
-                <span className="dot" />
+              <div className="mr-2 orbit-loader pointer-events-none" role="status" aria-label="Dashboard loading">
                 <span className="dot" />
               </div>
             ) : null}

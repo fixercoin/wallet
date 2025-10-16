@@ -409,10 +409,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
-        if (Object.keys(prices).length > 0) {
+        const solMint = "So11111111111111111111111111111111111111112";
+        if (Object.keys(prices).length > 0 && prices[solMint]) {
           priceSource = "dexscreener";
         } else {
-          throw new Error("DexScreener returned no prices");
+          throw new Error(
+            `DexScreener incomplete: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`
+          );
         }
       } catch (dexError) {
         try {

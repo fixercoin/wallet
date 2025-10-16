@@ -322,7 +322,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
       style={{
-        transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : undefined,
+        transform:
+          pullDistance > 0 ? `translateY(${pullDistance}px)` : undefined,
         transition: isPulling ? "none" : "transform 0.2s ease",
       }}
     >

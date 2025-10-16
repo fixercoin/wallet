@@ -372,12 +372,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             prices = {};
           }
 
-          // If SOL price is missing from DexScreener, don't throw - let it fall through to Jupiter/CoinGecko
+          // If SOL price is missing from DexScreener, don't throw immediately
+          // Accept partial data and let Jupiter/CoinGecko fill in gaps
           const solMint = "So11111111111111111111111111111111111111112";
-          if (!prices[solMint]) {
-            throw new Error("SOL price missing from DexScreener");
+          const hasSufficientData = Object.keys(prices).length > 0 && prices[solMint];
+
+          if (!hasSufficientData) {
+            throw new Error(
+              `DexScreener incomplete: got ${Object.keys(prices).length} prices`
+            );
           }
         } catch (dexErr) {
+          console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};
         }
 
@@ -390,7 +396,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               changeMap[fixercoinMint] = fixerData.priceChange24h;
             }
           }
-        } catch {}
+        } catch (err) {
+          console.warn("Failed to fetch FIXERCOIN price:", err);
+        }
 
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         if (!prices[lockerMint] || typeof changeMap[lockerMint] !== "number") {
@@ -405,7 +413,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 changeMap[lockerMint] = lockerDex.priceChange.h24;
             }
           } catch (e) {
-            // noop
+            console.warn("Failed to fetch LOCKER price from DexScreener:", e);
           }
         }
 
@@ -414,7 +422,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           priceSource = "dexscreener";
         } else {
           throw new Error(
-            `DexScreener incomplete: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`
+            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`
           );
         }
       } catch (dexError) {

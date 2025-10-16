@@ -529,45 +529,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </span>
           </div>
 
-          <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50/70 p-4 space-y-3">
-            <p className="text-xs uppercase tracking-wide text-orange-600">
-              Rewards &amp; dead wallet
-            </p>
-            <p className="text-xs text-orange-700">
-              All rewards and dead tokens are routed to this address. Individual
-              users do not receive reward payouts.
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCopyRewardWallet}
-                className="rounded bg-white/80 px-3 py-1 text-[12px] font-mono text-orange-700 hover:underline cursor-pointer"
-                aria-label="Copy rewards wallet address"
-              >
-                {shortenAddress(REWARD_SINK_WALLET, 6)}
-              </button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 rounded-full border border-orange-200 bg-white/80 text-orange-600 hover:bg-white"
-                onClick={handleCopyRewardWallet}
-              >
-                <Copy className="mr-1.5 h-3.5 w-3.5" />
-                Copy
-              </Button>
-
-              <a
-                className="text-xs font-semibold text-orange-600 underline-offset-4 hover:underline"
-                href={`https://solscan.io/account/${REWARD_SINK_WALLET}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View on Solscan
-              </a>
-            </div>
-          </div>
 
           <div className="space-y-4">
             <div>

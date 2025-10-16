@@ -472,10 +472,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           }
         } catch (err) {
           console.error("Reward routing error:", err);
-          toast({
-            title: "Reward routing failed",
-            description: err instanceof Error ? err.message : String(err),
-          });
         }
       }
     } catch (error) {

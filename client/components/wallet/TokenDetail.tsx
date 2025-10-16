@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Copy } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
-import { BuySellPieChart } from "./token-detail/BuySellPieChart";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -41,21 +40,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
-
-  const handleCopyAddress = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        (enhancedToken || token)?.mint || tokenMint,
-      );
-      toast({ title: "Copied", description: "Contract address copied" });
-    } catch (e) {
-      toast({
-        title: "Copy failed",
-        description: "Unable to copy address",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Find the token from the tokens list
   const token = tokens.find((t) => t.mint === tokenMint);
@@ -145,9 +129,18 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             withinCard
           />
 
-          {/* Action Buttons */}
-          <div className="px-4 pb-3">
-            <div className="grid grid-cols-4 gap-2">
+          {/* Chart and actions */}
+          <div className="px-4 pb-4 space-y-3">
+            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+              <iframe
+                width="100%"
+                height={400}
+                src="https://birdeye.so/tv-widget/H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump/5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy?chain=solana&viewMode=pair&chartInterval=1D&chartType=Candle&chartTimezone=Asia%2FKarachi&chartLeftToolbar=show&theme=dark&cssCustomProperties=--tv-color-platform-background%3A%23f0f0f1&cssCustomProperties=--tv-color-pane-background%3A%23f8f8fa&chartOverrides=paneProperties.backgroundGradientStartColor%3Argba%28253%2C+253%2C+253%2C+1%29&chartOverrides=paneProperties.backgroundGradientEndColor%3Argba%28249%2C+249%2C+250%2C+1%29"
+                frameBorder={0}
+                allowFullScreen
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}
                 className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
@@ -159,44 +152,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                 className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
               >
                 SELL
-              </Button>
-              <Button
-                onClick={() => onSend(tokenMint)}
-                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
-              >
-                SEND
-              </Button>
-              <Button
-                onClick={() => onReceive(tokenMint)}
-                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
-              >
-                RECIEVE
-              </Button>
-            </div>
-          </div>
-
-          <div className="px-4 pb-4">
-            <BuySellPieChart mint={displayToken.mint} />
-          </div>
-
-          <div className="px-4 pb-2">
-            <div className="bg-[hsl(var(--card))] rounded-lg p-3 flex items-center justify-between border-t border-[hsl(var(--border))]">
-              <div className="min-w-0">
-                <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Contract Address
-                </div>
-                <code className="text-[hsl(var(--foreground))] text-xs break-all">
-                  {displayToken.mint}
-                </code>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyAddress}
-                className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/10"
-                aria-label="Copy contract address"
-              >
-                <Copy className="h-4 w-4" />
               </Button>
             </div>
           </div>

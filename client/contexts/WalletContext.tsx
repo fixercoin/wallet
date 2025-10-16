@@ -18,6 +18,7 @@ import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -370,7 +371,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           } else {
             prices = {};
           }
+
+          // If SOL price is missing from DexScreener, don't throw immediately
+          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          const solMint = "So11111111111111111111111111111111111111112";
+          const hasSufficientData =
+            Object.keys(prices).length > 0 && prices[solMint];
+
+          if (!hasSufficientData) {
+            throw new Error(
+              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
+            );
+          }
         } catch (dexErr) {
+          console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};
         }
 
@@ -383,7 +397,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               changeMap[fixercoinMint] = fixerData.priceChange24h;
             }
           }
-        } catch {}
+        } catch (err) {
+          console.warn("Failed to fetch FIXERCOIN price:", err);
+        }
 
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         if (!prices[lockerMint] || typeof changeMap[lockerMint] !== "number") {
@@ -398,14 +414,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 changeMap[lockerMint] = lockerDex.priceChange.h24;
             }
           } catch (e) {
-            // noop
+            console.warn("Failed to fetch LOCKER price from DexScreener:", e);
           }
         }
 
-        if (Object.keys(prices).length > 0) {
+        const solMint = "So11111111111111111111111111111111111111112";
+        if (Object.keys(prices).length > 0 && prices[solMint]) {
           priceSource = "dexscreener";
         } else {
-          throw new Error("DexScreener returned no prices");
+          throw new Error(
+            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`,
+          );
         }
       } catch (dexError) {
         try {
@@ -417,13 +436,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             throw new Error("Jupiter also returned no prices");
           }
         } catch (jupiterError) {
-          prices = { So11111111111111111111111111111111111111112: 100 };
+          try {
+            const solPricePromise = solPriceService.getSolPrice();
+            const timeout = new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), 3000),
+            );
+            const solPriceData = await Promise.race([solPricePromise, timeout]);
+            prices = {
+              So11111111111111111111111111111111111111112:
+                solPriceData?.price || 100,
+            };
+            priceSource = solPriceData ? "coingecko" : "static";
+          } catch {
+            prices = { So11111111111111111111111111111111111111112: 100 };
+            priceSource = "static";
+          }
           try {
             const fixercoinPrice = await fixercoinPriceService.getPrice();
             prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
               fixercoinPrice;
           } catch {}
-          priceSource = "static";
         }
       }
 
@@ -455,6 +487,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         };
       });
 
+      console.log(
+        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
+      );
       setTokens(enhancedTokens);
     } catch (error) {
       console.error("Error refreshing tokens:", error);

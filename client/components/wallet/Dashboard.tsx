@@ -79,11 +79,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
-  const [showDotLoader, setShowDotLoader] = useState(false);
-
   useEffect(() => {
-    const t = window.setTimeout(() => setShowDotLoader(true), 2000);
-    return () => clearTimeout(t);
+    const alreadyRefreshed = sessionStorage.getItem("dashboard_refreshed_once");
+    if (!alreadyRefreshed) {
+      const t = window.setTimeout(() => {
+        try {
+          sessionStorage.setItem("dashboard_refreshed_once", "1");
+        } catch {}
+        window.location.reload();
+      }, 2000);
+      return () => clearTimeout(t);
+    }
   }, []);
 
   const handleCopyAddress = async () => {

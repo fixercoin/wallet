@@ -18,6 +18,7 @@ import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 

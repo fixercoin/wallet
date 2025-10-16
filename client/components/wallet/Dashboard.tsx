@@ -352,29 +352,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </DropdownMenu>
           </div>
 
-          {/* Centered loader (appears after 2s) */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 pointer-events-none">
-            {showDotLoader ? (
-              <div
-                className="loader"
-                role="status"
-                aria-label="Dashboard loading"
-              >
-                <div className="circle">
-                  <div className="dot" />
-                  <div className="outline" />
-                </div>
-                <div className="circle">
-                  <div className="dot" />
-                  <div className="outline" />
-                </div>
-                <div className="circle">
-                  <div className="dot" />
-                  <div className="outline" />
-                </div>
-              </div>
-            ) : null}
-          </div>
         </div>
       </div>
 

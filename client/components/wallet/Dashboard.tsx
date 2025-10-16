@@ -309,35 +309,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2 text-xs"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span>ALL WALLET</span>
+                  <span>MY-WALLET</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onAirdrop}
                   className="flex items-center gap-2 text-xs"
                 >
                   <Gift className="h-4 w-4" />
-                  <span>MULTI-SEND</span>
+                  <span>C-BUILDER</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onBurn}
                   className="flex items-center gap-2 text-xs"
                 >
                   <Flame className="h-4 w-4" />
-                  <span>BURNING</span>
+                  <span>SPL-BURN</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onLock}
                   className="flex items-center gap-2 text-xs"
                 >
                   <Lock className="h-4 w-4" />
-                  <span>LOCKING</span>
+                  <span>LOCK-SPL</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => navigate("/fixorium/token-listing")}
                   className="flex items-center gap-2 text-xs"
                 >
                   <Coins className="h-4 w-4" />
-                  <span>TOKEN-LIST</span>
+                  <span>LISTING</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

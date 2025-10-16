@@ -338,9 +338,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
         try {
-          let dexTokens = [] as any[];
+          let dexTokens: any[] = [];
           try {
-            dexTokens = await dexscreenerAPI.getTokensByMints(tokenMints);
+            const dexPromise = dexscreenerAPI.getTokensByMints(tokenMints);
+            const timeout = new Promise<any[]>((resolve) =>
+              setTimeout(() => resolve([]), 4500),
+            );
+            dexTokens = await Promise.race([dexPromise, timeout]);
           } catch (fetchErr) {
             dexTokens = [];
           }

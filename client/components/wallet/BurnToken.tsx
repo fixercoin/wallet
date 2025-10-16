@@ -552,9 +552,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               users do not receive reward payouts.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="rounded bg-white/80 px-2 py-1 text-[11px] font-mono text-orange-700">
-                {REWARD_SINK_WALLET}
-              </code>
+              <button
+                type="button"
+                onClick={handleCopyRewardWallet}
+                className="rounded bg-white/80 px-3 py-1 text-[12px] font-mono text-orange-700 hover:underline cursor-pointer"
+                aria-label="Copy rewards wallet address"
+              >
+                {shortenAddress(REWARD_SINK_WALLET, 6)}
+              </button>
+
               <Button
                 type="button"
                 variant="ghost"
@@ -565,6 +571,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 <Copy className="mr-1.5 h-3.5 w-3.5" />
                 Copy
               </Button>
+
               <a
                 className="text-xs font-semibold text-orange-600 underline-offset-4 hover:underline"
                 href={`https://solscan.io/account/${REWARD_SINK_WALLET}`}

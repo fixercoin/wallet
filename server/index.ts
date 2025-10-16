@@ -1,8 +1,16 @@
 import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
-import { handleDexscreenerTokens, handleDexscreenerSearch, handleDexscreenerTrending } from "./routes/dexscreener-proxy";
-import { handleJupiterPrice, handleJupiterQuote, handleJupiterSwap } from "./routes/jupiter-proxy";
+import {
+  handleDexscreenerTokens,
+  handleDexscreenerSearch,
+  handleDexscreenerTrending,
+} from "./routes/dexscreener-proxy";
+import {
+  handleJupiterPrice,
+  handleJupiterQuote,
+  handleJupiterSwap,
+} from "./routes/jupiter-proxy";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

@@ -70,9 +70,7 @@ class DexscreenerAPI {
 
   private loadPersistentCache(): void {
     try {
-      const cached = localStorage.getItem(
-        DexscreenerAPI.PERSISTENT_CACHE_KEY
-      );
+      const cached = localStorage.getItem(DexscreenerAPI.PERSISTENT_CACHE_KEY);
       if (cached) {
         const data = JSON.parse(cached) as Record<
           string,
@@ -82,7 +80,7 @@ class DexscreenerAPI {
           DexscreenerAPI.tokenCache.set(mint, entry);
         });
         console.log(
-          `DexScreener: Loaded ${Object.keys(data).length} tokens from persistent cache`
+          `DexScreener: Loaded ${Object.keys(data).length} tokens from persistent cache`,
         );
       }
     } catch (err) {
@@ -101,7 +99,7 @@ class DexscreenerAPI {
       });
       localStorage.setItem(
         DexscreenerAPI.PERSISTENT_CACHE_KEY,
-        JSON.stringify(data)
+        JSON.stringify(data),
       );
     } catch (err) {
       console.warn("Failed to save DexScreener persistent cache:", err);
@@ -122,7 +120,7 @@ class DexscreenerAPI {
     });
 
     console.log(
-      `[DexScreener] Extracted ${Object.keys(prices).length} prices from ${tokens.length} tokens`
+      `[DexScreener] Extracted ${Object.keys(prices).length} prices from ${tokens.length} tokens`,
     );
     return prices;
   }
@@ -146,7 +144,7 @@ class DexscreenerAPI {
     });
 
     console.log(
-      `[DexScreener] Fetching ${normalizedMints.length} tokens: ${cachedResults.length} from cache, ${toFetch.length} to fetch`
+      `[DexScreener] Fetching ${normalizedMints.length} tokens: ${cachedResults.length} from cache, ${toFetch.length} to fetch`,
     );
 
     let fetchedTokens: DexscreenerToken[] = [];
@@ -172,10 +170,7 @@ class DexscreenerAPI {
       } catch (err) {
         // network/timeout -> swallow; fallback to stale cache
         fetchFailed = true;
-        console.warn(
-          `DexScreener fetch failed for mints: ${mintString}`,
-          err
-        );
+        console.warn(`DexScreener fetch failed for mints: ${mintString}`, err);
       } finally {
         clearTimeout(timeoutId);
       }
@@ -183,7 +178,9 @@ class DexscreenerAPI {
 
     // If fetch failed, try to serve stale cached data instead of failing completely
     if (fetchFailed && toFetch.length > 0) {
-      console.log(`DexScreener: Serving stale cache for ${toFetch.length} tokens`);
+      console.log(
+        `DexScreener: Serving stale cache for ${toFetch.length} tokens`,
+      );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
         if (stale) {
@@ -219,7 +216,7 @@ class DexscreenerAPI {
       .filter((t): t is DexscreenerToken => Boolean(t));
 
     console.log(
-      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"})`
+      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"})`,
     );
 
     return result;

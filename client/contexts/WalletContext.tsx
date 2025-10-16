@@ -375,11 +375,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           // If SOL price is missing from DexScreener, don't throw immediately
           // Accept partial data and let Jupiter/CoinGecko fill in gaps
           const solMint = "So11111111111111111111111111111111111111112";
-          const hasSufficientData = Object.keys(prices).length > 0 && prices[solMint];
+          const hasSufficientData =
+            Object.keys(prices).length > 0 && prices[solMint];
 
           if (!hasSufficientData) {
             throw new Error(
-              `DexScreener incomplete: got ${Object.keys(prices).length} prices`
+              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
             );
           }
         } catch (dexErr) {
@@ -422,7 +423,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           priceSource = "dexscreener";
         } else {
           throw new Error(
-            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`
+            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`,
           );
         }
       } catch (dexError) {
@@ -442,7 +443,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
             const solPriceData = await Promise.race([solPricePromise, timeout]);
             prices = {
-              So11111111111111111111111111111111111111112: solPriceData?.price || 100
+              So11111111111111111111111111111111111111112:
+                solPriceData?.price || 100,
             };
             priceSource = solPriceData ? "coingecko" : "static";
           } catch {
@@ -486,7 +488,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
 
       console.log(
-        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`
+        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
       setTokens(enhancedTokens);
     } catch (error) {

@@ -371,6 +371,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           } else {
             prices = {};
           }
+
+          // If SOL price is missing from DexScreener, don't throw - let it fall through to Jupiter/CoinGecko
+          const solMint = "So11111111111111111111111111111111111111112";
+          if (!prices[solMint]) {
+            throw new Error("SOL price missing from DexScreener");
+          }
         } catch (dexErr) {
           prices = {};
         }

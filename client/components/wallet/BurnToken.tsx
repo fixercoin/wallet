@@ -480,10 +480,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           );
           if (!rewardResponse.ok) {
             const text = await rewardResponse.text().catch(() => "");
-            console.error("Reward request failed:", text || rewardResponse.status);
+            console.error(
+              "Reward request failed:",
+              text || rewardResponse.status,
+            );
             toast({
               title: "Reward routing failed",
-              description: text || `Reward request failed: ${rewardResponse.status}`,
+              description:
+                text || `Reward request failed: ${rewardResponse.status}`,
             });
           } else {
             const rewardJson = await rewardResponse.json().catch(() => ({}));

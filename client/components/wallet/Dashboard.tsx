@@ -349,14 +349,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Centered loader (appears after 2s) */}
           <div className="absolute left-1/2 transform -translate-x-1/2 pointer-events-none">
             {showDotLoader ? (
-              <div className="loader" role="status" aria-label="Dashboard loading">
-                <div className="circle"><div className="dot" /><div className="outline" /></div>
-                <div className="circle"><div className="dot" /><div className="outline" /></div>
-                <div className="circle"><div className="dot" /><div className="outline" /></div>
+              <div
+                className="loader"
+                role="status"
+                aria-label="Dashboard loading"
+              >
+                <div className="circle">
+                  <div className="dot" />
+                  <div className="outline" />
+                </div>
+                <div className="circle">
+                  <div className="dot" />
+                  <div className="outline" />
+                </div>
+                <div className="circle">
+                  <div className="dot" />
+                  <div className="outline" />
+                </div>
               </div>
             ) : null}
           </div>
-
         </div>
       </div>
 
@@ -422,11 +434,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
 
-
         {/* Tokens List */}
         <div className="mb-4">
           <Button
-            onClick={() => navigate('/express/embedded')}
+            onClick={() => navigate("/express/embedded")}
             className="w-full h-12 dash-btn font-semibold border-0"
             aria-label="Open Express P2P Service"
           >

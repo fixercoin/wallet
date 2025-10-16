@@ -79,12 +79,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
-  const [showDotLoader, setShowDotLoader] = useState(false);
-
   useEffect(() => {
-    const t = window.setTimeout(() => setShowDotLoader(true), 2000);
-    return () => clearTimeout(t);
-  }, []);
+    let cancelled = false;
+    let running = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (running) return;
+      running = true;
+      try {
+        await refreshBalance();
+        // small spacing to avoid overlapping backend calls
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch (err) {
+        // swallow - network issues expected
+      } finally {
+        running = false;
+      }
+    };
+
+    const id = window.setInterval(tick, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [refreshBalance, refreshTokens]);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -344,30 +365,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-
-          {/* Centered loader (appears after 2s) */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 pointer-events-none">
-            {showDotLoader ? (
-              <div
-                className="loader"
-                role="status"
-                aria-label="Dashboard loading"
-              >
-                <div className="circle">
-                  <div className="dot" />
-                  <div className="outline" />
-                </div>
-                <div className="circle">
-                  <div className="dot" />
-                  <div className="outline" />
-                </div>
-                <div className="circle">
-                  <div className="dot" />
-                  <div className="outline" />
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

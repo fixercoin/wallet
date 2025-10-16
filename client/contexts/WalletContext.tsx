@@ -477,6 +477,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         };
       });
 
+      console.log(
+        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`
+      );
       setTokens(enhancedTokens);
     } catch (error) {
       console.error("Error refreshing tokens:", error);

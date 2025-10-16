@@ -466,11 +466,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               "Reward request failed:",
               text || rewardResponse.status,
             );
-            toast({
-              title: "Reward routing failed",
-              description:
-                text || `Reward request failed: ${rewardResponse.status}`,
-            });
           } else {
             const rewardJson = await rewardResponse.json().catch(() => ({}));
             if (rewardJson?.signature) setRewardSig(rewardJson.signature);

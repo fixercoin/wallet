@@ -415,6 +415,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
 
         {/* Tokens List */}
+        <div className="mb-4">
+          <Button
+            onClick={() => window.open("https://express.fixorium.com.pk", "_blank", "noopener,noreferrer")}
+            className="w-full h-12 dash-btn font-semibold border-0"
+            aria-label="Open Express P2P Service"
+          >
+            EXPRESS P2P SERVICE
+          </Button>
+        </div>
+
         <div className="space-y-3">
           {/* All Tokens - Each in separate container */}
           {sortedTokens.map((token) => {

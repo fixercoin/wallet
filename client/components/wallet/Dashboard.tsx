@@ -18,7 +18,7 @@ import {
   Settings,
   Bot,
   Plus,
-  MoreVertical,
+  Menu,
   Gift,
   Flame,
   Lock,

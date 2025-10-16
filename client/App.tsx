@@ -23,6 +23,7 @@ import TokenListing from "./pages/TokenListing";
 import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
+import ExpressEmbed from "./pages/ExpressEmbed";
 
 const queryClient = new QueryClient();
 

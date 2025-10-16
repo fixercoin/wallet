@@ -178,6 +178,11 @@ class DexscreenerAPI {
       }
     });
 
+    // Save to persistent cache after successful fetch
+    if (fetchedTokens.length > 0) {
+      this.savePersistentCache();
+    }
+
     const allTokensMap = new Map<string, DexscreenerToken>();
     [...cachedResults, ...fetchedTokens].forEach((t) => {
       const mint = t.baseToken?.address;

@@ -344,6 +344,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Loader placed next to dropdown menus */}
+            {showDotLoader ? (
+              <div className="ml-2 three-dots" role="status" aria-label="Dashboard loading">
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+            ) : null}
           </div>
 
           {/* Centered three-dots loader (appears after 2s) */}

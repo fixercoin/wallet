@@ -431,10 +431,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       await confirmSignatureProxy(signature);
       setTxSig(signature);
 
-      // Show success toast immediately after burn is confirmed
+      // Show success toast only
       toast({
-        title: "Burn complete",
-        description: `${amount} ${selectedToken.symbol} burned successfully.`,
+        title: "Success",
+        description: "Successfully you have burnt your SPL tokens.",
       });
 
       setAmount("");

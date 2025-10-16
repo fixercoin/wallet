@@ -63,16 +63,36 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
         </div>
       )}
       <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+        <LineChart
+          data={data}
+          margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="label" stroke="#6b7280" />
           <YAxis stroke="#6b7280" allowDecimals={false} />
           <Tooltip
-            contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+            }}
             labelStyle={{ color: "#111827" }}
           />
-          <Line type="monotone" dataKey="buys" stroke="#22c55e" strokeWidth={2} dot={false} name="Buys" />
-          <Line type="monotone" dataKey="sells" stroke="#ef4444" strokeWidth={2} dot={false} name="Sells" />
+          <Line
+            type="monotone"
+            dataKey="buys"
+            stroke="#22c55e"
+            strokeWidth={2}
+            dot={false}
+            name="Buys"
+          />
+          <Line
+            type="monotone"
+            dataKey="sells"
+            stroke="#ef4444"
+            strokeWidth={2}
+            dot={false}
+            name="Sells"
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

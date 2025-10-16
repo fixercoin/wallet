@@ -133,7 +133,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
             <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-white">
-              <div className="px-3 pt-3 text-sm font-medium text-gray-700">Buys vs Sells (5m → 24h)</div>
+              <div className="px-3 pt-3 text-sm font-medium text-gray-700">
+                Buys vs Sells (5m → 24h)
+              </div>
               <div className="p-3">
                 <BuySellLine mint={tokenMint} />
               </div>

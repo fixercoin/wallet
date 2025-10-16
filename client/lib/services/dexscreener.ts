@@ -58,10 +58,55 @@ class DexscreenerAPI {
   // Using server proxy routes to avoid CORS issues
   private readonly baseUrl = "/api/dexscreener";
   private static TOKEN_CACHE_TTL_MS = 30_000;
+  private static PERSISTENT_CACHE_KEY = "dexscreener_persistent_cache";
   private static tokenCache = new Map<
     string,
     { token: DexscreenerToken; expiresAt: number }
   >();
+
+  constructor() {
+    this.loadPersistentCache();
+  }
+
+  private loadPersistentCache(): void {
+    try {
+      const cached = localStorage.getItem(
+        DexscreenerAPI.PERSISTENT_CACHE_KEY
+      );
+      if (cached) {
+        const data = JSON.parse(cached) as Record<
+          string,
+          { token: DexscreenerToken; expiresAt: number }
+        >;
+        Object.entries(data).forEach(([mint, entry]) => {
+          DexscreenerAPI.tokenCache.set(mint, entry);
+        });
+        console.log(
+          `DexScreener: Loaded ${Object.keys(data).length} tokens from persistent cache`
+        );
+      }
+    } catch (err) {
+      console.warn("Failed to load DexScreener persistent cache:", err);
+    }
+  }
+
+  private savePersistentCache(): void {
+    try {
+      const data: Record<
+        string,
+        { token: DexscreenerToken; expiresAt: number }
+      > = {};
+      DexscreenerAPI.tokenCache.forEach((value, key) => {
+        data[key] = value;
+      });
+      localStorage.setItem(
+        DexscreenerAPI.PERSISTENT_CACHE_KEY,
+        JSON.stringify(data)
+      );
+    } catch (err) {
+      console.warn("Failed to save DexScreener persistent cache:", err);
+    }
+  }
 
   // Helper method to extract prices from DexScreener data
   getTokenPrices(tokens: DexscreenerToken[]): Record<string, number> {

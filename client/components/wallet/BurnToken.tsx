@@ -747,19 +747,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   </a>
                 </div>
               ) : null}
-              {rewardSig ? (
-                <div className="break-all">
-                  Reward pool transaction:{" "}
-                  <a
-                    className="font-medium text-orange-500 underline-offset-4 hover:underline"
-                    href={`https://solscan.io/tx/${rewardSig}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {rewardSig}
-                  </a>
-                </div>
-              ) : null}
             </div>
           </div>
         ) : null}

@@ -18,7 +18,7 @@ import {
   Settings,
   Bot,
   Plus,
-  MoreVertical,
+  Menu,
   Gift,
   Flame,
   Lock,
@@ -43,7 +43,6 @@ interface DashboardProps {
   onSwap: () => void;
   onAutoBot: () => void;
   onAirdrop: () => void;
-  onP2P: () => void;
   onTokenClick: (tokenMint: string) => void;
   onSettings: () => void;
   onOpenSetup?: () => void;
@@ -60,7 +59,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSwap,
   onAutoBot,
   onAirdrop,
-  onP2P,
   onTokenClick,
   onSettings,
   onOpenSetup,
@@ -81,6 +79,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
+  const [showDotLoader, setShowDotLoader] = useState(false);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowDotLoader(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -276,15 +280,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      {isLoading ? (
-        <div className="dashboard-loader-overlay">
-          <div
-            className="dashboard-loader"
-            role="status"
-            aria-label="Loading dashboard data"
-          />
-        </div>
-      ) : null}
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
@@ -296,11 +291,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             />
             <span className="text-cream">FIXORIUM</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" className="h-8 w-8 p-0 dash-btn-circle">
-                  <MoreVertical className="h-4 w-4" />
+                  <Menu className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -349,6 +344,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+
+          {/* Centered loader (appears after 2s) */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 pointer-events-none">
+            {showDotLoader ? (
+              <div
+                className="loader"
+                role="status"
+                aria-label="Dashboard loading"
+              >
+                <div className="circle">
+                  <div className="dot" />
+                  <div className="outline" />
+                </div>
+                <div className="circle">
+                  <div className="dot" />
+                  <div className="outline" />
+                </div>
+                <div className="circle">
+                  <div className="dot" />
+                  <div className="outline" />
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -415,17 +434,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
 
-        {/* EXPRESS P2P SERVICE */}
+        {/* Tokens List */}
         <div className="mb-4">
           <Button
-            onClick={onP2P}
+            onClick={() => navigate("/express/embedded")}
             className="w-full h-12 dash-btn font-semibold border-0"
+            aria-label="Open Express P2P Service"
           >
             EXPRESS P2P SERVICE
           </Button>
         </div>
 
-        {/* Tokens List */}
         <div className="space-y-3">
           {/* All Tokens - Each in separate container */}
           {sortedTokens.map((token) => {

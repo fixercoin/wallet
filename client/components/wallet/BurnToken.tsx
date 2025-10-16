@@ -449,31 +449,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       await confirmSignatureProxy(signature);
       setTxSig(signature);
 
-      if (isFixerSelected) {
-        const rewardResponse = await fetch(
-          resolveApiUrl("/api/reward-locker"),
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              recipient: REWARD_SINK_WALLET,
-              burnSignature: signature,
-              amountRaw: amtRaw.toString(),
-              fixerMint: FIXER_MINT_ADDRESS,
-              lockerMint: LOCKER_MINT_ADDRESS,
-            }),
-          },
-        );
-        if (!rewardResponse.ok) {
-          const text = await rewardResponse.text().catch(() => "");
-          throw new Error(
-            text || `Reward request failed: ${rewardResponse.status}`,
-          );
-        }
-        const rewardJson = await rewardResponse.json().catch(() => ({}));
-        if (rewardJson?.signature) setRewardSig(rewardJson.signature);
-      }
-
+      // Show success toast immediately after burn is confirmed
       toast({
         title: "Burn complete",
         description: `${amount} ${selectedToken.symbol} burned successfully.`,
@@ -484,6 +460,47 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       setTimeout(() => {
         refreshTokens();
       }, 1500);
+
+      // Attempt to route rewards (non-fatal). If it fails, show a non-destructive toast.
+      if (isFixerSelected) {
+        try {
+          const rewardResponse = await fetch(
+            resolveApiUrl("/api/reward-locker"),
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: REWARD_SINK_WALLET,
+                burnSignature: signature,
+                amountRaw: amtRaw.toString(),
+                fixerMint: FIXER_MINT_ADDRESS,
+                lockerMint: LOCKER_MINT_ADDRESS,
+              }),
+            },
+          );
+          if (!rewardResponse.ok) {
+            const text = await rewardResponse.text().catch(() => "");
+            console.error(
+              "Reward request failed:",
+              text || rewardResponse.status,
+            );
+            toast({
+              title: "Reward routing failed",
+              description:
+                text || `Reward request failed: ${rewardResponse.status}`,
+            });
+          } else {
+            const rewardJson = await rewardResponse.json().catch(() => ({}));
+            if (rewardJson?.signature) setRewardSig(rewardJson.signature);
+          }
+        } catch (err) {
+          console.error("Reward routing error:", err);
+          toast({
+            title: "Reward routing failed",
+            description: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
     } catch (error) {
       console.error(error);
       const message = error instanceof Error ? error.message : String(error);
@@ -539,9 +556,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               users do not receive reward payouts.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="rounded bg-white/80 px-2 py-1 text-[11px] font-mono text-orange-700">
-                {REWARD_SINK_WALLET}
-              </code>
+              <button
+                type="button"
+                onClick={handleCopyRewardWallet}
+                className="rounded bg-white/80 px-3 py-1 text-[12px] font-mono text-orange-700 hover:underline cursor-pointer"
+                aria-label="Copy rewards wallet address"
+              >
+                {shortenAddress(REWARD_SINK_WALLET, 6)}
+              </button>
+
               <Button
                 type="button"
                 variant="ghost"
@@ -552,6 +575,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 <Copy className="mr-1.5 h-3.5 w-3.5" />
                 Copy
               </Button>
+
               <a
                 className="text-xs font-semibold text-orange-600 underline-offset-4 hover:underline"
                 href={`https://solscan.io/account/${REWARD_SINK_WALLET}`}

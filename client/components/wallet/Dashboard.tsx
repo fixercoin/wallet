@@ -99,7 +99,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 2000);
+    const id = window.setInterval(tick, 500);
 
     return () => {
       cancelled = true;
@@ -111,8 +111,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     let lastY = window.scrollY;
     let lastRefresh = 0;
-    const THRESHOLD = 100; // pixels scrolled down
-    const COOLDOWN = 5000; // ms between auto refreshes
+    const THRESHOLD = 50; // pixels scrolled down
+    const COOLDOWN = 1000; // ms between auto refreshes
 
     const doScrollRefresh = async () => {
       try {

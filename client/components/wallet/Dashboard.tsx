@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
+
+  // Pull-to-refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const startYRef = useRef<number | null>(null);
+  const pullThreshold = 70;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0 && !isLoading && !isRefreshing) {
+      startYRef.current = e.touches[0].clientY;
+      setIsPulling(true);
+      setPullDistance(0);
+    } else {
+      startYRef.current = null;
+      setIsPulling(false);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startYRef.current == null) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - startYRef.current;
+    if (deltaY > 0) {
+      // Prevent native overscroll bounce while pulling down
+      e.preventDefault();
+      setPullDistance(Math.min(120, deltaY * 0.6));
+    } else {
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (!isPulling) return;
+    const shouldRefresh = pullDistance >= pullThreshold;
+    setIsPulling(false);
+
+    if (shouldRefresh) {
+      setIsRefreshing(true);
+      try {
+        await handleRefresh();
+      } finally {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0);
+    }
+    startYRef.current = null;
+  };
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -265,7 +315,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+    <div
+      className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      style={{
+        transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : undefined,
+        transition: isPulling ? "none" : "transform 0.2s ease",
+      }}
+    >
       {isLoading ? (
         <div className="dashboard-loader-overlay">
           <div
@@ -275,6 +335,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
           />
         </div>
       ) : null}
+
+      {(isPulling || isRefreshing) && (
+        <div className="fixed top-0 left-0 right-0 z-20 flex justify-center mt-2 pointer-events-none">
+          <div className="px-3 py-1 rounded-full bg-white/90 border border-[hsl(var(--border))] text-xs text-gray-600 shadow-sm">
+            {isRefreshing
+              ? "Refreshing…"
+              : pullDistance < pullThreshold
+                ? "Pull to refresh"
+                : "Release to refresh"}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">

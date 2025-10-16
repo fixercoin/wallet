@@ -104,31 +104,23 @@ class DexscreenerAPI {
     let fetchedTokens: DexscreenerToken[] = [];
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
-      const fetchWithTimeout = async (url: string, ms = 10000) => {
-        const timeout = new Promise<Response>((resolve) =>
-          setTimeout(() => resolve(new Response("", { status: 504 })), ms),
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch(
+          `${this.baseUrl}/tokens?mints=${mintString}`,
+          { signal: controller.signal },
         );
-        return (await Promise.race([fetch(url), timeout])) as Response;
-      };
-
-      // Try up to 3 attempts, short backoff
-      let response: Response | null = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          response = await fetchWithTimeout(
-            `${this.baseUrl}/tokens?mints=${mintString}`,
-            10000,
-          );
-          if (response.ok) break;
-        } catch (err) {}
-        await new Promise((r) => setTimeout(r, attempt * 300));
-      }
-
-      if (response && response.ok) {
-        try {
-          const data: DexscreenerResponse = await response.json();
-          fetchedTokens = data.pairs || [];
-        } catch {}
+        if (response.ok) {
+          try {
+            const data: DexscreenerResponse = await response.json();
+            fetchedTokens = data.pairs || [];
+          } catch {}
+        }
+      } catch (err) {
+        // network/timeout -> swallow; fallback will handle
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 

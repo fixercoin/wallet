@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Copy, Flame, RefreshCw } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Flame, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { createBurnCheckedInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 
@@ -172,25 +177,6 @@ const getTokenBalanceRaw = (token: TokenInfo | null): bigint => {
 export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   const { wallet, tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
-
-  const handleCopyRewardWallet = useCallback(async () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(REWARD_SINK_WALLET);
-        toast({
-          title: "Rewards wallet copied",
-          description: "Address copied to clipboard.",
-        });
-        return;
-      } catch (error) {
-        // Fallback toast below when automatic copy fails
-      }
-    }
-    toast({
-      title: "Rewards wallet address",
-      description: REWARD_SINK_WALLET,
-    });
-  }, [toast]);
 
   const splTokens = useMemo(
     () =>
@@ -449,10 +435,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       await confirmSignatureProxy(signature);
       setTxSig(signature);
 
-      // Show success toast immediately after burn is confirmed
+      // Show success toast only
       toast({
-        title: "Burn complete",
-        description: `${amount} ${selectedToken.symbol} burned successfully.`,
+        title: "Success",
+        description: "Successfully you have burnt your SPL tokens.",
       });
 
       setAmount("");
@@ -484,21 +470,12 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               "Reward request failed:",
               text || rewardResponse.status,
             );
-            toast({
-              title: "Reward routing failed",
-              description:
-                text || `Reward request failed: ${rewardResponse.status}`,
-            });
           } else {
             const rewardJson = await rewardResponse.json().catch(() => ({}));
             if (rewardJson?.signature) setRewardSig(rewardJson.signature);
           }
         } catch (err) {
           console.error("Reward routing error:", err);
-          toast({
-            title: "Reward routing failed",
-            description: err instanceof Error ? err.message : String(err),
-          });
         }
       }
     } catch (error) {
@@ -545,46 +522,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
               Burn tokens you control
             </span>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50/70 p-4 space-y-3">
-            <p className="text-xs uppercase tracking-wide text-orange-600">
-              Rewards &amp; dead wallet
-            </p>
-            <p className="text-xs text-orange-700">
-              All rewards and dead tokens are routed to this address. Individual
-              users do not receive reward payouts.
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCopyRewardWallet}
-                className="rounded bg-white/80 px-3 py-1 text-[12px] font-mono text-orange-700 hover:underline cursor-pointer"
-                aria-label="Copy rewards wallet address"
-              >
-                {shortenAddress(REWARD_SINK_WALLET, 6)}
-              </button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 rounded-full border border-orange-200 bg-white/80 text-orange-600 hover:bg-white"
-                onClick={handleCopyRewardWallet}
-              >
-                <Copy className="mr-1.5 h-3.5 w-3.5" />
-                Copy
-              </Button>
-
-              <a
-                className="text-xs font-semibold text-orange-600 underline-offset-4 hover:underline"
-                href={`https://solscan.io/account/${REWARD_SINK_WALLET}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View on Solscan
-              </a>
-            </div>
           </div>
 
           <div className="space-y-4">
@@ -744,19 +681,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     rel="noreferrer"
                   >
                     {txSig}
-                  </a>
-                </div>
-              ) : null}
-              {rewardSig ? (
-                <div className="break-all">
-                  Reward pool transaction:{" "}
-                  <a
-                    className="font-medium text-orange-500 underline-offset-4 hover:underline"
-                    href={`https://solscan.io/tx/${rewardSig}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {rewardSig}
                   </a>
                 </div>
               ) : null}

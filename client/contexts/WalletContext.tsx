@@ -417,13 +417,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             throw new Error("Jupiter also returned no prices");
           }
         } catch (jupiterError) {
-          prices = { So11111111111111111111111111111111111111112: 100 };
+          try {
+            const solPriceData = await solPriceService.getSolPrice();
+            prices = {
+              So11111111111111111111111111111111111111112: solPriceData?.price || 100
+            };
+            priceSource = "coingecko";
+          } catch {
+            prices = { So11111111111111111111111111111111111111112: 100 };
+            priceSource = "static";
+          }
           try {
             const fixercoinPrice = await fixercoinPriceService.getPrice();
             prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
               fixercoinPrice;
           } catch {}
-          priceSource = "static";
         }
       }
 

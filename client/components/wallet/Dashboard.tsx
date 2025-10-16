@@ -43,7 +43,6 @@ interface DashboardProps {
   onSwap: () => void;
   onAutoBot: () => void;
   onAirdrop: () => void;
-  onP2P: () => void;
   onTokenClick: (tokenMint: string) => void;
   onSettings: () => void;
   onOpenSetup?: () => void;
@@ -60,7 +59,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSwap,
   onAutoBot,
   onAirdrop,
-  onP2P,
   onTokenClick,
   onSettings,
   onOpenSetup,
@@ -415,15 +413,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
 
-        {/* EXPRESS P2P SERVICE */}
-        <div className="mb-4">
-          <Button
-            onClick={onP2P}
-            className="w-full h-12 dash-btn font-semibold border-0"
-          >
-            EXPRESS P2P SERVICE
-          </Button>
-        </div>
 
         {/* Tokens List */}
         <div className="space-y-3">

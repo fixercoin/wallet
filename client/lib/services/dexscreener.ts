@@ -129,9 +129,6 @@ class DexscreenerAPI {
     const normalizedMints = Array.from(
       new Set((mints || []).map((m) => m.trim()).filter(Boolean)),
     ).sort();
-    console.log(
-      `DexScreener: Fetching tokens via proxy for ${normalizedMints.length} mints`,
-    );
 
     // Serve from cache when fresh
     const now = Date.now();
@@ -145,6 +142,10 @@ class DexscreenerAPI {
         toFetch.push(mint);
       }
     });
+
+    console.log(
+      `[DexScreener] Fetching ${normalizedMints.length} tokens: ${cachedResults.length} from cache, ${toFetch.length} to fetch`
+    );
 
     let fetchedTokens: DexscreenerToken[] = [];
     let fetchFailed = false;

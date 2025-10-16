@@ -45,6 +45,7 @@ const App = () => (
               />
               <Route path="/express/orderbook" element={<OrderBook />} />
               <Route path="/express/buy-trade" element={<BuyTrade />} />
+              <Route path="/express/embedded" element={<ExpressEmbed />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

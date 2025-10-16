@@ -304,7 +304,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" className="h-8 w-8 p-0 dash-btn-circle">
-                  <MoreVertical className="h-4 w-4" />
+                  <Menu className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

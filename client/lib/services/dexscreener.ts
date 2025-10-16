@@ -147,6 +147,8 @@ class DexscreenerAPI {
     });
 
     let fetchedTokens: DexscreenerToken[] = [];
+    let fetchFailed = false;
+
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
@@ -161,12 +163,30 @@ class DexscreenerAPI {
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
           } catch {}
+        } else {
+          fetchFailed = true;
         }
       } catch (err) {
-        // network/timeout -> swallow; fallback will handle
+        // network/timeout -> swallow; fallback to stale cache
+        fetchFailed = true;
+        console.warn(
+          `DexScreener fetch failed for mints: ${mintString}`,
+          err
+        );
       } finally {
         clearTimeout(timeoutId);
       }
+    }
+
+    // If fetch failed, try to serve stale cached data instead of failing completely
+    if (fetchFailed && toFetch.length > 0) {
+      console.log(`DexScreener: Serving stale cache for ${toFetch.length} tokens`);
+      toFetch.forEach((mint) => {
+        const stale = DexscreenerAPI.tokenCache.get(mint);
+        if (stale) {
+          fetchedTokens.push(stale.token);
+        }
+      });
     }
 
     // Update cache with fetched results

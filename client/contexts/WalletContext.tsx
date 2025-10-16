@@ -419,11 +419,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         } catch (jupiterError) {
           try {
-            const solPriceData = await solPriceService.getSolPrice();
+            const solPricePromise = solPriceService.getSolPrice();
+            const timeout = new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), 3000),
+            );
+            const solPriceData = await Promise.race([solPricePromise, timeout]);
             prices = {
               So11111111111111111111111111111111111111112: solPriceData?.price || 100
             };
-            priceSource = "coingecko";
+            priceSource = solPriceData ? "coingecko" : "static";
           } catch {
             prices = { So11111111111111111111111111111111111111112: 100 };
             priceSource = "static";

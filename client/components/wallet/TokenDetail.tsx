@@ -34,7 +34,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   onSend,
   onReceive,
 }) => {
-  const { tokens, balance, wallet, refreshTokens } = useWallet();
+  const { tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
   const [priceData, setPriceData] = useState(generateMockPriceData());
   const [isLoading, setIsLoading] = useState(false);

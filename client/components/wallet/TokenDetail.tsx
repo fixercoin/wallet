@@ -6,6 +6,7 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
+import { BuySellLine } from "./token-detail/BuySellLine";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -131,14 +132,13 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))]">
-              <iframe
-                width="100%"
-                height={400}
-                src="https://birdeye.so/tv-widget/H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump/5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy?chain=solana&viewMode=pair&chartInterval=1D&chartType=Candle&chartTimezone=Asia%2FKarachi&chartLeftToolbar=show&theme=dark&cssCustomProperties=--tv-color-platform-background%3A%23f0f0f1&cssCustomProperties=--tv-color-pane-background%3A%23f8f8fa&chartOverrides=paneProperties.backgroundGradientStartColor%3Argba%28253%2C+253%2C+253%2C+1%29&chartOverrides=paneProperties.backgroundGradientEndColor%3Argba%28249%2C+249%2C+250%2C+1%29"
-                frameBorder={0}
-                allowFullScreen
-              />
+            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-white">
+              <div className="px-3 pt-3 text-sm font-medium text-gray-700">
+                Buys vs Sells (5m → 24h)
+              </div>
+              <div className="p-3">
+                <BuySellLine mint={tokenMint} />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button

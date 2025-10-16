@@ -355,16 +355,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             ) : null}
           </div>
 
-          {/* Centered three-dots loader (appears after 2s) */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            {showDotLoader ? (
-              <div className="three-dots" role="status" aria-label="Dashboard loading">
-                <span className="dot" />
-                <span className="dot" />
-                <span className="dot" />
-              </div>
-            ) : null}
-          </div>
         </div>
       </div>
 

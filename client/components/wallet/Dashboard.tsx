@@ -80,17 +80,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
-    const alreadyRefreshed = sessionStorage.getItem("dashboard_refreshed_once");
-    if (!alreadyRefreshed) {
-      const t = window.setTimeout(() => {
-        try {
-          sessionStorage.setItem("dashboard_refreshed_once", "1");
-        } catch {}
-        window.location.reload();
-      }, 2000);
-      return () => clearTimeout(t);
-    }
-  }, []);
+    let cancelled = false;
+    let running = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (running) return;
+      running = true;
+      try {
+        await refreshBalance();
+        // small spacing to avoid overlapping backend calls
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch (err) {
+        // swallow - network issues expected
+      } finally {
+        running = false;
+      }
+    };
+
+    const id = window.setInterval(tick, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [refreshBalance, refreshTokens]);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

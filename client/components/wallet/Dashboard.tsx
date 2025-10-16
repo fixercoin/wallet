@@ -291,7 +291,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             />
             <span className="text-cream">FIXORIUM</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 ml-auto">
+            {/* Loader placed next to dropdown menus (left of dropdown) */}
+            {showDotLoader ? (
+              <div className="mr-2 three-dots pointer-events-none" role="status" aria-label="Dashboard loading">
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+            ) : null}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" className="h-8 w-8 p-0 dash-btn-circle">
@@ -344,15 +353,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Loader placed next to dropdown menus */}
-            {showDotLoader ? (
-              <div className="ml-2 three-dots" role="status" aria-label="Dashboard loading">
-                <span className="dot" />
-                <span className="dot" />
-                <span className="dot" />
-              </div>
-            ) : null}
           </div>
 
         </div>

@@ -166,16 +166,20 @@ export default function OrderBook() {
 
   const handleSaveOrder = async (order: Order) => {
     try {
-      await updateOrder(
-        order.id,
-        {
-          amountPKR: Number(order.amountPKR),
-          quoteAsset: String(order.quoteAsset),
-          pricePKRPerQuote: Number(order.pricePKRPerQuote),
-          paymentMethod: String(order.paymentMethod || "easypaisa"),
-        },
-        adminPassword,
-      );
+      const updateData: any = {
+        amountPKR: Number(order.amountPKR),
+        quoteAsset: String(order.quoteAsset),
+        pricePKRPerQuote: Number(order.pricePKRPerQuote),
+      };
+
+      if (order.type === "sell") {
+        updateData.accountName = order.accountName;
+        updateData.accountNumber = order.accountNumber;
+      } else if (order.type === "buy") {
+        updateData.walletAddress = order.walletAddress;
+      }
+
+      await updateOrder(order.id, updateData, adminPassword);
       toast({
         title: "Success",
         description: "Order updated successfully",

@@ -153,7 +153,7 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(`[DexScreener] Requesting: ${url}`);
@@ -165,6 +165,18 @@ class DexscreenerAPI {
             fetchedTokens = data.pairs || [];
             console.log(
               `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
+            );
+            // Validate that we got meaningful data (especially priceChange)
+            const withPriceChange = fetchedTokens.filter(
+              (t) =>
+                t.priceChange &&
+                (typeof t.priceChange.h24 === "number" ||
+                  typeof t.priceChange.h6 === "number" ||
+                  typeof t.priceChange.h1 === "number" ||
+                  typeof t.priceChange.m5 === "number"),
+            );
+            console.log(
+              `[DexScreener] Tokens with price change data: ${withPriceChange.length}/${fetchedTokens.length}`,
             );
           } catch (parseErr) {
             console.error(
@@ -204,7 +216,7 @@ class DexscreenerAPI {
       });
     }
 
-    // Update cache with fetched results
+    // Update cache with fetched results (only if we got meaningful data)
     const ttl = now + DexscreenerAPI.TOKEN_CACHE_TTL_MS;
     fetchedTokens.forEach((t) => {
       const mint = t.baseToken?.address;

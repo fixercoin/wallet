@@ -115,7 +115,20 @@ async function fetchDexscreenerData(path: string) {
   const now = Date.now();
   const cached = DEX_CACHE.get(path);
   if (cached && cached.expiresAt > now) {
-    return cached.data;
+    // Only return cache if it contains meaningful data with priceChange fields
+    const hasPriceChangeData =
+      Array.isArray(cached.data?.pairs) &&
+      cached.data.pairs.some(
+        (p: any) =>
+          p?.priceChange &&
+          (typeof p.priceChange.h24 === "number" ||
+            typeof p.priceChange.h6 === "number" ||
+            typeof p.priceChange.h1 === "number" ||
+            typeof p.priceChange.m5 === "number"),
+      );
+    if (hasPriceChangeData) {
+      return cached.data;
+    }
   }
   const existing = DEX_INFLIGHT.get(path);
   if (existing) return existing;

@@ -2,7 +2,7 @@
 
 ## Overview
 Fixed three major issues in the P2P marketplace:
-1. ✅ Added 4% marketplace fee/markup to all token prices
+1. ✅ Added 0.25% marketplace fee/markup to all token prices (silent, not displayed)
 2. ✅ Integrated DexScreener API for real-time USDC, SOL, and FIXERCOIN prices
 3. ✅ Fixed OrderBook "no handler" error by creating `/api/orders` endpoint
 

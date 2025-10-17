@@ -469,8 +469,8 @@ export default function ExpressPay() {
             <div className="flex items-center justify-between text-xs gap-2">
               <span className="text-[hsl(var(--muted-foreground))]">
                 1 {selectedCurrency} ={" "}
-                {isFinite(exchangeRate) && exchangeRate > 0
-                  ? exchangeRate.toFixed(2)
+                {isFinite(selectedRate) && selectedRate > 0
+                  ? selectedRate.toFixed(2)
                   : "-"}{" "}
                 PKR
               </span>

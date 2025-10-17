@@ -944,10 +944,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Alert>
             )}
             {indicative && (
-              <Alert className="bg-blue-500/10 border-blue-400/20 text-blue-200">
+              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
                 <AlertDescription>
-                  Indicative price shown (no route available). Try adjusting
-                  amount or pair.
+                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no direct route for this pair. Price is estimated from DEX data and may vary. You can still attempt the swap, but execution depends on available liquidity.
                 </AlertDescription>
               </Alert>
             )}

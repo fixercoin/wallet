@@ -46,9 +46,18 @@ function AppRoutes() {
       <Route path="/express/pay" element={<ExpressPay />} />
       <Route path="/express/add-post" element={<ExpressAddPost />} />
       <Route path="/express/embedded" element={<ExpressEmbed />} />
-      <Route path="/express/order-complete" element={<ExpressOrderComplete />} />
-      <Route path="/express/pending-orders" element={<ExpressPendingOrders />} />
-      <Route path="/express/post-order/:orderId" element={<ExpressPostOrderDetail />} />
+      <Route
+        path="/express/order-complete"
+        element={<ExpressOrderComplete />}
+      />
+      <Route
+        path="/express/pending-orders"
+        element={<ExpressPendingOrders />}
+      />
+      <Route
+        path="/express/post-order/:orderId"
+        element={<ExpressPostOrderDetail />}
+      />
       <Route path="/express/post-order" element={<ExpressAddPost />} />
       <Route path="/express/post/:orderId" element={<ExpressPostView />} />
       <Route path="/express/start-trade" element={<ExpressStartTrade />} />

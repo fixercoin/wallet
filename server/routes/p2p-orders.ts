@@ -22,7 +22,12 @@ export interface TradeRoom {
   buyer_wallet: string;
   seller_wallet: string;
   order_id: string;
-  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
   created_at: number;
   updated_at: number;
 }
@@ -30,7 +35,15 @@ export interface TradeRoom {
 // In-memory store for development (will be replaced with database)
 const orders: Map<string, P2POrder> = new Map();
 const rooms: Map<string, TradeRoom> = new Map();
-const messages: Map<string, Array<{ id: string; sender_wallet: string; message: string; created_at: number }>> = new Map();
+const messages: Map<
+  string,
+  Array<{
+    id: string;
+    sender_wallet: string;
+    message: string;
+    created_at: number;
+  }>
+> = new Map();
 
 // Helper functions
 function generateId(prefix: string): string {
@@ -74,7 +87,14 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       wallet_address,
     } = req.body;
 
-    if (!type || !creator_wallet || !token || !token_amount || !pkr_amount || !payment_method) {
+    if (
+      !type ||
+      !creator_wallet ||
+      !token ||
+      !token_amount ||
+      !pkr_amount ||
+      !payment_method
+    ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 

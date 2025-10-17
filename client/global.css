@@ -628,7 +628,7 @@
     height: 8px;
     width: 8px;
     border-radius: 9999px;
-    background-color: currentColor;
+    background-color: var(--status-color, #22c55e);
   }
   .status-dot::before,
   .status-dot::after {
@@ -636,16 +636,16 @@
     position: absolute;
     inset: -6px;
     border-radius: 9999px;
-    border: 2px solid currentColor;
+    border: 2px solid var(--status-color, #22c55e);
     opacity: 0.6;
     animation: status-ripple 1.5s ease-out infinite;
   }
   .status-dot::after {
     animation-delay: 0.75s;
   }
-  .status-red { color: #ef4444; }
-  .status-yellow { color: #f59e0b; }
-  .status-green { color: #22c55e; }
+  .status-red { --status-color: #ef4444 !important; }
+  .status-yellow { --status-color: #f59e0b !important; }
+  .status-green { --status-color: #22c55e !important; }
 
   @keyframes status-ripple {
     0% { transform: scale(0.6); opacity: 0.6; }

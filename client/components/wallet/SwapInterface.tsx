@@ -979,6 +979,27 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Alert>
             )}
 
+            {/* Quick % selector */}
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {[25, 50, 75, 100].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => {
+                    const bal = getTokenBalance(fromToken || undefined);
+                    const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0; // leave SOL for fees
+                    const usable = Math.max(0, (bal || 0) - reserve);
+                    const amt = (usable * (pct / 100));
+                    const digits = Math.min(6, Math.max(0, (fromToken?.decimals ?? 6)));
+                    setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
+                  }}
+                  className="text-xs px-2 py-2 rounded-lg bg-white/70 hover:bg-white text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                >
+                  {pct}%
+                </button>
+              ))}
+            </div>
+
             {/* Submit */}
             <Button
               onClick={handleSwap}

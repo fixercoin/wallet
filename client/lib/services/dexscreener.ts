@@ -253,7 +253,14 @@ class DexscreenerAPI {
       ...token,
       logoURI: dexData.info?.imageUrl || token.logoURI,
       price: dexData.priceUsd ? parseFloat(dexData.priceUsd) : undefined,
-      priceChange24h: dexData.priceChange?.h24,
+      priceChange24h: [
+        dexData.priceChange?.h24,
+        dexData.priceChange?.h6,
+        dexData.priceChange?.h1,
+        dexData.priceChange?.m5,
+      ].find((v) => typeof v === "number" && isFinite(v as number)) as
+        | number
+        | undefined,
       volume24h: dexData.volume?.h24,
       marketCap: dexData.marketCap,
       liquidity: dexData.liquidity?.usd,

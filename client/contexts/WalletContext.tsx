@@ -360,8 +360,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             try {
               dexTokens.forEach((dt: any) => {
                 const mint = dt?.baseToken?.address;
-                const ch = dt?.priceChange?.h24;
-                if (mint && typeof ch === "number" && isFinite(ch)) {
+                const pc = dt?.priceChange;
+                const candidates = [pc?.h24, pc?.h6, pc?.h1, pc?.m5];
+                const ch = candidates.find(
+                  (v: any) => typeof v === "number" && isFinite(v),
+                );
+                if (mint && typeof ch === "number") {
                   changeMap[mint] = ch;
                 }
               });
@@ -401,13 +405,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           console.warn("Failed to fetch FIXERCOIN price:", err);
         }
 
-        const usdcMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-        if (!prices[usdcMint]) {
-          prices[usdcMint] = 1;
-        }
-        if (typeof changeMap[usdcMint] !== "number") {
-          changeMap[usdcMint] = 0;
-        }
+        // Ensure stablecoin USDC always shows sane values, regardless of bridge mint
+        allTokens
+          .filter(
+            (t) =>
+              t.symbol?.toUpperCase() === "USDC" ||
+              /USD\s*COIN/i.test(t.name || ""),
+          )
+          .forEach((t) => {
+            if (!prices[t.mint]) prices[t.mint] = 1;
+            if (typeof changeMap[t.mint] !== "number") changeMap[t.mint] = 0;
+          });
 
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         if (!prices[lockerMint] || typeof changeMap[lockerMint] !== "number") {
@@ -418,10 +426,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 ? parseFloat(lockerDex.priceUsd)
                 : 0;
               if (price > 0) prices[lockerMint] = price;
-              const priceChange = lockerDex.priceChange?.h24;
-              // Only set changeMap if we have a valid numeric value. Otherwise leave undefined
-              // so UI can display a neutral/missing state instead of 0.00% which can be misleading.
-              if (typeof priceChange === "number" && isFinite(priceChange)) {
+              const pc = lockerDex.priceChange || {};
+              const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+              const priceChange = candidates.find(
+                (v: any) => typeof v === "number" && isFinite(v),
+              );
+              if (typeof priceChange === "number") {
                 changeMap[lockerMint] = priceChange;
               }
             }

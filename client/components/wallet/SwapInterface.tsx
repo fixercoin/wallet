@@ -134,6 +134,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setIsLoading(false);
           return;
         }
+        console.log(
+          `Requesting Jupiter quote: ${fromToken.symbol} (${fromToken.mint}) -> ${toToken.symbol} (${toToken.mint}), amount: ${amountInt}`,
+        );
         const q = await jupiterAPI.getQuote(
           fromToken.mint,
           toToken.mint,
@@ -141,12 +144,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
         );
         if (q) {
+          console.log(
+            `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
+          );
           setQuote(q);
           const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
           setToAmount(out.toFixed(6));
           setQuoteError("");
           setIndicative(false);
         } else {
+          console.log(
+            `No Jupiter quote available, falling back to DexScreener pricing`,
+          );
           const [fromDex, toDex] = await Promise.all([
             dexscreenerAPI.getTokenByMint(fromToken.mint),
             dexscreenerAPI.getTokenByMint(toToken.mint),
@@ -155,18 +164,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             ? parseFloat(fromDex.priceUsd)
             : null;
           const toUsd = toDex?.priceUsd ? parseFloat(toDex.priceUsd) : null;
+
+          console.log(
+            `DexScreener prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
+          );
+
           if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
             const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
             const estOutHuman = (fromHuman * fromUsd) / toUsd;
+            console.log(
+              `Using indicative pricing: ${estOutHuman.toFixed(6)} ${toToken.symbol}`,
+            );
             setQuote(null);
             setToAmount(estOutHuman.toFixed(6));
             setQuoteError("");
             setIndicative(true);
           } else {
+            console.warn(
+              `Could not get prices from DexScreener: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+            );
             setQuote(null);
             setToAmount("");
             setQuoteError(
-              "Quotes temporarily unavailable. Try another pair or amount.",
+              `No liquidity data found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
             );
             setIndicative(false);
           }
@@ -944,10 +964,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Alert>
             )}
             {indicative && (
-              <Alert className="bg-blue-500/10 border-blue-400/20 text-blue-200">
+              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
                 <AlertDescription>
-                  Indicative price shown (no route available). Try adjusting
-                  amount or pair.
+                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no
+                  direct route for this pair. Price is estimated from DEX data
+                  and may vary. You can still attempt the swap, but execution
+                  depends on available liquidity.
                 </AlertDescription>
               </Alert>
             )}
@@ -962,8 +984,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               onClick={handleSwap}
               className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={
-                !quote ||
-                indicative ||
+                (!quote && !indicative) ||
                 !!quoteError ||
                 !fromToken ||
                 !toToken ||
@@ -971,7 +992,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 isLoading
               }
             >
-              Submit
+              {indicative ? "Swap (Estimated)" : "Submit"}
             </Button>
           </div>
         </div>

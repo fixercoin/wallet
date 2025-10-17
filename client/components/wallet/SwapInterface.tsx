@@ -678,7 +678,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden">
           <div className="p-5 space-y-4">
             {/* FROM row */}
-            <div className="bg-purple-200/60 rounded-xl p-4">
+            <div>
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
                   <Input

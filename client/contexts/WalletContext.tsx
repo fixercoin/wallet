@@ -401,6 +401,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           console.warn("Failed to fetch FIXERCOIN price:", err);
         }
 
+        const usdcMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+        if (!prices[usdcMint]) {
+          prices[usdcMint] = 1;
+        }
+        if (typeof changeMap[usdcMint] !== "number") {
+          changeMap[usdcMint] = 0;
+        }
+
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         if (!prices[lockerMint] || typeof changeMap[lockerMint] !== "number") {
           try {
@@ -410,11 +418,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 ? parseFloat(lockerDex.priceUsd)
                 : 0;
               if (price > 0) prices[lockerMint] = price;
-              if (typeof lockerDex.priceChange?.h24 === "number")
-                changeMap[lockerMint] = lockerDex.priceChange.h24;
+              const priceChange = lockerDex.priceChange?.h24;
+              if (typeof priceChange === "number" && isFinite(priceChange)) {
+                changeMap[lockerMint] = priceChange;
+              } else if (!changeMap[lockerMint]) {
+                changeMap[lockerMint] = 0;
+              }
             }
           } catch (e) {
             console.warn("Failed to fetch LOCKER price from DexScreener:", e);
+            if (!changeMap[lockerMint]) {
+              changeMap[lockerMint] = 0;
+            }
           }
         }
 

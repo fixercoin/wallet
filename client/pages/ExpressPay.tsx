@@ -52,7 +52,14 @@ export default function ExpressPay() {
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [adjustedRate, setAdjustedRate] = useState<string>("");
-  const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin, isAdjusting, setIsAdjusting } = useExpressP2P();
+  const {
+    exchangeRate,
+    setExchangeRate,
+    isAdmin,
+    setIsAdmin,
+    isAdjusting,
+    setIsAdjusting,
+  } = useExpressP2P();
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
@@ -99,7 +106,6 @@ export default function ExpressPay() {
 
     setShowSellConfirmation(true);
   };
-
 
   const receivedAmount = useMemo(() => {
     if (!spendAmount || isNaN(Number(spendAmount))) return 0;
@@ -470,7 +476,8 @@ export default function ExpressPay() {
                 </div>
               ) : (
                 <span className="text-[hsl(var(--muted-foreground))]">
-                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR (Adjusted Rate)
+                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR (Adjusted
+                  Rate)
                 </span>
               )}
               {isAdmin && (

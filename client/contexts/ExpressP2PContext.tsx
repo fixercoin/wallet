@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface ExpressP2PContextType {
   exchangeRate: number;
@@ -10,12 +16,16 @@ interface ExpressP2PContextType {
   refreshExchangeRate: () => void;
 }
 
-const ExpressP2PContext = createContext<ExpressP2PContextType | undefined>(undefined);
+const ExpressP2PContext = createContext<ExpressP2PContextType | undefined>(
+  undefined,
+);
 
 const EXCHANGE_RATE_KEY = "express-exchange-rate";
 const DEFAULT_RATE = 280;
 
-export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_RATE);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);

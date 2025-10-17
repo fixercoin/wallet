@@ -781,6 +781,14 @@ export default function OrderBook() {
                                 {order.accountNumber || "N/A"}
                               </div>
                             </div>
+                            <div className="col-span-2 p-2 rounded-lg bg-[hsl(var(--secondary))]">
+                              <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                                Payment Method
+                              </div>
+                              <div className="font-semibold text-sm text-[hsl(var(--foreground))]">
+                                {order.paymentMethod || "N/A"}
+                              </div>
+                            </div>
                           </>
                         ) : (
                           <div className="col-span-2 p-2 rounded-lg bg-[hsl(var(--secondary))]">

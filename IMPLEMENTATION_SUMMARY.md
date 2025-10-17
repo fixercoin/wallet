@@ -1,7 +1,9 @@
 # P2P Implementation Summary
 
 ## Overview
+
 Fixed three major issues in the P2P marketplace:
+
 1. ✅ Added 0.25% marketplace fee/markup to all token prices (silent, not displayed)
 2. ✅ Integrated DexScreener API for real-time USDC, SOL, and FIXERCOIN prices
 3. ✅ Fixed OrderBook "no handler" error by creating `/api/orders` endpoint
@@ -13,6 +15,7 @@ Fixed three major issues in the P2P marketplace:
 ### 1. **Fixed OrderBook Save Issue - Created `/api/orders` Endpoint**
 
 **File: `server/routes/orders.ts` (NEW)**
+
 - Created comprehensive order management API handler
 - Implements CRUD operations for buy/sell orders
 - Uses admin token validation (password: "Pakistan##123")
@@ -20,6 +23,7 @@ Fixed three major issues in the P2P marketplace:
 - Supports filtering by roomId
 
 **API Endpoints:**
+
 ```
 GET    /api/orders              - List all orders (with roomId filter)
 POST   /api/orders              - Create new order (requires admin token)
@@ -29,6 +33,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ```
 
 **File: `server/index.ts` (MODIFIED)**
+
 - Registered all `/api/orders` routes
 - Routes are properly wired to handlers
 
@@ -37,6 +42,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ### 2. **0.25% Markup System Implementation**
 
 **File: `client/lib/services/p2p-price.ts` (NEW)**
+
 - Created `P2PPriceService` class for price management
 - **Key Features:**
   - Fetches USDC, SOL, FIXERCOIN prices from DexScreener API
@@ -45,6 +51,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
   - Fallback prices if DexScreener fails (280 PKR, 180 SOL, etc.)
 
 **Example Calculation:**
+
 ```
 - Base USDC price: 280 PKR
 - With 0.25% markup: 280 * 1.0025 = 280.7 PKR
@@ -52,6 +59,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ```
 
 **Token Mint Addresses:**
+
 ```
 - USDC:      EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6
 - SOL:       So11111111111111111111111111111111111111112
@@ -63,6 +71,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ### 3. **ExpressP2P Context Update**
 
 **File: `client/contexts/ExpressP2PContext.tsx` (MODIFIED)**
+
 - Integrated `p2pPriceService` for real-time price fetching
 - Loads prices from DexScreener on app initialization
 - Added loading state for price fetching
@@ -71,6 +80,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 - Auto-refresh capability for manual price updates
 
 **Key Changes:**
+
 ```typescript
 - DEFAULT_RATE: 291.2 (280 * 1.04 with 4% markup)
 - isLoadingPrice: boolean - indicates if fetching prices
@@ -83,14 +93,17 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ### 4. **UI Updates**
 
 **File: `client/pages/ExpressPay.tsx` (MODIFIED)**
+
 - Shows 1 USDC = XXX.XX PKR (with 0.25% markup applied silently)
 - No visible fee badge (fee is hidden from users)
 
 **File: `client/pages/ExpressAddPost.tsx` (MODIFIED)**
+
 - Simple rate adjustment interface for admins
 - No markup explanation (fee is silent)
 
 **File: `client/pages/OrderBook.tsx` (MODIFIED)**
+
 - Simple order management interface
 - No markup indicator displayed
 
@@ -99,6 +112,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ## How It Works
 
 ### Price Flow:
+
 ```
 1. User visits P2P page
 2. ExpressP2PContext initializes
@@ -109,6 +123,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ```
 
 ### Order Creation Flow:
+
 ```
 1. Admin creates buy/sell order in OrderBook
 2. Admin enters amount, price, token, payment method
@@ -120,6 +135,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ```
 
 ### Price Update Flow:
+
 ```
 1. Admin adjusts exchange rate in ExpressAddPost
 2. New rate saved to context + localStorage
@@ -133,6 +149,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ## Testing
 
 ### Test OrderBook Save:
+
 1. Go to `/express/pay`
 2. Click "+" button (admin panel)
 3. Enter password: `Pakistan##123`
@@ -142,11 +159,13 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 7. ✅ Order should save successfully (no "no handler" error)
 
 ### Test 0.25% Markup:
-1. Check rate display: "1 USDC = 280.70 PKR" (280 * 1.0025)
+
+1. Check rate display: "1 USDC = 280.70 PKR" (280 \* 1.0025)
 2. Manual adjustment adds 0.25% silently
 3. No fee badge shown to users
 
 ### Test DexScreener Integration:
+
 1. Check browser console for DexScreener API logs
 2. Prices auto-refresh every 60 seconds
 3. Uses fallback if DexScreener unavailable
@@ -191,6 +210,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ## Environment Variables
 
 Currently using hardcoded values:
+
 - Admin password: `Pakistan##123`
 - Cache TTL: 60 seconds
 - Markup: 0.25%

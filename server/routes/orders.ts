@@ -73,7 +73,8 @@ export const handleCreateOrder: RequestHandler = async (req, res) => {
       !paymentMethod
     ) {
       return res.status(400).json({
-        error: "Missing required fields: side, amountPKR, quoteAsset, pricePKRPerQuote, paymentMethod",
+        error:
+          "Missing required fields: side, amountPKR, quoteAsset, pricePKRPerQuote, paymentMethod",
       });
     }
 
@@ -82,7 +83,9 @@ export const handleCreateOrder: RequestHandler = async (req, res) => {
     const token = authHeader?.replace("Bearer ", "");
 
     if (!token || !validateAdminToken(token)) {
-      return res.status(401).json({ error: "Unauthorized: invalid or missing admin token" });
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: invalid or missing admin token" });
     }
 
     // Validate numeric fields
@@ -90,11 +93,15 @@ export const handleCreateOrder: RequestHandler = async (req, res) => {
     const price = Number(pricePKRPerQuote);
 
     if (!isFinite(amount) || amount <= 0) {
-      return res.status(400).json({ error: "Invalid amountPKR: must be a positive number" });
+      return res
+        .status(400)
+        .json({ error: "Invalid amountPKR: must be a positive number" });
     }
 
     if (!isFinite(price) || price <= 0) {
-      return res.status(400).json({ error: "Invalid pricePKRPerQuote: must be a positive number" });
+      return res
+        .status(400)
+        .json({ error: "Invalid pricePKRPerQuote: must be a positive number" });
     }
 
     // Create order
@@ -151,7 +158,9 @@ export const handleUpdateOrder: RequestHandler = async (req, res) => {
     const token = authHeader?.replace("Bearer ", "");
 
     if (!token || !validateAdminToken(token)) {
-      return res.status(401).json({ error: "Unauthorized: invalid or missing admin token" });
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: invalid or missing admin token" });
     }
 
     const order = ordersStore.get(orderId);
@@ -184,7 +193,9 @@ export const handleDeleteOrder: RequestHandler = async (req, res) => {
     const token = authHeader?.replace("Bearer ", "");
 
     if (!token || !validateAdminToken(token)) {
-      return res.status(401).json({ error: "Unauthorized: invalid or missing admin token" });
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: invalid or missing admin token" });
     }
 
     if (!ordersStore.has(orderId)) {

@@ -52,9 +52,14 @@ export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
           localStorage.setItem(EXCHANGE_RATE_KEY, String(price));
         }
 
-        console.log(`[ExpressP2P] Exchange rate initialized: ${price} PKR (with 4.25% markup)`);
+        console.log(
+          `[ExpressP2P] Exchange rate initialized: ${price} PKR (with 4.25% markup)`,
+        );
       } catch (error) {
-        console.warn("[ExpressP2P] Failed to fetch price from DexScreener, using default:", error);
+        console.warn(
+          "[ExpressP2P] Failed to fetch price from DexScreener, using default:",
+          error,
+        );
 
         // Fallback to localStorage or default
         if (typeof window !== "undefined") {

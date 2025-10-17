@@ -28,7 +28,10 @@ class P2PPriceService {
    * Apply markup percentage to base price
    * Example: price=280.70, markup=4.25% -> 280.70 * 1.0425 = 292.59
    */
-  private applyMarkup(basePrice: number, markupPercent: number = MARKUP_PERCENTAGE): number {
+  private applyMarkup(
+    basePrice: number,
+    markupPercent: number = MARKUP_PERCENTAGE,
+  ): number {
     return basePrice * (1 + markupPercent / 100);
   }
 
@@ -47,7 +50,11 @@ class P2PPriceService {
       const isCacheFresh = (cached?: CachedPrice) =>
         cached && cached.fetchedAt + this.CACHE_TTL_MS > now;
 
-      if (isCacheFresh(cachedUSDC) && isCacheFresh(cachedSOL) && isCacheFresh(cachedFIXERCOIN)) {
+      if (
+        isCacheFresh(cachedUSDC) &&
+        isCacheFresh(cachedSOL) &&
+        isCacheFresh(cachedFIXERCOIN)
+      ) {
         console.log("[P2PPrice] Serving prices from cache");
         return {
           USDC: cachedUSDC!.price,
@@ -67,7 +74,7 @@ class P2PPriceService {
 
       const prices: PriceData = {
         USDC: 280, // Fallback price
-        SOL: 180,  // Fallback price
+        SOL: 180, // Fallback price
         FIXERCOIN: 0.005, // Fallback price
       };
 
@@ -77,7 +84,9 @@ class P2PPriceService {
         const priceUsd = token.priceUsd ? parseFloat(token.priceUsd) : null;
 
         if (!priceUsd || priceUsd <= 0) {
-          console.warn(`[P2PPrice] Invalid price for token ${mint}: ${priceUsd}`);
+          console.warn(
+            `[P2PPrice] Invalid price for token ${mint}: ${priceUsd}`,
+          );
           return;
         }
 
@@ -90,7 +99,9 @@ class P2PPriceService {
             price: this.applyMarkup(prices.USDC),
             fetchedAt: now,
           });
-          console.log(`[P2PPrice] USDC base price: ${prices.USDC}, with markup: ${this.applyMarkup(prices.USDC)}`);
+          console.log(
+            `[P2PPrice] USDC base price: ${prices.USDC}, with markup: ${this.applyMarkup(prices.USDC)}`,
+          );
         } else if (mint === TOKEN_MINTS.SOL) {
           // SOL price varies, fetch from DexScreener
           const solPriceInPKR = priceUsd * 280; // Assuming 1 USD ≈ 280 PKR
@@ -99,7 +110,9 @@ class P2PPriceService {
             price: this.applyMarkup(prices.SOL),
             fetchedAt: now,
           });
-          console.log(`[P2PPrice] SOL base price: ${prices.SOL}, with markup: ${this.applyMarkup(prices.SOL)}`);
+          console.log(
+            `[P2PPrice] SOL base price: ${prices.SOL}, with markup: ${this.applyMarkup(prices.SOL)}`,
+          );
         } else if (mint === TOKEN_MINTS.FIXERCOIN) {
           // Fixercoin price from DexScreener
           const fixercoinPriceInPKR = priceUsd * 280; // Assuming 1 USD ≈ 280 PKR
@@ -108,7 +121,9 @@ class P2PPriceService {
             price: this.applyMarkup(prices.FIXERCOIN),
             fetchedAt: now,
           });
-          console.log(`[P2PPrice] FIXERCOIN base price: ${prices.FIXERCOIN}, with markup: ${this.applyMarkup(prices.FIXERCOIN)}`);
+          console.log(
+            `[P2PPrice] FIXERCOIN base price: ${prices.FIXERCOIN}, with markup: ${this.applyMarkup(prices.FIXERCOIN)}`,
+          );
         }
       });
 
@@ -123,7 +138,10 @@ class P2PPriceService {
       }
       if (!this.cache.has("FIXERCOIN")) {
         const markedupFIXERCOIN = this.applyMarkup(prices.FIXERCOIN);
-        this.cache.set("FIXERCOIN", { price: markedupFIXERCOIN, fetchedAt: now });
+        this.cache.set("FIXERCOIN", {
+          price: markedupFIXERCOIN,
+          fetchedAt: now,
+        });
       }
 
       return {

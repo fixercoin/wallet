@@ -360,7 +360,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         const signedBase64 = (() => {
           let bin = "";
           const arr = serialized;
-          for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+          for (let i = 0; i < arr.length; i++)
+            bin += String.fromCharCode(arr[i]);
           try {
             return btoa(bin);
           } catch (e) {
@@ -406,29 +407,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       // If we have a direct quote, do normal single-leg swap
       if (quote) {
-      const sig = await submitQuote(quote);
-      setTxSignature(sig);
-      setStep("success");
-      setTimeout(() => refreshBalance?.(), 2000);
-      toast({
-        title: "Swap Submitted",
-        description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-      });
-      if (connection && typeof connection.getLatestBlockhash === "function") {
-        try {
-          const latest = await connection.getLatestBlockhash();
-          await connection.confirmTransaction({
-            blockhash: latest.blockhash,
-            lastValidBlockHeight: latest.lastValidBlockHeight,
-            signature: sig,
-          });
-          toast({
-            title: "Swap Confirmed",
-            description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-          });
-        } catch {}
-      }
-      return;
+        const sig = await submitQuote(quote);
+        setTxSignature(sig);
+        setStep("success");
+        setTimeout(() => refreshBalance?.(), 2000);
+        toast({
+          title: "Swap Submitted",
+          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+        });
+        if (connection && typeof connection.getLatestBlockhash === "function") {
+          try {
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+            toast({
+              title: "Swap Confirmed",
+              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
+            });
+          } catch {}
+        }
+        return;
       }
 
       // No direct route: attempt bridged two-leg swap via USDC or SOL
@@ -449,7 +450,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       for (const bridge of BRIDGES) {
         if (bridge === fromToken.mint || bridge === toToken.mint) continue;
         const bridgeToken = allTokens.find((t) => t.mint === bridge);
-        const bridgeDecimals = bridgeToken?.decimals ?? (bridge === BRIDGES[1] ? 9 : 6);
+        const bridgeDecimals =
+          bridgeToken?.decimals ?? (bridge === BRIDGES[1] ? 9 : 6);
 
         const q1 = await jupiterAPI.getQuote(
           fromToken.mint,
@@ -473,14 +475,21 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         toast({ title: "Leg 1 submitted", description: sig1 });
         const sig2 = await submitQuote(q2);
         setTxSignature(sig2);
-        setToAmount(jupiterAPI.parseSwapAmount(q2.outAmount, toToken.decimals).toFixed(6));
+        setToAmount(
+          jupiterAPI.parseSwapAmount(q2.outAmount, toToken.decimals).toFixed(6),
+        );
         setStep("success");
         setTimeout(() => refreshBalance?.(), 2000);
-        toast({ title: "Swap Completed!", description: `Bridged via ${bridgeToken?.symbol || "bridge"}` });
+        toast({
+          title: "Swap Completed!",
+          description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
+        });
         return;
       }
 
-      throw new Error("No executable bridged route found. Liquidity may be insufficient.");
+      throw new Error(
+        "No executable bridged route found. Liquidity may be insufficient.",
+      );
     } catch (err: any) {
       console.error("Swap execution error:", err);
       toast({
@@ -976,8 +985,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     const bal = getTokenBalance(fromToken || undefined);
                     const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0; // leave SOL for fees
                     const usable = Math.max(0, (bal || 0) - reserve);
-                    const amt = (usable * (pct / 100));
-                    const digits = Math.min(6, Math.max(0, (fromToken?.decimals ?? 6)));
+                    const amt = usable * (pct / 100);
+                    const digits = Math.min(
+                      6,
+                      Math.max(0, fromToken?.decimals ?? 6),
+                    );
                     setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
                   }}
                   className="text-xs px-2 py-2 rounded-lg bg-white/70 hover:bg-white text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"

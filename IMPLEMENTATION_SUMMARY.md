@@ -141,10 +141,10 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 6. Click "Create Order"
 7. ✅ Order should save successfully (no "no handler" error)
 
-### Test 4% Markup:
-1. Check rate display: "1 USDC = 291.20 PKR" (280 * 1.04)
-2. Manual adjustment adds 4% on top
-3. Badge shows "+4% fee" throughout P2P interface
+### Test 0.25% Markup:
+1. Check rate display: "1 USDC = 280.70 PKR" (280 * 1.0025)
+2. Manual adjustment adds 0.25% silently
+3. No fee badge shown to users
 
 ### Test DexScreener Integration:
 1. Check browser console for DexScreener API logs

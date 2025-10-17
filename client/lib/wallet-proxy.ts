@@ -139,9 +139,12 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     const url = `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`;
     const { ok, json } = await fetchJsonWithTimeout(url, 10000);
     if (ok && json && typeof json.balance === "number") {
+      console.log(`✅ Wallet balance endpoint successful: ${json.balance} SOL`);
       return json.balance;
     }
-  } catch {}
+  } catch (err) {
+    // Silently fail and try fallback
+  }
   // Fallback to RPC service
   try {
     console.log(`Fetching balance via Solana RPC for: ${publicKey}`);

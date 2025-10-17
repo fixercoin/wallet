@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
+import { handleWalletBalance } from "./routes/wallet-balance";
 import {
   handleDexscreenerTokens,
   handleDexscreenerSearch,
@@ -44,6 +45,9 @@ export async function createServer(): Promise<express.Application> {
 
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);
+
+  // Wallet routes
+  app.get("/api/wallet/balance", handleWalletBalance);
 
   // P2P Orders routes
   app.get("/api/p2p/orders", handleListP2POrders);

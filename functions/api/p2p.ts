@@ -196,7 +196,10 @@ export default async function (
         ? await deletePostCF(db, id, adminHeader as any)
         : deletePost(id, adminHeader);
       if ("error" in result)
-        return jsonResponse({ error: (result as any).error }, (result as any).status);
+        return jsonResponse(
+          { error: (result as any).error },
+          (result as any).status,
+        );
       return jsonResponse({ ok: true }, (result as any).status);
     }
 
@@ -211,7 +214,10 @@ export default async function (
         ? await createOrUpdatePostCF(db, body || {}, adminHeader || "")
         : createOrUpdatePost(body || {}, adminHeader || "");
       if ("error" in result)
-        return jsonResponse({ error: (result as any).error }, (result as any).status);
+        return jsonResponse(
+          { error: (result as any).error },
+          (result as any).status,
+        );
 
       if (!hasDb) {
         try {
@@ -229,7 +235,10 @@ export default async function (
         }
       }
 
-      return jsonResponse({ post: (result as any).post }, (result as any).status);
+      return jsonResponse(
+        { post: (result as any).post },
+        (result as any).status,
+      );
     }
 
     if (
@@ -271,7 +280,10 @@ export default async function (
         ? await addTradeMessageCF(db, tradeId, msg, from)
         : addTradeMessage(tradeId, msg, from);
       if ("error" in result)
-        return jsonResponse({ error: (result as any).error }, (result as any).status);
+        return jsonResponse(
+          { error: (result as any).error },
+          (result as any).status,
+        );
 
       // If a proof is attached in the same request, process it as well for convenience
       let proofUrl: string | undefined;
@@ -290,7 +302,10 @@ export default async function (
         }
       } catch {}
 
-      return jsonResponse({ message: (result as any).message, proofUrl }, (result as any).status);
+      return jsonResponse(
+        { message: (result as any).message, proofUrl },
+        (result as any).status,
+      );
     }
 
     if (
@@ -302,7 +317,10 @@ export default async function (
       const body = await request.json().catch(() => null);
       const inMem = uploadProof(tradeId, body?.proof);
       if ("error" in inMem)
-        return jsonResponse({ error: (inMem as any).error }, (inMem as any).status);
+        return jsonResponse(
+          { error: (inMem as any).error },
+          (inMem as any).status,
+        );
 
       let supabaseUrl: string | undefined;
       try {
@@ -316,7 +334,10 @@ export default async function (
         } catch {}
       }
 
-      return jsonResponse({ ok: true, url: supabaseUrl }, (inMem as any).status);
+      return jsonResponse(
+        { ok: true, url: supabaseUrl },
+        (inMem as any).status,
+      );
     }
 
     return jsonResponse({ error: "not found" }, 404);

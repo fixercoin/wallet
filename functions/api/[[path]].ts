@@ -259,7 +259,9 @@ export const onRequest = async ({ request, env }) => {
             sender,
             ts: isFinite(ts) ? ts : Date.now(),
           });
-      return jsonCors((result as any).status, { payment: (result as any).payment });
+      return jsonCors((result as any).status, {
+        payment: (result as any).payment,
+      });
     }
 
     if (normalizedPath === "/easypaisa/payments" && request.method === "GET") {

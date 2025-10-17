@@ -253,8 +253,14 @@ export default function ExpressAddPost() {
           token,
           pricePkr: price,
           // include Fixercoin optional pricing if provided
-          pricePerUSDC: token === "FIXERCOIN" && pricePerUSDC !== "" ? Number(pricePerUSDC) : undefined,
-          pricePerSOL: token === "FIXERCOIN" && pricePerSOL !== "" ? Number(pricePerSOL) : undefined,
+          pricePerUSDC:
+            token === "FIXERCOIN" && pricePerUSDC !== ""
+              ? Number(pricePerUSDC)
+              : undefined,
+          pricePerSOL:
+            token === "FIXERCOIN" && pricePerSOL !== ""
+              ? Number(pricePerSOL)
+              : undefined,
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
@@ -262,7 +268,10 @@ export default function ExpressAddPost() {
           availability,
           paymentDetails:
             sellerAccountName || sellerAccountNumber
-              ? { accountName: sellerAccountName, accountNumber: sellerAccountNumber }
+              ? {
+                  accountName: sellerAccountName,
+                  accountNumber: sellerAccountNumber,
+                }
               : undefined,
         }),
       });
@@ -532,7 +541,9 @@ export default function ExpressAddPost() {
               {token === "FIXERCOIN" && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <div className="mb-1 text-xs font-medium text-muted-foreground">Price per USDC (Fixercoin)</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">
+                      Price per USDC (Fixercoin)
+                    </div>
                     <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                       <input
                         value={pricePerUSDC}
@@ -547,7 +558,9 @@ export default function ExpressAddPost() {
                     </div>
                   </div>
                   <div>
-                    <div className="mb-1 text-xs font-medium text-muted-foreground">Price per SOL (Fixercoin)</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">
+                      Price per SOL (Fixercoin)
+                    </div>
                     <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                       <input
                         value={pricePerSOL}
@@ -584,7 +597,9 @@ export default function ExpressAddPost() {
               )}
 
               <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Seller Payment Details (optional)</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
+                  Seller Payment Details (optional)
+                </div>
                 <div className="grid grid-cols-1 gap-2">
                   <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
                     <input
@@ -603,7 +618,10 @@ export default function ExpressAddPost() {
                     />
                   </div>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">Buyers will see these details after a match to send fiat payment.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Buyers will see these details after a match to send fiat
+                  payment.
+                </p>
               </div>
 
               <Button

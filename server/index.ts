@@ -11,6 +11,7 @@ import {
   handleJupiterPrice,
   handleJupiterQuote,
   handleJupiterSwap,
+  handleJupiterTokens,
 } from "./routes/jupiter-proxy";
 import {
   handleListP2POrders,

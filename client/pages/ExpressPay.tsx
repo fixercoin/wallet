@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useExpressP2P } from "@/contexts/ExpressP2PContext";
 import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
 

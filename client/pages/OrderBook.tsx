@@ -96,10 +96,14 @@ export default function OrderBook() {
         return;
       }
 
-      if (newOrder.type === "sell" && (!newOrder.accountName || !newOrder.accountNumber)) {
+      if (
+        newOrder.type === "sell" &&
+        (!newOrder.accountName || !newOrder.accountNumber)
+      ) {
         toast({
           title: "Invalid input",
-          description: "Please fill account name and account number for sell orders",
+          description:
+            "Please fill account name and account number for sell orders",
           variant: "destructive",
         });
         return;
@@ -462,7 +466,10 @@ export default function OrderBook() {
                       type="text"
                       value={newOrder.accountName}
                       onChange={(e) =>
-                        setNewOrder({ ...newOrder, accountName: e.target.value })
+                        setNewOrder({
+                          ...newOrder,
+                          accountName: e.target.value,
+                        })
                       }
                       placeholder="Account holder name"
                       className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
@@ -476,7 +483,10 @@ export default function OrderBook() {
                       type="text"
                       value={newOrder.accountNumber}
                       onChange={(e) =>
-                        setNewOrder({ ...newOrder, accountNumber: e.target.value })
+                        setNewOrder({
+                          ...newOrder,
+                          accountNumber: e.target.value,
+                        })
                       }
                       placeholder="Account number"
                       className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
@@ -489,7 +499,10 @@ export default function OrderBook() {
                     <select
                       value={newOrder.paymentMethod}
                       onChange={(e) =>
-                        setNewOrder({ ...newOrder, paymentMethod: e.target.value })
+                        setNewOrder({
+                          ...newOrder,
+                          paymentMethod: e.target.value,
+                        })
                       }
                       className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
                     >
@@ -508,7 +521,10 @@ export default function OrderBook() {
                     type="text"
                     value={newOrder.walletAddress}
                     onChange={(e) =>
-                      setNewOrder({ ...newOrder, walletAddress: e.target.value })
+                      setNewOrder({
+                        ...newOrder,
+                        walletAddress: e.target.value,
+                      })
                     }
                     placeholder="Wallet address"
                     className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"

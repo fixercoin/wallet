@@ -39,6 +39,9 @@ export default function OrderBook() {
     quoteAsset: "USDC",
     pricePKRPerQuote: "",
     paymentMethod: "easypaisa",
+    accountName: "",
+    accountNumber: "",
+    walletAddress: "",
   });
 
   const load = async () => {

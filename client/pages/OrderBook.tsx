@@ -96,8 +96,26 @@ export default function OrderBook() {
         return;
       }
 
+      if (newOrder.type === "sell" && (!newOrder.accountName || !newOrder.accountNumber)) {
+        toast({
+          title: "Invalid input",
+          description: "Please fill account name and account number for sell orders",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (newOrder.type === "buy" && !newOrder.walletAddress) {
+        toast({
+          title: "Invalid input",
+          description: "Please fill wallet address for buy orders",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Use the admin password as the token for creating orders
-      const orderData = {
+      const orderData: any = {
         side: newOrder.type,
         amountPKR: Number(newOrder.amountPKR),
         quoteAsset: newOrder.quoteAsset,
@@ -106,6 +124,13 @@ export default function OrderBook() {
         roomId: "global",
         createdBy: wallet?.publicKey || "admin",
       };
+
+      if (newOrder.type === "sell") {
+        orderData.accountName = newOrder.accountName;
+        orderData.accountNumber = newOrder.accountNumber;
+      } else if (newOrder.type === "buy") {
+        orderData.walletAddress = newOrder.walletAddress;
+      }
 
       await createOrder(orderData, adminPassword);
 
@@ -120,6 +145,9 @@ export default function OrderBook() {
         quoteAsset: "USDC",
         pricePKRPerQuote: "",
         paymentMethod: "easypaisa",
+        accountName: "",
+        accountNumber: "",
+        walletAddress: "",
       });
       setShowCreateForm(false);
       await load();

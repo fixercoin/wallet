@@ -679,7 +679,7 @@ export default function ExpressPay() {
                     PKR Amount
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
-                    {Number(spendAmount).toLocaleString()} PKR
+                    {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 

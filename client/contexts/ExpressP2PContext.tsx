@@ -24,7 +24,7 @@ const ExpressP2PContext = createContext<ExpressP2PContextType | undefined>(
 );
 
 const EXCHANGE_RATE_KEY = "express-exchange-rate";
-const DEFAULT_RATE = 280.7; // 280 * 1.0025 (with 0.25% markup)
+const DEFAULT_RATE = 292.59; // 280.70 * 1.0425 (with 4.25% markup)
 
 export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
   children,

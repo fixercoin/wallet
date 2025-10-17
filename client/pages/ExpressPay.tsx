@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
-import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
+import { listP2POrders, createTradeRoom } from "@/lib/p2p-api";
+import type { P2POrder } from "@/lib/p2p-api";
 
 type TabType = "buy" | "sell";
 type PaymentMethod = "easypaisa" | "jazzcash" | "bank";

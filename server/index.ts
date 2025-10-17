@@ -45,6 +45,23 @@ export async function createServer(): Promise<express.Application> {
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);
 
+  // P2P Orders routes
+  app.get("/api/p2p/orders", handleListP2POrders);
+  app.post("/api/p2p/orders", handleCreateP2POrder);
+  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
+  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
+  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+
+  // Trade Rooms routes
+  app.get("/api/p2p/rooms", handleListTradeRooms);
+  app.post("/api/p2p/rooms", handleCreateTradeRoom);
+  app.get("/api/p2p/rooms/:roomId", handleGetTradeRoom);
+  app.put("/api/p2p/rooms/:roomId", handleUpdateTradeRoom);
+
+  // Trade Messages routes
+  app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
+  app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
   // Health check
   app.get("/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

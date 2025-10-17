@@ -104,8 +104,8 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 2. ExpressP2PContext initializes
 3. P2PPriceService fetches prices from DexScreener
 4. Prices are cached for 60 seconds
-5. 4% markup is applied automatically
-6. Marked-up prices displayed everywhere in UI
+5. 0.25% markup is applied automatically (silent)
+6. Marked-up prices displayed everywhere in UI (without showing fee)
 ```
 
 ### Order Creation Flow:

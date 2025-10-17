@@ -95,6 +95,7 @@ export default function ExpressStartTrade() {
     const candidates = posts.filter(
       (p: any) =>
         p?.type === typeNeeded &&
+        p?.availability !== "offline" &&
         String(p?.token).toUpperCase() === String(params.token).toUpperCase() &&
         (params?.side === "buy"
           ? String(p?.paymentMethod).toLowerCase() ===
@@ -276,15 +277,8 @@ export default function ExpressStartTrade() {
         method: params?.paymentMethod || match.paymentMethod,
       };
     }
-    if (isEasypaisa) {
-      return {
-        accountName: "Seller Easypaisa Account",
-        accountNumber: "03107044833",
-        method: params?.paymentMethod || match.paymentMethod || "easypaisa",
-      };
-    }
     return null;
-  }, [match, params?.paymentMethod, isEasypaisa]);
+  }, [match, params?.paymentMethod]);
 
   const sellerPaymentMethodLabel = useMemo(() => {
     const raw =
@@ -803,16 +797,33 @@ export default function ExpressStartTrade() {
               {messages.length === 0 ? (
                 <div className="text-muted-foreground">No messages yet.</div>
               ) : (
-                messages.map((m) => (
-                  <div key={m.id} className="mb-1">
-                    <span className="font-medium">{m.from}:</span> {m.message}
-                    {m.proof?.filename && (
+                messages.map((m) => {
+                  const txt = String(m?.message || "");
+                  let proofBlock: React.ReactNode = null;
+                  if (txt.startsWith("proof:")) {
+                    const rest = txt.slice(6);
+                    const parts = rest.split(":");
+                    const filename = parts[0] || "attachment";
+                    const url = parts[1] && parts[1].startsWith("http") ? parts.slice(1).join(":") : null;
+                    proofBlock = (
                       <div className="mt-1 text-xs text-muted-foreground">
-                        Attachment: {m.proof.filename}
+                        Attachment: {url ? (
+                          <a href={url} target="_blank" rel="noreferrer" className="underline">
+                            {filename}
+                          </a>
+                        ) : (
+                          <span>{filename}</span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))
+                    );
+                  }
+                  return (
+                    <div key={m.id} className="mb-1">
+                      <span className="font-medium">{m.from}:</span> {txt.startsWith("proof:") ? "(sent a proof)" : txt}
+                      {proofBlock}
+                    </div>
+                  );
+                })
               )}
             </div>
             <div className="mt-2 flex gap-2 items-center">

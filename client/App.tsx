@@ -26,7 +26,6 @@ import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
 import ExpressPay from "./pages/ExpressPay";
 import ExpressAddPost from "./pages/ExpressAddPost";
-import ExpressEmbed from "./pages/ExpressEmbed";
 import ExpressOrderComplete from "./pages/ExpressOrderComplete";
 import ExpressPendingOrders from "./pages/ExpressPendingOrders";
 import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";

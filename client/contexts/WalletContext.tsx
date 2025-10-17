@@ -419,17 +419,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 : 0;
               if (price > 0) prices[lockerMint] = price;
               const priceChange = lockerDex.priceChange?.h24;
+              // Only set changeMap if we have a valid numeric value. Otherwise leave undefined
+              // so UI can display a neutral/missing state instead of 0.00% which can be misleading.
               if (typeof priceChange === "number" && isFinite(priceChange)) {
                 changeMap[lockerMint] = priceChange;
-              } else if (!changeMap[lockerMint]) {
-                changeMap[lockerMint] = 0;
               }
             }
           } catch (e) {
             console.warn("Failed to fetch LOCKER price from DexScreener:", e);
-            if (!changeMap[lockerMint]) {
-              changeMap[lockerMint] = 0;
-            }
+            // Do not force a 0% change on failure; keep undefined so the UI shows '—'
           }
         }
 

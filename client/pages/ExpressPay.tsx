@@ -49,6 +49,9 @@ export default function ExpressPay() {
   const [showSellConfirmation, setShowSellConfirmation] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [adjustedRate, setAdjustedRate] = useState<string>("280");
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [

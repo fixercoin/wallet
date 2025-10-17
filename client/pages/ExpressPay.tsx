@@ -670,7 +670,7 @@ export default function ExpressPay() {
                     Amount
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
-                    {receivedAmount.toFixed(6)}
+                    {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 

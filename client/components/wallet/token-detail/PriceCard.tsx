@@ -53,20 +53,26 @@ export const PriceCard: React.FC<PriceCardProps> = ({
               })}
             </h2>
             <div className="flex items-center gap-2 mt-1">
-              {isPositive ? (
-                <TrendingUp className="h-4 w-4 text-green-400" />
+              {priceChangePercent !== null ? (
+                <>
+                  {priceChangePercent >= 0 ? (
+                    <TrendingUp className="h-4 w-4 text-green-400" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-red-400" />
+                  )}
+                  <span
+                    className={`text-sm font-medium ${
+                      priceChangePercent >= 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {priceChangePercent >= 0 ? "+" : ""}
+                    {priceChangePercent.toFixed(2)}%
+                  </span>
+                  <span className="text-gray-400 text-sm">24h</span>
+                </>
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-400" />
+                <span className="text-sm font-medium text-gray-400">—</span>
               )}
-              <span
-                className={`text-sm font-medium ${
-                  isPositive ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {isPositive ? "+" : ""}
-                {priceChangePercent.toFixed(2)}%
-              </span>
-              <span className="text-gray-400 text-sm">24h</span>
             </div>
           </div>
         </div>

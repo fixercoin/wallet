@@ -631,6 +631,24 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         ),
       );
 
+      // Persist lock record to Cloudflare (best-effort)
+      try {
+        await fetch(resolveApiUrl("/api/locks"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: lockId,
+            wallet: wallet.publicKey,
+            tokenMint: provisional.mint,
+            amount: provisional.amount,
+            decimals: provisional.decimals,
+            txSignature: submittedSignature,
+            network: "solana",
+            note: `escrow:${provisional.escrowPublicKey}`,
+          }),
+        });
+      } catch {}
+
       await refreshTokens();
       toast({
         title: "Success",

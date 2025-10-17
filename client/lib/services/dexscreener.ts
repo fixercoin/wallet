@@ -241,18 +241,28 @@ class DexscreenerAPI {
 
   async searchTokens(query: string): Promise<DexscreenerToken[]> {
     try {
-      const response = await fetch(
-        `/api/dexscreener/search?q=${encodeURIComponent(query)}`,
-      ).catch(() => new Response("", { status: 0 } as any));
+      const url = `/api/dexscreener/search?q=${encodeURIComponent(query)}`;
+      console.log(`[DexScreener] Searching: ${url}`);
+
+      const response = await fetch(url).catch(() =>
+        new Response("", { status: 0 } as any)
+      );
 
       if (!response.ok) {
+        console.warn(
+          `[DexScreener] Search failed with status ${response.status}`,
+        );
         return [];
       }
 
       const data: DexscreenerResponse = await response.json();
+      console.log(`[DexScreener] Search returned ${(data.pairs || []).length} results`);
       return data.pairs || [];
     } catch (error) {
-      console.debug("Error searching tokens via DexScreener proxy:", error);
+      console.warn(
+        `[DexScreener] Search error:`,
+        error instanceof Error ? error.message : String(error),
+      );
       return [];
     }
   }
@@ -281,21 +291,29 @@ class DexscreenerAPI {
 
   async getPopularTokens(): Promise<DexscreenerToken[]> {
     try {
+      console.log(`[DexScreener] Fetching trending tokens...`);
       // Get trending tokens on Solana via proxy
       const response = await fetch("/api/dexscreener/trending").catch(
         () => new Response("", { status: 0 } as any),
       );
 
       if (!response.ok) {
+        console.warn(
+          `[DexScreener] Trending request failed with status ${response.status}`,
+        );
         return [];
       }
 
       const data: DexscreenerResponse = await response.json();
-      return data.pairs?.slice(0, 20) || []; // Get top 20 trending tokens
+      const trending = data.pairs?.slice(0, 20) || [];
+      console.log(
+        `[DexScreener] ✅ Got ${trending.length} trending tokens`,
+      );
+      return trending;
     } catch (error) {
-      console.debug(
-        "Error fetching popular tokens via DexScreener proxy:",
-        error,
+      console.warn(
+        `[DexScreener] Trending error:`,
+        error instanceof Error ? error.message : String(error),
       );
       return [];
     }

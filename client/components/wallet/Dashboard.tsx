@@ -498,13 +498,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             aria-label="Open Express P2P Service"
           >
             <span className="block w-full text-center">EXPRESS P2P SERVICE</span>
-            {(isLoading || isServiceDown) && (
-              <span
-                aria-label={isServiceDown ? "Service down" : "Refreshing"}
-                title={isServiceDown ? "Service down" : "Refreshing"}
-                className={`status-dot ${isServiceDown ? "status-red" : "status-yellow"} absolute right-3 top-1/2 -translate-y-1/2`}
-              />
-            )}
+            <span
+              aria-label={isServiceDown ? "Service unavailable" : "Service available"}
+              title={isServiceDown ? "Service unavailable" : "Service available"}
+              className={`status-dot ${isServiceDown ? "status-red" : "status-green"} absolute right-4 top-1/2 -translate-y-1/2`}
+            />
           </Button>
         </div>
 

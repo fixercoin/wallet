@@ -100,8 +100,6 @@ export default function ExpressPay() {
     setShowSellConfirmation(true);
   };
 
-  // Exchange rate (can be adjusted by admin)
-  const exchangeRate = Number(adjustedRate) || 280;
 
   const receivedAmount = useMemo(() => {
     if (!spendAmount || isNaN(Number(spendAmount))) return 0;

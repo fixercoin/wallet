@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Plus, AlertCircle, Check } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, AlertCircle, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
@@ -17,6 +17,13 @@ interface Order {
   minToken: number;
   maxToken: number;
   paymentMethod: string;
+  amountPKR?: number;
+  quoteAsset?: string;
+  pricePKRPerQuote?: number;
+  paymentDetails?: {
+    accountName: string;
+    accountNumber: string;
+  };
 }
 
 export default function ExpressPay() {
@@ -30,7 +37,9 @@ export default function ExpressPay() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("easypaisa");
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showBuyConfirmation, setShowBuyConfirmation] = useState(false);
+  const [showSellConfirmation, setShowSellConfirmation] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
@@ -57,7 +66,28 @@ export default function ExpressPay() {
     return token?.balance || 0;
   }, [activeTab, selectedCurrency, tokens]);
 
-  const handleBuyWithPKR = () => {
+  // Load available buy orders when in buy tab
+  useEffect(() => {
+    if (activeTab === "buy") {
+      loadOrders();
+    }
+  }, [activeTab]);
+
+  const loadOrders = async () => {
+    try {
+      setIsLoadingOrders(true);
+      const res = await listOrders("global");
+      // Filter for sell orders (sellers listing their tokens)
+      const sellOrders = (res.orders || []).filter((o: any) => o.type === "sell");
+      setOrders(sellOrders as Order[]);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  const handleBuyClick = () => {
     if (!wallet) {
       toast({
         title: "Wallet not connected",
@@ -76,21 +106,68 @@ export default function ExpressPay() {
       return;
     }
 
-    // For sell, show confirmation dialog
-    if (activeTab === "sell") {
-      setShowConfirmation(true);
+    // For buy, show confirmation with seller details
+    if (activeTab === "buy") {
+      // Use admin as default seller for now
+      const seller: Order = {
+        id: `seller-${Date.now()}`,
+        type: "sell",
+        token: selectedCurrency,
+        pricePkr: exchangeRate,
+        minToken: 0,
+        maxToken: 10000,
+        paymentMethod: selectedPayment,
+        amountPKR: Number(spendAmount),
+        quoteAsset: selectedCurrency,
+        pricePKRPerQuote: exchangeRate,
+        paymentDetails: {
+          accountName: "Fixorium Admin",
+          accountNumber: "03001234567",
+        },
+      };
+      setSelectedSeller(seller);
+      setShowBuyConfirmation(true);
       return;
     }
+  };
 
-    // Navigate to order book to proceed with the trade (buy flow)
-    navigate("/express/orderbook", {
-      state: {
-        type: "buy",
-        amountPKR: Number(spendAmount),
-        token: selectedCurrency,
-        paymentMethod: selectedPayment,
-      },
-    });
+  const handleBuyApprove = async () => {
+    try {
+      if (!wallet || !selectedSeller) {
+        toast({
+          title: "Error",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsProcessing(true);
+
+      toast({
+        title: "Payment confirmed",
+        description: "Waiting for seller to verify payment...",
+      });
+
+      // Simulate processing delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setShowBuyConfirmation(false);
+
+      // Navigate to chat window (BuyTrade page)
+      navigate("/express/buy-trade", {
+        state: {
+          order: selectedSeller,
+        },
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to process payment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSellApprove = async () => {
@@ -124,14 +201,6 @@ export default function ExpressPay() {
         return;
       }
 
-      // Simulate transaction to buyer (admin wallet detected)
-      const buyerWallet = ADMIN_WALLET;
-      
-      // In a real scenario, here you would:
-      // 1. Create a Solana transaction to send tokens to buyer
-      // 2. Sign and send it
-      // 3. Get the transaction signature
-      
       toast({
         title: "Transfer initiated",
         description: `Sending ${receivedAmount.toFixed(6)} ${selectedCurrency} to buyer...`,
@@ -145,8 +214,8 @@ export default function ExpressPay() {
         description: `${receivedAmount.toFixed(6)} ${selectedCurrency} sent to buyer`,
       });
 
-      setShowConfirmation(false);
-      
+      setShowSellConfirmation(false);
+
       // Navigate to chat window (BuyTrade page)
       navigate("/express/buy-trade", {
         state: {
@@ -161,7 +230,6 @@ export default function ExpressPay() {
           },
         },
       });
-
     } catch (error: any) {
       toast({
         title: "Transfer failed",
@@ -342,7 +410,7 @@ export default function ExpressPay() {
 
           {/* Primary Action Button */}
           <Button
-            onClick={handleBuyWithPKR}
+            onClick={handleBuyClick}
             disabled={isProcessing}
             className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
           >
@@ -362,8 +430,118 @@ export default function ExpressPay() {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {showConfirmation && (
+      {/* Buy Confirmation Modal */}
+      {showBuyConfirmation && selectedSeller && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Seller Details
+              </h2>
+              <button
+                onClick={() => setShowBuyConfirmation(false)}
+                className="text-white hover:bg-white/20 p-1 rounded"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              {/* Transaction Summary */}
+              <div className="space-y-2 pb-4 border-b border-[hsl(var(--border))]">
+                <div className="flex justify-between items-center p-2">
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                    You Pay
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))]">
+                    {Number(spendAmount).toLocaleString()} PKR
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2">
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                    You Receive
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))]">
+                    {receivedAmount.toFixed(6)} {selectedCurrency}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2">
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                    Rate
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))]">
+                    1 {selectedCurrency} = {exchangeRate} PKR
+                  </span>
+                </div>
+              </div>
+
+              {/* Seller Details */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-[hsl(var(--foreground))]">
+                  Seller Information
+                </h3>
+
+                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                    Account Name
+                  </div>
+                  <div className="font-semibold text-[hsl(var(--foreground))]">
+                    {selectedSeller.paymentDetails?.accountName || "Not provided"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                    Account Number
+                  </div>
+                  <div className="font-semibold text-[hsl(var(--foreground))] font-mono">
+                    {selectedSeller.paymentDetails?.accountNumber || "Not provided"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                    Payment Method
+                  </div>
+                  <div className="font-semibold text-[hsl(var(--foreground))] capitalize">
+                    {selectedSeller.paymentMethod || "EasyPaisa"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                <p className="text-xs text-green-800">
+                  ✓ After payment, chat window will open to confirm with seller.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3">
+              <Button
+                onClick={() => setShowBuyConfirmation(false)}
+                disabled={isProcessing}
+                className="flex-1 h-10 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium text-sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBuyApprove}
+                disabled={isProcessing}
+                className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+              >
+                {isProcessing ? "Processing..." : "I Have Paid"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sell Confirmation Modal */}
+      {showSellConfirmation && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
             {/* Header */}
@@ -425,7 +603,7 @@ export default function ExpressPay() {
             {/* Actions */}
             <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3">
               <Button
-                onClick={() => setShowConfirmation(false)}
+                onClick={() => setShowSellConfirmation(false)}
                 disabled={isProcessing}
                 className="flex-1 h-10 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium text-sm"
               >

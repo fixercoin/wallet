@@ -33,7 +33,7 @@ class P2PPriceService {
   }
 
   /**
-   * Fetch prices from DexScreener for USDC, SOL, FIXERCOIN with 4% markup
+   * Fetch prices from DexScreener for USDC, SOL, FIXERCOIN with 0.25% markup
    */
   async fetchPricesInPKR(): Promise<PriceData> {
     try {

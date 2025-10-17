@@ -14,6 +14,10 @@ export default function ExpressAddPost() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
+  const { exchangeRate, setExchangeRate } = useExpressP2P();
+  const isAdmin = (wallet?.publicKey || wallet?.address || "") === ADMIN_WALLET;
+  const [newRate, setNewRate] = useState<string>("");
+  useEffect(() => setNewRate(String(exchangeRate || "")), [exchangeRate]);
 
   // Order basic info
   const [type, setType] = useState<"buy" | "sell">("buy");

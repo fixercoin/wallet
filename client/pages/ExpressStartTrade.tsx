@@ -1,3 +1,4 @@
+// This file was created and structured by Builder.io
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Zap, AlertCircle, CheckCircle } from "lucide-react";
@@ -213,7 +214,6 @@ export default function ExpressStartTrade() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Selected Order Summary */}
             <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">Selected Order</h3>
@@ -251,7 +251,6 @@ export default function ExpressStartTrade() {
               </div>
             </div>
 
-            {/* Amount Input */}
             <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4">
               <label className="block text-sm font-medium mb-3">
                 {selectedOrder.type === "buy"
@@ -286,7 +285,6 @@ export default function ExpressStartTrade() {
               </div>
             </div>
 
-            {/* Terms & Conditions */}
             <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -307,7 +305,6 @@ export default function ExpressStartTrade() {
               </label>
             </div>
 
-            {/* Action Button */}
             <button
               onClick={handleStartTrade}
               disabled={isInitiating || !agreed || !pkrAmount}

@@ -168,7 +168,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 
 ## Error Handling
 
-- **DexScreener Down:** Falls back to hardcoded prices with 4% markup
+- **DexScreener Down:** Falls back to hardcoded prices with 0.25% markup
 - **Invalid Admin Token:** Returns 401 Unauthorized
 - **Missing Fields:** Returns 400 Bad Request with error details
 - **Network Issues:** Caches last successful prices for 60 seconds

@@ -179,15 +179,20 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                   </div>
                   <div>
                     <span className="text-gray-400">24h Change</span>
-                    <p
-                      className={`font-medium ${
-                        (displayToken.priceChange24h || 0) >= 0
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }`}
-                    >
-                      {displayToken.priceChange24h?.toFixed(2) || "0.00"}%
-                    </p>
+                    {typeof displayToken.priceChange24h === "number" && isFinite(displayToken.priceChange24h) ? (
+                      <p
+                        className={`font-medium ${
+                          displayToken.priceChange24h >= 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {displayToken.priceChange24h >= 0 ? "+" : ""}
+                        {displayToken.priceChange24h.toFixed(2)}%
+                      </p>
+                    ) : (
+                      <p className="font-medium text-gray-400">—</p>
+                    )}
                   </div>
                   <div>
                     <span className="text-gray-400">Decimals</span>

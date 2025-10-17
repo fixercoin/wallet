@@ -81,16 +81,17 @@ export default function ExpressPay() {
     if (!spendAmount || Number(spendAmount) <= 0) {
       toast({
         title: "Invalid amount",
-        description: "Please enter a valid PKR amount",
+        description: "Please enter a valid token amount",
         variant: "destructive",
       });
       return;
     }
 
-    if (walletBalance < receivedAmount) {
+    const tokenAmount = Number(spendAmount);
+    if (walletBalance < tokenAmount) {
       toast({
         title: "Insufficient balance",
-        description: `You have ${walletBalance} ${selectedCurrency} but need ${receivedAmount.toFixed(6)}`,
+        description: `You have ${walletBalance} ${selectedCurrency} but need ${tokenAmount.toFixed(6)}`,
         variant: "destructive",
       });
       return;

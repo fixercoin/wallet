@@ -171,11 +171,17 @@ import {
   addEasypaisaPayment,
   listEasypaisaPayments,
 } from "../../utils/p2pStore";
+import {
+  addEasypaisaPaymentCF,
+  listEasypaisaPaymentsCF,
+} from "../../utils/p2pStoreCf";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
   const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  const db: any = (env as any)?.FIXORIUM_WALLET_DB;
+  const hasDb = !!db && typeof db.prepare === "function";
 
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -236,22 +242,33 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(400, { error: "invalid payload" });
       }
 
-      const result = addEasypaisaPayment({
-        msisdn,
-        amount,
-        currency,
-        reference,
-        sender,
-        ts: isFinite(ts) ? ts : Date.now(),
-      });
-      return jsonCors(result.status, { payment: result.payment });
+      const result = hasDb
+        ? await addEasypaisaPaymentCF(db, {
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          })
+        : addEasypaisaPayment({
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          });
+      return jsonCors((result as any).status, { payment: (result as any).payment });
     }
 
     if (normalizedPath === "/easypaisa/payments" && request.method === "GET") {
       const msisdn =
         url.searchParams.get("msisdn") || (env as any)?.EASYPAY_MSISDN || "";
       const since = Number(url.searchParams.get("since") || 0);
-      const data = listEasypaisaPayments({ msisdn, since });
+      const data = hasDb
+        ? await listEasypaisaPaymentsCF(db, { msisdn, since })
+        : listEasypaisaPayments({ msisdn, since });
       return jsonCors(200, data);
     }
 

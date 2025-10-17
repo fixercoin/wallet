@@ -518,7 +518,13 @@ export default function ExpressPay() {
 
           {/* Primary Action Button */}
           <Button
-            onClick={handleBuyClick}
+            onClick={() => {
+              if (activeTab === "buy") {
+                handleBuyClick();
+              } else {
+                handleSellClick();
+              }
+            }}
             disabled={isProcessing}
             className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
           >

@@ -108,9 +108,11 @@ export default function ExpressPay() {
   };
 
   const receivedAmount = useMemo(() => {
-    if (!spendAmount || isNaN(Number(spendAmount))) return 0;
-    return Number(spendAmount) / exchangeRate;
-  }, [spendAmount]);
+    const amt = Number(spendAmount);
+    if (!isFinite(amt) || amt <= 0) return 0;
+    if (!isFinite(exchangeRate) || exchangeRate <= 0) return 0;
+    return amt / exchangeRate;
+  }, [spendAmount, exchangeRate]);
 
   // Get wallet balance for selected currency (in sell mode)
   const walletBalance = useMemo(() => {
@@ -476,8 +478,7 @@ export default function ExpressPay() {
                 </div>
               ) : (
                 <span className="text-[hsl(var(--muted-foreground))]">
-                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR (Adjusted
-                  Rate)
+                  1 {selectedCurrency} = {isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate.toFixed(2) : "-"} PKR
                 </span>
               )}
               {isAdmin && (
@@ -595,7 +596,7 @@ export default function ExpressPay() {
                     Rate
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
-                    1 {selectedCurrency} = {exchangeRate} PKR
+                    1 {selectedCurrency} = {isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate : "-"} PKR
                   </span>
                 </div>
               </div>

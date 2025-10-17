@@ -309,7 +309,7 @@ export default function OrderBook() {
           </Button>
 
           <div className="flex-1 text-center font-medium text-sm">
-            Order Management <span className="text-xs text-green-600">(+4% markup)</span>
+            Order Management
           </div>
 
           <Button

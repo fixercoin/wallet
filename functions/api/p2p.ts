@@ -1,3 +1,4 @@
+// This file handles all P2P API endpoints (Builder.io + Cloudflare Worker)
 import {
   listPosts,
   getPost,
@@ -40,7 +41,6 @@ async function uploadProofToSupabase(
     return { ok: false, error: "Supabase not configured" } as const;
 
   try {
-    // Expect base64 without data URL prefix
     const base64 = proof.data.includes(",")
       ? proof.data.split(",").pop()!
       : proof.data;
@@ -91,22 +91,20 @@ async function commitPostsToGitHub(
     const base64Content = Buffer.from(content).toString("base64");
 
     const getUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeURIComponent(filePath)}?ref=${encodeURIComponent(branch)}`;
-    const commonHeaders = {
+    const headers = {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
-    } as Record<string, string>;
+    };
 
-    let sha: string | undefined = undefined;
+    let sha: string | undefined;
     try {
-      const getResp = await fetch(getUrl, { headers: commonHeaders });
+      const getResp = await fetch(getUrl, { headers });
       if (getResp.ok) {
         const data = await getResp.json().catch(() => null);
-        if (data && data.sha) sha = data.sha;
+        sha = data?.sha;
       }
-    } catch (e) {
-      // ignore - we'll try to create
-    }
+    } catch {}
 
     const putUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeURIComponent(filePath)}`;
     const body: any = {
@@ -119,7 +117,7 @@ async function commitPostsToGitHub(
     const putResp = await fetch(putUrl, {
       method: "PUT",
       headers: {
-        ...commonHeaders,
+        ...headers,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
@@ -162,14 +160,10 @@ export default async function (
 
   try {
     if (request.method === "GET" && (path === "/list" || path === "/")) {
-      if (hasDb) {
-        const data = await listPostsCF(db);
-        return jsonResponse(data);
-      }
-      return jsonResponse(listPosts());
+      const data = hasDb ? await listPostsCF(db) : listPosts();
+      return jsonResponse(data);
     }
 
-    // Export posts as downloadable JSON
     if (request.method === "GET" && path === "/export") {
       const data = hasDb ? await listPostsCF(db) : listPosts();
       return new Response(JSON.stringify(data, null, 2), {
@@ -193,14 +187,11 @@ export default async function (
       const id = path.replace("/post/", "");
       const adminHeader = request.headers.get("x-admin-wallet") || "";
       const result = hasDb
-        ? await deletePostCF(db, id, adminHeader as any)
+        ? await deletePostCF(db, id, adminHeader)
         : deletePost(id, adminHeader);
       if ("error" in result)
-        return jsonResponse(
-          { error: (result as any).error },
-          (result as any).status,
-        );
-      return jsonResponse({ ok: true }, (result as any).status);
+        return jsonResponse(result, result.status || 400);
+      return jsonResponse({ ok: true }, result.status || 200);
     }
 
     if (
@@ -214,31 +205,14 @@ export default async function (
         ? await createOrUpdatePostCF(db, body || {}, adminHeader || "")
         : createOrUpdatePost(body || {}, adminHeader || "");
       if ("error" in result)
-        return jsonResponse(
-          { error: (result as any).error },
-          (result as any).status,
-        );
+        return jsonResponse(result, result.status || 400);
 
       if (!hasDb) {
-        try {
-          const postsData = listPosts();
-          const ghResult = await commitPostsToGitHub(env, postsData);
-          if (!ghResult.ok) {
-            try {
-              console.error("GitHub sync failed:", ghResult.error);
-            } catch {}
-          }
-        } catch (e) {
-          try {
-            console.error("GitHub sync exception:", (e as any)?.message || e);
-          } catch {}
-        }
+        const postsData = listPosts();
+        await commitPostsToGitHub(env, postsData).catch(() => {});
       }
 
-      return jsonResponse(
-        { post: (result as any).post },
-        (result as any).status,
-      );
+      return jsonResponse({ post: result.post }, result.status || 200);
     }
 
     if (
@@ -247,23 +221,18 @@ export default async function (
       path.endsWith("/messages")
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/messages$/, "");
-      if (hasDb) {
-        const data = await listTradeMessagesCF(db, tradeId);
-        return jsonResponse(data);
-      }
-      return jsonResponse(listTradeMessages(tradeId));
+      const data = hasDb
+        ? await listTradeMessagesCF(db, tradeId)
+        : listTradeMessages(tradeId);
+      return jsonResponse(data);
     }
 
     if (request.method === "GET" && path === "/trades/recent") {
       const since = Number(url.searchParams.get("since") || 0);
       const limit = Number(url.searchParams.get("limit") || 100);
-      if (hasDb) {
-        const data = await listRecentTradeMessagesCF(db, { since, limit });
-        return jsonResponse({ messages: (data as any).messages || [] });
-      }
-      const data = (listRecentTradeMessages({ since, limit }) as any) || {
-        messages: [],
-      };
+      const data = hasDb
+        ? await listRecentTradeMessagesCF(db, { since, limit })
+        : listRecentTradeMessages({ since, limit });
       return jsonResponse({ messages: data.messages || [] });
     }
 
@@ -274,37 +243,43 @@ export default async function (
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/message$/, "");
       const body = await request.json().catch(() => null);
-      const msg = (body && body.message) || "";
-      const from = (body && body.from) || "unknown";
+      const msg = body?.message || "";
+      const from = body?.from || "unknown";
+
+      let proofMeta: { filename: string; url?: string } | undefined;
+      if (body?.proof?.filename && body?.proof?.data) {
+        try {
+          const sup = await uploadProofToSupabase(env, tradeId, body.proof);
+          proofMeta = {
+            filename: body.proof.filename,
+            url: sup.ok ? sup.url : undefined,
+          };
+        } catch {
+          proofMeta = { filename: body.proof.filename };
+        }
+      }
+
       const result = hasDb
         ? await addTradeMessageCF(db, tradeId, msg, from)
-        : addTradeMessage(tradeId, msg, from);
-      if ("error" in result)
-        return jsonResponse(
-          { error: (result as any).error },
-          (result as any).status,
-        );
+        : addTradeMessage(tradeId, msg, from, proofMeta);
 
-      // If a proof is attached in the same request, process it as well for convenience
-      let proofUrl: string | undefined;
-      try {
-        if (body?.proof && body.proof.filename && body.proof.data) {
-          const stored = uploadProof(tradeId, body.proof);
-          if (!("error" in stored)) {
-            const sup = await uploadProofToSupabase(env, tradeId, body.proof);
-            if (sup.ok) proofUrl = (sup as any).url as string;
-            if (hasDb) {
-              try {
-                await recordProofCF(db, tradeId, body.proof.filename, proofUrl);
-              } catch {}
-            }
-          }
-        }
-      } catch {}
+      if ("error" in result)
+        return jsonResponse(result, result.status || 400);
+
+      if (body?.proof?.filename && body?.proof?.data && hasDb) {
+        try {
+          await recordProofCF(
+            db,
+            tradeId,
+            body.proof.filename,
+            proofMeta?.url,
+          );
+        } catch {}
+      }
 
       return jsonResponse(
-        { message: (result as any).message, proofUrl },
-        (result as any).status,
+        { message: result.message, proofUrl: proofMeta?.url },
+        result.status || 200,
       );
     }
 
@@ -317,15 +292,12 @@ export default async function (
       const body = await request.json().catch(() => null);
       const inMem = uploadProof(tradeId, body?.proof);
       if ("error" in inMem)
-        return jsonResponse(
-          { error: (inMem as any).error },
-          (inMem as any).status,
-        );
+        return jsonResponse(inMem, inMem.status || 400);
 
       let supabaseUrl: string | undefined;
       try {
         const sup = await uploadProofToSupabase(env, tradeId, body?.proof);
-        if (sup.ok) supabaseUrl = (sup as any).url as string;
+        if (sup.ok) supabaseUrl = sup.url;
       } catch {}
 
       if (hasDb) {
@@ -334,10 +306,7 @@ export default async function (
         } catch {}
       }
 
-      return jsonResponse(
-        { ok: true, url: supabaseUrl },
-        (inMem as any).status,
-      );
+      return jsonResponse({ ok: true, url: supabaseUrl }, 200);
     }
 
     return jsonResponse({ error: "not found" }, 404);

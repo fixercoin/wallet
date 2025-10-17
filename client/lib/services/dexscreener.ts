@@ -57,6 +57,54 @@ export interface DexscreenerResponse {
 class DexscreenerAPI {
   // Using server proxy routes to avoid CORS issues
   private readonly baseUrl = "/api/dexscreener";
+  private static TOKEN_CACHE_TTL_MS = 30_000;
+  private static PERSISTENT_CACHE_KEY = "dexscreener_persistent_cache";
+  private static tokenCache = new Map<
+    string,
+    { token: DexscreenerToken; expiresAt: number }
+  >();
+
+  constructor() {
+    this.loadPersistentCache();
+  }
+
+  private loadPersistentCache(): void {
+    try {
+      const cached = localStorage.getItem(DexscreenerAPI.PERSISTENT_CACHE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached) as Record<
+          string,
+          { token: DexscreenerToken; expiresAt: number }
+        >;
+        Object.entries(data).forEach(([mint, entry]) => {
+          DexscreenerAPI.tokenCache.set(mint, entry);
+        });
+        console.log(
+          `DexScreener: Loaded ${Object.keys(data).length} tokens from persistent cache`,
+        );
+      }
+    } catch (err) {
+      console.warn("Failed to load DexScreener persistent cache:", err);
+    }
+  }
+
+  private savePersistentCache(): void {
+    try {
+      const data: Record<
+        string,
+        { token: DexscreenerToken; expiresAt: number }
+      > = {};
+      DexscreenerAPI.tokenCache.forEach((value, key) => {
+        data[key] = value;
+      });
+      localStorage.setItem(
+        DexscreenerAPI.PERSISTENT_CACHE_KEY,
+        JSON.stringify(data),
+      );
+    } catch (err) {
+      console.warn("Failed to save DexScreener persistent cache:", err);
+    }
+  }
 
   // Helper method to extract prices from DexScreener data
   getTokenPrices(tokens: DexscreenerToken[]): Record<string, number> {
@@ -71,54 +119,107 @@ class DexscreenerAPI {
       }
     });
 
-    console.log(`DexScreener: Extracted ${Object.keys(prices).length} prices`);
+    console.log(
+      `[DexScreener] Extracted ${Object.keys(prices).length} prices from ${tokens.length} tokens`,
+    );
     return prices;
   }
 
   async getTokensByMints(mints: string[]): Promise<DexscreenerToken[]> {
-    const mintString = mints.join(",");
+    const normalizedMints = Array.from(
+      new Set((mints || []).map((m) => m.trim()).filter(Boolean)),
+    ).sort();
+
+    // Serve from cache when fresh
+    const now = Date.now();
+    const cachedResults: DexscreenerToken[] = [];
+    const toFetch: string[] = [];
+    normalizedMints.forEach((mint) => {
+      const cached = DexscreenerAPI.tokenCache.get(mint);
+      if (cached && cached.expiresAt > now) {
+        cachedResults.push(cached.token);
+      } else {
+        toFetch.push(mint);
+      }
+    });
+
     console.log(
-      `DexScreener: Fetching tokens via proxy for ${mints.length} mints`,
+      `[DexScreener] Fetching ${normalizedMints.length} tokens: ${cachedResults.length} from cache, ${toFetch.length} to fetch`,
     );
 
-    const fetchWithTimeout = async (url: string, ms = 10000) => {
-      const timeout = new Promise<Response>((resolve) =>
-        setTimeout(() => resolve(new Response("", { status: 504 })), ms),
-      );
-      return (await Promise.race([fetch(url), timeout])) as Response;
-    };
+    let fetchedTokens: DexscreenerToken[] = [];
+    let fetchFailed = false;
 
-    // Try up to 3 attempts, short backoff
-    let response: Response | null = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    if (toFetch.length > 0) {
+      const mintString = toFetch.join(",");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       try {
-        response = await fetchWithTimeout(
-          `/api/dexscreener/tokens?mints=${mintString}`,
-          10000,
+        const response = await fetch(
+          `${this.baseUrl}/tokens?mints=${mintString}`,
+          { signal: controller.signal },
         );
-        if (response.ok) break;
+        if (response.ok) {
+          try {
+            const data: DexscreenerResponse = await response.json();
+            fetchedTokens = data.pairs || [];
+          } catch {}
+        } else {
+          fetchFailed = true;
+        }
       } catch (err) {
-        // ignore
+        // network/timeout -> swallow; fallback to stale cache
+        fetchFailed = true;
+        console.warn(`DexScreener fetch failed for mints: ${mintString}`, err);
+      } finally {
+        clearTimeout(timeoutId);
       }
-      await new Promise((r) => setTimeout(r, attempt * 300));
     }
 
-    if (!response || !response.ok) {
-      console.debug(
-        `DexScreener proxy unavailable or non-OK (status=${response?.status || 0}), continuing without price data`,
-      );
-      return [];
-    }
-
-    try {
-      const data: DexscreenerResponse = await response.json();
+    // If fetch failed, try to serve stale cached data instead of failing completely
+    if (fetchFailed && toFetch.length > 0) {
       console.log(
-        `DexScreener: Retrieved ${data.pairs?.length || 0} pairs via proxy`,
+        `DexScreener: Serving stale cache for ${toFetch.length} tokens`,
       );
-      return data.pairs || [];
-    } catch {
-      return [];
+      toFetch.forEach((mint) => {
+        const stale = DexscreenerAPI.tokenCache.get(mint);
+        if (stale) {
+          fetchedTokens.push(stale.token);
+        }
+      });
     }
+
+    // Update cache with fetched results
+    const ttl = now + DexscreenerAPI.TOKEN_CACHE_TTL_MS;
+    fetchedTokens.forEach((t) => {
+      const mint = t.baseToken?.address;
+      if (mint) {
+        DexscreenerAPI.tokenCache.set(mint, { token: t, expiresAt: ttl });
+      }
+    });
+
+    // Save to persistent cache after successful fetch
+    if (fetchedTokens.length > 0) {
+      this.savePersistentCache();
+    }
+
+    const allTokensMap = new Map<string, DexscreenerToken>();
+    [...cachedResults, ...fetchedTokens].forEach((t) => {
+      const mint = t.baseToken?.address;
+      if (mint && !allTokensMap.has(mint)) {
+        allTokensMap.set(mint, t);
+      }
+    });
+
+    const result = normalizedMints
+      .map((m) => allTokensMap.get(m))
+      .filter((t): t is DexscreenerToken => Boolean(t));
+
+    console.log(
+      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"})`,
+    );
+
+    return result;
   }
 
   async getTokenByMint(mint: string): Promise<DexscreenerToken | null> {

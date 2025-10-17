@@ -18,8 +18,11 @@ import {
   Settings,
   Bot,
   Plus,
-  MoreVertical,
+  Menu,
   Gift,
+  Flame,
+  Lock,
+  Coins,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -40,12 +43,15 @@ interface DashboardProps {
   onSwap: () => void;
   onAutoBot: () => void;
   onAirdrop: () => void;
-  onP2P: () => void;
   onTokenClick: (tokenMint: string) => void;
   onSettings: () => void;
   onOpenSetup?: () => void;
   onAccounts?: () => void;
+  onLock: () => void;
+  onBurn: () => void;
 }
+
+import { useNavigate } from "react-router-dom";
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
@@ -53,11 +59,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSwap,
   onAutoBot,
   onAirdrop,
-  onP2P,
   onTokenClick,
   onSettings,
   onOpenSetup,
   onAccounts,
+  onLock,
+  onBurn,
 }) => {
   const {
     wallet,
@@ -71,6 +78,63 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
+  const navigate = useNavigate();
+  useEffect(() => {
+    let cancelled = false;
+    let running = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (running) return;
+      running = true;
+      try {
+        await refreshBalance();
+        // small spacing to avoid overlapping backend calls
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch (err) {
+        // swallow - network issues expected
+      } finally {
+        running = false;
+      }
+    };
+
+    const id = window.setInterval(tick, 500);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [refreshBalance, refreshTokens]);
+
+  // Refresh quietly when user scrolls down significantly
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let lastRefresh = 0;
+    const THRESHOLD = 50; // pixels scrolled down
+    const COOLDOWN = 1000; // ms between auto refreshes
+
+    const doScrollRefresh = async () => {
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch {}
+    };
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      const now = Date.now();
+      if (y - lastY > THRESHOLD && now - lastRefresh > COOLDOWN) {
+        lastRefresh = now;
+        void doScrollRefresh();
+      }
+      lastY = y;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [refreshBalance, refreshTokens]);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -266,15 +330,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      {isLoading ? (
-        <div className="dashboard-loader-overlay">
-          <div
-            className="dashboard-loader"
-            role="status"
-            aria-label="Loading dashboard data"
-          />
-        </div>
-      ) : null}
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
@@ -286,32 +341,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
             />
             <span className="text-cream">FIXORIUM</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" className="h-8 w-8 p-0 dash-btn-circle">
-                  <MoreVertical className="h-4 w-4" />
+                  <Menu className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span>ALL WALLET</span>
+                  <span>MY-WALLET</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={onAirdrop}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Gift className="h-4 w-4" />
-                  <span>MULTI-SEND</span>
+                  <span>C-BUILDER</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={onBurn}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Flame className="h-4 w-4" />
+                  <span>SPL-BURN</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={onLock}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Lock className="h-4 w-4" />
+                  <span>LOCK-SPL</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => navigate("/fixorium/token-listing")}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Coins className="h-4 w-4" />
+                  <span>LISTING</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={onSettings}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Settings className="h-4 w-4" />
                   <span>SETTINGS</span>
@@ -384,17 +460,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
 
-        {/* EXPRESS P2P SERVICE */}
+        {/* Tokens List */}
         <div className="mb-4">
           <Button
-            onClick={onP2P}
+            onClick={() => navigate("/express/embedded")}
             className="w-full h-12 dash-btn font-semibold border-0"
+            aria-label="Open Express P2P Service"
           >
             EXPRESS P2P SERVICE
           </Button>
         </div>
 
-        {/* Tokens List */}
         <div className="space-y-3">
           {/* All Tokens - Each in separate container */}
           {sortedTokens.map((token) => {
@@ -417,19 +493,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => onTokenClick(token.mint)}
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-gray-700 flex-shrink-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
                         <AvatarImage src={token.logoURI} alt={token.symbol} />
                         <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
                           {token.symbol.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-xs">
                           <span className="font-semibold text-[hsl(var(--foreground))] text-sm">
                             {token.symbol}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-xs">
                           <span className="text-xs text-[hsl(var(--muted-foreground))]">
                             ${formatTokenPriceDisplay(token.price)}
                           </span>

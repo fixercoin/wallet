@@ -309,8 +309,8 @@ export default function ExpressPay() {
       });
       return;
     }
-    // Save to localStorage
-    localStorage.setItem('express-exchange-rate', adjustedRate);
+    // Save to context (which persists to localStorage)
+    setExchangeRate(newRate);
     setIsAdjusting(false);
     toast({
       title: "Success",

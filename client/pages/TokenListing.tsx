@@ -20,7 +20,6 @@ export default function TokenListing() {
   const [logoURI, setLogoURI] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const hasMinSol = true;
 
   if (!wallet) {
     return (

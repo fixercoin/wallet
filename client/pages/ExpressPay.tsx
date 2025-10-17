@@ -181,6 +181,9 @@ export default function ExpressPay() {
       setShowBuyConfirmation(true);
       return;
     }
+
+    // For sell, show sell confirmation
+    handleSellClick();
   };
 
   const handleBuyApprove = async () => {

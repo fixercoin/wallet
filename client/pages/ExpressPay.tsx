@@ -14,6 +14,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useExpressP2P } from "@/contexts/ExpressP2PContext";
 import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
+import { p2pPriceService } from "@/lib/services/p2p-price";
 
 type TabType = "buy" | "sell";
 type PaymentMethod = "easypaisa" | "jazzcash" | "bank";
@@ -53,6 +54,33 @@ export default function ExpressPay() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin } =
     useExpressP2P();
+
+  // Token-specific PKR rate (USDC uses exchangeRate; SOL/FIXERCOIN fetched via service)
+  const [selectedRate, setSelectedRate] = useState<number>(exchangeRate);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadRate = async () => {
+      try {
+        if (selectedCurrency === "USDC") {
+          if (!cancelled) setSelectedRate(exchangeRate);
+          return;
+        }
+        const rate = await p2pPriceService.getTokenPrice(
+          selectedCurrency as "USDC" | "SOL" | "FIXERCOIN",
+        );
+        if (!cancelled && typeof rate === "number" && rate > 0) {
+          setSelectedRate(rate);
+        }
+      } catch {
+        if (!cancelled) setSelectedRate(exchangeRate);
+      }
+    };
+    loadRate();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCurrency, exchangeRate]);
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
@@ -103,9 +131,9 @@ export default function ExpressPay() {
   const receivedAmount = useMemo(() => {
     const amt = Number(spendAmount);
     if (!isFinite(amt) || amt <= 0) return 0;
-    if (!isFinite(exchangeRate) || exchangeRate <= 0) return 0;
-    return activeTab === "sell" ? amt * exchangeRate : amt / exchangeRate;
-  }, [spendAmount, exchangeRate, activeTab]);
+    if (!isFinite(selectedRate) || selectedRate <= 0) return 0;
+    return activeTab === "sell" ? amt * selectedRate : amt / selectedRate;
+  }, [spendAmount, selectedRate, activeTab]);
 
   // Get wallet balance for selected currency (in sell mode)
   const walletBalance = useMemo(() => {
@@ -165,13 +193,13 @@ export default function ExpressPay() {
         id: `seller-${Date.now()}`,
         type: "sell",
         token: selectedCurrency,
-        pricePkr: exchangeRate,
+        pricePkr: selectedRate,
         minToken: 0,
         maxToken: 10000,
         paymentMethod: selectedPayment,
         amountPKR: Number(spendAmount),
         quoteAsset: selectedCurrency,
-        pricePKRPerQuote: exchangeRate,
+        pricePKRPerQuote: selectedRate,
         paymentDetails: {
           accountName: "Fixorium Admin",
           accountNumber: "03001234567",
@@ -279,8 +307,8 @@ export default function ExpressPay() {
             id: `sell-${Date.now()}`,
             type: "sell",
             token: selectedCurrency,
-            amountPKR: Number(spendAmount) * exchangeRate,
-            pricePKRPerQuote: exchangeRate,
+            amountPKR: Number(spendAmount) * selectedRate,
+            pricePKRPerQuote: selectedRate,
             quoteAsset: selectedCurrency,
             paymentMethod: selectedPayment,
           },
@@ -441,8 +469,8 @@ export default function ExpressPay() {
             <div className="flex items-center justify-between text-xs gap-2">
               <span className="text-[hsl(var(--muted-foreground))]">
                 1 {selectedCurrency} ={" "}
-                {isFinite(exchangeRate) && exchangeRate > 0
-                  ? exchangeRate.toFixed(2)
+                {isFinite(selectedRate) && selectedRate > 0
+                  ? selectedRate.toFixed(2)
                   : "-"}{" "}
                 PKR
               </span>
@@ -572,8 +600,8 @@ export default function ExpressPay() {
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
                     1 {selectedCurrency} ={" "}
-                    {isFinite(exchangeRate) && exchangeRate > 0
-                      ? exchangeRate
+                    {isFinite(selectedRate) && selectedRate > 0
+                      ? selectedRate
                       : "-"}{" "}
                     PKR
                   </span>

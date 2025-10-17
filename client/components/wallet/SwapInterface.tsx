@@ -326,174 +326,170 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const executeSwap = async () => {
-    if (!quote || !wallet) return;
+    if (!wallet) return;
     setIsLoading(true);
 
     try {
-      if (!quote) throw new Error("Swap quote missing");
-      const swapRequest = {
-        quoteResponse: quote,
-        userPublicKey: wallet.publicKey,
-        wrapAndUnwrapSol: true,
-      } as any;
-      console.debug("Sending swap request to Jupiter proxy:", swapRequest);
-      const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
-      if (!swapResponse || !swapResponse.swapTransaction)
-        throw new Error("Failed to get swap transaction");
+      // Helper to submit a single-quote swap via Jupiter
+      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+        const swapRequest = {
+          quoteResponse: q,
+          userPublicKey: wallet.publicKey,
+          wrapAndUnwrapSol: true,
+        } as any;
+        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+        if (!swapResponse || !swapResponse.swapTransaction)
+          throw new Error("Failed to get swap transaction");
+        const kp = getKeypair();
+        if (!kp) throw new Error("Missing wallet key to sign transaction");
+        const swapTransactionBuf = Buffer.from(
+          swapResponse.swapTransaction,
+          "base64",
+        );
+        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+        tx.sign([kp]);
+        const serialized = Buffer.from(tx.serialize());
 
-      const kp = getKeypair();
-      if (!kp) throw new Error("Missing wallet key to sign transaction");
-
-      const swapTransactionBuf = Buffer.from(
-        swapResponse.swapTransaction,
-        "base64",
-      );
-      const tx = VersionedTransaction.deserialize(swapTransactionBuf);
-      tx.sign([kp]);
-      const serialized = Buffer.from(tx.serialize());
-
-      // If a connection is available in context, prefer it
-      if (connection && typeof connection.sendRawTransaction === "function") {
-        try {
+        if (connection && typeof connection.sendRawTransaction === "function") {
           const sig = await connection.sendRawTransaction(serialized, {
             skipPreflight: false,
           });
-
-          // Immediately update UI and return; perform confirmation in background
-          setTxSignature(sig);
-          setStep("success");
-          setTimeout(() => refreshBalance?.(), 2000);
-          toast({
-            title: "Swap Submitted",
-            description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-          });
-
-          (async () => {
-            try {
-              const latest = await connection.getLatestBlockhash();
-              await connection.confirmTransaction({
-                blockhash: latest.blockhash,
-                lastValidBlockHeight: latest.lastValidBlockHeight,
-                signature: sig,
-              });
-              toast({
-                title: "Swap Confirmed",
-                description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-              });
-            } catch (err) {
-              console.warn("Background confirmation failed:", err);
-            }
-          })();
-
-          return;
-        } catch (e: any) {
-          console.warn(
-            "connection.sendRawTransaction failed, falling back to server send:",
-            e?.message || e,
-          );
-          // Continue to fallback to server-side submission below
+          return sig;
         }
-      }
 
-      // Fallback: submit signed transaction to server endpoints (/api/solana-simulate, /api/solana-send)
-      const signedBase64 = (() => {
-        let bin = "";
-        const arr = serialized;
-        for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
-        try {
-          return btoa(bin);
-        } catch (e) {
-          return Buffer.from(arr).toString("base64");
-        }
-      })();
+        const signedBase64 = (() => {
+          let bin = "";
+          const arr = serialized;
+          for (let i = 0; i < arr.length; i++)
+            bin += String.fromCharCode(arr[i]);
+          try {
+            return btoa(bin);
+          } catch (e) {
+            return Buffer.from(arr).toString("base64");
+          }
+        })();
 
-      // Simulate first
-      try {
+        // Simulate
         const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ signedBase64 }),
         });
-
         if (!simResp.ok) {
           const txt = await simResp.text().catch(() => "");
-          let parsed: any = null;
-          try {
-            parsed = txt ? JSON.parse(txt) : null;
-          } catch {}
-          const msg =
-            parsed?.error?.message ||
-            txt ||
-            simResp.statusText ||
-            `Simulation failed (${simResp.status})`;
-          throw new Error(msg);
+          throw new Error(txt || simResp.statusText || "Simulation failed");
         }
-
         const simJson = await simResp.json();
         if (simJson?.insufficientLamports) {
           const d = simJson.insufficientLamports;
           const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
-          toast({
-            title: "Insufficient SOL",
-            description: `You need ~${missingSOL?.toFixed(6) ?? "0.000000"} SOL more to cover fees/rent.`,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          setStep("form");
-          return;
+          throw new Error(
+            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
+          );
         }
-      } catch (e: any) {
-        throw new Error(
-          `Simulation request failed: ${e instanceof Error ? e.message : String(e)}`,
-        );
-      }
 
-      // Send via server
-      try {
+        // Send
         const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ signedBase64 }),
         });
-
         if (!sendResp.ok) {
           const txt = await sendResp.text().catch(() => "");
-          let parsed: any = null;
-          try {
-            parsed = txt ? JSON.parse(txt) : null;
-          } catch {}
-          const details = parsed?.error?.details
-            ? JSON.stringify(parsed.error.details)
-            : txt || sendResp.statusText;
-          throw new Error(
-            `${sendResp.status} : ${parsed?.error?.message || txt} | details: ${details}`,
-          );
+          throw new Error(txt || sendResp.statusText || "Send failed");
         }
-
         const jb = await sendResp.json();
         if (jb.error) {
-          const det = jb.error.details
-            ? JSON.stringify(jb.error.details)
-            : JSON.stringify(jb.error);
-          throw new Error(
-            `RPC send error: ${jb.error.message || JSON.stringify(jb.error)} | details: ${det}`,
-          );
+          throw new Error(jb.error?.message || "RPC send error");
         }
+        return jb.result as string;
+      };
 
-        const signature = jb.result as string;
-        setTxSignature(signature);
+      // If we have a direct quote, do normal single-leg swap
+      if (quote) {
+        const sig = await submitQuote(quote);
+        setTxSignature(sig);
+        setStep("success");
+        setTimeout(() => refreshBalance?.(), 2000);
+        toast({
+          title: "Swap Submitted",
+          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+        });
+        if (connection && typeof connection.getLatestBlockhash === "function") {
+          try {
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+            toast({
+              title: "Swap Confirmed",
+              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
+            });
+          } catch {}
+        }
+        return;
+      }
+
+      // No direct route: attempt bridged two-leg swap via USDC or SOL
+      if (!fromToken || !toToken) throw new Error("Missing tokens");
+      const slippageBps = Math.max(
+        1,
+        Math.round(parseFloat(slippage || "0.5") * 100),
+      );
+      const amountInt = parseInt(
+        jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+        10,
+      );
+      const BRIDGES = [
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+        "So11111111111111111111111111111111111111112", // SOL
+      ];
+
+      for (const bridge of BRIDGES) {
+        if (bridge === fromToken.mint || bridge === toToken.mint) continue;
+        const bridgeToken = allTokens.find((t) => t.mint === bridge);
+        const bridgeDecimals =
+          bridgeToken?.decimals ?? (bridge === BRIDGES[1] ? 9 : 6);
+
+        const q1 = await jupiterAPI.getQuote(
+          fromToken.mint,
+          bridge,
+          amountInt,
+          slippageBps,
+        );
+        if (!q1) continue;
+        const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
+        const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
+        const q2 = await jupiterAPI.getQuote(
+          bridge,
+          toToken.mint,
+          parseInt(amount2, 10),
+          slippageBps,
+        );
+        if (!q2) continue;
+
+        // Execute leg1 then leg2
+        const sig1 = await submitQuote(q1);
+        toast({ title: "Leg 1 submitted", description: sig1 });
+        const sig2 = await submitQuote(q2);
+        setTxSignature(sig2);
+        setToAmount(
+          jupiterAPI.parseSwapAmount(q2.outAmount, toToken.decimals).toFixed(6),
+        );
         setStep("success");
         setTimeout(() => refreshBalance?.(), 2000);
         toast({
           title: "Swap Completed!",
-          description: `Successfully swapped ${fromAmount} ${fromToken?.symbol} for ${toAmount} ${toToken?.symbol}`,
+          description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
         });
         return;
-      } catch (e: any) {
-        throw new Error(
-          `Send request failed: ${e instanceof Error ? e.message : String(e)}`,
-        );
       }
+
+      throw new Error(
+        "No executable bridged route found. Liquidity may be insufficient.",
+      );
     } catch (err: any) {
       console.error("Swap execution error:", err);
       toast({
@@ -978,6 +974,30 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <AlertDescription>{quoteError}</AlertDescription>
               </Alert>
             )}
+
+            {/* Quick % selector */}
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {[25, 50, 75, 100].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => {
+                    const bal = getTokenBalance(fromToken || undefined);
+                    const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0; // leave SOL for fees
+                    const usable = Math.max(0, (bal || 0) - reserve);
+                    const amt = usable * (pct / 100);
+                    const digits = Math.min(
+                      6,
+                      Math.max(0, fromToken?.decimals ?? 6),
+                    );
+                    setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
+                  }}
+                  className="text-xs px-2 py-2 rounded-lg bg-white/70 hover:bg-white text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
+                >
+                  {pct}%
+                </button>
+              ))}
+            </div>
 
             {/* Submit */}
             <Button

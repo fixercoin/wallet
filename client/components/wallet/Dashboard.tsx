@@ -497,7 +497,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="w-full h-12 dash-btn font-semibold border-0"
             aria-label="Open Express P2P Service"
           >
-            EXPRESS P2P SERVICE
+            <span className="inline-flex items-center">
+              <span>EXPRESS P2P SERVICE</span>
+              {(isLoading || isServiceDown) && (
+                <span
+                  aria-label={isServiceDown ? "Service down" : "Refreshing"}
+                  title={isServiceDown ? "Service down" : "Refreshing"}
+                  className={`ml-2 inline-flex h-2 w-2 rounded-full animate-pulse ${isServiceDown ? "bg-red-500" : "bg-yellow-400"}`}
+                />
+              )}
+            </span>
           </Button>
         </div>
 

@@ -134,6 +134,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setIsLoading(false);
           return;
         }
+        console.log(
+          `Requesting Jupiter quote: ${fromToken.symbol} (${fromToken.mint}) -> ${toToken.symbol} (${toToken.mint}), amount: ${amountInt}`,
+        );
         const q = await jupiterAPI.getQuote(
           fromToken.mint,
           toToken.mint,
@@ -141,12 +144,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
         );
         if (q) {
+          console.log(
+            `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
+          );
           setQuote(q);
           const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
           setToAmount(out.toFixed(6));
           setQuoteError("");
           setIndicative(false);
         } else {
+          console.log(
+            `No Jupiter quote available, falling back to DexScreener pricing`,
+          );
           const [fromDex, toDex] = await Promise.all([
             dexscreenerAPI.getTokenByMint(fromToken.mint),
             dexscreenerAPI.getTokenByMint(toToken.mint),

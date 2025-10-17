@@ -5,6 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { p2pPriceService } from "@/lib/services/p2p-price";
 
 interface ExpressP2PContextType {
   exchangeRate: number;
@@ -14,6 +15,8 @@ interface ExpressP2PContextType {
   isAdjusting: boolean;
   setIsAdjusting: (adjusting: boolean) => void;
   refreshExchangeRate: () => void;
+  isLoadingPrice: boolean;
+  markupPercentage: number;
 }
 
 const ExpressP2PContext = createContext<ExpressP2PContextType | undefined>(
@@ -21,7 +24,7 @@ const ExpressP2PContext = createContext<ExpressP2PContextType | undefined>(
 );
 
 const EXCHANGE_RATE_KEY = "express-exchange-rate";
-const DEFAULT_RATE = 280;
+const DEFAULT_RATE = 291.2; // 280 * 1.04 (with 4% markup)
 
 export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -29,20 +32,45 @@ export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
   const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_RATE);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
 
-  // Load exchange rate from localStorage on mount
+  // Load exchange rate from localStorage and fetch real prices on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(EXCHANGE_RATE_KEY);
-      if (saved) {
-        const rate = Number(saved);
-        if (!isNaN(rate) && rate > 0) {
-          setExchangeRate(rate);
-          return;
+    const initializeExchangeRate = async () => {
+      try {
+        setIsLoadingPrice(true);
+
+        // Try to get USDC price with 4% markup from DexScreener
+        const price = await p2pPriceService.getTokenPrice("USDC");
+        setExchangeRate(price);
+
+        // Save to localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem(EXCHANGE_RATE_KEY, String(price));
         }
+
+        console.log(`[ExpressP2P] Exchange rate initialized: ${price} PKR (with 4% markup)`);
+      } catch (error) {
+        console.warn("[ExpressP2P] Failed to fetch price from DexScreener, using default:", error);
+
+        // Fallback to localStorage or default
+        if (typeof window !== "undefined") {
+          const saved = localStorage.getItem(EXCHANGE_RATE_KEY);
+          if (saved) {
+            const rate = Number(saved);
+            if (!isNaN(rate) && rate > 0) {
+              setExchangeRate(rate);
+              return;
+            }
+          }
+        }
+        setExchangeRate(DEFAULT_RATE);
+      } finally {
+        setIsLoadingPrice(false);
       }
-    }
-    setExchangeRate(DEFAULT_RATE);
+    };
+
+    initializeExchangeRate();
   }, []);
 
   // Save exchange rate to localStorage when changed
@@ -55,15 +83,24 @@ export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const refreshExchangeRate = () => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(EXCHANGE_RATE_KEY);
-      if (saved) {
-        const rate = Number(saved);
-        if (!isNaN(rate) && rate > 0) {
-          setExchangeRate(rate);
-        }
+  const refreshExchangeRate = async () => {
+    try {
+      setIsLoadingPrice(true);
+
+      // Clear cache and fetch fresh price
+      p2pPriceService.clearCache();
+      const price = await p2pPriceService.getTokenPrice("USDC");
+      setExchangeRate(price);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(EXCHANGE_RATE_KEY, String(price));
       }
+
+      console.log(`[ExpressP2P] Exchange rate refreshed: ${price} PKR`);
+    } catch (error) {
+      console.error("[ExpressP2P] Failed to refresh exchange rate:", error);
+    } finally {
+      setIsLoadingPrice(false);
     }
   };
 

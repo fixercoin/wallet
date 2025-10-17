@@ -693,7 +693,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       const amt = parseFloat(fromAmount || "0");
                       const price = fromUsdPrice ?? 0;
                       const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
+                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
                     })()}
                   </div>
                 </div>
@@ -807,7 +807,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       const amt = parseFloat(toAmount || "0");
                       const price = toUsdPrice ?? 0;
                       const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
+                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
                     })()}
                   </div>
                 </div>

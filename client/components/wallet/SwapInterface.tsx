@@ -166,7 +166,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             setQuote(null);
             setToAmount("");
             setQuoteError(
-              "Quotes temporarily unavailable. Try another pair or amount.",
+              `No liquidity found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
             );
             setIndicative(false);
           }

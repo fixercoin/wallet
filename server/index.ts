@@ -26,6 +26,13 @@ import {
   handleListTradeMessages,
   handleAddTradeMessage,
 } from "./routes/p2p-orders";
+import {
+  handleListOrders,
+  handleCreateOrder,
+  handleGetOrder,
+  handleUpdateOrder,
+  handleDeleteOrder,
+} from "./routes/orders";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

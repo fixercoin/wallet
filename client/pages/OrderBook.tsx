@@ -12,7 +12,10 @@ interface Order {
   amountPKR: number;
   quoteAsset: string;
   pricePKRPerQuote: number;
-  paymentMethod: string;
+  paymentMethod?: string;
+  accountName?: string;
+  accountNumber?: string;
+  walletAddress?: string;
 }
 
 const ADMIN_PASSWORD = "Pakistan##123";

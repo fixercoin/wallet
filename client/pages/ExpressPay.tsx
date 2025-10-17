@@ -264,6 +264,23 @@ export default function ExpressPay() {
     navigate("/express/orderbook");
   };
 
+  const handleSaveRate = () => {
+    const newRate = Number(adjustedRate);
+    if (newRate <= 0 || isNaN(newRate)) {
+      toast({
+        title: "Invalid rate",
+        description: "Please enter a valid exchange rate",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsAdjusting(false);
+    toast({
+      title: "Success",
+      description: `Exchange rate updated to ${newRate} PKR`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       {/* Header */}

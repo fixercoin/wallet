@@ -91,7 +91,7 @@ export async function createLock(db: D1Database, input: CreateLockInput): Promis
      VALUES (?1, ?2, 'lock', ?3, ?4, ?5, ?6)`,
   ).bind(crypto.randomUUID(), id, input.amount_total, input.tx_signature ?? null, now, input.note ?? null);
   const res = await db.batch([tx, ev]);
-  if (res.some((r) => (r as D1ExecResult).success === false)) throw new Error("Failed to create lock");
+  if (res.some((r) => (r as D1Result).success === false)) throw new Error("Failed to create lock");
   return getLock(db, id);
 }
 

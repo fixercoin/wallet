@@ -20,17 +20,17 @@ export async function createServer(): Promise<express.Application> {
   app.use(express.json());
 
   // DexScreener routes
-  app.get("/dexscreener/tokens", handleDexscreenerTokens);
-  app.get("/dexscreener/search", handleDexscreenerSearch);
-  app.get("/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
+  app.get("/api/dexscreener/search", handleDexscreenerSearch);
+  app.get("/api/dexscreener/trending", handleDexscreenerTrending);
 
   // Jupiter routes
-  app.get("/jupiter/price", handleJupiterPrice);
-  app.get("/jupiter/quote", handleJupiterQuote);
-  app.post("/jupiter/swap", handleJupiterSwap);
+  app.get("/api/jupiter/price", handleJupiterPrice);
+  app.get("/api/jupiter/quote", handleJupiterQuote);
+  app.post("/api/jupiter/swap", handleJupiterSwap);
 
   // Solana RPC proxy
-  app.post("/solana-rpc", handleSolanaRpc);
+  app.post("/api/solana-rpc", handleSolanaRpc);
 
   // Health check
   app.get("/health", (req, res) => {

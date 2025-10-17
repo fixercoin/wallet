@@ -57,7 +57,7 @@ function AppRoutes() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>

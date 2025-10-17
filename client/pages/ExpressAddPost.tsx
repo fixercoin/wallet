@@ -240,9 +240,7 @@ export default function ExpressAddPost() {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="flex-1 text-center font-medium">
-            Create P2P Offer
-          </div>
+          <div className="flex-1 text-center font-medium">Create P2P Offer</div>
         </div>
       </div>
 
@@ -310,7 +308,9 @@ export default function ExpressAddPost() {
         {/* Adjust global rate (admin only) */}
         {isAdmin && (
           <div className="p-3 rounded-xl border border-[hsl(var(--input))] bg-white">
-            <div className="text-xs text-muted-foreground mb-2 font-medium">Adjusted Exchange Rate</div>
+            <div className="text-xs text-muted-foreground mb-2 font-medium">
+              Adjusted Exchange Rate
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">1 USDC =</span>
               <input
@@ -327,7 +327,10 @@ export default function ExpressAddPost() {
                   const val = Number(newRate);
                   if (!isFinite(val) || val <= 0) return;
                   setExchangeRate(val);
-                  toast({ title: "Rate saved", description: `1 USDC = ${val} PKR` });
+                  toast({
+                    title: "Rate saved",
+                    description: `1 USDC = ${val} PKR`,
+                  });
                 }}
               >
                 Save

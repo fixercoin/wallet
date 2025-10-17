@@ -51,12 +51,8 @@ export default function ExpressPay() {
   const [showSellConfirmation, setShowSellConfirmation] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const {
-    exchangeRate,
-    setExchangeRate,
-    isAdmin,
-    setIsAdmin,
-  } = useExpressP2P();
+  const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin } =
+    useExpressP2P();
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
@@ -303,7 +299,6 @@ export default function ExpressPay() {
     navigate("/express/orderbook");
   };
 
-
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       {/* Header */}
@@ -440,7 +435,11 @@ export default function ExpressPay() {
             </div>
             <div className="flex items-center justify-between text-xs gap-2">
               <span className="text-[hsl(var(--muted-foreground))]">
-                1 {selectedCurrency} = {isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate.toFixed(2) : "-"} PKR
+                1 {selectedCurrency} ={" "}
+                {isFinite(exchangeRate) && exchangeRate > 0
+                  ? exchangeRate.toFixed(2)
+                  : "-"}{" "}
+                PKR
               </span>
             </div>
           </div>
@@ -539,7 +538,11 @@ export default function ExpressPay() {
                     Rate
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
-                    1 {selectedCurrency} = {isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate : "-"} PKR
+                    1 {selectedCurrency} ={" "}
+                    {isFinite(exchangeRate) && exchangeRate > 0
+                      ? exchangeRate
+                      : "-"}{" "}
+                    PKR
                   </span>
                 </div>
               </div>

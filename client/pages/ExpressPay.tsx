@@ -415,13 +415,45 @@ export default function ExpressPay() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[hsl(var(--muted-foreground))]">
-                1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR
-              </span>
-              <button className="text-[hsl(var(--primary))] font-medium hover:underline">
-                Adjust
-              </button>
+            <div className="flex items-center justify-between text-xs gap-2">
+              {isAdjusting && isAdmin ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    1 {selectedCurrency} ≈
+                  </span>
+                  <input
+                    type="number"
+                    value={adjustedRate}
+                    onChange={(e) => setAdjustedRate(e.target.value)}
+                    className="flex-1 border border-[hsl(var(--border))] rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  />
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    PKR
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[hsl(var(--muted-foreground))]">
+                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR
+                </span>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    if (isAdjusting) {
+                      handleSaveRate();
+                    } else {
+                      setIsAdjusting(true);
+                    }
+                  }}
+                  className={`font-medium hover:underline whitespace-nowrap ${
+                    isAdjusting
+                      ? "text-green-600"
+                      : "text-[hsl(var(--primary))]"
+                  }`}
+                >
+                  {isAdjusting ? "Save" : "Adjust"}
+                </button>
+              )}
             </div>
           </div>
 

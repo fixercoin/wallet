@@ -494,19 +494,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mb-4">
           <Button
             onClick={() => navigate("/express/embedded")}
-            className="w-full h-12 dash-btn font-semibold border-0"
+            className="w-full h-12 dash-btn font-semibold border-0 relative"
             aria-label="Open Express P2P Service"
           >
-            <span className="inline-flex items-center">
-              <span>EXPRESS P2P SERVICE</span>
-              {(isLoading || isServiceDown) && (
-                <span
-                  aria-label={isServiceDown ? "Service down" : "Refreshing"}
-                  title={isServiceDown ? "Service down" : "Refreshing"}
-                  className={`ml-2 inline-flex h-2 w-2 rounded-full animate-pulse ${isServiceDown ? "bg-red-500" : "bg-yellow-400"}`}
-                />
-              )}
-            </span>
+            <span className="block w-full text-center">EXPRESS P2P SERVICE</span>
+            {(isLoading || isServiceDown) && (
+              <span
+                aria-label={isServiceDown ? "Service down" : "Refreshing"}
+                title={isServiceDown ? "Service down" : "Refreshing"}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full animate-pulse ${isServiceDown ? "bg-red-500" : "bg-yellow-400"}`}
+              />
+            )}
           </Button>
         </div>
 

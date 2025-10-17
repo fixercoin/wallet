@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
-import { listP2POrders, createTradeRoom } from "@/lib/p2p-api";
+import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
 
 type TabType = "buy" | "sell";

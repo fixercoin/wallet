@@ -460,7 +460,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         // Ensure stablecoin USDC always has a valid price
         usdcMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;
-          // Don't force changeMap[mint] to 0; leave undefined if not found for cleaner UI
+          if (
+            typeof changeMap[mint] !== "number" ||
+            !isFinite(changeMap[mint]!)
+          ) {
+            changeMap[mint] = 0; // Stablecoin: show 0% if no data
+          }
         });
 
         const solMint = "So11111111111111111111111111111111111111112";

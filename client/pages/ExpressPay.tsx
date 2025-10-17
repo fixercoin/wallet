@@ -81,16 +81,17 @@ export default function ExpressPay() {
     if (!spendAmount || Number(spendAmount) <= 0) {
       toast({
         title: "Invalid amount",
-        description: "Please enter a valid PKR amount",
+        description: "Please enter a valid token amount",
         variant: "destructive",
       });
       return;
     }
 
-    if (walletBalance < receivedAmount) {
+    const tokenAmount = Number(spendAmount);
+    if (walletBalance < tokenAmount) {
       toast({
         title: "Insufficient balance",
-        description: `You have ${walletBalance} ${selectedCurrency} but need ${receivedAmount.toFixed(6)}`,
+        description: `You have ${walletBalance} ${selectedCurrency} but need ${tokenAmount.toFixed(6)}`,
         variant: "destructive",
       });
       return;
@@ -103,8 +104,8 @@ export default function ExpressPay() {
     const amt = Number(spendAmount);
     if (!isFinite(amt) || amt <= 0) return 0;
     if (!isFinite(exchangeRate) || exchangeRate <= 0) return 0;
-    return amt / exchangeRate;
-  }, [spendAmount, exchangeRate]);
+    return activeTab === "sell" ? amt * exchangeRate : amt / exchangeRate;
+  }, [spendAmount, exchangeRate, activeTab]);
 
   // Get wallet balance for selected currency (in sell mode)
   const walletBalance = useMemo(() => {
@@ -246,10 +247,11 @@ export default function ExpressPay() {
       }
 
       // Validate user has sufficient balance
-      if (walletBalance < receivedAmount) {
+      const tokenAmount = Number(spendAmount);
+      if (walletBalance < tokenAmount) {
         toast({
           title: "Insufficient balance",
-          description: `You have ${walletBalance} ${selectedCurrency} but need ${receivedAmount.toFixed(6)}`,
+          description: `You have ${walletBalance} ${selectedCurrency} but need ${tokenAmount.toFixed(6)}`,
           variant: "destructive",
         });
         return;
@@ -257,7 +259,7 @@ export default function ExpressPay() {
 
       toast({
         title: "Transfer initiated",
-        description: `Sending ${receivedAmount.toFixed(6)} ${selectedCurrency} to buyer...`,
+        description: `Sending ${tokenAmount.toFixed(6)} ${selectedCurrency} to buyer...`,
       });
 
       // Simulate delay for transaction
@@ -265,7 +267,7 @@ export default function ExpressPay() {
 
       toast({
         title: "Transfer successful",
-        description: `${receivedAmount.toFixed(6)} ${selectedCurrency} sent to buyer`,
+        description: `${Number(spendAmount).toFixed(6)} ${selectedCurrency} sent to buyer`,
       });
 
       setShowSellConfirmation(false);
@@ -277,7 +279,7 @@ export default function ExpressPay() {
             id: `sell-${Date.now()}`,
             type: "sell",
             token: selectedCurrency,
-            amountPKR: Number(spendAmount),
+            amountPKR: Number(spendAmount) * exchangeRate,
             pricePKRPerQuote: exchangeRate,
             quoteAsset: selectedCurrency,
             paymentMethod: selectedPayment,
@@ -378,36 +380,35 @@ export default function ExpressPay() {
             </>
           )}
 
-          {/* Spend Section */}
-          <div className="space-y-2">
-            <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-              {activeTab === "sell" ? "Sell Amount" : "Spend"}
-            </label>
-            <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  min={0}
-                  step={100}
-                  value={spendAmount}
-                  onChange={(e) => setSpendAmount(e.target.value)}
-                  placeholder="0"
-                  className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
-                />
-                <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
-                  PKR
+          {/* Spend Section (Buy) */}
+          {activeTab !== "sell" && (
+            <div className="space-y-2">
+              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                Spend
+              </label>
+              <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min={0}
+                    step={100}
+                    value={spendAmount}
+                    onChange={(e) => setSpendAmount(e.target.value)}
+                    placeholder="0"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                  />
+                  <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
+                    PKR
+                  </div>
                 </div>
               </div>
+              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                Minimum: 1,000 PKR
+              </div>
             </div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">
-              Minimum: 1,000 PKR
-              {activeTab === "sell" &&
-                walletBalance > 0 &&
-                ` | Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
-            </div>
-          </div>
+          )}
 
-          {/* Receive Section */}
+          {/* Token Selection / Receive Section */}
           <div className="space-y-2">
             <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
               {activeTab === "sell" ? "Sell Token" : "Receive"}
@@ -415,7 +416,11 @@ export default function ExpressPay() {
             <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
               <div className="flex items-center h-11">
                 <div className="flex-1 px-4 py-3 text-sm font-medium text-[hsl(var(--foreground))]">
-                  {receivedAmount > 0 ? receivedAmount.toFixed(6) : "0"}
+                  {activeTab === "sell"
+                    ? ""
+                    : receivedAmount > 0
+                      ? receivedAmount.toFixed(6)
+                      : "0"}
                 </div>
                 <div className="relative">
                   <select
@@ -443,6 +448,34 @@ export default function ExpressPay() {
               </span>
             </div>
           </div>
+
+          {activeTab === "sell" && (
+            <div className="space-y-2">
+              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                Sell Amount {selectedCurrency}
+              </label>
+              <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.000001}
+                    value={spendAmount}
+                    onChange={(e) => setSpendAmount(e.target.value)}
+                    placeholder="0"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                  />
+                  <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
+                    {selectedCurrency}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                {walletBalance > 0 &&
+                  `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
+              </div>
+            </div>
+          )}
 
           {/* Payment Methods */}
           <div className="space-y-2">
@@ -640,7 +673,7 @@ export default function ExpressPay() {
                     Amount
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
-                    {receivedAmount.toFixed(6)}
+                    {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
@@ -649,7 +682,7 @@ export default function ExpressPay() {
                     PKR Amount
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
-                    {Number(spendAmount).toLocaleString()} PKR
+                    {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 

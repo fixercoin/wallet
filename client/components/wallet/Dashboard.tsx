@@ -99,7 +99,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 1000);
+    const id = window.setInterval(tick, 2000);
 
     return () => {
       cancelled = true;
@@ -510,18 +510,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="w-full h-12 dash-btn font-semibold border-0 relative"
             aria-label="Open Express P2P Service"
           >
-            <span className="block w-full text-center">
+            <div className="block w-full text-center text-white">
               EXPRESS P2P SERVICE
-            </span>
-            <span
-              aria-label={
-                isServiceDown ? "Service unavailable" : "Service available"
-              }
-              title={
-                isServiceDown ? "Service unavailable" : "Service available"
-              }
-              className={`status-dot ${isServiceDown ? "status-red" : "status-green"} absolute right-8 top-1/2 -translate-y-1/2`}
-            />
+            </div>
           </Button>
         </div>
 

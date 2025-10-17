@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PublicKey } from "@solana/web3.js";
@@ -19,11 +18,6 @@ export default function TokenListing() {
   const [decimals, setDecimals] = useState<number>(6);
   const [logoURI, setLogoURI] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const hasMinSol = useMemo(
-    () => (typeof balance === "number" ? balance : 0) >= 0.002,
-    [balance],
-  );
 
   if (!wallet) {
     return (
@@ -46,14 +40,6 @@ export default function TokenListing() {
   }
 
   const handleList = async () => {
-    if (!hasMinSol) {
-      toast({
-        title: "Insufficient SOL",
-        description: "You need at least 0.002 SOL to list a token.",
-        variant: "destructive",
-      });
-      return;
-    }
     try {
       new PublicKey(mint.trim());
     } catch {
@@ -127,13 +113,6 @@ export default function TokenListing() {
             </span>
           </div>
 
-          <Alert>
-            <AlertDescription>
-              Requires at least <strong>0.002 SOL</strong> in your wallet to
-              confirm listing.
-            </AlertDescription>
-          </Alert>
-
           <div className="grid gap-3">
             <div className="space-y-2">
               <Label htmlFor="mint">Token Mint Address</Label>
@@ -185,16 +164,12 @@ export default function TokenListing() {
           </div>
 
           <Button
-            disabled={!hasMinSol || isLoading}
+            disabled={isLoading}
             onClick={handleList}
             className="h-11 w-full border-0 font-semibold dash-btn"
           >
             {isLoading ? "Listing..." : "Confirm Listing"}
           </Button>
-
-          {!hasMinSol && (
-            <p className="text-red-500 text-xs">Balance is below 0.002 SOL.</p>
-          )}
         </div>
       </div>
     </div>

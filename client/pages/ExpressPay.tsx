@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useExpressP2P } from "@/contexts/ExpressP2PContext";
 import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
 
@@ -50,9 +51,15 @@ export default function ExpressPay() {
   const [showSellConfirmation, setShowSellConfirmation] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isAdjusting, setIsAdjusting] = useState(false);
-  const [adjustedRate, setAdjustedRate] = useState<string>("280");
+  const [adjustedRate, setAdjustedRate] = useState<string>("");
+  const {
+    exchangeRate,
+    setExchangeRate,
+    isAdmin,
+    setIsAdmin,
+    isAdjusting,
+    setIsAdjusting,
+  } = useExpressP2P();
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
@@ -61,11 +68,12 @@ export default function ExpressPay() {
     { id: "bank", label: "Bank Account" },
   ] as const;
 
-  // Check if user is admin
+  // Check if user is admin and initialize adjusted rate
   useEffect(() => {
     const userWalletAddress = wallet?.publicKey || wallet?.address || "";
     setIsAdmin(userWalletAddress === ADMIN_WALLET);
-  }, [wallet]);
+    setAdjustedRate(String(exchangeRate));
+  }, [wallet, exchangeRate, setIsAdmin, setAdjustedRate]);
 
   // Handle sell confirmation when user clicks button
   const handleSellClick = () => {
@@ -98,9 +106,6 @@ export default function ExpressPay() {
 
     setShowSellConfirmation(true);
   };
-
-  // Exchange rate (can be adjusted by admin)
-  const exchangeRate = Number(adjustedRate) || 280;
 
   const receivedAmount = useMemo(() => {
     if (!spendAmount || isNaN(Number(spendAmount))) return 0;
@@ -310,6 +315,8 @@ export default function ExpressPay() {
       });
       return;
     }
+    // Save to context (which persists to localStorage)
+    setExchangeRate(newRate);
     setIsAdjusting(false);
     toast({
       title: "Success",
@@ -469,7 +476,8 @@ export default function ExpressPay() {
                 </div>
               ) : (
                 <span className="text-[hsl(var(--muted-foreground))]">
-                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR
+                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR (Adjusted
+                  Rate)
                 </span>
               )}
               {isAdmin && (

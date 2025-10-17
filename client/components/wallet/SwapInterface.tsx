@@ -678,7 +678,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden">
           <div className="p-5 space-y-4">
             {/* FROM row */}
-            <div className="">
+            <div>
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
                   <Input
@@ -686,14 +686,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     placeholder="0.000"
                     value={fromAmount}
                     onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
+                    className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
                   />
-                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
+                  <div className="mt-2 text-xl text-[hsl(var(--muted-foreground))]">
                     {(() => {
                       const amt = parseFloat(fromAmount || "0");
                       const price = fromUsdPrice ?? 0;
                       const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
+                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
                     })()}
                   </div>
                 </div>
@@ -794,20 +794,20 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* TO row */}
-            <div>
+            <div className="bg-purple-200/60 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
-                  <div className="text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
+                  <div className="text-xl leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
                     {toAmount
                       ? formatAmount(toAmount, toToken?.symbol)
                       : "0.000"}
                   </div>
-                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
+                  <div className="mt-2 text-xl text-[hsl(var(--muted-foreground))]">
                     {(() => {
                       const amt = parseFloat(toAmount || "0");
                       const price = toUsdPrice ?? 0;
                       const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
+                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
                     })()}
                   </div>
                 </div>

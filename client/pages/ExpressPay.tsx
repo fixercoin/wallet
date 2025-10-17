@@ -199,7 +199,7 @@ export default function ExpressPay() {
         paymentMethod: selectedPayment,
         amountPKR: Number(spendAmount),
         quoteAsset: selectedCurrency,
-        pricePKRPerQuote: exchangeRate,
+        pricePKRPerQuote: selectedRate,
         paymentDetails: {
           accountName: "Fixorium Admin",
           accountNumber: "03001234567",
@@ -308,7 +308,7 @@ export default function ExpressPay() {
             type: "sell",
             token: selectedCurrency,
             amountPKR: Number(spendAmount) * exchangeRate,
-            pricePKRPerQuote: exchangeRate,
+            pricePKRPerQuote: selectedRate,
             quoteAsset: selectedCurrency,
             paymentMethod: selectedPayment,
           },

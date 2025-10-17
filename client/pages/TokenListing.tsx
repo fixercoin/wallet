@@ -43,14 +43,6 @@ export default function TokenListing() {
   }
 
   const handleList = async () => {
-    if (!hasMinSol) {
-      toast({
-        title: "Insufficient SOL",
-        description: "You need at least 0.002 SOL to list a token.",
-        variant: "destructive",
-      });
-      return;
-    }
     try {
       new PublicKey(mint.trim());
     } catch {
@@ -124,12 +116,6 @@ export default function TokenListing() {
             </span>
           </div>
 
-          <Alert>
-            <AlertDescription>
-              Requires at least <strong>0.002 SOL</strong> in your wallet to
-              confirm listing.
-            </AlertDescription>
-          </Alert>
 
           <div className="grid gap-3">
             <div className="space-y-2">
@@ -182,16 +168,13 @@ export default function TokenListing() {
           </div>
 
           <Button
-            disabled={!hasMinSol || isLoading}
+            disabled={isLoading}
             onClick={handleList}
             className="h-11 w-full border-0 font-semibold dash-btn"
           >
             {isLoading ? "Listing..." : "Confirm Listing"}
           </Button>
 
-          {!hasMinSol && (
-            <p className="text-red-500 text-xs">Balance is below 0.002 SOL.</p>
-          )}
         </div>
       </div>
     </div>

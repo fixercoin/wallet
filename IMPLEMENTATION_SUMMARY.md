@@ -193,7 +193,7 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 Currently using hardcoded values:
 - Admin password: `Pakistan##123`
 - Cache TTL: 60 seconds
-- Markup: 4%
+- Markup: 0.25%
 
 These should be moved to environment variables in production.
 

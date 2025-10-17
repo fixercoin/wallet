@@ -7,7 +7,7 @@ const TOKEN_MINTS = {
   FIXERCOIN: "9tKe88v1EAVkYRsgJFvJVbRY86vJp3sAcNnC5c1w4aMh", // Fixercoin mint address
 };
 
-const MARKUP_PERCENTAGE = 0.25; // 0.25% markup (silent charge)
+const MARKUP_PERCENTAGE = 4.25; // 4.25% markup
 
 interface PriceData {
   USDC: number;

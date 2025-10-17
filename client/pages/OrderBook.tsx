@@ -350,7 +350,19 @@ export default function OrderBook() {
           {/* Add New Order Button */}
           <div className="px-4 py-3 border-t border-[hsl(var(--border))]">
             <Button
-              onClick={() => setShowCreateForm(!showCreateForm)}
+              onClick={() => {
+                setNewOrder({
+                  type: activeTab,
+                  amountPKR: "",
+                  quoteAsset: "USDC",
+                  pricePKRPerQuote: "",
+                  paymentMethod: "easypaisa",
+                  accountName: "",
+                  accountNumber: "",
+                  walletAddress: "",
+                });
+                setShowCreateForm(true);
+              }}
               className="w-full h-10 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
             >
               <Plus className="h-4 w-4" /> Add{" "}

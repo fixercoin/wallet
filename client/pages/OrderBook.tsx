@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  Trash2,
-  Save,
-  Edit2,
-  Lock,
-  Plus,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Trash2, Save, Edit2, Lock, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { listOrders, updateOrder, deleteOrder, createOrder } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
@@ -323,7 +315,8 @@ export default function OrderBook() {
               onClick={() => setShowCreateForm(!showCreateForm)}
               className="w-full h-10 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
             >
-              <Plus className="h-4 w-4" /> Add {activeTab === "buy" ? "Buy" : "Sell"} Order
+              <Plus className="h-4 w-4" /> Add{" "}
+              {activeTab === "buy" ? "Buy" : "Sell"} Order
             </Button>
           </div>
         </div>
@@ -349,7 +342,10 @@ export default function OrderBook() {
                 <select
                   value={newOrder.type}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, type: e.target.value as "buy" | "sell" })
+                    setNewOrder({
+                      ...newOrder,
+                      type: e.target.value as "buy" | "sell",
+                    })
                   }
                   className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
                 >
@@ -396,7 +392,10 @@ export default function OrderBook() {
                   step="0.01"
                   value={newOrder.pricePKRPerQuote}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, pricePKRPerQuote: e.target.value })
+                    setNewOrder({
+                      ...newOrder,
+                      pricePKRPerQuote: e.target.value,
+                    })
                   }
                   placeholder="0.00"
                   className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
@@ -510,7 +509,11 @@ export default function OrderBook() {
                           <select
                             value={order.quoteAsset}
                             onChange={(e) =>
-                              updateOrderField(order.id, "quoteAsset", e.target.value)
+                              updateOrderField(
+                                order.id,
+                                "quoteAsset",
+                                e.target.value,
+                              )
                             }
                             className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
                           >
@@ -544,7 +547,11 @@ export default function OrderBook() {
                           <select
                             value={order.paymentMethod}
                             onChange={(e) =>
-                              updateOrderField(order.id, "paymentMethod", e.target.value)
+                              updateOrderField(
+                                order.id,
+                                "paymentMethod",
+                                e.target.value,
+                              )
                             }
                             className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
                           >

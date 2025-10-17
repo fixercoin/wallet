@@ -1,7 +1,14 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, Plus, AlertCircle, Check, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Plus,
+  AlertCircle,
+  Check,
+  X,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
@@ -30,11 +37,12 @@ export default function ExpressPay() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet, tokens } = useWallet();
-  
+
   const [activeTab, setActiveTab] = useState<TabType>("buy");
   const [spendAmount, setSpendAmount] = useState<string>("");
   const [selectedCurrency, setSelectedCurrency] = useState<string>("USDC");
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("easypaisa");
+  const [selectedPayment, setSelectedPayment] =
+    useState<PaymentMethod>("easypaisa");
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [showBuyConfirmation, setShowBuyConfirmation] = useState(false);
@@ -60,8 +68,8 @@ export default function ExpressPay() {
   // Get wallet balance for selected currency (in sell mode)
   const walletBalance = useMemo(() => {
     if (activeTab !== "sell" || !tokens) return 0;
-    const token = tokens.find((t) =>
-      t.symbol?.toUpperCase() === selectedCurrency.toUpperCase(),
+    const token = tokens.find(
+      (t) => t.symbol?.toUpperCase() === selectedCurrency.toUpperCase(),
     );
     return token?.balance || 0;
   }, [activeTab, selectedCurrency, tokens]);
@@ -78,7 +86,9 @@ export default function ExpressPay() {
       setIsLoadingOrders(true);
       const res = await listOrders("global");
       // Filter for sell orders (sellers listing their tokens)
-      const sellOrders = (res.orders || []).filter((o: any) => o.type === "sell");
+      const sellOrders = (res.orders || []).filter(
+        (o: any) => o.type === "sell",
+      );
       setOrders(sellOrders as Order[]);
     } catch (error) {
       console.error("Failed to load orders:", error);
@@ -260,7 +270,9 @@ export default function ExpressPay() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
 
-          <div className="flex-1 text-center font-medium text-sm">Express P2P</div>
+          <div className="flex-1 text-center font-medium text-sm">
+            Express P2P
+          </div>
 
           <Button
             variant="ghost"
@@ -395,7 +407,9 @@ export default function ExpressPay() {
             <div className="relative">
               <select
                 value={selectedPayment}
-                onChange={(e) => setSelectedPayment(e.target.value as PaymentMethod)}
+                onChange={(e) =>
+                  setSelectedPayment(e.target.value as PaymentMethod)
+                }
                 className="w-full appearance-none bg-white border border-[hsl(var(--border))] rounded-xl px-4 py-3 pr-10 text-sm font-medium text-[hsl(var(--foreground))] outline-none cursor-pointer"
               >
                 {paymentMethods.map((method) => (
@@ -489,7 +503,8 @@ export default function ExpressPay() {
                     Account Name
                   </div>
                   <div className="font-semibold text-[hsl(var(--foreground))]">
-                    {selectedSeller.paymentDetails?.accountName || "Not provided"}
+                    {selectedSeller.paymentDetails?.accountName ||
+                      "Not provided"}
                   </div>
                 </div>
 
@@ -498,7 +513,8 @@ export default function ExpressPay() {
                     Account Number
                   </div>
                   <div className="font-semibold text-[hsl(var(--foreground))] font-mono">
-                    {selectedSeller.paymentDetails?.accountNumber || "Not provided"}
+                    {selectedSeller.paymentDetails?.accountNumber ||
+                      "Not provided"}
                   </div>
                 </div>
 
@@ -594,8 +610,8 @@ export default function ExpressPay() {
 
               <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
                 <p className="text-xs text-blue-800">
-                  ✓ Tokens will be transferred to buyer. Chat window will open after
-                  confirmation.
+                  ✓ Tokens will be transferred to buyer. Chat window will open
+                  after confirmation.
                 </p>
               </div>
             </div>

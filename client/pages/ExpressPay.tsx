@@ -247,10 +247,11 @@ export default function ExpressPay() {
       }
 
       // Validate user has sufficient balance
-      if (walletBalance < receivedAmount) {
+      const tokenAmount = Number(spendAmount);
+      if (walletBalance < tokenAmount) {
         toast({
           title: "Insufficient balance",
-          description: `You have ${walletBalance} ${selectedCurrency} but need ${receivedAmount.toFixed(6)}`,
+          description: `You have ${walletBalance} ${selectedCurrency} but need ${tokenAmount.toFixed(6)}`,
           variant: "destructive",
         });
         return;
@@ -258,7 +259,7 @@ export default function ExpressPay() {
 
       toast({
         title: "Transfer initiated",
-        description: `Sending ${receivedAmount.toFixed(6)} ${selectedCurrency} to buyer...`,
+        description: `Sending ${tokenAmount.toFixed(6)} ${selectedCurrency} to buyer...`,
       });
 
       // Simulate delay for transaction

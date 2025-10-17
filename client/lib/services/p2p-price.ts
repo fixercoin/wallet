@@ -26,7 +26,7 @@ class P2PPriceService {
 
   /**
    * Apply markup percentage to base price
-   * Example: price=280, markup=4% -> 280 * 1.04 = 291.2
+   * Example: price=280, markup=0.25% -> 280 * 1.0025 = 280.7
    */
   private applyMarkup(basePrice: number, markupPercent: number = MARKUP_PERCENTAGE): number {
     return basePrice * (1 + markupPercent / 100);

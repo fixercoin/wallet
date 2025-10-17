@@ -114,14 +114,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 2500);
-        const res = await fetch("/api/health", { signal: controller.signal });
+        const res = await fetch("/health", { signal: controller.signal });
         clearTimeout(to);
         if (!res.ok) {
           setIsServiceDown(true);
           return;
         }
         const data = await res.json().catch(() => null);
-        setIsServiceDown(!(data && data.ok === true));
+        setIsServiceDown(!(data && data.status === "ok"));
       } catch {
         setIsServiceDown(true);
       }

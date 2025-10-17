@@ -164,18 +164,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             ? parseFloat(fromDex.priceUsd)
             : null;
           const toUsd = toDex?.priceUsd ? parseFloat(toDex.priceUsd) : null;
+
+          console.log(
+            `DexScreener prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
+          );
+
           if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
             const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
             const estOutHuman = (fromHuman * fromUsd) / toUsd;
+            console.log(
+              `Using indicative pricing: ${estOutHuman.toFixed(6)} ${toToken.symbol}`,
+            );
             setQuote(null);
             setToAmount(estOutHuman.toFixed(6));
             setQuoteError("");
             setIndicative(true);
           } else {
+            console.warn(
+              `Could not get prices from DexScreener: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+            );
             setQuote(null);
             setToAmount("");
             setQuoteError(
-              `No liquidity found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
+              `No liquidity data found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
             );
             setIndicative(false);
           }

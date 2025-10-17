@@ -155,22 +155,34 @@ class DexscreenerAPI {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
       try {
-        const response = await fetch(
-          `${this.baseUrl}/tokens?mints=${mintString}`,
-          { signal: controller.signal },
-        );
+        const url = `${this.baseUrl}/tokens?mints=${mintString}`;
+        console.log(`[DexScreener] Requesting: ${url}`);
+        const response = await fetch(url, { signal: controller.signal });
+
         if (response.ok) {
           try {
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
-          } catch {}
+            console.log(
+              `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
+            );
+          } catch (parseErr) {
+            console.error(`[DexScreener] ❌ Failed to parse response:`, parseErr);
+            fetchFailed = true;
+          }
         } else {
+          console.error(
+            `[DexScreener] ❌ Server returned ${response.status}: ${response.statusText}`,
+          );
           fetchFailed = true;
         }
       } catch (err) {
         // network/timeout -> swallow; fallback to stale cache
         fetchFailed = true;
-        console.warn(`DexScreener fetch failed for mints: ${mintString}`, err);
+        console.warn(
+          `[DexScreener] ❌ Network error fetching tokens:`,
+          err instanceof Error ? err.message : String(err),
+        );
       } finally {
         clearTimeout(timeoutId);
       }
@@ -179,7 +191,7 @@ class DexscreenerAPI {
     // If fetch failed, try to serve stale cached data instead of failing completely
     if (fetchFailed && toFetch.length > 0) {
       console.log(
-        `DexScreener: Serving stale cache for ${toFetch.length} tokens`,
+        `[DexScreener] ⚠️ Serving stale cache for ${toFetch.length} tokens`,
       );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);

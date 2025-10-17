@@ -7,11 +7,17 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useExpressP2P } from "@/contexts/ExpressP2PContext";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function ExpressAddPost() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
+  const { exchangeRate, setExchangeRate } = useExpressP2P();
+  const isAdmin = (wallet?.publicKey || wallet?.address || "") === ADMIN_WALLET;
+  const [newRate, setNewRate] = useState<string>("");
+  useEffect(() => setNewRate(String(exchangeRate || "")), [exchangeRate]);
 
   // Order basic info
   const [type, setType] = useState<"buy" | "sell">("buy");
@@ -234,9 +240,7 @@ export default function ExpressAddPost() {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="flex-1 text-center font-medium">
-            Create P2P Offer
-          </div>
+          <div className="flex-1 text-center font-medium">Create P2P Offer</div>
         </div>
       </div>
 
@@ -300,6 +304,40 @@ export default function ExpressAddPost() {
             )}
           </div>
         </div>
+
+        {/* Adjust global rate (admin only) */}
+        {isAdmin && (
+          <div className="p-3 rounded-xl border border-[hsl(var(--input))] bg-white">
+            <div className="text-xs text-muted-foreground mb-2 font-medium">
+              Adjusted Exchange Rate
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">1 USDC =</span>
+              <input
+                type="number"
+                value={newRate}
+                onChange={(e) => setNewRate(e.target.value)}
+                className="flex-1 border border-[hsl(var(--border))] rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+              />
+              <span className="text-xs text-muted-foreground">PKR</span>
+              <Button
+                variant="default"
+                className="h-8"
+                onClick={() => {
+                  const val = Number(newRate);
+                  if (!isFinite(val) || val <= 0) return;
+                  setExchangeRate(val);
+                  toast({
+                    title: "Rate saved",
+                    description: `1 USDC = ${val} PKR`,
+                  });
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Price */}
         <div>

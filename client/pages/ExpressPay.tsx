@@ -51,14 +51,11 @@ export default function ExpressPay() {
   const [showSellConfirmation, setShowSellConfirmation] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [adjustedRate, setAdjustedRate] = useState<string>("");
   const {
     exchangeRate,
     setExchangeRate,
     isAdmin,
     setIsAdmin,
-    isAdjusting,
-    setIsAdjusting,
   } = useExpressP2P();
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
@@ -68,12 +65,11 @@ export default function ExpressPay() {
     { id: "bank", label: "Bank Account" },
   ] as const;
 
-  // Check if user is admin and initialize adjusted rate
+  // Check if user is admin
   useEffect(() => {
     const userWalletAddress = wallet?.publicKey || wallet?.address || "";
     setIsAdmin(userWalletAddress === ADMIN_WALLET);
-    setAdjustedRate(String(exchangeRate));
-  }, [wallet, exchangeRate, setIsAdmin, setAdjustedRate]);
+  }, [wallet, setIsAdmin]);
 
   // Handle sell confirmation when user clicks button
   const handleSellClick = () => {
@@ -307,24 +303,6 @@ export default function ExpressPay() {
     navigate("/express/orderbook");
   };
 
-  const handleSaveRate = () => {
-    const newRate = Number(adjustedRate);
-    if (newRate <= 0 || isNaN(newRate)) {
-      toast({
-        title: "Invalid rate",
-        description: "Please enter a valid exchange rate",
-        variant: "destructive",
-      });
-      return;
-    }
-    // Save to context (which persists to localStorage)
-    setExchangeRate(newRate);
-    setIsAdjusting(false);
-    toast({
-      title: "Success",
-      description: `Exchange rate updated to ${newRate} PKR`,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
@@ -461,44 +439,9 @@ export default function ExpressPay() {
               </div>
             </div>
             <div className="flex items-center justify-between text-xs gap-2">
-              {isAdjusting && isAdmin ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    1 {selectedCurrency} ≈
-                  </span>
-                  <input
-                    type="number"
-                    value={adjustedRate}
-                    onChange={(e) => setAdjustedRate(e.target.value)}
-                    className="flex-1 border border-[hsl(var(--border))] rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
-                  />
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    PKR
-                  </span>
-                </div>
-              ) : (
-                <span className="text-[hsl(var(--muted-foreground))]">
-                  1 {selectedCurrency} = {isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate.toFixed(2) : "-"} PKR
-                </span>
-              )}
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    if (isAdjusting) {
-                      handleSaveRate();
-                    } else {
-                      setIsAdjusting(true);
-                    }
-                  }}
-                  className={`font-medium hover:underline whitespace-nowrap ${
-                    isAdjusting
-                      ? "text-green-600"
-                      : "text-[hsl(var(--primary))]"
-                  }`}
-                >
-                  {isAdjusting ? "Save" : "Adjust"}
-                </button>
-              )}
+              <span className="text-[hsl(var(--muted-foreground))]">
+                1 {selectedCurrency} = {isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate.toFixed(2) : "-"} PKR
+              </span>
             </div>
           </div>
 

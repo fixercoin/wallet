@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageSquare, Clock, CheckCircle, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  MessageSquare,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
@@ -13,7 +19,9 @@ export default function ExpressPendingOrders() {
 
   const [rooms, setRooms] = useState<TradeRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending" | "confirmed" | "completed">("all");
+  const [filter, setFilter] = useState<
+    "all" | "pending" | "confirmed" | "completed"
+  >("all");
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -29,7 +37,7 @@ export default function ExpressPendingOrders() {
     try {
       setIsLoading(true);
       const allRooms = await listTradeRooms(wallet.publicKey);
-      
+
       let filtered = allRooms;
       if (filter !== "all") {
         filtered = allRooms.filter((r) => {
@@ -179,9 +187,10 @@ export default function ExpressPendingOrders() {
             }`}
           >
             Completed (
-            {rooms.filter((r) =>
-              ["completed", "cancelled"].includes(r.status)
-            ).length}
+            {
+              rooms.filter((r) => ["completed", "cancelled"].includes(r.status))
+                .length
+            }
             )
           </button>
         </div>
@@ -206,14 +215,16 @@ export default function ExpressPendingOrders() {
             {rooms.map((room) => (
               <div
                 key={room.id}
-                onClick={() => navigate("/express/buy-trade", { state: { room } })}
+                onClick={() =>
+                  navigate("/express/buy-trade", { state: { room } })
+                }
                 className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4 hover:shadow-md cursor-pointer transition-all"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${getStatusColor(
-                        room.status
+                        room.status,
                       )}`}
                     >
                       {getStatusIcon(room.status)}
@@ -235,7 +246,9 @@ export default function ExpressPendingOrders() {
                   <div>
                     <div className="text-gray-600 text-xs">Party</div>
                     <span className="font-semibold">
-                      {wallet.publicKey === room.buyer_wallet ? "Buyer" : "Seller"}
+                      {wallet.publicKey === room.buyer_wallet
+                        ? "Buyer"
+                        : "Seller"}
                     </span>
                   </div>
                   <div>

@@ -55,7 +55,13 @@ export default function PostOrder() {
     }
 
     if (mode === "buy") {
-      if (!minAmount || !maxAmount || !price || !accountName || !accountNumber) {
+      if (
+        !minAmount ||
+        !maxAmount ||
+        !price ||
+        !accountName ||
+        !accountNumber
+      ) {
         toast({
           title: "Missing fields",
           description: "Please fill all required buy fields",
@@ -298,8 +304,8 @@ export default function PostOrder() {
 
         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
           <p>
-            <strong>Tip:</strong> Switch between Buy and Sell above. You can auto-fill the
-            price based on current market rates.
+            <strong>Tip:</strong> Switch between Buy and Sell above. You can
+            auto-fill the price based on current market rates.
           </p>
         </div>
       </div>

@@ -170,9 +170,15 @@ export default {
           const type = searchParams.get("type") as any;
           const status = searchParams.get("status") as any;
           const token = searchParams.get("token") as any;
-          const online = searchParams.get("online") === "true" ? true : undefined;
+          const online =
+            searchParams.get("online") === "true" ? true : undefined;
 
-          const orders = await listP2POrders(env.DB, { type, status, token, online });
+          const orders = await listP2POrders(env.DB, {
+            type,
+            status,
+            token,
+            online,
+          });
           return json({ orders }, { headers: corsHeaders });
         } catch (e: any) {
           return json(
@@ -185,7 +191,10 @@ export default {
         try {
           const body = await parseJSON(req);
           if (!body || typeof body !== "object")
-            return json({ error: "Invalid body" }, { status: 400, headers: corsHeaders });
+            return json(
+              { error: "Invalid body" },
+              { status: 400, headers: corsHeaders },
+            );
 
           const order = await createP2POrder(env.DB, {
             type: body.type,
@@ -208,7 +217,10 @@ export default {
           );
         }
       }
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
     // Single P2P Order routes
@@ -222,7 +234,10 @@ export default {
           const order = await getP2POrder(env.DB, orderId);
           return json({ order }, { headers: corsHeaders });
         } catch (e: any) {
-          return json({ error: "Order not found" }, { status: 404, headers: corsHeaders });
+          return json(
+            { error: "Order not found" },
+            { status: 404, headers: corsHeaders },
+          );
         }
       }
       if (req.method === "PUT") {
@@ -242,10 +257,16 @@ export default {
           await deleteP2POrder(env.DB, orderId);
           return json({ ok: true }, { headers: corsHeaders });
         } catch (e: any) {
-          return json({ error: "Order not found" }, { status: 404, headers: corsHeaders });
+          return json(
+            { error: "Order not found" },
+            { status: 404, headers: corsHeaders },
+          );
         }
       }
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
     // Trade Rooms API
@@ -280,11 +301,16 @@ export default {
           );
         }
       }
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
     // Single Trade Room routes
-    const roomMatch = pathname.match(/^\/api\/p2p\/rooms\/([^/]+)(?:\/(messages|status))?$/);
+    const roomMatch = pathname.match(
+      /^\/api\/p2p\/rooms\/([^/]+)(?:\/(messages|status))?$/,
+    );
     if (roomMatch) {
       await ensureP2PSchema(env.DB);
       const roomId = decodeURIComponent(roomMatch[1]);
@@ -295,7 +321,10 @@ export default {
           const room = await getTradeRoom(env.DB, roomId);
           return json({ room }, { headers: corsHeaders });
         } catch (e: any) {
-          return json({ error: "Room not found" }, { status: 404, headers: corsHeaders });
+          return json(
+            { error: "Room not found" },
+            { status: 404, headers: corsHeaders },
+          );
         }
       }
 
@@ -342,7 +371,10 @@ export default {
         }
       }
 
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
     // Legacy Orders collection (Durable Objects - for backwards compatibility)

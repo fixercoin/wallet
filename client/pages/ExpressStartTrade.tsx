@@ -188,9 +188,9 @@ export default function ExpressStartTrade() {
                     <div>
                       <div className="text-gray-600 text-xs">Rate</div>
                       <div className="font-semibold">
-                        {(order.pkr_amount / Number(order.token_amount)).toFixed(
-                          2
-                        )}{" "}
+                        {(
+                          order.pkr_amount / Number(order.token_amount)
+                        ).toFixed(2)}{" "}
                         PKR
                       </div>
                     </div>
@@ -228,7 +228,9 @@ export default function ExpressStartTrade() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Type</span>
-                  <span className="font-semibold uppercase">{selectedOrder.type}</span>
+                  <span className="font-semibold uppercase">
+                    {selectedOrder.type}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Token</span>
@@ -242,7 +244,9 @@ export default function ExpressStartTrade() {
                 </div>
                 <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-semibold">
                   <span>Rate</span>
-                  <span>{rate.toFixed(2)} PKR per {selectedOrder.token}</span>
+                  <span>
+                    {rate.toFixed(2)} PKR per {selectedOrder.token}
+                  </span>
                 </div>
               </div>
             </div>
@@ -292,7 +296,8 @@ export default function ExpressStartTrade() {
                   className="mt-1 w-4 h-4 rounded"
                 />
                 <span className="text-xs text-gray-700">
-                  <strong>I agree</strong> to the P2P trading terms. I understand:
+                  <strong>I agree</strong> to the P2P trading terms. I
+                  understand:
                   <ul className="list-disc list-inside mt-2 space-y-1 text-gray-600">
                     <li>I will follow the agreed payment method</li>
                     <li>I will not dispute without reason</li>

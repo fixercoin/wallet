@@ -105,7 +105,9 @@ export default function ExpressAddPost() {
         {/* My Orders Section */}
         {wallet?.publicKey && myOrders.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">My Orders ({myOrders.length})</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              My Orders ({myOrders.length})
+            </h2>
             <div className="grid gap-3">
               {myOrders.map((order) => (
                 <div
@@ -123,9 +125,11 @@ export default function ExpressAddPost() {
                       >
                         {order.type.toUpperCase()}
                       </span>
-                      <span className={`text-xs font-medium ${
-                        order.online ? "text-green-600" : "text-gray-500"
-                      }`}>
+                      <span
+                        className={`text-xs font-medium ${
+                          order.online ? "text-green-600" : "text-gray-500"
+                        }`}
+                      >
                         {order.online ? "● Online" : "● Offline"}
                       </span>
                     </div>
@@ -143,16 +147,23 @@ export default function ExpressAddPost() {
                     </div>
                     <div>
                       <div className="text-gray-600">Amount</div>
-                      <div className="font-semibold">{Number(order.token_amount).toFixed(6)}</div>
+                      <div className="font-semibold">
+                        {Number(order.token_amount).toFixed(6)}
+                      </div>
                     </div>
                     <div>
                       <div className="text-gray-600">PKR</div>
-                      <div className="font-semibold">{order.pkr_amount.toLocaleString()}</div>
+                      <div className="font-semibold">
+                        {order.pkr_amount.toLocaleString()}
+                      </div>
                     </div>
                     <div>
                       <div className="text-gray-600">Rate</div>
                       <div className="font-semibold">
-                        {(order.pkr_amount / Number(order.token_amount)).toFixed(2)} PKR
+                        {(
+                          order.pkr_amount / Number(order.token_amount)
+                        ).toFixed(2)}{" "}
+                        PKR
                       </div>
                     </div>
                   </div>
@@ -226,12 +237,15 @@ export default function ExpressAddPost() {
             <div className="grid gap-3">
               {orders
                 .filter(
-                  (o) => !wallet?.publicKey || o.creator_wallet !== wallet.publicKey
+                  (o) =>
+                    !wallet?.publicKey || o.creator_wallet !== wallet.publicKey,
                 )
                 .map((order) => (
                   <div
                     key={order.id}
-                    onClick={() => navigate(`/express/buy-trade`, { state: { order } })}
+                    onClick={() =>
+                      navigate(`/express/buy-trade`, { state: { order } })
+                    }
                     className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4 hover:shadow-md cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -245,9 +259,11 @@ export default function ExpressAddPost() {
                         >
                           {order.type.toUpperCase()}
                         </span>
-                        <span className={`text-xs font-medium ${
-                          order.online ? "text-green-600" : "text-gray-500"
-                        }`}>
+                        <span
+                          className={`text-xs font-medium ${
+                            order.online ? "text-green-600" : "text-gray-500"
+                          }`}
+                        >
                           {order.online ? "● Online" : "● Offline"}
                         </span>
                       </div>
@@ -262,16 +278,23 @@ export default function ExpressAddPost() {
                       </div>
                       <div>
                         <div className="text-gray-600">Amount</div>
-                        <div className="font-semibold">{Number(order.token_amount).toFixed(6)}</div>
+                        <div className="font-semibold">
+                          {Number(order.token_amount).toFixed(6)}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-600">PKR</div>
-                        <div className="font-semibold">{order.pkr_amount.toLocaleString()}</div>
+                        <div className="font-semibold">
+                          {order.pkr_amount.toLocaleString()}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-600">Rate</div>
                         <div className="font-semibold">
-                          {(order.pkr_amount / Number(order.token_amount)).toFixed(2)} PKR
+                          {(
+                            order.pkr_amount / Number(order.token_amount)
+                          ).toFixed(2)}{" "}
+                          PKR
                         </div>
                       </div>
                     </div>

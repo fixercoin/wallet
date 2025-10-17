@@ -30,7 +30,12 @@ export interface TradeRoom {
   buyer_wallet: string;
   seller_wallet: string;
   order_id: string;
-  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
   created_at: number;
   updated_at: number;
 }
@@ -124,34 +129,39 @@ export async function createP2POrder(
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  await stmt.bind(
-    id,
-    input.type,
-    input.creator_wallet,
-    input.token,
-    input.token_amount,
-    input.pkr_amount,
-    input.payment_method,
-    input.status,
-    input.online ? 1 : 0,
-    input.account_name || null,
-    input.account_number || null,
-    input.wallet_address || null,
-    now,
-    now,
-  ).run();
+  await stmt
+    .bind(
+      id,
+      input.type,
+      input.creator_wallet,
+      input.token,
+      input.token_amount,
+      input.pkr_amount,
+      input.payment_method,
+      input.status,
+      input.online ? 1 : 0,
+      input.account_name || null,
+      input.account_number || null,
+      input.wallet_address || null,
+      now,
+      now,
+    )
+    .run();
 
   return getP2POrder(db, id);
 }
 
-export async function getP2POrder(db: D1Database, id: string): Promise<P2POrder> {
+export async function getP2POrder(
+  db: D1Database,
+  id: string,
+): Promise<P2POrder> {
   const row = await db
     .prepare(`SELECT * FROM p2p_orders WHERE id = ?`)
     .bind(id)
     .first<any>();
-  
+
   if (!row) throw new Error("Order not found");
-  
+
   return {
     ...row,
     online: Boolean(row.online),
@@ -189,7 +199,10 @@ export async function listP2POrders(
 
   sql += ` ORDER BY created_at DESC`;
 
-  const { results } = await db.prepare(sql).bind(...binds).all<any>();
+  const { results } = await db
+    .prepare(sql)
+    .bind(...binds)
+    .all<any>();
   return (results || []).map((r) => ({ ...r, online: Boolean(r.online) }));
 }
 
@@ -229,7 +242,10 @@ export async function updateP2POrder(
   return getP2POrder(db, id);
 }
 
-export async function deleteP2POrder(db: D1Database, id: string): Promise<void> {
+export async function deleteP2POrder(
+  db: D1Database,
+  id: string,
+): Promise<void> {
   await db.prepare(`DELETE FROM p2p_orders WHERE id = ?`).bind(id).run();
 }
 
@@ -243,22 +259,35 @@ export async function createTradeRoom(
   const id = `room-${now}-${Math.random().toString(36).slice(2, 8)}`;
 
   await db
-    .prepare(`
+    .prepare(
+      `
       INSERT INTO trade_rooms (id, buyer_wallet, seller_wallet, order_id, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `)
-    .bind(id, input.buyer_wallet, input.seller_wallet, input.order_id, input.status, now, now)
+    `,
+    )
+    .bind(
+      id,
+      input.buyer_wallet,
+      input.seller_wallet,
+      input.order_id,
+      input.status,
+      now,
+      now,
+    )
     .run();
 
   return getTradeRoom(db, id);
 }
 
-export async function getTradeRoom(db: D1Database, id: string): Promise<TradeRoom> {
+export async function getTradeRoom(
+  db: D1Database,
+  id: string,
+): Promise<TradeRoom> {
   const row = await db
     .prepare(`SELECT * FROM trade_rooms WHERE id = ?`)
     .bind(id)
     .first<TradeRoom>();
-  
+
   if (!row) throw new Error("Trade room not found");
   return row;
 }
@@ -277,7 +306,10 @@ export async function listTradeRooms(
 
   sql += ` ORDER BY created_at DESC`;
 
-  const { results } = await db.prepare(sql).bind(...binds).all<TradeRoom>();
+  const { results } = await db
+    .prepare(sql)
+    .bind(...binds)
+    .all<TradeRoom>();
   return results || [];
 }
 
@@ -305,22 +337,34 @@ export async function addTradeMessage(
   const id = `msg-${now}-${Math.random().toString(36).slice(2, 8)}`;
 
   await db
-    .prepare(`
+    .prepare(
+      `
       INSERT INTO trade_messages (id, room_id, sender_wallet, message, attachment_url, created_at)
       VALUES (?, ?, ?, ?, ?, ?)
-    `)
-    .bind(id, input.room_id, input.sender_wallet, input.message, input.attachment_url || null, now)
+    `,
+    )
+    .bind(
+      id,
+      input.room_id,
+      input.sender_wallet,
+      input.message,
+      input.attachment_url || null,
+      now,
+    )
     .run();
 
   return getTradeMessage(db, id);
 }
 
-export async function getTradeMessage(db: D1Database, id: string): Promise<TradeMessage> {
+export async function getTradeMessage(
+  db: D1Database,
+  id: string,
+): Promise<TradeMessage> {
   const row = await db
     .prepare(`SELECT * FROM trade_messages WHERE id = ?`)
     .bind(id)
     .first<TradeMessage>();
-  
+
   if (!row) throw new Error("Message not found");
   return row;
 }
@@ -330,7 +374,9 @@ export async function listTradeMessages(
   roomId: string,
 ): Promise<TradeMessage[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM trade_messages WHERE room_id = ? ORDER BY created_at ASC`)
+    .prepare(
+      `SELECT * FROM trade_messages WHERE room_id = ? ORDER BY created_at ASC`,
+    )
     .bind(roomId)
     .all<TradeMessage>();
 

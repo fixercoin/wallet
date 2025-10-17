@@ -64,8 +64,10 @@ export default function ExpressPostView() {
       setIsInitiatingTrade(true);
 
       const room = await createTradeRoom({
-        buyer_wallet: order.type === "sell" ? wallet.publicKey : order.creator_wallet,
-        seller_wallet: order.type === "sell" ? order.creator_wallet : wallet.publicKey,
+        buyer_wallet:
+          order.type === "sell" ? wallet.publicKey : order.creator_wallet,
+        seller_wallet:
+          order.type === "sell" ? order.creator_wallet : wallet.publicKey,
         order_id: order.id,
       });
 
@@ -126,9 +128,10 @@ export default function ExpressPostView() {
   }
 
   const isCreator = wallet?.publicKey === order.creator_wallet;
-  const rate = Number(order.token_amount) > 0
-    ? order.pkr_amount / Number(order.token_amount)
-    : 0;
+  const rate =
+    Number(order.token_amount) > 0
+      ? order.pkr_amount / Number(order.token_amount)
+      : 0;
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
@@ -161,7 +164,9 @@ export default function ExpressPostView() {
             </span>
             <span
               className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                order.online ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                order.online
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
               }`}
             >
               {order.online ? "Online" : "Offline"}
@@ -200,22 +205,33 @@ export default function ExpressPostView() {
           <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
             <div>
               <div className="text-gray-600 mb-1">Payment Method</div>
-              <div className="font-semibold capitalize">{order.payment_method}</div>
+              <div className="font-semibold capitalize">
+                {order.payment_method}
+              </div>
             </div>
 
             {order.type === "buy" && (
               <>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="text-gray-600 mb-1">Account Name</div>
-                  <div className="font-semibold">{order.account_name || "—"}</div>
+                  <div className="font-semibold">
+                    {order.account_name || "—"}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-600 mb-1">Account Number</div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono">{order.account_number || "—"}</span>
+                    <span className="font-mono">
+                      {order.account_number || "—"}
+                    </span>
                     {order.account_number && (
                       <button
-                        onClick={() => copyToClipboard(order.account_number!, "Account Number")}
+                        onClick={() =>
+                          copyToClipboard(
+                            order.account_number!,
+                            "Account Number",
+                          )
+                        }
                         className="p-1 hover:bg-white rounded"
                       >
                         {copied ? (
@@ -239,7 +255,9 @@ export default function ExpressPostView() {
                   </code>
                   {order.wallet_address && (
                     <button
-                      onClick={() => copyToClipboard(order.wallet_address!, "Wallet Address")}
+                      onClick={() =>
+                        copyToClipboard(order.wallet_address!, "Wallet Address")
+                      }
                       className="p-1 hover:bg-white rounded flex-shrink-0"
                     >
                       {copied ? (

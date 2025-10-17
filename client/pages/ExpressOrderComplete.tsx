@@ -34,7 +34,7 @@ export default function ExpressOrderComplete() {
       setIsLoading(true);
       const allRooms = await listTradeRooms(wallet.publicKey);
       const completed = allRooms.filter((r) => r.status === "completed");
-      
+
       setCompletedRooms(completed);
       setStats({
         completed: completed.length,
@@ -129,7 +129,9 @@ export default function ExpressOrderComplete() {
           ) : completedRooms.length === 0 ? (
             <div className="text-center py-12">
               <CheckCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600 font-medium">No completed trades yet</p>
+              <p className="text-gray-600 font-medium">
+                No completed trades yet
+              </p>
               <p className="text-sm text-gray-500 mt-1">
                 Your completed transactions will appear here
               </p>
@@ -164,7 +166,10 @@ export default function ExpressOrderComplete() {
                 </thead>
                 <tbody>
                   {completedRooms.map((room) => (
-                    <tr key={room.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr
+                      key={room.id}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
                       <td className="py-3 px-3">
                         <code className="font-mono text-xs">
                           {room.id.slice(0, 12)}...

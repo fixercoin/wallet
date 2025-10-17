@@ -87,7 +87,9 @@ export default function ExpressPostOrderDetail() {
       <div className="min-h-screen bg-pink-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl p-6 shadow max-w-sm w-full text-center">
           <h2 className="text-lg font-semibold">Order not found</h2>
-          <p className="text-sm text-gray-600 mt-2">The order you're looking for doesn't exist.</p>
+          <p className="text-sm text-gray-600 mt-2">
+            The order you're looking for doesn't exist.
+          </p>
           <button
             onClick={() => navigate("/express/post-order")}
             className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700"
@@ -134,7 +136,9 @@ export default function ExpressPostOrderDetail() {
             <div className="flex justify-between">
               <span className="text-gray-600">Order ID</span>
               <div className="flex items-center gap-2">
-                <code className="font-mono text-xs">{order.id.slice(0, 12)}...</code>
+                <code className="font-mono text-xs">
+                  {order.id.slice(0, 12)}...
+                </code>
                 <button
                   onClick={() => copyToClipboard(order.id, "Order ID")}
                   className="p-1 hover:bg-gray-200 rounded"
@@ -159,21 +163,28 @@ export default function ExpressPostOrderDetail() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount</span>
-                <span className="font-semibold">{order.token_amount} {order.token}</span>
+                <span className="font-semibold">
+                  {order.token_amount} {order.token}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">PKR Amount</span>
-                <span className="font-semibold">{order.pkr_amount.toLocaleString()} PKR</span>
+                <span className="font-semibold">
+                  {order.pkr_amount.toLocaleString()} PKR
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rate</span>
                 <span className="font-semibold">
-                  {(order.pkr_amount / Number(order.token_amount)).toFixed(2)} PKR
+                  {(order.pkr_amount / Number(order.token_amount)).toFixed(2)}{" "}
+                  PKR
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Payment Method</span>
-                <span className="font-semibold capitalize">{order.payment_method}</span>
+                <span className="font-semibold capitalize">
+                  {order.payment_method}
+                </span>
               </div>
             </div>
 
@@ -181,11 +192,15 @@ export default function ExpressPostOrderDetail() {
               <div className="border-t border-gray-200 pt-3 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Account Name</span>
-                  <span className="font-semibold">{order.account_name || "—"}</span>
+                  <span className="font-semibold">
+                    {order.account_name || "—"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Account Number</span>
-                  <span className="font-mono text-xs font-semibold">{order.account_number || "—"}</span>
+                  <span className="font-mono text-xs font-semibold">
+                    {order.account_number || "—"}
+                  </span>
                 </div>
               </div>
             )}
@@ -196,7 +211,10 @@ export default function ExpressPostOrderDetail() {
                   <span className="text-gray-600">Wallet Address</span>
                   <code className="font-mono text-xs font-semibold">
                     {order.wallet_address ? (
-                      <>{order.wallet_address.slice(0, 8)}...{order.wallet_address.slice(-4)}</>
+                      <>
+                        {order.wallet_address.slice(0, 8)}...
+                        {order.wallet_address.slice(-4)}
+                      </>
                     ) : (
                       "—"
                     )}
@@ -241,7 +259,10 @@ export default function ExpressPostOrderDetail() {
 
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
             {order.online ? (
-              <p>✓ Your order is visible to buyers. Buyers can contact you to trade.</p>
+              <p>
+                ✓ Your order is visible to buyers. Buyers can contact you to
+                trade.
+              </p>
             ) : (
               <p>⊗ Your order is hidden. Go online to accept trade requests.</p>
             )}

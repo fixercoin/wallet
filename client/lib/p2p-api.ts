@@ -28,7 +28,12 @@ export interface TradeRoom {
   buyer_wallet: string;
   seller_wallet: string;
   order_id: string;
-  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
   created_at: number;
   updated_at: number;
 }
@@ -56,7 +61,8 @@ export async function listP2POrders(filters?: {
   if (filters?.type) params.set("type", filters.type);
   if (filters?.status) params.set("status", filters.status);
   if (filters?.token) params.set("token", filters.token);
-  if (filters?.online !== undefined) params.set("online", String(filters.online));
+  if (filters?.online !== undefined)
+    params.set("online", String(filters.online));
 
   const res = await fetch(`${API_BASE}/api/p2p/orders?${params.toString()}`);
   if (!res.ok) throw new Error(`Failed to list orders: ${res.status}`);
@@ -65,7 +71,9 @@ export async function listP2POrders(filters?: {
 }
 
 export async function getP2POrder(orderId: string): Promise<P2POrder> {
-  const res = await fetch(`${API_BASE}/api/p2p/orders/${encodeURIComponent(orderId)}`);
+  const res = await fetch(
+    `${API_BASE}/api/p2p/orders/${encodeURIComponent(orderId)}`,
+  );
   if (!res.ok) throw new Error(`Failed to get order: ${res.status}`);
   const data = await res.json();
   return data.order;
@@ -97,20 +105,26 @@ export async function updateP2POrder(
   orderId: string,
   patch: Partial<Omit<P2POrder, "id" | "created_at">>,
 ): Promise<P2POrder> {
-  const res = await fetch(`${API_BASE}/api/p2p/orders/${encodeURIComponent(orderId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(patch),
-  });
+  const res = await fetch(
+    `${API_BASE}/api/p2p/orders/${encodeURIComponent(orderId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    },
+  );
   if (!res.ok) throw new Error(`Failed to update order: ${res.status}`);
   const data = await res.json();
   return data.order;
 }
 
 export async function deleteP2POrder(orderId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/p2p/orders/${encodeURIComponent(orderId)}`, {
-    method: "DELETE",
-  });
+  const res = await fetch(
+    `${API_BASE}/api/p2p/orders/${encodeURIComponent(orderId)}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!res.ok) throw new Error(`Failed to delete order: ${res.status}`);
 }
 
@@ -127,7 +141,9 @@ export async function listTradeRooms(wallet?: string): Promise<TradeRoom[]> {
 }
 
 export async function getTradeRoom(roomId: string): Promise<TradeRoom> {
-  const res = await fetch(`${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}`);
+  const res = await fetch(
+    `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}`,
+  );
   if (!res.ok) throw new Error(`Failed to get room: ${res.status}`);
   const data = await res.json();
   return data.room;
@@ -152,11 +168,14 @@ export async function updateTradeRoomStatus(
   roomId: string,
   status: TradeRoom["status"],
 ): Promise<TradeRoom> {
-  const res = await fetch(`${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
-  });
+  const res = await fetch(
+    `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    },
+  );
   if (!res.ok) throw new Error(`Failed to update room: ${res.status}`);
   const data = await res.json();
   return data.room;
@@ -164,7 +183,9 @@ export async function updateTradeRoomStatus(
 
 // ===== TRADE MESSAGES =====
 
-export async function listTradeMessages(roomId: string): Promise<TradeMessage[]> {
+export async function listTradeMessages(
+  roomId: string,
+): Promise<TradeMessage[]> {
   const res = await fetch(
     `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/messages`,
   );

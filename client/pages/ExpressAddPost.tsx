@@ -307,9 +307,14 @@ export default function ExpressAddPost() {
 
         {/* Adjust global rate (admin only) */}
         {isAdmin && (
-          <div className="p-3 rounded-xl border border-[hsl(var(--input))] bg-white">
-            <div className="text-xs text-muted-foreground mb-2 font-medium">
-              Adjusted Exchange Rate
+          <div className="p-3 rounded-xl border border-[hsl(var(--input))] bg-white space-y-2">
+            <div>
+              <div className="text-xs text-muted-foreground mb-2 font-medium">
+                Adjusted Exchange Rate (includes 4% platform fee)
+              </div>
+              <div className="text-xs text-muted-foreground mb-2 p-2 bg-green-50 border border-green-200 rounded">
+                Current rate already includes 4% marketplace fee. Actual base rate = {(Number(newRate) / 1.04).toFixed(2)} PKR
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">1 USDC =</span>
@@ -329,7 +334,7 @@ export default function ExpressAddPost() {
                   setExchangeRate(val);
                   toast({
                     title: "Rate saved",
-                    description: `1 USDC = ${val} PKR`,
+                    description: `1 USDC = ${val} PKR (with 4% fee)`,
                   });
                 }}
               >

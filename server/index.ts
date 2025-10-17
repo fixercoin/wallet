@@ -11,6 +11,7 @@ import {
   handleJupiterPrice,
   handleJupiterQuote,
   handleJupiterSwap,
+  handleJupiterTokens,
 } from "./routes/jupiter-proxy";
 import {
   handleListP2POrders,
@@ -42,6 +43,7 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/jupiter/price", handleJupiterPrice);
   app.get("/api/jupiter/quote", handleJupiterQuote);
   app.post("/api/jupiter/swap", handleJupiterSwap);
+  app.get("/api/jupiter/tokens", handleJupiterTokens);
 
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);

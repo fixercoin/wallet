@@ -446,15 +446,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                   console.log(
                     `[Price Refresh] ${mint}: 24h change = ${priceChange.toFixed(2)}%`,
                   );
-                } else {
-                  console.warn(
-                    `[Price Refresh] ${mint}: No valid priceChange found in DexScreener response`,
-                  );
                 }
-              } else {
-                console.warn(
-                  `[Price Refresh] ${mint}: Not found in DexScreener response`,
-                );
               }
             });
           } catch (e) {

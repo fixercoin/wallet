@@ -201,8 +201,9 @@ These should be moved to environment variables in production.
 
 ## Notes
 
-- All prices include 4% platform fee automatically
+- All prices include 0.25% platform fee silently (not shown to users)
 - OrderBook now works without "no handler" error
 - Real prices fetched from DexScreener for accuracy
 - Fallback system ensures app works even if external API fails
 - Admin can override prices manually anytime
+- Fee is hidden from users (applied silently in background)

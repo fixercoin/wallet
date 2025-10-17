@@ -101,10 +101,13 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
             </div>
             <div>
               <span className="text-sm text-gray-400">24h Change</span>
-              {typeof token.priceChange24h === "number" && isFinite(token.priceChange24h) ? (
+              {typeof token.priceChange24h === "number" &&
+              isFinite(token.priceChange24h) ? (
                 <p
                   className={`font-medium ${
-                    token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"
+                    token.priceChange24h >= 0
+                      ? "text-green-400"
+                      : "text-red-400"
                   }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}

@@ -179,7 +179,8 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                   </div>
                   <div>
                     <span className="text-gray-400">24h Change</span>
-                    {typeof displayToken.priceChange24h === "number" && isFinite(displayToken.priceChange24h) ? (
+                    {typeof displayToken.priceChange24h === "number" &&
+                    isFinite(displayToken.priceChange24h) ? (
                       <p
                         className={`font-medium ${
                           displayToken.priceChange24h >= 0

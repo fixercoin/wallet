@@ -797,12 +797,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             <div className="bg-purple-200/60 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-3">
-                  <div className="text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
+                  <div className="text-xl leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
                     {toAmount
                       ? formatAmount(toAmount, toToken?.symbol)
                       : "0.000"}
                   </div>
-                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
+                  <div className="mt-2 text-xl text-[hsl(var(--muted-foreground))]">
                     {(() => {
                       const amt = parseFloat(toAmount || "0");
                       const price = toUsdPrice ?? 0;

@@ -167,7 +167,10 @@ class DexscreenerAPI {
               `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
             );
           } catch (parseErr) {
-            console.error(`[DexScreener] ❌ Failed to parse response:`, parseErr);
+            console.error(
+              `[DexScreener] ❌ Failed to parse response:`,
+              parseErr,
+            );
             fetchFailed = true;
           }
         } else {
@@ -244,8 +247,8 @@ class DexscreenerAPI {
       const url = `/api/dexscreener/search?q=${encodeURIComponent(query)}`;
       console.log(`[DexScreener] Searching: ${url}`);
 
-      const response = await fetch(url).catch(() =>
-        new Response("", { status: 0 } as any)
+      const response = await fetch(url).catch(
+        () => new Response("", { status: 0 } as any),
       );
 
       if (!response.ok) {
@@ -256,7 +259,9 @@ class DexscreenerAPI {
       }
 
       const data: DexscreenerResponse = await response.json();
-      console.log(`[DexScreener] Search returned ${(data.pairs || []).length} results`);
+      console.log(
+        `[DexScreener] Search returned ${(data.pairs || []).length} results`,
+      );
       return data.pairs || [];
     } catch (error) {
       console.warn(
@@ -306,9 +311,7 @@ class DexscreenerAPI {
 
       const data: DexscreenerResponse = await response.json();
       const trending = data.pairs?.slice(0, 20) || [];
-      console.log(
-        `[DexScreener] ✅ Got ${trending.length} trending tokens`,
-      );
+      console.log(`[DexScreener] ✅ Got ${trending.length} trending tokens`);
       return trending;
     } catch (error) {
       console.warn(

@@ -103,8 +103,8 @@ export default function ExpressPay() {
     const amt = Number(spendAmount);
     if (!isFinite(amt) || amt <= 0) return 0;
     if (!isFinite(exchangeRate) || exchangeRate <= 0) return 0;
-    return amt / exchangeRate;
-  }, [spendAmount, exchangeRate]);
+    return activeTab === "sell" ? amt * exchangeRate : amt / exchangeRate;
+  }, [spendAmount, exchangeRate, activeTab]);
 
   // Get wallet balance for selected currency (in sell mode)
   const walletBalance = useMemo(() => {

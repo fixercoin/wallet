@@ -435,22 +435,54 @@ export default function OrderBook() {
                   className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
                 />
               </div>
-              <div className="col-span-2">
-                <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
-                  Payment Method
-                </label>
-                <select
-                  value={newOrder.paymentMethod}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, paymentMethod: e.target.value })
-                  }
-                  className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
-                >
-                  <option value="easypaisa">EasyPaisa</option>
-                  <option value="jazzcash">JazzCash</option>
-                  <option value="bank">Bank Account</option>
-                </select>
-              </div>
+
+              {newOrder.type === "sell" ? (
+                <>
+                  <div>
+                    <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                      Account Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newOrder.accountName}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, accountName: e.target.value })
+                      }
+                      placeholder="Account holder name"
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      value={newOrder.accountNumber}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, accountNumber: e.target.value })
+                      }
+                      placeholder="Account number"
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-2">
+                  <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                    Wallet Address
+                  </label>
+                  <input
+                    type="text"
+                    value={newOrder.walletAddress}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, walletAddress: e.target.value })
+                    }
+                    placeholder="Wallet address"
+                    className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-2">

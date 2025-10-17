@@ -115,7 +115,7 @@ export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
         setIsAdjusting,
         refreshExchangeRate,
         isLoadingPrice,
-        markupPercentage: 0.25,
+        markupPercentage: 4.25,
       }}
     >
       {children}

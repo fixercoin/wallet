@@ -52,7 +52,14 @@ export default function ExpressPay() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
-  const [adjustedRate, setAdjustedRate] = useState<string>("280");
+  const [adjustedRate, setAdjustedRate] = useState<string>(() => {
+    // Load from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('express-exchange-rate');
+      return saved || "280";
+    }
+    return "280";
+  });
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
@@ -310,6 +317,8 @@ export default function ExpressPay() {
       });
       return;
     }
+    // Save to localStorage
+    localStorage.setItem('express-exchange-rate', adjustedRate);
     setIsAdjusting(false);
     toast({
       title: "Success",

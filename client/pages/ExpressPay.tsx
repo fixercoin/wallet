@@ -51,16 +51,8 @@ export default function ExpressPay() {
   const [showSellConfirmation, setShowSellConfirmation] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isAdjusting, setIsAdjusting] = useState(false);
-  const [adjustedRate, setAdjustedRate] = useState<string>(() => {
-    // Load from localStorage on initial render
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('express-exchange-rate');
-      return saved || "280";
-    }
-    return "280";
-  });
+  const [adjustedRate, setAdjustedRate] = useState<string>("");
+  const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin, isAdjusting, setIsAdjusting } = useExpressP2P();
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [

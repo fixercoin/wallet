@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,23 +107,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [refreshBalance, refreshTokens]);
 
-  // Periodically check Express P2P service health
+  // Periodically check Express P2P service health (require consecutive failures before marking down)
+  const healthFailureRef = useRef(0);
   useEffect(() => {
     let stopped = false;
+    const FAILURE_THRESHOLD = 2; // require N consecutive failures
+
     const check = async () => {
       try {
         const controller = new AbortController();
-        const to = setTimeout(() => controller.abort(), 2500);
+        const to = setTimeout(() => controller.abort(), 4000); // slightly longer timeout
         const res = await fetch("/health", { signal: controller.signal });
         clearTimeout(to);
+
         if (!res.ok) {
-          setIsServiceDown(true);
+          healthFailureRef.current += 1;
+          setIsServiceDown(healthFailureRef.current >= FAILURE_THRESHOLD);
           return;
         }
+
         const data = await res.json().catch(() => null);
-        setIsServiceDown(!(data && data.status === "ok"));
+        if (data && data.status === "ok") {
+          healthFailureRef.current = 0;
+          setIsServiceDown(false);
+        } else {
+          healthFailureRef.current += 1;
+          setIsServiceDown(healthFailureRef.current >= FAILURE_THRESHOLD);
+        }
       } catch {
-        setIsServiceDown(true);
+        healthFailureRef.current += 1;
+        setIsServiceDown(healthFailureRef.current >= FAILURE_THRESHOLD);
       }
     };
 

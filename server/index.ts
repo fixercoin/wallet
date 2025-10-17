@@ -11,6 +11,19 @@ import {
   handleJupiterQuote,
   handleJupiterSwap,
 } from "./routes/jupiter-proxy";
+import {
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
+  handleListTradeRooms,
+  handleCreateTradeRoom,
+  handleGetTradeRoom,
+  handleUpdateTradeRoom,
+  handleListTradeMessages,
+  handleAddTradeMessage,
+} from "./routes/p2p-orders";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

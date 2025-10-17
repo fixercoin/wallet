@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useExpressP2P } from "@/contexts/ExpressP2PContext";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function ExpressAddPost() {
   const navigate = useNavigate();

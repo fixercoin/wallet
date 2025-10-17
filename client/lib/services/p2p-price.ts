@@ -1,10 +1,12 @@
 import { dexscreenerAPI } from "./dexscreener";
 
+import { dexscreenerAPI } from "./dexscreener";
+
 // Token mint addresses on Solana
 const TOKEN_MINTS = {
   USDC: "EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6",
   SOL: "So11111111111111111111111111111111111111112",
-  FIXERCOIN: "9tKe88v1EAVkYRsgJFvJVbRY86vJp3sAcNnC5c1w4aMh", // Fixercoin mint address
+  FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // Fixercoin mint address
 };
 
 const MARKUP_PERCENTAGE = 4.25; // 4.25% markup

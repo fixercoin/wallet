@@ -493,7 +493,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Tokens List */}
         <div className="mb-4">
           <Button
-            onClick={() => navigate("/express/embedded")}
+            onClick={() => navigate("/express/pay")}
             className="w-full h-12 dash-btn font-semibold border-0 relative"
             aria-label="Open Express P2P Service"
           >

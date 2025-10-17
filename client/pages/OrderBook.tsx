@@ -237,7 +237,7 @@ export default function OrderBook() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/express/embedded")}
+              onClick={() => navigate("/express/pay")}
               className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
               aria-label="Back"
             >
@@ -301,7 +301,7 @@ export default function OrderBook() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/express/embedded")}
+            onClick={() => navigate("/express/pay")}
             className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
             aria-label="Back"
           >

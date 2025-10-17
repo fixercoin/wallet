@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";

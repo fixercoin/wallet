@@ -502,7 +502,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <span
                 aria-label={isServiceDown ? "Service down" : "Refreshing"}
                 title={isServiceDown ? "Service down" : "Refreshing"}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full animate-pulse ${isServiceDown ? "bg-red-500" : "bg-yellow-400"}`}
+                className={`status-dot ${isServiceDown ? "status-red" : "status-yellow"} absolute right-3 top-1/2 -translate-y-1/2`}
               />
             )}
           </Button>

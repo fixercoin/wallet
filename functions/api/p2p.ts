@@ -8,6 +8,16 @@ import {
   uploadProof,
   deletePost,
 } from "../../utils/p2pStore";
+import {
+  listPostsCF,
+  getPostCF,
+  createOrUpdatePostCF,
+  listTradeMessagesCF,
+  listRecentTradeMessagesCF,
+  addTradeMessageCF,
+  recordProofCF,
+  deletePostCF,
+} from "../../utils/p2pStoreCf";
 
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -147,15 +157,21 @@ export default async function (
 
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/api\/p2p/, "");
+  const db: any = (env as any)?.FIXORIUM_WALLET_DB;
+  const hasDb = !!db && typeof db.prepare === "function";
 
   try {
     if (request.method === "GET" && (path === "/list" || path === "/")) {
+      if (hasDb) {
+        const data = await listPostsCF(db);
+        return jsonResponse(data);
+      }
       return jsonResponse(listPosts());
     }
 
     // Export posts as downloadable JSON
     if (request.method === "GET" && path === "/export") {
-      const data = listPosts();
+      const data = hasDb ? await listPostsCF(db) : listPosts();
       return new Response(JSON.stringify(data, null, 2), {
         status: 200,
         headers: {
@@ -168,7 +184,7 @@ export default async function (
 
     if (request.method === "GET" && path.startsWith("/post/")) {
       const id = path.replace("/post/", "");
-      const post = getPost(id);
+      const post = hasDb ? await getPostCF(db, id) : getPost(id);
       if (!post) return jsonResponse({ error: "not found" }, 404);
       return jsonResponse({ post });
     }
@@ -176,10 +192,12 @@ export default async function (
     if (request.method === "DELETE" && path.startsWith("/post/")) {
       const id = path.replace("/post/", "");
       const adminHeader = request.headers.get("x-admin-wallet") || "";
-      const result = deletePost(id, adminHeader);
+      const result = hasDb
+        ? await deletePostCF(db, id, adminHeader as any)
+        : deletePost(id, adminHeader);
       if ("error" in result)
-        return jsonResponse({ error: result.error }, result.status);
-      return jsonResponse({ ok: true }, result.status);
+        return jsonResponse({ error: (result as any).error }, (result as any).status);
+      return jsonResponse({ ok: true }, (result as any).status);
     }
 
     if (
@@ -189,28 +207,29 @@ export default async function (
       const body = await request.json().catch(() => null);
       const adminHeader =
         request.headers.get("x-admin-wallet") || body?.adminWallet || "";
-      const result = createOrUpdatePost(body || {}, adminHeader || "");
+      const result = hasDb
+        ? await createOrUpdatePostCF(db, body || {}, adminHeader || "")
+        : createOrUpdatePost(body || {}, adminHeader || "");
       if ("error" in result)
-        return jsonResponse({ error: result.error }, result.status);
+        return jsonResponse({ error: (result as any).error }, (result as any).status);
 
-      // Best-effort: commit posts to GitHub if token + repo provided in env
-      try {
-        const postsData = listPosts();
-        // call helper but do not fail the request if it errors
-        const ghResult = await commitPostsToGitHub(env, postsData);
-        if (!ghResult.ok) {
-          // log but continue
+      if (!hasDb) {
+        try {
+          const postsData = listPosts();
+          const ghResult = await commitPostsToGitHub(env, postsData);
+          if (!ghResult.ok) {
+            try {
+              console.error("GitHub sync failed:", ghResult.error);
+            } catch {}
+          }
+        } catch (e) {
           try {
-            console.error("GitHub sync failed:", ghResult.error);
+            console.error("GitHub sync exception:", (e as any)?.message || e);
           } catch {}
         }
-      } catch (e) {
-        try {
-          console.error("GitHub sync exception:", (e as any)?.message || e);
-        } catch {}
       }
 
-      return jsonResponse({ post: result.post }, result.status);
+      return jsonResponse({ post: (result as any).post }, (result as any).status);
     }
 
     if (
@@ -219,12 +238,20 @@ export default async function (
       path.endsWith("/messages")
     ) {
       const tradeId = path.replace(/^\/trade\//, "").replace(/\/messages$/, "");
+      if (hasDb) {
+        const data = await listTradeMessagesCF(db, tradeId);
+        return jsonResponse(data);
+      }
       return jsonResponse(listTradeMessages(tradeId));
     }
 
     if (request.method === "GET" && path === "/trades/recent") {
       const since = Number(url.searchParams.get("since") || 0);
       const limit = Number(url.searchParams.get("limit") || 100);
+      if (hasDb) {
+        const data = await listRecentTradeMessagesCF(db, { since, limit });
+        return jsonResponse({ messages: (data as any).messages || [] });
+      }
       const data = (listRecentTradeMessages({ since, limit }) as any) || {
         messages: [],
       };
@@ -240,10 +267,12 @@ export default async function (
       const body = await request.json().catch(() => null);
       const msg = (body && body.message) || "";
       const from = (body && body.from) || "unknown";
-      const result = addTradeMessage(tradeId, msg, from);
+      const result = hasDb
+        ? await addTradeMessageCF(db, tradeId, msg, from)
+        : addTradeMessage(tradeId, msg, from);
       if ("error" in result)
-        return jsonResponse({ error: result.error }, result.status);
-      return jsonResponse({ message: result.message }, result.status);
+        return jsonResponse({ error: (result as any).error }, (result as any).status);
+      return jsonResponse({ message: (result as any).message }, (result as any).status);
     }
 
     if (
@@ -255,7 +284,7 @@ export default async function (
       const body = await request.json().catch(() => null);
       const inMem = uploadProof(tradeId, body?.proof);
       if ("error" in inMem)
-        return jsonResponse({ error: inMem.error }, inMem.status);
+        return jsonResponse({ error: (inMem as any).error }, (inMem as any).status);
 
       let supabaseUrl: string | undefined;
       try {
@@ -263,7 +292,13 @@ export default async function (
         if (sup.ok) supabaseUrl = (sup as any).url as string;
       } catch {}
 
-      return jsonResponse({ ok: true, url: supabaseUrl }, inMem.status);
+      if (hasDb) {
+        try {
+          await recordProofCF(db, tradeId, body?.proof?.filename, supabaseUrl);
+        } catch {}
+      }
+
+      return jsonResponse({ ok: true, url: supabaseUrl }, (inMem as any).status);
     }
 
     return jsonResponse({ error: "not found" }, 404);

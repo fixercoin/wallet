@@ -23,7 +23,7 @@ import TokenListing from "./pages/TokenListing";
 import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
-import ExpressEmbed from "./pages/ExpressEmbed";
+import ExpressPay from "./pages/ExpressPay";
 
 const queryClient = new QueryClient();
 
@@ -45,7 +45,7 @@ const App = () => (
               />
               <Route path="/express/orderbook" element={<OrderBook />} />
               <Route path="/express/buy-trade" element={<BuyTrade />} />
-              <Route path="/express/embedded" element={<ExpressEmbed />} />
+              <Route path="/express/embedded" element={<ExpressPay />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

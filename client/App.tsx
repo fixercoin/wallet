@@ -45,7 +45,6 @@ function AppRoutes() {
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/express/pay" element={<ExpressPay />} />
       <Route path="/express/add-post" element={<ExpressAddPost />} />
-      <Route path="/express/embedded" element={<ExpressEmbed />} />
       <Route
         path="/express/order-complete"
         element={<ExpressOrderComplete />}

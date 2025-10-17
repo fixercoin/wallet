@@ -22,9 +22,9 @@ export const PriceCard: React.FC<PriceCardProps> = ({
   withinCard = false,
 }) => {
   const currentPrice = token.price || 0;
-  const priceChangePercent = token.priceChange24h || 0;
+  const priceChangePercent = typeof token.priceChange24h === "number" && isFinite(token.priceChange24h) ? token.priceChange24h : null;
   const totalValue = (token.balance || 0) * currentPrice;
-  const isPositive = priceChangePercent >= 0;
+  const isPositive = priceChangePercent !== null && priceChangePercent >= 0;
 
   const content = (
     <div className="p-6">

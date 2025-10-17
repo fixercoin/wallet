@@ -40,6 +40,9 @@ export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
       try {
         setIsLoadingPrice(true);
 
+        // Clear old cache to force fresh price
+        p2pPriceService.clearCache();
+
         // Try to get USDC price with 4.25% markup from DexScreener
         const price = await p2pPriceService.getTokenPrice("USDC");
         setExchangeRate(price);

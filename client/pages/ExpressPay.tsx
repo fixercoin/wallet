@@ -60,8 +60,14 @@ export default function ExpressPay() {
     { id: "bank", label: "Bank Account" },
   ] as const;
 
-  // Fixed exchange rate for display (PKR per token)
-  const exchangeRate = 280;
+  // Check if user is admin
+  useEffect(() => {
+    const userWalletAddress = wallet?.publicKey || wallet?.address || "";
+    setIsAdmin(userWalletAddress === ADMIN_WALLET);
+  }, [wallet]);
+
+  // Exchange rate (can be adjusted by admin)
+  const exchangeRate = Number(adjustedRate) || 280;
 
   const receivedAmount = useMemo(() => {
     if (!spendAmount || isNaN(Number(spendAmount))) return 0;

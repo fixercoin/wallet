@@ -49,6 +49,9 @@ export default function ExpressPay() {
   const [showSellConfirmation, setShowSellConfirmation] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Order | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [adjustedRate, setAdjustedRate] = useState<string>("280");
 
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
@@ -57,8 +60,14 @@ export default function ExpressPay() {
     { id: "bank", label: "Bank Account" },
   ] as const;
 
-  // Fixed exchange rate for display (PKR per token)
-  const exchangeRate = 280;
+  // Check if user is admin
+  useEffect(() => {
+    const userWalletAddress = wallet?.publicKey || wallet?.address || "";
+    setIsAdmin(userWalletAddress === ADMIN_WALLET);
+  }, [wallet]);
+
+  // Exchange rate (can be adjusted by admin)
+  const exchangeRate = Number(adjustedRate) || 280;
 
   const receivedAmount = useMemo(() => {
     if (!spendAmount || isNaN(Number(spendAmount))) return 0;
@@ -255,6 +264,23 @@ export default function ExpressPay() {
     navigate("/express/orderbook");
   };
 
+  const handleSaveRate = () => {
+    const newRate = Number(adjustedRate);
+    if (newRate <= 0 || isNaN(newRate)) {
+      toast({
+        title: "Invalid rate",
+        description: "Please enter a valid exchange rate",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsAdjusting(false);
+    toast({
+      title: "Success",
+      description: `Exchange rate updated to ${newRate} PKR`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       {/* Header */}
@@ -389,13 +415,45 @@ export default function ExpressPay() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[hsl(var(--muted-foreground))]">
-                1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR
-              </span>
-              <button className="text-[hsl(var(--primary))] font-medium hover:underline">
-                Adjust
-              </button>
+            <div className="flex items-center justify-between text-xs gap-2">
+              {isAdjusting && isAdmin ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    1 {selectedCurrency} ≈
+                  </span>
+                  <input
+                    type="number"
+                    value={adjustedRate}
+                    onChange={(e) => setAdjustedRate(e.target.value)}
+                    className="flex-1 border border-[hsl(var(--border))] rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  />
+                  <span className="text-[hsl(var(--muted-foreground))]">
+                    PKR
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[hsl(var(--muted-foreground))]">
+                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR
+                </span>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    if (isAdjusting) {
+                      handleSaveRate();
+                    } else {
+                      setIsAdjusting(true);
+                    }
+                  }}
+                  className={`font-medium hover:underline whitespace-nowrap ${
+                    isAdjusting
+                      ? "text-green-600"
+                      : "text-[hsl(var(--primary))]"
+                  }`}
+                >
+                  {isAdjusting ? "Save" : "Adjust"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -447,9 +505,9 @@ export default function ExpressPay() {
       {/* Buy Confirmation Modal */}
       {showBuyConfirmation && selectedSeller && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Seller Details
@@ -463,7 +521,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Transaction Summary */}
               <div className="space-y-2 pb-4 border-b border-[hsl(var(--border))]">
                 <div className="flex justify-between items-center p-2">
@@ -536,7 +594,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3">
+            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3 flex-shrink-0 border-t border-[hsl(var(--border))]">
               <Button
                 onClick={() => setShowBuyConfirmation(false)}
                 disabled={isProcessing}
@@ -559,9 +617,9 @@ export default function ExpressPay() {
       {/* Sell Confirmation Modal */}
       {showSellConfirmation && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4">
+            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Confirm Sell Transaction
@@ -569,7 +627,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-[hsl(var(--secondary))] rounded-lg">
                   <span className="text-sm text-[hsl(var(--muted-foreground))]">
@@ -617,7 +675,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3">
+            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3 flex-shrink-0 border-t border-[hsl(var(--border))]">
               <Button
                 onClick={() => setShowSellConfirmation(false)}
                 disabled={isProcessing}

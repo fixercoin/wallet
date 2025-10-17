@@ -12,7 +12,10 @@ interface Order {
   amountPKR: number;
   quoteAsset: string;
   pricePKRPerQuote: number;
-  paymentMethod: string;
+  paymentMethod?: string;
+  accountName?: string;
+  accountNumber?: string;
+  walletAddress?: string;
 }
 
 const ADMIN_PASSWORD = "Pakistan##123";
@@ -36,6 +39,9 @@ export default function OrderBook() {
     quoteAsset: "USDC",
     pricePKRPerQuote: "",
     paymentMethod: "easypaisa",
+    accountName: "",
+    accountNumber: "",
+    walletAddress: "",
   });
 
   const load = async () => {
@@ -90,8 +96,30 @@ export default function OrderBook() {
         return;
       }
 
+      if (
+        newOrder.type === "sell" &&
+        (!newOrder.accountName || !newOrder.accountNumber)
+      ) {
+        toast({
+          title: "Invalid input",
+          description:
+            "Please fill account name and account number for sell orders",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (newOrder.type === "buy" && !newOrder.walletAddress) {
+        toast({
+          title: "Invalid input",
+          description: "Please fill wallet address for buy orders",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Use the admin password as the token for creating orders
-      const orderData = {
+      const orderData: any = {
         side: newOrder.type,
         amountPKR: Number(newOrder.amountPKR),
         quoteAsset: newOrder.quoteAsset,
@@ -100,6 +128,13 @@ export default function OrderBook() {
         roomId: "global",
         createdBy: wallet?.publicKey || "admin",
       };
+
+      if (newOrder.type === "sell") {
+        orderData.accountName = newOrder.accountName;
+        orderData.accountNumber = newOrder.accountNumber;
+      } else if (newOrder.type === "buy") {
+        orderData.walletAddress = newOrder.walletAddress;
+      }
 
       await createOrder(orderData, adminPassword);
 
@@ -114,6 +149,9 @@ export default function OrderBook() {
         quoteAsset: "USDC",
         pricePKRPerQuote: "",
         paymentMethod: "easypaisa",
+        accountName: "",
+        accountNumber: "",
+        walletAddress: "",
       });
       setShowCreateForm(false);
       await load();
@@ -132,16 +170,20 @@ export default function OrderBook() {
 
   const handleSaveOrder = async (order: Order) => {
     try {
-      await updateOrder(
-        order.id,
-        {
-          amountPKR: Number(order.amountPKR),
-          quoteAsset: String(order.quoteAsset),
-          pricePKRPerQuote: Number(order.pricePKRPerQuote),
-          paymentMethod: String(order.paymentMethod || "easypaisa"),
-        },
-        adminPassword,
-      );
+      const updateData: any = {
+        amountPKR: Number(order.amountPKR),
+        quoteAsset: String(order.quoteAsset),
+        pricePKRPerQuote: Number(order.pricePKRPerQuote),
+      };
+
+      if (order.type === "sell") {
+        updateData.accountName = order.accountName;
+        updateData.accountNumber = order.accountNumber;
+      } else if (order.type === "buy") {
+        updateData.walletAddress = order.walletAddress;
+      }
+
+      await updateOrder(order.id, updateData, adminPassword);
       toast({
         title: "Success",
         description: "Order updated successfully",
@@ -312,7 +354,19 @@ export default function OrderBook() {
           {/* Add New Order Button */}
           <div className="px-4 py-3 border-t border-[hsl(var(--border))]">
             <Button
-              onClick={() => setShowCreateForm(!showCreateForm)}
+              onClick={() => {
+                setNewOrder({
+                  type: activeTab,
+                  amountPKR: "",
+                  quoteAsset: "USDC",
+                  pricePKRPerQuote: "",
+                  paymentMethod: "easypaisa",
+                  accountName: "",
+                  accountNumber: "",
+                  walletAddress: "",
+                });
+                setShowCreateForm(true);
+              }}
               className="w-full h-10 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
             >
               <Plus className="h-4 w-4" /> Add{" "}
@@ -401,22 +455,82 @@ export default function OrderBook() {
                   className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
                 />
               </div>
-              <div className="col-span-2">
-                <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
-                  Payment Method
-                </label>
-                <select
-                  value={newOrder.paymentMethod}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, paymentMethod: e.target.value })
-                  }
-                  className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
-                >
-                  <option value="easypaisa">EasyPaisa</option>
-                  <option value="jazzcash">JazzCash</option>
-                  <option value="bank">Bank Account</option>
-                </select>
-              </div>
+
+              {newOrder.type === "sell" ? (
+                <>
+                  <div>
+                    <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                      Account Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newOrder.accountName}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          accountName: e.target.value,
+                        })
+                      }
+                      placeholder="Account holder name"
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      value={newOrder.accountNumber}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          accountNumber: e.target.value,
+                        })
+                      }
+                      placeholder="Account number"
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                      Payment Method
+                    </label>
+                    <select
+                      value={newOrder.paymentMethod}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          paymentMethod: e.target.value,
+                        })
+                      }
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
+                    >
+                      <option value="easypaisa">EasyPaisa</option>
+                      <option value="jazzcash">JazzCash</option>
+                      <option value="bank">Bank Account</option>
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-2">
+                  <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                    Wallet Address
+                  </label>
+                  <input
+                    type="text"
+                    value={newOrder.walletAddress}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        walletAddress: e.target.value,
+                      })
+                    }
+                    placeholder="Wallet address"
+                    className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -540,26 +654,85 @@ export default function OrderBook() {
                             className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
                           />
                         </div>
-                        <div>
-                          <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
-                            Payment Method
-                          </label>
-                          <select
-                            value={order.paymentMethod}
-                            onChange={(e) =>
-                              updateOrderField(
-                                order.id,
-                                "paymentMethod",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
-                          >
-                            <option value="easypaisa">EasyPaisa</option>
-                            <option value="jazzcash">JazzCash</option>
-                            <option value="bank">Bank Account</option>
-                          </select>
-                        </div>
+                        {order.type === "sell" ? (
+                          <>
+                            <div>
+                              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                                Account Name
+                              </label>
+                              <input
+                                type="text"
+                                value={order.accountName || ""}
+                                onChange={(e) =>
+                                  updateOrderField(
+                                    order.id,
+                                    "accountName",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Account holder name"
+                                className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                                Account Number
+                              </label>
+                              <input
+                                type="text"
+                                value={order.accountNumber || ""}
+                                onChange={(e) =>
+                                  updateOrderField(
+                                    order.id,
+                                    "accountNumber",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Account number"
+                                className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                                Payment Method
+                              </label>
+                              <select
+                                value={order.paymentMethod || "easypaisa"}
+                                onChange={(e) =>
+                                  updateOrderField(
+                                    order.id,
+                                    "paymentMethod",
+                                    e.target.value,
+                                  )
+                                }
+                                className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 cursor-pointer"
+                              >
+                                <option value="easypaisa">EasyPaisa</option>
+                                <option value="jazzcash">JazzCash</option>
+                                <option value="bank">Bank Account</option>
+                              </select>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="col-span-2">
+                            <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium block mb-1">
+                              Wallet Address
+                            </label>
+                            <input
+                              type="text"
+                              value={order.walletAddress || ""}
+                              onChange={(e) =>
+                                updateOrderField(
+                                  order.id,
+                                  "walletAddress",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Wallet address"
+                              className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 bg-[hsl(var(--input))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons - Edit Mode */}
@@ -606,14 +779,43 @@ export default function OrderBook() {
                             {Number(order.pricePKRPerQuote).toFixed(2)}
                           </div>
                         </div>
-                        <div className="p-2 rounded-lg bg-[hsl(var(--secondary))]">
-                          <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
-                            Payment
+                        {order.type === "sell" ? (
+                          <>
+                            <div className="p-2 rounded-lg bg-[hsl(var(--secondary))]">
+                              <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                                Account Name
+                              </div>
+                              <div className="font-semibold text-sm text-[hsl(var(--foreground))]">
+                                {order.accountName || "N/A"}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-[hsl(var(--secondary))]">
+                              <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                                Account Number
+                              </div>
+                              <div className="font-semibold text-sm text-[hsl(var(--foreground))]">
+                                {order.accountNumber || "N/A"}
+                              </div>
+                            </div>
+                            <div className="col-span-2 p-2 rounded-lg bg-[hsl(var(--secondary))]">
+                              <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                                Payment Method
+                              </div>
+                              <div className="font-semibold text-sm text-[hsl(var(--foreground))]">
+                                {order.paymentMethod || "N/A"}
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="col-span-2 p-2 rounded-lg bg-[hsl(var(--secondary))]">
+                            <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                              Wallet Address
+                            </div>
+                            <div className="font-semibold text-sm text-[hsl(var(--foreground))] break-all">
+                              {order.walletAddress || "N/A"}
+                            </div>
                           </div>
-                          <div className="font-semibold text-sm text-[hsl(var(--foreground))]">
-                            {order.paymentMethod}
-                          </div>
-                        </div>
+                        )}
                       </div>
 
                       {/* Action Buttons - View Mode */}

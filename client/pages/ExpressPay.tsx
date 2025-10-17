@@ -14,6 +14,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useExpressP2P } from "@/contexts/ExpressP2PContext";
 import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
+import { p2pPriceService } from "@/lib/services/p2p-price";
 
 type TabType = "buy" | "sell";
 type PaymentMethod = "easypaisa" | "jazzcash" | "bank";

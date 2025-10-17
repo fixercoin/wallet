@@ -645,6 +645,7 @@
   }
   .status-red { color: #ef4444; }
   .status-yellow { color: #f59e0b; }
+  .status-green { color: #22c55e; }
 
   @keyframes status-ripple {
     0% { transform: scale(0.6); opacity: 0.6; }

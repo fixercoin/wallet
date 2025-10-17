@@ -617,9 +617,9 @@ export default function ExpressPay() {
       {/* Sell Confirmation Modal */}
       {showSellConfirmation && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4">
+            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Confirm Sell Transaction
@@ -627,7 +627,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-[hsl(var(--secondary))] rounded-lg">
                   <span className="text-sm text-[hsl(var(--muted-foreground))]">

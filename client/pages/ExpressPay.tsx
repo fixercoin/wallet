@@ -267,7 +267,7 @@ export default function ExpressPay() {
 
       toast({
         title: "Transfer successful",
-        description: `${receivedAmount.toFixed(6)} ${selectedCurrency} sent to buyer`,
+        description: `${Number(spendAmount).toFixed(6)} ${selectedCurrency} sent to buyer`,
       });
 
       setShowSellConfirmation(false);

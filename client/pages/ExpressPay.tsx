@@ -505,9 +505,9 @@ export default function ExpressPay() {
       {/* Buy Confirmation Modal */}
       {showBuyConfirmation && selectedSeller && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Seller Details
@@ -521,7 +521,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Transaction Summary */}
               <div className="space-y-2 pb-4 border-b border-[hsl(var(--border))]">
                 <div className="flex justify-between items-center p-2">

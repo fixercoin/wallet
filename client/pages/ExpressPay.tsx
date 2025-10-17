@@ -379,34 +379,31 @@ export default function ExpressPay() {
             </>
           )}
 
-          {/* Spend Section */}
-          <div className="space-y-2">
-            <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-              {activeTab === "sell" ? "Sell Amount" : "Spend"}
-            </label>
-            <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  min={0}
-                  step={100}
-                  value={spendAmount}
-                  onChange={(e) => setSpendAmount(e.target.value)}
-                  placeholder="0"
-                  className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
-                />
-                <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
-                  PKR
+          {/* Spend Section (Buy) */}
+          {activeTab !== "sell" && (
+            <div className="space-y-2">
+              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                Spend
+              </label>
+              <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min={0}
+                    step={100}
+                    value={spendAmount}
+                    onChange={(e) => setSpendAmount(e.target.value)}
+                    placeholder="0"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                  />
+                  <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
+                    PKR
+                  </div>
                 </div>
               </div>
+              <div className="text-xs text-[hsl(var(--muted-foreground))]">Minimum: 1,000 PKR</div>
             </div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">
-              Minimum: 1,000 PKR
-              {activeTab === "sell" &&
-                walletBalance > 0 &&
-                ` | Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
-            </div>
-          </div>
+          )}
 
           {/* Receive Section */}
           <div className="space-y-2">

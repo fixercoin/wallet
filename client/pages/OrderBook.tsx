@@ -126,7 +126,7 @@ export default function OrderBook() {
         pricePKRPerQuote: Number(newOrder.pricePKRPerQuote),
         paymentMethod: newOrder.paymentMethod,
         roomId: "global",
-        createdBy: wallet?.publicKey || "admin",
+        createdBy: wallet?.publicKey || wallet?.address || "admin",
       };
 
       if (newOrder.type === "sell") {

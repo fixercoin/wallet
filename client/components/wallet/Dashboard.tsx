@@ -79,6 +79,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
+  const [isServiceDown, setIsServiceDown] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     let running = false;
@@ -89,11 +91,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
       running = true;
       try {
         await refreshBalance();
-        // small spacing to avoid overlapping backend calls
         await new Promise((r) => setTimeout(r, 300));
         await refreshTokens();
       } catch (err) {
-        // swallow - network issues expected
       } finally {
         running = false;
       }
@@ -106,6 +106,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Periodically check Express P2P service health
+  useEffect(() => {
+    let stopped = false;
+    const check = async () => {
+      try {
+        const controller = new AbortController();
+        const to = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch("/api/health", { signal: controller.signal });
+        clearTimeout(to);
+        if (!res.ok) {
+          setIsServiceDown(true);
+          return;
+        }
+        const data = await res.json().catch(() => null);
+        setIsServiceDown(!(data && data.ok === true));
+      } catch {
+        setIsServiceDown(true);
+      }
+    };
+
+    void check();
+    const id = setInterval(() => {
+      if (!stopped) void check();
+    }, 10000);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+    };
+  }, []);
 
   // Refresh quietly when user scrolls down significantly
   useEffect(() => {

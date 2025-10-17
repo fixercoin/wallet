@@ -501,6 +501,19 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               : item,
           ),
         );
+        // Persist withdraw event to Cloudflare (best-effort)
+        try {
+          await fetch(resolveApiUrl(`/api/locks/${lock.id}/withdraw`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: lock.amount,
+              txSignature: signature,
+              note: `escrow:${lock.escrowPublicKey}`,
+            }),
+          });
+        } catch {}
+
         await refreshTokens();
         if (!opts?.auto) {
           toast({

@@ -961,8 +961,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               onClick={handleSwap}
               className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={
-                !quote ||
-                indicative ||
+                !quote &&
+                !indicative ||
                 !!quoteError ||
                 !fromToken ||
                 !toToken ||
@@ -970,7 +970,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 isLoading
               }
             >
-              Submit
+              {indicative ? "Swap (Estimated)" : "Submit"}
             </Button>
           </div>
         </div>

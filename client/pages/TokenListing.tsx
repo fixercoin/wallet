@@ -19,7 +19,6 @@ export default function TokenListing() {
   const [logoURI, setLogoURI] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-
   if (!wallet) {
     return (
       <div className="min-h-screen bg-white text-[hsl(var(--foreground))] flex items-center justify-center">
@@ -114,7 +113,6 @@ export default function TokenListing() {
             </span>
           </div>
 
-
           <div className="grid gap-3">
             <div className="space-y-2">
               <Label htmlFor="mint">Token Mint Address</Label>
@@ -172,7 +170,6 @@ export default function TokenListing() {
           >
             {isLoading ? "Listing..." : "Confirm Listing"}
           </Button>
-
         </div>
       </div>
     </div>

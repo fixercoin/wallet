@@ -402,7 +402,9 @@ export default function ExpressPay() {
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-[hsl(var(--muted-foreground))]">Minimum: 1,000 PKR</div>
+              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                Minimum: 1,000 PKR
+              </div>
             </div>
           )}
 
@@ -469,7 +471,8 @@ export default function ExpressPay() {
                 </div>
               </div>
               <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                {walletBalance > 0 && `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
+                {walletBalance > 0 &&
+                  `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
               </div>
             </div>
           )}

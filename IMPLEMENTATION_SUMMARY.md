@@ -158,11 +158,11 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 
 1. ✅ `server/routes/orders.ts` - **NEW** - Order CRUD handlers
 2. ✅ `server/index.ts` - Added `/api/orders` routes
-3. ✅ `client/lib/services/p2p-price.ts` - **NEW** - Price service with 4% markup
+3. ✅ `client/lib/services/p2p-price.ts` - **NEW** - Price service with 0.25% markup
 4. ✅ `client/contexts/ExpressP2PContext.tsx` - Integrated real prices
-5. ✅ `client/pages/ExpressPay.tsx` - Added "+4% fee" badge
-6. ✅ `client/pages/ExpressAddPost.tsx` - Added markup explanation
-7. ✅ `client/pages/OrderBook.tsx` - Added markup indicator
+5. ✅ `client/pages/ExpressPay.tsx` - Clean rate display (no fee badge)
+6. ✅ `client/pages/ExpressAddPost.tsx` - Simple rate adjustment
+7. ✅ `client/pages/OrderBook.tsx` - Clean order management
 
 ---
 

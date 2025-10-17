@@ -34,21 +34,21 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 
 ---
 
-### 2. **4% Markup System Implementation**
+### 2. **0.25% Markup System Implementation**
 
 **File: `client/lib/services/p2p-price.ts` (NEW)**
 - Created `P2PPriceService` class for price management
 - **Key Features:**
   - Fetches USDC, SOL, FIXERCOIN prices from DexScreener API
-  - Applies 4% markup to all prices: `price * 1.04`
+  - Applies 0.25% markup to all prices: `price * 1.0025` (silent, not displayed)
   - Caches prices for 60 seconds to reduce API calls
   - Fallback prices if DexScreener fails (280 PKR, 180 SOL, etc.)
 
 **Example Calculation:**
 ```
 - Base USDC price: 280 PKR
-- With 4% markup: 280 * 1.04 = 291.2 PKR
-- This marked-up price is displayed throughout P2P UI
+- With 0.25% markup: 280 * 1.0025 = 280.7 PKR
+- This marked-up price is silently applied (fee not shown to users)
 ```
 
 **Token Mint Addresses:**

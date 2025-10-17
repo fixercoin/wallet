@@ -421,7 +421,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
         if (mintsToFetch.length > 0) {
           try {
-            const dexTokens = await dexscreenerAPI.getTokensByMints(mintsToFetch);
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(mintsToFetch);
             const dexMap = new Map(
               dexTokens.map((t) => [t.baseToken.address, t]),
             );

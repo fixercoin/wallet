@@ -446,9 +446,6 @@ export default function ExpressPay() {
                   : "-"}{" "}
                 PKR
               </span>
-              <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 font-semibold">
-                +4% fee
-              </span>
             </div>
           </div>
 

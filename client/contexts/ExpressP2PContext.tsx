@@ -40,7 +40,7 @@ export const ExpressP2PProvider: React.FC<{ children: ReactNode }> = ({
       try {
         setIsLoadingPrice(true);
 
-        // Try to get USDC price with 0.25% markup from DexScreener
+        // Try to get USDC price with 4.25% markup from DexScreener
         const price = await p2pPriceService.getTokenPrice("USDC");
         setExchangeRate(price);
 

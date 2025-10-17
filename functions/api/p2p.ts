@@ -272,7 +272,25 @@ export default async function (
         : addTradeMessage(tradeId, msg, from);
       if ("error" in result)
         return jsonResponse({ error: (result as any).error }, (result as any).status);
-      return jsonResponse({ message: (result as any).message }, (result as any).status);
+
+      // If a proof is attached in the same request, process it as well for convenience
+      let proofUrl: string | undefined;
+      try {
+        if (body?.proof && body.proof.filename && body.proof.data) {
+          const stored = uploadProof(tradeId, body.proof);
+          if (!("error" in stored)) {
+            const sup = await uploadProofToSupabase(env, tradeId, body.proof);
+            if (sup.ok) proofUrl = (sup as any).url as string;
+            if (hasDb) {
+              try {
+                await recordProofCF(db, tradeId, body.proof.filename, proofUrl);
+              } catch {}
+            }
+          }
+        }
+      } catch {}
+
+      return jsonResponse({ message: (result as any).message, proofUrl }, (result as any).status);
     }
 
     if (

@@ -67,6 +67,38 @@ export default function ExpressPay() {
     setIsAdmin(userWalletAddress === ADMIN_WALLET);
   }, [wallet]);
 
+  // Handle sell confirmation when user clicks button
+  const handleSellClick = () => {
+    if (!wallet) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!spendAmount || Number(spendAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (walletBalance < receivedAmount) {
+      toast({
+        title: "Insufficient balance",
+        description: `You have ${walletBalance} ${selectedCurrency} but need ${receivedAmount.toFixed(6)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowSellConfirmation(true);
+  };
+
   // Exchange rate (can be adjusted by admin)
   const exchangeRate = Number(adjustedRate) || 280;
 

@@ -600,8 +600,8 @@ export default function ExpressPay() {
                   </span>
                   <span className="font-bold text-[hsl(var(--foreground))]">
                     1 {selectedCurrency} ={" "}
-                    {isFinite(exchangeRate) && exchangeRate > 0
-                      ? exchangeRate
+                    {isFinite(selectedRate) && selectedRate > 0
+                      ? selectedRate
                       : "-"}{" "}
                     PKR
                   </span>

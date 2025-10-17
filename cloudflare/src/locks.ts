@@ -149,7 +149,7 @@ export async function withdrawFromLock(db: D1Database, id: string, input: Withdr
      VALUES (?1, ?2, 'withdraw', ?3, ?4, ?5, ?6)`,
   ).bind(crypto.randomUUID(), id, `-${input.amount}`, input.tx_signature ?? null, now, input.note ?? null);
   const res = await db.batch([upd, ev]);
-  if (res.some((r) => (r as D1ExecResult).success === false)) throw new Error("Failed to withdraw");
+  if (res.some((r) => (r as D1Result).success === false)) throw new Error("Failed to withdraw");
   return getLock(db, id);
 }
 

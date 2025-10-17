@@ -83,18 +83,16 @@ DELETE /api/orders/:orderId     - Delete order (requires admin token)
 ### 4. **UI Updates**
 
 **File: `client/pages/ExpressPay.tsx` (MODIFIED)**
-- Added "+4% fee" badge next to exchange rate display
-- Shows 1 USDC = XXX.XX PKR (with markup applied)
-- Clear visual indicator of marketplace fee
+- Shows 1 USDC = XXX.XX PKR (with 0.25% markup applied silently)
+- No visible fee badge (fee is hidden from users)
 
 **File: `client/pages/ExpressAddPost.tsx` (MODIFIED)**
-- Added explanation for admin about 4% markup
-- Shows base rate calculation: `marked_price / 1.04`
-- Helps admins understand the fee structure
+- Simple rate adjustment interface for admins
+- No markup explanation (fee is silent)
 
 **File: `client/pages/OrderBook.tsx` (MODIFIED)**
-- Added "(+4% markup)" indicator in header
-- Ensures users creating orders understand the fee
+- Simple order management interface
+- No markup indicator displayed
 
 ---
 

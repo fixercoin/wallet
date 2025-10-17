@@ -470,7 +470,7 @@ export default function ExpressPay() {
                 </div>
               ) : (
                 <span className="text-[hsl(var(--muted-foreground))]">
-                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR
+                  1 {selectedCurrency} ≈ {exchangeRate.toFixed(2)} PKR (Adjusted Rate)
                 </span>
               )}
               {isAdmin && (

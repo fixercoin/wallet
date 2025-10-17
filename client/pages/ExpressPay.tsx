@@ -405,7 +405,7 @@ export default function ExpressPay() {
             </div>
           )}
 
-          {/* Receive Section */}
+          {/* Token Selection / Receive Section */}
           <div className="space-y-2">
             <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
               {activeTab === "sell" ? "Sell Token" : "Receive"}
@@ -413,7 +413,11 @@ export default function ExpressPay() {
             <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
               <div className="flex items-center h-11">
                 <div className="flex-1 px-4 py-3 text-sm font-medium text-[hsl(var(--foreground))]">
-                  {receivedAmount > 0 ? receivedAmount.toFixed(6) : "0"}
+                  {activeTab === "sell"
+                    ? ""
+                    : receivedAmount > 0
+                      ? receivedAmount.toFixed(6)
+                      : "0"}
                 </div>
                 <div className="relative">
                   <select
@@ -441,6 +445,33 @@ export default function ExpressPay() {
               </span>
             </div>
           </div>
+
+          {activeTab === "sell" && (
+            <div className="space-y-2">
+              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                Sell Amount {selectedCurrency}
+              </label>
+              <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.000001}
+                    value={spendAmount}
+                    onChange={(e) => setSpendAmount(e.target.value)}
+                    placeholder="0"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                  />
+                  <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
+                    {selectedCurrency}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                {walletBalance > 0 && `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
+              </div>
+            </div>
+          )}
 
           {/* Payment Methods */}
           <div className="space-y-2">

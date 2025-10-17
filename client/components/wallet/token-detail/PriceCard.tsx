@@ -22,7 +22,10 @@ export const PriceCard: React.FC<PriceCardProps> = ({
   withinCard = false,
 }) => {
   const currentPrice = token.price || 0;
-  const priceChangePercent = typeof token.priceChange24h === "number" && isFinite(token.priceChange24h) ? token.priceChange24h : null;
+  const priceChangePercent =
+    typeof token.priceChange24h === "number" && isFinite(token.priceChange24h)
+      ? token.priceChange24h
+      : null;
   const totalValue = (token.balance || 0) * currentPrice;
   const isPositive = priceChangePercent !== null && priceChangePercent >= 0;
 
@@ -62,7 +65,9 @@ export const PriceCard: React.FC<PriceCardProps> = ({
                   )}
                   <span
                     className={`text-sm font-medium ${
-                      priceChangePercent >= 0 ? "text-green-400" : "text-red-400"
+                      priceChangePercent >= 0
+                        ? "text-green-400"
+                        : "text-red-400"
                     }`}
                   >
                     {priceChangePercent >= 0 ? "+" : ""}

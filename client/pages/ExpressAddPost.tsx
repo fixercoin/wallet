@@ -36,6 +36,12 @@ export default function ExpressAddPost() {
   const [minToken, setMinToken] = useState<string>("");
   const [maxToken, setMaxToken] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
+  // Optional seller payment details for listing
+  const [sellerAccountName, setSellerAccountName] = useState<string>("");
+  const [sellerAccountNumber, setSellerAccountNumber] = useState<string>("");
+  // Optional Fixercoin specific pricing
+  const [pricePerUSDC, setPricePerUSDC] = useState<string>("");
+  const [pricePerSOL, setPricePerSOL] = useState<string>("");
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
@@ -246,11 +252,18 @@ export default function ExpressAddPost() {
           type,
           token,
           pricePkr: price,
+          // include Fixercoin optional pricing if provided
+          pricePerUSDC: token === "FIXERCOIN" && pricePerUSDC !== "" ? Number(pricePerUSDC) : undefined,
+          pricePerSOL: token === "FIXERCOIN" && pricePerSOL !== "" ? Number(pricePerSOL) : undefined,
           minToken: min,
           maxToken: max,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
           walletAddress: type === "buy" ? walletAddress : undefined,
           availability,
+          paymentDetails:
+            sellerAccountName || sellerAccountNumber
+              ? { accountName: sellerAccountName, accountNumber: sellerAccountNumber }
+              : undefined,
         }),
       });
       if (!resp.ok) {
@@ -516,6 +529,41 @@ export default function ExpressAddPost() {
                 </div>
               </div>
 
+              {token === "FIXERCOIN" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Price per USDC (Fixercoin)</div>
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
+                      <input
+                        value={pricePerUSDC}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (/^\d*\.?\d*$/.test(v)) setPricePerUSDC(v);
+                        }}
+                        inputMode="decimal"
+                        placeholder="optional"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Price per SOL (Fixercoin)</div>
+                    <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
+                      <input
+                        value={pricePerSOL}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (/^\d*\.?\d*$/.test(v)) setPricePerSOL(v);
+                        }}
+                        inputMode="decimal"
+                        placeholder="optional"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {type === "buy" && (
                 <div>
                   <div className="mb-1 text-xs font-medium text-muted-foreground">
@@ -534,6 +582,29 @@ export default function ExpressAddPost() {
                   </p>
                 </div>
               )}
+
+              <div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground">Seller Payment Details (optional)</div>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
+                    <input
+                      value={sellerAccountName}
+                      onChange={(e) => setSellerAccountName(e.target.value)}
+                      placeholder="Account holder name"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+                  <div className="rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2">
+                    <input
+                      value={sellerAccountNumber}
+                      onChange={(e) => setSellerAccountNumber(e.target.value)}
+                      placeholder="Account number / IBAN / mobile wallet"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Buyers will see these details after a match to send fiat payment.</p>
+              </div>
 
               <Button
                 onClick={handleSubmit}

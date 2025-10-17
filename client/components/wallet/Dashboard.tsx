@@ -99,7 +99,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 500);
+    const id = window.setInterval(tick, 1000);
 
     return () => {
       cancelled = true;

@@ -686,7 +686,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     placeholder="0.000"
                     value={fromAmount}
                     onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-6xl leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
+                    className="w-full bg-transparent border-0 p-0 h-auto text-7xl leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
                   />
                   <div className="mt-2 text-xl text-[hsl(var(--muted-foreground))]">
                     {(() => {

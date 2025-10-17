@@ -58,7 +58,14 @@ export async function createServer(): Promise<express.Application> {
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
 
-  // P2P Orders routes
+  // Orders routes (new API)
+  app.get("/api/orders", handleListOrders);
+  app.post("/api/orders", handleCreateOrder);
+  app.get("/api/orders/:orderId", handleGetOrder);
+  app.put("/api/orders/:orderId", handleUpdateOrder);
+  app.delete("/api/orders/:orderId", handleDeleteOrder);
+
+  // P2P Orders routes (legacy API)
   app.get("/api/p2p/orders", handleListP2POrders);
   app.post("/api/p2p/orders", handleCreateP2POrder);
   app.get("/api/p2p/orders/:orderId", handleGetP2POrder);

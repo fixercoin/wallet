@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
-import { listP2POrders, createTradeRoom } from "@/lib/p2p-api";
+import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
 
 type TabType = "buy" | "sell";
@@ -66,6 +66,38 @@ export default function ExpressPay() {
     const userWalletAddress = wallet?.publicKey || wallet?.address || "";
     setIsAdmin(userWalletAddress === ADMIN_WALLET);
   }, [wallet]);
+
+  // Handle sell confirmation when user clicks button
+  const handleSellClick = () => {
+    if (!wallet) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!spendAmount || Number(spendAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (walletBalance < receivedAmount) {
+      toast({
+        title: "Insufficient balance",
+        description: `You have ${walletBalance} ${selectedCurrency} but need ${receivedAmount.toFixed(6)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowSellConfirmation(true);
+  };
 
   // Exchange rate (can be adjusted by admin)
   const exchangeRate = Number(adjustedRate) || 280;
@@ -149,6 +181,9 @@ export default function ExpressPay() {
       setShowBuyConfirmation(true);
       return;
     }
+
+    // For sell, show sell confirmation
+    handleSellClick();
   };
 
   const handleBuyApprove = async () => {
@@ -483,7 +518,13 @@ export default function ExpressPay() {
 
           {/* Primary Action Button */}
           <Button
-            onClick={handleBuyClick}
+            onClick={() => {
+              if (activeTab === "buy") {
+                handleBuyClick();
+              } else {
+                handleSellClick();
+              }
+            }}
             disabled={isProcessing}
             className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
           >

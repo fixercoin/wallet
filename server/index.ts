@@ -11,6 +11,19 @@ import {
   handleJupiterQuote,
   handleJupiterSwap,
 } from "./routes/jupiter-proxy";
+import {
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
+  handleListTradeRooms,
+  handleCreateTradeRoom,
+  handleGetTradeRoom,
+  handleUpdateTradeRoom,
+  handleListTradeMessages,
+  handleAddTradeMessage,
+} from "./routes/p2p-orders";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -20,17 +33,34 @@ export async function createServer(): Promise<express.Application> {
   app.use(express.json());
 
   // DexScreener routes
-  app.get("/dexscreener/tokens", handleDexscreenerTokens);
-  app.get("/dexscreener/search", handleDexscreenerSearch);
-  app.get("/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
+  app.get("/api/dexscreener/search", handleDexscreenerSearch);
+  app.get("/api/dexscreener/trending", handleDexscreenerTrending);
 
   // Jupiter routes
-  app.get("/jupiter/price", handleJupiterPrice);
-  app.get("/jupiter/quote", handleJupiterQuote);
-  app.post("/jupiter/swap", handleJupiterSwap);
+  app.get("/api/jupiter/price", handleJupiterPrice);
+  app.get("/api/jupiter/quote", handleJupiterQuote);
+  app.post("/api/jupiter/swap", handleJupiterSwap);
 
   // Solana RPC proxy
-  app.post("/solana-rpc", handleSolanaRpc);
+  app.post("/api/solana-rpc", handleSolanaRpc);
+
+  // P2P Orders routes
+  app.get("/api/p2p/orders", handleListP2POrders);
+  app.post("/api/p2p/orders", handleCreateP2POrder);
+  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
+  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
+  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+
+  // Trade Rooms routes
+  app.get("/api/p2p/rooms", handleListTradeRooms);
+  app.post("/api/p2p/rooms", handleCreateTradeRoom);
+  app.get("/api/p2p/rooms/:roomId", handleGetTradeRoom);
+  app.put("/api/p2p/rooms/:roomId", handleUpdateTradeRoom);
+
+  // Trade Messages routes
+  app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
+  app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
 
   // Health check
   app.get("/health", (req, res) => {

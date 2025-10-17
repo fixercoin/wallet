@@ -8,12 +8,26 @@ import {
   listEvents,
   withdrawFromLock,
 } from "./locks";
+import {
+  ensureP2PSchema,
+  createP2POrder,
+  getP2POrder,
+  listP2POrders,
+  updateP2POrder,
+  deleteP2POrder,
+  createTradeRoom,
+  getTradeRoom,
+  listTradeRooms,
+  updateTradeRoom,
+  addTradeMessage,
+  listTradeMessages,
+} from "./p2p-orders";
 
 export interface Env {
   ROOM: DurableObjectNamespace;
   ADMIN_TOKEN: string; // set via wrangler secret put ADMIN_TOKEN
   ALLOWED_PAYMENT: string; // e.g. "easypaisa"
-  DB: D1Database; // Cloudflare D1 binding for locks/events
+  DB: D1Database; // Cloudflare D1 binding for locks/events and P2P
 }
 
 function getRoomStub(env: Env, roomId: string) {

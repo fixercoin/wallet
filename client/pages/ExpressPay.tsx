@@ -55,6 +55,33 @@ export default function ExpressPay() {
   const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin } =
     useExpressP2P();
 
+  // Token-specific PKR rate (USDC uses exchangeRate; SOL/FIXERCOIN fetched via service)
+  const [selectedRate, setSelectedRate] = useState<number>(exchangeRate);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadRate = async () => {
+      try {
+        if (selectedCurrency === "USDC") {
+          if (!cancelled) setSelectedRate(exchangeRate);
+          return;
+        }
+        const rate = await p2pPriceService.getTokenPrice(
+          selectedCurrency as "USDC" | "SOL" | "FIXERCOIN",
+        );
+        if (!cancelled && typeof rate === "number" && rate > 0) {
+          setSelectedRate(rate);
+        }
+      } catch {
+        if (!cancelled) setSelectedRate(exchangeRate);
+      }
+    };
+    loadRate();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCurrency, exchangeRate]);
+
   const currencies = ["USDC", "SOL", "FIXERCOIN"];
   const paymentMethods = [
     { id: "easypaisa", label: "EasyPaisa" },

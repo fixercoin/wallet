@@ -966,7 +966,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {indicative && (
               <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
                 <AlertDescription>
-                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no direct route for this pair. Price is estimated from DEX data and may vary. You can still attempt the swap, but execution depends on available liquidity.
+                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no
+                  direct route for this pair. Price is estimated from DEX data
+                  and may vary. You can still attempt the swap, but execution
+                  depends on available liquidity.
                 </AlertDescription>
               </Alert>
             )}
@@ -981,8 +984,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               onClick={handleSwap}
               className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={
-                !quote &&
-                !indicative ||
+                (!quote && !indicative) ||
                 !!quoteError ||
                 !fromToken ||
                 !toToken ||

@@ -290,13 +290,11 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
       break;
     }
 
-    return res
-      .status(lastStatus || 500)
-      .json({
-        error: `Quote API error`,
-        details: lastText,
-        code: lastStatus === 504 ? "TIMEOUT" : "API_ERROR",
-      });
+    return res.status(lastStatus || 500).json({
+      error: `Quote API error`,
+      details: lastText,
+      code: lastStatus === 504 ? "TIMEOUT" : "API_ERROR",
+    });
   } catch (error) {
     console.error("Jupiter quote proxy error:", {
       params: req.query,

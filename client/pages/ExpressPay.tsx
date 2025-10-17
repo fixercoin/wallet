@@ -61,11 +61,12 @@ export default function ExpressPay() {
     { id: "bank", label: "Bank Account" },
   ] as const;
 
-  // Check if user is admin
+  // Check if user is admin and initialize adjusted rate
   useEffect(() => {
     const userWalletAddress = wallet?.publicKey || wallet?.address || "";
     setIsAdmin(userWalletAddress === ADMIN_WALLET);
-  }, [wallet]);
+    setAdjustedRate(String(exchangeRate));
+  }, [wallet, exchangeRate, setIsAdmin, setAdjustedRate]);
 
   // Handle sell confirmation when user clicks button
   const handleSellClick = () => {

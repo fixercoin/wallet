@@ -594,7 +594,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3">
+            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3 flex-shrink-0 border-t border-[hsl(var(--border))]">
               <Button
                 onClick={() => setShowBuyConfirmation(false)}
                 disabled={isProcessing}

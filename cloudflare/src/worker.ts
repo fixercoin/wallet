@@ -50,7 +50,6 @@ export default {
         return json({ locks }, { headers: corsHeaders });
       }
       if (req.method === "POST") {
-        await requireAdmin(req, env);
         const body = await parseJSON(req);
         if (!body || typeof body !== "object")
           return json({ error: "Invalid body" }, { status: 400, headers: corsHeaders });
@@ -91,7 +90,6 @@ export default {
         return json({ events }, { headers: corsHeaders });
       }
       if (action === "withdraw" && req.method === "POST") {
-        await requireAdmin(req, env);
         const body = await parseJSON(req);
         if (!body || typeof body !== "object")
           return json({ error: "Invalid body" }, { status: 400, headers: corsHeaders });

@@ -307,7 +307,7 @@ export default function ExpressPay() {
             id: `sell-${Date.now()}`,
             type: "sell",
             token: selectedCurrency,
-            amountPKR: Number(spendAmount) * exchangeRate,
+            amountPKR: Number(spendAmount) * selectedRate,
             pricePKRPerQuote: selectedRate,
             quoteAsset: selectedCurrency,
             paymentMethod: selectedPayment,

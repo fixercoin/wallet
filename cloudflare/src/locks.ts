@@ -77,26 +77,55 @@ export interface CreateLockInput {
   note?: string;
 }
 
-export async function createLock(db: D1Database, input: CreateLockInput): Promise<Lock> {
+export async function createLock(
+  db: D1Database,
+  input: CreateLockInput,
+): Promise<Lock> {
   const now = Date.now();
   const id = input.id || crypto.randomUUID();
   const network = input.network || "solana";
-  const decimals = Number.isInteger(input.decimals) ? (input.decimals as number) : null;
-  const tx = db.prepare(
-    `INSERT INTO locks (id, wallet, token_mint, amount_total, amount_withdrawn, decimals, status, network, created_at, updated_at, tx_signature)
+  const decimals = Number.isInteger(input.decimals)
+    ? (input.decimals as number)
+    : null;
+  const tx = db
+    .prepare(
+      `INSERT INTO locks (id, wallet, token_mint, amount_total, amount_withdrawn, decimals, status, network, created_at, updated_at, tx_signature)
      VALUES (?1, ?2, ?3, ?4, '0', ?5, 'active', ?6, ?7, ?7, ?8)`,
-  ).bind(id, input.wallet, input.token_mint, input.amount_total, decimals, network, now, input.tx_signature ?? null);
-  const ev = db.prepare(
-    `INSERT INTO lock_events (id, lock_id, type, amount_delta, tx_signature, created_at, note)
+    )
+    .bind(
+      id,
+      input.wallet,
+      input.token_mint,
+      input.amount_total,
+      decimals,
+      network,
+      now,
+      input.tx_signature ?? null,
+    );
+  const ev = db
+    .prepare(
+      `INSERT INTO lock_events (id, lock_id, type, amount_delta, tx_signature, created_at, note)
      VALUES (?1, ?2, 'lock', ?3, ?4, ?5, ?6)`,
-  ).bind(crypto.randomUUID(), id, input.amount_total, input.tx_signature ?? null, now, input.note ?? null);
+    )
+    .bind(
+      crypto.randomUUID(),
+      id,
+      input.amount_total,
+      input.tx_signature ?? null,
+      now,
+      input.note ?? null,
+    );
   const res = await db.batch([tx, ev]);
-  if (res.some((r) => (r as D1Result).success === false)) throw new Error("Failed to create lock");
+  if (res.some((r) => (r as D1Result).success === false))
+    throw new Error("Failed to create lock");
   return getLock(db, id);
 }
 
 export async function getLock(db: D1Database, id: string): Promise<Lock> {
-  const row = await db.prepare(`SELECT * FROM locks WHERE id = ?1`).bind(id).first<Lock>();
+  const row = await db
+    .prepare(`SELECT * FROM locks WHERE id = ?1`)
+    .bind(id)
+    .first<Lock>();
   if (!row) throw new Error("Lock not found");
   return row;
 }
@@ -109,7 +138,8 @@ export interface WithdrawInput {
 
 function add(a: string, b: string): string {
   // simple decimal addition using BigInt over scaled integer by removing dot; assume same scale for both inputs
-  if (!a.includes(".") && !b.includes(".")) return (BigInt(a) + BigInt(b)).toString();
+  if (!a.includes(".") && !b.includes("."))
+    return (BigInt(a) + BigInt(b)).toString();
   const [ai, ad = ""] = a.split(".");
   const [bi, bd = ""] = b.split(".");
   const scale = Math.max(ad.length, bd.length);
@@ -117,11 +147,17 @@ function add(a: string, b: string): string {
   const B = BigInt(bi + bd.padEnd(scale, "0"));
   const sum = A + B;
   const s = sum.toString().padStart(scale + 1, "0");
-  return scale ? `${s.slice(0, -scale)}.${s.slice(-scale).replace(/0+$/, "")}`.replace(/\.$/, "") : s;
+  return scale
+    ? `${s.slice(0, -scale)}.${s.slice(-scale).replace(/0+$/, "")}`.replace(
+        /\.$/,
+        "",
+      )
+    : s;
 }
 
 function sub(a: string, b: string): string {
-  if (!a.includes(".") && !b.includes(".")) return (BigInt(a) - BigInt(b)).toString();
+  if (!a.includes(".") && !b.includes("."))
+    return (BigInt(a) - BigInt(b)).toString();
   const [ai, ad = ""] = a.split(".");
   const [bi, bd = ""] = b.split(".");
   const scale = Math.max(ad.length, bd.length);
@@ -129,10 +165,19 @@ function sub(a: string, b: string): string {
   const B = BigInt(bi + bd.padEnd(scale, "0"));
   const diff = A - B;
   const s = diff.toString().padStart(scale + 1, "0");
-  return scale ? `${s.slice(0, -scale)}.${s.slice(-scale).replace(/0+$/, "")}`.replace(/\.$/, "") : s;
+  return scale
+    ? `${s.slice(0, -scale)}.${s.slice(-scale).replace(/0+$/, "")}`.replace(
+        /\.$/,
+        "",
+      )
+    : s;
 }
 
-export async function withdrawFromLock(db: D1Database, id: string, input: WithdrawInput): Promise<Lock> {
+export async function withdrawFromLock(
+  db: D1Database,
+  id: string,
+  input: WithdrawInput,
+): Promise<Lock> {
   const now = Date.now();
   const lock = await getLock(db, id);
   const newWithdrawn = add(lock.amount_withdrawn, input.amount);
@@ -141,15 +186,27 @@ export async function withdrawFromLock(db: D1Database, id: string, input: Withdr
   const isFully = remaining === "0" || /^0(?:\.0+)?$/.test(remaining);
   const status: LockStatus = isFully ? "withdrawn" : "active";
 
-  const upd = db.prepare(
-    `UPDATE locks SET amount_withdrawn = ?2, status = ?3, updated_at = ?4, tx_signature = COALESCE(?5, tx_signature) WHERE id = ?1`,
-  ).bind(id, newWithdrawn, status, now, input.tx_signature ?? null);
-  const ev = db.prepare(
-    `INSERT INTO lock_events (id, lock_id, type, amount_delta, tx_signature, created_at, note)
+  const upd = db
+    .prepare(
+      `UPDATE locks SET amount_withdrawn = ?2, status = ?3, updated_at = ?4, tx_signature = COALESCE(?5, tx_signature) WHERE id = ?1`,
+    )
+    .bind(id, newWithdrawn, status, now, input.tx_signature ?? null);
+  const ev = db
+    .prepare(
+      `INSERT INTO lock_events (id, lock_id, type, amount_delta, tx_signature, created_at, note)
      VALUES (?1, ?2, 'withdraw', ?3, ?4, ?5, ?6)`,
-  ).bind(crypto.randomUUID(), id, `-${input.amount}`, input.tx_signature ?? null, now, input.note ?? null);
+    )
+    .bind(
+      crypto.randomUUID(),
+      id,
+      `-${input.amount}`,
+      input.tx_signature ?? null,
+      now,
+      input.note ?? null,
+    );
   const res = await db.batch([upd, ev]);
-  if (res.some((r) => (r as D1Result).success === false)) throw new Error("Failed to withdraw");
+  if (res.some((r) => (r as D1Result).success === false))
+    throw new Error("Failed to withdraw");
   return getLock(db, id);
 }
 
@@ -159,7 +216,10 @@ export interface ListLocksFilter {
   status?: LockStatus;
 }
 
-export async function listLocks(db: D1Database, filter: ListLocksFilter = {}): Promise<Lock[]> {
+export async function listLocks(
+  db: D1Database,
+  filter: ListLocksFilter = {},
+): Promise<Lock[]> {
   const where: string[] = [];
   const binds: any[] = [];
   let n = 1;
@@ -181,9 +241,14 @@ export async function listLocks(db: D1Database, filter: ListLocksFilter = {}): P
   return results || [];
 }
 
-export async function listEvents(db: D1Database, lockId: string): Promise<LockEvent[]> {
+export async function listEvents(
+  db: D1Database,
+  lockId: string,
+): Promise<LockEvent[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM lock_events WHERE lock_id = ?1 ORDER BY created_at ASC`)
+    .prepare(
+      `SELECT * FROM lock_events WHERE lock_id = ?1 ORDER BY created_at ASC`,
+    )
     .bind(lockId)
     .all<LockEvent>();
   return results || [];

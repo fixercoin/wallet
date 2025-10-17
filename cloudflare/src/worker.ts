@@ -1,6 +1,13 @@
 import { DurableRoom } from "./durable_room";
 import { json, parseJSON, requireAdmin } from "./utils";
-import { ensureSchema, createLock, listLocks, getLock, listEvents, withdrawFromLock } from "./locks";
+import {
+  ensureSchema,
+  createLock,
+  listLocks,
+  getLock,
+  listEvents,
+  withdrawFromLock,
+} from "./locks";
 
 export interface Env {
   ROOM: DurableObjectNamespace;
@@ -52,27 +59,39 @@ export default {
       if (req.method === "POST") {
         const body = await parseJSON(req);
         if (!body || typeof body !== "object")
-          return json({ error: "Invalid body" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: "Invalid body" },
+            { status: 400, headers: corsHeaders },
+          );
         try {
           const lock = await createLock(env.DB, {
             id: body.id,
             wallet: String(body.wallet),
             token_mint: String(body.tokenMint || body.token_mint),
             amount_total: String(body.amount || body.amount_total),
-            decimals: typeof body.decimals === "number" ? body.decimals : undefined,
+            decimals:
+              typeof body.decimals === "number" ? body.decimals : undefined,
             tx_signature: body.txSignature || body.tx_signature,
             network: body.network || "solana",
             note: body.note,
           });
           return json(lock, { status: 201, headers: corsHeaders });
         } catch (e: any) {
-          return json({ error: e?.message || "Failed to create lock" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: e?.message || "Failed to create lock" },
+            { status: 400, headers: corsHeaders },
+          );
         }
       }
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
-    const lockMatch = pathname.match(/^\/api\/locks\/([^\/]+)(?:\/(events|withdraw))?$/);
+    const lockMatch = pathname.match(
+      /^\/api\/locks\/([^\/]+)(?:\/(events|withdraw))?$/,
+    );
     if (lockMatch) {
       await ensureSchema(env.DB);
       const lockId = decodeURIComponent(lockMatch[1]);
@@ -82,7 +101,10 @@ export default {
           const lock = await getLock(env.DB, lockId);
           return json(lock, { headers: corsHeaders });
         } catch (e: any) {
-          return json({ error: "Not found" }, { status: 404, headers: corsHeaders });
+          return json(
+            { error: "Not found" },
+            { status: 404, headers: corsHeaders },
+          );
         }
       }
       if (action === "events" && req.method === "GET") {
@@ -92,7 +114,10 @@ export default {
       if (action === "withdraw" && req.method === "POST") {
         const body = await parseJSON(req);
         if (!body || typeof body !== "object")
-          return json({ error: "Invalid body" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: "Invalid body" },
+            { status: 400, headers: corsHeaders },
+          );
         try {
           const updated = await withdrawFromLock(env.DB, lockId, {
             amount: String(body.amount),
@@ -101,10 +126,16 @@ export default {
           });
           return json(updated, { headers: corsHeaders });
         } catch (e: any) {
-          return json({ error: e?.message || "Failed to withdraw" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: e?.message || "Failed to withdraw" },
+            { status: 400, headers: corsHeaders },
+          );
         }
       }
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
     // WebSocket upgrade: /ws/:roomId

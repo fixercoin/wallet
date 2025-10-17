@@ -24,6 +24,13 @@ import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
 import ExpressPay from "./pages/ExpressPay";
+import ExpressAddPost from "./pages/ExpressAddPost";
+import ExpressEmbed from "./pages/ExpressEmbed";
+import ExpressOrderComplete from "./pages/ExpressOrderComplete";
+import ExpressPendingOrders from "./pages/ExpressPendingOrders";
+import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
+import ExpressPostView from "./pages/ExpressPostView";
+import ExpressStartTrade from "./pages/ExpressStartTrade";
 
 const queryClient = new QueryClient();
 
@@ -45,7 +52,27 @@ const App = () => (
               />
               <Route path="/express/orderbook" element={<OrderBook />} />
               <Route path="/express/buy-trade" element={<BuyTrade />} />
-              <Route path="/express/embedded" element={<ExpressPay />} />
+              <Route path="/express/pay" element={<ExpressPay />} />
+              <Route path="/express/add-post" element={<ExpressAddPost />} />
+              <Route path="/express/embedded" element={<ExpressEmbed />} />
+              <Route
+                path="/express/order-complete"
+                element={<ExpressOrderComplete />}
+              />
+              <Route
+                path="/express/pending-orders"
+                element={<ExpressPendingOrders />}
+              />
+              <Route
+                path="/express/post-order/:orderId"
+                element={<ExpressPostOrderDetail />}
+              />
+              <Route
+                path="/express/post-order"
+                element={<ExpressAddPost />}
+              />
+              <Route path="/express/post/:orderId" element={<ExpressPostView />} />
+              <Route path="/express/start-trade" element={<ExpressStartTrade />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

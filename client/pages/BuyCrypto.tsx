@@ -309,7 +309,7 @@ export default function BuyCrypto() {
               PENDING <span className="font-semibold text-white">{pendingCount}</span>
             </span>
           </div>
-          <a href="mailto:info@fixorium.com.pk" className="ml-auto text-white/80 text-xs hover:text-white">PUT APPEAL: info@fixorium.com.pk</a>
+          <a href="mailto:info@fixorium.com.pk" className="ml-auto text-white/80 text-xs hover:text-white">PUT APPEAL</a>
         </div>
       </div>
 

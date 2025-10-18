@@ -31,7 +31,9 @@ export default defineConfig({
         server.middlewares.use((req, res, next) => {
           // Only handle /api and /health requests with the Express app
           if (req.url.startsWith("/api") || req.url === "/health") {
-            console.log(`[Vite Middleware] Routing ${req.method} ${req.url} to Express`);
+            console.log(
+              `[Vite Middleware] Routing ${req.method} ${req.url} to Express`,
+            );
             return apiServer(req, res, next);
           }
           next();

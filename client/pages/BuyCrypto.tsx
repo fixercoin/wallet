@@ -121,7 +121,9 @@ export default function BuyCrypto() {
         console.log(`[BuyCrypto] Fetching exchange rate from: ${url}`);
 
         const response = await fetch(url);
-        console.log(`[BuyCrypto] Exchange rate response status: ${response.status}`);
+        console.log(
+          `[BuyCrypto] Exchange rate response status: ${response.status}`,
+        );
 
         if (!response.ok) {
           throw new Error(`Failed to fetch exchange rate: ${response.status}`);
@@ -340,13 +342,13 @@ export default function BuyCrypto() {
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
                     <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} = {
-                        exchangeRate > 0
-                          ? exchangeRate < 1
-                            ? exchangeRate.toFixed(6)
-                            : exchangeRate.toFixed(2)
-                          : "0.00"
-                      } PKR
+                      1 {selectedToken.symbol} ={" "}
+                      {exchangeRate > 0
+                        ? exchangeRate < 1
+                          ? exchangeRate.toFixed(6)
+                          : exchangeRate.toFixed(2)
+                        : "0.00"}{" "}
+                      PKR
                     </span>
                   )}
                 </div>

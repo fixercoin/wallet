@@ -342,10 +342,12 @@ export default function ExpressPay() {
 
       setShowBuyConfirmation(false);
 
-      // Navigate to chat window (BuyTrade page)
+      // Navigate to chat window (BuyTrade page) and open chat
       navigate("/express/buy-trade", {
         state: {
           order: selectedSeller,
+          openChat: true,
+          initialPhase: "awaiting_seller_approval",
         },
       });
     } catch (error: any) {
@@ -420,7 +422,7 @@ export default function ExpressPay() {
 
       setShowSellConfirmation(false);
 
-      // Navigate to chat window (BuyTrade page)
+      // Navigate to chat window (BuyTrade page) and open chat for seller
       navigate("/express/buy-trade", {
         state: {
           order: {
@@ -432,6 +434,8 @@ export default function ExpressPay() {
             quoteAsset: selectedCurrency,
             paymentMethod: "easypaisa",
           },
+          openChat: true,
+          initialPhase: "seller_transferred",
         },
       });
     } catch (error: any) {

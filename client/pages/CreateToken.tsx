@@ -232,7 +232,7 @@ export default function CreateToken() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30">
+        <Card className="bg-transparent border-0">
           <CardHeader>
             <CardTitle className="text-lg">Create Token</CardTitle>
           </CardHeader>

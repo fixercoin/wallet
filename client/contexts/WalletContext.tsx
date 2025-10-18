@@ -467,14 +467,44 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
-        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change
+        // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
+        try {
+          const stableSymbols = allTokens
+            .filter((t) => stableMints.includes(t.mint))
+            .map((t) => (t.symbol || "").toUpperCase());
+          const uniqSyms = Array.from(new Set(stableSymbols)).filter(Boolean);
+          if (uniqSyms.length > 0) {
+            const params = new URLSearchParams({ symbols: uniqSyms.join(",") });
+            const resp = await fetch(`/api/stable-24h?${params.toString()}`).catch(
+              () => new Response("", { status: 0 } as any),
+            );
+            if (resp.ok) {
+              const st = await resp.json();
+              const data = st?.data || {};
+              Object.keys(data).forEach((sym) => {
+                const entry = data[sym];
+                const mint = entry?.mint as string | undefined;
+                const ch = entry?.change24h;
+                const price = entry?.priceUsd;
+                if (mint && typeof ch === "number" && isFinite(ch)) {
+                  changeMap[mint] = ch;
+                }
+                if (mint && typeof price === "number" && price > 0) {
+                  prices[mint] = price;
+                }
+              });
+            }
+          }
+        } catch {}
+
+        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
         stableMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;
           if (
             typeof changeMap[mint] !== "number" ||
             !isFinite(changeMap[mint]!)
           ) {
-            changeMap[mint] = 0; // Stablecoin: show 0% if no data
+            changeMap[mint] = 0;
           }
         });
 

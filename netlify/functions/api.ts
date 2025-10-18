@@ -562,6 +562,56 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (path === "/stable-24h" && method === "GET") {
+      const symbolsParam = (event.queryStringParameters?.symbols || "USDC,USDT").toUpperCase();
+      const symbols = Array.from(new Set(String(symbolsParam).split(",").map((s) => s.trim()).filter(Boolean)));
+
+      const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        USDC: { id: "usd-coin", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
+        USDT: { id: "tether", mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns" },
+      };
+
+      const ids = symbols.map((s) => COINGECKO_IDS[s]?.id).filter(Boolean).join(",");
+      if (!ids) {
+        return jsonResponse(400, { error: "No supported symbols provided" });
+      }
+
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd&include_24hr_change=true`;
+      let result: Record<string, { priceUsd: number; change24h: number; mint: string }> = {};
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        const resp = await fetch(url, { signal: controller.signal, headers: { Accept: "application/json" } });
+        clearTimeout(timeout);
+        if (resp.ok) {
+          const json = await resp.json();
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            const d = json?.[meta.id];
+            const price = typeof d?.usd === "number" ? d.usd : 1;
+            const change = typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = { priceUsd: price, change24h: change, mint: meta.mint };
+          });
+        } else {
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+          });
+        }
+      } catch {
+        symbols.forEach((sym) => {
+          const meta = COINGECKO_IDS[sym];
+          if (!meta) return;
+          result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+        });
+      }
+
+      return jsonResponse(200, { data: result });
+    }
+
     // DexScreener: tokens
     if (path === "/dexscreener/tokens" && method === "GET") {
       const mints = event.queryStringParameters?.mints;

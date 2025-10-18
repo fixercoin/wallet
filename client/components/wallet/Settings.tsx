@@ -179,9 +179,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         <div>
           <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 shadow-sm rounded-lg p-6">
             <div className="px-6 pt-2">
-              <div className="text-[hsl(var(--primary))] font-semibold">
-            
-              </div>
+              <div className="text-[hsl(var(--primary))] font-semibold"></div>
             </div>
             <div className="space-y-6">
               <section>
@@ -375,9 +373,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="border-t border-[hsl(var(--border))]" />
 
               <section>
-                <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  
-                </div>
+                <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
                   <Button
                     onClick={handleLogout}

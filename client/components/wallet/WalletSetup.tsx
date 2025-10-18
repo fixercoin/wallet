@@ -350,7 +350,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold">Recovery Phrase</Label>
+                  <Label className="text-lg font-semibold">
+                    Recovery Phrase
+                  </Label>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

@@ -80,9 +80,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
           {/* Address (simple) */}
           <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-4">
             <div className="mb-2">
-              <h3 className="text-lg text-white">
-                Your Address
-              </h3>
+              <h3 className="text-lg text-white">Your Address</h3>
             </div>
             <div className="space-y-4">
               <div className="flex gap-2">

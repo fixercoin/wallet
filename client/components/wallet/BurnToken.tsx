@@ -526,9 +526,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-gray-300">
-                Select token
-              </Label>
+              <Label className="text-xs text-gray-300">Select token</Label>
               <Select
                 value={selectedMint}
                 onValueChange={setSelectedMint}
@@ -592,10 +590,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             ) : null}
 
             <div>
-              <Label
-                htmlFor="burn-amount"
-                className="text-xs text-gray-300"
-              >
+              <Label htmlFor="burn-amount" className="text-xs text-gray-300">
                 Amount to burn
               </Label>
               <div className="mt-1 flex items-center gap-3">

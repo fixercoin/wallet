@@ -387,7 +387,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-1 ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" className="h-8 w-8 p-0 rounded-full bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white">
+                <Button
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-full bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
+                >
                   <Menu className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -450,10 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           >
             TOTAL BALANCE
           </div>
-          <div
-            className="text-sm text-gray-300"
-            style={{ fontSize: 14 }}
-          >
+          <div className="text-sm text-gray-300" style={{ fontSize: 14 }}>
             {wallet
               ? (() => {
                   const total = getTotalPortfolioValue();

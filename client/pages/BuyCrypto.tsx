@@ -348,7 +348,13 @@ export default function BuyCrypto() {
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
                     <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} = {exchangeRate.toFixed(2)} PKR
+                      1 {selectedToken.symbol} = {
+                        exchangeRate > 0
+                          ? exchangeRate < 1
+                            ? exchangeRate.toFixed(6)
+                            : exchangeRate.toFixed(2)
+                          : "0.00"
+                      } PKR
                     </span>
                   )}
                 </div>

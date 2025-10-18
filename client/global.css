@@ -133,6 +133,27 @@
   select {
     color: hsl(var(--foreground)) !important;
   }
+
+  /* P2P page white text override */
+  .express-p2p-page p,
+  .express-p2p-page span,
+  .express-p2p-page a,
+  .express-p2p-page li,
+  .express-p2p-page label,
+  .express-p2p-page small,
+  .express-p2p-page strong,
+  .express-p2p-page em,
+  .express-p2p-page h1,
+  .express-p2p-page h2,
+  .express-p2p-page h3,
+  .express-p2p-page h4,
+  .express-p2p-page h5,
+  .express-p2p-page h6,
+  .express-p2p-page input,
+  .express-p2p-page textarea,
+  .express-p2p-page select {
+    color: white !important;
+  }
 }
 
 @layer components {

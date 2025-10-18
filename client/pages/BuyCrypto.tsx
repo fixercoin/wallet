@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
+import { shortenAddress } from "@/lib/wallet";
 
 interface TokenOption {
   id: string;
@@ -67,7 +68,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyCrypto() {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
+  const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
   const { send } = useDurableRoom("global", API_BASE);
 
@@ -82,6 +83,12 @@ export default function BuyCrypto() {
   const [fetchingRate, setFetchingRate] = useState(false);
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const selectedTokenBalance = useMemo(() => {
+    const t = (walletTokens || []).find(
+      (tk) => (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
+    );
+    return t?.balance || 0;
+  }, [walletTokens, selectedToken]);
 
   // Load token logos/prices (best-effort)
   useEffect(() => {
@@ -379,6 +386,14 @@ export default function BuyCrypto() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <Separator className="bg-[#FF7A5C]/20" />
+
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                  <div className="text-xs opacity-80">Wallet Address</div>
+                  <div className="font-mono text-sm break-all">{wallet ? shortenAddress(wallet.publicKey, 8) : "Not connected"}</div>
+                  <div className="mt-2 text-xs">Available: <span className="font-semibold">{selectedTokenBalance.toFixed(6)} {selectedToken.symbol}</span></div>
                 </div>
 
                 <Separator className="bg-[#FF7A5C]/20" />

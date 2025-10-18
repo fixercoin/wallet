@@ -11,6 +11,7 @@ import {
   dexscreenerAPI,
   type DexscreenerToken,
 } from "@/lib/services/dexscreener";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Select,
   SelectContent,
@@ -29,11 +30,11 @@ interface TokenOption {
 }
 
 const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
-  FIXERCOIN: "FixZjx2QQk2f8q1ZuTaWjXKLmnq3Y7jFGt8CyHEMPjX",
-  SOL: "So11111111111111111111111111111111111111112",
-  USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
-  USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
-  LOCKER: "LockerToken1111111111111111111111111111111",
+  FIXERCOIN: TOKEN_MINTS.FIXERCOIN,
+  SOL: TOKEN_MINTS.SOL,
+  USDC: TOKEN_MINTS.USDC,
+  USDT: TOKEN_MINTS.USDT,
+  LOCKER: TOKEN_MINTS.LOCKER,
 };
 
 const DEFAULT_TOKENS: TokenOption[] = [

@@ -248,13 +248,13 @@ export default function BuyCrypto() {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]" style={{ fontSize: '10px' }}>
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
           <div className="flex items-center gap-3">
             <button
@@ -296,58 +296,71 @@ export default function BuyCrypto() {
       {/* Main Content */}
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Info Card */}
-        <Card className="mb-6 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md">
+        <Card className="mb-6 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl rounded-md">
           <CardContent className="pt-6">
-            <p className="text-sm text-white/80 leading-relaxed">
-              Fixorium Wallet allows you to instantly buy Fixercoin, Solana
-              (SOL), USDC (Solana), USDT (Solana), and LOCKER tokens using your
-              Visa or Mastercard. Once your payment is confirmed, your wallet
-              balance updates automatically.
+            <p className="text-white/80 leading-relaxed">
+              Buy Fixercoin, Solana (SOL), USDC, USDT, or LOCKER tokens instantly with Visa or Mastercard. Payment confirmation is automatic, and your wallet balance updates right away.
             </p>
           </CardContent>
         </Card>
 
         {/* Main Buy Card */}
-        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md">
-          <CardHeader className="border-b border-[#FF7A5C]/20">
-            <CardTitle className="text-white text-lg">Buy Tokens</CardTitle>
+        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl rounded-md">
+          <CardHeader>
+            <CardTitle className="text-white">Buy Tokens</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
-            {/* Token Selection */}
+            {/* Token Selection Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-3">
+              <label className="block font-medium text-white/80 mb-3">
                 Select Token
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                {SUPPORTED_TOKENS.map((token) => (
-                  <button
-                    key={token.id}
-                    onClick={() => setSelectedToken(token)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      selectedToken.id === token.id
-                        ? "border-[#FF7A5C] bg-[#FF7A5C]/20 shadow-lg shadow-[#FF7A5C]/20"
-                        : "border-[#FF7A5C]/30 hover:border-[#FF7A5C]/50 bg-[#1a2540]/50"
-                    }`}
-                  >
-                    <Avatar className="w-8 h-8 mx-auto mb-2">
-                      <AvatarImage src={token.logo} alt={token.symbol} />
+              <Select
+                value={selectedToken.id}
+                onValueChange={(id) => {
+                  const token = tokens.find((t) => t.id === id);
+                  if (token) setSelectedToken(token);
+                }}
+              >
+                <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-5 h-5">
+                      <AvatarImage src={selectedToken.logo} alt={selectedToken.symbol} />
                       <AvatarFallback className="bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] text-white text-xs">
-                        {token.symbol[0]}
+                        {selectedToken.symbol[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-xs font-semibold text-white">
-                      {token.symbol}
-                    </p>
-                  </button>
-                ))}
-              </div>
+                    <SelectValue />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a2540] border-none">
+                  {tokens.map((token) => (
+                    <SelectItem key={token.id} value={token.id} className="text-white">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-5 h-5">
+                          <AvatarImage src={token.logo} alt={token.symbol} />
+                          <AvatarFallback className="bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] text-white text-xs">
+                            {token.symbol[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{token.symbol}</span>
+                        {token.price && (
+                          <span className="text-white/60">
+                            ₨{token.price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Separator className="bg-[#FF7A5C]/20" />
 
             {/* Amount Input */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block font-medium text-white/80 mb-2">
                 Amount (PKR)
               </label>
               <input
@@ -355,7 +368,7 @@ export default function BuyCrypto() {
                 value={amountPKR}
                 onChange={(e) => setAmountPKR(e.target.value)}
                 placeholder="Enter amount in PKR"
-                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] focus:border-transparent text-white placeholder-white/40"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="100"
               />
@@ -364,22 +377,22 @@ export default function BuyCrypto() {
             <Separator className="bg-[#FF7A5C]/20" />
 
             {/* Exchange Rate & Calculation */}
-            <div className="bg-gradient-to-r from-[#1a2540]/60 to-[#1f2d48]/60 p-4 rounded-lg border border-[#FF7A5C]/20">
+            <div className="bg-gradient-to-r from-[#1a2540]/60 to-[#1f2d48]/60 p-4 rounded-lg">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70 text-sm">Exchange Rate:</span>
+                  <span className="text-white/70">Exchange Rate:</span>
                   {fetchingRate ? (
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
-                    <span className="font-semibold text-[#FF7A5C] text-sm">
+                    <span className="font-semibold text-[#FF7A5C]">
                       1 {selectedToken.symbol} = {exchangeRate.toFixed(2)} PKR
                     </span>
                   )}
                 </div>
                 <Separator className="bg-[#FF7A5C]/20" />
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70 text-sm">You Will Receive:</span>
-                  <span className="text-lg font-bold text-[#FF7A5C]">
+                  <span className="text-white/70">You Will Receive:</span>
+                  <span className="font-bold text-[#FF7A5C]">
                     {estimatedTokens.toFixed(6)} {selectedToken.symbol}
                   </span>
                 </div>
@@ -387,22 +400,6 @@ export default function BuyCrypto() {
             </div>
 
             <Separator className="bg-[#FF7A5C]/20" />
-
-            {/* Wallet Info */}
-            {wallet && (
-              <div className="bg-[#1a2540]/50 p-4 rounded-lg border border-[#FF7A5C]/20">
-                <p className="text-xs text-white/70">
-                  <span className="font-medium text-white">Wallet:</span>{" "}
-                  <span className="font-mono text-[#FF7A5C]">
-                    {wallet.publicKey.slice(0, 8)}...
-                    {wallet.publicKey.slice(-8)}
-                  </span>
-                </p>
-                <p className="text-xs text-white/50 mt-2">
-                  Tokens credited after payment confirmation
-                </p>
-              </div>
-            )}
 
             {/* Buy Button */}
             <Button
@@ -413,7 +410,7 @@ export default function BuyCrypto() {
                 Number(amountPKR) <= 0 ||
                 estimatedTokens === 0
               }
-              className="w-full h-12 rounded-lg font-semibold text-base transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -425,7 +422,7 @@ export default function BuyCrypto() {
               )}
             </Button>
 
-            <p className="text-xs text-white/50 text-center">
+            <p className="text-white/50 text-center">
               Payments processed securely through Razorpay
             </p>
           </CardContent>

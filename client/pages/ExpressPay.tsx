@@ -479,9 +479,7 @@ export default function ExpressPay() {
               <div className="flex items-center justify-between text-xs mb-1 text-white">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-white">Status:</span>
-                  <span
-                    className={isBuyOnline ? "text-white" : "text-white"}
-                  >
+                  <span className={isBuyOnline ? "text-white" : "text-white"}>
                     {isBuyOnline ? "Online" : "Offline"}
                   </span>
                 </div>
@@ -544,10 +542,10 @@ export default function ExpressPay() {
                     value={selectedCurrency}
                     onChange={(e) => setSelectedCurrency(e.target.value)}
                     className="appearance-none bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
-                    style={{ color: 'white' }}
+                    style={{ color: "white" }}
                   >
                     {currencies.map((cur) => (
-                      <option key={cur} value={cur} style={{ color: 'black' }}>
+                      <option key={cur} value={cur} style={{ color: "black" }}>
                         {cur}
                       </option>
                     ))}
@@ -572,9 +570,7 @@ export default function ExpressPay() {
               <div className="flex items-center justify-between text-xs mb-1 text-white">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-white">Status:</span>
-                  <span
-                    className={isSellOnline ? "text-white" : "text-white"}
-                  >
+                  <span className={isSellOnline ? "text-white" : "text-white"}>
                     {isSellOnline ? "Online" : "Offline"}
                   </span>
                 </div>
@@ -712,9 +708,7 @@ export default function ExpressPay() {
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
-                  <div className="text-xs text-white mb-1">
-                    Account Number
-                  </div>
+                  <div className="text-xs text-white mb-1">Account Number</div>
                   <div className="font-semibold text-white font-mono">
                     {selectedSeller.paymentDetails?.accountNumber ||
                       "Not provided"}
@@ -722,9 +716,7 @@ export default function ExpressPay() {
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
-                  <div className="text-xs text-white mb-1">
-                    Payment Method
-                  </div>
+                  <div className="text-xs text-white mb-1">Payment Method</div>
                   <div className="font-semibold text-white capitalize">
                     {selectedSeller.paymentMethod || "easypaisa"}
                   </div>

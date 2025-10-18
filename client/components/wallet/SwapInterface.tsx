@@ -805,12 +805,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {/* swap arrow */}
             <div className="flex items-center justify-center py-1">
               <Button
-              size="icon"
-              onClick={handleSwapTokens}
-              className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white transition-colors"
-            >
-              <ArrowUpDown className="h-4 w-4" />
-            </Button>
+                size="icon"
+                onClick={handleSwapTokens}
+                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white transition-colors"
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
             </div>
 
             {/* TO row */}
@@ -916,9 +916,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
               <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-white">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white">
-                    Quote
-                  </span>
+                  <span className="text-sm text-white">Quote</span>
                   <span className="text-sm text-white">
                     1 {fromToken.symbol} ={" "}
                     {(
@@ -928,28 +926,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">
-                    Network fee
-                  </span>
-                  <span className="text-white">
-                    Included
-                  </span>
+                  <span className="text-white">Network fee</span>
+                  <span className="text-white">Included</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">
-                    Time
-                  </span>
-                  <span className="text-white">
-                    &lt; 1 min
-                  </span>
+                  <span className="text-white">Time</span>
+                  <span className="text-white">&lt; 1 min</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">
-                    Rate includes
-                  </span>
-                  <span className="text-white">
-                    {slippage}% slippage
-                  </span>
+                  <span className="text-white">Rate includes</span>
+                  <span className="text-white">{slippage}% slippage</span>
                 </div>
                 <div className="text-right text-sm text-[#FF7A5C]">
                   More quotes

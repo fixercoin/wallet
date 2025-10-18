@@ -13,12 +13,7 @@ export default defineConfig({
     react(),
     {
       name: "express-server",
-      configResolved(config) {
-        // Only start server in dev mode
-        if (config.command === "serve") {
-          this.apply = "serve";
-        }
-      },
+      apply: "serve",
       async configureServer(server) {
         return () => {
           server.middlewares.use(async (req, res, next) => {

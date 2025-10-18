@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PublicKey } from "@solana/web3.js";
 import { TokenInfo } from "@/lib/wallet";
+import { ArrowLeft } from "lucide-react";
 
 export default function TokenListing() {
   const { wallet, balance, addCustomToken, refreshTokens } = useWallet();

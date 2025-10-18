@@ -59,6 +59,9 @@ export async function createServer(): Promise<express.Application> {
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
 
+  // Exchange rate route
+  app.get("/api/exchange-rate", handleExchangeRate);
+
   // Orders routes (new API)
   app.get("/api/orders", handleListOrders);
   app.post("/api/orders", handleCreateOrder);

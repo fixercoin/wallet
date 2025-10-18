@@ -505,28 +505,30 @@ export default function ExpressPay() {
             </div>
           )}
 
-          {/* Payment Methods */}
-          <div className="space-y-2">
-            <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-              Payment Method
-            </label>
-            <div className="relative">
-              <select
-                value={selectedPayment}
-                onChange={(e) =>
-                  setSelectedPayment(e.target.value as PaymentMethod)
-                }
-                className="w-full appearance-none bg-white border border-[hsl(var(--border))] rounded-xl px-4 py-3 pr-10 text-sm font-medium text-[hsl(var(--foreground))] outline-none cursor-pointer"
-              >
-                {paymentMethods.map((method) => (
-                  <option key={method.id} value={method.id}>
-                    {method.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+          {/* Payment Methods (Buy only) */}
+          {activeTab !== "sell" && (
+            <div className="space-y-2">
+              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                Payment Method
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedPayment}
+                  onChange={(e) =>
+                    setSelectedPayment(e.target.value as PaymentMethod)
+                  }
+                  className="w-full appearance-none bg-white border border-[hsl(var(--border))] rounded-xl px-4 py-3 pr-10 text-sm font-medium text-[hsl(var(--foreground))] outline-none cursor-pointer"
+                >
+                  {paymentMethods.map((method) => (
+                    <option key={method.id} value={method.id}>
+                      {method.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Primary Action Button */}
           <Button
@@ -714,14 +716,6 @@ export default function ExpressPay() {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[hsl(var(--secondary))] rounded-lg">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                    Payment Method
-                  </span>
-                  <span className="font-bold text-[hsl(var(--foreground))] capitalize">
-                    {selectedPayment}
-                  </span>
-                </div>
               </div>
 
               <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">

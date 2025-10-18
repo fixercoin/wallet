@@ -34,7 +34,6 @@ const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
   SOL: TOKEN_MINTS.SOL,
   USDC: TOKEN_MINTS.USDC,
   USDT: TOKEN_MINTS.USDT,
-  LOCKER: TOKEN_MINTS.LOCKER,
 };
 
 const DEFAULT_TOKENS: TokenOption[] = [
@@ -65,13 +64,6 @@ const DEFAULT_TOKENS: TokenOption[] = [
     symbol: "USDT",
     logo: "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
     mint: SUPPORTED_TOKEN_MINTS.USDT,
-  },
-  {
-    id: "LOCKER",
-    name: "Locker",
-    symbol: "LOCKER",
-    logo: "https://raw.githubusercontent.com/Fixorium/token-list/main/assets/locker.png",
-    mint: SUPPORTED_TOKEN_MINTS.LOCKER,
   },
 ];
 
@@ -125,14 +117,35 @@ export default function BuyCrypto() {
     const fetchRate = async () => {
       setFetchingRate(true);
       try {
-        const response = await fetch(
-          `/api/exchange-rate?token=${selectedToken.id}`,
+        const url = `/api/exchange-rate?token=${selectedToken.id}`;
+        console.log(`[BuyCrypto] Fetching exchange rate from: ${url}`);
+
+        const response = await fetch(url);
+        console.log(
+          `[BuyCrypto] Exchange rate response status: ${response.status}`,
         );
-        if (!response.ok) throw new Error("Failed to fetch exchange rate");
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch exchange rate: ${response.status}`);
+        }
+
         const data = await response.json();
-        setExchangeRate(data.rate || 0);
+        console.log(`[BuyCrypto] Exchange rate response:`, data);
+
+        const rate = data.rate || data.priceInPKR || 0;
+        console.log(
+          `[BuyCrypto] Setting exchange rate for ${selectedToken.id}: ${rate} PKR`,
+        );
+
+        if (typeof rate !== "number" || rate <= 0) {
+          console.warn(
+            `[BuyCrypto] Invalid rate received: ${rate}, will show 0`,
+          );
+        }
+
+        setExchangeRate(rate);
       } catch (error) {
-        console.error("Error fetching exchange rate:", error);
+        console.error("[BuyCrypto] Error fetching exchange rate:", error);
         setExchangeRate(0);
       } finally {
         setFetchingRate(false);
@@ -329,7 +342,13 @@ export default function BuyCrypto() {
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
                     <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} = {exchangeRate.toFixed(2)} PKR
+                      1 {selectedToken.symbol} ={" "}
+                      {exchangeRate > 0
+                        ? exchangeRate < 1
+                          ? exchangeRate.toFixed(6)
+                          : exchangeRate.toFixed(2)
+                        : "0.00"}{" "}
+                      PKR
                     </span>
                   )}
                 </div>

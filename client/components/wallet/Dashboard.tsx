@@ -574,56 +574,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             aria-label="Pay to Buy Crypto"
           >
             <span className="mr-3">PAY TO BUY</span>
-            <svg
-              width="20"
-              height="13"
-              viewBox="0 0 20 13"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="mr-1"
-            >
-              <rect
-                x="0.5"
-                y="0.5"
-                width="19"
-                height="12"
-                rx="1.5"
-                fill="white"
-                stroke="white"
-                strokeWidth="0.5"
-              />
-              <path d="M4 3.5H5.5V9.5H4V3.5Z" fill="#1434CB" />
-              <path d="M5.5 3.5H7.5L6.5 9.5H5.5L5.5 3.5Z" fill="#1434CB" />
-              <path d="M14.5 3.5H13L12 9.5H13.5L14.5 3.5Z" fill="#1434CB" />
-            </svg>
-            <svg
-              width="20"
-              height="13"
-              viewBox="0 0 20 13"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect
-                x="0.5"
-                y="0.5"
-                width="19"
-                height="12"
-                rx="1.5"
-                fill="white"
-                stroke="white"
-                strokeWidth="0.5"
-              />
-              <circle cx="8" cy="6.5" r="3.5" fill="#EB001B" />
-              <circle cx="12" cy="6.5" r="3.5" fill="#F79E1B" />
-              <circle
-                cx="10"
-                cy="6.5"
-                r="3.5"
-                fill="none"
-                stroke="#FF5F00"
-                strokeWidth="0.5"
-              />
-            </svg>
+            <img
+              src="https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fbc6cbd6eba3945ec8b5c37f7a359d3fe?format=webp&width=800"
+              alt="Pay"
+              className="h-6 w-auto ml-1"
+              loading="lazy"
+            />
           </Button>
         </div>
 

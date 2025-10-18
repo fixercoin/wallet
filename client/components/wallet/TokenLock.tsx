@@ -724,27 +724,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#FF7A5C]/10 border border-[#FF7A5C]/30"
-            onClick={onBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-purple-500">
-              SPL Token Lock
-            </div>
-            <h1 className="text-xl font-semibold text-white"></h1>
-            <p className="text-xs text-gray-300">
-              Securely hold tokens without rewards. Unlock manually after the
-              lock ends.
-            </p>
-          </div>
-        </div>
-
         <div className="bg-transparent border-0 rounded-2xl p-6 space-y-5 text-white">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />

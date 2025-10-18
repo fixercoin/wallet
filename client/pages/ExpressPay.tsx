@@ -652,17 +652,17 @@ export default function ExpressPay() {
 
       {/* Buy Confirmation Modal */}
       {showBuyConfirmation && selectedSeller && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111214] rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#1f2d48]/95 to-[#1a2540]/95 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[#FF7A5C]/30">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] px-6 py-4 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Seller Details
               </h2>
               <button
                 onClick={() => setShowBuyConfirmation(false)}
-                className="text-white hover:bg-white/20 p-1 rounded"
+                className="text-white hover:bg-white/20 p-1 rounded transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -671,7 +671,7 @@ export default function ExpressPay() {
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Transaction Summary */}
-              <div className="space-y-2 pb-4 border-b border-[#2a2b2f]">
+              <div className="space-y-2 pb-4 border-b border-[#FF7A5C]/30">
                 <div className="flex justify-between items-center p-2">
                   <span className="text-sm text-gray-400">You Pay</span>
                   <span className="font-bold text-white">
@@ -702,7 +702,7 @@ export default function ExpressPay() {
                   Seller Information
                 </h3>
 
-                <div className="p-3 rounded-lg bg-[#1a1b1e]">
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
                   <div className="text-xs text-gray-400 mb-1">Account Name</div>
                   <div className="font-semibold text-white">
                     {selectedSeller.paymentDetails?.accountName ||
@@ -710,7 +710,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#1a1b1e]">
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
                   <div className="text-xs text-gray-400 mb-1">
                     Account Number
                   </div>
@@ -720,7 +720,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#1a1b1e]">
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
                   <div className="text-xs text-gray-400 mb-1">
                     Payment Method
                   </div>
@@ -730,26 +730,26 @@ export default function ExpressPay() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300">
-                <p className="text-xs text-green-300">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-[#FF7A5C]">
+                <p className="text-xs text-[#FF7A5C]">
                   ✓ After payment, chat window will open to confirm with seller.
                 </p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[#1a1b1e] flex gap-3 flex-shrink-0 border-t border-[#2a2b2f]">
+            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0 border-t border-[#FF7A5C]/20">
               <Button
                 onClick={() => setShowBuyConfirmation(false)}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-[#2a2b2f] hover:bg-[#32333a] text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gray-700/40 hover:bg-gray-700/60 text-white font-medium text-sm transition-colors"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleBuyApprove}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-medium text-sm transition-all"
               >
                 {isProcessing ? "Processing..." : "I Have Paid"}
               </Button>

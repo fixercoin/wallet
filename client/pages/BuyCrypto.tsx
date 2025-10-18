@@ -268,21 +268,9 @@ export default function BuyCrypto() {
 
       {/* Main Content */}
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
-        {/* Info Card */}
-        <Card className="mb-6 bg-transparent backdrop-blur-xl rounded-md">
-          <CardContent className="pt-6">
-            <p className="text-white/80 leading-relaxed">
-              Buy Fixercoin, Solana (SOL), USDC, USDT, or LOCKER tokens
-              instantly with Visa or Mastercard. Payment confirmation is
-              automatic, and your wallet balance updates right away.
-            </p>
-          </CardContent>
-        </Card>
-
         {/* Main Buy Card */}
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardHeader>
-            <CardTitle className="text-white">Buy Tokens</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
             {/* Token Selection Dropdown */}

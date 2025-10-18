@@ -569,7 +569,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Tokens List */}
         <div className="mb-4">
           <Button
-            onClick={() => navigate("/express/pay")}
+            onClick={() => navigate("/buy-crypto")}
             className="w-full h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
             aria-label="Open Express P2P Service"
           >

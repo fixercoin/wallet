@@ -160,7 +160,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 </Button>
 
                 <Button
-                  onClick={() => setActiveTab("recover")]
+                  onClick={() => setActiveTab("recover")}
                   variant="ghost"
                   className="w-full h-12 rounded-xl text-white hover:bg-[#FF7A5C]/10"
                 >

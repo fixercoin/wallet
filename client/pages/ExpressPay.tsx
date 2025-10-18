@@ -496,7 +496,7 @@ export default function ExpressPay() {
                     placeholder="0"
                     className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
                   />
-                  <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
+                  <div className="px-4 py-3 bg-white/10 text-xs font-bold text-white">
                     PKR
                   </div>
                 </div>
@@ -525,7 +525,7 @@ export default function ExpressPay() {
                   <select
                     value={selectedCurrency}
                     onChange={(e) => setSelectedCurrency(e.target.value)}
-                    className="appearance-none bg-white/50 px-3 py-3 pr-7 text-xs font-bold text-[hsl(var(--primary))] outline-none cursor-pointer"
+                    className="appearance-none bg-white/10 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
                   >
                     {currencies.map((cur) => (
                       <option key={cur} value={cur}>
@@ -533,7 +533,7 @@ export default function ExpressPay() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--primary))] pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -578,7 +578,7 @@ export default function ExpressPay() {
                     placeholder="0"
                     className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
                   />
-                  <div className="px-4 py-3 bg-white/50 text-xs font-bold text-[hsl(var(--primary))]">
+                  <div className="px-4 py-3 bg-white/10 text-xs font-bold text-white">
                     {selectedCurrency}
                   </div>
                 </div>

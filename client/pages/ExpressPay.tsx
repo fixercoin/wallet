@@ -435,7 +435,7 @@ export default function ExpressPay() {
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "buy"
                   ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-white hover:text-white"
               }`}
             >
               Buy
@@ -445,7 +445,7 @@ export default function ExpressPay() {
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "sell"
                   ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-white hover:text-white"
               }`}
             >
               Sell
@@ -458,7 +458,7 @@ export default function ExpressPay() {
               <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-gray-400 mb-1">
+                    <div className="text-xs text-white mb-1">
                       Your {selectedCurrency} Balance
                     </div>
                     <div className="text-lg font-bold text-white">
@@ -496,7 +496,7 @@ export default function ExpressPay() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs border-gray-500/50 text-gray-400 hover:bg-gray-500/10"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/10"
                       onClick={() => setBuyStatus(false)}
                     >
                       Offline
@@ -504,7 +504,7 @@ export default function ExpressPay() {
                   </div>
                 )}
               </div>
-              <label className="text-xs text-gray-400 font-medium">Spend</label>
+              <label className="text-xs text-white font-medium">Spend</label>
               <div className="relative rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
                 <div className="flex items-center">
                   <input
@@ -521,13 +521,13 @@ export default function ExpressPay() {
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">Minimum: 1,000 PKR</div>
+              <div className="text-xs text-white">Minimum: 1,000 PKR</div>
             </div>
           )}
 
           {/* Token Selection / Receive Section */}
           <div className="space-y-2">
-            <label className="text-xs text-gray-400 font-medium">
+            <label className="text-xs text-white font-medium">
               {activeTab === "sell" ? "Sell Token" : "Receive"}
             </label>
             <div className="rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
@@ -556,7 +556,7 @@ export default function ExpressPay() {
               </div>
             </div>
             <div className="flex items-center justify-between text-xs gap-2">
-              <span className="text-gray-400">
+              <span className="text-white">
                 1 {selectedCurrency} ={" "}
                 {isFinite(selectedRate) && selectedRate > 0
                   ? selectedRate.toFixed(2)
@@ -588,7 +588,7 @@ export default function ExpressPay() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs border-gray-500/50 text-gray-400 hover:bg-gray-500/10"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/10"
                       onClick={() => setSellStatus(false)}
                     >
                       Offline
@@ -596,7 +596,7 @@ export default function ExpressPay() {
                   </div>
                 )}
               </div>
-              <label className="text-xs text-gray-400 font-medium">
+              <label className="text-xs text-white font-medium">
                 Sell Amount {selectedCurrency}
               </label>
               <div className="relative rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
@@ -615,7 +615,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-white">
                 {walletBalance > 0 &&
                   `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
               </div>
@@ -643,7 +643,7 @@ export default function ExpressPay() {
 
           {/* Footer Link */}
           <div className="text-center">
-            <button className="text-xs text-gray-400 hover:text-[#FF7A5C] underline transition-colors">
+            <button className="text-xs text-white hover:text-[#FF7A5C] underline transition-colors">
               Login to post offers
             </button>
           </div>
@@ -673,19 +673,19 @@ export default function ExpressPay() {
               {/* Transaction Summary */}
               <div className="space-y-2 pb-4 border-b border-[#FF7A5C]/30">
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">You Pay</span>
+                  <span className="text-sm text-white">You Pay</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount).toLocaleString()} PKR
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">You Receive</span>
+                  <span className="text-sm text-white">You Receive</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toFixed(6)} {selectedCurrency}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">Rate</span>
+                  <span className="text-sm text-white">Rate</span>
                   <span className="font-bold text-white">
                     1 {selectedCurrency} ={" "}
                     {isFinite(selectedRate) && selectedRate > 0
@@ -703,7 +703,7 @@ export default function ExpressPay() {
                 </h3>
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
-                  <div className="text-xs text-gray-400 mb-1">Account Name</div>
+                  <div className="text-xs text-white mb-1">Account Name</div>
                   <div className="font-semibold text-white">
                     {selectedSeller.paymentDetails?.accountName ||
                       "Not provided"}
@@ -711,7 +711,7 @@ export default function ExpressPay() {
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
-                  <div className="text-xs text-gray-400 mb-1">
+                  <div className="text-xs text-white mb-1">
                     Account Number
                   </div>
                   <div className="font-semibold text-white font-mono">
@@ -721,7 +721,7 @@ export default function ExpressPay() {
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
-                  <div className="text-xs text-gray-400 mb-1">
+                  <div className="text-xs text-white mb-1">
                     Payment Method
                   </div>
                   <div className="font-semibold text-white capitalize">
@@ -774,28 +774,28 @@ export default function ExpressPay() {
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
-                  <span className="text-sm text-gray-400">Token to Send</span>
+                  <span className="text-sm text-white">Token to Send</span>
                   <span className="font-bold text-white">
                     {selectedCurrency}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
-                  <span className="text-sm text-gray-400">Amount</span>
+                  <span className="text-sm text-white">Amount</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
-                  <span className="text-sm text-gray-400">PKR Amount</span>
+                  <span className="text-sm text-white">PKR Amount</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 
                 <div className="p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
-                  <div className="text-xs text-gray-400 mb-1">
+                  <div className="text-xs text-white mb-1">
                     Transfer To Address
                   </div>
                   <div className="font-mono text-sm break-all text-[#FF7A5C]">

@@ -760,10 +760,10 @@ export default function ExpressPay() {
 
       {/* Sell Confirmation Modal */}
       {showSellConfirmation && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111214] rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#1f2d48]/95 to-[#1a2540]/95 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[#FF7A5C]/30">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex-shrink-0">
+            <div className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] px-6 py-4 flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Confirm Sell Transaction
@@ -773,32 +773,32 @@ export default function ExpressPay() {
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
                   <span className="text-sm text-gray-400">Token to Send</span>
                   <span className="font-bold text-white">
                     {selectedCurrency}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
                   <span className="text-sm text-gray-400">Amount</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
                   <span className="text-sm text-gray-400">PKR Amount</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 
-                <div className="p-3 bg-[#1a1b1e] rounded-lg">
+                <div className="p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
                   <div className="text-xs text-gray-400 mb-1">
                     Transfer To Address
                   </div>
-                  <div className="font-mono text-sm break-all">
+                  <div className="font-mono text-sm break-all text-[#FF7A5C]">
                     {ADMIN_WALLET}
                   </div>
                 </div>

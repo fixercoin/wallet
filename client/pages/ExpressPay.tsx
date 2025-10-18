@@ -678,13 +678,13 @@ export default function ExpressPay() {
                     {Number(spendAmount).toLocaleString()} PKR
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-2">
+                <div className="flex justify-between items-center p-2 text-white">
                   <span className="text-sm text-white">You Receive</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toFixed(6)} {selectedCurrency}
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-2">
+                <div className="flex justify-between items-center p-2 text-white">
                   <span className="text-sm text-white">Rate</span>
                   <span className="font-bold text-white">
                     1 {selectedCurrency} ={" "}

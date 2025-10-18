@@ -183,20 +183,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-4 relative z-20">
-        <div className="flex items-center gap-3 mb-6 pt-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="text-white hover:bg-[#FF7A5C]/10"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            ACCOUNTS
-          </h1>
-        </div>
+      <div className="max-w-md mx-auto p-4 py-6 relative z-20">
 
         <div>
           <div className="bg-transparent border-0 shadow-none rounded-lg p-6">

@@ -695,7 +695,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         </div>
 
         {/* Card */}
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl overflow-hidden shadow-2xl text-white">
+        <div className="transparent-cardboard rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
             {/* FROM row */}
             <div>

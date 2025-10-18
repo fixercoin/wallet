@@ -823,7 +823,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder-gray-400"
+                    className="bg-transparent border-white/30 text-white placeholder-gray-400"
                   />
                   <div className="flex gap-2">
                     <Button

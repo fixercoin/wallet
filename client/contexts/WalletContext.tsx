@@ -428,9 +428,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           try {
             const dexTokens =
               await dexscreenerAPI.getTokensByMints(mintsToFetch);
-            const dexMap = new Map(
-              dexTokens.map((t) => [t.baseToken.address, t]),
-            );
+            const dexMap = new Map<string, any>();
+            dexTokens.forEach((t) => {
+              const matchMint = mintsToFetch.find(
+                (m) =>
+                  m === t.baseToken?.address || m === t.quoteToken?.address,
+              );
+              if (matchMint) dexMap.set(matchMint, t);
+            });
 
             mintsToFetch.forEach((mint) => {
               const dexToken = dexMap.get(mint);

@@ -219,9 +219,11 @@ class DexscreenerAPI {
     // Update cache with fetched results (only if we got meaningful data)
     const ttl = now + DexscreenerAPI.TOKEN_CACHE_TTL_MS;
     fetchedTokens.forEach((t) => {
-      const mint = t.baseToken?.address;
-      if (mint) {
-        DexscreenerAPI.tokenCache.set(mint, { token: t, expiresAt: ttl });
+      const matchMint = normalizedMints.find(
+        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
+      );
+      if (matchMint) {
+        DexscreenerAPI.tokenCache.set(matchMint, { token: t, expiresAt: ttl });
       }
     });
 
@@ -232,9 +234,11 @@ class DexscreenerAPI {
 
     const allTokensMap = new Map<string, DexscreenerToken>();
     [...cachedResults, ...fetchedTokens].forEach((t) => {
-      const mint = t.baseToken?.address;
-      if (mint && !allTokensMap.has(mint)) {
-        allTokensMap.set(mint, t);
+      const matchMint = normalizedMints.find(
+        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
+      );
+      if (matchMint && !allTokensMap.has(matchMint)) {
+        allTokensMap.set(matchMint, t);
       }
     });
 

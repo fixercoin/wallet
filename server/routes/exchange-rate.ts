@@ -32,8 +32,10 @@ async function fetchTokenPriceFromDexScreener(
 ): Promise<number | null> {
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${mint}`;
+    console.log(`[DexScreener] Fetching price for ${mint} from: ${url}`);
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const response = await fetch(url, {
       signal: controller.signal,
@@ -45,22 +47,34 @@ async function fetchTokenPriceFromDexScreener(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`DexScreener returned ${response.status} for ${mint}`);
+      console.warn(
+        `[DexScreener] ❌ API returned ${response.status} for mint ${mint}`,
+      );
       return null;
     }
 
     const data = (await response.json()) as DexscreenerResponse;
+    console.log(
+      `[DexScreener] Response received for ${mint}:`,
+      JSON.stringify(data).substring(0, 200),
+    );
 
     if (data.pairs && data.pairs.length > 0) {
       const priceUsd = data.pairs[0].priceUsd;
       if (priceUsd) {
-        return parseFloat(priceUsd);
+        const price = parseFloat(priceUsd);
+        console.log(`[DexScreener] ✅ Got price for ${mint}: $${price}`);
+        return price;
       }
     }
 
+    console.warn(`[DexScreener] No pairs found in response for ${mint}`);
     return null;
   } catch (error) {
-    console.warn(`Failed to fetch ${mint} from DexScreener:`, error);
+    console.error(
+      `[DexScreener] ❌ Failed to fetch ${mint}:`,
+      error instanceof Error ? error.message : String(error),
+    );
     return null;
   }
 }

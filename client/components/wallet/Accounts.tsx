@@ -37,7 +37,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
           </h1>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6">
+        <div className="bg-transparent border-0 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-sm text-[hsl(var(--muted-foreground))]">

@@ -475,23 +475,31 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={onBack}
-            className="text-white hover:bg-[#FF7A5C]/10"
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+            aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-[hsl(var(--foreground))] flex items-center gap-2">
-            <Gift className="h-5 w-5" /> Airdrop Distribution
-          </h1>
+          <div className="flex-1 text-center font-medium text-sm">
+            AIRDROP DISTRIBUTION
+          </div>
         </div>
+      </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 p-6 rounded-2xl">
+      <div className="max-w-md mx-auto p-4 py-6 relative z-20">
+        <div className="bg-transparent border-0 p-6 rounded-2xl">
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-300">

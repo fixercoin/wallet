@@ -82,6 +82,39 @@ export default function BuyCrypto() {
   const [fetchingRate, setFetchingRate] = useState(false);
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [completedCount, setCompletedCount] = useState<number>(0);
+
+  const refreshCounts = () => {
+    try {
+      const p = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const c = JSON.parse(localStorage.getItem("orders_completed") || "[]");
+      setPendingCount(Array.isArray(p) ? p.length : 0);
+      setCompletedCount(Array.isArray(c) ? c.length : 0);
+    } catch {
+      setPendingCount(0);
+      setCompletedCount(0);
+    }
+  };
+
+  useEffect(() => {
+    refreshCounts();
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key.includes("orders_")) refreshCounts();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const addPendingOrder = (o: any) => {
+    try {
+      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const arr = Array.isArray(cur) ? cur : [];
+      arr.unshift({ ...o, status: "pending" });
+      localStorage.setItem("orders_pending", JSON.stringify(arr));
+    } catch {}
+    refreshCounts();
+  };
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
       (tk) =>
@@ -185,6 +218,7 @@ export default function BuyCrypto() {
       try {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
+      addPendingOrder(order);
       navigate("/buynote");
     } catch (error: any) {
       toast({
@@ -233,6 +267,7 @@ export default function BuyCrypto() {
         createdAt: Date.now(),
       };
       try { localStorage.setItem("sellnote_order", JSON.stringify(order)); } catch {}
+      addPendingOrder(order);
       navigate("/sellnote");
     } catch (error: any) {
       toast({
@@ -266,6 +301,22 @@ export default function BuyCrypto() {
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => navigate("/orders/completed")}
+                className="w-full p-3 rounded-lg bg-[#1a2540]/50 border border-[#22c55e]/40 text-white text-center font-semibold hover:bg-[#1a2540]/60 transition-colors"
+              >
+                <div className="text-xs opacity-80">COMPLETED</div>
+                <div className="text-lg">{completedCount}</div>
+              </button>
+              <button
+                onClick={() => navigate("/orders/pending")}
+                className="w-full p-3 rounded-lg bg-[#1a2540]/50 border border-[#f59e0b]/40 text-white text-center font-semibold hover:bg-[#1a2540]/60 transition-colors"
+              >
+                <div className="text-xs opacity-80">PENDING</div>
+                <div className="text-lg">{pendingCount}</div>
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
               <button
                 onClick={() => setActiveTab("buy")}

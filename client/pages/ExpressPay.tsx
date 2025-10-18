@@ -804,8 +804,8 @@ export default function ExpressPay() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-blue-900/30 border border-blue-700/40 text-blue-300">
-                <p className="text-xs text-blue-300">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-[#FF7A5C]">
+                <p className="text-xs text-[#FF7A5C]">
                   ✓ Tokens will be transferred to buyer. Chat window will open
                   after confirmation.
                 </p>
@@ -813,18 +813,18 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[#1a1b1e] flex gap-3 flex-shrink-0 border-t border-[#2a2b2f]">
+            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0 border-t border-[#FF7A5C]/20">
               <Button
                 onClick={() => setShowSellConfirmation(false)}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-[#2a2b2f] hover:bg-[#32333a] text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gray-700/40 hover:bg-gray-700/60 text-white font-medium text-sm transition-colors"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSellApprove}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-medium text-sm transition-all"
               >
                 {isProcessing ? "Processing..." : "I Have Paid"}
               </Button>

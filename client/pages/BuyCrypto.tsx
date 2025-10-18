@@ -63,9 +63,11 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyCrypto() {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
+  const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
+  const { events, send } = useDurableRoom("global", API_BASE);
 
+  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
@@ -75,6 +77,12 @@ export default function BuyCrypto() {
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
+
+  // Sell tab state
+  const [sellTokenMint, setSellTokenMint] = useState<string>(
+    walletTokens.find((t) => t.symbol !== "UNKNOWN")?.mint || TOKEN_MINTS.USDC,
+  );
+  const [sellAmount, setSellAmount] = useState<string>("");
 
   // Fetch token data from Dexscreener
   useEffect(() => {

@@ -450,6 +450,61 @@ export const onRequest = async ({ request, env }) => {
       }
     }
 
+    // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
+    if (normalizedPath === "/exchange-rate") {
+      const token = (url.searchParams.get("token") || "FIXERCOIN").toUpperCase();
+
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
+      };
+
+      const PKR_PER_USD = 280; // base FX
+      const MARKUP = 1.0425; // 4.25%
+
+      let priceUsd: number | null = null;
+      try {
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else if (TOKEN_MINTS[token]) {
+          const data = await fetchDexscreenerData(`/tokens/${TOKEN_MINTS[token]}`);
+          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          const price =
+            pairs.length > 0 && pairs[0]?.priceUsd
+              ? Number(pairs[0].priceUsd)
+              : null;
+          if (typeof price === "number" && isFinite(price) && price > 0) {
+            priceUsd = price;
+          }
+        }
+      } catch {}
+
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return jsonCors(200, {
+        token,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+      });
+    }
+
     // DexScreener: /api/dexscreener/tokens?mints=...
     if (normalizedPath === "/dexscreener/tokens") {
       const mints = url.searchParams.get("mints");

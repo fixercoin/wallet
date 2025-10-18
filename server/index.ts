@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
+import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
   handleDexscreenerSearch,

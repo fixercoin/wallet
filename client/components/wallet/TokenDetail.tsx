@@ -123,7 +123,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="bg-transparent border-0 rounded-2xl overflow-hidden">
           {/* Price Section (inside single card) */}
           <PriceCard

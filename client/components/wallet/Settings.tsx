@@ -222,10 +222,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </div>
               </section>
 
-              <div className="border-t border-[hsl(var(--border))]" />
-
-              <div className="border-t border-[hsl(var(--border))]" />
-
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
                   <Key className="h-5 w-5" />
@@ -373,10 +369,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </div>
               </section>
-
-              <div className="border-t border-[hsl(var(--border))]" />
-
-              <div className="border-t border-[hsl(var(--border))]" />
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>

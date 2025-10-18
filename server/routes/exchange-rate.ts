@@ -1,94 +1,97 @@
 import { RequestHandler } from "express";
 import { TOKEN_MINTS } from "@shared/api";
 
-const FALLBACK_RATES = {
-  FIXERCOIN: 0.005, // $0.005 per FIXERCOIN -> ~1.4 PKR
-  SOL: 180, // $180 per SOL -> ~50,400 PKR
-  USDC: 280, // $1 USDC -> ~280 PKR
-  USDT: 280, // $1 USDT -> ~280 PKR
-  LOCKER: 0.1, // $0.1 per LOCKER -> ~28 PKR
+const FALLBACK_RATES: Record<string, number> = {
+  FIXERCOIN: 0.005, // $0.005 per FIXERCOIN
+  SOL: 180, // $180 per SOL
+  USDC: 1.0, // $1 USDC
+  USDT: 1.0, // $1 USDT
+  LOCKER: 0.1, // $0.1 per LOCKER
 };
 
 const PKR_PER_USD = 280; // Approximate conversion rate
+const MARKUP = 1.0425; // 4.25% markup
+
+interface DexscreenerResponse {
+  pairs: Array<{
+    baseToken: { address: string };
+    priceUsd?: string;
+  }>;
+}
+
+async function fetchTokenPriceFromDexScreener(
+  mint: string,
+): Promise<number | null> {
+  try {
+    const url = `https://api.dexscreener.com/latest/dex/tokens/${mint}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`DexScreener returned ${response.status} for ${mint}`);
+      return null;
+    }
+
+    const data = (await response.json()) as DexscreenerResponse;
+
+    if (data.pairs && data.pairs.length > 0) {
+      const priceUsd = data.pairs[0].priceUsd;
+      if (priceUsd) {
+        return parseFloat(priceUsd);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.warn(`Failed to fetch ${mint} from DexScreener:`, error);
+    return null;
+  }
+}
 
 export const handleExchangeRate: RequestHandler = async (req, res) => {
   try {
     const token = (req.query.token as string) || "FIXERCOIN";
 
-    // Get base price in USD
     let priceUsd: number | null = null;
 
+    // Fetch price from DexScreener based on token
     if (token === "FIXERCOIN") {
-      // Fetch FIXERCOIN price from DexScreener
-      try {
-        const response = await fetch(
-          `/api/dexscreener/tokens?mints=${TOKEN_MINTS.FIXERCOIN}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.pairs && data.pairs.length > 0) {
-            const tokenData = data.pairs[0];
-            if (tokenData.priceUsd) {
-              priceUsd = parseFloat(tokenData.priceUsd);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to fetch FIXERCOIN from DexScreener:", err);
-      }
+      priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.FIXERCOIN);
     } else if (token === "SOL") {
-      // Fetch SOL price from DexScreener
-      try {
-        const response = await fetch(
-          `/api/dexscreener/tokens?mints=${TOKEN_MINTS.SOL}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.pairs && data.pairs.length > 0) {
-            const tokenData = data.pairs[0];
-            if (tokenData.priceUsd) {
-              priceUsd = parseFloat(tokenData.priceUsd);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to fetch SOL from DexScreener:", err);
-      }
+      priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.SOL);
     } else if (token === "USDC" || token === "USDT") {
       // Stablecoins are always ~1 USD
       priceUsd = 1.0;
     } else if (token === "LOCKER") {
-      // Fetch LOCKER price from DexScreener
-      try {
-        const response = await fetch(
-          `/api/dexscreener/tokens?mints=${TOKEN_MINTS.LOCKER}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.pairs && data.pairs.length > 0) {
-            const tokenData = data.pairs[0];
-            if (tokenData.priceUsd) {
-              priceUsd = parseFloat(tokenData.priceUsd);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to fetch LOCKER from DexScreener:", err);
-      }
+      priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.LOCKER);
     }
 
-    // Fall back to hardcoded rates if DexScreener fetch fails
+    // Fall back to hardcoded rates if DexScreener fetch fails or price is invalid
     if (priceUsd === null || priceUsd <= 0) {
-      const fallbackUsd = FALLBACK_RATES[token as keyof typeof FALLBACK_RATES];
-      priceUsd = fallbackUsd || FALLBACK_RATES.FIXERCOIN;
+      priceUsd = FALLBACK_RATES[token] || FALLBACK_RATES.FIXERCOIN;
+      console.log(
+        `[ExchangeRate] Using fallback rate for ${token}: $${priceUsd}`,
+      );
+    } else {
+      console.log(
+        `[ExchangeRate] Fetched ${token} price from DexScreener: $${priceUsd}`,
+      );
     }
 
-    // Convert to PKR with slight markup (4.25%)
-    const MARKUP = 1.0425; // 4.25% markup
+    // Convert to PKR with markup
     const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
 
     console.log(
-      `[ExchangeRate] ${token}: $${priceUsd} USD -> ${rateInPKR.toFixed(2)} PKR`,
+      `[ExchangeRate] ${token}: $${priceUsd.toFixed(6)} USD -> ${rateInPKR.toFixed(2)} PKR (with ${(MARKUP - 1) * 100}% markup)`,
     );
 
     res.json({

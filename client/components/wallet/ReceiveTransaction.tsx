@@ -62,53 +62,46 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
       <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
 
-        <div className="space-y-6">
-          {/* QR Code (simple) */}
-          <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6">
-            <div className="text-center space-y-4">
-              <div className="inline-block bg-white p-3 rounded-lg">
-                <QRCode
-                  value={wallet.publicKey}
-                  size={160}
-                  fgColor="#000000"
-                  bgColor="#ffffff"
-                  level="M"
-                />
-              </div>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                Scan to send SOL
-              </p>
+        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-6 text-white">
+          {/* QR Code */}
+          <div className="text-center space-y-4">
+            <div className="inline-block bg-white p-3 rounded-lg">
+              <QRCode
+                value={wallet.publicKey}
+                size={160}
+                fgColor="#000000"
+                bgColor="#ffffff"
+                level="M"
+              />
             </div>
+            <p className="text-sm text-gray-300">
+              Scan to send SOL
+            </p>
           </div>
 
-          {/* Address (simple) */}
-          <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-4">
-            <div className="mb-2">
-              <h3 className="text-lg text-white">Your Address</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  value={wallet.publicKey}
-                  readOnly
-                  className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 text-[hsl(var(--foreground))] placeholder:text-muted-foreground"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyAddress}
-                  className="shrink-0 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+          {/* Address Section */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-white">Your Address</h3>
+            <div className="flex gap-2">
+              <Input
+                value={wallet.publicKey}
+                readOnly
+                className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyAddress}
+                className="shrink-0 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           </div>
-
         </div>
       </div>
     </div>

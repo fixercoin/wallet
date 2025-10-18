@@ -544,9 +544,10 @@ export default function ExpressPay() {
                     value={selectedCurrency}
                     onChange={(e) => setSelectedCurrency(e.target.value)}
                     className="appearance-none bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
+                    style={{ color: 'white' }}
                   >
                     {currencies.map((cur) => (
-                      <option key={cur} value={cur}>
+                      <option key={cur} value={cur} style={{ color: 'black' }}>
                         {cur}
                       </option>
                     ))}

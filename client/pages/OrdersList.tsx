@@ -10,7 +10,8 @@ export default function OrdersList() {
 
   useEffect(() => {
     try {
-      const key = status === "completed" ? "orders_completed" : "orders_pending";
+      const key =
+        status === "completed" ? "orders_completed" : "orders_pending";
       const raw = localStorage.getItem(key);
       const arr = raw ? JSON.parse(raw) : [];
       setOrders(Array.isArray(arr) ? arr : []);
@@ -22,13 +23,22 @@ export default function OrdersList() {
   const goBack = () => navigate("/buy-crypto");
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]" style={{ fontSize: "10px" }}>
+    <div
+      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"
+      style={{ fontSize: "10px" }}
+    >
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center">
-          <button onClick={goBack} className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors" aria-label="Back">
+          <button
+            onClick={goBack}
+            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
+            aria-label="Back"
+          >
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
-          <div className="flex-1 text-center font-semibold uppercase">{status} orders</div>
+          <div className="flex-1 text-center font-semibold uppercase">
+            {status} orders
+          </div>
         </div>
       </div>
 
@@ -37,7 +47,10 @@ export default function OrdersList() {
           <div className="text-center text-white/70">No {status} orders</div>
         )}
         {orders.map((o) => (
-          <Card key={o.id} className="bg-transparent backdrop-blur-xl rounded-md">
+          <Card
+            key={o.id}
+            className="bg-transparent backdrop-blur-xl rounded-md"
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>

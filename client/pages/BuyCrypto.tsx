@@ -266,7 +266,9 @@ export default function BuyCrypto() {
         adminWallet: ADMIN_WALLET,
         createdAt: Date.now(),
       };
-      try { localStorage.setItem("sellnote_order", JSON.stringify(order)); } catch {}
+      try {
+        localStorage.setItem("sellnote_order", JSON.stringify(order));
+      } catch {}
       addPendingOrder(order);
       navigate("/sellnote");
     } catch (error: any) {
@@ -300,16 +302,23 @@ export default function BuyCrypto() {
               onClick={() => navigate("/orders/completed")}
               className="cursor-pointer hover:text-white"
             >
-              COMPLETED <span className="font-semibold text-white">{completedCount}</span>
+              COMPLETED{" "}
+              <span className="font-semibold text-white">{completedCount}</span>
             </span>
             <span
               onClick={() => navigate("/orders/pending")}
               className="cursor-pointer hover:text-white"
             >
-              PENDING <span className="font-semibold text-white">{pendingCount}</span>
+              PENDING{" "}
+              <span className="font-semibold text-white">{pendingCount}</span>
             </span>
           </div>
-          <a href="mailto:info@fixorium.com.pk" className="ml-auto text-white/80 text-[10px] hover:text-white">PUT APPEAL</a>
+          <a
+            href="mailto:info@fixorium.com.pk"
+            className="ml-auto text-white/80 text-[10px] hover:text-white"
+          >
+            PUT APPEAL
+          </a>
         </div>
       </div>
 
@@ -369,8 +378,6 @@ export default function BuyCrypto() {
                   </Select>
                 </div>
 
-                
-
                 <div>
                   <label className="block font-medium text-white/80 mb-2">
                     Amount (PKR)
@@ -385,8 +392,6 @@ export default function BuyCrypto() {
                     step="100"
                   />
                 </div>
-
-                
 
                 <div className="bg-transparent p-4 rounded-lg">
                   <div className="space-y-3">
@@ -406,7 +411,7 @@ export default function BuyCrypto() {
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
@@ -415,8 +420,6 @@ export default function BuyCrypto() {
                     </div>
                   </div>
                 </div>
-
-                
 
                 <Button
                   onClick={handleBuyClick}
@@ -470,8 +473,6 @@ export default function BuyCrypto() {
                   </Select>
                 </div>
 
-                
-
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
                   <div className="text-xs opacity-80">Available Balance</div>
                   <div className="mt-1 text-sm">
@@ -480,8 +481,6 @@ export default function BuyCrypto() {
                     </span>
                   </div>
                 </div>
-
-                
 
                 <div>
                   <label className="block font-medium text-white/80 mb-2">
@@ -497,8 +496,6 @@ export default function BuyCrypto() {
                     step="0.000001"
                   />
                 </div>
-
-                
 
                 <div className="bg-transparent p-4 rounded-lg">
                   <div className="space-y-3">
@@ -518,7 +515,7 @@ export default function BuyCrypto() {
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
@@ -530,8 +527,6 @@ export default function BuyCrypto() {
                     </div>
                   </div>
                 </div>
-
-                
 
                 <Button
                   onClick={handleSellClick}

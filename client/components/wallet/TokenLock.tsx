@@ -700,13 +700,13 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const isFormDisabled = isSubmitting || !wallet || !selectedToken;
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm border border-white/40"
+            className="h-10 w-10 rounded-full text-white hover:bg-[#FF7A5C]/10 border border-[#FF7A5C]/30"
             onClick={onBack}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -723,7 +723,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="wallet-card rounded-2xl p-6 space-y-5">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-5">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
@@ -821,7 +821,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="wallet-card rounded-2xl p-6 space-y-4">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-purple-500" />
@@ -852,7 +852,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-xl border border-white/40 bg-white/70 space-y-3"
+                    className="p-4 rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <div>

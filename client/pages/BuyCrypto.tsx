@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
-import { API_BASE } from "@/lib/p2p";
+import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 
 interface TokenOption {
   id: string;
@@ -80,6 +80,8 @@ export default function BuyCrypto() {
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
+  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
 
   // Load token logos/prices (best-effort)
   useEffect(() => {
@@ -183,6 +185,48 @@ export default function BuyCrypto() {
     }
   };
 
+  const handleSellClick = async () => {
+    if (!wallet) {
+      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      return;
+    }
+    const amount = Number(sellAmountTokens);
+    if (!sellAmountTokens || !isFinite(amount) || amount <= 0 || !exchangeRate) {
+      toast({ title: "Invalid Amount", description: "Enter a valid token amount", variant: "destructive" });
+      return;
+    }
+    try {
+      send?.({
+        type: "chat",
+        text: JSON.stringify({
+          type: "seller_offer",
+          token: selectedToken.id,
+          amountTokens: amount,
+          sellerWallet: wallet.publicKey,
+          adminWallet: ADMIN_WALLET,
+        }),
+      });
+      toast({ title: "Sell request sent", description: `Offer to sell ${amount} ${selectedToken.id} sent in chat` });
+      navigate("/express/buy-trade", {
+        state: {
+          order: {
+            id: `sell-${Date.now()}`,
+            type: "sell",
+            token: selectedToken.id,
+            amountPKR: amount * exchangeRate,
+            pricePKRPerQuote: exchangeRate,
+            quoteAsset: selectedToken.id,
+            paymentMethod: "easypaisa",
+          },
+          openChat: true,
+          initialPhase: "awaiting_seller_approval",
+        },
+      });
+    } catch (error: any) {
+      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
+    }
+  };
+
   return (
     <div
       className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"
@@ -206,85 +250,196 @@ export default function BuyCrypto() {
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
-            <div>
-              <label className="block font-medium text-white/80 mb-3">Select Token</label>
-              <Select
-                value={selectedToken.id}
-                onValueChange={(id) => {
-                  const token = tokens.find((t) => t.id === id);
-                  if (token) setSelectedToken(token);
-                }}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
+              <button
+                onClick={() => setActiveTab("buy")}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  activeTab === "buy"
+                    ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
+                    : "text-white hover:text-white"
+                }`}
               >
-                <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a2540] border-none">
-                  {tokens.map((token) => (
-                    <SelectItem key={token.id} value={token.id} className="text-white">
-                      {token.symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                Buy
+              </button>
+              <button
+                onClick={() => setActiveTab("sell")}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  activeTab === "sell"
+                    ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
+                    : "text-white hover:text-white"
+                }`}
+              >
+                Sell
+              </button>
             </div>
 
-            <Separator className="bg-[#FF7A5C]/20" />
-
-            <div>
-              <label className="block font-medium text-white/80 mb-2">Amount (PKR)</label>
-              <input
-                type="number"
-                value={amountPKR}
-                onChange={(e) => setAmountPKR(e.target.value)}
-                placeholder="Enter amount in PKR"
-                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
-                min="0"
-                step="100"
-              />
-            </div>
-
-            <Separator className="bg-[#FF7A5C]/20" />
-
-            <div className="bg-transparent p-4 rounded-lg">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70">Exchange Rate:</span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} = {exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR
-                    </span>
-                  )}
+            {activeTab === "buy" && (
+              <>
+                <div>
+                  <label className="block font-medium text-white/80 mb-3">Select Token</label>
+                  <Select
+                    value={selectedToken.id}
+                    onValueChange={(id) => {
+                      const token = tokens.find((t) => t.id === id);
+                      if (token) setSelectedToken(token);
+                    }}
+                  >
+                    <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2540] border-none">
+                      {tokens.map((token) => (
+                        <SelectItem key={token.id} value={token.id} className="text-white">
+                          {token.symbol}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
                 <Separator className="bg-[#FF7A5C]/20" />
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70">You Will Receive:</span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {estimatedTokens.toFixed(6)} {selectedToken.symbol}
-                  </span>
+
+                <div>
+                  <label className="block font-medium text-white/80 mb-2">Amount (PKR)</label>
+                  <input
+                    type="number"
+                    value={amountPKR}
+                    onChange={(e) => setAmountPKR(e.target.value)}
+                    placeholder="Enter amount in PKR"
+                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                    min="0"
+                    step="100"
+                  />
                 </div>
-              </div>
-            </div>
 
-            <Separator className="bg-[#FF7A5C]/20" />
+                <Separator className="bg-[#FF7A5C]/20" />
 
-            <Button
-              onClick={handleBuyClick}
-              disabled={
-                loading || !amountPKR || Number(amountPKR) <= 0 || estimatedTokens === 0
-              }
-              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                `PAY TO BUY CRYPTO CURRENCY`
-              )}
-            </Button>
+                <div className="bg-transparent p-4 rounded-lg">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Exchange Rate:</span>
+                      {fetchingRate ? (
+                        <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
+                      ) : (
+                        <span className="font-semibold text-[#FF7A5C]">
+                          1 {selectedToken.symbol} = {exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR
+                        </span>
+                      )}
+                    </div>
+                    <Separator className="bg-[#FF7A5C]/20" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">You Will Receive:</span>
+                      <span className="font-bold text-[#FF7A5C]">
+                        {estimatedTokens.toFixed(6)} {selectedToken.symbol}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="bg-[#FF7A5C]/20" />
+
+                <Button
+                  onClick={handleBuyClick}
+                  disabled={
+                    loading || !amountPKR || Number(amountPKR) <= 0 || estimatedTokens === 0
+                  }
+                  className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `PAY TO BUY CRYPTO CURRENCY`
+                  )}
+                </Button>
+              </>
+            )}
+
+            {activeTab === "sell" && (
+              <>
+                <div>
+                  <label className="block font-medium text-white/80 mb-3">Select Token</label>
+                  <Select
+                    value={selectedToken.id}
+                    onValueChange={(id) => {
+                      const token = tokens.find((t) => t.id === id);
+                      if (token) setSelectedToken(token);
+                    }}
+                  >
+                    <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2540] border-none">
+                      {tokens.map((token) => (
+                        <SelectItem key={token.id} value={token.id} className="text-white">
+                          {token.symbol}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator className="bg-[#FF7A5C]/20" />
+
+                <div>
+                  <label className="block font-medium text-white/80 mb-2">Amount ({selectedToken.symbol})</label>
+                  <input
+                    type="number"
+                    value={sellAmountTokens}
+                    onChange={(e) => setSellAmountTokens(e.target.value)}
+                    placeholder={`Enter amount in ${selectedToken.symbol}`}
+                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                    min="0"
+                    step="0.000001"
+                  />
+                </div>
+
+                <Separator className="bg-[#FF7A5C]/20" />
+
+                <div className="bg-transparent p-4 rounded-lg">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Exchange Rate:</span>
+                      {fetchingRate ? (
+                        <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
+                      ) : (
+                        <span className="font-semibold text-[#FF7A5C]">
+                          1 {selectedToken.symbol} = {exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR
+                        </span>
+                      )}
+                    </div>
+                    <Separator className="bg-[#FF7A5C]/20" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">You Will Receive:</span>
+                      <span className="font-bold text-[#FF7A5C]">
+                        {(Number(sellAmountTokens || 0) * (exchangeRate || 0)).toFixed(2)} PKR
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="bg-[#FF7A5C]/20" />
+
+                <Button
+                  onClick={handleSellClick}
+                  disabled={
+                    loading || !sellAmountTokens || Number(sellAmountTokens) <= 0 || !exchangeRate
+                  }
+                  className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "SELL FOR PKR"
+                  )}
+                </Button>
+              </>
+            )}
 
           </CardContent>
         </Card>

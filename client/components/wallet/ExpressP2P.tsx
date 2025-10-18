@@ -4,6 +4,7 @@ import { copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, MessageSquare, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   DropdownMenu,
   DropdownMenuContent,

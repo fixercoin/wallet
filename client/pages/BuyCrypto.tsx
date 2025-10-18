@@ -125,14 +125,33 @@ export default function BuyCrypto() {
     const fetchRate = async () => {
       setFetchingRate(true);
       try {
-        const response = await fetch(
-          `/api/exchange-rate?token=${selectedToken.id}`,
-        );
-        if (!response.ok) throw new Error("Failed to fetch exchange rate");
+        const url = `/api/exchange-rate?token=${selectedToken.id}`;
+        console.log(`[BuyCrypto] Fetching exchange rate from: ${url}`);
+
+        const response = await fetch(url);
+        console.log(`[BuyCrypto] Exchange rate response status: ${response.status}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch exchange rate: ${response.status}`);
+        }
+
         const data = await response.json();
-        setExchangeRate(data.rate || 0);
+        console.log(`[BuyCrypto] Exchange rate response:`, data);
+
+        const rate = data.rate || data.priceInPKR || 0;
+        console.log(
+          `[BuyCrypto] Setting exchange rate for ${selectedToken.id}: ${rate} PKR`,
+        );
+
+        if (typeof rate !== "number" || rate <= 0) {
+          console.warn(
+            `[BuyCrypto] Invalid rate received: ${rate}, will show 0`,
+          );
+        }
+
+        setExchangeRate(rate);
       } catch (error) {
-        console.error("Error fetching exchange rate:", error);
+        console.error("[BuyCrypto] Error fetching exchange rate:", error);
         setExchangeRate(0);
       } finally {
         setFetchingRate(false);

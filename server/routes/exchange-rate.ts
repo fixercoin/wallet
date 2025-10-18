@@ -1,13 +1,13 @@
 import { RequestHandler } from "express";
 
-// Token mint addresses for Solana mainnet
+// Token mint addresses for Solana mainnet (imported from shared constants)
 const TOKEN_MINTS = {
   SOL: "So11111111111111111111111111111111111111112",
   USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
   FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
   LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
-};
+} as const;
 
 const FALLBACK_RATES: Record<string, number> = {
   FIXERCOIN: 0.005, // $0.005 per FIXERCOIN

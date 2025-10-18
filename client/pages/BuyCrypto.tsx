@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import {
-  dexscreenerAPI,
-  type DexscreenerToken,
-} from "@/lib/services/dexscreener";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Select,
@@ -19,6 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
+import { copyToClipboard } from "@/lib/wallet";
 
 interface TokenOption {
   id: string;
@@ -69,9 +69,11 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyCrypto() {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
+  const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
+  const { events, send } = useDurableRoom("global", API_BASE);
 
+  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
@@ -81,6 +83,12 @@ export default function BuyCrypto() {
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
+
+  // Sell tab state
+  const [sellTokenMint, setSellTokenMint] = useState<string>(
+    walletTokens.find((t) => t.symbol !== "UNKNOWN")?.mint || TOKEN_MINTS.USDC,
+  );
+  const [sellAmount, setSellAmount] = useState<string>("");
 
   // Fetch token data from Dexscreener
   useEffect(() => {
@@ -174,87 +182,87 @@ export default function BuyCrypto() {
       });
       return;
     }
-
-    if (!amountPKR || Number(amountPKR) <= 0) {
+    if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
       toast({
         title: "Invalid Amount",
-        description: "Please enter a valid amount in PKR",
+        description: "Enter a valid PKR amount",
         variant: "destructive",
       });
       return;
     }
-
-    setLoading(true);
-
     try {
-      // Create payment intent with Razorpay
-      const response = await fetch("/api/payments/create-intent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          walletAddress: wallet.publicKey,
-          amount: Math.round(Number(amountPKR) * 100), // Razorpay uses smallest currency unit
-          currency: "PKR",
-          tokenType: selectedToken.id,
-          email: wallet.email || "user@fixorium.com",
-          contact: wallet.phone || "",
+      const pricePKRPerQuote = exchangeRate;
+      send?.({
+        type: "chat",
+        text: JSON.stringify({
+          type: "buyer_request",
+          token: selectedToken.id,
+          amountPKR: Number(amountPKR),
+          pricePKRPerQuote,
+          paymentMethod: "easypaisa",
+          seller: {
+            accountName: "ameer nawaz khan",
+            accountNumber: "030107044833",
+          },
+          buyerWallet: wallet.publicKey,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create payment intent");
-      }
-
-      const data = await response.json();
-
-      if (!data.orderId || !data.key) {
-        throw new Error("Invalid payment response");
-      }
-
-      // Initialize Razorpay checkout
-      const options = {
-        key: data.key,
-        amount: Math.round(Number(amountPKR) * 100),
-        currency: "PKR",
-        name: "Fixorium Wallet",
-        description: `Buy ${selectedToken.symbol}`,
-        order_id: data.orderId,
-        handler: function (response: any) {
-          toast({
-            title: "Payment Successful",
-            description: `Your wallet will be credited with ${estimatedTokens.toFixed(6)} ${selectedToken.symbol} shortly`,
-          });
-          setTimeout(() => {
-            navigate("/");
-          }, 2000);
+      navigate("/express/buy-trade", {
+        state: {
+          order: {
+            token: selectedToken.id,
+            quoteAsset: selectedToken.id,
+            pricePKRPerQuote,
+            paymentMethod: "easypaisa",
+          },
+          openChat: true,
+          initialPhase: "awaiting_seller_approval",
         },
-        prefill: {
-          email: wallet.email,
-          contact: wallet.phone,
-        },
-        theme: {
-          color: "#FF7A5C",
-        },
-      };
-
-      if ((window as any).Razorpay) {
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      } else {
-        throw new Error("Razorpay not loaded");
-      }
+      });
     } catch (error: any) {
       toast({
-        title: "Payment Failed",
-        description:
-          error?.message || "An error occurred while processing payment",
+        title: "Failed to start chat",
+        description: error?.message || String(error),
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const handleSellClick = () => {
+    if (!wallet) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+    const tokenMeta = walletTokens.find((t) => t.mint === sellTokenMint);
+    const symbol = (tokenMeta?.symbol || "").toUpperCase();
+    const amount = Number(sellAmount);
+    if (!symbol || !isFinite(amount) || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Enter token amount to sell",
+        variant: "destructive",
+      });
+      return;
+    }
+    send?.({
+      type: "chat",
+      text: JSON.stringify({
+        type: "seller_offer",
+        token: symbol,
+        amountTokens: amount,
+        sellerWallet: wallet.publicKey,
+        adminWallet: ADMIN_WALLET,
+      }),
+    });
+    toast({
+      title: "Sell request sent",
+      description: `Offer to sell ${amount} ${symbol} sent in chat`,
+    });
+    navigate("/express/buy-trade", { state: { openChat: true } });
   };
 
   return (

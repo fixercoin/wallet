@@ -139,14 +139,24 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
-              <div className="px-3 pt-3 text-sm font-medium text-gray-700">
-                Buys vs Sells (5m → 24h)
-              </div>
-              <div className="p-3">
-                <BuySellLine mint={tokenMint} />
-              </div>
-            </div>
+            {(() => {
+              const stableMints = new Set<string>([
+                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+                "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+              ]);
+              const isStable = stableMints.has(tokenMint);
+              if (isStable) return null;
+              return (
+                <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
+                  <div className="px-3 pt-3 text-sm font-medium text-gray-700">
+                    Buys vs Sells (5m → 24h)
+                  </div>
+                  <div className="p-3">
+                    <BuySellLine mint={tokenMint} />
+                  </div>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}

@@ -226,7 +226,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <span className="font-medium">SECRETS</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="p-4 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-lg">
+                  <div className="p-4 bg-transparent border-0 rounded-lg">
                     <div className="flex gap-3 mb-3">
                       <select
                         aria-label="Select secret"

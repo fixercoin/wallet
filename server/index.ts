@@ -14,6 +14,8 @@ import {
   handleJupiterSwap,
   handleJupiterTokens,
 } from "./routes/jupiter-proxy";
+import { handleForexRate } from "./routes/forex-rate";
+import { handleStable24h } from "./routes/stable-24h";
 import {
   handleListP2POrders,
   handleCreateP2POrder,
@@ -59,8 +61,10 @@ export async function createServer(): Promise<express.Application> {
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
 
-  // Exchange rate route
+  // Exchange rate routes
   app.get("/api/exchange-rate", handleExchangeRate);
+  app.get("/api/forex/rate", handleForexRate);
+  app.get("/api/stable-24h", handleStable24h);
 
   // Orders routes (new API)
   app.get("/api/orders", handleListOrders);

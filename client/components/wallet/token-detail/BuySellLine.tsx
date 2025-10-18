@@ -24,15 +24,30 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
   const [token, setToken] = useState<DexscreenerToken | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Known stablecoin mints on Solana
+  const STABLE_MINTS = new Set<string>([
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+  ]);
+
   useEffect(() => {
     let mounted = true;
     setError(null);
+
+    // For stablecoins, skip DexScreener (often missing buy/sell breakdown) and avoid error noise
+    if (STABLE_MINTS.has(mint)) {
+      setToken(null);
+      return () => {
+        mounted = false;
+      };
+    }
+
     dexscreenerAPI
       .getTokenByMint(mint)
       .then((t) => {
         if (!mounted) return;
         setToken(t);
-        if (!t) setError("No DexScreener data found for this token");
+        if (!t) setError("Trade breakdown unavailable for this token");
       })
       .catch(() => {
         if (!mounted) return;

@@ -577,7 +577,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <img
               src="https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fbc6cbd6eba3945ec8b5c37f7a359d3fe?format=webp&width=800"
               alt="Pay"
-              className="h-6 w-auto ml-1"
+              className="h-full w-auto ml-2 py-1 object-contain"
               loading="lazy"
             />
           </Button>

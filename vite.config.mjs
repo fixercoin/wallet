@@ -5,9 +5,40 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(new URL(import.meta.url)));
 
+let apiServer = null;
+
 export default defineConfig({
   base: "./",
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "express-server",
+      configResolved(config) {
+        // Only start server in dev mode
+        if (config.command === "serve") {
+          this.apply = "serve";
+        }
+      },
+      async configureServer(server) {
+        return () => {
+          server.middlewares.use(async (req, res, next) => {
+            // Only handle /api requests with the Express app
+            if (req.url.startsWith("/api") || req.url === "/health") {
+              if (!apiServer) {
+                const { createServer: createExpressServer } = await import(
+                  "./server/index.ts"
+                );
+                apiServer = await createExpressServer();
+              }
+              apiServer(req, res, next);
+            } else {
+              next();
+            }
+          });
+        };
+      },
+    },
+  ],
   build: {
     outDir: "dist/spa",
     emptyOutDir: true,

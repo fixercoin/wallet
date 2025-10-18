@@ -12,9 +12,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { useExpressP2P } from "@/contexts/ExpressP2PContext";
-import { listOrders, ADMIN_WALLET } from "@/lib/p2p";
+import { listOrders, ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
 import { p2pPriceService } from "@/lib/services/p2p-price";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
 
 type TabType = "buy" | "sell";
 type PaymentMethod = "easypaisa" | "jazzcash" | "bank";
@@ -54,6 +55,8 @@ export default function ExpressPay() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin } =
     useExpressP2P();
+
+  const { send } = useDurableRoom("global", API_BASE);
 
   // Token-specific PKR rate (USDC uses exchangeRate; SOL/FIXERCOIN fetched via service)
   const [selectedRate, setSelectedRate] = useState<number>(exchangeRate);
@@ -196,13 +199,13 @@ export default function ExpressPay() {
         pricePkr: selectedRate,
         minToken: 0,
         maxToken: 10000,
-        paymentMethod: selectedPayment,
+        paymentMethod: "easypaisa",
         amountPKR: Number(spendAmount),
         quoteAsset: selectedCurrency,
         pricePKRPerQuote: selectedRate,
         paymentDetails: {
-          accountName: "Fixorium Admin",
-          accountNumber: "03001234567",
+          accountName: "ameer nawaz khan",
+          accountNumber: "03107044833",
         },
       };
       setSelectedSeller(seller);
@@ -233,6 +236,20 @@ export default function ExpressPay() {
 
       // Simulate processing delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Send prompt message to seller feed
+      try {
+        send?.({
+          type: "chat",
+          text: JSON.stringify({
+            type: "buyer_paid",
+            orderId: selectedSeller.id,
+            amountPKR: Number(spendAmount),
+            token: selectedCurrency,
+            paymentMethod: "easypaisa",
+          }),
+        });
+      } catch {}
 
       setShowBuyConfirmation(false);
 
@@ -609,6 +626,15 @@ export default function ExpressPay() {
                   <div className="font-semibold text-[hsl(var(--foreground))] font-mono">
                     {selectedSeller.paymentDetails?.accountNumber ||
                       "Not provided"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                    Payment Method
+                  </div>
+                  <div className="font-semibold text-[hsl(var(--foreground))] capitalize">
+                    {selectedSeller.paymentMethod || "easypaisa"}
                   </div>
                 </div>
 

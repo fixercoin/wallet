@@ -574,12 +574,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             aria-label="Pay to Buy Crypto"
           >
             <span className="mr-3">PAY TO BUY</span>
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fbc6cbd6eba3945ec8b5c37f7a359d3fe?format=webp&width=800"
-              alt="Pay"
-              className="h-12 w-auto ml-2 object-contain flex-shrink-0"
-              loading="lazy"
-            />
+            <span className="pay-to-buy-icon ml-1" aria-hidden="true"></span>
           </Button>
         </div>
 

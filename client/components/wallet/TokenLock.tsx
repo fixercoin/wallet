@@ -732,9 +732,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-white">
-                Select token
-              </Label>
+              <Label className="text-xs text-white">Select token</Label>
               <Select
                 value={selectedMint}
                 onValueChange={(value) => setSelectedMint(value)}
@@ -761,9 +759,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white">
-                Amount to lock
-              </Label>
+              <Label className="text-xs text-white">Amount to lock</Label>
               <Input
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
@@ -780,9 +776,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white">
-                Lock duration
-              </Label>
+              <Label className="text-xs text-white">Lock duration</Label>
               <Select
                 value={selectedLockOption}
                 onValueChange={(val) => setSelectedLockOption(val)}

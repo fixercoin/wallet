@@ -396,7 +396,7 @@ export default function ExpressPay() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+    <div className="min-h-screen bg-pink-50 text-white">
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
@@ -404,7 +404,7 @@ export default function ExpressPay() {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
             aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -419,15 +419,15 @@ export default function ExpressPay() {
 
       {/* Main Content */}
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="bg-white rounded-2xl border border-[hsl(var(--border))] shadow-sm p-6 space-y-5">
+        <div className="bg-white rounded-2xl border border-[#2a2b2f] shadow-sm p-6 space-y-5">
           {/* Tab Selection */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-[hsl(var(--secondary))] rounded-xl">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-[#1a1b1e] rounded-xl">
             <button
               onClick={() => setActiveTab("buy")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "buy"
-                  ? "bg-white text-[hsl(var(--foreground))] shadow-sm"
-                  : "text-[hsl(var(--muted-foreground))]"
+                  ? "bg-white text-white shadow-sm"
+                  : "text-gray-400"
               }`}
             >
               Buy
@@ -436,8 +436,8 @@ export default function ExpressPay() {
               onClick={() => setActiveTab("sell")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "sell"
-                  ? "bg-white text-[hsl(var(--foreground))] shadow-sm"
-                  : "text-[hsl(var(--muted-foreground))]"
+                  ? "bg-white text-white shadow-sm"
+                  : "text-gray-400"
               }`}
             >
               Sell
@@ -450,10 +450,10 @@ export default function ExpressPay() {
               <div className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                    <div className="text-xs text-gray-400 mb-1">
                       Your {selectedCurrency} Balance
                     </div>
-                    <div className="text-lg font-bold text-[hsl(var(--foreground))]">
+                    <div className="text-lg font-bold text-white">
                       {walletBalance.toFixed(6)}
                     </div>
                   </div>
@@ -482,10 +482,10 @@ export default function ExpressPay() {
                   </div>
                 )}
               </div>
-              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+              <label className="text-xs text-gray-400 font-medium">
                 Spend
               </label>
-              <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+              <div className="relative rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
                 <div className="flex items-center">
                   <input
                     type="number"
@@ -501,7 +501,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+              <div className="text-xs text-gray-400">
                 Minimum: 1,000 PKR
               </div>
             </div>
@@ -509,12 +509,12 @@ export default function ExpressPay() {
 
           {/* Token Selection / Receive Section */}
           <div className="space-y-2">
-            <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+            <label className="text-xs text-gray-400 font-medium">
               {activeTab === "sell" ? "Sell Token" : "Receive"}
             </label>
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+            <div className="rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
               <div className="flex items-center h-11">
-                <div className="flex-1 px-4 py-3 text-sm font-medium text-[hsl(var(--foreground))]">
+                <div className="flex-1 px-4 py-3 text-sm font-medium text-white">
                   {activeTab === "sell"
                     ? ""
                     : receivedAmount > 0
@@ -538,7 +538,7 @@ export default function ExpressPay() {
               </div>
             </div>
             <div className="flex items-center justify-between text-xs gap-2">
-              <span className="text-[hsl(var(--muted-foreground))]">
+              <span className="text-gray-400">
                 1 {selectedCurrency} ={" "}
                 {isFinite(selectedRate) && selectedRate > 0
                   ? selectedRate.toFixed(2)
@@ -564,10 +564,10 @@ export default function ExpressPay() {
                   </div>
                 )}
               </div>
-              <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+              <label className="text-xs text-gray-400 font-medium">
                 Sell Amount {selectedCurrency}
               </label>
-              <div className="relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--input))] overflow-hidden">
+              <div className="relative rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
                 <div className="flex items-center">
                   <input
                     type="number"
@@ -583,7 +583,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+              <div className="text-xs text-gray-400">
                 {walletBalance > 0 &&
                   `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
               </div>
@@ -612,7 +612,7 @@ export default function ExpressPay() {
 
           {/* Footer Link */}
           <div className="text-center">
-            <button className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] underline">
+            <button className="text-xs text-gray-400 hover:text-[hsl(var(--primary))] underline">
               Login to post offers
             </button>
           </div>
@@ -640,28 +640,28 @@ export default function ExpressPay() {
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Transaction Summary */}
-              <div className="space-y-2 pb-4 border-b border-[hsl(var(--border))]">
+              <div className="space-y-2 pb-4 border-b border-[#2a2b2f]">
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                  <span className="text-sm text-gray-400">
                     You Pay
                   </span>
-                  <span className="font-bold text-[hsl(var(--foreground))]">
+                  <span className="font-bold text-white">
                     {Number(spendAmount).toLocaleString()} PKR
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                  <span className="text-sm text-gray-400">
                     You Receive
                   </span>
-                  <span className="font-bold text-[hsl(var(--foreground))]">
+                  <span className="font-bold text-white">
                     {receivedAmount.toFixed(6)} {selectedCurrency}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                  <span className="text-sm text-gray-400">
                     Rate
                   </span>
-                  <span className="font-bold text-[hsl(var(--foreground))]">
+                  <span className="font-bold text-white">
                     1 {selectedCurrency} ={" "}
                     {isFinite(selectedRate) && selectedRate > 0
                       ? selectedRate
@@ -673,42 +673,42 @@ export default function ExpressPay() {
 
               {/* Seller Details */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-[hsl(var(--foreground))]">
+                <h3 className="font-semibold text-sm text-white">
                   Seller Information
                 </h3>
 
-                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                <div className="p-3 rounded-lg bg-[#1a1b1e]">
+                  <div className="text-xs text-gray-400 mb-1">
                     Account Name
                   </div>
-                  <div className="font-semibold text-[hsl(var(--foreground))]">
+                  <div className="font-semibold text-white">
                     {selectedSeller.paymentDetails?.accountName ||
                       "Not provided"}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                <div className="p-3 rounded-lg bg-[#1a1b1e]">
+                  <div className="text-xs text-gray-400 mb-1">
                     Account Number
                   </div>
-                  <div className="font-semibold text-[hsl(var(--foreground))] font-mono">
+                  <div className="font-semibold text-white font-mono">
                     {selectedSeller.paymentDetails?.accountNumber ||
                       "Not provided"}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">
+                <div className="p-3 rounded-lg bg-[#1a1b1e]">
+                  <div className="text-xs text-gray-400 mb-1">
                     Payment Method
                   </div>
-                  <div className="font-semibold text-[hsl(var(--foreground))] capitalize">
+                  <div className="font-semibold text-white capitalize">
                     {selectedSeller.paymentMethod || "easypaisa"}
                   </div>
                 </div>
 
               </div>
 
-              <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+              <div className="p-3 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300">
                 <p className="text-xs text-green-800">
                   ✓ After payment, chat window will open to confirm with seller.
                 </p>
@@ -716,11 +716,11 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3 flex-shrink-0 border-t border-[hsl(var(--border))]">
+            <div className="px-6 py-4 bg-[#1a1b1e] flex gap-3 flex-shrink-0 border-t border-[#2a2b2f]">
               <Button
                 onClick={() => setShowBuyConfirmation(false)}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-[#2a2b2f] hover:bg-[#32333a] text-white font-medium text-sm"
               >
                 Cancel
               </Button>
@@ -751,41 +751,41 @@ export default function ExpressPay() {
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-[hsl(var(--secondary))] rounded-lg">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
+                  <span className="text-sm text-gray-400">
                     Token to Send
                   </span>
-                  <span className="font-bold text-[hsl(var(--foreground))]">
+                  <span className="font-bold text-white">
                     {selectedCurrency}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[hsl(var(--secondary))] rounded-lg">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
+                  <span className="text-sm text-gray-400">
                     Amount
                   </span>
-                  <span className="font-bold text-[hsl(var(--foreground))]">
+                  <span className="font-bold text-white">
                     {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[hsl(var(--secondary))] rounded-lg">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
+                  <span className="text-sm text-gray-400">
                     PKR Amount
                   </span>
-                  <span className="font-bold text-[hsl(var(--foreground))]">
+                  <span className="font-bold text-white">
                     {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 
-                <div className="p-3 bg-[hsl(var(--secondary))] rounded-lg">
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Transfer To Address</div>
+                <div className="p-3 bg-[#1a1b1e] rounded-lg">
+                  <div className="text-xs text-gray-400 mb-1">Transfer To Address</div>
                   <div className="font-mono text-sm break-all">{ADMIN_WALLET}</div>
                 </div>
 
               </div>
 
-              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <div className="p-3 rounded-lg bg-blue-900/30 border border-blue-700/40 text-blue-300">
                 <p className="text-xs text-blue-800">
                   ✓ Tokens will be transferred to buyer. Chat window will open
                   after confirmation.
@@ -794,11 +794,11 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[hsl(var(--secondary))] flex gap-3 flex-shrink-0 border-t border-[hsl(var(--border))]">
+            <div className="px-6 py-4 bg-[#1a1b1e] flex gap-3 flex-shrink-0 border-t border-[#2a2b2f]">
               <Button
                 onClick={() => setShowSellConfirmation(false)}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-[#2a2b2f] hover:bg-[#32333a] text-white font-medium text-sm"
               >
                 Cancel
               </Button>

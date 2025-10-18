@@ -530,7 +530,7 @@ export default function ExpressPay() {
             <label className="text-xs text-gray-400 font-medium">
               {activeTab === "sell" ? "Sell Token" : "Receive"}
             </label>
-            <div className="rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
+            <div className="rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
               <div className="flex items-center h-11">
                 <div className="flex-1 px-4 py-3 text-sm font-medium text-white">
                   {activeTab === "sell"
@@ -543,7 +543,7 @@ export default function ExpressPay() {
                   <select
                     value={selectedCurrency}
                     onChange={(e) => setSelectedCurrency(e.target.value)}
-                    className="appearance-none bg-white/10 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
+                    className="appearance-none bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 px-3 py-3 pr-7 text-xs font-bold text-[#FF7A5C] outline-none cursor-pointer"
                   >
                     {currencies.map((cur) => (
                       <option key={cur} value={cur}>
@@ -551,7 +551,7 @@ export default function ExpressPay() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#FF7A5C] pointer-events-none" />
                 </div>
               </div>
             </div>

@@ -120,7 +120,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl overflow-hidden">
+        <div className="bg-transparent border-0 rounded-2xl overflow-hidden">
           {/* Price Section (inside single card) */}
           <PriceCard
             token={displayToken}

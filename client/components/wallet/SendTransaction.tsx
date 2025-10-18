@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Transaction,
   SystemProgram,

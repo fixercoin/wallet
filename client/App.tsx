@@ -35,6 +35,8 @@ import BuyCrypto from "./pages/BuyCrypto";
 import BuyNote from "./pages/BuyNote";
 import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";
+import OrdersList from "./pages/OrdersList";
+import OrderDetail from "./pages/OrderDetail";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,8 @@ function AppRoutes() {
       <Route path="/buynote" element={<BuyNote />} />
       <Route path="/sellnote" element={<SellNote />} />
       <Route path="/verify-sell" element={<VerifySell />} />
+      <Route path="/orders/:status" element={<OrdersList />} />
+      <Route path="/order/:orderId" element={<OrderDetail />} />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />

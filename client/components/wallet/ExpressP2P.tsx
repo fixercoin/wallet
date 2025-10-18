@@ -142,9 +142,11 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const symbolToMint = (sym: string): string | null => {
     const s = String(sym || "").toUpperCase();
     const known: Record<string, string> = {
-      SOL: "So11111111111111111111111111111111111111112",
-      USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-      FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+      SOL: TOKEN_MINTS.SOL,
+      USDC: TOKEN_MINTS.USDC,
+      USDT: TOKEN_MINTS.USDT,
+      FIXERCOIN: TOKEN_MINTS.FIXERCOIN,
+      LOCKER: TOKEN_MINTS.LOCKER,
     };
     if (known[s]) return known[s];
     const t = tokens.find((x) => String(x.symbol || "").toUpperCase() === s);

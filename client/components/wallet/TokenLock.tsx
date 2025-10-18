@@ -715,15 +715,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             <div className="text-xs uppercase tracking-wide text-purple-500">
               SPL Token Lock
             </div>
-            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]"></h1>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            <h1 className="text-xl font-semibold text-white"></h1>
+            <p className="text-xs text-gray-300">
               Securely hold tokens without rewards. Unlock manually after the
               lock ends.
             </p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-5">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-5 text-white">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
@@ -732,7 +732,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+              <Label className="text-xs text-white">
                 Select token
               </Label>
               <Select
@@ -750,7 +750,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         <span className="font-medium text-sm">
                           {token.symbol || token.name || token.mint.slice(0, 6)}
                         </span>
-                        <span className="text-[10px] text-gray-500 uppercase">
+                        <span className="text-[10px] text-gray-400 uppercase">
                           Balance: {(token.balance || 0).toLocaleString()}
                         </span>
                       </div>
@@ -761,7 +761,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+              <Label className="text-xs text-white">
                 Amount to lock
               </Label>
               <Input
@@ -772,7 +772,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 className="mt-1"
               />
               {selectedToken ? (
-                <p className="text-[10px] text-gray-500 mt-1">
+                <p className="text-[10px] text-gray-400 mt-1">
                   Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
                   {selectedToken.symbol}
                 </p>
@@ -780,7 +780,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
+              <Label className="text-xs text-white">
                 Lock duration
               </Label>
               <Select
@@ -802,7 +802,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <Button
-              className="w-full h-11 dash-btn font-semibold border-0"
+              className="w-full h-11 font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
               onClick={handleSubmit}
               disabled={isFormDisabled}
             >
@@ -821,11 +821,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-4">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-purple-500" />
-              <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              <span className="text-sm font-semibold text-white">
                 Active locks
               </span>
             </div>
@@ -837,7 +837,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
           <div className="space-y-4">
             {locks.length === 0 ? (
-              <div className="text-center py-6 text-sm text-gray-500">
+              <div className="text-center py-6 text-sm text-gray-300">
                 No token locks yet. Create one above to get started.
               </div>
             ) : (
@@ -852,17 +852,17 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 space-y-3"
+                    className="p-4 rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 space-y-3 text-white"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                        <div className="text-sm font-semibold text-white">
                           {lock.amount} {lock.symbol}
                         </div>
-                        <div className="text-[10px] text-gray-500">
+                        <div className="text-[10px] text-gray-400">
                           Locked on {formatDateTime(lock.createdAt)}
                         </div>
-                        <div className="text-[10px] text-gray-500 mt-1">
+                        <div className="text-[10px] text-gray-400 mt-1">
                           Held by:{" "}
                           <a
                             className="font-medium text-orange-500 underline-offset-4 hover:underline"
@@ -875,7 +875,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         </div>
                       </div>
                       {lock.lockSignature || lock.withdrawSignature ? (
-                        <div className="text-[10px] text-gray-500 mt-1">
+                        <div className="text-[10px] text-gray-400 mt-1">
                           {lock.lockSignature ? (
                             <>
                               Lock tx:{" "}
@@ -933,7 +933,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         <span>{Math.round(progress)}%</span>
                       </div>
                       <Progress value={progress} className="h-2" />
-                      <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
+                      <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-400">
                         <div>Unlocks on {formatDateTime(lock.unlockAt)}</div>
                         <div className="text-right">
                           {isUnlocked
@@ -947,7 +947,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       <div></div>
                       <Button
                         size="sm"
-                        className="dash-btn h-9 px-4 text-xs font-semibold"
+                        className="h-9 px-4 text-xs font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
                         onClick={() => performWithdraw(lock)}
                         disabled={!canWithdraw}
                       >

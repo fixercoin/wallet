@@ -352,7 +352,7 @@ export default function BuyCrypto() {
                       if (token) setSelectedToken(token);
                     }}
                   >
-                    <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                    <SelectTrigger className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2540] border-none">
@@ -380,7 +380,7 @@ export default function BuyCrypto() {
                     value={amountPKR}
                     onChange={(e) => setAmountPKR(e.target.value)}
                     placeholder="Enter amount in PKR"
-                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                     min="0"
                     step="100"
                   />
@@ -453,7 +453,7 @@ export default function BuyCrypto() {
                       if (token) setSelectedToken(token);
                     }}
                   >
-                    <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                    <SelectTrigger className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2540] border-none">
@@ -492,7 +492,7 @@ export default function BuyCrypto() {
                     value={sellAmountTokens}
                     onChange={(e) => setSellAmountTokens(e.target.value)}
                     placeholder={`Enter amount in ${selectedToken.symbol}`}
-                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                     min="0"
                     step="0.000001"
                   />

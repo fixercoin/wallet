@@ -105,14 +105,6 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
             </div>
           </div>
 
-          {/* Copy Button */}
-          <Button
-            onClick={handleCopyAddress}
-            className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Copy Address
-          </Button>
         </div>
       </div>
     </div>

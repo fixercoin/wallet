@@ -65,13 +65,6 @@ const DEFAULT_TOKENS: TokenOption[] = [
     logo: "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
     mint: SUPPORTED_TOKEN_MINTS.USDT,
   },
-  {
-    id: "LOCKER",
-    name: "Locker",
-    symbol: "LOCKER",
-    logo: "https://raw.githubusercontent.com/Fixorium/token-list/main/assets/locker.png",
-    mint: SUPPORTED_TOKEN_MINTS.LOCKER,
-  },
 ];
 
 export default function BuyCrypto() {

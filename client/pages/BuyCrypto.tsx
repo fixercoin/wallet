@@ -323,33 +323,12 @@ export default function BuyCrypto() {
                 }}
               >
                 <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-5 h-5">
-                      <AvatarImage src={selectedToken.logo} alt={selectedToken.symbol} />
-                      <AvatarFallback className="bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] text-white text-xs">
-                        {selectedToken.symbol[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <SelectValue />
-                  </div>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1a2540] border-none">
                   {tokens.map((token) => (
                     <SelectItem key={token.id} value={token.id} className="text-white">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-5 h-5">
-                          <AvatarImage src={token.logo} alt={token.symbol} />
-                          <AvatarFallback className="bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] text-white text-xs">
-                            {token.symbol[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{token.symbol}</span>
-                        {token.price && (
-                          <span className="text-white/60">
-                            ₨{token.price.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
+                      {token.symbol}
                     </SelectItem>
                   ))}
                 </SelectContent>

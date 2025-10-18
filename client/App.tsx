@@ -31,6 +31,7 @@ import ExpressPendingOrders from "./pages/ExpressPendingOrders";
 import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
 import ExpressPostView from "./pages/ExpressPostView";
 import ExpressStartTrade from "./pages/ExpressStartTrade";
+import BuyCrypto from "./pages/BuyCrypto";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />

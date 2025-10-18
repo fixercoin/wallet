@@ -697,7 +697,7 @@ export default function ExpressPay() {
               </div>
 
               {/* Seller Details */}
-              <div className="space-y-3">
+              <div className="space-y-3 text-white">
                 <h3 className="font-semibold text-sm text-white">
                   Seller Information
                 </h3>

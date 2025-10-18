@@ -372,9 +372,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
       {/* Header */}
-      <div className="bg-transparent sticky top-0 z-10">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
           <div className="flex items-center gap-3 text-white font-bold tracking-wide">
             <img
@@ -444,38 +448,97 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}
-        <div className="text-center space-y-1 mb-8">
-          <div
-            className="text-sm font-semibold text-white"
-            style={{ fontSize: 14 }}
-          >
-            TOTAL BALANCE
-          </div>
-          <div className="text-sm text-gray-300" style={{ fontSize: 14 }}>
-            {wallet
-              ? (() => {
-                  const total = getTotalPortfolioValue();
-                  const hasAnyBalance =
-                    tokens.some(
-                      (t) => typeof t.balance === "number" && t.balance > 0,
-                    ) ||
-                    (typeof balance === "number" && balance > 0);
-                  // If wallet has no balances, don't show any amount
-                  if (!hasAnyBalance) return null;
+        <div className="text-center space-y-2 mb-8">
+          {wallet
+            ? (() => {
+                const total = getTotalPortfolioValue();
+                const hasAnyBalance =
+                  tokens.some(
+                    (t) => typeof t.balance === "number" && t.balance > 0,
+                  ) ||
+                  (typeof balance === "number" && balance > 0);
+                // If wallet has no balances, don't show any amount
+                if (!hasAnyBalance) return null;
 
-                  return (
-                    <div className="text-[30px] font-semibold text-white leading-tight">
+                // Calculate 24h change
+                let totalChange24h = 0;
+                let hasValidPriceChange = false;
+                tokens.forEach((token) => {
+                  if (
+                    typeof token.balance === "number" &&
+                    typeof token.price === "number" &&
+                    typeof token.priceChange24h === "number" &&
+                    isFinite(token.balance) &&
+                    isFinite(token.price) &&
+                    isFinite(token.priceChange24h) &&
+                    token.balance > 0 &&
+                    token.price > 0
+                  ) {
+                    const currentValue = token.balance * token.price;
+                    const previousPrice =
+                      token.price / (1 + token.priceChange24h / 100);
+                    const previousValue = token.balance * previousPrice;
+                    const change = currentValue - previousValue;
+                    totalChange24h += change;
+                    hasValidPriceChange = true;
+                  }
+                });
+
+                const change24hPercent = hasValidPriceChange
+                  ? (totalChange24h / (total - totalChange24h)) * 100
+                  : 0;
+                const isPositive = totalChange24h >= 0;
+
+                return (
+                  <>
+                    <div className="text-[40px] font-bold text-white leading-tight">
+                      $
                       {total.toLocaleString(undefined, {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}
                     </div>
-                  );
-                })()
-              : "Connect wallet to see balance"}
-          </div>
+                    {hasValidPriceChange && (
+                      <div className="flex items-center justify-center gap-2">
+                        {isPositive ? (
+                          <>
+                            <ArrowUpRight className="h-4 w-4 text-green-400" />
+                            <span className="text-sm font-medium text-green-400">
+                              +$
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}{" "}
+                              (+{change24hPercent.toFixed(2)}%)
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDownLeft className="h-4 w-4 text-red-400" />
+                            <span className="text-sm font-medium text-red-400">
+                              -$
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}{" "}
+                              ({change24hPercent.toFixed(2)}%)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            : "Connect wallet to see balance"}
         </div>
 
         {/* Action Buttons */}

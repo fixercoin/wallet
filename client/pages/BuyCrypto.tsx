@@ -397,7 +397,7 @@ export default function BuyCrypto() {
                   Processing...
                 </>
               ) : (
-                `Pay ₨${Number(amountPKR).toLocaleString() || 0} & Buy ${selectedToken.symbol}`
+                `PAY TO BUY ${selectedToken.symbol}`
               )}
             </Button>
 

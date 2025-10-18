@@ -251,6 +251,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
+                  className="bg-transparent border-[#FF7A5C]/30 text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -260,6 +261,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
+                  className="bg-transparent border-[#FF7A5C]/30 text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -269,6 +271,7 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
+                  className="bg-transparent border-[#FF7A5C]/30 text-white"
                 />
               </div>
               <div className="text-xs text-gray-400">

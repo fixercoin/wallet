@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, Menu } from "lucide-react";
+import { ArrowLeft, Loader2, Menu, ChevronDown } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { dexscreenerAPI, type DexscreenerToken } from "@/lib/services/dexscreener";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,44 +15,66 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TokenOption {
   id: string;
   name: string;
   symbol: string;
   logo: string;
+  mint?: string;
+  price?: number;
 }
 
-const SUPPORTED_TOKENS: TokenOption[] = [
+const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
+  FIXERCOIN: "FixZjx2QQk2f8q1ZuTaWjXKLmnq3Y7jFGt8CyHEMPjX",
+  SOL: "So11111111111111111111111111111111111111112",
+  USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
+  USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+  LOCKER: "LockerToken1111111111111111111111111111111",
+};
+
+const DEFAULT_TOKENS: TokenOption[] = [
   {
     id: "FIXERCOIN",
     name: "Fixercoin",
     symbol: "FIXERCOIN",
     logo: "https://raw.githubusercontent.com/Fixorium/token-list/main/assets/fixercoin.png",
+    mint: SUPPORTED_TOKEN_MINTS.FIXERCOIN,
   },
   {
     id: "SOL",
     name: "Solana",
     symbol: "SOL",
     logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+    mint: SUPPORTED_TOKEN_MINTS.SOL,
   },
   {
     id: "USDC",
     name: "USDC",
     symbol: "USDC",
     logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q/logo.png",
+    mint: SUPPORTED_TOKEN_MINTS.USDC,
   },
   {
     id: "USDT",
     name: "Tether",
     symbol: "USDT",
     logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
+    mint: SUPPORTED_TOKEN_MINTS.USDT,
   },
   {
     id: "LOCKER",
     name: "Locker",
     symbol: "LOCKER",
     logo: "https://raw.githubusercontent.com/Fixorium/token-list/main/assets/locker.png",
+    mint: SUPPORTED_TOKEN_MINTS.LOCKER,
   },
 ];
 

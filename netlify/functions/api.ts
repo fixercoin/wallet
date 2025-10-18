@@ -506,7 +506,9 @@ export const handler = async (event: any) => {
 
     // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
     if (path === "/exchange-rate" && method === "GET") {
-      const token = (event.queryStringParameters?.token || "FIXERCOIN").toUpperCase();
+      const token = (
+        event.queryStringParameters?.token || "FIXERCOIN"
+      ).toUpperCase();
 
       // Known Solana token mints
       const TOKEN_MINTS: Record<string, string> = {
@@ -535,7 +537,10 @@ export const handler = async (event: any) => {
         } else if (TOKEN_MINTS[token]) {
           const data = await fetchDexData(`/tokens/${TOKEN_MINTS[token]}`);
           const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-          const price = pairs.length > 0 && pairs[0]?.priceUsd ? Number(pairs[0].priceUsd) : null;
+          const price =
+            pairs.length > 0 && pairs[0]?.priceUsd
+              ? Number(pairs[0].priceUsd)
+              : null;
           if (typeof price === "number" && isFinite(price) && price > 0) {
             priceUsd = price;
           }
@@ -793,7 +798,8 @@ export const handler = async (event: any) => {
       const SOL_MINT = "So11111111111111111111111111111111111111112";
       if (!mints.includes(SOL_MINT)) mints.unshift(SOL_MINT);
 
-      if (mints.length === 0) return jsonResponse(200, { total: 0, missing: 0, missingMints: [] });
+      if (mints.length === 0)
+        return jsonResponse(200, { total: 0, missing: 0, missingMints: [] });
 
       // DexScreener fetch for these mints
       const data = await fetchDexData(`/tokens/${mints.join(",")}`);
@@ -807,11 +813,14 @@ export const handler = async (event: any) => {
         // Stablecoins are shown as 0% if no data
         if (mint === USDC_MINT || mint === USDT_MINT) return;
         const t = pairs.find(
-          (p) => p?.baseToken?.address === mint || p?.quoteToken?.address === mint,
+          (p) =>
+            p?.baseToken?.address === mint || p?.quoteToken?.address === mint,
         );
         const pc = t?.priceChange || {};
         const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-        const has = candidates.some((v) => typeof v === "number" && isFinite(v));
+        const has = candidates.some(
+          (v) => typeof v === "number" && isFinite(v),
+        );
         if (!has) missing.push(mint);
       });
 

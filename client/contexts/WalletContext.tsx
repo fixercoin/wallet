@@ -431,7 +431,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             const dexMap = new Map<string, any>();
             dexTokens.forEach((t) => {
               const matchMint = mintsToFetch.find(
-                (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
+                (m) =>
+                  m === t.baseToken?.address || m === t.quoteToken?.address,
               );
               if (matchMint) dexMap.set(matchMint, t);
             });

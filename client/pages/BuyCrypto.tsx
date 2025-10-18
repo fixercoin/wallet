@@ -412,7 +412,7 @@ export default function BuyCrypto() {
                   Processing...
                 </>
               ) : (
-                `PAY TO BUY ${selectedToken.symbol}`
+                `PAY TO BUY CRYPTO CURRENCY`
               )}
             </Button>
 

@@ -129,6 +129,24 @@ export default function BuyTrade() {
         title: "Transfer complete",
         description: "Check assets in wallet",
       });
+      try {
+        const completedRaw = localStorage.getItem("orders_completed");
+        const completed = completedRaw ? JSON.parse(completedRaw) : [];
+        const orderToSave = order
+          ? { ...order, status: "completed", completedAt: Date.now() }
+          : null;
+        if (orderToSave) {
+          completed.unshift(orderToSave);
+          localStorage.setItem("orders_completed", JSON.stringify(completed));
+        }
+        const pendingRaw = localStorage.getItem("orders_pending");
+        const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+        const filtered =
+          Array.isArray(pending) && order?.id
+            ? pending.filter((o: any) => o.id !== order.id)
+            : pending;
+        localStorage.setItem("orders_pending", JSON.stringify(filtered));
+      } catch {}
       setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
     } else if (payload.type === "order_failed") {
       setFailMsg(String(payload.reason || "Order could not complete"));

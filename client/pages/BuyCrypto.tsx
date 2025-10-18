@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
-import { shortenAddress } from "@/lib/wallet";
 
 interface TokenOption {
   id: string;
@@ -83,6 +82,39 @@ export default function BuyCrypto() {
   const [fetchingRate, setFetchingRate] = useState(false);
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [completedCount, setCompletedCount] = useState<number>(0);
+
+  const refreshCounts = () => {
+    try {
+      const p = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const c = JSON.parse(localStorage.getItem("orders_completed") || "[]");
+      setPendingCount(Array.isArray(p) ? p.length : 0);
+      setCompletedCount(Array.isArray(c) ? c.length : 0);
+    } catch {
+      setPendingCount(0);
+      setCompletedCount(0);
+    }
+  };
+
+  useEffect(() => {
+    refreshCounts();
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key.includes("orders_")) refreshCounts();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const addPendingOrder = (o: any) => {
+    try {
+      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const arr = Array.isArray(cur) ? cur : [];
+      arr.unshift({ ...o, status: "pending" });
+      localStorage.setItem("orders_pending", JSON.stringify(arr));
+    } catch {}
+    refreshCounts();
+  };
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
       (tk) =>
@@ -170,33 +202,24 @@ export default function BuyCrypto() {
 
     setLoading(true);
     try {
-      send?.({
-        type: "chat",
-        text: JSON.stringify({
-          type: "buyer_request",
-          token: selectedToken.id,
-          amountPKR: Number(amountPKR),
-          pricePKRPerQuote,
-          paymentMethod: "easypaisa",
-          seller: {
-            accountName: "ameer nawaz khan",
-            accountNumber: "030107044833",
-          },
-          buyerWallet: wallet.publicKey,
-        }),
-      });
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            token: selectedToken.id,
-            quoteAsset: selectedToken.id,
-            pricePKRPerQuote,
-            paymentMethod: "easypaisa",
-          },
-          openChat: true,
-          initialPhase: "awaiting_seller_approval",
+      const order = {
+        id: `ORD-${Date.now()}`,
+        token: selectedToken.id,
+        amountPKR: Number(amountPKR),
+        pricePKRPerQuote,
+        paymentMethod: "easypaisa",
+        seller: {
+          accountName: "ameer nawaz khan",
+          accountNumber: "030107044833",
         },
-      });
+        buyerWallet: wallet.publicKey,
+        createdAt: Date.now(),
+      };
+      try {
+        localStorage.setItem("buynote_order", JSON.stringify(order));
+      } catch {}
+      addPendingOrder(order);
+      navigate("/buynote");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",
@@ -232,35 +255,22 @@ export default function BuyCrypto() {
       return;
     }
     try {
-      send?.({
-        type: "chat",
-        text: JSON.stringify({
-          type: "seller_offer",
-          token: selectedToken.id,
-          amountTokens: amount,
-          sellerWallet: wallet.publicKey,
-          adminWallet: ADMIN_WALLET,
-        }),
-      });
-      toast({
-        title: "Sell request sent",
-        description: `Offer to sell ${amount} ${selectedToken.id} sent in chat`,
-      });
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            id: `sell-${Date.now()}`,
-            type: "sell",
-            token: selectedToken.id,
-            amountPKR: amount * exchangeRate,
-            pricePKRPerQuote: exchangeRate,
-            quoteAsset: selectedToken.id,
-            paymentMethod: "easypaisa",
-          },
-          openChat: true,
-          initialPhase: "awaiting_seller_approval",
-        },
-      });
+      const order = {
+        id: `SELL-${Date.now()}`,
+        token: selectedToken.id,
+        amountTokens: amount,
+        amountPKR: amount * exchangeRate,
+        pricePKRPerQuote: exchangeRate,
+        paymentMethod: "easypaisa",
+        sellerWallet: wallet.publicKey,
+        adminWallet: ADMIN_WALLET,
+        createdAt: Date.now(),
+      };
+      try {
+        localStorage.setItem("sellnote_order", JSON.stringify(order));
+      } catch {}
+      addPendingOrder(order);
+      navigate("/sellnote");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",
@@ -279,7 +289,7 @@ export default function BuyCrypto() {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
             className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
@@ -287,6 +297,28 @@ export default function BuyCrypto() {
           >
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
+          <div className="flex items-center gap-4 text-white/80 text-[10px]">
+            <span
+              onClick={() => navigate("/orders/completed")}
+              className="cursor-pointer hover:text-white"
+            >
+              COMPLETED{" "}
+              <span className="font-semibold text-white">{completedCount}</span>
+            </span>
+            <span
+              onClick={() => navigate("/orders/pending")}
+              className="cursor-pointer hover:text-white"
+            >
+              PENDING{" "}
+              <span className="font-semibold text-white">{pendingCount}</span>
+            </span>
+          </div>
+          <a
+            href="mailto:info@fixorium.com.pk"
+            className="ml-auto text-white/80 text-[10px] hover:text-white"
+          >
+            PUT APPEAL
+          </a>
         </div>
       </div>
 
@@ -329,7 +361,7 @@ export default function BuyCrypto() {
                       if (token) setSelectedToken(token);
                     }}
                   >
-                    <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                    <SelectTrigger className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2540] border-none">
@@ -346,8 +378,6 @@ export default function BuyCrypto() {
                   </Select>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
-
                 <div>
                   <label className="block font-medium text-white/80 mb-2">
                     Amount (PKR)
@@ -357,13 +387,11 @@ export default function BuyCrypto() {
                     value={amountPKR}
                     onChange={(e) => setAmountPKR(e.target.value)}
                     placeholder="Enter amount in PKR"
-                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                     min="0"
                     step="100"
                   />
                 </div>
-
-                <Separator className="bg-[#FF7A5C]/20" />
 
                 <div className="bg-transparent p-4 rounded-lg">
                   <div className="space-y-3">
@@ -383,7 +411,7 @@ export default function BuyCrypto() {
                         </span>
                       )}
                     </div>
-                    <Separator className="bg-[#FF7A5C]/20" />
+
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
@@ -392,8 +420,6 @@ export default function BuyCrypto() {
                     </div>
                   </div>
                 </div>
-
-                <Separator className="bg-[#FF7A5C]/20" />
 
                 <Button
                   onClick={handleBuyClick}
@@ -430,7 +456,7 @@ export default function BuyCrypto() {
                       if (token) setSelectedToken(token);
                     }}
                   >
-                    <SelectTrigger className="bg-[#1a2540]/50 border-none focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                    <SelectTrigger className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2540] border-none">
@@ -447,24 +473,14 @@ export default function BuyCrypto() {
                   </Select>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
-
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                  <div className="text-xs opacity-80">Wallet Address</div>
-                  <div className="font-mono text-sm break-all">
-                    {wallet
-                      ? shortenAddress(wallet.publicKey, 8)
-                      : "Not connected"}
-                  </div>
-                  <div className="mt-2 text-xs">
-                    Available:{" "}
+                  <div className="text-xs opacity-80">Available Balance</div>
+                  <div className="mt-1 text-sm">
                     <span className="font-semibold">
                       {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
                     </span>
                   </div>
                 </div>
-
-                <Separator className="bg-[#FF7A5C]/20" />
 
                 <div>
                   <label className="block font-medium text-white/80 mb-2">
@@ -475,13 +491,11 @@ export default function BuyCrypto() {
                     value={sellAmountTokens}
                     onChange={(e) => setSellAmountTokens(e.target.value)}
                     placeholder={`Enter amount in ${selectedToken.symbol}`}
-                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                    className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                     min="0"
                     step="0.000001"
                   />
                 </div>
-
-                <Separator className="bg-[#FF7A5C]/20" />
 
                 <div className="bg-transparent p-4 rounded-lg">
                   <div className="space-y-3">
@@ -501,7 +515,7 @@ export default function BuyCrypto() {
                         </span>
                       )}
                     </div>
-                    <Separator className="bg-[#FF7A5C]/20" />
+
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
@@ -513,8 +527,6 @@ export default function BuyCrypto() {
                     </div>
                   </div>
                 </div>
-
-                <Separator className="bg-[#FF7A5C]/20" />
 
                 <Button
                   onClick={handleSellClick}

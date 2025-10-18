@@ -475,14 +475,14 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[hsl(var(--foreground))] p-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
       <div className="max-w-md mx-auto">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="text-white hover:bg-[#FF7A5C]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -491,14 +491,14 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           </h1>
         </div>
 
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm p-6 rounded-lg">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 p-6 rounded-2xl">
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-300">
                 Select Token (only available here)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] mt-2">
+                <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
                 <SelectContent className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
@@ -520,7 +520,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                  className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}
@@ -537,7 +537,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 semicolons)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] rounded-md h-40 font-mono text-sm"
+                className="w-full mt-2 p-2 bg-[#1a2540]/50 text-white rounded-md h-40 font-mono text-sm border border-[#FF7A5C]/30 placeholder:text-gray-300"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"
@@ -555,7 +555,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 onClick={validateAndStart}
                 disabled={isRunning || recipients.length === 0}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg"
+                className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
               >
                 {isRunning
                   ? `Running (${progress.sent}/${progress.total})`
@@ -564,7 +564,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 variant="outline"
                 onClick={handleDownloadList}
-                className="bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white"
               >
                 LIST
               </Button>

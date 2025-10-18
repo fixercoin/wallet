@@ -377,7 +377,7 @@ export default function BuyCrypto() {
             <Separator className="bg-[#FF7A5C]/20" />
 
             {/* Exchange Rate & Calculation */}
-            <div className="bg-gradient-to-r from-[#1a2540]/60 to-[#1f2d48]/60 p-4 rounded-lg">
+            <div className="bg-transparent p-4 rounded-lg">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-white/70">Exchange Rate:</span>

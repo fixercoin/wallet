@@ -8,7 +8,13 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
@@ -169,11 +175,19 @@ export default function BuyCrypto() {
 
   const handleBuyClick = async () => {
     if (!wallet) {
-      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
       return;
     }
     if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
-      toast({ title: "Invalid Amount", description: "Enter a valid PKR amount", variant: "destructive" });
+      toast({
+        title: "Invalid Amount",
+        description: "Enter a valid PKR amount",
+        variant: "destructive",
+      });
       return;
     }
     try {
@@ -206,20 +220,32 @@ export default function BuyCrypto() {
         },
       });
     } catch (error: any) {
-      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
+      toast({
+        title: "Failed to start chat",
+        description: error?.message || String(error),
+        variant: "destructive",
+      });
     }
   };
 
   const handleSellClick = () => {
     if (!wallet) {
-      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
       return;
     }
     const tokenMeta = walletTokens.find((t) => t.mint === sellTokenMint);
     const symbol = (tokenMeta?.symbol || "").toUpperCase();
     const amount = Number(sellAmount);
     if (!symbol || !isFinite(amount) || amount <= 0) {
-      toast({ title: "Invalid Amount", description: "Enter token amount to sell", variant: "destructive" });
+      toast({
+        title: "Invalid Amount",
+        description: "Enter token amount to sell",
+        variant: "destructive",
+      });
       return;
     }
     send?.({
@@ -232,7 +258,10 @@ export default function BuyCrypto() {
         adminWallet: ADMIN_WALLET,
       }),
     });
-    toast({ title: "Sell request sent", description: `Offer to sell ${amount} ${symbol} sent in chat` });
+    toast({
+      title: "Sell request sent",
+      description: `Offer to sell ${amount} ${symbol} sent in chat`,
+    });
     navigate("/express/buy-trade", { state: { openChat: true } });
   };
 

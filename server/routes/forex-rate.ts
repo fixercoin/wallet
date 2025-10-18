@@ -2,8 +2,8 @@ import { RequestHandler } from "express";
 
 export const handleForexRate: RequestHandler = async (req, res) => {
   try {
-    const base = String((req.query.base || "USD")).toUpperCase();
-    const symbols = String((req.query.symbols || "PKR")).toUpperCase();
+    const base = String(req.query.base || "USD").toUpperCase();
+    const symbols = String(req.query.symbols || "PKR").toUpperCase();
     const firstSymbol = symbols.split(",")[0];
     const PROVIDER_TIMEOUT_MS = 5000;
 
@@ -50,7 +50,10 @@ export const handleForexRate: RequestHandler = async (req, res) => {
       provider: (typeof providers)[number],
     ): Promise<{ rate: number; provider: string }> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        PROVIDER_TIMEOUT_MS,
+      );
       try {
         const resp = await fetch(provider.url, {
           headers: {
@@ -83,17 +86,19 @@ export const handleForexRate: RequestHandler = async (req, res) => {
       if (typeof (Promise as any).any === "function") {
         return (Promise as any).any(attempts);
       }
-      return new Promise<{ rate: number; provider: string }>((resolve, reject) => {
-        const errors: string[] = [];
-        let remaining = attempts.length;
-        attempts.forEach((attempt) => {
-          attempt.then(resolve).catch((err) => {
-            errors.push(err instanceof Error ? err.message : String(err));
-            remaining -= 1;
-            if (remaining === 0) reject(new Error(errors.join("; ")));
+      return new Promise<{ rate: number; provider: string }>(
+        (resolve, reject) => {
+          const errors: string[] = [];
+          let remaining = attempts.length;
+          attempts.forEach((attempt) => {
+            attempt.then(resolve).catch((err) => {
+              errors.push(err instanceof Error ? err.message : String(err));
+              remaining -= 1;
+              if (remaining === 0) reject(new Error(errors.join("; ")));
+            });
           });
-        });
-      });
+        },
+      );
     };
 
     try {
@@ -106,7 +111,9 @@ export const handleForexRate: RequestHandler = async (req, res) => {
       });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      res.status(502).json({ error: "Failed to fetch forex rate", details: msg });
+      res
+        .status(502)
+        .json({ error: "Failed to fetch forex rate", details: msg });
     }
   } catch (error) {
     res.status(500).json({ error: "Unexpected error" });

@@ -75,7 +75,8 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
     <div className="w-full h-64">
       {isStable && (
         <div className="text-xs text-gray-500 mb-2">
-          Stablecoin detected — buy/sell breakdown is not provided by our data sources.
+          Stablecoin detected — buy/sell breakdown is not provided by our data
+          sources.
         </div>
       )}
       {error && (

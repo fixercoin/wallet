@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 
 export const handleStable24h: RequestHandler = async (req, res) => {
   try {
-    const symbolsParam = String((req.query.symbols || "USDC,USDT")).toUpperCase();
+    const symbolsParam = String(req.query.symbols || "USDC,USDT").toUpperCase();
     const symbols = Array.from(
       new Set(
         String(symbolsParam)
@@ -43,7 +43,10 @@ export const handleStable24h: RequestHandler = async (req, res) => {
       } as any);
       clearTimeout(timeoutId);
 
-      const result: Record<string, { priceUsd: number; change24h: number; mint: string }> = {};
+      const result: Record<
+        string,
+        { priceUsd: number; change24h: number; mint: string }
+      > = {};
 
       if (resp.ok) {
         const json = await resp.json();
@@ -52,7 +55,8 @@ export const handleStable24h: RequestHandler = async (req, res) => {
           if (!meta) return;
           const d = (json as any)?.[meta.id];
           const price = typeof d?.usd === "number" ? d.usd : 1;
-          const change = typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+          const change =
+            typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
           result[sym] = { priceUsd: price, change24h: change, mint: meta.mint };
         });
       } else {
@@ -66,7 +70,10 @@ export const handleStable24h: RequestHandler = async (req, res) => {
       res.json({ data: result });
     } catch (e) {
       clearTimeout(timeoutId);
-      const result: Record<string, { priceUsd: number; change24h: number; mint: string }> = {};
+      const result: Record<
+        string,
+        { priceUsd: number; change24h: number; mint: string }
+      > = {};
       symbols.forEach((sym) => {
         const meta = COINGECKO_IDS[sym];
         if (!meta) return;

@@ -295,7 +295,7 @@ export default function BuyCrypto() {
           >
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
-          <div className="flex items-center gap-4 text-white/80 text-xs">
+          <div className="flex items-center gap-4 text-white/80 text-[10px]">
             <span
               onClick={() => navigate("/orders/completed")}
               className="cursor-pointer hover:text-white"
@@ -309,7 +309,7 @@ export default function BuyCrypto() {
               PENDING <span className="font-semibold text-white">{pendingCount}</span>
             </span>
           </div>
-          <a href="mailto:info@fixorium.com.pk" className="ml-auto text-white/80 text-xs hover:text-white">PUT APPEAL</a>
+          <a href="mailto:info@fixorium.com.pk" className="ml-auto text-white/80 text-[10px] hover:text-white">PUT APPEAL</a>
         </div>
       </div>
 

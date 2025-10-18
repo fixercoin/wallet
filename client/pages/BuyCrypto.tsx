@@ -76,8 +76,6 @@ export default function BuyCrypto() {
     DEFAULT_TOKENS[0],
   );
   const [amountPKR, setAmountPKR] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [contact, setContact] = useState<string>("");
   const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -243,29 +241,6 @@ export default function BuyCrypto() {
                 min="0"
                 step="100"
               />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-medium text-white/80 mb-2">Email (optional)</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
-                />
-              </div>
-              <div>
-                <label className="block font-medium text-white/80 mb-2">Contact (optional)</label>
-                <input
-                  type="tel"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  placeholder="03xxxxxxxxx"
-                  className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
-                />
-              </div>
             </div>
 
             <Separator className="bg-[#FF7A5C]/20" />

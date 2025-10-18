@@ -41,7 +41,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 pt-4">
@@ -49,7 +49,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="text-white hover:bg-[#FF7A5C]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -60,7 +60,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
         <div className="space-y-6">
           {/* QR Code (simple) */}
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6">
             <div className="text-center space-y-4">
               <div className="inline-block bg-white p-3 rounded-lg">
                 <QRCode
@@ -78,9 +78,9 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
           </div>
 
           {/* Address (simple) */}
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-4">
+          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-4">
             <div className="mb-2">
-              <h3 className="text-lg text-[hsl(var(--primary))]">
+              <h3 className="text-lg text-white">
                 Your Address
               </h3>
             </div>
@@ -89,13 +89,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 <Input
                   value={wallet.publicKey}
                   readOnly
-                  className="font-mono text-sm bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-muted-foreground"
+                  className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 text-[hsl(var(--foreground))] placeholder:text-muted-foreground"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyAddress}
-                  className="shrink-0 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]/90"
+                  className="shrink-0 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
                 >
                   {copied ? (
                     <Check className="h-4 w-4" />
@@ -110,7 +110,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
           {/* Copy Button */}
           <Button
             onClick={handleCopyAddress}
-            className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg"
+            className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
           >
             <Copy className="h-4 w-4 mr-2" />
             Copy Address

@@ -723,7 +723,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-5 text-white">
+        <div className="bg-transparent border-0 rounded-2xl p-6 space-y-5 text-white">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
@@ -815,7 +815,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-4 text-white">
+        <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-purple-500" />

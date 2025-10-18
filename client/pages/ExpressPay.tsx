@@ -671,8 +671,8 @@ export default function ExpressPay() {
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Transaction Summary */}
-              <div className="space-y-2 pb-4 border-b border-[#FF7A5C]/30">
-                <div className="flex justify-between items-center p-2">
+              <div className="space-y-2 pb-4 border-b border-[#FF7A5C]/30 text-white">
+                <div className="flex justify-between items-center p-2 text-white">
                   <span className="text-sm text-white">You Pay</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount).toLocaleString()} PKR

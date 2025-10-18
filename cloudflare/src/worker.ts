@@ -556,12 +556,25 @@ export default {
           );
         }
 
-        // Verify Razorpay signature
-        const crypto = await import("crypto");
-        const expectedSignature = crypto
-          .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
-          .update(body)
-          .digest("hex");
+        // Verify Razorpay signature using Web Crypto API
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(env.RAZORPAY_KEY_SECRET),
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign"]
+        );
+
+        const signatureBuffer = await crypto.subtle.sign(
+          "HMAC",
+          key,
+          encoder.encode(body)
+        );
+
+        const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
 
         if (signature !== expectedSignature) {
           console.error("Signature mismatch");

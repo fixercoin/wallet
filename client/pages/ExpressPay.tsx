@@ -476,9 +476,9 @@ export default function ExpressPay() {
           {/* Spend Section (Buy) */}
           {activeTab !== "sell" && (
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs mb-1">
+              <div className="flex items-center justify-between text-xs mb-1 text-white">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Status:</span>
+                  <span className="font-medium text-white">Status:</span>
                   <span
                     className={isBuyOnline ? "text-white" : "text-white"}
                   >

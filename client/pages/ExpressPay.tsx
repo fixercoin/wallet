@@ -572,7 +572,7 @@ export default function ExpressPay() {
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Status:</span>
                   <span
-                    className={isSellOnline ? "text-green-600" : "text-red-600"}
+                    className={isSellOnline ? "text-[#FF7A5C]" : "text-red-500"}
                   >
                     {isSellOnline ? "Online" : "Offline"}
                   </span>
@@ -581,14 +581,14 @@ export default function ExpressPay() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs"
+                      className="h-7 px-2 text-xs border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/20"
                       onClick={() => setSellStatus(true)}
                     >
                       Online
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs"
+                      className="h-7 px-2 text-xs border-gray-500/50 text-gray-400 hover:bg-gray-500/10"
                       onClick={() => setSellStatus(false)}
                     >
                       Offline
@@ -599,7 +599,7 @@ export default function ExpressPay() {
               <label className="text-xs text-gray-400 font-medium">
                 Sell Amount {selectedCurrency}
               </label>
-              <div className="relative rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
+              <div className="relative rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
                 <div className="flex items-center">
                   <input
                     type="number"
@@ -608,9 +608,9 @@ export default function ExpressPay() {
                     value={spendAmount}
                     onChange={(e) => setSpendAmount(e.target.value)}
                     placeholder="0"
-                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none text-white placeholder-gray-500"
                   />
-                  <div className="px-4 py-3 bg-white/10 text-xs font-bold text-white">
+                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-[#FF7A5C]">
                     {selectedCurrency}
                   </div>
                 </div>

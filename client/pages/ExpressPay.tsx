@@ -772,22 +772,22 @@ export default function ExpressPay() {
 
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
+              <div className="space-y-3 text-white">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
                   <span className="text-sm text-white">Token to Send</span>
                   <span className="font-bold text-white">
                     {selectedCurrency}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
                   <span className="text-sm text-white">Amount</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
                   <span className="text-sm text-white">PKR Amount</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toLocaleString()} PKR

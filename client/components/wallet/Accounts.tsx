@@ -37,35 +37,38 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
           </h1>
         </div>
 
-        <div className="bg-transparent border-0 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="text-sm text-[hsl(var(--muted-foreground))]">
-                Active Wallet
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                <div className="font-semibold text-[hsl(var(--foreground))]">
-                  {wallet ? shortenAddress(wallet.publicKey, 8) : "No wallet"}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="ml-2"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))]">
+              Active Wallet
             </div>
-
-            <div>
-              <Button
-                onClick={() => onOpenSetup && onOpenSetup()}
-                className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-sm"
-                aria-label="Add wallet"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="w-full">
+              <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md p-4 flex items-center justify-between">
+                <div className="min-w-0">
+                  <div className="text-xs text-gray-300 mb-1">Address</div>
+                  <div className="font-mono text-sm break-all text-white">
+                    {wallet ? shortenAddress(wallet.publicKey, 8) : "No wallet"}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    aria-label="Copy address"
+                    className="text-white hover:bg-[#FF7A5C]/10"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={() => onOpenSetup && onOpenSetup()}
+                    className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-sm"
+                    aria-label="Add wallet"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
 

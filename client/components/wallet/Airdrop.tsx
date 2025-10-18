@@ -491,7 +491,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           </h1>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 p-6 rounded-2xl">
+        <div className="bg-transparent border-0 p-6 rounded-2xl">
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-300">

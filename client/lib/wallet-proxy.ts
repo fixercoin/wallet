@@ -96,6 +96,14 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 6,
     logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
   },
+  {
+    mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+    symbol: "LOCKER",
+    name: "LOCKER",
+    decimals: 6,
+    logoURI:
+      "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+  },
 ];
 
 const SOLANA_DERIVATION_PATH = "m/44'/501'/0'/0'" as const;

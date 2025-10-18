@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { PublicKey } from "@solana/web3.js";
 
 interface AddTokenDialogProps {

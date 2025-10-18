@@ -673,7 +673,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="max-w-md mx-auto relative z-10">
+      <div className="w-full md:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4 pt-2">
           <Button
@@ -695,7 +695,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         </div>
 
         {/* Card */}
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl overflow-hidden shadow-2xl text-white">
+        <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
             {/* FROM row */}
             <div>

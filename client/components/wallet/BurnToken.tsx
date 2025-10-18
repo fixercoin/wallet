@@ -493,7 +493,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 space-y-6">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -516,7 +516,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-5">
+        <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
             <span className="text-sm font-semibold text-white">
@@ -658,7 +658,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         </div>
 
         {txSig || rewardSig ? (
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-3">
+          <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6 space-y-3">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />
               <span className="text-sm font-semibold text-white">

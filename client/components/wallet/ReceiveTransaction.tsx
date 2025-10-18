@@ -42,7 +42,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-      <div className="max-w-md mx-auto">
+      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
@@ -60,7 +60,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
         <div className="space-y-6">
           {/* QR Code (simple) */}
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6">
+          <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6">
             <div className="text-center space-y-4">
               <div className="inline-block bg-white p-3 rounded-lg">
                 <QRCode
@@ -78,7 +78,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
           </div>
 
           {/* Address (simple) */}
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-4">
+          <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-4">
             <div className="mb-2">
               <h3 className="text-lg text-white">Your Address</h3>
             </div>

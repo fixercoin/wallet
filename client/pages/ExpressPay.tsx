@@ -56,7 +56,11 @@ export default function ExpressPay() {
   const { exchangeRate, setExchangeRate, isAdmin, setIsAdmin } =
     useExpressP2P();
 
-  const { send } = useDurableRoom("global", API_BASE);
+  const { events, send } = useDurableRoom("global", API_BASE);
+
+  // Online/Offline status (visible to all users; toggle only by admin)
+  const [isBuyOnline, setIsBuyOnline] = useState<boolean>(false);
+  const [isSellOnline, setIsSellOnline] = useState<boolean>(false);
 
   // Token-specific PKR rate (USDC uses exchangeRate; SOL/FIXERCOIN fetched via service)
   const [selectedRate, setSelectedRate] = useState<number>(exchangeRate);
@@ -153,6 +157,39 @@ export default function ExpressPay() {
       loadOrders();
     }
   }, [activeTab]);
+
+  // Listen for admin status messages via room chat
+  useEffect(() => {
+    const last = events[events.length - 1];
+    if (!last || last.kind !== "chat") return;
+    const txt = last.data?.text || "";
+    try {
+      const payload = JSON.parse(txt);
+      if (payload && payload.type === "admin_status") {
+        if (payload.scope === "buy" && typeof payload.online === "boolean") {
+          setIsBuyOnline(!!payload.online);
+        } else if (payload.scope === "sell" && typeof payload.online === "boolean") {
+          setIsSellOnline(!!payload.online);
+        } else {
+          if (typeof payload.buyOnline === "boolean") setIsBuyOnline(!!payload.buyOnline);
+          if (typeof payload.sellOnline === "boolean") setIsSellOnline(!!payload.sellOnline);
+        }
+      }
+    } catch {}
+  }, [events]);
+
+  const setBuyStatus = (online: boolean) => {
+    setIsBuyOnline(online);
+    try {
+      send?.({ type: "chat", text: JSON.stringify({ type: "admin_status", scope: "buy", online }) });
+    } catch {}
+  };
+  const setSellStatus = (online: boolean) => {
+    setIsSellOnline(online);
+    try {
+      send?.({ type: "chat", text: JSON.stringify({ type: "admin_status", scope: "sell", online }) });
+    } catch {}
+  };
 
   const loadOrders = async () => {
     try {
@@ -441,6 +478,20 @@ export default function ExpressPay() {
           {/* Spend Section (Buy) */}
           {activeTab !== "sell" && (
             <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Status:</span>
+                  <span className={isBuyOnline ? "text-green-600" : "text-red-600"}>
+                    {isBuyOnline ? "Online" : "Offline"}
+                  </span>
+                </div>
+                {isAdmin && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setBuyStatus(true)}>Online</Button>
+                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setBuyStatus(false)}>Offline</Button>
+                  </div>
+                )}
+              </div>
               <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
                 Spend
               </label>
@@ -509,6 +560,20 @@ export default function ExpressPay() {
 
           {activeTab === "sell" && (
             <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Status:</span>
+                  <span className={isSellOnline ? "text-green-600" : "text-red-600"}>
+                    {isSellOnline ? "Online" : "Offline"}
+                  </span>
+                </div>
+                {isAdmin && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setSellStatus(true)}>Online</Button>
+                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setSellStatus(false)}>Offline</Button>
+                  </div>
+                )}
+              </div>
               <label className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
                 Sell Amount {selectedCurrency}
               </label>

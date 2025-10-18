@@ -169,33 +169,23 @@ export default function BuyCrypto() {
 
     setLoading(true);
     try {
-      send?.({
-        type: "chat",
-        text: JSON.stringify({
-          type: "buyer_request",
-          token: selectedToken.id,
-          amountPKR: Number(amountPKR),
-          pricePKRPerQuote,
-          paymentMethod: "easypaisa",
-          seller: {
-            accountName: "ameer nawaz khan",
-            accountNumber: "030107044833",
-          },
-          buyerWallet: wallet.publicKey,
-        }),
-      });
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            token: selectedToken.id,
-            quoteAsset: selectedToken.id,
-            pricePKRPerQuote,
-            paymentMethod: "easypaisa",
-          },
-          openChat: true,
-          initialPhase: "awaiting_seller_approval",
+      const order = {
+        id: `ORD-${Date.now()}`,
+        token: selectedToken.id,
+        amountPKR: Number(amountPKR),
+        pricePKRPerQuote,
+        paymentMethod: "easypaisa",
+        seller: {
+          accountName: "ameer nawaz khan",
+          accountNumber: "030107044833",
         },
-      });
+        buyerWallet: wallet.publicKey,
+        createdAt: Date.now(),
+      };
+      try {
+        localStorage.setItem("buynote_order", JSON.stringify(order));
+      } catch {}
+      navigate("/buynote");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

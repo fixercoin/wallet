@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import {
-  dexscreenerAPI,
-  type DexscreenerToken,
-} from "@/lib/services/dexscreener";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
+import { copyToClipboard } from "@/lib/wallet";
 
 interface TokenOption {
   id: string;

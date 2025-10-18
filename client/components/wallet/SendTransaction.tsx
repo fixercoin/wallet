@@ -751,7 +751,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       </div>
 
       <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
-
         <div className="bg-transparent border-0 relative rounded-none sm:rounded-2xl">
           {isLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">

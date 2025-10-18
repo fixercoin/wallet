@@ -58,14 +58,11 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1 text-center font-medium text-sm">
-            RECEIVE
-          </div>
+          <div className="flex-1 text-center font-medium text-sm">RECEIVE</div>
         </div>
       </div>
 
       <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
-
         <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-6 text-white">
           {/* QR Code */}
           <div className="text-center space-y-4">
@@ -78,9 +75,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 level="M"
               />
             </div>
-            <p className="text-sm text-gray-300">
-              Scan to send SOL
-            </p>
+            <p className="text-sm text-gray-300">Scan to send SOL</p>
           </div>
 
           {/* Address Section */}

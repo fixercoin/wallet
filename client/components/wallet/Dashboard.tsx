@@ -477,7 +477,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     token.price > 0
                   ) {
                     const currentValue = token.balance * token.price;
-                    const previousPrice = token.price / (1 + token.priceChange24h / 100);
+                    const previousPrice =
+                      token.price / (1 + token.priceChange24h / 100);
                     const previousValue = token.balance * previousPrice;
                     const change = currentValue - previousValue;
                     totalChange24h += change;
@@ -493,7 +494,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <>
                     <div className="text-[40px] font-bold text-white leading-tight">
-                      ${total.toLocaleString(undefined, {
+                      $
+                      {total.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -504,10 +506,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <>
                             <ArrowUpRight className="h-4 w-4 text-green-400" />
                             <span className="text-sm font-medium text-green-400">
-                              +${Math.abs(totalChange24h).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}{" "}
+                              +$
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}{" "}
                               (+{change24hPercent.toFixed(2)}%)
                             </span>
                           </>
@@ -515,10 +521,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <>
                             <ArrowDownLeft className="h-4 w-4 text-red-400" />
                             <span className="text-sm font-medium text-red-400">
-                              -${Math.abs(totalChange24h).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}{" "}
+                              -$
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}{" "}
                               ({change24hPercent.toFixed(2)}%)
                             </span>
                           </>

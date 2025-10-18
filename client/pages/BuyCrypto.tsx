@@ -169,94 +169,71 @@ export default function BuyCrypto() {
 
   const handleBuyClick = async () => {
     if (!wallet) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet first",
-        variant: "destructive",
-      });
+      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
       return;
     }
-
-    if (!amountPKR || Number(amountPKR) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid amount in PKR",
-        variant: "destructive",
-      });
+    if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
+      toast({ title: "Invalid Amount", description: "Enter a valid PKR amount", variant: "destructive" });
       return;
     }
-
-    setLoading(true);
-
     try {
-      // Create payment intent with Razorpay
-      const response = await fetch("/api/payments/create-intent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          walletAddress: wallet.publicKey,
-          amount: Math.round(Number(amountPKR) * 100), // Razorpay uses smallest currency unit
-          currency: "PKR",
-          tokenType: selectedToken.id,
-          email: wallet.email || "user@fixorium.com",
-          contact: wallet.phone || "",
+      const pricePKRPerQuote = exchangeRate;
+      send?.({
+        type: "chat",
+        text: JSON.stringify({
+          type: "buyer_request",
+          token: selectedToken.id,
+          amountPKR: Number(amountPKR),
+          pricePKRPerQuote,
+          paymentMethod: "easypaisa",
+          seller: {
+            accountName: "ameer nawaz khan",
+            accountNumber: "030107044833",
+          },
+          buyerWallet: wallet.publicKey,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create payment intent");
-      }
-
-      const data = await response.json();
-
-      if (!data.orderId || !data.key) {
-        throw new Error("Invalid payment response");
-      }
-
-      // Initialize Razorpay checkout
-      const options = {
-        key: data.key,
-        amount: Math.round(Number(amountPKR) * 100),
-        currency: "PKR",
-        name: "Fixorium Wallet",
-        description: `Buy ${selectedToken.symbol}`,
-        order_id: data.orderId,
-        handler: function (response: any) {
-          toast({
-            title: "Payment Successful",
-            description: `Your wallet will be credited with ${estimatedTokens.toFixed(6)} ${selectedToken.symbol} shortly`,
-          });
-          setTimeout(() => {
-            navigate("/");
-          }, 2000);
+      navigate("/express/buy-trade", {
+        state: {
+          order: {
+            token: selectedToken.id,
+            quoteAsset: selectedToken.id,
+            pricePKRPerQuote,
+            paymentMethod: "easypaisa",
+          },
+          openChat: true,
+          initialPhase: "awaiting_seller_approval",
         },
-        prefill: {
-          email: wallet.email,
-          contact: wallet.phone,
-        },
-        theme: {
-          color: "#FF7A5C",
-        },
-      };
-
-      if ((window as any).Razorpay) {
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      } else {
-        throw new Error("Razorpay not loaded");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Payment Failed",
-        description:
-          error?.message || "An error occurred while processing payment",
-        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
     }
+  };
+
+  const handleSellClick = () => {
+    if (!wallet) {
+      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      return;
+    }
+    const tokenMeta = walletTokens.find((t) => t.mint === sellTokenMint);
+    const symbol = (tokenMeta?.symbol || "").toUpperCase();
+    const amount = Number(sellAmount);
+    if (!symbol || !isFinite(amount) || amount <= 0) {
+      toast({ title: "Invalid Amount", description: "Enter token amount to sell", variant: "destructive" });
+      return;
+    }
+    send?.({
+      type: "chat",
+      text: JSON.stringify({
+        type: "seller_offer",
+        token: symbol,
+        amountTokens: amount,
+        sellerWallet: wallet.publicKey,
+        adminWallet: ADMIN_WALLET,
+      }),
+    });
+    toast({ title: "Sell request sent", description: `Offer to sell ${amount} ${symbol} sent in chat` });
+    navigate("/express/buy-trade", { state: { openChat: true } });
   };
 
   return (

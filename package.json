@@ -59,6 +59,7 @@
     "recharts": "^3.2.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
+    "tsx": "^4.20.6",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
@@ -67,7 +68,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.3.0",
+    "typescript": "^5.9.3",
     "vite": "^5.4.20"
   },
   "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34"

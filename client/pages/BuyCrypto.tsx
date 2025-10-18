@@ -319,7 +319,7 @@ export default function BuyCrypto() {
                   </Select>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <div>
                   <label className="block font-medium text-white/80 mb-2">
@@ -336,7 +336,7 @@ export default function BuyCrypto() {
                   />
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <div className="bg-transparent p-4 rounded-lg">
                   <div className="space-y-3">
@@ -356,7 +356,7 @@ export default function BuyCrypto() {
                         </span>
                       )}
                     </div>
-                    <Separator className="bg-[#FF7A5C]/20" />
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
@@ -366,7 +366,7 @@ export default function BuyCrypto() {
                   </div>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <Button
                   onClick={handleBuyClick}
@@ -420,7 +420,7 @@ export default function BuyCrypto() {
                   </Select>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
                   <div className="text-xs opacity-80">Available Balance</div>
@@ -431,7 +431,7 @@ export default function BuyCrypto() {
                   </div>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <div>
                   <label className="block font-medium text-white/80 mb-2">
@@ -448,7 +448,7 @@ export default function BuyCrypto() {
                   />
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <div className="bg-transparent p-4 rounded-lg">
                   <div className="space-y-3">
@@ -468,7 +468,7 @@ export default function BuyCrypto() {
                         </span>
                       )}
                     </div>
-                    <Separator className="bg-[#FF7A5C]/20" />
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
@@ -481,7 +481,7 @@ export default function BuyCrypto() {
                   </div>
                 </div>
 
-                <Separator className="bg-[#FF7A5C]/20" />
+                
 
                 <Button
                   onClick={handleSellClick}

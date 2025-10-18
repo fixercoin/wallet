@@ -794,7 +794,7 @@ export default function ExpressPay() {
                   </span>
                 </div>
 
-                <div className="p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20">
+                <div className="p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
                   <div className="text-xs text-white mb-1">
                     Transfer To Address
                   </div>

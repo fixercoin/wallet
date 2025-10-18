@@ -221,35 +221,19 @@ export default function BuyCrypto() {
       return;
     }
     try {
-      send?.({
-        type: "chat",
-        text: JSON.stringify({
-          type: "seller_offer",
-          token: selectedToken.id,
-          amountTokens: amount,
-          sellerWallet: wallet.publicKey,
-          adminWallet: ADMIN_WALLET,
-        }),
-      });
-      toast({
-        title: "Sell request sent",
-        description: `Offer to sell ${amount} ${selectedToken.id} sent in chat`,
-      });
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            id: `sell-${Date.now()}`,
-            type: "sell",
-            token: selectedToken.id,
-            amountPKR: amount * exchangeRate,
-            pricePKRPerQuote: exchangeRate,
-            quoteAsset: selectedToken.id,
-            paymentMethod: "easypaisa",
-          },
-          openChat: true,
-          initialPhase: "awaiting_seller_approval",
-        },
-      });
+      const order = {
+        id: `SELL-${Date.now()}`,
+        token: selectedToken.id,
+        amountTokens: amount,
+        amountPKR: amount * exchangeRate,
+        pricePKRPerQuote: exchangeRate,
+        paymentMethod: "easypaisa",
+        sellerWallet: wallet.publicKey,
+        adminWallet: ADMIN_WALLET,
+        createdAt: Date.now(),
+      };
+      try { localStorage.setItem("sellnote_order", JSON.stringify(order)); } catch {}
+      navigate("/sellnote");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

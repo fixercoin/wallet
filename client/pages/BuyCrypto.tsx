@@ -34,7 +34,6 @@ const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
   SOL: TOKEN_MINTS.SOL,
   USDC: TOKEN_MINTS.USDC,
   USDT: TOKEN_MINTS.USDT,
-  LOCKER: TOKEN_MINTS.LOCKER,
 };
 
 const DEFAULT_TOKENS: TokenOption[] = [

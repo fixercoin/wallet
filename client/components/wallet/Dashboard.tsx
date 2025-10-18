@@ -389,6 +389,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span className="text-cream">FIXORIUM</span>
           </div>
           <div className="flex items-center gap-1 ml-auto">
+            <a href="mailto:info@fixorium.com.pk" className="text-white/80 text-xs hover:text-white mr-2">PUT APPEAL: info@fixorium.com.pk</a>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

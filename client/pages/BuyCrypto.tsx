@@ -83,14 +83,45 @@ export default function BuyCrypto() {
   const { wallet } = useWallet();
   const { toast } = useToast();
 
+  const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
-    SUPPORTED_TOKENS[0]
+    DEFAULT_TOKENS[0]
   );
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
+
+  // Fetch token data from Dexscreener
+  useEffect(() => {
+    const fetchTokens = async () => {
+      try {
+        const mints = Object.values(SUPPORTED_TOKEN_MINTS);
+        const dexTokens = await dexscreenerAPI.getTokensByMints(mints);
+
+        // Merge Dexscreener data with our token list
+        const enrichedTokens = DEFAULT_TOKENS.map((token) => {
+          const dexData = dexTokens.find(
+            (dt) => dt.baseToken.address === token.mint
+          );
+          return {
+            ...token,
+            logo: dexData?.info?.imageUrl || token.logo,
+            price: dexData?.priceUsd ? parseFloat(dexData.priceUsd) : undefined,
+          };
+        });
+
+        setTokens(enrichedTokens);
+        setSelectedToken(enrichedTokens[0]);
+      } catch (error) {
+        console.error("Error fetching tokens from Dexscreener:", error);
+        setTokens(DEFAULT_TOKENS);
+      }
+    };
+
+    fetchTokens();
+  }, []);
 
   // Fetch exchange rate for selected token
   useEffect(() => {

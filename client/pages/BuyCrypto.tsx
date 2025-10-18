@@ -7,7 +7,10 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Loader2, Menu, ChevronDown } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { dexscreenerAPI, type DexscreenerToken } from "@/lib/services/dexscreener";
+import {
+  dexscreenerAPI,
+  type DexscreenerToken,
+} from "@/lib/services/dexscreener";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +88,7 @@ export default function BuyCrypto() {
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
-    DEFAULT_TOKENS[0]
+    DEFAULT_TOKENS[0],
   );
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
@@ -103,7 +106,7 @@ export default function BuyCrypto() {
         // Merge Dexscreener data with our token list
         const enrichedTokens = DEFAULT_TOKENS.map((token) => {
           const dexData = dexTokens.find(
-            (dt) => dt.baseToken.address === token.mint
+            (dt) => dt.baseToken.address === token.mint,
           );
           return {
             ...token,
@@ -129,7 +132,7 @@ export default function BuyCrypto() {
       setFetchingRate(true);
       try {
         const response = await fetch(
-          `/api/exchange-rate?token=${selectedToken.id}`
+          `/api/exchange-rate?token=${selectedToken.id}`,
         );
         if (!response.ok) throw new Error("Failed to fetch exchange rate");
         const data = await response.json();
@@ -248,7 +251,10 @@ export default function BuyCrypto() {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]" style={{ fontSize: '10px' }}>
+    <div
+      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"
+      style={{ fontSize: "10px" }}
+    >
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
@@ -282,7 +288,10 @@ export default function BuyCrypto() {
                   <Menu className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1a2540] border-[#FF7A5C]/30">
+              <DropdownMenuContent
+                align="end"
+                className="bg-[#1a2540] border-[#FF7A5C]/30"
+              >
                 <DropdownMenuItem className="text-xs text-white hover:bg-[#FF7A5C]/20">
                   Back to Wallet
                 </DropdownMenuItem>
@@ -299,7 +308,9 @@ export default function BuyCrypto() {
         <Card className="mb-6 bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="pt-6">
             <p className="text-white/80 leading-relaxed">
-              Buy Fixercoin, Solana (SOL), USDC, USDT, or LOCKER tokens instantly with Visa or Mastercard. Payment confirmation is automatic, and your wallet balance updates right away.
+              Buy Fixercoin, Solana (SOL), USDC, USDT, or LOCKER tokens
+              instantly with Visa or Mastercard. Payment confirmation is
+              automatic, and your wallet balance updates right away.
             </p>
           </CardContent>
         </Card>
@@ -327,7 +338,11 @@ export default function BuyCrypto() {
                 </SelectTrigger>
                 <SelectContent className="bg-[#1a2540] border-none">
                   {tokens.map((token) => (
-                    <SelectItem key={token.id} value={token.id} className="text-white">
+                    <SelectItem
+                      key={token.id}
+                      value={token.id}
+                      className="text-white"
+                    >
                       {token.symbol}
                     </SelectItem>
                   ))}

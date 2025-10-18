@@ -76,11 +76,13 @@ The current implementation uses mock exchange rates. To use real rates, replace 
 
 ```typescript
 // Example: Call an external price API
-const rates = await fetch('https://api.coingecko.com/api/v3/...')
-  .then(r => r.json());
+const rates = await fetch("https://api.coingecko.com/api/v3/...").then((r) =>
+  r.json(),
+);
 ```
 
 Current mock rates:
+
 - FIXERCOIN: 0.0003 PKR per token
 - SOL: 6000 PKR per token
 - USDC: 280 PKR per token
@@ -90,9 +92,11 @@ Current mock rates:
 ## API Endpoints
 
 ### 1. Create Payment Intent
+
 **POST** `/api/payments/create-intent`
 
 Request:
+
 ```json
 {
   "walletAddress": "Aso...xxx",
@@ -105,6 +109,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "orderId": "order_xxx",
@@ -115,18 +120,22 @@ Response:
 ```
 
 ### 2. Payment Webhook
+
 **POST** `/api/webhooks/payment`
 
 Razorpay sends webhook events here. The worker:
+
 - Verifies the webhook signature
 - Checks if payment was authorized/captured
 - Credits the user's wallet with tokens
 - Stores payment records in KV
 
 ### 3. Get Wallet Balance
+
 **GET** `/api/wallet/balance?wallet=Aso...xxx`
 
 Response:
+
 ```json
 {
   "walletAddress": "Aso...xxx",
@@ -141,14 +150,17 @@ Response:
 ```
 
 ### 4. Manual Wallet Credit (Admin Only)
+
 **POST** `/api/wallet/credit`
 
 Headers:
+
 ```
 Authorization: Bearer <ADMIN_TOKEN>
 ```
 
 Request:
+
 ```json
 {
   "walletAddress": "Aso...xxx",
@@ -158,9 +170,11 @@ Request:
 ```
 
 ### 5. Get Exchange Rate
+
 **GET** `/api/exchange-rate?token=SOL`
 
 Response:
+
 ```json
 {
   "token": "SOL",
@@ -173,6 +187,7 @@ Response:
 ### Local Testing
 
 1. Start the dev server:
+
 ```bash
 npm run dev
 ```
@@ -192,6 +207,7 @@ Use Razorpay's webhook tester or tools like `ngrok` to expose your local server 
 
 1. Update `cloudflare/wrangler.toml` with production KV namespace IDs
 2. Deploy to Cloudflare:
+
 ```bash
 cd cloudflare
 wrangler deploy
@@ -203,19 +219,23 @@ wrangler deploy
 ## Troubleshooting
 
 ### Issue: "Razorpay not loaded"
+
 - Ensure the Razorpay script loads from CDN (`https://checkout.razorpay.com/v1/checkout.js`)
 - Check browser console for network errors
 
 ### Issue: "Invalid signature"
+
 - Verify `RAZORPAY_KEY_SECRET` is set correctly in Cloudflare
 - Ensure webhook secret matches if using custom webhook verification
 
 ### Issue: Wallet not being credited
+
 - Check Cloudflare Workers logs for errors
 - Verify KV namespace is accessible
 - Check that payment webhook was received by examining Razorpay webhook logs
 
 ### Issue: Exchange rate not loading
+
 - Verify `/api/exchange-rate` endpoint is accessible
 - Check for CORS issues if using external API
 - Review browser console network tab
@@ -231,6 +251,7 @@ wrangler deploy
 ## Support
 
 For issues with:
+
 - **Razorpay Integration**: Contact Razorpay support
 - **Cloudflare Workers**: Check Cloudflare documentation
 - **Application Logic**: Review the implementation in `cloudflare/src/worker.ts` and `client/pages/BuyCrypto.tsx`

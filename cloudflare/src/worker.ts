@@ -463,10 +463,7 @@ export default {
       };
 
       const rate = rates[token] || rates["USDC"];
-      return json(
-        { token, rate },
-        { headers: corsHeaders }
-      );
+      return json({ token, rate }, { headers: corsHeaders });
     }
 
     // Create Payment Intent (Razorpay)
@@ -476,23 +473,17 @@ export default {
         if (!body || typeof body !== "object") {
           return json(
             { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
-        const {
-          walletAddress,
-          amount,
-          currency,
-          tokenType,
-          email,
-          contact,
-        } = body as any;
+        const { walletAddress, amount, currency, tokenType, email, contact } =
+          body as any;
 
         if (!walletAddress || !amount || !currency || !tokenType) {
           return json(
             { error: "Missing required fields" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -515,14 +506,14 @@ export default {
                 tokenType,
               },
             }),
-          }
+          },
         );
 
         if (!orderResponse.ok) {
           throw new Error(`Razorpay API error: ${orderResponse.statusText}`);
         }
 
-        const orderData = await orderResponse.json() as any;
+        const orderData = (await orderResponse.json()) as any;
 
         return json(
           {
@@ -532,13 +523,13 @@ export default {
             currency: orderData.currency,
             notes: orderData.notes,
           },
-          { status: 201, headers: corsHeaders }
+          { status: 201, headers: corsHeaders },
         );
       } catch (error: any) {
         console.error("Payment creation error:", error);
         return json(
           { error: error?.message || "Failed to create payment intent" },
-          { status: 500, headers: corsHeaders }
+          { status: 500, headers: corsHeaders },
         );
       }
     }
@@ -552,7 +543,7 @@ export default {
         if (!signature) {
           return json(
             { error: "Missing signature" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -563,13 +554,13 @@ export default {
           encoder.encode(env.RAZORPAY_KEY_SECRET),
           { name: "HMAC", hash: "SHA-256" },
           false,
-          ["sign"]
+          ["sign"],
         );
 
         const signatureBuffer = await crypto.subtle.sign(
           "HMAC",
           key,
-          encoder.encode(body)
+          encoder.encode(body),
         );
 
         const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
@@ -580,7 +571,7 @@ export default {
           console.error("Signature mismatch");
           return json(
             { error: "Invalid signature" },
-            { status: 401, headers: corsHeaders }
+            { status: 401, headers: corsHeaders },
           );
         }
 
@@ -622,7 +613,7 @@ export default {
                 status: "completed",
                 timestamp: Date.now(),
               }),
-              { expirationTtl: 86400 * 30 } // 30 days
+              { expirationTtl: 86400 * 30 }, // 30 days
             );
 
             // Credit wallet
@@ -634,7 +625,7 @@ export default {
             await env.WALLET_KV.put(
               balanceKey,
               newBalance.toString(),
-              { expirationTtl: 31536000 } // 1 year
+              { expirationTtl: 31536000 }, // 1 year
             );
           }
         }
@@ -644,7 +635,7 @@ export default {
         console.error("Webhook error:", error);
         return json(
           { error: error?.message || "Webhook processing failed" },
-          { status: 500, headers: corsHeaders }
+          { status: 500, headers: corsHeaders },
         );
       }
     }
@@ -656,7 +647,7 @@ export default {
         if (!walletAddress) {
           return json(
             { error: "Wallet address required" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -665,19 +656,16 @@ export default {
 
         for (const token of tokens) {
           const balanceStr = await env.WALLET_KV.get(
-            `wallet_${walletAddress}_${token}`
+            `wallet_${walletAddress}_${token}`,
           );
           balances[token] = parseFloat(balanceStr || "0");
         }
 
-        return json(
-          { walletAddress, balances },
-          { headers: corsHeaders }
-        );
+        return json({ walletAddress, balances }, { headers: corsHeaders });
       } catch (error: any) {
         return json(
           { error: error?.message || "Failed to fetch balance" },
-          { status: 500, headers: corsHeaders }
+          { status: 500, headers: corsHeaders },
         );
       }
     }
@@ -689,7 +677,7 @@ export default {
         if (authHeader !== `Bearer ${env.ADMIN_TOKEN}`) {
           return json(
             { error: "Unauthorized" },
-            { status: 401, headers: corsHeaders }
+            { status: 401, headers: corsHeaders },
           );
         }
 
@@ -699,7 +687,7 @@ export default {
         if (!walletAddress || !tokenType || !amount) {
           return json(
             { error: "Missing required fields" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -708,11 +696,9 @@ export default {
         const oldBalance = parseFloat(oldBalanceStr || "0");
         const newBalance = oldBalance + parseFloat(amount);
 
-        await env.WALLET_KV.put(
-          balanceKey,
-          newBalance.toString(),
-          { expirationTtl: 31536000 }
-        );
+        await env.WALLET_KV.put(balanceKey, newBalance.toString(), {
+          expirationTtl: 31536000,
+        });
 
         return json(
           {
@@ -723,12 +709,12 @@ export default {
             newBalance,
             amount,
           },
-          { headers: corsHeaders }
+          { headers: corsHeaders },
         );
       } catch (error: any) {
         return json(
           { error: error?.message || "Failed to credit wallet" },
-          { status: 500, headers: corsHeaders }
+          { status: 500, headers: corsHeaders },
         );
       }
     }

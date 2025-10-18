@@ -632,7 +632,7 @@ export default function ExpressPay() {
               }
             }}
             disabled={isProcessing}
-            className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+            className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] transition-all shadow-lg hover:shadow-2xl disabled:opacity-50"
           >
             {isProcessing
               ? "Processing..."
@@ -643,7 +643,7 @@ export default function ExpressPay() {
 
           {/* Footer Link */}
           <div className="text-center">
-            <button className="text-xs text-gray-400 hover:text-white underline">
+            <button className="text-xs text-gray-400 hover:text-[#FF7A5C] underline transition-colors">
               Login to post offers
             </button>
           </div>

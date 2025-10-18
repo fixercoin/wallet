@@ -1,12 +1,11 @@
 import { dexscreenerAPI } from "./dexscreener";
-
-import { dexscreenerAPI } from "./dexscreener";
+import { TOKEN_MINTS as SOLANA_TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 // Token mint addresses on Solana
 const TOKEN_MINTS = {
-  USDC: "EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6",
-  SOL: "So11111111111111111111111111111111111111112",
-  FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // Fixercoin mint address
+  USDC: SOLANA_TOKEN_MINTS.USDC,
+  SOL: SOLANA_TOKEN_MINTS.SOL,
+  FIXERCOIN: SOLANA_TOKEN_MINTS.FIXERCOIN,
 };
 
 const MARKUP_PERCENTAGE = 4.25; // 4.25% markup

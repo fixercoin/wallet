@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { TokenInfo } from "@/lib/wallet";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Bot, Zap, Shield, Clock, Play, Square } from "lucide-react";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
@@ -25,8 +26,8 @@ type FixerPosition = {
   ts: number; // timestamp
 };
 
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+const SOL_MINT = TOKEN_MINTS.SOL;
+const FIXER_MINT = TOKEN_MINTS.FIXERCOIN;
 const STORAGE_KEY = "autobot_fixer_position";
 
 // Internal risk controls (not user-adjustable on UI)

@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Transaction,
   SystemProgram,
@@ -54,7 +55,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
-    initialMint || "So11111111111111111111111111111111111111112",
+    initialMint || TOKEN_MINTS.SOL,
   );
 
   const selectedToken: TokenInfo | undefined = useMemo(
@@ -73,9 +74,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
           t.symbol === "FIXERCOIN" ||
           t.symbol === "USDC" ||
           t.symbol === "USDT" ||
-          t.mint === "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump" ||
-          t.mint === "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" ||
-          t.mint === "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+          t.mint === TOKEN_MINTS.FIXERCOIN ||
+          t.mint === TOKEN_MINTS.USDC ||
+          t.mint === TOKEN_MINTS.USDT,
       )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;

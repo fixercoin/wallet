@@ -11,6 +11,7 @@ import {
   dexscreenerAPI,
   type DexscreenerToken,
 } from "@/lib/services/dexscreener";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Select,
   SelectContent,
@@ -29,11 +30,11 @@ interface TokenOption {
 }
 
 const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
-  FIXERCOIN: "FixZjx2QQk2f8q1ZuTaWjXKLmnq3Y7jFGt8CyHEMPjX",
-  SOL: "So11111111111111111111111111111111111111112",
-  USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
-  USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
-  LOCKER: "LockerToken1111111111111111111111111111111",
+  FIXERCOIN: TOKEN_MINTS.FIXERCOIN,
+  SOL: TOKEN_MINTS.SOL,
+  USDC: TOKEN_MINTS.USDC,
+  USDT: TOKEN_MINTS.USDT,
+  LOCKER: TOKEN_MINTS.LOCKER,
 };
 
 const DEFAULT_TOKENS: TokenOption[] = [
@@ -267,22 +268,8 @@ export default function BuyCrypto() {
 
       {/* Main Content */}
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
-        {/* Info Card */}
-        <Card className="mb-6 bg-transparent backdrop-blur-xl rounded-md">
-          <CardContent className="pt-6">
-            <p className="text-white/80 leading-relaxed">
-              Buy Fixercoin, Solana (SOL), USDC, USDT, or LOCKER tokens
-              instantly with Visa or Mastercard. Payment confirmation is
-              automatic, and your wallet balance updates right away.
-            </p>
-          </CardContent>
-        </Card>
-
         {/* Main Buy Card */}
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
-          <CardHeader>
-            <CardTitle className="text-white">Buy Tokens</CardTitle>
-          </CardHeader>
           <CardContent className="space-y-6 pt-6">
             {/* Token Selection Dropdown */}
             <div>

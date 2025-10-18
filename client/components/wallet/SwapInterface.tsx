@@ -21,6 +21,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
@@ -442,11 +443,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
         10,
       );
-      const BRIDGES = [
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
-        "So11111111111111111111111111111111111111112", // SOL
-      ];
+      const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
 
       for (const bridge of BRIDGES) {
         if (bridge === fromToken.mint || bridge === toToken.mint) continue;

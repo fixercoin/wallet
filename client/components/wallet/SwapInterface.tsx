@@ -444,9 +444,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         10,
       );
       const BRIDGES = [
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
-        "So11111111111111111111111111111111111111112", // SOL
+        TOKEN_MINTS.USDC,
+        TOKEN_MINTS.USDT,
+        TOKEN_MINTS.SOL,
       ];
 
       for (const bridge of BRIDGES) {

@@ -443,11 +443,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
         10,
       );
-      const BRIDGES = [
-        TOKEN_MINTS.USDC,
-        TOKEN_MINTS.USDT,
-        TOKEN_MINTS.SOL,
-      ];
+      const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
 
       for (const bridge of BRIDGES) {
         if (bridge === fromToken.mint || bridge === toToken.mint) continue;

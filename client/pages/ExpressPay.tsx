@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   ChevronDown,
-  Plus,
   AlertCircle,
   Check,
   X,
@@ -412,18 +411,9 @@ export default function ExpressPay() {
           </Button>
 
           <div className="flex-1 text-center font-medium text-sm">
-            Express P2P
+            EXPRESS P2P SERVICE
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleAdminPanel}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
-            aria-label="Admin panel"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 

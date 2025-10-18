@@ -71,10 +71,14 @@ export class DurableRoom implements DurableObject {
                   (await this.state.storage.get<AdminStatus>("admin_status")) ||
                   ({ buyOnline: false, sellOnline: false } as AdminStatus);
                 const next: AdminStatus = { ...prev };
-                if (inner.scope === "buy" && typeof inner.online === "boolean") {
+                if (
+                  inner.scope === "buy" &&
+                  typeof inner.online === "boolean"
+                ) {
                   next.buyOnline = !!inner.online;
                 } else if (
-                  inner.scope === "sell" && typeof inner.online === "boolean"
+                  inner.scope === "sell" &&
+                  typeof inner.online === "boolean"
                 ) {
                   next.sellOnline = !!inner.online;
                 } else {
@@ -106,10 +110,16 @@ export class DurableRoom implements DurableObject {
         this.state.storage.get<Order[]>("orders").then((v) => v || []),
         this.state.storage
           .get<AdminStatus>("admin_status")
-          .then((v) => v || ({ buyOnline: false, sellOnline: false } as AdminStatus)),
+          .then(
+            (v) =>
+              v || ({ buyOnline: false, sellOnline: false } as AdminStatus),
+          ),
       ]);
       server.send(
-        JSON.stringify({ kind: "snapshot", data: { orders, admin_status: adminStatus } }),
+        JSON.stringify({
+          kind: "snapshot",
+          data: { orders, admin_status: adminStatus },
+        }),
       );
 
       return new Response(null, { status: 101, webSocket: client });

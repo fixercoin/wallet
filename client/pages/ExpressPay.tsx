@@ -161,7 +161,8 @@ export default function ExpressPay() {
       const st = s?.admin_status;
       if (st) {
         if (typeof st.buyOnline === "boolean") setIsBuyOnline(!!st.buyOnline);
-        if (typeof st.sellOnline === "boolean") setIsSellOnline(!!st.sellOnline);
+        if (typeof st.sellOnline === "boolean")
+          setIsSellOnline(!!st.sellOnline);
       }
       return;
     }
@@ -187,10 +188,13 @@ export default function ExpressPay() {
       }
 
       // Auto-open chat on payment events for involved parties (buyer/seller)
-      const userWalletAddress = wallet?.publicKey || (wallet as any)?.address || "";
+      const userWalletAddress =
+        wallet?.publicKey || (wallet as any)?.address || "";
       if (
         payload?.type === "buyer_paid" &&
-        (isAdmin || (!!payload?.buyer_wallet && payload.buyer_wallet === userWalletAddress))
+        (isAdmin ||
+          (!!payload?.buyer_wallet &&
+            payload.buyer_wallet === userWalletAddress))
       ) {
         const orderObj: any = {
           id: payload.orderId || `order-${Date.now()}`,
@@ -206,7 +210,9 @@ export default function ExpressPay() {
       }
       if (
         payload?.type === "seller_transferred" &&
-        (isAdmin || (!!payload?.seller_wallet && payload.seller_wallet === userWalletAddress))
+        (isAdmin ||
+          (!!payload?.seller_wallet &&
+            payload.seller_wallet === userWalletAddress))
       ) {
         const orderObj: any = {
           id: payload.orderId || `sell-${Date.now()}`,

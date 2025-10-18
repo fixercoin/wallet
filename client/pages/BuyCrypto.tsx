@@ -287,7 +287,7 @@ export default function BuyCrypto() {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate("/")}
             className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
@@ -295,28 +295,26 @@ export default function BuyCrypto() {
           >
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
+          <div className="flex items-center gap-4 text-white/80 text-xs">
+            <span
+              onClick={() => navigate("/orders/completed")}
+              className="cursor-pointer hover:text-white"
+            >
+              COMPLETED <span className="font-semibold text-white">{completedCount}</span>
+            </span>
+            <span
+              onClick={() => navigate("/orders/pending")}
+              className="cursor-pointer hover:text-white"
+            >
+              PENDING <span className="font-semibold text-white">{pendingCount}</span>
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => navigate("/orders/completed")}
-                className="w-full p-3 rounded-lg bg-[#1a2540]/50 border border-[#22c55e]/40 text-white text-center font-semibold hover:bg-[#1a2540]/60 transition-colors"
-              >
-                <div className="text-xs opacity-80">COMPLETED</div>
-                <div className="text-lg">{completedCount}</div>
-              </button>
-              <button
-                onClick={() => navigate("/orders/pending")}
-                className="w-full p-3 rounded-lg bg-[#1a2540]/50 border border-[#f59e0b]/40 text-white text-center font-semibold hover:bg-[#1a2540]/60 transition-colors"
-              >
-                <div className="text-xs opacity-80">PENDING</div>
-                <div className="text-lg">{pendingCount}</div>
-              </button>
-            </div>
             <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
               <button
                 onClick={() => setActiveTab("buy")}

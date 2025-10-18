@@ -139,7 +139,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
         <div className="w-full max-w-md mx-auto relative z-10">
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="bg-transparent border-0 rounded-2xl overflow-hidden shadow-none">
             <div className="p-6 space-y-6">
               <div className="text-center pb-2">
                 <img
@@ -189,7 +189,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
         <div className="max-w-2xl w-full mx-auto relative z-10">
-          <div className="relative bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="relative bg-transparent border-0 rounded-2xl overflow-hidden shadow-none">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
                 <div className="text-white">Importing wallet...</div>
@@ -332,7 +332,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
         <div className="max-w-2xl w-full mx-auto relative z-10">
-          <div className="relative bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="relative bg-transparent border-0 rounded-2xl overflow-hidden shadow-none">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
                 <div className="text-white">Creating wallet...</div>

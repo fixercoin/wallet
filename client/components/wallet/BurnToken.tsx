@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Keypair,
   PublicKey,
@@ -28,9 +29,9 @@ interface BurnTokenProps {
   onBack: () => void;
 }
 
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const FIXER_MINT_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const LOCKER_MINT_ADDRESS = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+const SOL_MINT = TOKEN_MINTS.SOL;
+const FIXER_MINT_ADDRESS = TOKEN_MINTS.FIXERCOIN;
+const LOCKER_MINT_ADDRESS = TOKEN_MINTS.LOCKER;
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
 );

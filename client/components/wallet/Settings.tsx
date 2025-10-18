@@ -40,7 +40,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
     return (
       <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
         <div className="max-w-md mx-auto pt-8">
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 shadow-sm rounded-lg p-6">
+          <div className="bg-transparent border-0 shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">
                 No accounts available. Create a wallet from the dashboard using
@@ -177,7 +177,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         </div>
 
         <div>
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 shadow-sm rounded-lg p-6">
+          <div className="bg-transparent border-0 shadow-none rounded-lg p-6">
             <div className="px-6 pt-2">
               <div className="text-[hsl(var(--primary))] font-semibold"></div>
             </div>

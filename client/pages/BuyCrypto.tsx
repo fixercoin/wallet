@@ -7,6 +7,13 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Loader2, Menu } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface TokenOption {
   id: string;
@@ -164,7 +171,7 @@ export default function BuyCrypto() {
           contact: wallet.phone,
         },
         theme: {
-          color: "#8b5cf6",
+          color: "#FF7A5C",
         },
       };
 
@@ -187,64 +194,94 @@ export default function BuyCrypto() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
+              <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">Buy Crypto</h1>
+            <div className="flex items-center gap-3 text-white font-bold tracking-wide">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2Fcb7c54ed71c4445994802d2be5063923%2F5dbc95a4895e477594adad3ce67d2790?format=webp&width=800"
+                alt="Fixorium logo"
+                className="h-8 w-8 rounded-full object-contain"
+              />
+              <span className="text-cream">FIXORIUM</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-full bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#1a2540] border-[#FF7A5C]/30">
+                <DropdownMenuItem className="text-xs text-white hover:bg-[#FF7A5C]/20">
+                  Back to Wallet
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Info Card */}
-        <Card className="mb-6 bg-white/80 backdrop-blur-sm border-white/20 shadow-lg">
+        <Card className="mb-6 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md">
           <CardContent className="pt-6">
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-sm text-white/80 leading-relaxed">
               Fixorium Wallet allows you to instantly buy Fixercoin, Solana
               (SOL), USDC (Solana), USDT (Solana), and LOCKER tokens using your
               Visa or Mastercard. Once your payment is confirmed, your wallet
-              balance updates automatically — no manual confirmation needed. All
-              payments are handled securely and verified through our gateway.
+              balance updates automatically.
             </p>
           </CardContent>
         </Card>
 
         {/* Main Buy Card */}
-        <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-gray-900">Select Token & Amount</CardTitle>
+        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md">
+          <CardHeader className="border-b border-[#FF7A5C]/20">
+            <CardTitle className="text-white text-lg">Buy Tokens</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             {/* Token Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Choose Token to Buy
+              <label className="block text-sm font-medium text-white/80 mb-3">
+                Select Token
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {SUPPORTED_TOKENS.map((token) => (
                   <button
                     key={token.id}
                     onClick={() => setSelectedToken(token)}
-                    className={`p-4 rounded-xl border-2 transition-all ${
+                    className={`p-3 rounded-lg border-2 transition-all ${
                       selectedToken.id === token.id
-                        ? "border-purple-500 bg-purple-50 shadow-md"
-                        : "border-gray-200 hover:border-gray-300 bg-white"
+                        ? "border-[#FF7A5C] bg-[#FF7A5C]/20 shadow-lg shadow-[#FF7A5C]/20"
+                        : "border-[#FF7A5C]/30 hover:border-[#FF7A5C]/50 bg-[#1a2540]/50"
                     }`}
                   >
-                    <Avatar className="w-10 h-10 mx-auto mb-2">
+                    <Avatar className="w-8 h-8 mx-auto mb-2">
                       <AvatarImage src={token.logo} alt={token.symbol} />
-                      <AvatarFallback>{token.symbol[0]}</AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] text-white text-xs">
+                        {token.symbol[0]}
+                      </AvatarFallback>
                     </Avatar>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs font-semibold text-white">
                       {token.symbol}
                     </p>
                   </button>
@@ -252,65 +289,63 @@ export default function BuyCrypto() {
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-[#FF7A5C]/20" />
 
             {/* Amount Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/80 mb-2">
                 Amount (PKR)
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={amountPKR}
-                  onChange={(e) => setAmountPKR(e.target.value)}
-                  placeholder="Enter amount in PKR"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  min="0"
-                  step="100"
-                />
-              </div>
+              <input
+                type="number"
+                value={amountPKR}
+                onChange={(e) => setAmountPKR(e.target.value)}
+                placeholder="Enter amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] focus:border-transparent text-white placeholder-white/40"
+                min="0"
+                step="100"
+              />
             </div>
 
-            <Separator />
+            <Separator className="bg-[#FF7A5C]/20" />
 
             {/* Exchange Rate & Calculation */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-100">
+            <div className="bg-gradient-to-r from-[#1a2540]/60 to-[#1f2d48]/60 p-4 rounded-lg border border-[#FF7A5C]/20">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Exchange Rate:</span>
+                  <span className="text-white/70 text-sm">Exchange Rate:</span>
                   {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-[#FF7A5C] text-sm">
                       1 {selectedToken.symbol} = {exchangeRate.toFixed(2)} PKR
                     </span>
                   )}
                 </div>
-                <Separator className="bg-purple-200" />
+                <Separator className="bg-[#FF7A5C]/20" />
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700">You Will Receive:</span>
-                  <span className="text-lg font-bold text-purple-600">
+                  <span className="text-white/70 text-sm">You Will Receive:</span>
+                  <span className="text-lg font-bold text-[#FF7A5C]">
                     {estimatedTokens.toFixed(6)} {selectedToken.symbol}
                   </span>
                 </div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-[#FF7A5C]/20" />
 
             {/* Wallet Info */}
             {wallet && (
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm text-gray-700">
-                  <span className="font-medium">Wallet Address:</span>{" "}
-                  <span className="font-mono text-blue-600">
+              <div className="bg-[#1a2540]/50 p-4 rounded-lg border border-[#FF7A5C]/20">
+                <p className="text-xs text-white/70">
+                  <span className="font-medium text-white">Wallet:</span>{" "}
+                  <span className="font-mono text-[#FF7A5C]">
                     {wallet.publicKey.slice(0, 8)}...
                     {wallet.publicKey.slice(-8)}
                   </span>
                 </p>
-                <p className="text-xs text-gray-600 mt-2">
-                  Tokens will be credited to this wallet after payment confirmation
+                <p className="text-xs text-white/50 mt-2">
+                  Tokens credited after payment confirmation
                 </p>
               </div>
             )}
@@ -324,7 +359,7 @@ export default function BuyCrypto() {
                 Number(amountPKR) <= 0 ||
                 estimatedTokens === 0
               }
-              className="w-full h-12 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-lg font-semibold text-base transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -332,13 +367,12 @@ export default function BuyCrypto() {
                   Processing...
                 </>
               ) : (
-                `Pay ₨${Number(amountPKR).toLocaleString()} & Buy ${selectedToken.symbol}`
+                `Pay ₨${Number(amountPKR).toLocaleString() || 0} & Buy ${selectedToken.symbol}`
               )}
             </Button>
 
-            <p className="text-xs text-gray-600 text-center">
-              By continuing, you agree to our terms and conditions. Payments are
-              processed securely through Razorpay.
+            <p className="text-xs text-white/50 text-center">
+              Payments processed securely through Razorpay
             </p>
           </CardContent>
         </Card>

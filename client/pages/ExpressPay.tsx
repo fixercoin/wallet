@@ -304,16 +304,29 @@ export default function ExpressPay() {
 
       toast({
         title: "Transfer initiated",
-        description: `Sending ${tokenAmount.toFixed(6)} ${selectedCurrency} to buyer...`,
+        description: `Send ${tokenAmount.toFixed(6)} ${selectedCurrency} to ${ADMIN_WALLET}`,
       });
 
       // Simulate delay for transaction
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       toast({
-        title: "Transfer successful",
-        description: `${Number(spendAmount).toFixed(6)} ${selectedCurrency} sent to buyer`,
+        title: "Transfer marked paid",
+        description: `${Number(spendAmount).toFixed(6)} ${selectedCurrency} marked as transferred`,
       });
+
+      try {
+        send?.({
+          type: "chat",
+          text: JSON.stringify({
+            type: "seller_transferred",
+            to: ADMIN_WALLET,
+            token: selectedCurrency,
+            amountToken: tokenAmount,
+            amountPKR: tokenAmount * selectedRate,
+          }),
+        });
+      } catch {}
 
       setShowSellConfirmation(false);
 
@@ -327,7 +340,7 @@ export default function ExpressPay() {
             amountPKR: Number(spendAmount) * selectedRate,
             pricePKRPerQuote: selectedRate,
             quoteAsset: selectedCurrency,
-            paymentMethod: selectedPayment,
+            paymentMethod: "easypaisa",
           },
         },
       });
@@ -710,6 +723,11 @@ export default function ExpressPay() {
                   </span>
                 </div>
 
+                <div className="p-3 bg-[hsl(var(--secondary))] rounded-lg">
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Transfer To Address</div>
+                  <div className="font-mono text-sm break-all">{ADMIN_WALLET}</div>
+                </div>
+
               </div>
 
               <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
@@ -734,7 +752,7 @@ export default function ExpressPay() {
                 disabled={isProcessing}
                 className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
               >
-                {isProcessing ? "Processing..." : "Approve & Send"}
+                {isProcessing ? "Processing..." : "I Have Paid"}
               </Button>
             </div>
           </div>

@@ -85,7 +85,8 @@ export default function BuyCrypto() {
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
-      (tk) => (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
+      (tk) =>
+        (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
     );
     return t?.balance || 0;
   }, [walletTokens, selectedToken]);
@@ -123,7 +124,8 @@ export default function BuyCrypto() {
       try {
         const url = `/api/exchange-rate?token=${selectedToken.id}`;
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Rate fetch failed ${response.status}`);
+        if (!response.ok)
+          throw new Error(`Rate fetch failed ${response.status}`);
         const data = await response.json();
         const rate = data.rate || data.priceInPKR || 0;
         setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 0);
@@ -146,14 +148,21 @@ export default function BuyCrypto() {
     }
   }, [amountPKR, exchangeRate]);
 
-
   const handleBuyClick = async () => {
     if (!wallet) {
-      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
       return;
     }
     if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
-      toast({ title: "Invalid Amount", description: "Enter a valid PKR amount", variant: "destructive" });
+      toast({
+        title: "Invalid Amount",
+        description: "Enter a valid PKR amount",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -169,7 +178,10 @@ export default function BuyCrypto() {
           amountPKR: Number(amountPKR),
           pricePKRPerQuote,
           paymentMethod: "easypaisa",
-          seller: { accountName: "ameer nawaz khan", accountNumber: "030107044833" },
+          seller: {
+            accountName: "ameer nawaz khan",
+            accountNumber: "030107044833",
+          },
           buyerWallet: wallet.publicKey,
         }),
       });
@@ -186,7 +198,11 @@ export default function BuyCrypto() {
         },
       });
     } catch (error: any) {
-      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
+      toast({
+        title: "Failed to start chat",
+        description: error?.message || String(error),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -194,12 +210,25 @@ export default function BuyCrypto() {
 
   const handleSellClick = async () => {
     if (!wallet) {
-      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
       return;
     }
     const amount = Number(sellAmountTokens);
-    if (!sellAmountTokens || !isFinite(amount) || amount <= 0 || !exchangeRate) {
-      toast({ title: "Invalid Amount", description: "Enter a valid token amount", variant: "destructive" });
+    if (
+      !sellAmountTokens ||
+      !isFinite(amount) ||
+      amount <= 0 ||
+      !exchangeRate
+    ) {
+      toast({
+        title: "Invalid Amount",
+        description: "Enter a valid token amount",
+        variant: "destructive",
+      });
       return;
     }
     try {
@@ -213,7 +242,10 @@ export default function BuyCrypto() {
           adminWallet: ADMIN_WALLET,
         }),
       });
-      toast({ title: "Sell request sent", description: `Offer to sell ${amount} ${selectedToken.id} sent in chat` });
+      toast({
+        title: "Sell request sent",
+        description: `Offer to sell ${amount} ${selectedToken.id} sent in chat`,
+      });
       navigate("/express/buy-trade", {
         state: {
           order: {
@@ -230,7 +262,11 @@ export default function BuyCrypto() {
         },
       });
     } catch (error: any) {
-      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
+      toast({
+        title: "Failed to start chat",
+        description: error?.message || String(error),
+        variant: "destructive",
+      });
     }
   };
 
@@ -283,7 +319,9 @@ export default function BuyCrypto() {
             {activeTab === "buy" && (
               <>
                 <div>
-                  <label className="block font-medium text-white/80 mb-3">Select Token</label>
+                  <label className="block font-medium text-white/80 mb-3">
+                    Select Token
+                  </label>
                   <Select
                     value={selectedToken.id}
                     onValueChange={(id) => {
@@ -296,7 +334,11 @@ export default function BuyCrypto() {
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2540] border-none">
                       {tokens.map((token) => (
-                        <SelectItem key={token.id} value={token.id} className="text-white">
+                        <SelectItem
+                          key={token.id}
+                          value={token.id}
+                          className="text-white"
+                        >
                           {token.symbol}
                         </SelectItem>
                       ))}
@@ -307,7 +349,9 @@ export default function BuyCrypto() {
                 <Separator className="bg-[#FF7A5C]/20" />
 
                 <div>
-                  <label className="block font-medium text-white/80 mb-2">Amount (PKR)</label>
+                  <label className="block font-medium text-white/80 mb-2">
+                    Amount (PKR)
+                  </label>
                   <input
                     type="number"
                     value={amountPKR}
@@ -329,7 +373,13 @@ export default function BuyCrypto() {
                         <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                       ) : (
                         <span className="font-semibold text-[#FF7A5C]">
-                          1 {selectedToken.symbol} = {exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR
+                          1 {selectedToken.symbol} ={" "}
+                          {exchangeRate > 0
+                            ? exchangeRate < 1
+                              ? exchangeRate.toFixed(6)
+                              : exchangeRate.toFixed(2)
+                            : "0.00"}{" "}
+                          PKR
                         </span>
                       )}
                     </div>
@@ -348,7 +398,10 @@ export default function BuyCrypto() {
                 <Button
                   onClick={handleBuyClick}
                   disabled={
-                    loading || !amountPKR || Number(amountPKR) <= 0 || estimatedTokens === 0
+                    loading ||
+                    !amountPKR ||
+                    Number(amountPKR) <= 0 ||
+                    estimatedTokens === 0
                   }
                   className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -367,7 +420,9 @@ export default function BuyCrypto() {
             {activeTab === "sell" && (
               <>
                 <div>
-                  <label className="block font-medium text-white/80 mb-3">Select Token</label>
+                  <label className="block font-medium text-white/80 mb-3">
+                    Select Token
+                  </label>
                   <Select
                     value={selectedToken.id}
                     onValueChange={(id) => {
@@ -380,7 +435,11 @@ export default function BuyCrypto() {
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2540] border-none">
                       {tokens.map((token) => (
-                        <SelectItem key={token.id} value={token.id} className="text-white">
+                        <SelectItem
+                          key={token.id}
+                          value={token.id}
+                          className="text-white"
+                        >
                           {token.symbol}
                         </SelectItem>
                       ))}
@@ -392,14 +451,25 @@ export default function BuyCrypto() {
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
                   <div className="text-xs opacity-80">Wallet Address</div>
-                  <div className="font-mono text-sm break-all">{wallet ? shortenAddress(wallet.publicKey, 8) : "Not connected"}</div>
-                  <div className="mt-2 text-xs">Available: <span className="font-semibold">{selectedTokenBalance.toFixed(6)} {selectedToken.symbol}</span></div>
+                  <div className="font-mono text-sm break-all">
+                    {wallet
+                      ? shortenAddress(wallet.publicKey, 8)
+                      : "Not connected"}
+                  </div>
+                  <div className="mt-2 text-xs">
+                    Available:{" "}
+                    <span className="font-semibold">
+                      {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                    </span>
+                  </div>
                 </div>
 
                 <Separator className="bg-[#FF7A5C]/20" />
 
                 <div>
-                  <label className="block font-medium text-white/80 mb-2">Amount ({selectedToken.symbol})</label>
+                  <label className="block font-medium text-white/80 mb-2">
+                    Amount ({selectedToken.symbol})
+                  </label>
                   <input
                     type="number"
                     value={sellAmountTokens}
@@ -421,7 +491,13 @@ export default function BuyCrypto() {
                         <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                       ) : (
                         <span className="font-semibold text-[#FF7A5C]">
-                          1 {selectedToken.symbol} = {exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR
+                          1 {selectedToken.symbol} ={" "}
+                          {exchangeRate > 0
+                            ? exchangeRate < 1
+                              ? exchangeRate.toFixed(6)
+                              : exchangeRate.toFixed(2)
+                            : "0.00"}{" "}
+                          PKR
                         </span>
                       )}
                     </div>
@@ -429,7 +505,10 @@ export default function BuyCrypto() {
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">You Will Receive:</span>
                       <span className="font-bold text-[#FF7A5C]">
-                        {(Number(sellAmountTokens || 0) * (exchangeRate || 0)).toFixed(2)} PKR
+                        {(
+                          Number(sellAmountTokens || 0) * (exchangeRate || 0)
+                        ).toFixed(2)}{" "}
+                        PKR
                       </span>
                     </div>
                   </div>
@@ -440,7 +519,10 @@ export default function BuyCrypto() {
                 <Button
                   onClick={handleSellClick}
                   disabled={
-                    loading || !sellAmountTokens || Number(sellAmountTokens) <= 0 || !exchangeRate
+                    loading ||
+                    !sellAmountTokens ||
+                    Number(sellAmountTokens) <= 0 ||
+                    !exchangeRate
                   }
                   className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -455,11 +537,9 @@ export default function BuyCrypto() {
                 </Button>
               </>
             )}
-
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }

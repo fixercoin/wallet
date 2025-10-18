@@ -516,7 +516,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6 space-y-5">
+        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
             <span className="text-sm font-semibold text-white">

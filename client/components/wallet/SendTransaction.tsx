@@ -660,7 +660,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     return (
       <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
         <div className="w-full md:max-w-md mx-auto pt-8 px-0 sm:px-4">
-          <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-8 text-center">
+          <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-8 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
                 <Check className="h-8 w-8 text-emerald-300" />
@@ -743,7 +743,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
           </h1>
         </div>
 
-        <div className="transparent-cardboard border-0 relative rounded-none sm:rounded-2xl">
+        <div className="bg-transparent border-0 relative rounded-none sm:rounded-2xl">
           {isLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
               <div className="text-[hsl(var(--foreground))]">

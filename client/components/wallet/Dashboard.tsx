@@ -374,7 +374,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
       {/* Header */}
-      <div className="bg-transparent sticky top-0 z-10">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
           <div className="flex items-center gap-3 text-white font-bold tracking-wide">
             <img

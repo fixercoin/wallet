@@ -28,6 +28,9 @@ export interface Env {
   ADMIN_TOKEN: string; // set via wrangler secret put ADMIN_TOKEN
   ALLOWED_PAYMENT: string; // e.g. "easypaisa"
   DB: D1Database; // Cloudflare D1 binding for locks/events and P2P
+  RAZORPAY_KEY_ID: string; // Razorpay key ID
+  RAZORPAY_KEY_SECRET: string; // Razorpay key secret
+  WALLET_KV: KVNamespace; // KV store for wallet balances
 }
 
 function getRoomStub(env: Env, roomId: string) {

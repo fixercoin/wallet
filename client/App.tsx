@@ -31,6 +31,7 @@ import ExpressPendingOrders from "./pages/ExpressPendingOrders";
 import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
 import ExpressPostView from "./pages/ExpressPostView";
 import ExpressStartTrade from "./pages/ExpressStartTrade";
+import BuyCrypto from "./pages/BuyCrypto";
 
 const queryClient = new QueryClient();
 

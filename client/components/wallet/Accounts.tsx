@@ -21,14 +21,14 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
       <div className="max-w-md mx-auto">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="text-white hover:bg-[#FF7A5C]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -37,7 +37,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
           </h1>
         </div>
 
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-sm text-[hsl(var(--muted-foreground))]">
@@ -61,7 +61,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             <div>
               <Button
                 onClick={() => onOpenSetup && onOpenSetup()}
-                className="h-10 w-10 p-0 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
+                className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-sm"
                 aria-label="Add wallet"
               >
                 <Plus className="h-4 w-4" />
@@ -77,7 +77,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               {wallets.map((w) => (
                 <div
                   key={w.publicKey}
-                  className="w-full p-3 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-md flex items-center gap-2"
+                  className="w-full p-3 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-md flex items-center gap-2"
                 >
                   <button
                     onClick={() => {

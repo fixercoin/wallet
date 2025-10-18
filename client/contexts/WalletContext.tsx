@@ -475,9 +475,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           const uniqSyms = Array.from(new Set(stableSymbols)).filter(Boolean);
           if (uniqSyms.length > 0) {
             const params = new URLSearchParams({ symbols: uniqSyms.join(",") });
-            const resp = await fetch(`/api/stable-24h?${params.toString()}`).catch(
-              () => new Response("", { status: 0 } as any),
-            );
+            const resp = await fetch(
+              `/api/stable-24h?${params.toString()}`,
+            ).catch(() => new Response("", { status: 0 } as any));
             if (resp.ok) {
               const st = await resp.json();
               const data = st?.data || {};

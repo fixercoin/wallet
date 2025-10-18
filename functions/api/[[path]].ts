@@ -452,7 +452,9 @@ export const onRequest = async ({ request, env }) => {
 
     // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
     if (normalizedPath === "/exchange-rate") {
-      const token = (url.searchParams.get("token") || "FIXERCOIN").toUpperCase();
+      const token = (
+        url.searchParams.get("token") || "FIXERCOIN"
+      ).toUpperCase();
 
       const TOKEN_MINTS: Record<string, string> = {
         SOL: "So11111111111111111111111111111111111111112",
@@ -478,7 +480,9 @@ export const onRequest = async ({ request, env }) => {
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
         } else if (TOKEN_MINTS[token]) {
-          const data = await fetchDexscreenerData(`/tokens/${TOKEN_MINTS[token]}`);
+          const data = await fetchDexscreenerData(
+            `/tokens/${TOKEN_MINTS[token]}`,
+          );
           const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
           const price =
             pairs.length > 0 && pairs[0]?.priceUsd
@@ -507,15 +511,33 @@ export const onRequest = async ({ request, env }) => {
 
     // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
     if (normalizedPath === "/stable-24h") {
-      const symbolsParam = (url.searchParams.get("symbols") || "USDC,USDT").toUpperCase();
-      const symbols = Array.from(new Set(String(symbolsParam).split(",").map((s) => s.trim()).filter(Boolean)));
+      const symbolsParam = (
+        url.searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
 
       const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
-        USDC: { id: "usd-coin", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
-        USDT: { id: "tether", mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns" },
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
       };
 
-      const ids = symbols.map((s) => COINGECKO_IDS[s]?.id).filter(Boolean).join(",");
+      const ids = symbols
+        .map((s) => COINGECKO_IDS[s]?.id)
+        .filter(Boolean)
+        .join(",");
       if (!ids) {
         return jsonCors(400, { error: "No supported symbols provided" });
       }
@@ -524,9 +546,15 @@ export const onRequest = async ({ request, env }) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 12000);
       try {
-        const resp = await fetch(apiUrl, { signal: controller.signal, headers: { Accept: "application/json" } });
+        const resp = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
         clearTimeout(timeoutId);
-        const result: Record<string, { priceUsd: number; change24h: number; mint: string }> = {};
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
         if (resp.ok) {
           const json = await resp.json();
           symbols.forEach((sym) => {
@@ -534,8 +562,13 @@ export const onRequest = async ({ request, env }) => {
             if (!meta) return;
             const d = json?.[meta.id];
             const price = typeof d?.usd === "number" ? d.usd : 1;
-            const change = typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
-            result[sym] = { priceUsd: price, change24h: change, mint: meta.mint };
+            const change =
+              typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = {
+              priceUsd: price,
+              change24h: change,
+              mint: meta.mint,
+            };
           });
         } else {
           symbols.forEach((sym) => {
@@ -547,7 +580,10 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(200, { data: result });
       } catch (e) {
         clearTimeout(timeoutId);
-        const result: Record<string, { priceUsd: number; change24h: number; mint: string }> = {};
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
         symbols.forEach((sym) => {
           const meta = COINGECKO_IDS[sym];
           if (!meta) return;

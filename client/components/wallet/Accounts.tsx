@@ -39,7 +39,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
 
         <div className="space-y-4">
           <div>
-            <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))]">Active Wallet</div>
+            <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))]">
+              Active Wallet
+            </div>
             <div className="w-full">
               <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md p-4 flex items-center justify-between">
                 <div className="min-w-0">
@@ -49,7 +51,13 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={handleCopy} aria-label="Copy address" className="text-white hover:bg-[#FF7A5C]/10">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    aria-label="Copy address"
+                    className="text-white hover:bg-[#FF7A5C]/10"
+                  >
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button
@@ -65,7 +73,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
           </div>
 
           <div>
-            <div className="text-sm mb-2 text-[hsl(var(--foreground))] font-medium">All Accounts</div>
+            <div className="text-sm mb-2 text-[hsl(var(--foreground))] font-medium">
+              All Accounts
+            </div>
             <div className="space-y-2">
               {wallets.map((w) => (
                 <div

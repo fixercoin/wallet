@@ -12,6 +12,8 @@ export default function BuyTrade() {
   const navigate = useNavigate();
   const { state } = useLocation() as { state?: { order?: any } };
   const order = state?.order || null;
+  const openChat: boolean = !!(state && state.openChat);
+  const initialPhaseFromNav: string | undefined = state?.initialPhase;
   const { toast } = useToast();
   const { wallet } = useWallet();
   const { events, send } = useDurableRoom("global", API_BASE);
@@ -80,6 +82,15 @@ export default function BuyTrade() {
   };
 
   useEffect(() => {
+    // If navigated here with openChat flag, set phase accordingly
+    if (openChat) {
+      if (initialPhaseFromNav && typeof initialPhaseFromNav === "string") {
+        // ensure phase is one of allowed values
+        setPhase(initialPhaseFromNav as Phase);
+      }
+      setUnread(true);
+    }
+
     const last = events[events.length - 1];
     if (!last || last.kind !== "chat") return;
     const txt = last.data?.text || "";

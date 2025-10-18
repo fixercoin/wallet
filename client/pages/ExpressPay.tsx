@@ -480,7 +480,7 @@ export default function ExpressPay() {
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Status:</span>
                   <span
-                    className={isBuyOnline ? "text-[#FF7A5C]" : "text-red-500"}
+                    className={isBuyOnline ? "text-white" : "text-white"}
                   >
                     {isBuyOnline ? "Online" : "Offline"}
                   </span>
@@ -489,7 +489,7 @@ export default function ExpressPay() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/20"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/20"
                       onClick={() => setBuyStatus(true)}
                     >
                       Online
@@ -516,7 +516,7 @@ export default function ExpressPay() {
                     placeholder="0"
                     className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none text-white placeholder-gray-500"
                   />
-                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-[#FF7A5C]">
+                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-white">
                     PKR
                   </div>
                 </div>
@@ -543,7 +543,7 @@ export default function ExpressPay() {
                   <select
                     value={selectedCurrency}
                     onChange={(e) => setSelectedCurrency(e.target.value)}
-                    className="appearance-none bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 px-3 py-3 pr-7 text-xs font-bold text-[#FF7A5C] outline-none cursor-pointer"
+                    className="appearance-none bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
                   >
                     {currencies.map((cur) => (
                       <option key={cur} value={cur}>
@@ -551,7 +551,7 @@ export default function ExpressPay() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#FF7A5C] pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -572,7 +572,7 @@ export default function ExpressPay() {
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Status:</span>
                   <span
-                    className={isSellOnline ? "text-[#FF7A5C]" : "text-red-500"}
+                    className={isSellOnline ? "text-white" : "text-white"}
                   >
                     {isSellOnline ? "Online" : "Offline"}
                   </span>
@@ -581,7 +581,7 @@ export default function ExpressPay() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/20"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/20"
                       onClick={() => setSellStatus(true)}
                     >
                       Online
@@ -610,7 +610,7 @@ export default function ExpressPay() {
                     placeholder="0"
                     className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none text-white placeholder-gray-500"
                   />
-                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-[#FF7A5C]">
+                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-white">
                     {selectedCurrency}
                   </div>
                 </div>
@@ -730,8 +730,8 @@ export default function ExpressPay() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-[#FF7A5C]">
-                <p className="text-xs text-[#FF7A5C]">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
+                <p className="text-xs text-white">
                   ✓ After payment, chat window will open to confirm with seller.
                 </p>
               </div>
@@ -798,14 +798,14 @@ export default function ExpressPay() {
                   <div className="text-xs text-white mb-1">
                     Transfer To Address
                   </div>
-                  <div className="font-mono text-sm break-all text-[#FF7A5C]">
+                  <div className="font-mono text-sm break-all text-white">
                     {ADMIN_WALLET}
                   </div>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-[#FF7A5C]">
-                <p className="text-xs text-[#FF7A5C]">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
+                <p className="text-xs text-white">
                   ✓ Tokens will be transferred to buyer. Chat window will open
                   after confirmation.
                 </p>

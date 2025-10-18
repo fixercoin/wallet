@@ -1,13 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  ChevronDown,
-  AlertCircle,
-  Check,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ChevronDown, AlertCircle, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { useExpressP2P } from "@/contexts/ExpressP2PContext";
@@ -167,11 +161,16 @@ export default function ExpressPay() {
       if (payload && payload.type === "admin_status") {
         if (payload.scope === "buy" && typeof payload.online === "boolean") {
           setIsBuyOnline(!!payload.online);
-        } else if (payload.scope === "sell" && typeof payload.online === "boolean") {
+        } else if (
+          payload.scope === "sell" &&
+          typeof payload.online === "boolean"
+        ) {
           setIsSellOnline(!!payload.online);
         } else {
-          if (typeof payload.buyOnline === "boolean") setIsBuyOnline(!!payload.buyOnline);
-          if (typeof payload.sellOnline === "boolean") setIsSellOnline(!!payload.sellOnline);
+          if (typeof payload.buyOnline === "boolean")
+            setIsBuyOnline(!!payload.buyOnline);
+          if (typeof payload.sellOnline === "boolean")
+            setIsSellOnline(!!payload.sellOnline);
         }
       }
     } catch {}
@@ -180,13 +179,19 @@ export default function ExpressPay() {
   const setBuyStatus = (online: boolean) => {
     setIsBuyOnline(online);
     try {
-      send?.({ type: "chat", text: JSON.stringify({ type: "admin_status", scope: "buy", online }) });
+      send?.({
+        type: "chat",
+        text: JSON.stringify({ type: "admin_status", scope: "buy", online }),
+      });
     } catch {}
   };
   const setSellStatus = (online: boolean) => {
     setIsSellOnline(online);
     try {
-      send?.({ type: "chat", text: JSON.stringify({ type: "admin_status", scope: "sell", online }) });
+      send?.({
+        type: "chat",
+        text: JSON.stringify({ type: "admin_status", scope: "sell", online }),
+      });
     } catch {}
   };
 
@@ -413,7 +418,6 @@ export default function ExpressPay() {
           <div className="flex-1 text-center font-medium text-sm">
             EXPRESS P2P SERVICE
           </div>
-
         </div>
       </div>
 
@@ -471,20 +475,32 @@ export default function ExpressPay() {
               <div className="flex items-center justify-between text-xs mb-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Status:</span>
-                  <span className={isBuyOnline ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={isBuyOnline ? "text-green-600" : "text-red-600"}
+                  >
                     {isBuyOnline ? "Online" : "Offline"}
                   </span>
                 </div>
                 {isAdmin && (
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setBuyStatus(true)}>Online</Button>
-                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setBuyStatus(false)}>Offline</Button>
+                    <Button
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setBuyStatus(true)}
+                    >
+                      Online
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setBuyStatus(false)}
+                    >
+                      Offline
+                    </Button>
                   </div>
                 )}
               </div>
-              <label className="text-xs text-gray-400 font-medium">
-                Spend
-              </label>
+              <label className="text-xs text-gray-400 font-medium">Spend</label>
               <div className="relative rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
                 <div className="flex items-center">
                   <input
@@ -501,9 +517,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">
-                Minimum: 1,000 PKR
-              </div>
+              <div className="text-xs text-gray-400">Minimum: 1,000 PKR</div>
             </div>
           )}
 
@@ -553,14 +567,28 @@ export default function ExpressPay() {
               <div className="flex items-center justify-between text-xs mb-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Status:</span>
-                  <span className={isSellOnline ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={isSellOnline ? "text-green-600" : "text-red-600"}
+                  >
                     {isSellOnline ? "Online" : "Offline"}
                   </span>
                 </div>
                 {isAdmin && (
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setSellStatus(true)}>Online</Button>
-                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={() => setSellStatus(false)}>Offline</Button>
+                    <Button
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setSellStatus(true)}
+                    >
+                      Online
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setSellStatus(false)}
+                    >
+                      Offline
+                    </Button>
                   </div>
                 )}
               </div>
@@ -589,7 +617,6 @@ export default function ExpressPay() {
               </div>
             </div>
           )}
-
 
           {/* Primary Action Button */}
           <Button
@@ -642,25 +669,19 @@ export default function ExpressPay() {
               {/* Transaction Summary */}
               <div className="space-y-2 pb-4 border-b border-[#2a2b2f]">
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">
-                    You Pay
-                  </span>
+                  <span className="text-sm text-gray-400">You Pay</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount).toLocaleString()} PKR
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">
-                    You Receive
-                  </span>
+                  <span className="text-sm text-gray-400">You Receive</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toFixed(6)} {selectedCurrency}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">
-                    Rate
-                  </span>
+                  <span className="text-sm text-gray-400">Rate</span>
                   <span className="font-bold text-white">
                     1 {selectedCurrency} ={" "}
                     {isFinite(selectedRate) && selectedRate > 0
@@ -678,9 +699,7 @@ export default function ExpressPay() {
                 </h3>
 
                 <div className="p-3 rounded-lg bg-[#1a1b1e]">
-                  <div className="text-xs text-gray-400 mb-1">
-                    Account Name
-                  </div>
+                  <div className="text-xs text-gray-400 mb-1">Account Name</div>
                   <div className="font-semibold text-white">
                     {selectedSeller.paymentDetails?.accountName ||
                       "Not provided"}
@@ -705,7 +724,6 @@ export default function ExpressPay() {
                     {selectedSeller.paymentMethod || "easypaisa"}
                   </div>
                 </div>
-
               </div>
 
               <div className="p-3 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300">
@@ -752,37 +770,34 @@ export default function ExpressPay() {
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
-                  <span className="text-sm text-gray-400">
-                    Token to Send
-                  </span>
+                  <span className="text-sm text-gray-400">Token to Send</span>
                   <span className="font-bold text-white">
                     {selectedCurrency}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
-                  <span className="text-sm text-gray-400">
-                    Amount
-                  </span>
+                  <span className="text-sm text-gray-400">Amount</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
-                  <span className="text-sm text-gray-400">
-                    PKR Amount
-                  </span>
+                  <span className="text-sm text-gray-400">PKR Amount</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 
                 <div className="p-3 bg-[#1a1b1e] rounded-lg">
-                  <div className="text-xs text-gray-400 mb-1">Transfer To Address</div>
-                  <div className="font-mono text-sm break-all">{ADMIN_WALLET}</div>
+                  <div className="text-xs text-gray-400 mb-1">
+                    Transfer To Address
+                  </div>
+                  <div className="font-mono text-sm break-all">
+                    {ADMIN_WALLET}
+                  </div>
                 </div>
-
               </div>
 
               <div className="p-3 rounded-lg bg-blue-900/30 border border-blue-700/40 text-blue-300">

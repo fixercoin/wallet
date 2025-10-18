@@ -151,8 +151,15 @@
   .express-p2p-page h6,
   .express-p2p-page input,
   .express-p2p-page textarea,
-  .express-p2p-page select {
+  .express-p2p-page select,
+  .express-p2p-page div {
     color: white !important;
+  }
+
+  /* Remove white borders and lines from express-p2p-page */
+  .express-p2p-page .border-white,
+  .express-p2p-page [class*="border-white"] {
+    border-color: transparent !important;
   }
 }
 

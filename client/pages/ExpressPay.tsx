@@ -427,7 +427,7 @@ export default function ExpressPay() {
 
       {/* Main Content */}
       <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
-        <div className="bg-transparent border border-[#FF7A5C]/30 rounded-none sm:rounded-2xl p-6 space-y-5 text-white backdrop-blur-sm">
+        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-5 text-white">
           {/* Tab Selection */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
             <button
@@ -725,7 +725,7 @@ export default function ExpressPay() {
 
               <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
                 <p className="text-xs text-white">
-                  ��� After payment, chat window will open to confirm with seller.
+                  ✓ After payment, chat window will open to confirm with seller.
                 </p>
               </div>
             </div>

@@ -573,8 +573,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="w-full h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
             aria-label="Pay to Buy Crypto"
           >
-            <span className="mr-3">PAY TO BUY</span>
-            <span className="pay-to-buy-icon ml-1" aria-hidden="true"></span>
+            <span className="mr-0">PAY TO BUY CRYPTO CURRENCY</span>
           </Button>
         </div>
 

@@ -762,6 +762,66 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Debug: count tokens missing 24h change on dashboard logic
+    if (path === "/debug/24h-missing" && method === "GET") {
+      const publicKey = (event.queryStringParameters?.publicKey || "").trim();
+      if (!publicKey) return jsonResponse(400, { error: "publicKey required" });
+
+      // Fetch token accounts via RPC (same RPC fanout used by /api/solana-rpc)
+      let mints: string[] = [];
+      try {
+        const rpc = await callRpc(
+          "getTokenAccountsByOwner",
+          [
+            publicKey,
+            { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+            { encoding: "jsonParsed" },
+          ],
+          Date.now(),
+        );
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        const value = parsed?.result?.value || [];
+        const list: string[] = Array.isArray(value)
+          ? value
+              .map((v: any) => v?.account?.data?.parsed?.info?.mint)
+              .filter((x: any) => typeof x === "string" && x.length > 0)
+          : [];
+        mints = Array.from(new Set(list));
+      } catch {}
+
+      // Always include SOL synthetic mint so dashboard token appears
+      const SOL_MINT = "So11111111111111111111111111111111111111112";
+      if (!mints.includes(SOL_MINT)) mints.unshift(SOL_MINT);
+
+      if (mints.length === 0) return jsonResponse(200, { total: 0, missing: 0, missingMints: [] });
+
+      // DexScreener fetch for these mints
+      const data = await fetchDexData(`/tokens/${mints.join(",")}`);
+      const pairs: any[] = Array.isArray(data?.pairs) ? data.pairs : [];
+
+      const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+      const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
+
+      const missing: string[] = [];
+      mints.forEach((mint) => {
+        // Stablecoins are shown as 0% if no data
+        if (mint === USDC_MINT || mint === USDT_MINT) return;
+        const t = pairs.find(
+          (p) => p?.baseToken?.address === mint || p?.quoteToken?.address === mint,
+        );
+        const pc = t?.priceChange || {};
+        const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+        const has = candidates.some((v) => typeof v === "number" && isFinite(v));
+        if (!has) missing.push(mint);
+      });
+
+      return jsonResponse(200, {
+        total: mints.length,
+        missing: missing.length,
+        missingMints: missing,
+      });
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

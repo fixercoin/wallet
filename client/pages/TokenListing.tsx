@@ -111,7 +111,7 @@ export default function TokenListing() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">

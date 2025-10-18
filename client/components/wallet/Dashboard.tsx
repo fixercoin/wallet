@@ -450,36 +450,85 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}
-        <div className="text-center space-y-1 mb-8">
-          <div
-            className="text-sm font-semibold text-white"
-            style={{ fontSize: 14 }}
-          >
-            TOTAL BALANCE
-          </div>
-          <div className="text-sm text-gray-300" style={{ fontSize: 14 }}>
-            {wallet
-              ? (() => {
-                  const total = getTotalPortfolioValue();
-                  const hasAnyBalance =
-                    tokens.some(
-                      (t) => typeof t.balance === "number" && t.balance > 0,
-                    ) ||
-                    (typeof balance === "number" && balance > 0);
-                  // If wallet has no balances, don't show any amount
-                  if (!hasAnyBalance) return null;
+        <div className="text-center space-y-2 mb-8">
+          {wallet
+            ? (() => {
+                const total = getTotalPortfolioValue();
+                const hasAnyBalance =
+                  tokens.some(
+                    (t) => typeof t.balance === "number" && t.balance > 0,
+                  ) ||
+                  (typeof balance === "number" && balance > 0);
+                // If wallet has no balances, don't show any amount
+                if (!hasAnyBalance) return null;
 
-                  return (
-                    <div className="text-[30px] font-semibold text-white leading-tight">
-                      {total.toLocaleString(undefined, {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3,
+                // Calculate 24h change
+                let totalChange24h = 0;
+                let hasValidPriceChange = false;
+                tokens.forEach((token) => {
+                  if (
+                    typeof token.balance === "number" &&
+                    typeof token.price === "number" &&
+                    typeof token.priceChange24h === "number" &&
+                    isFinite(token.balance) &&
+                    isFinite(token.price) &&
+                    isFinite(token.priceChange24h) &&
+                    token.balance > 0 &&
+                    token.price > 0
+                  ) {
+                    const currentValue = token.balance * token.price;
+                    const previousPrice = token.price / (1 + token.priceChange24h / 100);
+                    const previousValue = token.balance * previousPrice;
+                    const change = currentValue - previousValue;
+                    totalChange24h += change;
+                    hasValidPriceChange = true;
+                  }
+                });
+
+                const change24hPercent = hasValidPriceChange
+                  ? (totalChange24h / (total - totalChange24h)) * 100
+                  : 0;
+                const isPositive = totalChange24h >= 0;
+
+                return (
+                  <>
+                    <div className="text-[40px] font-bold text-white leading-tight">
+                      ${total.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}
                     </div>
-                  );
-                })()
-              : "Connect wallet to see balance"}
-          </div>
+                    {hasValidPriceChange && (
+                      <div className="flex items-center justify-center gap-2">
+                        {isPositive ? (
+                          <>
+                            <ArrowUpRight className="h-4 w-4 text-green-400" />
+                            <span className="text-sm font-medium text-green-400">
+                              +${Math.abs(totalChange24h).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{" "}
+                              (+{change24hPercent.toFixed(2)}%)
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDownLeft className="h-4 w-4 text-red-400" />
+                            <span className="text-sm font-medium text-red-400">
+                              -${Math.abs(totalChange24h).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{" "}
+                              ({change24hPercent.toFixed(2)}%)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            : "Connect wallet to see balance"}
         </div>
 
         {/* Action Buttons */}

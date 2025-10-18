@@ -426,8 +426,8 @@ export default function ExpressPay() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="transparent-cardboard rounded-2xl p-6 space-y-5 text-white">
+      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
+        <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6 space-y-5 text-white">
           {/* Tab Selection */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
             <button

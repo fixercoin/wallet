@@ -287,7 +287,7 @@ export default function BuyCrypto() {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
             className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"

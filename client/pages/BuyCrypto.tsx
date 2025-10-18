@@ -270,8 +270,6 @@ export default function BuyCrypto() {
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Main Buy Card */}
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
-          <CardHeader>
-          </CardHeader>
           <CardContent className="space-y-6 pt-6">
             {/* Token Selection Dropdown */}
             <div>

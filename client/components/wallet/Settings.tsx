@@ -38,9 +38,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
   if (wallets.length === 0) {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
         <div className="max-w-md mx-auto pt-8">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 shadow-sm rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">
                 No accounts available. Create a wallet from the dashboard using
@@ -49,7 +49,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mt-4">
                 <Button
                   onClick={onBack}
-                  className="w-full bg-transparent border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                  className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white"
                 >
                   Back to Dashboard
                 </Button>
@@ -160,14 +160,14 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
       <div className="max-w-md mx-auto">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="text-white hover:bg-[#FF7A5C]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -177,11 +177,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         </div>
 
         <div>
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 shadow-sm rounded-lg p-6">
             <div className="px-6 pt-2">
-              <div className="text-[hsl(var(--primary))] font-semibold">
-            
-              </div>
+              <div className="text-[hsl(var(--primary))] font-semibold"></div>
             </div>
             <div className="space-y-6">
               <section>
@@ -203,7 +201,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         description: "Switched to selected account",
                       });
                     }}
-                    className="flex-1 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-2 rounded-md border border-[hsl(var(--border))] font-mono"
+                    className="flex-1 bg-[#1a2540]/50 text-white p-2 rounded-md border border-[#FF7A5C]/30 font-mono"
                   >
                     {wallets.map((w) => (
                       <option
@@ -228,7 +226,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <span className="font-medium">SECRETS</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="p-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-lg">
                     <div className="flex gap-3 mb-3">
                       <select
                         aria-label="Select secret"
@@ -238,7 +236,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.target.value as "recovery" | "private",
                           )
                         }
-                        className="flex-1 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-2 rounded-md border border-[hsl(var(--border))] font-mono"
+                        className="flex-1 bg-[#1a2540]/50 text-white p-2 rounded-md border border-[#FF7A5C]/30 font-mono"
                       >
                         <option value="recovery">RECOVERY PHRASE</option>
                         <option value="private">PRIVATE KEY</option>
@@ -354,7 +352,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             : ""
                       }
                       readOnly
-                      className="bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] font-mono text-sm resize-none min-h-[140px]"
+                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white font-mono text-sm resize-none min-h-[140px]"
                       placeholder={
                         showRecoveryPhrase || showPrivateKey ? "" : "Hidden"
                       }
@@ -375,14 +373,12 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="border-t border-[hsl(var(--border))]" />
 
               <section>
-                <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  
-                </div>
+                <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
                   <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className="w-full flex items-center gap-2 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]/90"
+                    className="w-full flex items-center gap-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -394,7 +390,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     className={`w-full flex items-center gap-2 ${
                       confirmDelete
                         ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]/90"
+                        : "bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
                     }`}
                   >
                     <Trash2 className="h-4 w-4" />

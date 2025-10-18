@@ -88,8 +88,8 @@ export default function TokenListing() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
+      <div className="bg-transparent sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold tracking-wide">
             <span className="text-cream">FIXORIUM</span>
@@ -97,7 +97,7 @@ export default function TokenListing() {
           </div>
           <Button
             variant="ghost"
-            className="h-8 px-3 text-cream hover:bg-[#38bdf8]/20"
+            className="h-8 px-3 text-white hover:bg-[#FF7A5C]/10"
             onClick={() => navigate(-1)}
           >
             Back
@@ -106,7 +106,7 @@ export default function TokenListing() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="wallet-card rounded-2xl p-6 space-y-4">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
               Token Listing
@@ -166,7 +166,7 @@ export default function TokenListing() {
           <Button
             disabled={isLoading}
             onClick={handleList}
-            className="h-11 w-full border-0 font-semibold dash-btn"
+            className="h-11 w-full border-0 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
           >
             {isLoading ? "Listing..." : "Confirm Listing"}
           </Button>

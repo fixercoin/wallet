@@ -46,7 +46,7 @@ export default function CreateToken() {
 
   if (!wallet) {
     return (
-      <div className="min-h-screen bg-white text-[hsl(var(--foreground))] flex items-center justify-center">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center">
         <Card className="w-[90%] max-w-md">
           <CardHeader>
             <CardTitle>Wallet Required</CardTitle>
@@ -214,8 +214,8 @@ export default function CreateToken() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
+      <div className="bg-transparent sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold tracking-wide">
             <span className="text-cream">FIXORIUM</span>
@@ -223,7 +223,7 @@ export default function CreateToken() {
           </div>
           <Button
             variant="ghost"
-            className="h-8 px-3 text-cream hover:bg-[#38bdf8]/20"
+            className="h-8 px-3 text-white hover:bg-[#FF7A5C]/10"
             onClick={() => navigate(-1)}
           >
             Back
@@ -232,7 +232,7 @@ export default function CreateToken() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="bg-gray-800/50 border-gray-700">
+        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30">
           <CardHeader>
             <CardTitle className="text-lg">Create Token</CardTitle>
           </CardHeader>
@@ -279,7 +279,7 @@ export default function CreateToken() {
             <Button
               disabled={!hasMinSol || isLoading}
               onClick={createTokenOnChain}
-              className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
+              className="w-full h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
             >
               {isLoading ? "Creating..." : "Create Token on Solana"}
             </Button>

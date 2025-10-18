@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
-import { shortenAddress } from "@/lib/wallet";
 
 interface TokenOption {
   id: string;
@@ -450,14 +449,8 @@ export default function BuyCrypto() {
                 <Separator className="bg-[#FF7A5C]/20" />
 
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                  <div className="text-xs opacity-80">Wallet Address</div>
-                  <div className="font-mono text-sm break-all">
-                    {wallet
-                      ? shortenAddress(wallet.publicKey, 8)
-                      : "Not connected"}
-                  </div>
-                  <div className="mt-2 text-xs">
-                    Available:{" "}
+                  <div className="text-xs opacity-80">Available Balance</div>
+                  <div className="mt-1 text-sm">
                     <span className="font-semibold">
                       {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
                     </span>

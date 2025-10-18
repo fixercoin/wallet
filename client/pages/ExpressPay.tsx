@@ -455,7 +455,7 @@ export default function ExpressPay() {
           {activeTab === "sell" && (
             <>
               {/* Wallet Balance Info (Sell Mode) */}
-              <div className="p-3 rounded-lg bg-[#0f1012] border border-[#26272b]">
+              <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs text-gray-400 mb-1">
@@ -466,7 +466,7 @@ export default function ExpressPay() {
                     </div>
                   </div>
                   {walletBalance > 0 && (
-                    <Check className="h-6 w-6 text-green-600" />
+                    <Check className="h-6 w-6 text-[#FF7A5C]" />
                   )}
                 </div>
               </div>

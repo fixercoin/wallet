@@ -63,10 +63,7 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Special handling for FIXERCOIN
-      if (
-        contractAddress.trim() ===
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"
-      ) {
+      if (contractAddress.trim() === TOKEN_MINTS.FIXERCOIN) {
         mockTokenInfo.symbol = "FIXERCOIN";
         mockTokenInfo.name = "FIXERCOIN";
         mockTokenInfo.decimals = 6;

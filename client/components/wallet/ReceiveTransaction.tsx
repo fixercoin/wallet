@@ -41,22 +41,26 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={onBack}
-            className="text-white hover:bg-[#FF7A5C]/10"
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+            aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            Receive
-          </h1>
+          <div className="flex-1 text-center font-medium text-sm">
+            RECEIVE
+          </div>
         </div>
+      </div>
+
+      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
 
         <div className="space-y-6">
           {/* QR Code (simple) */}

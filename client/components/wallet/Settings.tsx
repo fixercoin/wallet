@@ -222,17 +222,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </div>
               </section>
 
-              <div className="border-t border-[hsl(var(--border))]" />
-
-              <div className="border-t border-[hsl(var(--border))]" />
-
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
                   <Key className="h-5 w-5" />
                   <span className="font-medium">SECRETS</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="p-4 bg-transparent border-0 rounded-lg">
+                  <div className="bg-transparent border-0 rounded-lg">
                     <div className="flex gap-3 mb-3">
                       <select
                         aria-label="Select secret"
@@ -373,10 +369,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </div>
               </section>
-
-              <div className="border-t border-[hsl(var(--border))]" />
-
-              <div className="border-t border-[hsl(var(--border))]" />
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>

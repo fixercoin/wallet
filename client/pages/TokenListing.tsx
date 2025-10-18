@@ -128,7 +128,7 @@ export default function TokenListing() {
                 value={mint}
                 onChange={(e) => setMint(e.target.value)}
                 placeholder="Mint address"
-                className="font-mono"
+                className="font-mono bg-transparent border-[#FF7A5C]/30 text-white"
               />
             </div>
             <div className="space-y-2">
@@ -138,6 +138,7 @@ export default function TokenListing() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Token"
+                className="bg-transparent border-[#FF7A5C]/30 text-white"
               />
             </div>
             <div className="space-y-2">
@@ -147,6 +148,7 @@ export default function TokenListing() {
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="MTK"
+                className="bg-transparent border-[#FF7A5C]/30 text-white"
               />
             </div>
             <div className="space-y-2">
@@ -157,6 +159,7 @@ export default function TokenListing() {
                 value={decimals}
                 onChange={(e) => setDecimals(Number(e.target.value) || 0)}
                 placeholder="6"
+                className="bg-transparent border-[#FF7A5C]/30 text-white"
               />
             </div>
             <div className="space-y-2">
@@ -166,6 +169,7 @@ export default function TokenListing() {
                 value={logoURI}
                 onChange={(e) => setLogoURI(e.target.value)}
                 placeholder="https://..."
+                className="bg-transparent border-[#FF7A5C]/30 text-white"
               />
             </div>
           </div>

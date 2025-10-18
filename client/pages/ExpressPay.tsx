@@ -401,15 +401,19 @@ export default function ExpressPay() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0f] text-white">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
       {/* Header */}
-      <div className="bg-[#0b0b0f]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#26272b]">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
             aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -422,16 +426,16 @@ export default function ExpressPay() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto px-4 py-6">
-        <div className="bg-[#111214] rounded-2xl border border-[#2a2b2f] shadow-lg p-6 space-y-5">
+      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl rounded-2xl border border-[#FF7A5C]/30 shadow-2xl p-6 space-y-5 text-white">
           {/* Tab Selection */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-[#1a1b1e] rounded-xl">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
             <button
               onClick={() => setActiveTab("buy")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "buy"
-                  ? "bg-[#0f1012] text-white shadow-sm"
-                  : "text-gray-400"
+                  ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
+                  : "text-white hover:text-white"
               }`}
             >
               Buy
@@ -440,8 +444,8 @@ export default function ExpressPay() {
               onClick={() => setActiveTab("sell")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "sell"
-                  ? "bg-[#0f1012] text-white shadow-sm"
-                  : "text-gray-400"
+                  ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
+                  : "text-white hover:text-white"
               }`}
             >
               Sell
@@ -451,10 +455,10 @@ export default function ExpressPay() {
           {activeTab === "sell" && (
             <>
               {/* Wallet Balance Info (Sell Mode) */}
-              <div className="p-3 rounded-lg bg-[#0f1012] border border-[#26272b]">
+              <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-gray-400 mb-1">
+                    <div className="text-xs text-white mb-1">
                       Your {selectedCurrency} Balance
                     </div>
                     <div className="text-lg font-bold text-white">
@@ -462,7 +466,7 @@ export default function ExpressPay() {
                     </div>
                   </div>
                   {walletBalance > 0 && (
-                    <Check className="h-6 w-6 text-green-600" />
+                    <Check className="h-6 w-6 text-[#FF7A5C]" />
                   )}
                 </div>
               </div>
@@ -472,12 +476,10 @@ export default function ExpressPay() {
           {/* Spend Section (Buy) */}
           {activeTab !== "sell" && (
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs mb-1">
+              <div className="flex items-center justify-between text-xs mb-1 text-white">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Status:</span>
-                  <span
-                    className={isBuyOnline ? "text-green-600" : "text-red-600"}
-                  >
+                  <span className="font-medium text-white">Status:</span>
+                  <span className={isBuyOnline ? "text-white" : "text-white"}>
                     {isBuyOnline ? "Online" : "Offline"}
                   </span>
                 </div>
@@ -485,14 +487,14 @@ export default function ExpressPay() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/20"
                       onClick={() => setBuyStatus(true)}
                     >
                       Online
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/10"
                       onClick={() => setBuyStatus(false)}
                     >
                       Offline
@@ -500,8 +502,8 @@ export default function ExpressPay() {
                   </div>
                 )}
               </div>
-              <label className="text-xs text-gray-400 font-medium">Spend</label>
-              <div className="relative rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
+              <label className="text-xs text-white font-medium">Spend</label>
+              <div className="relative rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
                 <div className="flex items-center">
                   <input
                     type="number"
@@ -510,23 +512,23 @@ export default function ExpressPay() {
                     value={spendAmount}
                     onChange={(e) => setSpendAmount(e.target.value)}
                     placeholder="0"
-                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none text-white placeholder-gray-500"
                   />
-                  <div className="px-4 py-3 bg-white/10 text-xs font-bold text-white">
+                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-white">
                     PKR
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">Minimum: 1,000 PKR</div>
+              <div className="text-xs text-white">Minimum: 1,000 PKR</div>
             </div>
           )}
 
           {/* Token Selection / Receive Section */}
           <div className="space-y-2">
-            <label className="text-xs text-gray-400 font-medium">
+            <label className="text-xs text-white font-medium">
               {activeTab === "sell" ? "Sell Token" : "Receive"}
             </label>
-            <div className="rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
+            <div className="rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
               <div className="flex items-center h-11">
                 <div className="flex-1 px-4 py-3 text-sm font-medium text-white">
                   {activeTab === "sell"
@@ -539,10 +541,11 @@ export default function ExpressPay() {
                   <select
                     value={selectedCurrency}
                     onChange={(e) => setSelectedCurrency(e.target.value)}
-                    className="appearance-none bg-white/10 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
+                    className="appearance-none bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 px-3 py-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
+                    style={{ color: "white" }}
                   >
                     {currencies.map((cur) => (
-                      <option key={cur} value={cur}>
+                      <option key={cur} value={cur} style={{ color: "black" }}>
                         {cur}
                       </option>
                     ))}
@@ -552,7 +555,7 @@ export default function ExpressPay() {
               </div>
             </div>
             <div className="flex items-center justify-between text-xs gap-2">
-              <span className="text-gray-400">
+              <span className="text-white">
                 1 {selectedCurrency} ={" "}
                 {isFinite(selectedRate) && selectedRate > 0
                   ? selectedRate.toFixed(2)
@@ -564,12 +567,10 @@ export default function ExpressPay() {
 
           {activeTab === "sell" && (
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs mb-1">
+              <div className="flex items-center justify-between text-xs mb-1 text-white">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Status:</span>
-                  <span
-                    className={isSellOnline ? "text-green-600" : "text-red-600"}
-                  >
+                  <span className="font-medium text-white">Status:</span>
+                  <span className={isSellOnline ? "text-white" : "text-white"}>
                     {isSellOnline ? "Online" : "Offline"}
                   </span>
                 </div>
@@ -577,14 +578,14 @@ export default function ExpressPay() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/20"
                       onClick={() => setSellStatus(true)}
                     >
                       Online
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs"
+                      className="h-7 px-2 text-xs border-white/50 text-white hover:bg-white/10"
                       onClick={() => setSellStatus(false)}
                     >
                       Offline
@@ -592,10 +593,10 @@ export default function ExpressPay() {
                   </div>
                 )}
               </div>
-              <label className="text-xs text-gray-400 font-medium">
+              <label className="text-xs text-white font-medium">
                 Sell Amount {selectedCurrency}
               </label>
-              <div className="relative rounded-xl border border-[#2a2b2f] bg-[#1a1b1e] overflow-hidden">
+              <div className="relative rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 overflow-hidden focus-within:border-[#FF7A5C]/60 transition-colors">
                 <div className="flex items-center">
                   <input
                     type="number"
@@ -604,14 +605,14 @@ export default function ExpressPay() {
                     value={spendAmount}
                     onChange={(e) => setSpendAmount(e.target.value)}
                     placeholder="0"
-                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none"
+                    className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none text-white placeholder-gray-500"
                   />
-                  <div className="px-4 py-3 bg-white/10 text-xs font-bold text-white">
+                  <div className="px-4 py-3 bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 text-xs font-bold text-white">
                     {selectedCurrency}
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-white">
                 {walletBalance > 0 &&
                   `Available: ${walletBalance.toFixed(6)} ${selectedCurrency}`}
               </div>
@@ -628,7 +629,7 @@ export default function ExpressPay() {
               }
             }}
             disabled={isProcessing}
-            className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 hover:from-[hsl(var(--primary))]/90 hover:to-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+            className="w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] transition-all shadow-lg hover:shadow-2xl disabled:opacity-50"
           >
             {isProcessing
               ? "Processing..."
@@ -639,7 +640,7 @@ export default function ExpressPay() {
 
           {/* Footer Link */}
           <div className="text-center">
-            <button className="text-xs text-gray-400 hover:text-white underline">
+            <button className="text-xs text-white hover:text-[#FF7A5C] underline transition-colors">
               Login to post offers
             </button>
           </div>
@@ -648,17 +649,17 @@ export default function ExpressPay() {
 
       {/* Buy Confirmation Modal */}
       {showBuyConfirmation && selectedSeller && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111214] rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#1f2d48]/95 to-[#1a2540]/95 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[#FF7A5C]/30">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] px-6 py-4 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Seller Details
               </h2>
               <button
                 onClick={() => setShowBuyConfirmation(false)}
-                className="text-white hover:bg-white/20 p-1 rounded"
+                className="text-white hover:bg-white/20 p-1 rounded transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -667,21 +668,21 @@ export default function ExpressPay() {
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Transaction Summary */}
-              <div className="space-y-2 pb-4 border-b border-[#2a2b2f]">
-                <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">You Pay</span>
+              <div className="space-y-2 pb-4 border-b border-[#FF7A5C]/30 text-white">
+                <div className="flex justify-between items-center p-2 text-white">
+                  <span className="text-sm text-white">You Pay</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount).toLocaleString()} PKR
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">You Receive</span>
+                <div className="flex justify-between items-center p-2 text-white">
+                  <span className="text-sm text-white">You Receive</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toFixed(6)} {selectedCurrency}
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-2">
-                  <span className="text-sm text-gray-400">Rate</span>
+                <div className="flex justify-between items-center p-2 text-white">
+                  <span className="text-sm text-white">Rate</span>
                   <span className="font-bold text-white">
                     1 {selectedCurrency} ={" "}
                     {isFinite(selectedRate) && selectedRate > 0
@@ -693,59 +694,55 @@ export default function ExpressPay() {
               </div>
 
               {/* Seller Details */}
-              <div className="space-y-3">
+              <div className="space-y-3 text-white">
                 <h3 className="font-semibold text-sm text-white">
                   Seller Information
                 </h3>
 
-                <div className="p-3 rounded-lg bg-[#1a1b1e]">
-                  <div className="text-xs text-gray-400 mb-1">Account Name</div>
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
+                  <div className="text-xs text-white mb-1">Account Name</div>
                   <div className="font-semibold text-white">
                     {selectedSeller.paymentDetails?.accountName ||
                       "Not provided"}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#1a1b1e]">
-                  <div className="text-xs text-gray-400 mb-1">
-                    Account Number
-                  </div>
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
+                  <div className="text-xs text-white mb-1">Account Number</div>
                   <div className="font-semibold text-white font-mono">
                     {selectedSeller.paymentDetails?.accountNumber ||
                       "Not provided"}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#1a1b1e]">
-                  <div className="text-xs text-gray-400 mb-1">
-                    Payment Method
-                  </div>
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
+                  <div className="text-xs text-white mb-1">Payment Method</div>
                   <div className="font-semibold text-white capitalize">
                     {selectedSeller.paymentMethod || "easypaisa"}
                   </div>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300">
-                <p className="text-xs text-green-300">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
+                <p className="text-xs text-white">
                   ✓ After payment, chat window will open to confirm with seller.
                 </p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[#1a1b1e] flex gap-3 flex-shrink-0 border-t border-[#2a2b2f]">
+            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0 border-t border-[#FF7A5C]/20">
               <Button
                 onClick={() => setShowBuyConfirmation(false)}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-[#2a2b2f] hover:bg-[#32333a] text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gray-700/40 hover:bg-gray-700/60 text-white font-medium text-sm transition-colors"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleBuyApprove}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-medium text-sm transition-all"
               >
                 {isProcessing ? "Processing..." : "I Have Paid"}
               </Button>
@@ -756,10 +753,10 @@ export default function ExpressPay() {
 
       {/* Sell Confirmation Modal */}
       {showSellConfirmation && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111214] rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#1f2d48]/95 to-[#1a2540]/95 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[#FF7A5C]/30">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 px-6 py-4 flex-shrink-0">
+            <div className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] px-6 py-4 flex-shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Confirm Sell Transaction
@@ -768,40 +765,40 @@ export default function ExpressPay() {
 
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
-                  <span className="text-sm text-gray-400">Token to Send</span>
+              <div className="space-y-3 text-white">
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
+                  <span className="text-sm text-white">Token to Send</span>
                   <span className="font-bold text-white">
                     {selectedCurrency}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
-                  <span className="text-sm text-gray-400">Amount</span>
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
+                  <span className="text-sm text-white">Amount</span>
                   <span className="font-bold text-white">
                     {Number(spendAmount || 0).toFixed(6)}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 bg-[#1a1b1e] rounded-lg">
-                  <span className="text-sm text-gray-400">PKR Amount</span>
+                <div className="flex justify-between items-center p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
+                  <span className="text-sm text-white">PKR Amount</span>
                   <span className="font-bold text-white">
                     {receivedAmount.toLocaleString()} PKR
                   </span>
                 </div>
 
-                <div className="p-3 bg-[#1a1b1e] rounded-lg">
-                  <div className="text-xs text-gray-400 mb-1">
+                <div className="p-3 bg-[#1a2540]/50 rounded-lg border border-[#FF7A5C]/20 text-white">
+                  <div className="text-xs text-white mb-1">
                     Transfer To Address
                   </div>
-                  <div className="font-mono text-sm break-all">
+                  <div className="font-mono text-sm break-all text-white">
                     {ADMIN_WALLET}
                   </div>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-blue-900/30 border border-blue-700/40 text-blue-300">
-                <p className="text-xs text-blue-300">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
+                <p className="text-xs text-white">
                   ✓ Tokens will be transferred to buyer. Chat window will open
                   after confirmation.
                 </p>
@@ -809,18 +806,18 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[#1a1b1e] flex gap-3 flex-shrink-0 border-t border-[#2a2b2f]">
+            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0 border-t border-[#FF7A5C]/20">
               <Button
                 onClick={() => setShowSellConfirmation(false)}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-[#2a2b2f] hover:bg-[#32333a] text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gray-700/40 hover:bg-gray-700/60 text-white font-medium text-sm transition-colors"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSellApprove}
                 disabled={isProcessing}
-                className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+                className="flex-1 h-10 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-medium text-sm transition-all"
               >
                 {isProcessing ? "Processing..." : "I Have Paid"}
               </Button>

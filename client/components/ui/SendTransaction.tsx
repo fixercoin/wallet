@@ -878,7 +878,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Add a note"
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder-gray-400"
+                    className="bg-transparent border-white/30 text-white placeholder-gray-400"
                   />
                 </div>
 

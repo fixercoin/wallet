@@ -405,18 +405,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           console.warn("Failed to fetch FIXERCOIN price:", err);
         }
 
-        // Fetch DexScreener data for USDC and LOCKER to get accurate price changes
-        const usdcMints = allTokens
-          .filter(
-            (t) =>
-              t.symbol?.toUpperCase() === "USDC" ||
-              /USD\s*COIN/i.test(t.name || ""),
-          )
+        // Fetch DexScreener data for stablecoins (USDC, USDT) and LOCKER to get accurate price changes
+        const stableMints = allTokens
+          .filter((t) => {
+            const sym = (t.symbol || "").toUpperCase();
+            const name = t.name || "";
+            return (
+              sym === "USDC" ||
+              sym === "USDT" ||
+              /USD\s*COIN/i.test(name) ||
+              /TETHER/i.test(name)
+            );
+          })
           .map((t) => t.mint);
 
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         const mintsToFetch = [
-          ...new Set([...usdcMints, lockerMint].filter(Boolean)),
+          ...new Set([...stableMints, lockerMint].filter(Boolean)),
         ];
 
         if (mintsToFetch.length > 0) {
@@ -457,8 +462,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
-        // Ensure stablecoin USDC always has a valid price
-        usdcMints.forEach((mint) => {
+        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change
+        stableMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;
           if (
             typeof changeMap[mint] !== "number" ||

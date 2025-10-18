@@ -139,42 +139,6 @@ export default function BuyCrypto() {
     }
   }, [amountPKR, exchangeRate]);
 
-  const openRazorpay = async (order: {
-    orderId: string;
-    key: string;
-    amount: number;
-    currency: string;
-  }) => {
-    const RazorpayCtor = (window as any).Razorpay;
-    if (!RazorpayCtor) {
-      throw new Error("Razorpay not loaded");
-    }
-
-    return new Promise<void>((resolve, reject) => {
-      const rzp = new RazorpayCtor({
-        key: order.key,
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.orderId,
-        name: "Fixorium Wallet",
-        description: `Buy ${selectedToken.symbol}`,
-        notes: {
-          walletAddress: wallet?.publicKey || (wallet as any)?.address || "",
-          tokenType: selectedToken.id,
-        },
-        prefill: {
-          email: email || undefined,
-          contact: contact || undefined,
-        },
-        handler: () => resolve(),
-        modal: {
-          ondismiss: () => reject(new Error("Payment cancelled")),
-        },
-        theme: { color: "#FF7A5C" },
-      });
-      rzp.open();
-    });
-  };
 
   const handleBuyClick = async () => {
     if (!wallet) {
@@ -187,63 +151,9 @@ export default function BuyCrypto() {
     }
 
     const pricePKRPerQuote = exchangeRate;
-    const amountPaise = Math.round(Number(amountPKR) * 100);
 
     setLoading(true);
     try {
-      // Try to create Razorpay order via Cloudflare Worker
-      const resp = await fetch(`/api/payments/create-intent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          walletAddress: wallet.publicKey,
-          amount: amountPaise,
-          currency: "PKR",
-          tokenType: selectedToken.id,
-          email: email || undefined,
-          contact: contact || undefined,
-        }),
-      }).catch(() => new Response("", { status: 0 } as any));
-
-      if (resp && resp.ok) {
-        const data = await resp.json();
-        try {
-          await openRazorpay(data);
-          // Notify seller feed and navigate to trade screen after successful payment
-          try {
-            send?.({
-              type: "chat",
-              text: JSON.stringify({
-                type: "buyer_paid",
-                amountPKR: Number(amountPKR),
-                token: selectedToken.id,
-                paymentMethod: "easypaisa",
-                buyer_wallet: wallet.publicKey,
-              }),
-            });
-          } catch {}
-
-          navigate("/express/buy-trade", {
-            state: {
-              order: {
-                id: data.orderId || `order-${Date.now()}`,
-                token: selectedToken.id,
-                quoteAsset: selectedToken.id,
-                pricePKRPerQuote,
-                paymentMethod: "easypaisa",
-              },
-              openChat: true,
-              initialPhase: "awaiting_seller_approval",
-            },
-          });
-          return;
-        } catch (e: any) {
-          toast({ title: "Payment cancelled", description: e?.message || "You closed the payment.", variant: "destructive" });
-          return;
-        }
-      }
-
-      // Fallback: no payments API available – start chat-based trade flow
       send?.({
         type: "chat",
         text: JSON.stringify({
@@ -269,7 +179,7 @@ export default function BuyCrypto() {
         },
       });
     } catch (error: any) {
-      toast({ title: "Failed to initiate payment", description: error?.message || String(error), variant: "destructive" });
+      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -401,12 +311,10 @@ export default function BuyCrypto() {
               )}
             </Button>
 
-            <p className="text-white/50 text-center">Payments processed securely through Razorpay</p>
           </CardContent>
         </Card>
       </div>
 
-      <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
     </div>
   );
 }

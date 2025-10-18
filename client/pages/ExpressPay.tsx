@@ -429,13 +429,13 @@ export default function ExpressPay() {
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl rounded-2xl border border-[#FF7A5C]/30 shadow-2xl p-6 space-y-5">
           {/* Tab Selection */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-[#1a1b1e] rounded-xl">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
             <button
               onClick={() => setActiveTab("buy")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "buy"
-                  ? "bg-[#0f1012] text-white shadow-sm"
-                  : "text-gray-400"
+                  ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
+                  : "text-gray-400 hover:text-gray-300"
               }`}
             >
               Buy
@@ -444,8 +444,8 @@ export default function ExpressPay() {
               onClick={() => setActiveTab("sell")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeTab === "sell"
-                  ? "bg-[#0f1012] text-white shadow-sm"
-                  : "text-gray-400"
+                  ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg"
+                  : "text-gray-400 hover:text-gray-300"
               }`}
             >
               Sell

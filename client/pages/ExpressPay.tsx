@@ -151,10 +151,22 @@ export default function ExpressPay() {
     }
   }, [activeTab]);
 
-  // Listen for admin status messages via room chat
+  // Listen for admin status via snapshot and chat; also auto-open chat on payment events
   useEffect(() => {
     const last = events[events.length - 1];
-    if (!last || last.kind !== "chat") return;
+    if (!last) return;
+
+    if (last.kind === "snapshot") {
+      const s: any = last.data;
+      const st = s?.admin_status;
+      if (st) {
+        if (typeof st.buyOnline === "boolean") setIsBuyOnline(!!st.buyOnline);
+        if (typeof st.sellOnline === "boolean") setIsSellOnline(!!st.sellOnline);
+      }
+      return;
+    }
+
+    if (last.kind !== "chat") return;
     const txt = last.data?.text || "";
     try {
       const payload = JSON.parse(txt);
@@ -173,8 +185,43 @@ export default function ExpressPay() {
             setIsSellOnline(!!payload.sellOnline);
         }
       }
+
+      // Auto-open chat on payment events for involved parties (buyer/seller)
+      const userWalletAddress = wallet?.publicKey || (wallet as any)?.address || "";
+      if (
+        payload?.type === "buyer_paid" &&
+        (isAdmin || (!!payload?.buyer_wallet && payload.buyer_wallet === userWalletAddress))
+      ) {
+        const orderObj: any = {
+          id: payload.orderId || `order-${Date.now()}`,
+          type: "sell",
+          token: payload.token,
+          amountPKR: Number(payload.amountPKR || 0),
+          pricePKRPerQuote: selectedRate,
+          quoteAsset: payload.token,
+          paymentMethod: payload.paymentMethod || "easypaisa",
+        };
+        navigate("/express/buy-trade", { state: { order: orderObj } });
+        return;
+      }
+      if (
+        payload?.type === "seller_transferred" &&
+        (isAdmin || (!!payload?.seller_wallet && payload.seller_wallet === userWalletAddress))
+      ) {
+        const orderObj: any = {
+          id: payload.orderId || `sell-${Date.now()}`,
+          type: "sell",
+          token: payload.token,
+          amountPKR: Number(payload.amountPKR || 0),
+          pricePKRPerQuote: selectedRate,
+          quoteAsset: payload.token,
+          paymentMethod: "easypaisa",
+        };
+        navigate("/express/buy-trade", { state: { order: orderObj } });
+        return;
+      }
     } catch {}
-  }, [events]);
+  }, [events, isAdmin, navigate, selectedRate, wallet]);
 
   const setBuyStatus = (online: boolean) => {
     setIsBuyOnline(online);
@@ -288,6 +335,7 @@ export default function ExpressPay() {
             amountPKR: Number(spendAmount),
             token: selectedCurrency,
             paymentMethod: "easypaisa",
+            buyer_wallet: wallet?.publicKey || (wallet as any)?.address || "",
           }),
         });
       } catch {}
@@ -365,6 +413,7 @@ export default function ExpressPay() {
             token: selectedCurrency,
             amountToken: tokenAmount,
             amountPKR: tokenAmount * selectedRate,
+            seller_wallet: wallet?.publicKey || (wallet as any)?.address || "",
           }),
         });
       } catch {}

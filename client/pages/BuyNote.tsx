@@ -319,7 +319,7 @@ export default function BuyNote() {
             <Separator className="bg-[#FF7A5C]/20" />
 
             <Button
-              onClick={() => setShowConfirmation(true)}
+              onClick={handlePaid}
               disabled={loading}
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -335,65 +335,6 @@ export default function BuyNote() {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm Payment</DialogTitle>
-            <DialogDescription>
-              You are confirming that you have sent {order?.amountPKR.toLocaleString()} PKR
-              to the seller's account. The seller will verify the payment and send you the tokens.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 text-sm py-4">
-            <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="flex items-center justify-between">
-                <span className="text-white/80">Amount Sent</span>
-                <span className="font-semibold text-[#FF7A5C]">
-                  {order?.amountPKR.toLocaleString()} PKR
-                </span>
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="flex items-center justify-between">
-                <span className="text-white/80">Payment Method</span>
-                <span className="font-semibold text-[#FF7A5C] capitalize">
-                  {order?.paymentMethod}
-                </span>
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="flex items-center justify-between">
-                <span className="text-white/80">You Will Receive</span>
-                <span className="font-semibold text-[#FF7A5C]">
-                  {estimatedTokens.toFixed(6)} {order?.token}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmation(false)}
-              className="bg-transparent border-white/30 text-white hover:bg-white/10"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setShowConfirmation(false);
-                handlePaid();
-              }}
-              disabled={loading}
-              className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-            >
-              {loading ? "Notifying..." : "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -290,7 +290,7 @@ export default function BuyNote() {
             <Separator className="bg-[#FF7A5C]/20" />
 
             <Button
-              onClick={handlePaid}
+              onClick={() => setShowConfirmation(true)}
               disabled={loading}
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >

@@ -498,12 +498,12 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 space-y-6 relative z-20">
+      <div className="w-full px-0 sm:px-4 py-6 space-y-6 relative z-20">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#FF7A5C]/10 border border-[#FF7A5C]/30"
+            className="h-10 w-10 rounded-full text-white hover:bg-[#FF7A5C]/10"
             onClick={onBack}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -521,7 +521,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-5">
+        <div className="bg-transparent p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
             <span className="text-sm font-semibold text-white">
@@ -537,10 +537,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 onValueChange={setSelectedMint}
                 disabled={!splTokens.length || isLoading}
               >
-                <SelectTrigger className="mt-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                <SelectTrigger className="mt-1 bg-[#1a2540]/50 text-white">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                <SelectContent className="bg-[#1a2540]/95 text-white">
                   {splTokens.map((token) => (
                     <SelectItem key={token.mint} value={token.mint}>
                       <div className="flex flex-col">

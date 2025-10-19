@@ -24,6 +24,7 @@ import {
   broadcastNotification,
   saveNotification,
   loadChatHistory,
+  parseWebSocketMessage,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
@@ -79,9 +80,10 @@ export default function VerifySell() {
     const last = events[events.length - 1];
     if (!last) return;
 
-    if (last.kind === "message") {
-      const msg = last.data as ChatMessage;
-      if (msg.roomId === selectedOrder.roomId) {
+    if (last.kind === "chat") {
+      const txt = (last as any).data?.text || "";
+      const msg = parseWebSocketMessage(txt);
+      if (msg && msg.roomId === selectedOrder.roomId) {
         saveChatMessage(msg);
         setChatLog((prev) => [...prev, msg]);
 

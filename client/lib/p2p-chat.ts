@@ -85,7 +85,7 @@ export function broadcastNotification(
 ) {
   try {
     send?.({
-      type: "notification",
+      kind: "notification",
       data: notification,
     });
   } catch (e) {
@@ -100,8 +100,12 @@ export function sendChatMessage(
 ) {
   try {
     send?.({
-      type: "chat",
-      text: JSON.stringify(message),
+      kind: "chat",
+      data: {
+        id: message.id,
+        text: JSON.stringify(message),
+        at: message.timestamp,
+      },
     });
   } catch (e) {
     console.error("Failed to send chat message", e);

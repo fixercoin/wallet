@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 
 export default function Select() {
   const navigate = useNavigate();
@@ -22,9 +22,10 @@ export default function Select() {
         </button>
         <button
           onClick={() => navigate("/express/pending-orders")}
-          className="text-sm font-medium text-white hover:text-blue-300 transition-colors cursor-pointer"
+          className="flex items-center gap-2 text-sm font-medium text-white hover:text-blue-300 transition-colors cursor-pointer"
         >
-          📋 PENDING ORDERS
+          <Settings className="w-4 h-4" />
+          PENDING ORDERS
         </button>
       </div>
 

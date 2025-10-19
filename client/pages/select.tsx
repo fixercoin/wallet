@@ -11,21 +11,14 @@ export default function Select() {
       <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Back button and Pending Orders at top-left */}
-      <div className="absolute top-4 left-4 z-30 flex items-center gap-4">
+      {/* Back button at top-left */}
+      <div className="absolute top-4 left-4 z-30">
         <button
           onClick={() => navigate("/")}
           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
           aria-label="Go back to wallet dashboard"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
-        <button
-          onClick={() => navigate("/express/pending-orders")}
-          className="flex items-center gap-2 text-sm font-medium text-white hover:text-blue-300 transition-colors cursor-pointer"
-        >
-          <Settings className="w-4 h-4" />
-          PENDING ORDERS
         </button>
       </div>
 

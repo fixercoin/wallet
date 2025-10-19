@@ -32,8 +32,16 @@ export default function Select() {
           />
         </div>
 
+        {/* Fixorium P2P brief card */}
+        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white/20 p-4 sm:p-5">
+          <h3 className="text-base sm:text-lg font-semibold">Fixorium P2P</h3>
+          <p className="mt-1 text-sm sm:text-base text-white/80">
+            Buy and sell crypto directly with peers using secure escrow, fast settlement, and low fees. Choose BUY or SELL to start a trade in seconds.
+          </p>
+        </div>
+
         {/* Actions card under banner with only border color */}
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white/30 p-4 sm:p-6">
+        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border-2 border-pink-300 p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}

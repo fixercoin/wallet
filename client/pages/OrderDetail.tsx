@@ -5,6 +5,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { ArrowLeft } from "lucide-react";
 
 export default function OrderDetail() {
+  const { formatCurrency } = useCurrency();
   const navigate = useNavigate();
   const { orderId } = useParams();
   const [order, setOrder] = useState<any | null>(null);

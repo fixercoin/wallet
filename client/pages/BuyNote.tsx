@@ -8,6 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
+import {
+  saveChatMessage,
+  saveNotification,
+  broadcastNotification,
+  sendChatMessage,
+  type ChatMessage,
+  type ChatNotification,
+} from "@/lib/p2p-chat";
 
 interface BuyOrder {
   id: string;
@@ -57,11 +65,17 @@ export default function BuyNote() {
     }
     setLoading(true);
     try {
-      // Notify seller in chat that buyer has paid with full details
-      send?.({
-        type: "chat",
-        text: JSON.stringify({
-          type: "buyer_paid",
+      const roomId = order.id;
+
+      // Create and send chat message
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        roomId,
+        senderWallet: wallet.publicKey,
+        senderRole: "buyer",
+        type: "buyer_paid",
+        text: `Payment sent: ${order.amountPKR} PKR for ~${estimatedTokens.toFixed(6)} ${order.token}`,
+        metadata: {
           orderId: order.id,
           token: order.token,
           amountPKR: order.amountPKR,
@@ -69,8 +83,33 @@ export default function BuyNote() {
           paymentMethod: order.paymentMethod,
           seller: order.seller,
           buyerWallet: order.buyerWallet,
-          note: "Buyer marked payment as paid and requests verification.",
-        }),
+        },
+        timestamp: Date.now(),
+      };
+
+      saveChatMessage(message);
+      sendChatMessage(send, message);
+
+      // Send notification to seller
+      const notification: ChatNotification = {
+        type: "status_change",
+        roomId,
+        initiatorWallet: wallet.publicKey,
+        initiatorRole: "buyer",
+        message: `Payment received: ${order.amountPKR} PKR - Waiting for verification`,
+        data: {
+          amountPKR: order.amountPKR,
+          token: order.token,
+        },
+        timestamp: Date.now(),
+      };
+
+      saveNotification(notification);
+      broadcastNotification(send, notification);
+
+      toast({
+        title: "Payment marked",
+        description: "Seller will be notified for verification",
       });
 
       // Navigate to chat/trade page

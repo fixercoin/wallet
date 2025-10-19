@@ -18,6 +18,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
+import MobileShell from "@/components/ui/MobileShell";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -79,6 +80,33 @@ function AppRoutes() {
 }
 
 function App() {
+  const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobileMatch(e.matches);
+    try {
+      mq.addEventListener("change", handler);
+    } catch (e) {
+      // Safari fallback
+      // @ts-ignore
+      mq.addListener(handler);
+    }
+    return () => {
+      try {
+        mq.removeEventListener("change", handler);
+      } catch (e) {
+        // @ts-ignore
+        mq.removeListener(handler);
+      }
+    };
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
@@ -89,7 +117,15 @@ function App() {
               <Sonner />
               <CurrencyProvider>
                 <BrowserRouter>
-                  <AppRoutes />
+                  {isMobileMatch ? (
+                    <MobileShell>
+                      <AppRoutes />
+                    </MobileShell>
+                  ) : (
+                    <div className="min-h-screen">
+                      <AppRoutes />
+                    </div>
+                  )}
                 </BrowserRouter>
               </CurrencyProvider>
             </TooltipProvider>

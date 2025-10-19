@@ -115,7 +115,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Check for pending payment verifications if admin
   useEffect(() => {
-    if (wallet?.publicKey === ADMIN_WALLET) {
+    if (
+      wallet?.publicKey &&
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
+    ) {
       const notifications = getPaymentReceivedNotifications(wallet.publicKey);
       setPendingOrdersCount(notifications.length);
 

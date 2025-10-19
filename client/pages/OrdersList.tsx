@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function OrdersList() {
   const navigate = useNavigate();
@@ -57,12 +59,27 @@ export default function OrdersList() {
                   <div className="text-xs opacity-80">Order Number</div>
                   <div className="font-semibold">{o.id}</div>
                 </div>
-                <button
-                  onClick={() => navigate(`/order/${encodeURIComponent(o.id)}`)}
-                  className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-sm hover:bg-[#1a2540]/60"
-                >
-                  View
-                </button>
+                {wallet?.publicKey === ADMIN_WALLET ? (
+                  <button
+                    onClick={() =>
+                      navigate("/express/buy-trade", {
+                        state: { order: o, openChat: true },
+                      })
+                    }
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-sm hover:bg-[#1a2540]/60"
+                  >
+                    Open View
+                  </button>
+                ) : (
+                  <button
+                    onClick={() =>
+                      navigate(`/order/${encodeURIComponent(o.id)}`)
+                    }
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-sm hover:bg-[#1a2540]/60"
+                  >
+                    View
+                  </button>
+                )}
               </div>
             </CardContent>
           </Card>

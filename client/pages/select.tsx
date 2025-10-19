@@ -1,31 +1,46 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ArrowLeft } from "lucide-react";
 
 export default function Select() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [showConfirmation, setShowConfirmation] = useState(
+    !!location.state?.confirmation,
+  );
+
+  const confirmationData = location.state?.confirmation;
+
+  const handleConfirmPayment = async () => {
+    if (confirmationData?.onConfirm) {
+      await confirmationData.onConfirm();
+    }
+    setShowConfirmation(false);
+  };
+
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
       {/* Decorative blobs */}
       <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Back button and Pending Orders at top-left */}
-      <div className="absolute top-4 left-4 z-30 flex items-center gap-4">
+      {/* Back button at top-left */}
+      <div className="absolute top-4 left-4 z-30">
         <button
           onClick={() => navigate("/")}
           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
           aria-label="Go back to wallet dashboard"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
-        <button
-          onClick={() => navigate("/express/pending-orders")}
-          className="flex items-center gap-2 text-sm font-medium text-white hover:text-blue-300 transition-colors cursor-pointer"
-        >
-          <Settings className="w-4 h-4" />
-          PENDING ORDERS
         </button>
       </div>
 
@@ -80,6 +95,50 @@ export default function Select() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmationData?.title}</DialogTitle>
+            <DialogDescription>{confirmationData?.message}</DialogDescription>
+          </DialogHeader>
+
+          {confirmationData?.details && (
+            <div className="space-y-3 text-sm py-4">
+              {confirmationData.details.map((detail: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/80">{detail.label}</span>
+                    <span className="font-semibold text-[#FF7A5C] text-right break-all max-w-xs">
+                      {detail.value}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmation(false)}
+              className="bg-transparent border-white/30 text-white hover:bg-white/10"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmPayment}
+              className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+            >
+              {confirmationData?.buttonText || "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

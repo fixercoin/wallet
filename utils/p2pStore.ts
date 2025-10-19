@@ -117,6 +117,8 @@ try {
         store.proofs = parsed.proofs;
       if (Array.isArray(parsed.easypaisa))
         store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
+      if (Array.isArray(parsed.rooms))
+        store.rooms = parsed.rooms as TradeRoom[];
     }
   }
 } catch (e) {

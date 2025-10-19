@@ -14,7 +14,9 @@ import { ArrowLeft } from "lucide-react";
 export default function Select() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showConfirmation, setShowConfirmation] = useState(!!location.state?.confirmation);
+  const [showConfirmation, setShowConfirmation] = useState(
+    !!location.state?.confirmation,
+  );
 
   const confirmationData = location.state?.confirmation;
 
@@ -99,9 +101,7 @@ export default function Select() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{confirmationData?.title}</DialogTitle>
-            <DialogDescription>
-              {confirmationData?.message}
-            </DialogDescription>
+            <DialogDescription>{confirmationData?.message}</DialogDescription>
           </DialogHeader>
 
           {confirmationData?.details && (

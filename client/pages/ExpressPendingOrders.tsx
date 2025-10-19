@@ -8,17 +8,22 @@ import {
   XCircle,
   Check,
   X,
+  Bell,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { API_BASE } from "@/lib/p2p";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 
 export default function ExpressPendingOrders() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
+  const { events } = useDurableRoom("global", API_BASE);
 
   const [rooms, setRooms] = useState<TradeRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,11 +32,60 @@ export default function ExpressPendingOrders() {
   >("all");
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [processingRoomId, setProcessingRoomId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Listen for notifications and auto-open chat
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+
+    const last = events[events.length - 1];
+    if (!last) return;
+
+    if (last.kind === "notification") {
+      const notif = last.data;
+      if (notif?.roomId && notif?.initiatorWallet !== wallet.publicKey) {
+        toast({
+          title: "New Trade Alert 🔔",
+          description: notif.message,
+        });
+
+        // Auto-open chat window for the other party
+        if (
+          notif.type === "trade_initiated" ||
+          notif.type === "status_change"
+        ) {
+          const room: TradeRoom = {
+            id: notif.roomId,
+            buyer_wallet: "",
+            seller_wallet: "",
+            order_id: notif.roomId,
+            status: "pending",
+            created_at: Date.now(),
+            updated_at: Date.now(),
+          };
+
+          navigate("/express/buy-trade", {
+            state: {
+              room,
+              order: {
+                id: notif.roomId,
+                type: "sell",
+                token: notif.data?.token || "USDC",
+              },
+              openChat: true,
+            },
+          });
+        }
+      }
+    }
+  }, [events, wallet?.publicKey, navigate, toast]);
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
     loadRooms();
-  }, [wallet?.publicKey, filter]);
+    const count = getUnreadNotifications(wallet.publicKey).length;
+    setUnreadCount(count);
+  }, [wallet?.publicKey, filter, events]);
 
   const loadRooms = async () => {
     if (!wallet?.publicKey) {

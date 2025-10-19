@@ -362,6 +362,25 @@ export default function BuyTrade() {
     setChatLog((prev) => [...prev, message]);
   };
 
+  const buyerConfirmReceipt = () => {
+    if (!roomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "buyer",
+      type: "buyer_confirmed_receipt",
+      text: "Buyer confirmed receipt of assets",
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    sendChatMessage(send, message);
+    setChatLog((prev) => [...prev, message]);
+    setPhase("completed");
+  };
+
   const handleSendMessage = () => {
     if (!messageInput.trim() || !roomId || !wallet) return;
 

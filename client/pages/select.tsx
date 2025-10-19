@@ -93,6 +93,52 @@ export default function Select() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmationData?.title}</DialogTitle>
+            <DialogDescription>
+              {confirmationData?.message}
+            </DialogDescription>
+          </DialogHeader>
+
+          {confirmationData?.details && (
+            <div className="space-y-3 text-sm py-4">
+              {confirmationData.details.map((detail: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/80">{detail.label}</span>
+                    <span className="font-semibold text-[#FF7A5C] text-right break-all max-w-xs">
+                      {detail.value}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmation(false)}
+              className="bg-transparent border-white/30 text-white hover:bg-white/10"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmPayment}
+              className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+            >
+              {confirmationData?.buttonText || "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

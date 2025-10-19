@@ -74,9 +74,9 @@ export default function OrderDetail() {
               )}
               {typeof order.amountPKR !== "undefined" && (
                 <div className="flex items-center justify-between">
-                  <div className="text-xs opacity-80">Amount (PKR)</div>
+                  <div className="text-xs opacity-80">Amount</div>
                   <div className="font-semibold">
-                    {Number(order.amountPKR).toLocaleString()}
+                    {formatCurrency(Number(order.amountPKR), { from: "PKR", minimumFractionDigits: 0 })}
                   </div>
                 </div>
               )}

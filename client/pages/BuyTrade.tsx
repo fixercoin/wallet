@@ -31,7 +31,7 @@ export default function BuyTrade() {
   const openChat: boolean = !!(state && state.openChat);
   const initialPhaseFromNav: string | undefined = state?.initialPhase;
   const { toast } = useToast();
-  const { wallet, balance } = useWallet();
+  const { wallet, balance, tokens } = useWallet();
   const derivedRoomId = room?.id || (order && order.id) || "global";
   const { events, send } = useDurableRoom(derivedRoomId, API_BASE);
   const counterpartyWallet = useMemo(() => {
@@ -282,8 +282,40 @@ export default function BuyTrade() {
 
   const [hasReceived, setHasReceived] = useState(false);
   const [sendAmount, setSendAmount] = useState("");
-  const [toWallet, setToWallet] = useState("");
+  const [toWallet, setToWallet] = useState(counterpartyWallet);
+  const [sellerToken, setSellerToken] = useState<string>(token);
+  const sellerTokenInfo = useMemo(
+    () =>
+      tokens.find(
+        (t) =>
+          (t.symbol || "").toUpperCase() === String(sellerToken).toUpperCase(),
+      ),
+    [tokens, sellerToken],
+  );
   const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
+
+  useEffect(() => {
+    if (hasReceived && !toWallet && counterpartyWallet) {
+      setToWallet(counterpartyWallet);
+    }
+  }, [hasReceived, counterpartyWallet, toWallet]);
+
+  const sendTextMessage = () => {
+    if (!messageInput.trim() || !derivedRoomId || !wallet) return;
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: userRole,
+      type: "message",
+      text: messageInput.trim(),
+      timestamp: Date.now(),
+    };
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+    setChatLog((prev) => [...prev, message]);
+    setMessageInput("");
+  };
 
   const handleReceived = () => {
     if (!derivedRoomId || !wallet) return;
@@ -491,10 +523,30 @@ export default function BuyTrade() {
                 <>
                   <div className="p-4 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
                     <div className="text-sm font-medium mb-2">
-                      Wallet balance
+                      Select token and balance
                     </div>
-                    <div className="font-semibold">
-                      {balance.toFixed(6)} SOL
+                    <select
+                      value={sellerToken}
+                      onChange={(e) => setSellerToken(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white cursor-pointer"
+                    >
+                      {tokens.map((t) => (
+                        <option
+                          key={t.mint}
+                          value={t.symbol}
+                          className="bg-[#1a2540] text-white"
+                        >
+                          {t.symbol} —{" "}
+                          {typeof t.balance === "number"
+                            ? t.balance.toFixed(6)
+                            : 0}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="mt-2 font-semibold">
+                      Wallet balance:{" "}
+                      {sellerTokenInfo?.balance?.toFixed(6) || "0.000000"}{" "}
+                      {sellerToken}
                     </div>
                   </div>
                   <div className="grid gap-3">
@@ -528,6 +580,48 @@ export default function BuyTrade() {
                   )}
                 </>
               )}
+
+              <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+                {chatLog.length === 0 ? (
+                  <div className="text-xs text-white/60 text-center py-4">
+                    No messages yet
+                  </div>
+                ) : (
+                  chatLog.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`text-xs p-2 rounded ${
+                        msg.senderWallet === wallet?.publicKey
+                          ? "bg-[#FF7A5C]/20 text-white/90"
+                          : "bg-[#1a2540]/50 text-white/70"
+                      }`}
+                    >
+                      <div className="font-semibold text-white/80">
+                        {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                      </div>
+                      <div>{msg.text}</div>
+                      <div className="text-xs text-white/50 mt-1">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                  placeholder="Type a message..."
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                />
+                <Button
+                  onClick={sendTextMessage}
+                  className="wallet-button-primary px-4"
+                  disabled={!messageInput.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -594,33 +688,6 @@ export default function BuyTrade() {
                 </>
               ) : (
                 <>
-                  <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
-                    {chatLog.length === 0 ? (
-                      <div className="text-xs text-white/60 text-center py-4">
-                        No messages yet
-                      </div>
-                    ) : (
-                      chatLog.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`text-xs p-2 rounded ${
-                            msg.senderWallet === wallet?.publicKey
-                              ? "bg-[#FF7A5C]/20 text-white/90"
-                              : "bg-[#1a2540]/50 text-white/70"
-                          }`}
-                        >
-                          <div className="font-semibold text-white/80">
-                            {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
-                          </div>
-                          <div>{msg.text}</div>
-                          <div className="text-xs text-white/50 mt-1">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
                   {phase === "awaiting_seller_approval" && (
                     <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/30 text-sm text-white/80">
                       Waiting for seller to approve...
@@ -699,6 +766,48 @@ export default function BuyTrade() {
                       {failMsg}
                     </div>
                   )}
+
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+                    {chatLog.length === 0 ? (
+                      <div className="text-xs text-white/60 text-center py-4">
+                        No messages yet
+                      </div>
+                    ) : (
+                      chatLog.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`text-xs p-2 rounded ${
+                            msg.senderWallet === wallet?.publicKey
+                              ? "bg-[#FF7A5C]/20 text-white/90"
+                              : "bg-[#1a2540]/50 text-white/70"
+                          }`}
+                        >
+                          <div className="font-semibold text-white/80">
+                            {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                          </div>
+                          <div>{msg.text}</div>
+                          <div className="text-xs text-white/50 mt-1">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                      placeholder="Type a message..."
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                    />
+                    <Button
+                      onClick={sendTextMessage}
+                      className="wallet-button-primary px-4"
+                      disabled={!messageInput.trim()}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </>
               )}
             </div>

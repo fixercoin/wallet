@@ -395,18 +395,58 @@ export default function BuyTrade() {
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="rounded-2xl p-6 space-y-5 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
           {/* Chat window */}
-          <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30 max-h-48 overflow-auto custom-scrollbar">
+          <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30 max-h-64 overflow-y-auto custom-scrollbar">
             {chatLog.length === 0 ? (
               <div className="text-xs text-white/60">No messages yet</div>
             ) : (
-              <ul className="space-y-1">
-                {chatLog.map((m, i) => (
-                  <li key={i} className="text-xs text-white/90">
-                    {m}
-                  </li>
+              <div className="space-y-2">
+                {chatLog.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`p-2 rounded-lg text-xs ${
+                      m.senderWallet === wallet?.publicKey
+                        ? "bg-[#FF7A5C]/20 border border-[#FF7A5C]/40 text-white/90"
+                        : "bg-white/10 border border-white/20 text-white/80"
+                    }`}
+                  >
+                    <div className="font-semibold text-[#FF7A5C] text-xs mb-1">
+                      {m.senderRole === "buyer" ? "🛒 Buyer" : "🏪 Seller"}
+                    </div>
+                    <div>{m.text}</div>
+                    {m.metadata && Object.keys(m.metadata).length > 0 && (
+                      <div className="text-[10px] opacity-70 mt-1">
+                        {JSON.stringify(m.metadata)}
+                      </div>
+                    )}
+                    <div className="text-[10px] opacity-50 mt-1">
+                      {new Date(m.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
+          </div>
+
+          {/* Message input */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              placeholder="Type a message..."
+              className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-xs focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!messageInput.trim()}
+              className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white disabled:opacity-50 hover:opacity-90 transition-all"
+            >
+              <Send className="w-4 h-4" />
+            </button>
           </div>
 
           {phase === "entry" && (

@@ -163,30 +163,30 @@ export default function BuyNote() {
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
               <div className="flex items-center justify-between">
                 <div className="text-xs opacity-80">Order Number</div>
-                <div className="font-semibold">{order.id}</div>
+                <div className="font-semibold text-[#FF7A5C]">{order.id}</div>
               </div>
             </div>
 
             <div>
-              <label className="block font-medium text-white/80 mb-2">
+              <label className="block font-medium text-white/80 mb-3">
                 Seller Details
               </label>
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white space-y-1">
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Account Name</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-[#FF7A5C]">
                     {order.seller.accountName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Account Number</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-[#FF7A5C]">
                     {order.seller.accountNumber}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Payment Method</span>
-                  <span className="font-semibold capitalize">
+                  <span className="font-semibold capitalize text-[#FF7A5C]">
                     {order.paymentMethod}
                   </span>
                 </div>
@@ -196,35 +196,43 @@ export default function BuyNote() {
             <Separator className="bg-[#FF7A5C]/20" />
 
             <div>
-              <label className="block font-medium text-white/80 mb-2">
+              <label className="block font-medium text-white/80 mb-3">
                 Order Detail
               </label>
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="opacity-80">Token</span>
-                  <span className="font-semibold">{order.token}</span>
+              <div className="space-y-3">
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="opacity-80">Token</span>
+                    <span className="font-semibold text-[#FF7A5C]">{order.token}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="opacity-80">Amount (PKR)</span>
-                  <span className="font-semibold">
-                    {order.amountPKR.toLocaleString()}
-                  </span>
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="opacity-80">Amount (PKR)</span>
+                    <span className="font-semibold text-[#FF7A5C]">
+                      {order.amountPKR.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="opacity-80">Exchange Rate</span>
-                  <span className="font-semibold">
-                    1 {order.token} ={" "}
-                    {order.pricePKRPerQuote < 1
-                      ? order.pricePKRPerQuote.toFixed(6)
-                      : order.pricePKRPerQuote.toFixed(2)}{" "}
-                    PKR
-                  </span>
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="opacity-80">Exchange Rate</span>
+                    <span className="font-semibold text-[#FF7A5C]">
+                      1 {order.token} ={" "}
+                      {order.pricePKRPerQuote < 1
+                        ? order.pricePKRPerQuote.toFixed(6)
+                        : order.pricePKRPerQuote.toFixed(2)}{" "}
+                      PKR
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="opacity-80">You Will Receive</span>
-                  <span className="font-semibold">
-                    {estimatedTokens.toFixed(6)} {order.token}
-                  </span>
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="opacity-80">You Will Receive</span>
+                    <span className="font-bold text-[#FF7A5C]">
+                      {estimatedTokens.toFixed(6)} {order.token}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

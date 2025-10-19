@@ -240,6 +240,39 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="font-medium">CURRENCY PREFERENCE</span>
+                </div>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => {
+                    const selectedCurrency = value as "USD" | "PKR";
+                    setCurrency(selectedCurrency);
+                    try {
+                      localStorage.setItem("preferred_currency", selectedCurrency);
+                    } catch {}
+                    toast({
+                      title: "Currency Changed",
+                      description: `Currency preference set to ${selectedCurrency}`,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a2540]/95 border border-[#FF7A5C]/30">
+                    <SelectItem value="USD" className="text-white">
+                      USD (United States Dollar)
+                    </SelectItem>
+                    <SelectItem value="PKR" className="text-white">
+                      PKR (Pakistani Rupee)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </section>
+
+              <section>
+                <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
                   <Key className="h-5 w-5" />
                   <span className="font-medium">SECRETS</span>
                 </div>

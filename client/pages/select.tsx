@@ -12,7 +12,9 @@ export default function Select() {
 
       <div className="w-full max-w-md mx-auto px-4 py-8 relative z-20 space-y-4">
         <h1 className="text-xl font-bold text-center">Express P2P Service</h1>
-        <p className="text-center text-white/80">Choose advertiser and action</p>
+        <p className="text-center text-white/80">
+          Choose advertiser and action
+        </p>
 
         <Card className="bg-transparent backdrop-blur-xl">
           <CardContent className="pt-6 space-y-4">
@@ -22,12 +24,23 @@ export default function Select() {
                 <div className="text-lg font-semibold">FIXORIUM</div>
               </div>
               <div className="text-right text-sm text-white/70">
-                <div>Available order: <span className="text-white">Unlimited</span></div>
-                <div>Payment: <span className="text-white">Easypaisa</span></div>
+                <div>
+                  Available order: <span className="text-white">Unlimited</span>
+                </div>
+                <div>
+                  Payment: <span className="text-white">Easypaisa</span>
+                </div>
               </div>
             </div>
-            <div className="text-sm text-white/70">Asset: <span className="text-white">Select on next step</span></div>
-            <Button onClick={() => navigate("/buy-now")} className="w-full h-11 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C]">Buy</Button>
+            <div className="text-sm text-white/70">
+              Asset: <span className="text-white">Select on next step</span>
+            </div>
+            <Button
+              onClick={() => navigate("/buy-now")}
+              className="w-full h-11 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C]"
+            >
+              Buy
+            </Button>
           </CardContent>
         </Card>
 
@@ -39,12 +52,24 @@ export default function Select() {
                 <div className="text-lg font-semibold">fixorium</div>
               </div>
               <div className="text-right text-sm text-white/70">
-                <div>Available order: <span className="text-white">Unlimited</span></div>
-                <div>Payment: <span className="text-white">Easypaisa</span></div>
+                <div>
+                  Available order: <span className="text-white">Unlimited</span>
+                </div>
+                <div>
+                  Payment: <span className="text-white">Easypaisa</span>
+                </div>
               </div>
             </div>
-            <div className="text-sm text-white/70">Asset: <span className="text-white">Select on next step</span></div>
-            <Button onClick={() => navigate("/sell-now")} variant="secondary" className="w-full h-11 rounded-lg font-semibold bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70">Sell</Button>
+            <div className="text-sm text-white/70">
+              Asset: <span className="text-white">Select on next step</span>
+            </div>
+            <Button
+              onClick={() => navigate("/sell-now")}
+              variant="secondary"
+              className="w-full h-11 rounded-lg font-semibold bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70"
+            >
+              Sell
+            </Button>
           </CardContent>
         </Card>
       </div>

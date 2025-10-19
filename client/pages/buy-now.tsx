@@ -7,7 +7,13 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TokenOption {
   id: string;
@@ -62,7 +68,9 @@ export default function BuyNow() {
   const { toast } = useToast();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
-  const [selectedToken, setSelectedToken] = useState<TokenOption>(DEFAULT_TOKENS[0]);
+  const [selectedToken, setSelectedToken] = useState<TokenOption>(
+    DEFAULT_TOKENS[0],
+  );
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
@@ -75,7 +83,9 @@ export default function BuyNow() {
         const mints = Object.values(SUPPORTED_TOKEN_MINTS);
         const dexTokens = await dexscreenerAPI.getTokensByMints(mints);
         const enriched = DEFAULT_TOKENS.map((token) => {
-          const dexData = dexTokens.find((dt) => dt.baseToken.address === token.mint);
+          const dexData = dexTokens.find(
+            (dt) => dt.baseToken.address === token.mint,
+          );
           return {
             ...token,
             logo: dexData?.info?.imageUrl || token.logo,
@@ -98,7 +108,8 @@ export default function BuyNow() {
       try {
         const url = `/api/exchange-rate?token=${selectedToken.id}`;
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Rate fetch failed ${response.status}`);
+        if (!response.ok)
+          throw new Error(`Rate fetch failed ${response.status}`);
         const data = await response.json();
         const rate = data.rate || data.priceInPKR || 0;
         setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 0);
@@ -131,11 +142,19 @@ export default function BuyNow() {
 
   const handleBuyClick = async () => {
     if (!wallet) {
-      toast({ title: "Wallet Not Connected", description: "Please connect your wallet first", variant: "destructive" });
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
       return;
     }
     if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
-      toast({ title: "Invalid Amount", description: "Enter a valid PKR amount", variant: "destructive" });
+      toast({
+        title: "Invalid Amount",
+        description: "Enter a valid PKR amount",
+        variant: "destructive",
+      });
       return;
     }
     const pricePKRPerQuote = exchangeRate;
@@ -147,28 +166,44 @@ export default function BuyNow() {
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
         paymentMethod: "easypaisa",
-        seller: { accountName: "ameer nawaz khan", accountNumber: "030107044833" },
+        seller: {
+          accountName: "ameer nawaz khan",
+          accountNumber: "030107044833",
+        },
         buyerWallet: wallet.publicKey,
         createdAt: Date.now(),
       };
-      try { localStorage.setItem("buynote_order", JSON.stringify(order)); } catch {}
+      try {
+        localStorage.setItem("buynote_order", JSON.stringify(order));
+      } catch {}
       addPendingOrder(order);
       navigate("/buynote");
     } catch (error: any) {
-      toast({ title: "Failed to start chat", description: error?.message || String(error), variant: "destructive" });
+      toast({
+        title: "Failed to start chat",
+        description: error?.message || String(error),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]" style={{ fontSize: "10px" }}>
+    <div
+      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"
+      style={{ fontSize: "10px" }}
+    >
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
-          <button onClick={() => navigate("/select")} className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors" aria-label="Back">
+          <button
+            onClick={() => navigate("/select")}
+            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
+            aria-label="Back"
+          >
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
           <div className="flex-1 text-center font-medium text-sm">Buy Now</div>
@@ -179,22 +214,46 @@ export default function BuyNow() {
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
             <div>
-              <label className="block font-medium text-white/80 mb-3">Select Token</label>
-              <Select value={selectedToken.id} onValueChange={(id) => { const token = tokens.find((t) => t.id === id); if (token) setSelectedToken(token); }}>
+              <label className="block font-medium text-white/80 mb-3">
+                Select Token
+              </label>
+              <Select
+                value={selectedToken.id}
+                onValueChange={(id) => {
+                  const token = tokens.find((t) => t.id === id);
+                  if (token) setSelectedToken(token);
+                }}
+              >
                 <SelectTrigger className="bg-[#1a2540]/50 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1a2540]">
                   {tokens.map((token) => (
-                    <SelectItem key={token.id} value={token.id} className="text-white">{token.symbol}</SelectItem>
+                    <SelectItem
+                      key={token.id}
+                      value={token.id}
+                      className="text-white"
+                    >
+                      {token.symbol}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <label className="block font-medium text-white/80 mb-2">Amount (PKR)</label>
-              <input type="number" value={amountPKR} onChange={(e) => setAmountPKR(e.target.value)} placeholder="Enter amount in PKR" className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40" min="0" step="100" />
+              <label className="block font-medium text-white/80 mb-2">
+                Amount (PKR)
+              </label>
+              <input
+                type="number"
+                value={amountPKR}
+                onChange={(e) => setAmountPKR(e.target.value)}
+                placeholder="Enter amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="100"
+              />
             </div>
 
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
@@ -204,18 +263,44 @@ export default function BuyNow() {
                   {fetchingRate ? (
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
-                    <span className="font-semibold text-[#FF7A5C]">1 {selectedToken.symbol} = {exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR</span>
+                    <span className="font-semibold text-[#FF7A5C]">
+                      1 {selectedToken.symbol} ={" "}
+                      {exchangeRate > 0
+                        ? exchangeRate < 1
+                          ? exchangeRate.toFixed(6)
+                          : exchangeRate.toFixed(2)
+                        : "0.00"}{" "}
+                      PKR
+                    </span>
                   )}
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-white/70">You Will Receive:</span>
-                  <span className="font-bold text-[#FF7A5C]">{estimatedTokens.toFixed(6)} {selectedToken.symbol}</span>
+                  <span className="font-bold text-[#FF7A5C]">
+                    {estimatedTokens.toFixed(6)} {selectedToken.symbol}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <Button onClick={handleBuyClick} disabled={loading || !amountPKR || Number(amountPKR) <= 0 || estimatedTokens === 0} className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? (<><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processing...</>) : ("PAY TO BUY CRYPTO CURRENCY")}
+            <Button
+              onClick={handleBuyClick}
+              disabled={
+                loading ||
+                !amountPKR ||
+                Number(amountPKR) <= 0 ||
+                estimatedTokens === 0
+              }
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "PAY TO BUY CRYPTO CURRENCY"
+              )}
             </Button>
           </CardContent>
         </Card>

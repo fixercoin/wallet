@@ -254,6 +254,79 @@ export const handler = async (event: any) => {
       return jsonResponse(result.status, { post: result.post });
     }
 
+    // P2P Trade Rooms endpoints
+    if (path === "/p2p/rooms" && method === "GET") {
+      const wallet = event.queryStringParameters?.wallet;
+      const rooms: any[] = [];
+      if (wallet) {
+        // Filter rooms by wallet - would be implemented with persistent storage
+      }
+      return jsonResponse(200, { rooms });
+    }
+
+    if (path === "/p2p/rooms" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const { buyer_wallet, seller_wallet, order_id } = body;
+      if (!buyer_wallet || !seller_wallet || !order_id) {
+        return jsonResponse(400, {
+          error: "Missing required fields: buyer_wallet, seller_wallet, order_id",
+        });
+      }
+      const roomId = `room-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const room = {
+        id: roomId,
+        buyer_wallet,
+        seller_wallet,
+        order_id,
+        status: "pending",
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+      return jsonResponse(201, { room });
+    }
+
+    if (path.startsWith("/p2p/rooms/") && method === "GET") {
+      const roomId = path.replace("/p2p/rooms/", "");
+      if (!roomId) {
+        return jsonResponse(400, { error: "Room ID required" });
+      }
+      // Return a placeholder room
+      const room = {
+        id: roomId,
+        buyer_wallet: "",
+        seller_wallet: "",
+        order_id: roomId,
+        status: "pending",
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+      return jsonResponse(200, { room });
+    }
+
+    if (path.startsWith("/p2p/rooms/") && method === "PUT") {
+      const roomId = path.replace("/p2p/rooms/", "");
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      if (!roomId) {
+        return jsonResponse(400, { error: "Room ID required" });
+      }
+      const updatedRoom = {
+        id: roomId,
+        buyer_wallet: body.buyer_wallet || "",
+        seller_wallet: body.seller_wallet || "",
+        order_id: body.order_id || roomId,
+        status: body.status || "pending",
+        created_at: body.created_at || Date.now(),
+        updated_at: Date.now(),
+      };
+      return jsonResponse(200, { room: updatedRoom });
+    }
+
     if (
       path.startsWith("/p2p/trade/") &&
       path.endsWith("/messages") &&

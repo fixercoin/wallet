@@ -1,12 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, Copy } from "lucide-react";
+import { ArrowLeft, MessageSquare, Copy, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
 import { useState, useEffect, useMemo } from "react";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   saveChatMessage,
   loadChatHistory,

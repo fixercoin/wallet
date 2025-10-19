@@ -272,10 +272,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, []);
 
-  const formatPKR = (amount: number): string => {
-    if (!amount || !isFinite(amount)) return "PKR 0.00";
-    return `PKR ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  // Currency formatting from context
+  const { formatCurrency } = useCurrency();
 
   // Get SOL token data from tokens list
   const getSolToken = () => {

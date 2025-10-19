@@ -18,6 +18,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
+import MobileShell from "@/components/ui/MobileShell";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -88,9 +89,11 @@ function App() {
               <Toaster />
               <Sonner />
               <CurrencyProvider>
-                <BrowserRouter>
-                  <AppRoutes />
-                </BrowserRouter>
+                <MobileShell>
+                  <BrowserRouter>
+                    <AppRoutes />
+                  </BrowserRouter>
+                </MobileShell>
               </CurrencyProvider>
             </TooltipProvider>
           </ExpressP2PProvider>

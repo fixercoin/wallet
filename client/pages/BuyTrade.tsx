@@ -15,6 +15,7 @@ import {
   clearNotificationsForRoom,
   parseWebSocketMessage,
   sendChatMessage,
+  broadcastNotification,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";

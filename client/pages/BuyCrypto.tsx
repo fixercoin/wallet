@@ -322,10 +322,10 @@ export default function BuyCrypto() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
+      <div className="w-full px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
-            <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl">
               <button
                 onClick={() => setActiveTab("buy")}
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
@@ -361,10 +361,10 @@ export default function BuyCrypto() {
                       if (token) setSelectedToken(token);
                     }}
                   >
-                    <SelectTrigger className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                    <SelectTrigger className="bg-[#1a2540]/50 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1a2540] border-none">
+                    <SelectContent className="bg-[#1a2540]">
                       {tokens.map((token) => (
                         <SelectItem
                           key={token.id}
@@ -456,10 +456,10 @@ export default function BuyCrypto() {
                       if (token) setSelectedToken(token);
                     }}
                   >
-                    <SelectTrigger className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:ring-2 focus:ring-[#FF7A5C] text-white">
+                    <SelectTrigger className="bg-[#1a2540]/50 focus:ring-2 focus:ring-[#FF7A5C] text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1a2540] border-none">
+                    <SelectContent className="bg-[#1a2540]">
                       {tokens.map((token) => (
                         <SelectItem
                           key={token.id}

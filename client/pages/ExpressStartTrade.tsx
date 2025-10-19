@@ -128,8 +128,8 @@ export default function ExpressStartTrade() {
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <button
             onClick={() => {
               navigate("/");
@@ -145,12 +145,12 @@ export default function ExpressStartTrade() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         {!selectedOrder ? (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold mb-4">Choose an Order</h2>
             {orders.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-[hsl(var(--border))]">
+              <div className="text-center py-12 bg-white rounded-xl">
                 <Zap className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-600">No active orders available</p>
                 <button
@@ -165,7 +165,7 @@ export default function ExpressStartTrade() {
                 <button
                   key={order.id}
                   onClick={() => handleSelectOrder(order)}
-                  className="w-full bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4 hover:shadow-md hover:border-purple-300 transition-all text-left"
+                  className="w-full bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all text-left"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span

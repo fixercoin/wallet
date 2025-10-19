@@ -466,8 +466,8 @@ export default function ExpressPay() {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -485,10 +485,10 @@ export default function ExpressPay() {
       </div>
 
       {/* Main Content */}
-      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
-        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-5 text-white">
+      <div className="w-full px-0 sm:px-4 py-6 relative z-20">
+        <div className="bg-transparent p-6 space-y-5 text-white">
           {/* Tab Selection */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl border border-[#FF7A5C]/20">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl">
             <button
               onClick={() => setActiveTab("buy")}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
@@ -514,7 +514,7 @@ export default function ExpressPay() {
           {activeTab === "sell" && (
             <>
               {/* Wallet Balance Info (Sell Mode) */}
-              <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
+              <div className="p-3 rounded-lg bg-[#1a2540]/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs text-white mb-1">
@@ -758,7 +758,7 @@ export default function ExpressPay() {
                   Seller Information
                 </h3>
 
-                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
+                <div className="p-3 rounded-lg bg-[#1a2540]/50">
                   <div className="text-xs text-white mb-1">Account Name</div>
                   <div className="font-semibold text-white">
                     {selectedSeller.paymentDetails?.accountName ||
@@ -766,7 +766,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
+                <div className="p-3 rounded-lg bg-[#1a2540]/50">
                   <div className="text-xs text-white mb-1">Account Number</div>
                   <div className="font-semibold text-white font-mono">
                     {selectedSeller.paymentDetails?.accountNumber ||
@@ -774,7 +774,7 @@ export default function ExpressPay() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/20">
+                <div className="p-3 rounded-lg bg-[#1a2540]/50">
                   <div className="text-xs text-white mb-1">Payment Method</div>
                   <div className="font-semibold text-white capitalize">
                     {selectedSeller.paymentMethod || "easypaisa"}
@@ -782,7 +782,7 @@ export default function ExpressPay() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 text-white">
                 <p className="text-xs text-white">
                   ✓ After payment, chat window will open to confirm with seller.
                 </p>
@@ -790,7 +790,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0 border-t border-[#FF7A5C]/20">
+            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0">
               <Button
                 onClick={() => setShowBuyConfirmation(false)}
                 disabled={isProcessing}
@@ -856,7 +856,7 @@ export default function ExpressPay() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/40 text-white">
+              <div className="p-3 rounded-lg bg-[#FF7A5C]/10 text-white">
                 <p className="text-xs text-white">
                   ✓ Tokens will be transferred to buyer. Chat window will open
                   after confirmation.
@@ -865,7 +865,7 @@ export default function ExpressPay() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0 border-t border-[#FF7A5C]/20">
+            <div className="px-6 py-4 bg-[#1a2540]/50 flex gap-3 flex-shrink-0">
               <Button
                 onClick={() => setShowSellConfirmation(false)}
                 disabled={isProcessing}

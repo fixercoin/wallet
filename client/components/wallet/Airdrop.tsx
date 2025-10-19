@@ -481,8 +481,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -498,18 +498,18 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-4 py-6 relative z-20">
-        <div className="bg-transparent border-0 p-6 rounded-2xl">
+      <div className="w-full p-4 py-6 relative z-20">
+        <div className="bg-transparent p-6 rounded-2xl">
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-300">
                 Select Token (only available here)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 mt-2">
+                <SelectTrigger className="w-full bg-[#1a2540]/50 text-white placeholder:text-gray-300 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                <SelectContent className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
                       {t.symbol} {t.balance ? ` — ${t.balance}` : ""}

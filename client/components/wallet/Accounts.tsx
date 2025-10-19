@@ -22,7 +22,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-      <div className="max-w-md mx-auto">
+      <div className="w-full">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
             variant="ghost"
@@ -43,7 +43,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               Active Wallet
             </div>
             <div className="w-full">
-              <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md p-4 flex items-center justify-between">
+              <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl rounded-md p-4 flex items-center justify-between">
                 <div className="min-w-0">
                   <div className="text-xs text-gray-300 mb-1">Address</div>
                   <div className="font-mono text-sm break-all text-white">

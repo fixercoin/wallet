@@ -590,8 +590,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   if (step === "success") {
     return (
       <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-        <div className="max-w-md mx-auto pt-8">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg">
+        <div className="w-full pt-8">
+          <div className="bg-[hsl(var(--card))] shadow-sm rounded-lg">
             <div className="p-8 text-center">
               <div className="mb-6">
                 <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
@@ -648,7 +648,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={resetSwap}
-                  className="flex-1 bg-[hsl(var(--card))]/70 border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/80"
+                  className="flex-1 bg-[hsl(var(--card))]/70 text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/80"
                 >
                   Swap Again
                 </Button>
@@ -672,7 +672,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="w-full md:max-w-md mx-auto relative z-10 px-0 sm:px-4">
+      <div className="w-full relative z-10 px-0 sm:px-4">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4 pt-2">
           <Button

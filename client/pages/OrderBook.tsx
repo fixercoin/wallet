@@ -232,8 +232,8 @@ export default function OrderBook() {
     return (
       <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
         {/* Header */}
-        <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-          <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+          <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -253,8 +253,8 @@ export default function OrderBook() {
         </div>
 
         {/* Authentication Card */}
-        <div className="max-w-md mx-auto px-4 py-8">
-          <div className="bg-white rounded-2xl border border-[hsl(var(--border))] shadow-sm p-6 space-y-4">
+        <div className="w-full px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
             <div className="text-center">
               <Lock className="h-12 w-12 text-[hsl(var(--primary))] mx-auto mb-2" />
               <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">
@@ -296,8 +296,8 @@ export default function OrderBook() {
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
       {/* Header */}
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             size="icon"

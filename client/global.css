@@ -145,7 +145,12 @@
     color: hsl(var(--foreground)) !important;
   }
 
-  /* P2P page white text override */
+  /* P2P page white text override and mobile fullscreen */
+  .express-p2p-page {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .express-p2p-page p,
   .express-p2p-page span,
   .express-p2p-page a,

@@ -10,6 +10,10 @@ import {
   uploadProof,
   addEasypaisaPayment,
   listEasypaisaPayments,
+  listTradeRooms,
+  getTradeRoom,
+  createTradeRoom,
+  updateTradeRoom,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
@@ -254,6 +258,57 @@ export const handler = async (event: any) => {
       return jsonResponse(result.status, { post: result.post });
     }
 
+    // P2P Trade Rooms endpoints
+    if (path === "/p2p/rooms" && method === "GET") {
+      const wallet = event.queryStringParameters?.wallet;
+      const result = listTradeRooms(wallet);
+      return jsonResponse(200, result);
+    }
+
+    if (path === "/p2p/rooms" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const result = createTradeRoom({
+        buyer_wallet: body?.buyer_wallet || "",
+        seller_wallet: body?.seller_wallet || "",
+        order_id: body?.order_id || "",
+      });
+      if ("error" in result) {
+        return jsonResponse(result.status, { error: result.error });
+      }
+      return jsonResponse(result.status, { room: result.room });
+    }
+
+    if (path.startsWith("/p2p/rooms/") && method === "GET") {
+      const roomId = path.replace("/p2p/rooms/", "");
+      if (!roomId) {
+        return jsonResponse(400, { error: "Room ID required" });
+      }
+      const room = getTradeRoom(roomId);
+      if (!room) {
+        return jsonResponse(404, { error: "Room not found" });
+      }
+      return jsonResponse(200, { room });
+    }
+
+    if (path.startsWith("/p2p/rooms/") && method === "PUT") {
+      const roomId = path.replace("/p2p/rooms/", "");
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      if (!roomId) {
+        return jsonResponse(400, { error: "Room ID required" });
+      }
+      const result = updateTradeRoom(roomId, body || {});
+      if ("error" in result) {
+        return jsonResponse(result.status, { error: result.error });
+      }
+      return jsonResponse(result.status, { room: result.room });
+    }
+
     if (
       path.startsWith("/p2p/trade/") &&
       path.endsWith("/messages") &&
@@ -263,6 +318,46 @@ export const handler = async (event: any) => {
         .replace(/^\/p2p\/trade\//, "")
         .replace(/\/messages$/, "");
       return jsonResponse(200, listTradeMessages(tradeId));
+    }
+
+    if (
+      path.startsWith("/p2p/rooms/") &&
+      path.endsWith("/messages") &&
+      method === "GET"
+    ) {
+      const roomId = path
+        .replace(/^\/p2p\/rooms\//, "")
+        .replace(/\/messages$/, "");
+      return jsonResponse(200, { messages: listTradeMessages(roomId) });
+    }
+
+    if (
+      path.startsWith("/p2p/rooms/") &&
+      path.endsWith("/messages") &&
+      method === "POST"
+    ) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const roomId = path
+        .replace(/^\/p2p\/rooms\//, "")
+        .replace(/\/messages$/, "");
+      const { sender_wallet, message, attachment_url } = body;
+      if (!sender_wallet || !message) {
+        return jsonResponse(400, {
+          error: "Missing required fields: sender_wallet, message",
+        });
+      }
+      const msg = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        room_id: roomId,
+        sender_wallet,
+        message,
+        attachment_url,
+        created_at: Date.now(),
+      };
+      return jsonResponse(201, { message: msg });
     }
 
     if (path === "/p2p/trades/recent" && method === "GET") {

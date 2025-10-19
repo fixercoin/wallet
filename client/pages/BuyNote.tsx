@@ -63,80 +63,41 @@ export default function BuyNote() {
       });
       return;
     }
-    setLoading(true);
-    try {
-      const roomId = order.id;
 
-      // Create and send chat message
-      const message: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        roomId,
-        senderWallet: wallet.publicKey,
-        senderRole: "buyer",
-        type: "buyer_paid",
-        text: `Payment sent: ${order.amountPKR} PKR via ${order.paymentMethod}\n\nSend ${estimatedTokens.toFixed(6)} ${order.token} to:\n${order.buyerWallet}`,
-        metadata: {
-          orderId: order.id,
+    navigate("/select", {
+      state: {
+        confirmation: {
+          title: "Confirm Payment",
+          message: `You are confirming that you have sent ${order.amountPKR.toLocaleString()} PKR to the seller's account. The seller will verify the payment and send you the tokens.`,
+          details: [
+            {
+              label: "Amount Sent",
+              value: `${order.amountPKR.toLocaleString()} PKR`,
+            },
+            {
+              label: "Payment Method",
+              value: order.paymentMethod,
+            },
+            {
+              label: "You Will Receive",
+              value: `${estimatedTokens.toFixed(6)} ${order.token}`,
+            },
+          ],
+          buttonText: "Confirm",
+        },
+        action: "buyer_paid",
+        payload: {
+          roomId: order.id,
           token: order.token,
           amountPKR: order.amountPKR,
-          estimatedTokens: Number(estimatedTokens.toFixed(6)),
+          pricePKRPerQuote: order.pricePKRPerQuote,
           paymentMethod: order.paymentMethod,
-          seller: order.seller,
           buyerWallet: order.buyerWallet,
+          seller: order.seller,
+          estimatedTokens: Number(estimatedTokens.toFixed(6)),
         },
-        timestamp: Date.now(),
-      };
-
-      saveChatMessage(message);
-      sendChatMessage(send, message);
-
-      // Send notification to seller
-      const notification: ChatNotification = {
-        type: "status_change",
-        roomId,
-        initiatorWallet: wallet.publicKey,
-        initiatorRole: "buyer",
-        message: `Payment received: ${order.amountPKR} PKR - Waiting for verification`,
-        data: {
-          amountPKR: order.amountPKR,
-          token: order.token,
-        },
-        timestamp: Date.now(),
-      };
-
-      saveNotification(notification);
-      broadcastNotification(send, notification);
-
-      toast({
-        title: "Payment marked",
-        description: "Seller will be notified for verification",
-      });
-
-      // Navigate to chat/trade page
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            id: order.id,
-            type: "buy",
-            token: order.token,
-            amountPKR: order.amountPKR,
-            pricePKRPerQuote: order.pricePKRPerQuote,
-            quoteAsset: order.token,
-            paymentMethod: order.paymentMethod,
-          },
-          openChat: true,
-          initialPhase: "awaiting_seller_verified",
-        },
-      });
-    } catch (error: any) {
-      toast({
-        title: "Failed to notify seller",
-        description: error?.message || String(error),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
   };
 
   const goBack = () => navigate("/buy-crypto");

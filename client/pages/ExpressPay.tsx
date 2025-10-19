@@ -8,6 +8,7 @@ import { useExpressP2P } from "@/contexts/ExpressP2PContext";
 import { listOrders, ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import type { P2POrder } from "@/lib/p2p-api";
 import { p2pPriceService } from "@/lib/services/p2p-price";
+import { broadcastNotification, type ChatNotification } from "@/lib/p2p-chat";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 
 type TabType = "buy" | "sell";
@@ -205,11 +206,18 @@ export default function ExpressPay() {
           quoteAsset: payload.token,
           paymentMethod: payload.paymentMethod || "easypaisa",
         };
-        navigate("/express/buy-trade", { state: { order: orderObj } });
+        navigate("/express/buy-trade", {
+          state: {
+            order: orderObj,
+            openChat: true,
+            initialPhase: "awaiting_seller_approval",
+          },
+        });
         return;
       }
       if (
-        payload?.type === "seller_transferred" &&
+        (payload?.type === "seller_transferred" ||
+          payload?.type === "seller_sent") &&
         (isAdmin ||
           (!!payload?.seller_wallet &&
             payload.seller_wallet === userWalletAddress))
@@ -223,7 +231,13 @@ export default function ExpressPay() {
           quoteAsset: payload.token,
           paymentMethod: "easypaisa",
         };
-        navigate("/express/buy-trade", { state: { order: orderObj } });
+        navigate("/express/buy-trade", {
+          state: {
+            order: orderObj,
+            openChat: true,
+            initialPhase: "seller_transferred",
+          },
+        });
         return;
       }
     } catch {}
@@ -344,6 +358,24 @@ export default function ExpressPay() {
             buyer_wallet: wallet?.publicKey || (wallet as any)?.address || "",
           }),
         });
+        const notif: ChatNotification = {
+          type: "status_change",
+          roomId: selectedSeller.id,
+          initiatorWallet:
+            (wallet?.publicKey as string) ||
+            ((wallet as any)?.address as string) ||
+            "",
+          initiatorRole: "buyer",
+          message: `Buyer marked payment paid: PKR ${Number(spendAmount).toFixed(2)} (${selectedCurrency})`,
+          data: {
+            orderId: selectedSeller.id,
+            amountPKR: Number(spendAmount),
+            token: selectedCurrency,
+            paymentMethod: "easypaisa",
+          },
+          timestamp: Date.now(),
+        };
+        broadcastNotification(send, notif);
       } catch {}
 
       setShowBuyConfirmation(false);
@@ -413,10 +445,12 @@ export default function ExpressPay() {
       });
 
       try {
+        const roomId = `sell-${Date.now()}`;
         send?.({
           type: "chat",
           text: JSON.stringify({
-            type: "seller_transferred",
+            type: "seller_sent",
+            orderId: roomId,
             to: ADMIN_WALLET,
             token: selectedCurrency,
             amountToken: tokenAmount,
@@ -424,26 +458,44 @@ export default function ExpressPay() {
             seller_wallet: wallet?.publicKey || (wallet as any)?.address || "",
           }),
         });
-      } catch {}
-
-      setShowSellConfirmation(false);
-
-      // Navigate to chat window (BuyTrade page) and open chat for seller
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            id: `sell-${Date.now()}`,
-            type: "sell",
+        const notif: ChatNotification = {
+          type: "status_change",
+          roomId,
+          initiatorWallet:
+            (wallet?.publicKey as string) ||
+            ((wallet as any)?.address as string) ||
+            "",
+          initiatorRole: "seller",
+          message: `Seller sent ${tokenAmount.toFixed(6)} ${selectedCurrency} to ${ADMIN_WALLET}`,
+          data: {
+            orderId: roomId,
             token: selectedCurrency,
-            amountPKR: Number(spendAmount) * selectedRate,
-            pricePKRPerQuote: selectedRate,
-            quoteAsset: selectedCurrency,
-            paymentMethod: "easypaisa",
+            amountToken: tokenAmount,
+            amountPKR: tokenAmount * selectedRate,
           },
-          openChat: true,
-          initialPhase: "seller_transferred",
-        },
-      });
+          timestamp: Date.now(),
+        };
+        broadcastNotification(send, notif);
+
+        setShowSellConfirmation(false);
+
+        // Navigate to chat window (BuyTrade page) and open chat for seller
+        navigate("/express/buy-trade", {
+          state: {
+            order: {
+              id: roomId,
+              type: "sell",
+              token: selectedCurrency,
+              amountPKR: Number(spendAmount) * selectedRate,
+              pricePKRPerQuote: selectedRate,
+              quoteAsset: selectedCurrency,
+              paymentMethod: "easypaisa",
+            },
+            openChat: true,
+            initialPhase: "seller_transferred",
+          },
+        });
+      } catch {}
     } catch (error: any) {
       toast({
         title: "Transfer failed",
@@ -878,7 +930,7 @@ export default function ExpressPay() {
                 disabled={isProcessing}
                 className="flex-1 h-10 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-medium text-sm transition-all"
               >
-                {isProcessing ? "Processing..." : "I Have Paid"}
+                {isProcessing ? "Processing..." : "I Have Sent"}
               </Button>
             </div>
           </div>

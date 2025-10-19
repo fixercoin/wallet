@@ -68,11 +68,13 @@ const store: {
     { id: string; filename: string; data: string; ts: number }[]
   >;
   easypaisa: EasypaisaPayment[];
+  rooms: TradeRoom[];
 } = (globalThis as any).__P2P_STORE || {
   posts: [],
   messages: {},
   proofs: {},
   easypaisa: [],
+  rooms: [],
 };
 (globalThis as any).__P2P_STORE = store;
 

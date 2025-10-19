@@ -53,7 +53,9 @@ export default function ExpressPendingOrders() {
           title: "New Trade Alert 🔔",
           description: notif.message,
         });
-        try { saveNotification(notif); } catch {}
+        try {
+          saveNotification(notif);
+        } catch {}
 
         // Auto-open chat window for the other party
         if (

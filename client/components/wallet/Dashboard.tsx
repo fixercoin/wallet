@@ -26,7 +26,10 @@ import {
   Bell,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
-import { getPaymentReceivedNotifications, saveNotification } from "@/lib/p2p-chat";
+import {
+  getPaymentReceivedNotifications,
+  saveNotification,
+} from "@/lib/p2p-chat";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -142,11 +145,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const last = events?.[events.length - 1];
     if (!last || last.kind !== "notification") return;
     const notif = last.data as any;
-    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey) return;
-    try { saveNotification(notif); } catch {}
+    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
+      return;
+    try {
+      saveNotification(notif);
+    } catch {}
     if (
       ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() === String(ADMIN_WALLET).toLowerCase()
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
     ) {
       const updated = getPaymentReceivedNotifications(wallet.publicKey);
       setPendingOrdersCount(updated.length);

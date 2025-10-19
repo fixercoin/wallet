@@ -35,8 +35,9 @@ export default function Select() {
 
           <div className="flex-1" />
           <div className="flex-1" />
+          <div className="flex-1" />
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full relative z-10">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full relative z-10 mt-4">
             <Button
               onClick={() => navigate("/buy-now")}
               className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"

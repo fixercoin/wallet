@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,10 +10,35 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ArrowLeft } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
+import { useToast } from "@/hooks/use-toast";
+import {
+  saveChatMessage,
+  saveNotification,
+  broadcastNotification,
+  sendChatMessage,
+  type ChatMessage,
+  type ChatNotification,
+} from "@/lib/p2p-chat";
+
+type ActionType = "buyer_paid" | "seller_sent";
 
 export default function Select() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useLocation() as any;
+  const { toast } = useToast();
+  const { wallet } = useWallet();
+  const action = (location.state?.action || null) as ActionType | null;
+  const payload = (location.state?.payload || null) as any;
+
+  const derivedRoomId: string | null = useMemo(() => {
+    return (payload && (payload.roomId || payload.orderId)) || null;
+  }, [payload]);
+
+  const { send } = useDurableRoom(derivedRoomId || "global", API_BASE);
+
   const [showConfirmation, setShowConfirmation] = useState(
     !!location.state?.confirmation,
   );
@@ -21,10 +46,118 @@ export default function Select() {
   const confirmationData = location.state?.confirmation;
 
   const handleConfirmPayment = async () => {
-    if (confirmationData?.onConfirm) {
-      await confirmationData.onConfirm();
+    try {
+      if (!action || !payload) {
+        setShowConfirmation(false);
+        return;
+      }
+      if (!wallet?.publicKey) {
+        toast({ title: "Wallet Not Connected", variant: "destructive" });
+        return;
+      }
+
+      if (action === "buyer_paid") {
+        const roomId = payload.roomId as string;
+        const estimatedTokens = Number(payload.estimatedTokens || 0);
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "buyer",
+          type: "buyer_paid",
+          text: `Payment sent: ${payload.amountPKR} PKR via ${payload.paymentMethod}\n\nSend ${estimatedTokens.toFixed(6)} ${payload.token} to:\n${payload.buyerWallet}`,
+          metadata: {
+            orderId: roomId,
+            token: payload.token,
+            amountPKR: payload.amountPKR,
+            estimatedTokens: estimatedTokens,
+            paymentMethod: payload.paymentMethod,
+            seller: payload.seller,
+            buyerWallet: payload.buyerWallet,
+          },
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        sendChatMessage(send, message);
+        const notification: ChatNotification = {
+          type: "status_change",
+          roomId,
+          initiatorWallet: wallet.publicKey,
+          initiatorRole: "buyer",
+          message: `Payment received: ${payload.amountPKR} PKR - Waiting for verification`,
+          data: { amountPKR: payload.amountPKR, token: payload.token },
+          timestamp: Date.now(),
+        };
+        saveNotification(notification);
+        broadcastNotification(send, notification);
+        toast({ title: "Payment marked", description: "Seller will be notified for verification" });
+        navigate("/express/buy-trade", {
+          state: {
+            order: {
+              id: roomId,
+              type: "buy",
+              token: payload.token,
+              amountPKR: payload.amountPKR,
+              pricePKRPerQuote: payload.pricePKRPerQuote,
+              quoteAsset: payload.token,
+              paymentMethod: payload.paymentMethod,
+            },
+            openChat: true,
+            initialPhase: "awaiting_seller_verified",
+          },
+        });
+      } else if (action === "seller_sent") {
+        const roomId = payload.roomId as string;
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "seller",
+          type: "seller_sent",
+          text: `Seller sent ${Number(payload.amountTokens).toFixed(6)} ${payload.token} to ${ADMIN_WALLET}\n\nBuyer, please send ${Number(payload.amountPKR).toFixed(2)} PKR via ${payload.paymentMethod}`,
+          metadata: {
+            orderId: roomId,
+            token: payload.token,
+            amountTokens: payload.amountTokens,
+            amountPKR: payload.amountPKR,
+            sellerWallet: payload.sellerWallet,
+            adminWallet: payload.adminWallet,
+          },
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        sendChatMessage(send, message);
+        const notification: ChatNotification = {
+          type: "status_change",
+          roomId,
+          initiatorWallet: wallet.publicKey,
+          initiatorRole: "seller",
+          message: `Transfer sent: ${Number(payload.amountTokens).toFixed(6)} ${payload.token} to ${ADMIN_WALLET}`,
+          data: { amountTokens: payload.amountTokens, token: payload.token },
+          timestamp: Date.now(),
+        };
+        saveNotification(notification);
+        broadcastNotification(send, notification);
+        toast({ title: "Transfer marked sent", description: "Buyer will be notified" });
+        navigate("/express/buy-trade", {
+          state: {
+            order: {
+              id: roomId,
+              type: "sell",
+              token: payload.token,
+              amountPKR: payload.amountPKR,
+              pricePKRPerQuote: payload.pricePKRPerQuote,
+              quoteAsset: payload.token,
+              paymentMethod: payload.paymentMethod,
+            },
+            openChat: true,
+            initialPhase: "awaiting_seller_verified",
+          },
+        });
+      }
+    } finally {
+      setShowConfirmation(false);
     }
-    setShowConfirmation(false);
   };
 
   return (

@@ -134,13 +134,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Main welcome screen
   if (activeTab === "create" && !generatedWallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4 relative overflow-hidden">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-        <div className="w-full relative z-10">
-          <div className="bg-transparent overflow-hidden">
-            <div className="p-6 space-y-6">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 relative z-10">
+          <div className="w-full bg-transparent overflow-hidden">
+            <div className="space-y-6">
               <div className="text-center pb-2">
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
@@ -153,7 +153,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   onClick={handleCreateWallet}
                   disabled={isLoading}
-                  className="w-full h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
+                  className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                 >
                   <Plus className="h-5 w-5 mr-2" />
                   CREATE NEW WALLET
@@ -169,7 +169,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 </Button>
 
                 {error && (
-                  <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
+                  <Alert className="bg-red-500/10 text-red-200">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
@@ -184,19 +184,19 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Recovery screen
   if (activeTab === "recover") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4 relative overflow-hidden">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-        <div className="max-w-2xl w-full mx-auto relative z-10">
-          <div className="relative bg-transparent border-0 rounded-2xl overflow-hidden shadow-none">
+        <div className="w-full relative z-10 p-4">
+          <div className="relative bg-transparent overflow-hidden">
             {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                 <div className="text-white">Importing wallet...</div>
               </div>
             )}
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-4 text-sm">
@@ -236,7 +236,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       onChange={(e) => setRecoveryPhrase(e.target.value)}
                       placeholder="Paste your 12 or 24-word recovery phrase here..."
                       aria-label="Recovery Phrase"
-                      className="w-full h-32 p-4 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30 focus:border-[#FF7A5C]/40"
+                      className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
                     />
                     <p className="text-xs text-gray-300">
                       Derivation Path (Solana default) →
@@ -258,7 +258,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         : "Hidden"
                     }
                     aria-label="Private Key"
-                    className="w-full h-32 p-4 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30 focus:border-[#FF7A5C]/40"
+                    className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
                   />
                 )}
               </div>
@@ -267,7 +267,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   variant="outline"
                   onClick={() => setActiveTab("create")}
-                  className="flex-1 bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                  className="flex-1 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                 >
                   Back
                 </Button>
@@ -275,7 +275,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <Button
                     onClick={handleRecoverWallet}
                     disabled={!isMnemonicWordCountValid || isLoading}
-                    className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="flex-1 h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Recover Wallet
                   </Button>
@@ -305,7 +305,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       }
                     }}
                     disabled={!privateKeyInput.trim()}
-                    className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="flex-1 h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Import Wallet
                   </Button>
@@ -313,7 +313,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               </div>
 
               {error && (
-                <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
+                <Alert className="bg-red-500/10 text-red-200">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -327,19 +327,19 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Mnemonic display screen
   if (activeTab === "mnemonic" && generatedWallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4 relative overflow-hidden">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-        <div className="max-w-2xl w-full mx-auto relative z-10">
-          <div className="relative bg-transparent border-0 rounded-2xl overflow-hidden shadow-none">
+        <div className="w-full relative z-10 p-4">
+          <div className="relative bg-transparent overflow-hidden">
             {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                 <div className="text-white">Creating wallet...</div>
               </div>
             )}
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6">
               <div className="text-center">
                 <div className="text-2xl font-bold">Secret Recovery Phrase</div>
                 <div className="opacity-80">
@@ -358,7 +358,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="outline"
                       size="sm"
                       onClick={() => setShowMnemonic(!showMnemonic)}
-                      className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      className="bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                     >
                       {showMnemonic ? (
                         <EyeOff className="h-4 w-4" />
@@ -371,7 +371,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="outline"
                       size="sm"
                       onClick={copyFullMnemonic}
-                      className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      className="bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                     >
                       <Copy className="h-4 w-4" />
                       Copy All
@@ -379,11 +379,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <div className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-xl p-6">
+                <div className="bg-[#1a2540]/50 rounded-xl p-6">
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••�� •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>
@@ -394,7 +394,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   id="confirm-backup"
                   checked={confirmedMnemonic}
                   onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                  className="rounded border border-[#FF7A5C]/30 bg-[#1a2540]/50"
+                  className="rounded bg-[#1a2540]/50"
                 />
                 <Label htmlFor="confirm-backup" className="text-sm opacity-80">
                   I have safely backed up my recovery phrase
@@ -405,14 +405,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   variant="outline"
                   onClick={() => setActiveTab("create")}
-                  className="flex-1 bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                  className="flex-1 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                 >
                   Back
                 </Button>
                 <Button
                   onClick={handleConfirmWallet}
                   disabled={!confirmedMnemonic}
-                  className="flex-1 h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
+                  className="flex-1 h-12 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                 >
                   Create Wallet
                 </Button>

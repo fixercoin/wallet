@@ -587,11 +587,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   if (step === "success") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4 relative overflow-hidden">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-        <div className="w-full max-w-md mx-auto relative z-10 pt-8 px-4">
+        <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 pt-8 px-0 sm:px-4">
           <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl">
             <div className="p-8 text-center">
               <div className="mb-6">
@@ -662,12 +662,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4 relative overflow-hidden">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto relative z-10 px-4">
+      <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4 pt-2">
           <Button

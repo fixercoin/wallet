@@ -95,6 +95,8 @@ export class DurableRoom implements DurableObject {
               text,
               at: Date.now(),
             });
+          } else if (msg?.kind === "notification") {
+            await this.broadcast("notification", msg.data);
           } else if (msg?.type === "ping") {
             server.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
           }

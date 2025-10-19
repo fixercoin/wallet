@@ -530,8 +530,167 @@ export default function BuyTrade() {
               )}
             </div>
           ) : (
-            <div className="text-center text-sm text-white/70">
-              Waiting for seller actions…
+            <div className="space-y-4">
+              {phase === "entry" ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-white/70">
+                      Select Token
+                    </label>
+                    <select
+                      value={token}
+                      onChange={(e) => setToken(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 appearance-none cursor-pointer"
+                    >
+                      {Object.keys(TOKEN_MINTS).map((tokenName) => (
+                        <option
+                          key={tokenName}
+                          value={tokenName}
+                          className="bg-[#1a2540] text-white"
+                        >
+                          {tokenName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-white/70">
+                      Amount PKR
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                      placeholder="Enter PKR amount"
+                      value={amountPKR}
+                      onChange={(e) => setAmountPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                    />
+                  </div>
+
+                  {pricePKR && (
+                    <div className="p-3 rounded-lg bg-[#0f1520]/50 border border-[#FF7A5C]/20">
+                      <div className="text-xs text-white/60 mb-2">
+                        Price: {pricePKR.toFixed(2)} PKR per {token}
+                      </div>
+                      {estimatedTokens > 0 && (
+                        <div className="text-sm font-semibold text-white">
+                          You will receive: {estimatedTokens.toFixed(6)} {token}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleConfirm}
+                    disabled={!canConfirm}
+                    className="wallet-button-primary w-full disabled:opacity-50"
+                  >
+                    Request to Buy
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+                    {chatLog.length === 0 ? (
+                      <div className="text-xs text-white/60 text-center py-4">
+                        No messages yet
+                      </div>
+                    ) : (
+                      chatLog.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`text-xs p-2 rounded ${
+                            msg.senderWallet === wallet?.publicKey
+                              ? "bg-[#FF7A5C]/20 text-white/90"
+                              : "bg-[#1a2540]/50 text-white/70"
+                          }`}
+                        >
+                          <div className="font-semibold text-white/80">
+                            {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                          </div>
+                          <div>{msg.text}</div>
+                          <div className="text-xs text-white/50 mt-1">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {phase === "awaiting_seller_approval" && (
+                    <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/30 text-sm text-white/80">
+                      Waiting for seller to approve...
+                    </div>
+                  )}
+
+                  {phase === "seller_approved" && sellerInfo && (
+                    <>
+                      <div className="p-3 rounded-lg bg-[#0f1520]/50 border border-[#FF7A5C]/30 space-y-2">
+                        <div className="text-xs font-semibold text-white/70">
+                          Seller Payment Details
+                        </div>
+                        <div>
+                          <div className="text-xs text-white/60">Account Name</div>
+                          <div className="text-sm font-medium text-white">
+                            {sellerInfo.accountName}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-white/60">Account Number</div>
+                          <div className="text-sm font-medium text-white">
+                            {sellerInfo.accountNumber}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-white/60">Payment Method</div>
+                          <div className="text-sm font-medium text-white">
+                            {sellerInfo.paymentMethod}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={notifySeller}
+                        className="wallet-button-primary w-full"
+                      >
+                        I've Sent Payment
+                      </Button>
+                    </>
+                  )}
+
+                  {phase === "awaiting_seller_verified" && (
+                    <div className="p-3 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/30 text-sm text-white/80">
+                      Waiting for seller to verify payment...
+                    </div>
+                  )}
+
+                  {phase === "seller_verified" && (
+                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm text-green-400/80">
+                      Seller verified payment. Assets are being transferred...
+                    </div>
+                  )}
+
+                  {phase === "seller_transferred" && (
+                    <Button
+                      onClick={buyerConfirmReceipt}
+                      className="wallet-button-primary w-full"
+                    >
+                      Confirm Receipt
+                    </Button>
+                  )}
+
+                  {phase === "completed" && (
+                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm text-green-400/80 text-center font-semibold">
+                      Order Completed Successfully!
+                    </div>
+                  )}
+
+                  {phase === "failed" && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400/80">
+                      {failMsg}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

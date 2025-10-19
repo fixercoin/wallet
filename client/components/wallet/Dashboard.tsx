@@ -25,8 +25,12 @@ import {
   Coins,
   Bell,
 } from "lucide-react";
-import { ADMIN_WALLET } from "@/lib/p2p";
-import { getPaymentReceivedNotifications } from "@/lib/p2p-chat";
+import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
+import {
+  getPaymentReceivedNotifications,
+  saveNotification,
+} from "@/lib/p2p-chat";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -81,6 +85,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     addCustomToken,
   } = useWallet();
   const { toast } = useToast();
+  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
@@ -133,6 +138,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
       return () => clearInterval(interval);
     }
   }, [wallet?.publicKey]);
+
+  // Persist incoming notifications and update pending badge (admin only)
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    const last = events?.[events.length - 1];
+    if (!last || last.kind !== "notification") return;
+    const notif = last.data as any;
+    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
+      return;
+    try {
+      saveNotification(notif);
+    } catch {}
+    if (
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
+    ) {
+      const updated = getPaymentReceivedNotifications(wallet.publicKey);
+      setPendingOrdersCount(updated.length);
+    }
+  }, [events, wallet?.publicKey]);
 
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);

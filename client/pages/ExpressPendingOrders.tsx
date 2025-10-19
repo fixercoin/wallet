@@ -19,6 +19,7 @@ import { API_BASE } from "@/lib/p2p";
 import {
   getUnreadNotifications,
   getPaymentReceivedNotifications,
+  saveNotification,
 } from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 
@@ -52,6 +53,9 @@ export default function ExpressPendingOrders() {
           title: "New Trade Alert 🔔",
           description: notif.message,
         });
+        try {
+          saveNotification(notif);
+        } catch {}
 
         // Auto-open chat window for the other party
         if (

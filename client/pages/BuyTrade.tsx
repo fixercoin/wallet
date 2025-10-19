@@ -15,6 +15,7 @@ import {
   clearNotificationsForRoom,
   parseWebSocketMessage,
   sendChatMessage,
+  broadcastNotification,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
@@ -118,6 +119,7 @@ export default function BuyTrade() {
     };
 
     saveNotification(notification);
+    broadcastNotification(send, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({
@@ -159,6 +161,7 @@ export default function BuyTrade() {
     };
 
     saveNotification(notification);
+    broadcastNotification(send, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({

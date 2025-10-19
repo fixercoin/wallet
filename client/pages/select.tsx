@@ -34,6 +34,7 @@ export default function Select() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-transparent rounded-2xl sm:rounded-3xl" />
 
           <div className="flex-1" />
+          <div className="flex-1" />
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full relative z-10">
             <Button

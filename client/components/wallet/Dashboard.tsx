@@ -52,6 +52,7 @@ interface DashboardProps {
 }
 
 import { useNavigate } from "react-router-dom";
+import { TopBar } from "./TopBar";
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
@@ -377,76 +378,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
-          <div className="flex items-center gap-3 text-white font-bold tracking-wide">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2Fcb7c54ed71c4445994802d2be5063923%2F5dbc95a4895e477594adad3ce67d2790?format=webp&width=800"
-              alt="Fixorium logo"
-              className="h-8 w-8 rounded-full object-contain"
-            />
-            <span className="text-cream">FIXORIUM</span>
-          </div>
-          <div className="flex items-center gap-1 ml-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-full bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>MY-WALLET</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onAirdrop}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Gift className="h-4 w-4" />
-                  <span>C-BUILDER</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onBurn}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Flame className="h-4 w-4" />
-                  <span>SPL-BURN</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onLock}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Lock className="h-4 w-4" />
-                  <span>LOCK-SPL</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => navigate("/fixorium/token-listing")}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Coins className="h-4 w-4" />
-                  <span>LISTING</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={onSettings}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>SETTINGS</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+      <TopBar
+        onAccounts={onAccounts}
+        onAirdrop={onAirdrop}
+        onBurn={onBurn}
+        onLock={onLock}
+        onSettings={onSettings}
+      />
 
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}

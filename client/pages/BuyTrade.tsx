@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, Copy, Send } from "lucide-react";
+import { ArrowLeft, MessageSquare, Copy, Send, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
@@ -14,6 +14,7 @@ import {
   saveNotification,
   clearNotificationsForRoom,
   parseWebSocketMessage,
+  sendChatMessage,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
@@ -104,7 +105,7 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
 
     const notification: ChatNotification = {
       type: "trade_initiated",
@@ -140,7 +141,7 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
 
     const notification: ChatNotification = {
       type: "payment_received",
@@ -295,10 +296,10 @@ export default function BuyTrade() {
   const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
 
   useEffect(() => {
-    if (hasReceived && !toWallet && counterpartyWallet) {
+    if (!toWallet && counterpartyWallet) {
       setToWallet(counterpartyWallet);
     }
-  }, [hasReceived, counterpartyWallet, toWallet]);
+  }, [counterpartyWallet, toWallet]);
 
   const sendTextMessage = () => {
     if (!messageInput.trim() || !derivedRoomId || !wallet) return;
@@ -312,7 +313,7 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setMessageInput("");
   };
@@ -329,7 +330,7 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     toast({ title: "Payment received" });
     setHasReceived(true);
     setPhase("seller_verified");
@@ -352,7 +353,7 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     toast({ title: "Assets sent" });
     setPhase("seller_transferred");
   };
@@ -376,7 +377,7 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -394,7 +395,7 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -412,7 +413,7 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -431,7 +432,7 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -449,10 +450,66 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    send?.({ type: "chat", text: JSON.stringify(message) });
+    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setPhase("completed");
   };
+
+  async function resizeImageToDataUrl(file: File, maxDim = 1024, quality = 0.8): Promise<string> {
+    const img = document.createElement("img");
+    const fileUrl = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = fileUrl;
+      });
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas unsupported");
+      ctx.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL("image/jpeg", quality);
+    } finally {
+      URL.revokeObjectURL(fileUrl);
+    }
+  }
+
+  async function handleImageAttachment(file: File) {
+    if (!file || !derivedRoomId || !wallet) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        roomId: derivedRoomId,
+        senderWallet: wallet.publicKey,
+        senderRole: userRole,
+        type: "attachment",
+        text: "Sent an image",
+        metadata: { attachmentDataUrl: dataUrl, filename: file.name },
+        timestamp: Date.now(),
+      };
+      saveChatMessage(message);
+      sendChatMessage(send, message);
+      setChatLog((prev) => [...prev, message]);
+    } catch (e) {
+      console.error("Attachment failed", e);
+      toast({ title: "Upload failed", description: "Could not attach image", variant: "destructive" });
+    }
+  }
 
   return (
     <div
@@ -600,6 +657,15 @@ export default function BuyTrade() {
                         {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
                       </div>
                       <div>{msg.text}</div>
+                      {msg.metadata?.attachmentDataUrl && (
+                        <div className="mt-2">
+                          <img
+                            src={msg.metadata.attachmentDataUrl}
+                            alt="attachment"
+                            className="rounded-lg max-h-48 border border-white/20"
+                          />
+                        </div>
+                      )}
                       <div className="text-xs text-white/50 mt-1">
                         {new Date(msg.timestamp).toLocaleTimeString()}
                       </div>
@@ -614,6 +680,24 @@ export default function BuyTrade() {
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                 />
+                <input
+                  id="attach-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.currentTarget.files?.[0];
+                    if (f) handleImageAttachment(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => document.getElementById("attach-input")?.click()}
+                  className="wallet-button-secondary px-3"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
                 <Button
                   onClick={sendTextMessage}
                   className="wallet-button-primary px-4"
@@ -768,46 +852,73 @@ export default function BuyTrade() {
                   )}
 
                   <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
-                    {chatLog.length === 0 ? (
-                      <div className="text-xs text-white/60 text-center py-4">
-                        No messages yet
-                      </div>
-                    ) : (
-                      chatLog.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`text-xs p-2 rounded ${
-                            msg.senderWallet === wallet?.publicKey
-                              ? "bg-[#FF7A5C]/20 text-white/90"
-                              : "bg-[#1a2540]/50 text-white/70"
-                          }`}
-                        >
-                          <div className="font-semibold text-white/80">
-                            {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
-                          </div>
-                          <div>{msg.text}</div>
-                          <div className="text-xs text-white/50 mt-1">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                          </div>
-                        </div>
-                      ))
-                    )}
+                {chatLog.length === 0 ? (
+                  <div className="text-xs text-white/60 text-center py-4">
+                    No messages yet
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
-                      placeholder="Type a message..."
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                    />
-                    <Button
-                      onClick={sendTextMessage}
-                      className="wallet-button-primary px-4"
-                      disabled={!messageInput.trim()}
+                ) : (
+                  chatLog.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`text-xs p-2 rounded ${
+                        msg.senderWallet === wallet?.publicKey
+                          ? "bg-[#FF7A5C]/20 text-white/90"
+                          : "bg-[#1a2540]/50 text-white/70"
+                      }`}
                     >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
+                      <div className="font-semibold text-white/80">
+                        {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                      </div>
+                      <div>{msg.text}</div>
+                      {msg.metadata?.attachmentDataUrl && (
+                        <div className="mt-2">
+                          <img
+                            src={msg.metadata.attachmentDataUrl}
+                            alt="attachment"
+                            className="rounded-lg max-h-48 border border-white/20"
+                          />
+                        </div>
+                      )}
+                      <div className="text-xs text-white/50 mt-1">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                  placeholder="Type a message..."
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                />
+                <input
+                  id="attach-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.currentTarget.files?.[0];
+                    if (f) handleImageAttachment(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => document.getElementById("attach-input")?.click()}
+                  className="wallet-button-secondary px-3"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={sendTextMessage}
+                  className="wallet-button-primary px-4"
+                  disabled={!messageInput.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
                 </>
               )}
             </div>

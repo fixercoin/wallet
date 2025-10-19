@@ -81,7 +81,9 @@ function AppRoutes() {
 
 function App() {
   const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false,
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false,
   );
 
   useEffect(() => {

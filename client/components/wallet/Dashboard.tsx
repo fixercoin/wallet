@@ -524,7 +524,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
           <Button
-            onClick={() => navigate("/buy-crypto")}
+            onClick={() => navigate("/select")}
             className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
             aria-label="EXPRESS P2P SERVICE"
           >

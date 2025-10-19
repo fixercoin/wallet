@@ -338,3 +338,70 @@ export function listEasypaisaPayments(filters: {
   arr.sort((a, b) => b.ts - a.ts);
   return { payments: arr } as const;
 }
+
+// ===== TRADE ROOM FUNCTIONS =====
+
+export function listTradeRooms(wallet?: string) {
+  let rooms = store.rooms.slice();
+  if (wallet) {
+    rooms = rooms.filter(
+      (r) => r.buyer_wallet === wallet || r.seller_wallet === wallet,
+    );
+  }
+  rooms.sort((a, b) => b.created_at - a.created_at);
+  return { rooms } as const;
+}
+
+export function getTradeRoom(roomId: string) {
+  const room = store.rooms.find((r) => r.id === roomId);
+  return room || null;
+}
+
+export function createTradeRoom(input: {
+  buyer_wallet: string;
+  seller_wallet: string;
+  order_id: string;
+}) {
+  const { buyer_wallet, seller_wallet, order_id } = input;
+  if (!buyer_wallet || !seller_wallet || !order_id) {
+    return { error: "Missing required fields", status: 400 } as const;
+  }
+
+  const now = Date.now();
+  const room: TradeRoom = {
+    id: `room-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    buyer_wallet,
+    seller_wallet,
+    order_id,
+    status: "pending",
+    created_at: now,
+    updated_at: now,
+  };
+
+  store.rooms.push(room);
+  void saveStoreToFile();
+  return { room, status: 201 } as const;
+}
+
+export function updateTradeRoom(
+  roomId: string,
+  updates: Partial<Omit<TradeRoom, "id" | "created_at">>,
+) {
+  const idx = store.rooms.findIndex((r) => r.id === roomId);
+  if (idx === -1) {
+    return { error: "Room not found", status: 404 } as const;
+  }
+
+  const existing = store.rooms[idx];
+  const updated: TradeRoom = {
+    ...existing,
+    ...updates,
+    id: existing.id,
+    created_at: existing.created_at,
+    updated_at: Date.now(),
+  };
+
+  store.rooms[idx] = updated;
+  void saveStoreToFile();
+  return { room: updated, status: 200 } as const;
+}

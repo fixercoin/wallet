@@ -43,6 +43,14 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
+  const [currency, setCurrency] = useState<"USD" | "PKR">(() => {
+    try {
+      const saved = localStorage.getItem("preferred_currency");
+      return (saved as "USD" | "PKR") || "USD";
+    } catch {
+      return "USD";
+    }
+  });
 
   if (wallets.length === 0) {
     return (

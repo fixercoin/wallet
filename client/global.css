@@ -156,6 +156,24 @@
     color: white !important;
   }
 
+  /* Dropdown menu text override */
+  [role="menu"] p,
+  [role="menu"] span,
+  [role="menu"] a,
+  [role="menu"] li,
+  [role="menu"] label,
+  [role="menu"] small,
+  [role="menu"] strong,
+  [role="menu"] em,
+  [role="menu"] h1,
+  [role="menu"] h2,
+  [role="menu"] h3,
+  [role="menu"] h4,
+  [role="menu"] h5,
+  [role="menu"] h6 {
+    color: white !important;
+  }
+
   /* Remove white borders and lines from express-p2p-page */
   .express-p2p-page .border-white,
   .express-p2p-page [class*="border-white"] {

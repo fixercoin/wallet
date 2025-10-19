@@ -77,7 +77,10 @@ export default function OrderDetail() {
                 <div className="flex items-center justify-between">
                   <div className="text-xs opacity-80">Amount</div>
                   <div className="font-semibold">
-                    {formatCurrency(Number(order.amountPKR), { from: "PKR", minimumFractionDigits: 0 })}
+                    {formatCurrency(Number(order.amountPKR), {
+                      from: "PKR",
+                      minimumFractionDigits: 0,
+                    })}
                   </div>
                 </div>
               )}
@@ -93,7 +96,12 @@ export default function OrderDetail() {
                 <div className="flex items-center justify-between">
                   <div className="text-xs opacity-80">Exchange Rate</div>
                   <div className="font-semibold">
-                    1 {order.token} = {formatCurrency(Number(order.pricePKRPerQuote), { from: "PKR", minimumFractionDigits: Number(order.pricePKRPerQuote) < 1 ? 6 : 2 })}
+                    1 {order.token} ={" "}
+                    {formatCurrency(Number(order.pricePKRPerQuote), {
+                      from: "PKR",
+                      minimumFractionDigits:
+                        Number(order.pricePKRPerQuote) < 1 ? 6 : 2,
+                    })}
                   </div>
                 </div>
               )}

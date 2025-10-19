@@ -85,7 +85,8 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
     <div className="w-full h-64">
       {isStable && (
         <div className="text-xs text-gray-500 mb-2">
-          Stablecoin detected — showing neutral activity (buy/sell data not available).
+          Stablecoin detected — showing neutral activity (buy/sell data not
+          available).
         </div>
       )}
       {error && (

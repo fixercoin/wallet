@@ -431,7 +431,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <>
                     <div className="text-[40px] font-bold text-white leading-tight">
-                      {formatCurrency(total, { from: "USD", minimumFractionDigits: 2 })}
+                      {formatCurrency(total, {
+                        from: "USD",
+                        minimumFractionDigits: 2,
+                      })}
                     </div>
                     {hasValidPriceChange && (
                       <div className="flex items-center justify-center gap-2">
@@ -439,7 +442,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <>
                             <ArrowUpRight className="h-4 w-4 text-green-400" />
                             <span className="text-sm font-medium text-green-400">
-                              +{formatCurrency(Math.abs(totalChange24h), {
+                              +
+                              {formatCurrency(Math.abs(totalChange24h), {
                                 from: "USD",
                                 minimumFractionDigits: 2,
                               })}{" "}
@@ -450,7 +454,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <>
                             <ArrowDownLeft className="h-4 w-4 text-red-400" />
                             <span className="text-sm font-medium text-red-400">
-                              -{formatCurrency(Math.abs(totalChange24h), {
+                              -
+                              {formatCurrency(Math.abs(totalChange24h), {
                                 from: "USD",
                                 minimumFractionDigits: 2,
                               })}{" "}

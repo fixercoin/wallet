@@ -52,7 +52,10 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           )}
           <div>
             <h2 className="text-2xl font-bold text-white">
-              {formatCurrency(currentPrice, { from: "USD", minimumFractionDigits: 8 })}
+              {formatCurrency(currentPrice, {
+                from: "USD",
+                minimumFractionDigits: 8,
+              })}
             </h2>
             <div className="flex items-center gap-2 mt-1">
               {priceChangePercent !== null ? (
@@ -105,7 +108,10 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Total Value</span>
             <span className="text-white font-medium">
-              {formatCurrency(totalValue, { from: "USD", minimumFractionDigits: 2 })}
+              {formatCurrency(totalValue, {
+                from: "USD",
+                minimumFractionDigits: 2,
+              })}
             </span>
           </div>
         </div>

@@ -207,13 +207,19 @@ export default function BuyTrade() {
           setPhase("seller_verified");
           toast({
             title: "Seller verified payment",
-            description: "Proceed to transfer",
+            description: "Assets are being transferred to you",
           });
-        } else if (msg.type === "seller_transferred") {
+        } else if (msg.type === "seller_completed") {
           setPhase("seller_transferred");
           toast({
-            title: "Transfer complete",
-            description: "Check assets in wallet",
+            title: "Seller completed transfer",
+            description: "Please confirm receipt to finalize order",
+          });
+        } else if (msg.type === "buyer_confirmed_receipt") {
+          setPhase("completed");
+          toast({
+            title: "Order Complete",
+            description: "Trade finalized successfully",
           });
           try {
             const completedRaw = localStorage.getItem("orders_completed");
@@ -236,7 +242,7 @@ export default function BuyTrade() {
                 : pending;
             localStorage.setItem("orders_pending", JSON.stringify(filtered));
           } catch {}
-          setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
+          setTimeout(() => navigate("/", { state: { goP2P: true } }), 2000);
         } else if (msg.type === "order_failed") {
           setFailMsg(
             String(msg.metadata?.reason || "Order could not complete"),

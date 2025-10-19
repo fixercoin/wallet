@@ -38,7 +38,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="sticky top-0 z-10 bg-gradient-to-r from-[#0f172a] to-[#0b1220]/95 border-b border-white/5">
+    <div className="sticky top-0 z-10 bg-transparent border-b border-white/5">
       <div className="max-w-md mx-auto px-3 py-3">
         {/* Pill bar replicating the provided design */}
         <div className="flex items-center gap-2 rounded-xl bg-[#141c2b] text-white h-10 px-3 shadow-sm ring-1 ring-white/10">

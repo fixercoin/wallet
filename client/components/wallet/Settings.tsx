@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft,
   Copy,
   LogOut,
@@ -11,6 +18,7 @@ import {
   Key,
   Eye,
   EyeOff,
+  DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -35,6 +43,14 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
+  const [currency, setCurrency] = useState<"USD" | "PKR">(() => {
+    try {
+      const saved = localStorage.getItem("preferred_currency");
+      return (saved as "USD" | "PKR") || "USD";
+    } catch {
+      return "USD";
+    }
+  });
 
   if (wallets.length === 0) {
     return (
@@ -224,6 +240,42 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="font-medium">CURRENCY PREFERENCE</span>
+                </div>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => {
+                    const selectedCurrency = value as "USD" | "PKR";
+                    setCurrency(selectedCurrency);
+                    try {
+                      localStorage.setItem(
+                        "preferred_currency",
+                        selectedCurrency,
+                      );
+                    } catch {}
+                    toast({
+                      title: "Currency Changed",
+                      description: `Currency preference set to ${selectedCurrency}`,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a2540]/95 border border-[#FF7A5C]/30">
+                    <SelectItem value="USD" className="text-white">
+                      USD (United States Dollar)
+                    </SelectItem>
+                    <SelectItem value="PKR" className="text-white">
+                      PKR (Pakistani Rupee)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </section>
+
+              <section>
+                <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
                   <Key className="h-5 w-5" />
                   <span className="font-medium">SECRETS</span>
                 </div>
@@ -337,7 +389,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             setShowRecoveryPhrase(false);
                           }
                         }}
-                        className="bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-1 rounded-md border border-[hsl(var(--border))]"
+                        className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
                       >
                         <option value="hidden">Hidden</option>
                         <option value="show">Show</option>

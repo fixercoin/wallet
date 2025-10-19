@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -696,109 +697,111 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         <div className="bg-transparent border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
             {/* FROM row */}
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-3">
-                  <Input
-                    type="number"
-                    placeholder="0.000"
-                    value={fromAmount}
-                    onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
-                  />
-                  <div className="mt-2 text-xl text-white">
-                    {(() => {
-                      const amt = parseFloat(fromAmount || "0");
-                      const price = fromUsdPrice ?? 0;
-                      const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
-                    })()}
+            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-3">
+                    <Input
+                      type="number"
+                      placeholder="0.000"
+                      value={fromAmount}
+                      onChange={(e) => setFromAmount(e.target.value)}
+                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
+                    />
+                    <div className="mt-2 text-xl text-white">
+                      {(() => {
+                        const amt = parseFloat(fromAmount || "0");
+                        const price = fromUsdPrice ?? 0;
+                        const usd = amt * price;
+                        return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
+                      })()}
+                    </div>
                   </div>
-                </div>
 
-                {/* Token select pill (from) */}
-                <div className="flex flex-col items-end min-w-[8.5rem]">
-                  <Select
-                    value={fromToken?.mint || ""}
-                    onValueChange={(v) => {
-                      const t = allTokens.find((x) => x.mint === v);
-                      if (t) setFromToken(t);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
-                      <SelectValue>
-                        <div className="flex items-center gap-2 text-white">
-                          {fromToken ? (
-                            <>
-                              <Avatar className="h-6 w-6">
+                  {/* Token select pill (from) */}
+                  <div className="flex flex-col items-end min-w-[8.5rem]">
+                    <Select
+                      value={fromToken?.mint || ""}
+                      onValueChange={(v) => {
+                        const t = allTokens.find((x) => x.mint === v);
+                        if (t) setFromToken(t);
+                      }}
+                    >
+                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
+                        <SelectValue>
+                          <div className="flex items-center gap-2 text-white">
+                            {fromToken ? (
+                              <>
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage
+                                    src={fromToken.logoURI}
+                                    alt={fromToken.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {fromToken.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-white">
+                                  {fromToken.symbol}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-white">Select</span>
+                            )}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                        {allTokens.map((token) => (
+                          <SelectItem
+                            key={token.mint}
+                            value={token.mint}
+                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <Avatar className="h-5 w-5 ring-1 ring-white/20">
                                 <AvatarImage
-                                  src={fromToken.logoURI}
-                                  alt={fromToken.symbol}
+                                  src={token.logoURI}
+                                  alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs">
-                                  {fromToken.symbol.slice(0, 2)}
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                  {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium text-white">
-                                {fromToken.symbol}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-white">Select</span>
-                          )}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
-                      {allTokens.map((token) => (
-                        <SelectItem
-                          key={token.mint}
-                          value={token.mint}
-                          className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={token.logoURI}
-                                alt={token.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {token.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {token.symbol}
-                                </span>
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {token.name}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">
+                                    {token.symbol}
+                                  </span>
+                                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                    {formatAmount(
+                                      getTokenBalance(token),
+                                      token.symbol,
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {token.name}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fromToken ? (
-                    <div className="mt-2 text-xs text-white">
-                      {formatAmount(
-                        getTokenBalance(fromToken),
-                        fromToken.symbol,
-                      )}{" "}
-                      {fromToken.symbol}
-                    </div>
-                  ) : null}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fromToken ? (
+                      <div className="mt-2 text-xs text-white">
+                        {formatAmount(
+                          getTokenBalance(fromToken),
+                          fromToken.symbol,
+                        )}{" "}
+                        {fromToken.symbol}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* swap arrow */}
             <div className="flex items-center justify-center py-1">
@@ -812,103 +815,105 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* TO row */}
-            <div className="bg-[#1a2540]/50 rounded-xl p-4 border border-[#FF7A5C]/30">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-3">
-                  <div className="text-xl leading-none tracking-tight text-white">
-                    {toAmount
-                      ? formatAmount(toAmount, toToken?.symbol)
-                      : "0.000"}
+            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-3">
+                    <div className="text-xl leading-none tracking-tight text-white">
+                      {toAmount
+                        ? formatAmount(toAmount, toToken?.symbol)
+                        : "0.000"}
+                    </div>
+                    <div className="mt-2 text-xl text-white">
+                      {(() => {
+                        const amt = parseFloat(toAmount || "0");
+                        const price = toUsdPrice ?? 0;
+                        const usd = amt * price;
+                        return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
+                      })()}
+                    </div>
                   </div>
-                  <div className="mt-2 text-xl text-white">
-                    {(() => {
-                      const amt = parseFloat(toAmount || "0");
-                      const price = toUsdPrice ?? 0;
-                      const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
-                    })()}
-                  </div>
-                </div>
 
-                {/* Token select pill (to) */}
-                <div className="flex flex-col items-end min-w-[8.5rem]">
-                  <Select
-                    value={toToken?.mint || ""}
-                    onValueChange={(v) => {
-                      const t = allTokens.find((x) => x.mint === v);
-                      if (t) setToToken(t);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
-                      <SelectValue>
-                        <div className="flex items-center gap-2 text-white">
-                          {toToken ? (
-                            <>
-                              <Avatar className="h-6 w-6">
+                  {/* Token select pill (to) */}
+                  <div className="flex flex-col items-end min-w-[8.5rem]">
+                    <Select
+                      value={toToken?.mint || ""}
+                      onValueChange={(v) => {
+                        const t = allTokens.find((x) => x.mint === v);
+                        if (t) setToToken(t);
+                      }}
+                    >
+                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
+                        <SelectValue>
+                          <div className="flex items-center gap-2 text-white">
+                            {toToken ? (
+                              <>
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage
+                                    src={toToken.logoURI}
+                                    alt={toToken.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {toToken.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-white">
+                                  {toToken.symbol}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-white">Select</span>
+                            )}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                        {allTokens.map((token) => (
+                          <SelectItem
+                            key={token.mint}
+                            value={token.mint}
+                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <Avatar className="h-5 w-5 ring-1 ring-white/20">
                                 <AvatarImage
-                                  src={toToken.logoURI}
-                                  alt={toToken.symbol}
+                                  src={token.logoURI}
+                                  alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs">
-                                  {toToken.symbol.slice(0, 2)}
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                  {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium text-white">
-                                {toToken.symbol}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-white">Select</span>
-                          )}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
-                      {allTokens.map((token) => (
-                        <SelectItem
-                          key={token.mint}
-                          value={token.mint}
-                          className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={token.logoURI}
-                                alt={token.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {token.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {token.symbol}
-                                </span>
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {token.name}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">
+                                    {token.symbol}
+                                  </span>
+                                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                    {formatAmount(
+                                      getTokenBalance(token),
+                                      token.symbol,
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {token.name}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {toToken ? (
-                    <div className="mt-2 text-xs text-white font-mono">
-                      {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
-                    </div>
-                  ) : null}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {toToken ? (
+                      <div className="mt-2 text-xs text-white font-mono">
+                        {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Quote details */}
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (

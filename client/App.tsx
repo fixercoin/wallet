@@ -19,7 +19,6 @@ import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
 import MobileShell from "@/components/ui/MobileShell";
-import ViewModeToggle from "@/components/ui/ViewModeToggle";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -81,20 +80,6 @@ function AppRoutes() {
 }
 
 function App() {
-  const [mode, setMode] = useState<"auto" | "mobile" | "full">(() => {
-    try {
-      return (localStorage.getItem("viewMode") as "auto" | "mobile" | "full") || "auto";
-    } catch (_) {
-      return "auto";
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("viewMode", mode);
-    } catch (_) {}
-  }, [mode]);
-
   const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false,
   );
@@ -120,8 +105,6 @@ function App() {
     };
   }, []);
 
-  const isMobilePreferred = mode === "mobile" ? true : mode === "full" ? false : isMobileMatch;
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
@@ -132,7 +115,7 @@ function App() {
               <Sonner />
               <CurrencyProvider>
                 <BrowserRouter>
-                  {isMobilePreferred ? (
+                  {isMobileMatch ? (
                     <MobileShell>
                       <AppRoutes />
                     </MobileShell>
@@ -142,7 +125,6 @@ function App() {
                     </div>
                   )}
                 </BrowserRouter>
-                <ViewModeToggle mode={mode} setMode={setMode} />
               </CurrencyProvider>
             </TooltipProvider>
           </ExpressP2PProvider>

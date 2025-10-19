@@ -23,8 +23,14 @@ export default function Select() {
       </div>
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
-        {/* Banner without any background color */}
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl relative overflow-hidden p-6 sm:p-8 flex flex-col items-center justify-center" />
+        {/* Banner with image (no background color) */}
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl relative overflow-hidden p-6 sm:p-8 flex items-center justify-center">
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2Ff98a0c38026744178f6ea91c30482956?format=webp&width=800"
+            alt="Banner"
+            className="w-full h-full object-contain"
+          />
+        </div>
 
         {/* Actions card under banner with only border color */}
         <div className="mt-6 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border-2 border-[#FF5A8C] p-4 sm:p-6">

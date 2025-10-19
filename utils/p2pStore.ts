@@ -27,6 +27,7 @@ export type TradeMessage = {
   message: string;
   from: string;
   ts: number;
+  proof?: { filename: string; url?: string };
 };
 
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
@@ -111,6 +112,18 @@ try {
 
 export function listPosts() {
   return { posts: store.posts };
+}
+
+export function deletePost(id: string, adminWalletHeader?: string) {
+  const admin = adminWalletHeader || "";
+  if (admin !== ADMIN_WALLET) {
+    return { error: "unauthorized", status: 401 } as const;
+  }
+  const idx = store.posts.findIndex((p) => p.id === id);
+  if (idx === -1) return { error: "not_found", status: 404 } as const;
+  const removed = store.posts.splice(idx, 1)[0];
+  void saveStoreToFile();
+  return { ok: true, post: removed, status: 200 } as const;
 }
 
 export function getPost(id: string) {
@@ -243,6 +256,7 @@ export function addTradeMessage(
   tradeId: string,
   message: string,
   from: string,
+  proof?: { filename: string; url?: string },
 ) {
   if (!message) return { error: "invalid message", status: 400 } as const;
   const entry: TradeMessage = {
@@ -250,6 +264,7 @@ export function addTradeMessage(
     message,
     from: from || "unknown",
     ts: Date.now(),
+    proof,
   };
   store.messages[tradeId] = store.messages[tradeId] || [];
   store.messages[tradeId].push(entry);

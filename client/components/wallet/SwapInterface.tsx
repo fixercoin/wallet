@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
@@ -134,6 +136,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setIsLoading(false);
           return;
         }
+        console.log(
+          `Requesting Jupiter quote: ${fromToken.symbol} (${fromToken.mint}) -> ${toToken.symbol} (${toToken.mint}), amount: ${amountInt}`,
+        );
         const q = await jupiterAPI.getQuote(
           fromToken.mint,
           toToken.mint,
@@ -141,12 +146,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
         );
         if (q) {
+          console.log(
+            `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
+          );
           setQuote(q);
           const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
           setToAmount(out.toFixed(6));
           setQuoteError("");
           setIndicative(false);
         } else {
+          console.log(
+            `No Jupiter quote available, falling back to DexScreener pricing`,
+          );
           const [fromDex, toDex] = await Promise.all([
             dexscreenerAPI.getTokenByMint(fromToken.mint),
             dexscreenerAPI.getTokenByMint(toToken.mint),
@@ -155,18 +166,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             ? parseFloat(fromDex.priceUsd)
             : null;
           const toUsd = toDex?.priceUsd ? parseFloat(toDex.priceUsd) : null;
+
+          console.log(
+            `DexScreener prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
+          );
+
           if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
             const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
             const estOutHuman = (fromHuman * fromUsd) / toUsd;
+            console.log(
+              `Using indicative pricing: ${estOutHuman.toFixed(6)} ${toToken.symbol}`,
+            );
             setQuote(null);
             setToAmount(estOutHuman.toFixed(6));
             setQuoteError("");
             setIndicative(true);
           } else {
+            console.warn(
+              `Could not get prices from DexScreener: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+            );
             setQuote(null);
             setToAmount("");
             setQuoteError(
-              "Quotes temporarily unavailable. Try another pair or amount.",
+              `No liquidity data found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
             );
             setIndicative(false);
           }
@@ -306,174 +328,167 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const executeSwap = async () => {
-    if (!quote || !wallet) return;
+    if (!wallet) return;
     setIsLoading(true);
 
     try {
-      if (!quote) throw new Error("Swap quote missing");
-      const swapRequest = {
-        quoteResponse: quote,
-        userPublicKey: wallet.publicKey,
-        wrapAndUnwrapSol: true,
-      } as any;
-      console.debug("Sending swap request to Jupiter proxy:", swapRequest);
-      const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
-      if (!swapResponse || !swapResponse.swapTransaction)
-        throw new Error("Failed to get swap transaction");
+      // Helper to submit a single-quote swap via Jupiter
+      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+        const swapRequest = {
+          quoteResponse: q,
+          userPublicKey: wallet.publicKey,
+          wrapAndUnwrapSol: true,
+        } as any;
+        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+        if (!swapResponse || !swapResponse.swapTransaction)
+          throw new Error("Failed to get swap transaction");
+        const kp = getKeypair();
+        if (!kp) throw new Error("Missing wallet key to sign transaction");
+        const swapTransactionBuf = Buffer.from(
+          swapResponse.swapTransaction,
+          "base64",
+        );
+        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+        tx.sign([kp]);
+        const serialized = Buffer.from(tx.serialize());
 
-      const kp = getKeypair();
-      if (!kp) throw new Error("Missing wallet key to sign transaction");
-
-      const swapTransactionBuf = Buffer.from(
-        swapResponse.swapTransaction,
-        "base64",
-      );
-      const tx = VersionedTransaction.deserialize(swapTransactionBuf);
-      tx.sign([kp]);
-      const serialized = Buffer.from(tx.serialize());
-
-      // If a connection is available in context, prefer it
-      if (connection && typeof connection.sendRawTransaction === "function") {
-        try {
+        if (connection && typeof connection.sendRawTransaction === "function") {
           const sig = await connection.sendRawTransaction(serialized, {
             skipPreflight: false,
           });
-
-          // Immediately update UI and return; perform confirmation in background
-          setTxSignature(sig);
-          setStep("success");
-          setTimeout(() => refreshBalance?.(), 2000);
-          toast({
-            title: "Swap Submitted",
-            description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-          });
-
-          (async () => {
-            try {
-              const latest = await connection.getLatestBlockhash();
-              await connection.confirmTransaction({
-                blockhash: latest.blockhash,
-                lastValidBlockHeight: latest.lastValidBlockHeight,
-                signature: sig,
-              });
-              toast({
-                title: "Swap Confirmed",
-                description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-              });
-            } catch (err) {
-              console.warn("Background confirmation failed:", err);
-            }
-          })();
-
-          return;
-        } catch (e: any) {
-          console.warn(
-            "connection.sendRawTransaction failed, falling back to server send:",
-            e?.message || e,
-          );
-          // Continue to fallback to server-side submission below
+          return sig;
         }
-      }
 
-      // Fallback: submit signed transaction to server endpoints (/api/solana-simulate, /api/solana-send)
-      const signedBase64 = (() => {
-        let bin = "";
-        const arr = serialized;
-        for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
-        try {
-          return btoa(bin);
-        } catch (e) {
-          return Buffer.from(arr).toString("base64");
-        }
-      })();
+        const signedBase64 = (() => {
+          let bin = "";
+          const arr = serialized;
+          for (let i = 0; i < arr.length; i++)
+            bin += String.fromCharCode(arr[i]);
+          try {
+            return btoa(bin);
+          } catch (e) {
+            return Buffer.from(arr).toString("base64");
+          }
+        })();
 
-      // Simulate first
-      try {
+        // Simulate
         const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ signedBase64 }),
         });
-
         if (!simResp.ok) {
           const txt = await simResp.text().catch(() => "");
-          let parsed: any = null;
-          try {
-            parsed = txt ? JSON.parse(txt) : null;
-          } catch {}
-          const msg =
-            parsed?.error?.message ||
-            txt ||
-            simResp.statusText ||
-            `Simulation failed (${simResp.status})`;
-          throw new Error(msg);
+          throw new Error(txt || simResp.statusText || "Simulation failed");
         }
-
         const simJson = await simResp.json();
         if (simJson?.insufficientLamports) {
           const d = simJson.insufficientLamports;
           const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
-          toast({
-            title: "Insufficient SOL",
-            description: `You need ~${missingSOL?.toFixed(6) ?? "0.000000"} SOL more to cover fees/rent.`,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          setStep("form");
-          return;
+          throw new Error(
+            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
+          );
         }
-      } catch (e: any) {
-        throw new Error(
-          `Simulation request failed: ${e instanceof Error ? e.message : String(e)}`,
-        );
-      }
 
-      // Send via server
-      try {
+        // Send
         const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ signedBase64 }),
         });
-
         if (!sendResp.ok) {
           const txt = await sendResp.text().catch(() => "");
-          let parsed: any = null;
-          try {
-            parsed = txt ? JSON.parse(txt) : null;
-          } catch {}
-          const details = parsed?.error?.details
-            ? JSON.stringify(parsed.error.details)
-            : txt || sendResp.statusText;
-          throw new Error(
-            `${sendResp.status} : ${parsed?.error?.message || txt} | details: ${details}`,
-          );
+          throw new Error(txt || sendResp.statusText || "Send failed");
         }
-
         const jb = await sendResp.json();
         if (jb.error) {
-          const det = jb.error.details
-            ? JSON.stringify(jb.error.details)
-            : JSON.stringify(jb.error);
-          throw new Error(
-            `RPC send error: ${jb.error.message || JSON.stringify(jb.error)} | details: ${det}`,
-          );
+          throw new Error(jb.error?.message || "RPC send error");
         }
+        return jb.result as string;
+      };
 
-        const signature = jb.result as string;
-        setTxSignature(signature);
+      // If we have a direct quote, do normal single-leg swap
+      if (quote) {
+        const sig = await submitQuote(quote);
+        setTxSignature(sig);
+        setStep("success");
+        setTimeout(() => refreshBalance?.(), 2000);
+        toast({
+          title: "Swap Submitted",
+          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+        });
+        if (connection && typeof connection.getLatestBlockhash === "function") {
+          try {
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+            toast({
+              title: "Swap Confirmed",
+              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
+            });
+          } catch {}
+        }
+        return;
+      }
+
+      // No direct route: attempt bridged two-leg swap via USDC or SOL
+      if (!fromToken || !toToken) throw new Error("Missing tokens");
+      const slippageBps = Math.max(
+        1,
+        Math.round(parseFloat(slippage || "0.5") * 100),
+      );
+      const amountInt = parseInt(
+        jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+        10,
+      );
+      const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
+
+      for (const bridge of BRIDGES) {
+        if (bridge === fromToken.mint || bridge === toToken.mint) continue;
+        const bridgeToken = allTokens.find((t) => t.mint === bridge);
+        const bridgeDecimals =
+          bridgeToken?.decimals ?? (bridge === BRIDGES[1] ? 9 : 6);
+
+        const q1 = await jupiterAPI.getQuote(
+          fromToken.mint,
+          bridge,
+          amountInt,
+          slippageBps,
+        );
+        if (!q1) continue;
+        const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
+        const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
+        const q2 = await jupiterAPI.getQuote(
+          bridge,
+          toToken.mint,
+          parseInt(amount2, 10),
+          slippageBps,
+        );
+        if (!q2) continue;
+
+        // Execute leg1 then leg2
+        const sig1 = await submitQuote(q1);
+        toast({ title: "Leg 1 submitted", description: sig1 });
+        const sig2 = await submitQuote(q2);
+        setTxSignature(sig2);
+        setToAmount(
+          jupiterAPI.parseSwapAmount(q2.outAmount, toToken.decimals).toFixed(6),
+        );
         setStep("success");
         setTimeout(() => refreshBalance?.(), 2000);
         toast({
           title: "Swap Completed!",
-          description: `Successfully swapped ${fromAmount} ${fromToken?.symbol} for ${toAmount} ${toToken?.symbol}`,
+          description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
         });
         return;
-      } catch (e: any) {
-        throw new Error(
-          `Send request failed: ${e instanceof Error ? e.message : String(e)}`,
-        );
       }
+
+      throw new Error(
+        "No executable bridged route found. Liquidity may be insufficient.",
+      );
     } catch (err: any) {
       console.error("Swap execution error:", err);
       toast({
@@ -558,9 +573,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           {formatAmount(getTokenBalance(token), token.symbol)}
                         </span>
                       </div>
-                      <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {token.name}
-                      </div>
+                      <div className="text-xs text-white">{token.name}</div>
                     </div>
                   </div>
                 </SelectItem>
@@ -574,44 +587,41 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-        <div className="max-w-md mx-auto pt-8">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+        <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 pt-8 px-0 sm:px-4">
+          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl">
             <div className="p-8 text-center">
               <div className="mb-6">
                 <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
                   <Check className="h-8 w-8 text-emerald-300" />
                 </div>
-                <h3 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-2">
+                <h3 className="text-xl font-semibold text-white mb-2">
                   Swap Completed!
                 </h3>
-                <p className="text-[hsl(var(--muted-foreground))]">
+                <p className="text-white/80">
                   Your transaction has been successfully executed
                 </p>
               </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Swapped:
-                  </span>
-                  <span className="font-medium text-[hsl(var(--foreground))]">
+                  <span className="text-white/70">Swapped:</span>
+                  <span className="font-medium text-white">
                     {fromAmount} {fromToken?.symbol}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Received:
-                  </span>
-                  <span className="font-medium text-[hsl(var(--foreground))]">
+                  <span className="text-white/70">Received:</span>
+                  <span className="font-medium text-white">
                     {toAmount} {toToken?.symbol}
                   </span>
                 </div>
                 {txSignature && (
                   <div className="flex justify-between items-center">
-                    <span className="text-[hsl(var(--muted-foreground))]">
-                      Transaction:
-                    </span>
+                    <span className="text-white/70">Transaction:</span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-emerald-400">
                         {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
@@ -633,13 +643,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={resetSwap}
-                  className="flex-1 bg-[hsl(var(--card))]/70 border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/80"
+                  className="flex-1 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
                 >
                   Swap Again
                 </Button>
                 <Button
                   onClick={onBack}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white"
+                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
                 >
                   Back to Wallet
                 </Button>
@@ -652,254 +662,260 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-      <div className="max-w-md mx-auto">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4 pt-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
+            className="text-white hover:bg-[#FF7A5C]/10 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Swap</h1>
+          <h1 className="text-lg font-semibold text-white">Swap</h1>
           <Button
             variant="ghost"
             size="icon"
-            className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
+            className="text-white hover:text-white hover:bg-[#FF7A5C]/10 transition-colors"
           >
             <Settings className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Card */}
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden">
+        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
             {/* FROM row */}
-            <div className="">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-3">
-                  <Input
-                    type="number"
-                    placeholder="0.000"
-                    value={fromAmount}
-                    onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
-                  />
-                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
-                    {(() => {
-                      const amt = parseFloat(fromAmount || "0");
-                      const price = fromUsdPrice ?? 0;
-                      const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
-                    })()}
+            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-3">
+                    <Input
+                      type="number"
+                      placeholder="0.000"
+                      value={fromAmount}
+                      onChange={(e) => setFromAmount(e.target.value)}
+                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
+                    />
+                    <div className="mt-2 text-xl text-white">
+                      {(() => {
+                        const amt = parseFloat(fromAmount || "0");
+                        const price = fromUsdPrice ?? 0;
+                        const usd = amt * price;
+                        return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
+                      })()}
+                    </div>
                   </div>
-                </div>
 
-                {/* Token select pill (from) */}
-                <div className="flex flex-col items-end min-w-[8.5rem]">
-                  <Select
-                    value={fromToken?.mint || ""}
-                    onValueChange={(v) => {
-                      const t = allTokens.find((x) => x.mint === v);
-                      if (t) setFromToken(t);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          {fromToken ? (
-                            <>
-                              <Avatar className="h-6 w-6">
+                  {/* Token select pill (from) */}
+                  <div className="flex flex-col items-end min-w-[8.5rem]">
+                    <Select
+                      value={fromToken?.mint || ""}
+                      onValueChange={(v) => {
+                        const t = allTokens.find((x) => x.mint === v);
+                        if (t) setFromToken(t);
+                      }}
+                    >
+                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
+                        <SelectValue>
+                          <div className="flex items-center gap-2 text-white">
+                            {fromToken ? (
+                              <>
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage
+                                    src={fromToken.logoURI}
+                                    alt={fromToken.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {fromToken.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-white">
+                                  {fromToken.symbol}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-white">Select</span>
+                            )}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                        {allTokens.map((token) => (
+                          <SelectItem
+                            key={token.mint}
+                            value={token.mint}
+                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <Avatar className="h-5 w-5 ring-1 ring-white/20">
                                 <AvatarImage
-                                  src={fromToken.logoURI}
-                                  alt={fromToken.symbol}
+                                  src={token.logoURI}
+                                  alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs">
-                                  {fromToken.symbol.slice(0, 2)}
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                  {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
-                                {fromToken.symbol}
-                              </span>
-                            </>
-                          ) : (
-                            <span>Select</span>
-                          )}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-                      {allTokens.map((token) => (
-                        <SelectItem
-                          key={token.mint}
-                          value={token.mint}
-                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={token.logoURI}
-                                alt={token.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {token.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {token.symbol}
-                                </span>
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {token.name}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">
+                                    {token.symbol}
+                                  </span>
+                                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                    {formatAmount(
+                                      getTokenBalance(token),
+                                      token.symbol,
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-white">
+                                  {token.name}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fromToken ? (
-                    <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
-                      {formatAmount(
-                        getTokenBalance(fromToken),
-                        fromToken.symbol,
-                      )}{" "}
-                      {fromToken.symbol}
-                    </div>
-                  ) : null}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fromToken ? (
+                      <div className="mt-2 text-xs text-white">
+                        {formatAmount(
+                          getTokenBalance(fromToken),
+                          fromToken.symbol,
+                        )}{" "}
+                        {fromToken.symbol}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* swap arrow */}
             <div className="flex items-center justify-center py-1">
               <Button
                 size="icon"
                 onClick={handleSwapTokens}
-                className="rounded-full h-9 w-9 bg-[hsl(var(--card))]/70 hover:bg-[hsl(var(--card))]/80 border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white transition-colors"
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
             </div>
 
             {/* TO row */}
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-3">
-                  <div className="text-sm text-[14px] font-medium leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
-                    {toAmount
-                      ? formatAmount(toAmount, toToken?.symbol)
-                      : "0.000"}
+            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-3">
+                    <div className="text-xl leading-none tracking-tight text-white">
+                      {toAmount
+                        ? formatAmount(toAmount, toToken?.symbol)
+                        : "0.000"}
+                    </div>
+                    <div className="mt-2 text-xl text-white">
+                      {(() => {
+                        const amt = parseFloat(toAmount || "0");
+                        const price = toUsdPrice ?? 0;
+                        const usd = amt * price;
+                        return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
+                      })()}
+                    </div>
                   </div>
-                  <div className="mt-2 text-sm text-[14px] text-[hsl(var(--muted-foreground))]">
-                    {(() => {
-                      const amt = parseFloat(toAmount || "0");
-                      const price = toUsdPrice ?? 0;
-                      const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} usd`;
-                    })()}
-                  </div>
-                </div>
 
-                {/* Token select pill (to) */}
-                <div className="flex flex-col items-end min-w-[8.5rem]">
-                  <Select
-                    value={toToken?.mint || ""}
-                    onValueChange={(v) => {
-                      const t = allTokens.find((x) => x.mint === v);
-                      if (t) setToToken(t);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          {toToken ? (
-                            <>
-                              <Avatar className="h-6 w-6">
+                  {/* Token select pill (to) */}
+                  <div className="flex flex-col items-end min-w-[8.5rem]">
+                    <Select
+                      value={toToken?.mint || ""}
+                      onValueChange={(v) => {
+                        const t = allTokens.find((x) => x.mint === v);
+                        if (t) setToToken(t);
+                      }}
+                    >
+                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
+                        <SelectValue>
+                          <div className="flex items-center gap-2 text-white">
+                            {toToken ? (
+                              <>
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage
+                                    src={toToken.logoURI}
+                                    alt={toToken.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {toToken.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-white">
+                                  {toToken.symbol}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-white">Select</span>
+                            )}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                        {allTokens.map((token) => (
+                          <SelectItem
+                            key={token.mint}
+                            value={token.mint}
+                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <Avatar className="h-5 w-5 ring-1 ring-white/20">
                                 <AvatarImage
-                                  src={toToken.logoURI}
-                                  alt={toToken.symbol}
+                                  src={token.logoURI}
+                                  alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs">
-                                  {toToken.symbol.slice(0, 2)}
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                  {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
-                                {toToken.symbol}
-                              </span>
-                            </>
-                          ) : (
-                            <span>Select</span>
-                          )}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-                      {allTokens.map((token) => (
-                        <SelectItem
-                          key={token.mint}
-                          value={token.mint}
-                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={token.logoURI}
-                                alt={token.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {token.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {token.symbol}
-                                </span>
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {token.name}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">
+                                    {token.symbol}
+                                  </span>
+                                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                    {formatAmount(
+                                      getTokenBalance(token),
+                                      token.symbol,
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-white">
+                                  {token.name}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {toToken ? (
-                    <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))] font-mono">
-                      {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
-                    </div>
-                  ) : null}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {toToken ? (
+                      <div className="mt-2 text-xs text-white font-mono">
+                        {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Quote details */}
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
-              <div className="mt-2 bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
+              <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-white">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                    Quote
-                  </span>
-                  <span className="text-sm">
+                  <span className="text-sm text-white">Quote</span>
+                  <span className="text-sm text-white">
                     1 {fromToken.symbol} ={" "}
                     {(
                       parseFloat(toAmount) / parseFloat(fromAmount || "1")
@@ -908,30 +924,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Network fee
-                  </span>
-                  <span className="text-[hsl(var(--foreground))]">
-                    Included
-                  </span>
+                  <span className="text-white">Network fee</span>
+                  <span className="text-white">Included</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Time
-                  </span>
-                  <span className="text-[hsl(var(--foreground))]">
-                    &lt; 1 min
-                  </span>
+                  <span className="text-white">Time</span>
+                  <span className="text-white">&lt; 1 min</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Rate includes
-                  </span>
-                  <span className="text-[hsl(var(--foreground))]">
-                    {slippage}% slippage
-                  </span>
+                  <span className="text-white">Rate includes</span>
+                  <span className="text-white">{slippage}% slippage</span>
                 </div>
-                <div className="text-right text-sm text-blue-400">
+                <div className="text-right text-sm text-[#FF7A5C]">
                   More quotes
                 </div>
               </div>
@@ -944,10 +948,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Alert>
             )}
             {indicative && (
-              <Alert className="bg-blue-500/10 border-blue-400/20 text-blue-200">
+              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
                 <AlertDescription>
-                  Indicative price shown (no route available). Try adjusting
-                  amount or pair.
+                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no
+                  direct route for this pair. Price is estimated from DEX data
+                  and may vary. You can still attempt the swap, but execution
+                  depends on available liquidity.
                 </AlertDescription>
               </Alert>
             )}
@@ -957,13 +963,36 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Alert>
             )}
 
+            {/* Quick % selector */}
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {[25, 50, 75, 100].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => {
+                    const bal = getTokenBalance(fromToken || undefined);
+                    const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0; // leave SOL for fees
+                    const usable = Math.max(0, (bal || 0) - reserve);
+                    const amt = usable * (pct / 100);
+                    const digits = Math.min(
+                      6,
+                      Math.max(0, fromToken?.decimals ?? 6),
+                    );
+                    setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
+                  }}
+                  className="text-xs px-2 py-2 rounded-lg bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white border border-[#FF7A5C]/30 transition-colors"
+                >
+                  {pct}%
+                </button>
+              ))}
+            </div>
+
             {/* Submit */}
             <Button
               onClick={handleSwap}
-              className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
               disabled={
-                !quote ||
-                indicative ||
+                (!quote && !indicative) ||
                 !!quoteError ||
                 !fromToken ||
                 !toToken ||
@@ -971,7 +1000,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 isLoading
               }
             >
-              Submit
+              {indicative ? "Swap (Estimated)" : "Submit"}
             </Button>
           </div>
         </div>

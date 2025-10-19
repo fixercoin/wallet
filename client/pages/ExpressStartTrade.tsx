@@ -1,1043 +1,346 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useWallet } from "@/contexts/WalletContext";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Copy, MessageSquare, X } from "lucide-react";
+// This file was created and structured by Builder.io
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Zap, AlertCircle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { copyToClipboard } from "@/lib/wallet";
-
-interface NavState {
-  side?: "buy" | "sell";
-  pkrAmount?: number;
-  token?: "USDC" | "SOL" | "FIXERCOIN" | string;
-  tokenUnits?: number; // computed estimate from previous page
-  paymentMethod?: "bank" | "easypaisa" | "firstpay" | string;
-  tradeId?: string;
-}
+import { useWallet } from "@/contexts/WalletContext";
+import { listP2POrders, createTradeRoom } from "@/lib/p2p-api";
+import type { P2POrder } from "@/lib/p2p-api";
 
 export default function ExpressStartTrade() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { state } = useLocation();
-  const params = (state || {}) as NavState;
-
-  const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [tradeId, setTradeId] = useState<string | null>(null);
-  const [proofFile, setProofFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [sellerConfirmed, setSellerConfirmed] = useState(false);
-
-  const [baselineSig, setBaselineSig] = useState<string | null>(null);
-  const [txDetected, setTxDetected] = useState(false);
-  const [awaitingApproval, setAwaitingApproval] = useState(false);
-  const [fiatConfirmationSent, setFiatConfirmationSent] = useState(false);
-
-  const pollRef = useRef<number | null>(null);
-  const easypayPollRef = useRef<number | null>(null);
-  const orderStartRef = useRef<number>(Date.now());
-  const [fiatDetected, setFiatDetected] = useState(false);
-  const [manualPaid, setManualPaid] = useState(false);
-  const [autoConfirmed, setAutoConfirmed] = useState(false);
-
   const { wallet } = useWallet();
-  const buyerPublicKey = wallet?.publicKey || null;
-  const localRole = params?.side === "sell" ? "seller" : "buyer";
-  const isEasypaisa = useMemo(
-    () => String(params?.paymentMethod || "").toLowerCase() === "easypaisa",
-    [params?.paymentMethod],
-  );
 
-  // Counterparty-provided buyer address (via trade message fallback)
-  const [counterpartyBuyerAddress, setCounterpartyBuyerAddress] = useState<
-    string | null
-  >(null);
-  const buyerAddrSentRef = useRef<string | null>(null);
+  const [orders, setOrders] = useState<P2POrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<P2POrder | null>(null);
+  const [isInitiating, setIsInitiating] = useState(false);
+  const [pkrAmount, setPkrAmount] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
-  // Load posts to match an order against seller/buyer listings
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        const resp = await fetch("/api/p2p/list");
-        if (!resp.ok) throw new Error("Failed to load posts");
-        const data = await resp.json();
-        if (mounted) setPosts(Array.isArray(data?.posts) ? data.posts : []);
-      } catch (e) {
-        if (mounted) setError("Unable to load market posts");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+    loadOrders();
   }, []);
 
-  // Choose a matching post
-  const match = useMemo(() => {
-    if (!Array.isArray(posts) || !params?.token) return null;
-    const desiredUnits = Number(params?.tokenUnits || 0);
-    const typeNeeded = params?.side === "buy" ? "sell" : "buy";
-    const candidates = posts.filter(
-      (p: any) =>
-        p?.type === typeNeeded &&
-        String(p?.token).toUpperCase() === String(params.token).toUpperCase() &&
-        (params?.side === "buy"
-          ? String(p?.paymentMethod).toLowerCase() ===
-            String(params.paymentMethod || "").toLowerCase()
-          : true),
-    );
-    const within = candidates.find(
-      (p: any) =>
-        desiredUnits >= Number(p?.minToken || 0) &&
-        desiredUnits <= Number(p?.maxToken || 0),
-    );
-    if (within) return within;
-    const eligible = candidates
-      .slice()
-      .sort((a: any, b: any) => Number(a.minToken) - Number(b.minToken));
-    return eligible[0] || null;
-  }, [posts, params]);
+  const loadOrders = async () => {
+    try {
+      setIsLoading(true);
+      const data = await listP2POrders({ online: true, status: "active" });
+      setOrders(data);
+    } catch (error: any) {
+      toast({
+        title: "Failed to load orders",
+        description: error?.message || String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Create or reuse a tradeId for messaging scope
-  useEffect(() => {
-    const incomingTradeId = (state as any)?.tradeId as string | undefined;
-    if (incomingTradeId) {
-      setTradeId(incomingTradeId);
+  const handleSelectOrder = (order: P2POrder) => {
+    if (wallet?.publicKey === order.creator_wallet) {
+      toast({
+        title: "Cannot trade with yourself",
+        description: "Select a different order",
+        variant: "destructive",
+      });
       return;
     }
-    const base = (match?.id || "no-post") + "";
-    setTradeId(`${base}-${Date.now()}`);
-  }, [match, state]);
-
-  // Post an initial order-start event for admin monitoring
-  const orderInitSentRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!tradeId || !params?.side) return;
-    if (orderInitSentRef.current === tradeId) return;
-    const side = params.side;
-    const token = params.token || "USDC";
-    const pkr = Number(params.pkrAmount || 0);
-    const units = Number(params.tokenUnits || 0);
-    const method = String(params.paymentMethod || "");
-    const msg = `__ORDER_STARTED__|side=${side};token=${token};pkr=${pkr};units=${units};method=${method}`;
-    (async () => {
-      try {
-        await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: msg, from: localRole }),
-        });
-      } catch {}
-    })();
-    orderInitSentRef.current = tradeId;
-  }, [tradeId, params, localRole]);
-
-  // Poll messages for this trade
-  useEffect(() => {
-    if (!tradeId) return;
-    let mounted = true;
-    const load = async () => {
-      try {
-        const resp = await fetch(
-          `/api/p2p/trade/${encodeURIComponent(tradeId)}/messages`,
-        );
-        if (!resp.ok) return;
-        const data = await resp.json();
-        if (mounted)
-          setMessages(Array.isArray(data?.messages) ? data.messages : []);
-      } catch {}
-    };
-    load();
-    const id = setInterval(load, 2000);
-    return () => {
-      mounted = false;
-      clearInterval(id);
-    };
-  }, [tradeId]);
-
-  // Persist a pending order snapshot so users can resume
-  useEffect(() => {
-    if (!tradeId) return;
-    const payload = {
-      tradeId,
-      minimized: false,
-      status: "review",
-      params,
-      ts: Date.now(),
-    } as any;
-    try {
-      localStorage.setItem("expressPendingOrder", JSON.stringify(payload));
-    } catch {}
-  }, [tradeId, params]);
-
-  useEffect(() => {
-    setFiatDetected(false);
-    setFiatConfirmationSent(false);
-    setAwaitingApproval(false);
-    setManualPaid(false);
-    setAutoConfirmed(false);
-  }, [tradeId]);
-
-  // Notify when counterparty confirms settlement via special message
-  const lastConfirmedMessageId = useRef<string | null>(null);
-  useEffect(() => {
-    if (!messages || messages.length === 0) return;
-    const reversed = messages.slice().reverse();
-
-    // Parse buyer wallet address if provided via message
-    const buyerAddrMsg = reversed.find(
-      (m) =>
-        typeof m?.message === "string" &&
-        m.message.startsWith("__BUYER_WALLET__|"),
-    );
-    if (buyerAddrMsg) {
-      const part = String(buyerAddrMsg.message).split("|")[1] || "";
-      const kv = Object.fromEntries(
-        part
-          .split(";")
-          .map((s) => s.split("=").map((x) => x.trim()))
-          .filter((p) => p.length === 2),
-      ) as any;
-      if (kv.addr && typeof kv.addr === "string" && kv.addr.length > 20) {
-        setCounterpartyBuyerAddress(kv.addr);
-      }
-    }
-
-    const confirmMsg = reversed.find(
-      (m) => String(m?.message) === "__CONFIRMED_SETTLEMENT__",
-    );
-    if (confirmMsg && confirmMsg.id && confirmMsg.from !== localRole) {
-      if (lastConfirmedMessageId.current !== confirmMsg.id) {
-        toast({
-          title: "Order update",
-          description: "Counterparty confirmed settlement",
-        });
-        lastConfirmedMessageId.current = confirmMsg.id;
-      }
-    }
-
-    const sellerMsg = reversed.find(
-      (m) => String(m?.message) === "__SELLER_CONFIRMED__",
-    );
-    if (sellerMsg && sellerMsg.from !== localRole) {
-      setSellerConfirmed(true);
-    }
-
-    const approvedMsg = reversed.find(
-      (m) => String(m?.message) === "__BUYER_APPROVED__",
-    );
-    if (approvedMsg && approvedMsg.from !== localRole) {
-      if (localRole === "seller") {
-        setAwaitingApproval(false);
-        toast({ title: "Buyer approved" });
-        try {
-          localStorage.removeItem("expressPendingOrder");
-        } catch {}
-        try {
-          localStorage.setItem(
-            "expressLastOrder",
-            JSON.stringify({ tradeId, params, ts: Date.now() }),
-          );
-        } catch {}
-        navigate("/express/order-complete", {
-          state: { tradeId, params, ts: Date.now() },
-        });
-      }
-    }
-  }, [messages, localRole, toast]);
-
-  const withinLimits = useMemo(() => {
-    const units = Number(params?.tokenUnits || 0);
-    if (!match) return false;
-    return (
-      units >= Number(match.minToken || 0) &&
-      units <= Number(match.maxToken || 0)
-    );
-  }, [match, params]);
-
-  const sellerPaymentDetails = useMemo(() => {
-    if (!match) return null;
-    if (match.paymentDetails) {
-      return {
-        accountName: match.paymentDetails.accountName,
-        accountNumber: match.paymentDetails.accountNumber,
-        method: params?.paymentMethod || match.paymentMethod,
-      };
-    }
-    if (isEasypaisa) {
-      return {
-        accountName: "Seller Easypaisa Account",
-        accountNumber: "03107044833",
-        method: params?.paymentMethod || match.paymentMethod || "easypaisa",
-      };
-    }
-    return null;
-  }, [match, params?.paymentMethod, isEasypaisa]);
-
-  const sellerPaymentMethodLabel = useMemo(() => {
-    const raw =
-      sellerPaymentDetails?.method ||
-      params?.paymentMethod ||
-      match?.paymentMethod ||
-      "";
-    if (!raw) return "";
-    const value = String(raw);
-    return value.charAt(0).toUpperCase() + value.slice(1);
-  }, [
-    sellerPaymentDetails?.method,
-    params?.paymentMethod,
-    match?.paymentMethod,
-  ]);
-
-  // Easypaisa auto-detect polling (buy/sell payment method)
-  useEffect(() => {
-    if (!isEasypaisa) return;
-
-    const msisdn = (window as any)?.EASYPAY_MSISDN || "03107044833";
-    const since = orderStartRef.current - 10 * 60 * 1000;
-
-    const tick = async () => {
-      try {
-        const resp = await fetch(
-          `/api/easypaisa/payments?msisdn=${encodeURIComponent(msisdn)}&since=${since}`,
-        );
-        if (!resp.ok) return;
-        const data = await resp.json();
-        const arr = Array.isArray(data?.payments) ? data.payments : [];
-        const expected = Number(params?.pkrAmount || 0);
-        if (!expected) return;
-        const tol = Math.max(1, expected * 0.01);
-        const hit = arr.find(
-          (p: any) => Math.abs(Number(p.amount) - expected) <= tol,
-        );
-        if (hit) {
-          if (!fiatDetected) setFiatDetected(true);
-          if (localRole === "buyer") {
-            if (!fiatConfirmationSent && tradeId) {
-              try {
-                await fetch(
-                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      message: "__CONFIRMED_SETTLEMENT__",
-                      from: localRole,
-                    }),
-                  },
-                );
-                setFiatConfirmationSent(true);
-              } catch {}
-            }
-            if (!awaitingApproval) {
-              setAwaitingApproval(true);
-              try {
-                const raw = localStorage.getItem("expressPendingOrder");
-                const obj = raw ? JSON.parse(raw) : {};
-                obj.minimized = false;
-                obj.status = "awaiting_approval";
-                obj.params = params;
-                obj.tradeId = tradeId;
-                obj.ts = Date.now();
-                localStorage.setItem(
-                  "expressPendingOrder",
-                  JSON.stringify(obj),
-                );
-              } catch {}
-            }
-          }
-        }
-      } catch {}
-    };
-
-    tick();
-    if (easypayPollRef.current) {
-      clearInterval(easypayPollRef.current);
-      easypayPollRef.current = null;
-    }
-    easypayPollRef.current = window.setInterval(tick, 5000);
-
-    return () => {
-      if (easypayPollRef.current) {
-        clearInterval(easypayPollRef.current);
-        easypayPollRef.current = null;
-      }
-    };
-  }, [
-    isEasypaisa,
-    params?.pkrAmount,
-    localRole,
-    awaitingApproval,
-    tradeId,
-    fiatConfirmationSent,
-    params,
-    fiatDetected,
-  ]);
-
-  // Proactively share buyer wallet address with counterparty via message
-  useEffect(() => {
-    if (!tradeId) return;
-    if (localRole !== "buyer") return;
-    if (!buyerPublicKey) return;
-    if (buyerAddrSentRef.current === tradeId) return;
-    (async () => {
-      try {
-        await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: `__BUYER_WALLET__|addr=${buyerPublicKey}`,
-            from: localRole,
-          }),
-        });
-        buyerAddrSentRef.current = tradeId;
-      } catch {}
-    })();
-  }, [tradeId, localRole, buyerPublicKey]);
-
-  // Address to trace for transaction detection
-  const detectionAddress = useMemo(() => {
-    if (localRole === "seller") {
-      return match?.walletAddress || counterpartyBuyerAddress || null;
-    }
-    return buyerPublicKey || null; // buyer's own wallet
-  }, [
-    localRole,
-    match?.walletAddress,
-    counterpartyBuyerAddress,
-    buyerPublicKey,
-  ]);
-
-  // Poll for transaction detection
-  useEffect(() => {
-    const shouldPoll =
-      (localRole === "seller" && !!detectionAddress) ||
-      (localRole === "buyer" && awaitingApproval && !!detectionAddress);
-
-    if (!shouldPoll) return;
-
-    let cancelled = false;
-
-    const fetchLatestSig = async () => {
-      try {
-        const resp = await fetch("/api/solana-rpc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: Date.now(),
-            method: "getSignaturesForAddress",
-            params: [detectionAddress, { limit: 1 }],
-          }),
-        });
-        const data = await resp.json();
-        const arr = data?.result || [];
-        const sig = arr?.[0]?.signature || null;
-        if (!cancelled) setBaselineSig(sig);
-      } catch {}
-    };
-
-    const poll = async () => {
-      try {
-        const resp = await fetch("/api/solana-rpc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: Date.now(),
-            method: "getSignaturesForAddress",
-            params: [detectionAddress, { limit: 1 }],
-          }),
-        });
-        const data = await resp.json();
-        const sig = data?.result?.[0]?.signature || null;
-        if (baselineSig && sig && sig !== baselineSig) {
-          setTxDetected(true);
-          if (pollRef.current) {
-            window.clearInterval(pollRef.current);
-            pollRef.current = null;
-          }
-        }
-      } catch {}
-    };
-
-    fetchLatestSig();
-    if (pollRef.current) {
-      window.clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-    pollRef.current = window.setInterval(poll, 5000);
-
-    return () => {
-      cancelled = true;
-      if (pollRef.current) {
-        window.clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-    };
-  }, [awaitingApproval, localRole, detectionAddress, baselineSig]);
-
-  const sendMessage = async () => {
-    if (!tradeId) return;
-    const text = message.trim();
-    if (!text && !proofFile) return;
-    try {
-      setUploading(true);
-      let body: any = { message: text || "", from: localRole };
-      if (proofFile) {
-        const base64: string = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result));
-          reader.onerror = () => reject(reader.error);
-          reader.readAsDataURL(proofFile);
-        });
-        body.proof = { filename: proofFile.name, data: base64 };
-      }
-      const resp = await fetch(
-        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        },
-      );
-      if (!resp.ok) throw new Error("send failed");
-      setMessage("");
-      setProofFile(null);
-      toast({ title: "Message sent" });
-    } catch (e) {
-      toast({ title: "Failed to send message", variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
+    setSelectedOrder(order);
+    setPkrAmount("");
+    setAgreed(false);
   };
 
-  const handleBuyerConfirm = async () => {
-    if (!tradeId) return;
-    try {
-      if (localRole === "buyer" && isEasypaisa && !fiatConfirmationSent) {
-        try {
-          await fetch(`/api/p2p/trade/${encodeURIComponent(tradeId)}/message`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              message: "__CONFIRMED_SETTLEMENT__",
-              from: localRole,
-            }),
-          });
-          setFiatConfirmationSent(true);
-        } catch {}
-      }
+  const handleStartTrade = async () => {
+    if (!selectedOrder || !wallet?.publicKey) return;
 
-      const resp = await fetch(
-        `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: "__BUYER_APPROVED__",
-            from: "buyer",
-          }),
-        },
-      );
-      if (!resp.ok) throw new Error("failed");
-      setAwaitingApproval(false);
-      setTxDetected(false);
-      if (isEasypaisa) {
-        setFiatDetected(false);
-      }
-      try {
-        localStorage.removeItem("expressPendingOrder");
-      } catch {}
-      if (pollRef.current) {
-        window.clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-      toast({ title: "Approved" });
-      try {
-        localStorage.setItem(
-          "expressLastOrder",
-          JSON.stringify({ tradeId, params, ts: Date.now() }),
-        );
-      } catch {}
-      navigate("/express/order-complete", {
-        state: { tradeId, params, ts: Date.now() },
+    if (!pkrAmount || Number(pkrAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid PKR amount",
+        variant: "destructive",
       });
-    } catch (e) {
-      toast({ title: "Failed to approve", variant: "destructive" });
+      return;
+    }
+
+    if (!agreed) {
+      toast({
+        title: "Please agree",
+        description: "You must agree to the terms to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsInitiating(true);
+
+      const room = await createTradeRoom({
+        buyer_wallet:
+          selectedOrder.type === "sell"
+            ? wallet.publicKey
+            : selectedOrder.creator_wallet,
+        seller_wallet:
+          selectedOrder.type === "sell"
+            ? selectedOrder.creator_wallet
+            : wallet.publicKey,
+        order_id: selectedOrder.id,
+      });
+
+      toast({
+        title: "Trade started",
+        description: "Entering trade chat...",
+      });
+
+      setTimeout(() => {
+        navigate("/express/buy-trade", {
+          state: { order: selectedOrder, room },
+        });
+      }, 500);
+    } catch (error: any) {
+      toast({
+        title: "Failed to start trade",
+        description: error?.message || String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setIsInitiating(false);
     }
   };
 
-  useEffect(() => {
-    if (
-      isEasypaisa &&
-      localRole === "buyer" &&
-      fiatDetected &&
-      !autoConfirmed
-    ) {
-      setAutoConfirmed(true);
-      handleBuyerConfirm();
-    }
-  }, [isEasypaisa, localRole, fiatDetected, autoConfirmed]);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-pink-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          <p className="mt-4 text-gray-600">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const rate = selectedOrder
+    ? selectedOrder.pkr_amount / Number(selectedOrder.token_amount)
+    : 0;
+  const estimatedTokens = pkrAmount ? Number(pkrAmount) / rate : 0;
 
   return (
-    <div className="flex min-h-screen w-screen flex-col bg-background">
-      <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
-        <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2"></div>
+    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
+          <button
+            onClick={() => {
+              navigate("/");
+              setSelectedOrder(null);
+            }}
+            className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-gray-100"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="flex-1 text-center font-medium">Quick Trade</div>
+          <div className="h-9 w-9" />
         </div>
-      </header>
+      </div>
 
-      <main className="flex-1">
-        <div className="container mx-auto max-w-md px-4 py-6">
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-wallet-purple-50 p-4">
-            <div className="mb-3 flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/express")}
-                aria-label="Back"
-                className="h-8 w-8 rounded-full border border-[hsl(var(--border))] bg-white/90 text-[hsl(var(--primary))] shadow-sm hover:bg-[hsl(var(--primary))]/10"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="text-sm font-semibold uppercase">
-                Order Review
+      <div className="w-full px-4 py-6">
+        {!selectedOrder ? (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold mb-4">Choose an Order</h2>
+            {orders.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl">
+                <Zap className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No active orders available</p>
+                <button
+                  onClick={() => navigate("/express/add-post")}
+                  className="mt-4 px-4 py-2 text-purple-600 font-medium hover:underline"
+                >
+                  Browse all orders →
+                </button>
               </div>
-            </div>
-
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span>Side</span>
-                <span>{params?.side || "buy"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Token</span>
-                <span>{params?.token || "USDC"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>PKR</span>
-                <span>{params?.pkrAmount?.toFixed?.(2) ?? "0.00"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Est. Units</span>
-                <span>{params?.tokenUnits?.toFixed?.(4) ?? "0"}</span>
-              </div>
-              {params?.side === "sell" ? (
-                <div className="flex items-center justify-between">
-                  <span>Sell Instructions</span>
-                  <span className="text-xs text-muted-foreground">
-                    Will be shared after match
-                  </span>
-                </div>
-              ) : (
-                <div className="flex justify-between">
-                  <span>Payment</span>
-                  <span>{params?.paymentMethod || "bank"}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-4 rounded-lg border bg-white p-3 text-sm">
-              <div className="mb-1 font-medium">Matched Listing</div>
-              {loading ? (
-                <div>Loading posts…</div>
-              ) : error ? (
-                <div className="text-destructive">{error}</div>
-              ) : match ? (
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span>Post ID</span>
-                    <span>{match.id}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Type</span>
-                    <span>{match.type}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Limits</span>
-                    <span>
-                      {match.minToken} - {match.maxToken}
+            ) : (
+              orders.map((order) => (
+                <button
+                  key={order.id}
+                  onClick={() => handleSelectOrder(order)}
+                  className="w-full bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all text-left"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-semibold ${
+                        order.type === "buy"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {order.type.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(order.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Availability</span>
-                    <span>{match.availability || "online"}</span>
-                  </div>
-                  {!withinLimits && (
-                    <div className="mt-2 rounded bg-yellow-50 p-2 text-xs text-yellow-800">
-                      Order size is outside seller limits. Adjust amount on
-                      previous page for a smoother match.
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <div className="text-gray-600 text-xs">Token</div>
+                      <div className="font-semibold">{order.token}</div>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div>No matching listings found for your selection.</div>
-              )}
-            </div>
-
-            {/* Settlement section (inline, persistent) */}
-            <div className="mt-4 rounded-lg border bg-white p-3 text-sm">
-              <div className="mb-2 font-medium">Settlement</div>
-
-              {localRole === "buyer" ? (
-                <div className="space-y-3">
-                  <div>
-                    <div className="font-medium">Seller Payment Details</div>
-                    {sellerPaymentDetails ? (
-                      <div className="mt-1 space-y-1">
-                        {sellerPaymentDetails.accountName && (
-                          <div>
-                            <span className="font-semibold">Name: </span>
-                            {sellerPaymentDetails.accountName}
-                          </div>
-                        )}
-                        <div>
-                          <span className="font-semibold">Account: </span>
-                          {sellerPaymentDetails.accountNumber}
-                        </div>
-                        <div>
-                          <span className="font-semibold">Method: </span>
-                          {sellerPaymentMethodLabel || "—"}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">
-                        Seller payment details will be provided by the seller.
-                      </div>
-                    )}
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {isEasypaisa
-                        ? "Send the fiat payment to the seller via Easypaisa. The transfer is monitored automatically."
-                        : 'Send the agreed fiat payment to the seller using the details above. Once you have sent payment, click "I\'ve Paid".'}
-                    </div>
-                  </div>
-
-                  {isEasypaisa ? (
-                    <div className="space-y-2">
-                      <div
-                        className={`rounded px-3 py-2 text-xs ${
-                          fiatDetected
-                            ? "border border-green-200 bg-green-50 text-green-700"
-                            : "border border-yellow-200 bg-yellow-50 text-yellow-800"
-                        }`}
-                      >
-                        {fiatDetected
-                          ? "Easypaisa payment detected for seller account 03107044833."
-                          : awaitingApproval
-                            ? !txDetected
-                              ? "Waiting for transaction to your wallet…"
-                              : "Transaction detected. You can confirm now."
-                            : "Waiting for Easypaisa confirmation for seller account 03107044833…"}
-                      </div>
-                      <div className="flex gap-2">
-                        {(fiatDetected || txDetected || manualPaid) && (
-                          <Button onClick={handleBuyerConfirm} className="h-9">
-                            Confirm
-                          </Button>
-                        )}
-                        {!fiatDetected && !awaitingApproval && (
-                          <Button
-                            variant="outline"
-                            onClick={async () => {
-                              if (!tradeId) return;
-                              setManualPaid(true);
-                              try {
-                                const resp = await fetch(
-                                  `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                                  {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      message: "__CONFIRMED_SETTLEMENT__",
-                                      from: localRole,
-                                    }),
-                                  },
-                                );
-                                if (resp.ok) {
-                                  setAwaitingApproval(true);
-                                  const raw = localStorage.getItem(
-                                    "expressPendingOrder",
-                                  );
-                                  const obj = raw ? JSON.parse(raw) : {};
-                                  obj.minimized = false;
-                                  obj.status = "awaiting_approval";
-                                  obj.params = params;
-                                  obj.tradeId = tradeId;
-                                  obj.ts = Date.now();
-                                  localStorage.setItem(
-                                    "expressPendingOrder",
-                                    JSON.stringify(obj),
-                                  );
-                                  toast({
-                                    title:
-                                      "Marked as paid. Waiting for seller.",
-                                  });
-                                }
-                              } catch {}
-                            }}
-                            className="h-9"
-                          >
-                            I've Paid
-                          </Button>
-                        )}
+                    <div>
+                      <div className="text-gray-600 text-xs">Rate</div>
+                      <div className="font-semibold">
+                        {(
+                          order.pkr_amount / Number(order.token_amount)
+                        ).toFixed(2)}{" "}
+                        PKR
                       </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {!awaitingApproval && (
-                        <Button
-                          onClick={async () => {
-                            if (!tradeId) return;
-                            try {
-                              const resp = await fetch(
-                                `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    message: "__CONFIRMED_SETTLEMENT__",
-                                    from: localRole,
-                                  }),
-                                },
-                              );
-                              if (!resp.ok) throw new Error("failed");
-                              setAwaitingApproval(true);
-                              try {
-                                const raw = localStorage.getItem(
-                                  "expressPendingOrder",
-                                );
-                                const obj = raw ? JSON.parse(raw) : {};
-                                obj.minimized = false;
-                                obj.status = "awaiting_approval";
-                                obj.params = params;
-                                obj.tradeId = tradeId;
-                                obj.ts = Date.now();
-                                localStorage.setItem(
-                                  "expressPendingOrder",
-                                  JSON.stringify(obj),
-                                );
-                              } catch {}
-                              toast({
-                                title:
-                                  "Marked as paid. Waiting for transaction.",
-                              });
-                            } catch (e) {
-                              toast({
-                                title: "Failed to notify",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="h-9"
-                        >
-                          I've Paid
-                        </Button>
-                      )}
-
-                      {txDetected && (
-                        <Button
-                          variant="outline"
-                          onClick={handleBuyerConfirm}
-                          className="h-9"
-                        >
-                          Confirm
-                        </Button>
-                      )}
+                    <div>
+                      <div className="text-gray-600 text-xs">Amount</div>
+                      <div className="font-semibold">
+                        {Number(order.token_amount).toFixed(6)}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div>
-                    <div className="font-medium">Buyer Wallet Address</div>
-                    {match?.walletAddress || counterpartyBuyerAddress ? (
-                      <div className="mt-1 flex items-center gap-2 rounded-md border px-2 py-1">
-                        <span className="font-mono text-xs break-all flex-1">
-                          {match?.walletAddress || counterpartyBuyerAddress}
-                        </span>
-                        <Button
-                          variant="outline"
-                          className="h-7 px-2"
-                          onClick={() =>
-                            copyToClipboard(
-                              match?.walletAddress ||
-                                counterpartyBuyerAddress ||
-                                "",
-                            )
-                          }
-                        >
-                          Copy
-                        </Button>
+                    <div>
+                      <div className="text-gray-600 text-xs">PKR</div>
+                      <div className="font-semibold">
+                        {order.pkr_amount.toLocaleString()}
                       </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">
-                        Waiting for buyer address.
-                      </div>
-                    )}
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Send the tokens to the buyer wallet address above. Once
-                      the transaction is confirmed on-chain, the Confirm button
-                      will appear.
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      disabled={!txDetected}
-                      onClick={async () => {
-                        if (!tradeId) return;
-                        try {
-                          const resp = await fetch(
-                            `/api/p2p/trade/${encodeURIComponent(tradeId)}/message`,
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                message: "__SELLER_CONFIRMED__",
-                                from: "seller",
-                              }),
-                            },
-                          );
-                          if (!resp.ok) throw new Error("failed");
-                          setAwaitingApproval(true);
-                          toast({ title: "You confirmed settlement" });
-                        } catch (e) {
-                          toast({
-                            title: "Confirmation failed",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="h-9"
-                    >
-                      Confirm
-                    </Button>
-
-                    {sellerConfirmed && (
-                      <div className="text-xs text-muted-foreground">
-                        Waiting for buyer approval…
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Waiting overlays */}
-        {awaitingApproval && localRole === "seller" && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="dashboard-loader-overlay">
-              <div className="dashboard-loader" />
-              <div className="text-sm">Waiting for buyer approval…</div>
-            </div>
-          </div>
-        )}
-
-        {awaitingApproval && localRole === "buyer" && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="dashboard-loader-overlay">
-              <div className="dashboard-loader" />
-              <div className="flex flex-col items-center gap-2">
-                {isEasypaisa ? (
-                  <div className="text-sm">
-                    {fiatDetected
-                      ? "Easypaisa payment confirmed."
-                      : !txDetected
-                        ? "Waiting for transaction…"
-                        : "Transaction detected"}
-                  </div>
-                ) : (
-                  <div className="text-sm">
-                    {!txDetected
-                      ? "Waiting for transaction…"
-                      : "Transaction detected"}
-                  </div>
-                )}
-                {!isEasypaisa && (
-                  <div className="mt-2 text-xs font-mono">
-                    Buyer wallet: {buyerPublicKey || "(no wallet selected)"}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Chat Button */}
-        <button
-          type="button"
-          onClick={() => setChatOpen((o) => !o)}
-          aria-label="Open chat"
-          className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-white shadow-xl hover:brightness-95"
-        >
-          {chatOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <MessageSquare className="h-6 w-6" />
-          )}
-        </button>
-
-        {chatOpen && (
-          <div className="fixed bottom-24 right-6 z-50 w-80 rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-2xl">
-            <div className="mb-2 text-sm font-semibold">Trade Chat</div>
-            <div className="max-h-64 overflow-auto rounded-md border bg-white p-2 text-xs">
-              {messages.length === 0 ? (
-                <div className="text-muted-foreground">No messages yet.</div>
-              ) : (
-                messages.map((m) => (
-                  <div key={m.id} className="mb-1">
-                    <span className="font-medium">{m.from}:</span> {m.message}
-                    {m.proof?.filename && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        Attachment: {m.proof.filename}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="mt-2 flex gap-2 items-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                className="block rounded-md border border-[hsl(var(--input))] bg-white px-2 py-1 text-sm w-32"
-              />
-              <input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message…"
-                className="flex-1 rounded-md border border-[hsl(var(--input))] bg-white px-3 py-2 text-sm outline-none"
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={!tradeId || (!message.trim() && !proofFile)}
-                className="h-10 px-3"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-            {proofFile && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                Selected: {proofFile.name}
-              </div>
+                </button>
+              ))
             )}
           </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Selected Order</h3>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Change
+                </button>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Type</span>
+                  <span className="font-semibold uppercase">
+                    {selectedOrder.type}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Token</span>
+                  <span className="font-semibold">{selectedOrder.token}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Available Amount</span>
+                  <span className="font-semibold">
+                    {Number(selectedOrder.token_amount).toFixed(6)}
+                  </span>
+                </div>
+                <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-semibold">
+                  <span>Rate</span>
+                  <span>
+                    {rate.toFixed(2)} PKR per {selectedOrder.token}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4">
+              <label className="block text-sm font-medium mb-3">
+                {selectedOrder.type === "buy"
+                  ? "How much do you want to buy?"
+                  : "How much do you want to sell?"}
+              </label>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-600 block mb-1">
+                    Amount in PKR
+                  </label>
+                  <input
+                    type="number"
+                    value={pkrAmount}
+                    onChange={(e) => setPkrAmount(e.target.value)}
+                    placeholder="Enter PKR amount"
+                    className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm"
+                  />
+                </div>
+
+                {estimatedTokens > 0 && (
+                  <div className="p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                    <div className="text-sm">
+                      <span className="text-gray-600">You will receive: </span>
+                      <span className="font-bold text-lg text-purple-600">
+                        {estimatedTokens.toFixed(6)} {selectedOrder.token}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded"
+                />
+                <span className="text-xs text-gray-700">
+                  <strong>I agree</strong> to the P2P trading terms. I
+                  understand:
+                  <ul className="list-disc list-inside mt-2 space-y-1 text-gray-600">
+                    <li>I will follow the agreed payment method</li>
+                    <li>I will not dispute without reason</li>
+                    <li>My rating will be affected by conduct</li>
+                  </ul>
+                </span>
+              </label>
+            </div>
+
+            <button
+              onClick={handleStartTrade}
+              disabled={isInitiating || !agreed || !pkrAmount}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            >
+              {isInitiating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Starting...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-5 w-5" />
+                  Start Trade
+                </>
+              )}
+            </button>
+
+            {!agreed && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-yellow-800">
+                  You must agree to the terms before starting a trade.
+                </p>
+              </div>
+            )}
+
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-800">
+                Enter a chat with the seller to discuss and complete the trade.
+              </p>
+            </div>
+          </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

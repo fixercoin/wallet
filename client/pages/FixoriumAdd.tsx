@@ -10,7 +10,7 @@ export default function FixoriumAdd() {
   return (
     <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="w-full px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold tracking-wide">
             <span className="text-cream">FIXORIUM</span>
             <span className="text-gray-400 text-xs">/ add</span>
@@ -25,8 +25,8 @@ export default function FixoriumAdd() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        <Card className="bg-gray-800/50 border-gray-700">
+      <div className="w-full px-4 py-6 space-y-4">
+        <Card className="bg-gray-800/50">
           <CardHeader>
             <CardTitle className="text-lg">Choose an action</CardTitle>
           </CardHeader>

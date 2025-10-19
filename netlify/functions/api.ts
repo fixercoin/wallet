@@ -125,6 +125,45 @@ async function tryDexEndpoints(path: string) {
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
 }
 
+// In-memory cache and inflight dedupe (best-effort per function instance)
+const DEX_CACHE_TTL_MS = 30_000;
+const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const DEX_INFLIGHT = new Map<string, Promise<any>>();
+
+async function fetchDexData(path: string) {
+  const now = Date.now();
+  const cached = DEX_CACHE.get(path);
+  if (cached && cached.expiresAt > now) {
+    // Only return cache if it contains meaningful data with priceChange fields
+    const hasPriceChangeData =
+      Array.isArray(cached.data?.pairs) &&
+      cached.data.pairs.some(
+        (p: any) =>
+          p?.priceChange &&
+          (typeof p.priceChange.h24 === "number" ||
+            typeof p.priceChange.h6 === "number" ||
+            typeof p.priceChange.h1 === "number" ||
+            typeof p.priceChange.m5 === "number"),
+      );
+    if (hasPriceChangeData) {
+      return cached.data;
+    }
+  }
+  const existing = DEX_INFLIGHT.get(path);
+  if (existing) return existing;
+  const request = (async () => {
+    try {
+      const data = await tryDexEndpoints(path);
+      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
+      return data;
+    } finally {
+      DEX_INFLIGHT.delete(path);
+    }
+  })();
+  DEX_INFLIGHT.set(path, request);
+  return request;
+}
+
 type BinanceCacheEntry = {
   expiresAt: number;
   data: any;
@@ -465,12 +504,156 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
+    if (path === "/exchange-rate" && method === "GET") {
+      const token = (
+        event.queryStringParameters?.token || "FIXERCOIN"
+      ).toUpperCase();
+
+      // Known Solana token mints
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
+      };
+
+      const PKR_PER_USD = 280; // base FX
+      const MARKUP = 1.0425; // 4.25%
+
+      let priceUsd: number | null = null;
+      try {
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else if (TOKEN_MINTS[token]) {
+          const data = await fetchDexData(`/tokens/${TOKEN_MINTS[token]}`);
+          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          const price =
+            pairs.length > 0 && pairs[0]?.priceUsd
+              ? Number(pairs[0].priceUsd)
+              : null;
+          if (typeof price === "number" && isFinite(price) && price > 0) {
+            priceUsd = price;
+          }
+        }
+      } catch {}
+
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return jsonResponse(200, {
+        token,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+      });
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (path === "/stable-24h" && method === "GET") {
+      const symbolsParam = (
+        event.queryStringParameters?.symbols || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
+      };
+
+      const ids = symbols
+        .map((s) => COINGECKO_IDS[s]?.id)
+        .filter(Boolean)
+        .join(",");
+      if (!ids) {
+        return jsonResponse(400, { error: "No supported symbols provided" });
+      }
+
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd&include_24hr_change=true`;
+      let result: Record<
+        string,
+        { priceUsd: number; change24h: number; mint: string }
+      > = {};
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        const resp = await fetch(url, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        clearTimeout(timeout);
+        if (resp.ok) {
+          const json = await resp.json();
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            const d = json?.[meta.id];
+            const price = typeof d?.usd === "number" ? d.usd : 1;
+            const change =
+              typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = {
+              priceUsd: price,
+              change24h: change,
+              mint: meta.mint,
+            };
+          });
+        } else {
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+          });
+        }
+      } catch {
+        symbols.forEach((sym) => {
+          const meta = COINGECKO_IDS[sym];
+          if (!meta) return;
+          result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+        });
+      }
+
+      return jsonResponse(200, { data: result });
+    }
+
     // DexScreener: tokens
     if (path === "/dexscreener/tokens" && method === "GET") {
       const mints = event.queryStringParameters?.mints;
       if (!mints)
         return jsonResponse(400, { error: "Missing 'mints' query parameter" });
-      const data = await tryDexEndpoints(`/tokens/${mints}`);
+      const rawMints = String(mints)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const uniqSorted = Array.from(new Set(rawMints)).sort();
+      if (uniqSorted.length === 0)
+        return jsonResponse(400, { error: "No valid token mints provided" });
+      const data = await fetchDexData(`/tokens/${uniqSorted.join(",")}`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs.filter((p: any) => p?.chainId === "solana")
         : [];
@@ -485,7 +668,7 @@ export const handler = async (event: any) => {
       const q = event.queryStringParameters?.q;
       if (!q)
         return jsonResponse(400, { error: "Missing 'q' query parameter" });
-      const data = await tryDexEndpoints(`/search/?q=${encodeURIComponent(q)}`);
+      const data = await fetchDexData(`/search/?q=${encodeURIComponent(q)}`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20)
         : [];
@@ -497,7 +680,7 @@ export const handler = async (event: any) => {
 
     // DexScreener: trending
     if (path === "/dexscreener/trending" && method === "GET") {
-      const data = await tryDexEndpoints(`/pairs/solana`);
+      const data = await fetchDexData(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
             .filter(
@@ -660,6 +843,70 @@ export const handler = async (event: any) => {
       return jsonResponse(502, {
         error: "All Binance endpoints failed",
         details: lastErr,
+      });
+    }
+
+    // Debug: count tokens missing 24h change on dashboard logic
+    if (path === "/debug/24h-missing" && method === "GET") {
+      const publicKey = (event.queryStringParameters?.publicKey || "").trim();
+      if (!publicKey) return jsonResponse(400, { error: "publicKey required" });
+
+      // Fetch token accounts via RPC (same RPC fanout used by /api/solana-rpc)
+      let mints: string[] = [];
+      try {
+        const rpc = await callRpc(
+          "getTokenAccountsByOwner",
+          [
+            publicKey,
+            { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+            { encoding: "jsonParsed" },
+          ],
+          Date.now(),
+        );
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        const value = parsed?.result?.value || [];
+        const list: string[] = Array.isArray(value)
+          ? value
+              .map((v: any) => v?.account?.data?.parsed?.info?.mint)
+              .filter((x: any) => typeof x === "string" && x.length > 0)
+          : [];
+        mints = Array.from(new Set(list));
+      } catch {}
+
+      // Always include SOL synthetic mint so dashboard token appears
+      const SOL_MINT = "So11111111111111111111111111111111111111112";
+      if (!mints.includes(SOL_MINT)) mints.unshift(SOL_MINT);
+
+      if (mints.length === 0)
+        return jsonResponse(200, { total: 0, missing: 0, missingMints: [] });
+
+      // DexScreener fetch for these mints
+      const data = await fetchDexData(`/tokens/${mints.join(",")}`);
+      const pairs: any[] = Array.isArray(data?.pairs) ? data.pairs : [];
+
+      const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+      const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
+
+      const missing: string[] = [];
+      mints.forEach((mint) => {
+        // Stablecoins are shown as 0% if no data
+        if (mint === USDC_MINT || mint === USDT_MINT) return;
+        const t = pairs.find(
+          (p) =>
+            p?.baseToken?.address === mint || p?.quoteToken?.address === mint,
+        );
+        const pc = t?.priceChange || {};
+        const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+        const has = candidates.some(
+          (v) => typeof v === "number" && isFinite(v),
+        );
+        if (!has) missing.push(mint);
+      });
+
+      return jsonResponse(200, {
+        total: mints.length,
+        missing: missing.length,
+        missingMints: missing,
       });
     }
 

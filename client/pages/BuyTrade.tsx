@@ -36,6 +36,7 @@ export default function BuyTrade() {
     | "awaiting_seller_verified"
     | "seller_verified"
     | "seller_transferred"
+    | "completed"
     | "failed";
 
   const [phase, setPhase] = useState<Phase>("entry");

@@ -21,6 +21,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import bs58 from "bs58";
@@ -43,14 +44,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
-  const [currency, setCurrency] = useState<"USD" | "PKR">(() => {
-    try {
-      const saved = localStorage.getItem("preferred_currency");
-      return (saved as "USD" | "PKR") || "USD";
-    } catch {
-      return "USD";
-    }
-  });
+  const { currency, setCurrency } = useCurrency();
 
   if (wallets.length === 0) {
     return (

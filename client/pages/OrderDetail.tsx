@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { ArrowLeft } from "lucide-react";
 
 export default function OrderDetail() {
+  const { formatCurrency } = useCurrency();
   const navigate = useNavigate();
   const { orderId } = useParams();
   const [order, setOrder] = useState<any | null>(null);
@@ -73,9 +75,12 @@ export default function OrderDetail() {
               )}
               {typeof order.amountPKR !== "undefined" && (
                 <div className="flex items-center justify-between">
-                  <div className="text-xs opacity-80">Amount (PKR)</div>
+                  <div className="text-xs opacity-80">Amount</div>
                   <div className="font-semibold">
-                    {Number(order.amountPKR).toLocaleString()}
+                    {formatCurrency(Number(order.amountPKR), {
+                      from: "PKR",
+                      minimumFractionDigits: 0,
+                    })}
                   </div>
                 </div>
               )}
@@ -92,10 +97,11 @@ export default function OrderDetail() {
                   <div className="text-xs opacity-80">Exchange Rate</div>
                   <div className="font-semibold">
                     1 {order.token} ={" "}
-                    {order.pricePKRPerQuote < 1
-                      ? Number(order.pricePKRPerQuote).toFixed(6)
-                      : Number(order.pricePKRPerQuote).toFixed(2)}{" "}
-                    PKR
+                    {formatCurrency(Number(order.pricePKRPerQuote), {
+                      from: "PKR",
+                      minimumFractionDigits:
+                        Number(order.pricePKRPerQuote) < 1 ? 6 : 2,
+                    })}
                   </div>
                 </div>
               )}

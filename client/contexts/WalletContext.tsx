@@ -508,6 +508,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
+        // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
+        if (
+          typeof changeMap[lockerMint] !== "number" ||
+          !isFinite(changeMap[lockerMint]!)
+        ) {
+          changeMap[lockerMint] = 0;
+        }
+
         const solMint = "So11111111111111111111111111111111111111112";
         if (Object.keys(prices).length > 0 && prices[solMint]) {
           priceSource = "dexscreener";

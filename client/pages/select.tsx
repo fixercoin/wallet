@@ -13,6 +13,18 @@ import { ArrowLeft } from "lucide-react";
 
 export default function Select() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [showConfirmation, setShowConfirmation] = useState(!!location.state?.confirmation);
+
+  const confirmationData = location.state?.confirmation;
+
+  const handleConfirmPayment = async () => {
+    if (confirmationData?.onConfirm) {
+      await confirmationData.onConfirm();
+    }
+    setShowConfirmation(false);
+  };
+
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
       {/* Decorative blobs */}

@@ -249,7 +249,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     const selectedCurrency = value as "USD" | "PKR";
                     setCurrency(selectedCurrency);
                     try {
-                      localStorage.setItem("preferred_currency", selectedCurrency);
+                      localStorage.setItem(
+                        "preferred_currency",
+                        selectedCurrency,
+                      );
                     } catch {}
                     toast({
                       title: "Currency Changed",

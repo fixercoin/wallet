@@ -8,6 +8,7 @@ import { ADMIN_WALLET } from "@/lib/p2p";
 export default function OrdersList() {
   const navigate = useNavigate();
   const { status } = useParams();
+  const { wallet } = useWallet();
   const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {

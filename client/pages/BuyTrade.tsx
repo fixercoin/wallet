@@ -36,6 +36,7 @@ export default function BuyTrade() {
     | "awaiting_seller_verified"
     | "seller_verified"
     | "seller_transferred"
+    | "completed"
     | "failed";
 
   const [phase, setPhase] = useState<Phase>("entry");
@@ -124,7 +125,7 @@ export default function BuyTrade() {
       senderWallet: wallet.publicKey,
       senderRole: userRole,
       type: "buyer_notify",
-      text: "Buyer notified seller to check pending orders",
+      text: "Buyer confirmed payment and notified seller to verify",
       timestamp: Date.now(),
     };
 
@@ -132,11 +133,17 @@ export default function BuyTrade() {
     sendChatMessage(send, message);
 
     const notification: ChatNotification = {
-      type: "status_change",
+      type: "payment_received",
       roomId,
       initiatorWallet: wallet.publicKey,
-      initiatorRole: userRole,
-      message: "Seller has been notified",
+      initiatorRole: "buyer",
+      message: `Buyer has confirmed payment - ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      data: {
+        amountPKR: Number(amountPKR),
+        token,
+        estimatedTokens: estimatedTokens.toFixed(6),
+        orderId: roomId,
+      },
       timestamp: Date.now(),
     };
 
@@ -144,7 +151,10 @@ export default function BuyTrade() {
     broadcastNotification(send, notification);
 
     setChatLog((prev) => [...prev, message]);
-    toast({ title: "Seller notified" });
+    toast({
+      title: "Seller notified",
+      description: "Waiting for seller to verify payment...",
+    });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };
 
@@ -201,13 +211,19 @@ export default function BuyTrade() {
           setPhase("seller_verified");
           toast({
             title: "Seller verified payment",
-            description: "Proceed to transfer",
+            description: "Assets are being transferred to you",
           });
-        } else if (msg.type === "seller_transferred") {
+        } else if (msg.type === "seller_completed") {
           setPhase("seller_transferred");
           toast({
-            title: "Transfer complete",
-            description: "Check assets in wallet",
+            title: "Seller completed transfer",
+            description: "Please confirm receipt to finalize order",
+          });
+        } else if (msg.type === "buyer_confirmed_receipt") {
+          setPhase("completed");
+          toast({
+            title: "Order Complete",
+            description: "Trade finalized successfully",
           });
           try {
             const completedRaw = localStorage.getItem("orders_completed");
@@ -230,7 +246,7 @@ export default function BuyTrade() {
                 : pending;
             localStorage.setItem("orders_pending", JSON.stringify(filtered));
           } catch {}
-          setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
+          setTimeout(() => navigate("/", { state: { goP2P: true } }), 2000);
         } else if (msg.type === "order_failed") {
           setFailMsg(
             String(msg.metadata?.reason || "Order could not complete"),
@@ -347,6 +363,25 @@ export default function BuyTrade() {
     saveChatMessage(message);
     sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
+  };
+
+  const buyerConfirmReceipt = () => {
+    if (!roomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "buyer",
+      type: "buyer_confirmed_receipt",
+      text: "Buyer confirmed receipt of assets",
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    sendChatMessage(send, message);
+    setChatLog((prev) => [...prev, message]);
+    setPhase("completed");
   };
 
   const handleSendMessage = () => {
@@ -592,8 +627,47 @@ export default function BuyTrade() {
                 </div>
               </div>
               <p className="text-sm text-gray-600">
-                After transfer is sent, you will receive a completion message.
+                Seller is transferring your assets now. Please wait...
               </p>
+            </div>
+          )}
+
+          {phase === "seller_transferred" && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                <div className="text-sm font-semibold text-green-900">
+                  ✓ Assets transferred!
+                </div>
+                <p className="text-sm text-green-800 mt-2">
+                  Seller has completed the transfer. Please confirm receipt to
+                  finalize the order.
+                </p>
+              </div>
+              <Button
+                onClick={buyerConfirmReceipt}
+                className="wallet-button-primary w-full"
+              >
+                Confirm Receipt
+              </Button>
+            </div>
+          )}
+
+          {phase === "completed" && (
+            <div className="space-y-4 text-center">
+              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                <div className="text-lg font-bold text-green-900">
+                  ✓ Order Completed!
+                </div>
+                <p className="text-sm text-green-800 mt-2">
+                  Your trade has been finalized successfully.
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate("/", { state: { goP2P: true } })}
+                className="wallet-button-primary w-full"
+              >
+                Back to Dashboard
+              </Button>
             </div>
           )}
 

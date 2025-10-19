@@ -23,7 +23,10 @@ import {
   Flame,
   Lock,
   Coins,
+  Bell,
 } from "lucide-react";
+import { ADMIN_WALLET } from "@/lib/p2p";
+import { getPaymentReceivedNotifications } from "@/lib/p2p-chat";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -82,6 +85,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +112,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Check for pending payment verifications if admin
+  useEffect(() => {
+    if (wallet?.publicKey === ADMIN_WALLET) {
+      const notifications = getPaymentReceivedNotifications(wallet.publicKey);
+      setPendingOrdersCount(notifications.length);
+
+      // Poll for updates every 5 seconds
+      const interval = setInterval(() => {
+        const updated = getPaymentReceivedNotifications(wallet.publicKey);
+        setPendingOrdersCount(updated.length);
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [wallet?.publicKey]);
 
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
@@ -497,14 +517,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Tokens List */}
-        <div className="mb-4">
+        <div className="mb-4 flex gap-2">
           <Button
             onClick={() => navigate("/buy-crypto")}
-            className="w-full h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
-            aria-label="PAY TO BUY CRYPTO CURRENCY"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
+            aria-label="EXPRESS P2P SERVICE"
           >
-            <span className="mr-0">PAY TO BUY CRYPTO CURRENCY</span>
+            <span className="mr-0">EXPRESS P2P SERVICE</span>
           </Button>
+
+          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+            <Button
+              onClick={() => navigate("/verify-sell")}
+              className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
+              aria-label={`${pendingOrdersCount} pending orders`}
+            >
+              <span className="relative">
+                {pendingOrdersCount}
+                {pendingOrdersCount > 0 && (
+                  <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+                    !
+                  </span>
+                )}
+              </span>
+            </Button>
+          )}
         </div>
 
         <div className="space-y-3">

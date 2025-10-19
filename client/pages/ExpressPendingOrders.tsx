@@ -16,7 +16,10 @@ import { Button } from "@/components/ui/button";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
-import { getUnreadNotifications } from "@/lib/p2p-chat";
+import {
+  getUnreadNotifications,
+  getPaymentReceivedNotifications,
+} from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 
 export default function ExpressPendingOrders() {
@@ -33,6 +36,7 @@ export default function ExpressPendingOrders() {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [processingRoomId, setProcessingRoomId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
 
   // Listen for notifications and auto-open chat
   useEffect(() => {
@@ -85,6 +89,10 @@ export default function ExpressPendingOrders() {
     loadRooms();
     const count = getUnreadNotifications(wallet.publicKey).length;
     setUnreadCount(count);
+    const verifyCount = getPaymentReceivedNotifications(
+      wallet.publicKey,
+    ).length;
+    setPendingVerificationCount(verifyCount);
   }, [wallet?.publicKey, filter, events]);
 
   const loadRooms = async () => {
@@ -263,6 +271,31 @@ export default function ExpressPendingOrders() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
+        {/* Seller Verification Alert */}
+        {pendingVerificationCount > 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border border-[#FF7A5C]/40 flex items-start gap-3">
+            <div className="text-[#FF7A5C] flex-shrink-0 mt-0.5">
+              <Bell className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm text-white">
+                {pendingVerificationCount} Payment
+                {pendingVerificationCount !== 1 ? "s" : ""} to Verify
+              </div>
+              <p className="text-xs text-white/80 mt-1">
+                Buyer{pendingVerificationCount !== 1 ? "s have" : " has"}{" "}
+                confirmed payment. Review and verify to proceed.
+              </p>
+              <button
+                onClick={() => navigate("/verify-sell")}
+                className="mt-2 inline-flex items-center px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white text-xs font-semibold hover:opacity-90 transition-all"
+              >
+                Review Now →
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Filter Tabs */}
         <div className="flex flex-wrap gap-2 mb-6">
           <button

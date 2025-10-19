@@ -19,6 +19,7 @@ import { API_BASE } from "@/lib/p2p";
 import {
   getUnreadNotifications,
   getPaymentReceivedNotifications,
+  saveNotification,
 } from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 

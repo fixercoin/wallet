@@ -73,95 +73,124 @@ export default function SellNote() {
       });
       return;
     }
-    setLoading(true);
-    try {
-      const roomId = order.id;
 
-      // Create and send chat message
-      const message: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        roomId,
-        senderWallet: wallet.publicKey,
-        senderRole: "seller",
-        type: "seller_sent",
-        text: `Seller sent ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}\n\nBuyer, please send ${order.amountPKR.toFixed(2)} PKR via ${order.paymentMethod}`,
-        metadata: {
-          orderId: order.id,
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-          sellerWallet: order.sellerWallet,
-          adminWallet: order.adminWallet,
-        },
-        timestamp: Date.now(),
-      };
-
-      saveChatMessage(message);
-      sendChatMessage(send, message);
-
-      // Send notification to buyer
-      const notification: ChatNotification = {
-        type: "status_change",
-        roomId,
-        initiatorWallet: wallet.publicKey,
-        initiatorRole: "seller",
-        message: `Transfer sent: ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}`,
-        data: {
-          amountTokens: order.amountTokens,
-          token: order.token,
-        },
-        timestamp: Date.now(),
-      };
-
-      saveNotification(notification);
-      broadcastNotification(send, notification);
-
+    const onConfirmTransfer = async () => {
+      setLoading(true);
       try {
-        localStorage.setItem(
-          "sell_pending_verification",
-          JSON.stringify({
-            id: order.id,
+        const roomId = order.id;
+
+        // Create and send chat message
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "seller",
+          type: "seller_sent",
+          text: `Seller sent ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}\n\nBuyer, please send ${order.amountPKR.toFixed(2)} PKR via ${order.paymentMethod}`,
+          metadata: {
+            orderId: order.id,
             token: order.token,
             amountTokens: order.amountTokens,
             amountPKR: order.amountPKR,
-            pricePKRPerQuote: order.pricePKRPerQuote,
-            paymentMethod: order.paymentMethod,
             sellerWallet: order.sellerWallet,
             adminWallet: order.adminWallet,
-            createdAt: Date.now(),
-          }),
-        );
-      } catch {}
-
-      toast({
-        title: "Transfer marked sent",
-        description: "Buyer will be notified",
-      });
-
-      navigate("/express/buy-trade", {
-        state: {
-          order: {
-            id: order.id,
-            type: "sell",
-            token: order.token,
-            amountPKR: order.amountPKR,
-            pricePKRPerQuote: order.pricePKRPerQuote,
-            quoteAsset: order.token,
-            paymentMethod: order.paymentMethod,
           },
-          openChat: true,
-          initialPhase: "awaiting_seller_verified",
+          timestamp: Date.now(),
+        };
+
+        saveChatMessage(message);
+        sendChatMessage(send, message);
+
+        // Send notification to buyer
+        const notification: ChatNotification = {
+          type: "status_change",
+          roomId,
+          initiatorWallet: wallet.publicKey,
+          initiatorRole: "seller",
+          message: `Transfer sent: ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}`,
+          data: {
+            amountTokens: order.amountTokens,
+            token: order.token,
+          },
+          timestamp: Date.now(),
+        };
+
+        saveNotification(notification);
+        broadcastNotification(send, notification);
+
+        try {
+          localStorage.setItem(
+            "sell_pending_verification",
+            JSON.stringify({
+              id: order.id,
+              token: order.token,
+              amountTokens: order.amountTokens,
+              amountPKR: order.amountPKR,
+              pricePKRPerQuote: order.pricePKRPerQuote,
+              paymentMethod: order.paymentMethod,
+              sellerWallet: order.sellerWallet,
+              adminWallet: order.adminWallet,
+              createdAt: Date.now(),
+            }),
+          );
+        } catch {}
+
+        toast({
+          title: "Transfer marked sent",
+          description: "Buyer will be notified",
+        });
+
+        navigate("/express/buy-trade", {
+          state: {
+            order: {
+              id: order.id,
+              type: "sell",
+              token: order.token,
+              amountPKR: order.amountPKR,
+              pricePKRPerQuote: order.pricePKRPerQuote,
+              quoteAsset: order.token,
+              paymentMethod: order.paymentMethod,
+            },
+            openChat: true,
+            initialPhase: "awaiting_seller_verified",
+          },
+        });
+      } catch (error: any) {
+        toast({
+          title: "Failed to notify buyer",
+          description: error?.message || String(error),
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Navigate to select.tsx with confirmation modal
+    navigate("/select", {
+      state: {
+        confirmation: {
+          title: "Confirm Transfer",
+          message: `You are confirming that you have sent ${order.amountTokens.toFixed(6)} ${order.token} to the admin wallet. The buyer will be notified to complete the payment.`,
+          details: [
+            {
+              label: "Amount Sent",
+              value: `${order.amountTokens.toFixed(6)} ${order.token}`,
+            },
+            {
+              label: "To Address",
+              value: ADMIN_WALLET,
+            },
+            {
+              label: "Buyer Receives",
+              value: `${order.amountPKR.toFixed(2)} PKR`,
+            },
+          ],
+          buttonText: "Confirm",
+          onConfirm: onConfirmTransfer,
         },
-      });
-    } catch (error: any) {
-      toast({
-        title: "Failed to notify buyer",
-        description: error?.message || String(error),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
   };
 
   const goBack = () => navigate("/buy-crypto");

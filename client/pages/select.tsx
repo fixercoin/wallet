@@ -1,77 +1,45 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function Select() {
   const navigate = useNavigate();
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
+      <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto px-4 py-8 relative z-20 space-y-4">
-        <h1 className="text-xl font-bold text-center">Express P2P Service</h1>
-        <p className="text-center text-white/80">
-          Choose advertiser and action
-        </p>
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
+        <div
+          className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl shadow-2xl relative overflow-hidden group p-6 sm:p-8 flex flex-col items-center justify-between"
+          style={{
+            backgroundImage:
+              "url('https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2F2b43145023ad4337a2667c4286647a78?format=webp&width=800')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 rounded-2xl sm:rounded-3xl" />
 
-        <Card className="bg-transparent backdrop-blur-xl">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-white/70">Advertiser</div>
-                <div className="text-lg font-semibold">FIXORIUM</div>
-              </div>
-              <div className="text-right text-sm text-white/70">
-                <div>
-                  Available order: <span className="text-white">Unlimited</span>
-                </div>
-                <div>
-                  Payment: <span className="text-white">Easypaisa</span>
-                </div>
-              </div>
-            </div>
-            <div className="text-sm text-white/70">
-              Asset: <span className="text-white">Select on next step</span>
-            </div>
+          <div className="flex-1" />
+
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full relative z-10">
             <Button
               onClick={() => navigate("/buy-now")}
-              className="w-full h-11 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C]"
+              className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
-              Buy
+              buy
             </Button>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-transparent backdrop-blur-xl">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-white/70">Advertiser</div>
-                <div className="text-lg font-semibold">fixorium</div>
-              </div>
-              <div className="text-right text-sm text-white/70">
-                <div>
-                  Available order: <span className="text-white">Unlimited</span>
-                </div>
-                <div>
-                  Payment: <span className="text-white">Easypaisa</span>
-                </div>
-              </div>
-            </div>
-            <div className="text-sm text-white/70">
-              Asset: <span className="text-white">Select on next step</span>
-            </div>
             <Button
               onClick={() => navigate("/sell-now")}
-              variant="secondary"
-              className="w-full h-11 rounded-lg font-semibold bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70"
+              className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
-              Sell
+              sell
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

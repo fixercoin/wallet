@@ -75,7 +75,7 @@ export default function SellNote() {
         senderWallet: wallet.publicKey,
         senderRole: "seller",
         type: "seller_sent",
-        text: `Seller sent ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}`,
+        text: `Seller sent ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}\n\nBuyer, please send ${order.amountPKR.toFixed(2)} PKR via ${order.paymentMethod}`,
         metadata: {
           orderId: order.id,
           token: order.token,

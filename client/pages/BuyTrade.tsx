@@ -624,8 +624,46 @@ export default function BuyTrade() {
                 </div>
               </div>
               <p className="text-sm text-gray-600">
-                After transfer is sent, you will receive a completion message.
+                Seller is transferring your assets now. Please wait...
               </p>
+            </div>
+          )}
+
+          {phase === "seller_transferred" && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                <div className="text-sm font-semibold text-green-900">
+                  ✓ Assets transferred!
+                </div>
+                <p className="text-sm text-green-800 mt-2">
+                  Seller has completed the transfer. Please confirm receipt to finalize the order.
+                </p>
+              </div>
+              <Button
+                onClick={buyerConfirmReceipt}
+                className="wallet-button-primary w-full"
+              >
+                Confirm Receipt
+              </Button>
+            </div>
+          )}
+
+          {phase === "completed" && (
+            <div className="space-y-4 text-center">
+              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                <div className="text-lg font-bold text-green-900">
+                  ✓ Order Completed!
+                </div>
+                <p className="text-sm text-green-800 mt-2">
+                  Your trade has been finalized successfully.
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate("/", { state: { goP2P: true } })}
+                className="wallet-button-primary w-full"
+              >
+                Back to Dashboard
+              </Button>
             </div>
           )}
 

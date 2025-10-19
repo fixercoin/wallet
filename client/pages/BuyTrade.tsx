@@ -19,7 +19,10 @@ import {
 export default function BuyTrade() {
   const navigate = useNavigate();
   const { state } = useLocation() as {
-    state?: { order?: any; room?: { id: string; buyer_wallet?: string; seller_wallet?: string } };
+    state?: {
+      order?: any;
+      room?: { id: string; buyer_wallet?: string; seller_wallet?: string };
+    };
   };
   const order = state?.order || null;
   const room = state?.room as any;
@@ -77,7 +80,8 @@ export default function BuyTrade() {
     return Number(amountPKR) / pricePKR;
   }, [amountPKR, pricePKR]);
 
-  const canConfirm = Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
+  const canConfirm =
+    Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
 
   const handleConfirm = () => {
     if (!canConfirm || !derivedRoomId || !wallet) return;
@@ -113,7 +117,10 @@ export default function BuyTrade() {
     saveNotification(notification);
 
     setChatLog((prev) => [...prev, message]);
-    toast({ title: "Trade request sent", description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}` });
+    toast({
+      title: "Trade request sent",
+      description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
+    });
     setPhase("awaiting_seller_approval");
   };
 
@@ -139,14 +146,22 @@ export default function BuyTrade() {
       initiatorWallet: wallet.publicKey,
       initiatorRole: "buyer",
       message: `Buyer has confirmed payment - ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
-      data: { amountPKR: Number(amountPKR), token, estimatedTokens: estimatedTokens.toFixed(6), orderId: derivedRoomId },
+      data: {
+        amountPKR: Number(amountPKR),
+        token,
+        estimatedTokens: estimatedTokens.toFixed(6),
+        orderId: derivedRoomId,
+      },
       timestamp: Date.now(),
     };
 
     saveNotification(notification);
 
     setChatLog((prev) => [...prev, message]);
-    toast({ title: "Seller notified", description: "Waiting for seller to verify payment..." });
+    toast({
+      title: "Seller notified",
+      description: "Waiting for seller to verify payment...",
+    });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };
 
@@ -189,32 +204,57 @@ export default function BuyTrade() {
             paymentMethod: String(msg.metadata?.paymentMethod || ""),
           });
           setPhase("seller_approved");
-          toast({ title: "Seller approved", description: "Payment details received" });
+          toast({
+            title: "Seller approved",
+            description: "Payment details received",
+          });
         } else if (msg.type === "seller_verified") {
           setPhase("seller_verified");
-          toast({ title: "Seller verified payment", description: "Assets are being transferred to you" });
-        } else if (msg.type === "seller_transferred" || msg.type === "seller_completed") {
+          toast({
+            title: "Seller verified payment",
+            description: "Assets are being transferred to you",
+          });
+        } else if (
+          msg.type === "seller_transferred" ||
+          msg.type === "seller_completed"
+        ) {
           setPhase("seller_transferred");
-          toast({ title: "Seller completed transfer", description: "Please confirm receipt to finalize order" });
+          toast({
+            title: "Seller completed transfer",
+            description: "Please confirm receipt to finalize order",
+          });
         } else if (msg.type === "buyer_confirmed_receipt") {
           setPhase("completed");
-          toast({ title: "Order Complete", description: "Trade finalized successfully" });
+          toast({
+            title: "Order Complete",
+            description: "Trade finalized successfully",
+          });
           try {
             const completedRaw = localStorage.getItem("orders_completed");
             const completed = completedRaw ? JSON.parse(completedRaw) : [];
-            const orderToSave = order ? { ...order, status: "completed", completedAt: Date.now() } : null;
+            const orderToSave = order
+              ? { ...order, status: "completed", completedAt: Date.now() }
+              : null;
             if (orderToSave) {
               completed.unshift(orderToSave);
-              localStorage.setItem("orders_completed", JSON.stringify(completed));
+              localStorage.setItem(
+                "orders_completed",
+                JSON.stringify(completed),
+              );
             }
             const pendingRaw = localStorage.getItem("orders_pending");
             const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
-            const filtered = Array.isArray(pending) && order?.id ? pending.filter((o: any) => o.id !== order.id) : pending;
+            const filtered =
+              Array.isArray(pending) && order?.id
+                ? pending.filter((o: any) => o.id !== order.id)
+                : pending;
             localStorage.setItem("orders_pending", JSON.stringify(filtered));
           } catch {}
           setTimeout(() => navigate("/", { state: { goP2P: true } }), 2000);
         } else if (msg.type === "order_failed") {
-          setFailMsg(String(msg.metadata?.reason || "Order could not complete"));
+          setFailMsg(
+            String(msg.metadata?.reason || "Order could not complete"),
+          );
           setPhase("failed");
         }
       }
@@ -395,7 +435,9 @@ export default function BuyTrade() {
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
 
-          <div className="flex-1 text-center font-semibold uppercase">Buy Trade</div>
+          <div className="flex-1 text-center font-semibold uppercase">
+            Buy Trade
+          </div>
 
           <button
             onClick={clearUnread}
@@ -437,14 +479,21 @@ export default function BuyTrade() {
               ) : null}
 
               {!hasReceived ? (
-                <Button onClick={handleReceived} className="wallet-button-primary w-full">
+                <Button
+                  onClick={handleReceived}
+                  className="wallet-button-primary w-full"
+                >
                   I have received
                 </Button>
               ) : (
                 <>
                   <div className="p-4 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
-                    <div className="text-sm font-medium mb-2">Wallet balance</div>
-                    <div className="font-semibold">{balance.toFixed(6)} SOL</div>
+                    <div className="text-sm font-medium mb-2">
+                      Wallet balance
+                    </div>
+                    <div className="font-semibold">
+                      {balance.toFixed(6)} SOL
+                    </div>
                   </div>
                   <div className="grid gap-3">
                     <input
@@ -461,11 +510,17 @@ export default function BuyTrade() {
                     />
                   </div>
                   {!readyToConfirmSend ? (
-                    <Button onClick={handleSendTransaction} className="wallet-button-primary w-full">
+                    <Button
+                      onClick={handleSendTransaction}
+                      className="wallet-button-primary w-full"
+                    >
                       Send transaction
                     </Button>
                   ) : (
-                    <Button onClick={handleSentAsset} className="wallet-button-secondary w-full">
+                    <Button
+                      onClick={handleSentAsset}
+                      className="wallet-button-secondary w-full"
+                    >
                       I have sent asset
                     </Button>
                   )}
@@ -473,7 +528,9 @@ export default function BuyTrade() {
               )}
             </div>
           ) : (
-            <div className="text-center text-sm text-white/70">Waiting for seller actions…</div>
+            <div className="text-center text-sm text-white/70">
+              Waiting for seller actions…
+            </div>
           )}
         </div>
       </div>

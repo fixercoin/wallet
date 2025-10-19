@@ -7,7 +7,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Flame, Menu, Search, Wallet, Gift, Flame as BurnIcon, Lock, Coins, Settings } from "lucide-react";
+import {
+  Flame,
+  Menu,
+  Search,
+  Wallet,
+  Gift,
+  Flame as BurnIcon,
+  Lock,
+  Coins,
+  Settings,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
@@ -38,7 +48,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             </span>
             <span className="truncate text-xs opacity-90">fixorium</span>
           </div>
-          <button aria-label="Search" className="p-1.5 rounded-lg hover:bg-white/5">
+          <button
+            aria-label="Search"
+            className="p-1.5 rounded-lg hover:bg-white/5"
+          >
             <Search className="h-4 w-4 text-white/80" />
           </button>
           <DropdownMenu>
@@ -51,19 +64,31 @@ export const TopBar: React.FC<TopBarProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onAccounts?.()} className="flex items-center gap-2 text-xs">
+              <DropdownMenuItem
+                onSelect={() => onAccounts?.()}
+                className="flex items-center gap-2 text-xs"
+              >
                 <Wallet className="h-4 w-4" />
                 <span>MY-WALLET</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onAirdrop} className="flex items-center gap-2 text-xs">
+              <DropdownMenuItem
+                onSelect={onAirdrop}
+                className="flex items-center gap-2 text-xs"
+              >
                 <Gift className="h-4 w-4" />
                 <span>C-BUILDER</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onBurn} className="flex items-center gap-2 text-xs">
+              <DropdownMenuItem
+                onSelect={onBurn}
+                className="flex items-center gap-2 text-xs"
+              >
                 <BurnIcon className="h-4 w-4" />
                 <span>SPL-BURN</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onLock} className="flex items-center gap-2 text-xs">
+              <DropdownMenuItem
+                onSelect={onLock}
+                className="flex items-center gap-2 text-xs"
+              >
                 <Lock className="h-4 w-4" />
                 <span>LOCK-SPL</span>
               </DropdownMenuItem>
@@ -75,7 +100,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>LISTING</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onSettings} className="flex items-center gap-2 text-xs">
+              <DropdownMenuItem
+                onSelect={onSettings}
+                className="flex items-center gap-2 text-xs"
+              >
                 <Settings className="h-4 w-4" />
                 <span>SETTINGS</span>
               </DropdownMenuItem>

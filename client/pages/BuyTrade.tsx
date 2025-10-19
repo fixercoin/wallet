@@ -563,7 +563,11 @@ export default function BuyTrade() {
                       className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
                       placeholder="Enter PKR amount"
                       value={amountPKR}
-                      onChange={(e) => setAmountPKR(e.target.value === "" ? "" : Number(e.target.value))}
+                      onChange={(e) =>
+                        setAmountPKR(
+                          e.target.value === "" ? "" : Number(e.target.value),
+                        )
+                      }
                     />
                   </div>
 
@@ -630,19 +634,25 @@ export default function BuyTrade() {
                           Seller Payment Details
                         </div>
                         <div>
-                          <div className="text-xs text-white/60">Account Name</div>
+                          <div className="text-xs text-white/60">
+                            Account Name
+                          </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.accountName}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-white/60">Account Number</div>
+                          <div className="text-xs text-white/60">
+                            Account Number
+                          </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.accountNumber}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-white/60">Payment Method</div>
+                          <div className="text-xs text-white/60">
+                            Payment Method
+                          </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.paymentMethod}
                           </div>

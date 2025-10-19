@@ -29,6 +29,8 @@ export const PriceCard: React.FC<PriceCardProps> = ({
   const totalValue = (token.balance || 0) * currentPrice;
   const isPositive = priceChangePercent !== null && priceChangePercent >= 0;
 
+  const { formatCurrency } = useCurrency();
+
   const content = (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">

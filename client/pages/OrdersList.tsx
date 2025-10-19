@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function OrdersList() {
   const navigate = useNavigate();

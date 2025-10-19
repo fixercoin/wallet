@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft,
   Copy,
   LogOut,
@@ -11,8 +18,10 @@ import {
   Key,
   Eye,
   EyeOff,
+  DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import bs58 from "bs58";
@@ -35,12 +44,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
+  const { currency, setCurrency } = useCurrency();
 
   if (wallets.length === 0) {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-        <div className="max-w-md mx-auto pt-8">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
+        <div className="w-full max-w-md mx-auto pt-8 px-4">
+          <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">
                 No accounts available. Create a wallet from the dashboard using
@@ -49,7 +59,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mt-4">
                 <Button
                   onClick={onBack}
-                  className="w-full bg-transparent border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                  className="w-full bg-[#1a2540]/50 text-white"
                 >
                   Back to Dashboard
                 </Button>
@@ -160,33 +170,37 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={onBack}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+            aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            Accounts
-          </h1>
+          <div className="flex-1 text-center font-medium text-sm">ACCOUNTS</div>
         </div>
+      </div>
 
+      <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
         <div>
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+          <div className="bg-transparent border-0 shadow-none rounded-lg p-6">
             <div className="px-6 pt-2">
-              <div className="text-[hsl(var(--primary))] font-semibold">
-                Accounts
-              </div>
+              <div className="text-[hsl(var(--primary))] font-semibold"></div>
             </div>
             <div className="space-y-6">
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  All Accounts
+                  SELECT ACCOUNT
                 </div>
                 <div className="flex items-center">
                   <select
@@ -203,7 +217,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         description: "Switched to selected account",
                       });
                     }}
-                    className="flex-1 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-2 rounded-md border border-[hsl(var(--border))] font-mono"
+                    className="flex-1 bg-[#1a2540]/50 text-white p-2 rounded-md border border-[#FF7A5C]/30 font-mono"
                   >
                     {wallets.map((w) => (
                       <option
@@ -218,17 +232,49 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </div>
               </section>
 
-              <div className="border-t border-[hsl(var(--border))]" />
-
-              <div className="border-t border-[hsl(var(--border))]" />
+              <section>
+                <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="font-medium">CURRENCY PREFERENCE</span>
+                </div>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => {
+                    const selectedCurrency = value as "USD" | "PKR";
+                    setCurrency(selectedCurrency);
+                    try {
+                      localStorage.setItem(
+                        "preferred_currency",
+                        selectedCurrency,
+                      );
+                    } catch {}
+                    toast({
+                      title: "Currency Changed",
+                      description: `Currency preference set to ${selectedCurrency}`,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a2540]/95 border border-[#FF7A5C]/30">
+                    <SelectItem value="USD" className="text-white">
+                      USD (United States Dollar)
+                    </SelectItem>
+                    <SelectItem value="PKR" className="text-white">
+                      PKR (Pakistani Rupee)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </section>
 
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
                   <Key className="h-5 w-5" />
-                  <span className="font-medium">Secrets</span>
+                  <span className="font-medium">SECRETS</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="p-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg">
+                  <div className="bg-transparent border-0 rounded-lg">
                     <div className="flex gap-3 mb-3">
                       <select
                         aria-label="Select secret"
@@ -238,10 +284,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.target.value as "recovery" | "private",
                           )
                         }
-                        className="flex-1 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-2 rounded-md border border-[hsl(var(--border))] font-mono"
+                        className="flex-1 bg-[#1a2540]/50 text-white p-2 rounded-md border border-[#FF7A5C]/30 font-mono"
                       >
-                        <option value="recovery">Recovery Phrase</option>
-                        <option value="private">Private Key</option>
+                        <option value="recovery">RECOVERY PHRASE</option>
+                        <option value="private">PRIVATE KEY</option>
                       </select>
 
                       <select
@@ -337,7 +383,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             setShowRecoveryPhrase(false);
                           }
                         }}
-                        className="bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-1 rounded-md border border-[hsl(var(--border))]"
+                        className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
                       >
                         <option value="hidden">Hidden</option>
                         <option value="show">Show</option>
@@ -354,7 +400,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             : ""
                       }
                       readOnly
-                      className="bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] font-mono text-sm resize-none min-h-[140px]"
+                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white font-mono text-sm resize-none min-h-[140px]"
                       placeholder={
                         showRecoveryPhrase || showPrivateKey ? "" : "Hidden"
                       }
@@ -370,19 +416,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </div>
               </section>
 
-              <div className="border-t border-[hsl(var(--border))]" />
-
-              <div className="border-t border-[hsl(var(--border))]" />
-
               <section>
-                <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  Account
-                </div>
+                <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
                   <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className="w-full flex items-center gap-2 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]/90"
+                    className="w-full flex items-center gap-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -394,7 +434,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     className={`w-full flex items-center gap-2 ${
                       confirmDelete
                         ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]/90"
+                        : "bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
                     }`}
                   >
                     <Trash2 className="h-4 w-4" />

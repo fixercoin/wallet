@@ -6,7 +6,10 @@
     <title>Fixorium Wallet</title>
   </head>
   <body>
+    <!-- Fallback content placed INSIDE #root so it is visible when the JS bundle is missing,
+         and removed/replaced when React mounts. -->
     <div id="root"></div>
+
     <script type="module" src="/client/polyfills.ts"></script>
     <script type="module" src="/client/App.tsx"></script>
   </body>

@@ -74,7 +74,7 @@ export default function BuyNote() {
         senderWallet: wallet.publicKey,
         senderRole: "buyer",
         type: "buyer_paid",
-        text: `Payment sent: ${order.amountPKR} PKR for ~${estimatedTokens.toFixed(6)} ${order.token}`,
+        text: `Payment sent: ${order.amountPKR} PKR for ~${estimatedTokens.toFixed(6)} ${order.token}\n\nBuyer Wallet: ${order.buyerWallet}\nPayment Method: ${order.paymentMethod}\n\nSeller Account: ${order.seller.accountName}\nAccount Number: ${order.seller.accountNumber}`,
         metadata: {
           orderId: order.id,
           token: order.token,

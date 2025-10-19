@@ -82,6 +82,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     addCustomToken,
   } = useWallet();
   const { toast } = useToast();
+  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();

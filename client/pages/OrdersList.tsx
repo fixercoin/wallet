@@ -62,7 +62,9 @@ export default function OrdersList() {
                 {wallet?.publicKey === ADMIN_WALLET ? (
                   <button
                     onClick={() =>
-                      navigate("/express/buy-trade", { state: { order: o, openChat: true } })
+                      navigate("/express/buy-trade", {
+                        state: { order: o, openChat: true },
+                      })
                     }
                     className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-sm hover:bg-[#1a2540]/60"
                   >
@@ -70,7 +72,9 @@ export default function OrdersList() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => navigate(`/order/${encodeURIComponent(o.id)}`)}
+                    onClick={() =>
+                      navigate(`/order/${encodeURIComponent(o.id)}`)
+                    }
                     className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-sm hover:bg-[#1a2540]/60"
                   >
                     View

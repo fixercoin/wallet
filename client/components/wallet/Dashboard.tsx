@@ -23,7 +23,10 @@ import {
   Flame,
   Lock,
   Coins,
+  Bell,
 } from "lucide-react";
+import { ADMIN_WALLET } from "@/lib/p2p";
+import { getPaymentReceivedNotifications } from "@/lib/p2p-chat";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";

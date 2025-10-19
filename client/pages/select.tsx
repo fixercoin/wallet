@@ -10,13 +10,16 @@ export default function Select() {
       <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl shadow-2xl relative overflow-hidden group p-6 sm:p-8 flex flex-col items-center justify-between"
+        <div
+          className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl shadow-2xl relative overflow-hidden group p-6 sm:p-8 flex flex-col items-center justify-between"
           style={{
-            backgroundImage: "url('https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2F2b43145023ad4337a2667c4286647a78?format=webp&width=800')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}>
+            backgroundImage:
+              "url('https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2F2b43145023ad4337a2667c4286647a78?format=webp&width=800')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 rounded-2xl sm:rounded-3xl" />
 
           <div className="flex-1" />

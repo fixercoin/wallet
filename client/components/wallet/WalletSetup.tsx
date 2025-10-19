@@ -139,7 +139,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
         <div className="w-full h-full flex flex-col items-center justify-center p-4 relative z-10">
-          <div className="w-full bg-transparent overflow-hidden">
+          <div className="w-full max-w-lg md:max-w-xl lg:max-w-2xl mx-auto bg-transparent overflow-hidden">
             <div className="space-y-6">
               <div className="text-center pb-2">
                 <img
@@ -189,7 +189,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
         <div className="w-full relative z-10 p-4">
-          <div className="relative bg-transparent overflow-hidden">
+          <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl mx-auto bg-transparent overflow-hidden">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                 <div className="text-white">Importing wallet...</div>
@@ -332,7 +332,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
         <div className="w-full relative z-10 p-4">
-          <div className="relative bg-transparent overflow-hidden">
+          <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl mx-auto bg-transparent overflow-hidden">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                 <div className="text-white">Creating wallet...</div>
@@ -383,7 +383,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• ••••���••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>

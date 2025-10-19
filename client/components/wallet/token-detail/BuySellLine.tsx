@@ -34,7 +34,7 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
     let mounted = true;
     setError(null);
 
-    // For stablecoins, skip DexScreener (often missing buy/sell breakdown) and avoid error noise
+    // For stablecoins, skip remote fetch (DexScreener often lacks tx breakdown)
     if (STABLE_MINTS.has(mint)) {
       setToken(null);
       return () => {
@@ -59,6 +59,16 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
   }, [mint]);
 
   const data: Point[] = useMemo(() => {
+    const isStable = STABLE_MINTS.has(mint);
+    if (isStable) {
+      // Provide a neutral placeholder dataset for stablecoins
+      return [
+        { label: "5m", buys: 0, sells: 0 },
+        { label: "1h", buys: 0, sells: 0 },
+        { label: "6h", buys: 0, sells: 0 },
+        { label: "24h", buys: 0, sells: 0 },
+      ];
+    }
     if (!token) return [];
     const tx = token.txns;
     if (!tx) return [];
@@ -68,15 +78,14 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
       { label: "6h", buys: tx.h6.buys, sells: tx.h6.sells },
       { label: "24h", buys: tx.h24.buys, sells: tx.h24.sells },
     ];
-  }, [token]);
+  }, [token, mint]);
 
   const isStable = STABLE_MINTS.has(mint);
   return (
     <div className="w-full h-64">
       {isStable && (
         <div className="text-xs text-gray-500 mb-2">
-          Stablecoin detected — buy/sell breakdown is not provided by our data
-          sources.
+          Stablecoin detected — showing neutral activity (buy/sell data not available).
         </div>
       )}
       {error && (

@@ -8,12 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { API_BASE } from "@/lib/p2p";
-import { 
-  getPaymentReceivedNotifications, 
+import {
+  getPaymentReceivedNotifications,
   clearNotificationsForRoom,
   saveChatMessage,
   sendChatMessage,
   broadcastNotification,
+  saveNotification,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";

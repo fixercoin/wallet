@@ -103,8 +103,8 @@ export default function ExpressPostOrderDetail() {
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <button
             onClick={() => navigate("/express/post-order")}
             className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-gray-100"
@@ -117,8 +117,8 @@ export default function ExpressPostOrderDetail() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl border border-[hsl(var(--border))] shadow-sm p-6 space-y-4">
+      <div className="w-full px-4 py-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold">Order Summary</h1>
             <span
@@ -264,7 +264,7 @@ export default function ExpressPostOrderDetail() {
                 trade.
               </p>
             ) : (
-              <p>⊗ Your order is hidden. Go online to accept trade requests.</p>
+              <p>��� Your order is hidden. Go online to accept trade requests.</p>
             )}
           </div>
         </div>

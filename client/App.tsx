@@ -39,6 +39,9 @@ import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";
 import OrdersList from "./pages/OrdersList";
 import OrderDetail from "./pages/OrderDetail";
+import Select from "./pages/select";
+import BuyNow from "./pages/buy-now";
+import SellNow from "./pages/sell-now";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,9 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/select" element={<Select />} />
+      <Route path="/buy-now" element={<BuyNow />} />
+      <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/buynote" element={<BuyNote />} />
       <Route path="/sellnote" element={<SellNote />} />

@@ -124,7 +124,7 @@ export default function BuyTrade() {
       senderWallet: wallet.publicKey,
       senderRole: userRole,
       type: "buyer_notify",
-      text: "Buyer notified seller to check pending orders",
+      text: "Buyer confirmed payment and notified seller to verify",
       timestamp: Date.now(),
     };
 
@@ -132,11 +132,17 @@ export default function BuyTrade() {
     sendChatMessage(send, message);
 
     const notification: ChatNotification = {
-      type: "status_change",
+      type: "payment_received",
       roomId,
       initiatorWallet: wallet.publicKey,
-      initiatorRole: userRole,
-      message: "Seller has been notified",
+      initiatorRole: "buyer",
+      message: `Buyer has confirmed payment - ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      data: {
+        amountPKR: Number(amountPKR),
+        token,
+        estimatedTokens: estimatedTokens.toFixed(6),
+        orderId: roomId,
+      },
       timestamp: Date.now(),
     };
 
@@ -144,7 +150,7 @@ export default function BuyTrade() {
     broadcastNotification(send, notification);
 
     setChatLog((prev) => [...prev, message]);
-    toast({ title: "Seller notified" });
+    toast({ title: "Seller notified", description: "Waiting for seller to verify payment..." });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };
 

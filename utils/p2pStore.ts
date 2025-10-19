@@ -89,6 +89,7 @@ async function saveStoreToFile() {
           messages: store.messages,
           proofs: store.proofs,
           easypaisa: store.easypaisa,
+          rooms: store.rooms,
         },
         null,
         2,

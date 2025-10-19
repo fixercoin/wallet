@@ -24,7 +24,7 @@ export default function Select() {
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
         {/* Banner with image (no background color) */}
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl relative overflow-hidden p-6 sm:p-8 flex items-center justify-center">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl relative overflow-hidden p-0 flex items-center justify-center">
           <img
             src="https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2Ff98a0c38026744178f6ea91c30482956?format=webp&width=800"
             alt="Banner"
@@ -33,7 +33,7 @@ export default function Select() {
         </div>
 
         {/* Fixorium P2P brief card */}
-        <div className="mt-1 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white p-4 sm:p-5">
+        <div className="mt-0 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white p-4 sm:p-5">
           <h3 className="text-base sm:text-lg font-semibold uppercase">FIXORIUM P2P</h3>
           <p className="mt-1 text-sm sm:text-base text-white/80 uppercase">
             Buy and sell crypto directly with peers using secure escrow, fast settlement, and low fees. Choose BUY or SELL to start a trade in seconds.

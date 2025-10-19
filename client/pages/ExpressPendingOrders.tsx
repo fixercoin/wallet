@@ -251,7 +251,14 @@ export default function ExpressPendingOrders() {
           <div className="flex-1 text-center font-semibold uppercase">
             Pending Orders
           </div>
-          <div className="w-9" />
+          <div className="relative">
+            <Bell className="w-5 h-5 text-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

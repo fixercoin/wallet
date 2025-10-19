@@ -33,9 +33,9 @@ export default function Select() {
         </div>
 
         {/* Fixorium P2P brief card */}
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white p-4 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold">Fixorium P2P</h3>
-          <p className="mt-1 text-sm sm:text-base text-white/80">
+        <div className="mt-1 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white p-4 sm:p-5">
+          <h3 className="text-base sm:text-lg font-semibold uppercase">FIXORIUM P2P</h3>
+          <p className="mt-1 text-sm sm:text-base text-white/80 uppercase">
             Buy and sell crypto directly with peers using secure escrow, fast settlement, and low fees. Choose BUY or SELL to start a trade in seconds.
           </p>
         </div>

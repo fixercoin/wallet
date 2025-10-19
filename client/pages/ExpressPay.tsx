@@ -206,11 +206,18 @@ export default function ExpressPay() {
           quoteAsset: payload.token,
           paymentMethod: payload.paymentMethod || "easypaisa",
         };
-        navigate("/express/buy-trade", { state: { order: orderObj, openChat: true, initialPhase: "awaiting_seller_approval" } });
+        navigate("/express/buy-trade", {
+          state: {
+            order: orderObj,
+            openChat: true,
+            initialPhase: "awaiting_seller_approval",
+          },
+        });
         return;
       }
       if (
-        (payload?.type === "seller_transferred" || payload?.type === "seller_sent") &&
+        (payload?.type === "seller_transferred" ||
+          payload?.type === "seller_sent") &&
         (isAdmin ||
           (!!payload?.seller_wallet &&
             payload.seller_wallet === userWalletAddress))
@@ -224,7 +231,13 @@ export default function ExpressPay() {
           quoteAsset: payload.token,
           paymentMethod: "easypaisa",
         };
-        navigate("/express/buy-trade", { state: { order: orderObj, openChat: true, initialPhase: "seller_transferred" } });
+        navigate("/express/buy-trade", {
+          state: {
+            order: orderObj,
+            openChat: true,
+            initialPhase: "seller_transferred",
+          },
+        });
         return;
       }
     } catch {}
@@ -349,7 +362,9 @@ export default function ExpressPay() {
           type: "status_change",
           roomId: selectedSeller.id,
           initiatorWallet:
-            (wallet?.publicKey as string) || ((wallet as any)?.address as string) || "",
+            (wallet?.publicKey as string) ||
+            ((wallet as any)?.address as string) ||
+            "",
           initiatorRole: "buyer",
           message: `Buyer marked payment paid: PKR ${Number(spendAmount).toFixed(2)} (${selectedCurrency})`,
           data: {
@@ -447,7 +462,9 @@ export default function ExpressPay() {
           type: "status_change",
           roomId,
           initiatorWallet:
-            (wallet?.publicKey as string) || ((wallet as any)?.address as string) || "",
+            (wallet?.publicKey as string) ||
+            ((wallet as any)?.address as string) ||
+            "",
           initiatorRole: "seller",
           message: `Seller sent ${tokenAmount.toFixed(6)} ${selectedCurrency} to ${ADMIN_WALLET}`,
           data: {

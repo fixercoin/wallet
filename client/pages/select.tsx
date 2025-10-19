@@ -90,7 +90,10 @@ export default function Select() {
         };
         saveNotification(notification);
         broadcastNotification(send, notification);
-        toast({ title: "Payment marked", description: "Seller will be notified for verification" });
+        toast({
+          title: "Payment marked",
+          description: "Seller will be notified for verification",
+        });
         navigate("/express/buy-trade", {
           state: {
             order: {
@@ -138,7 +141,10 @@ export default function Select() {
         };
         saveNotification(notification);
         broadcastNotification(send, notification);
-        toast({ title: "Transfer marked sent", description: "Buyer will be notified" });
+        toast({
+          title: "Transfer marked sent",
+          description: "Buyer will be notified",
+        });
         navigate("/express/buy-trade", {
           state: {
             order: {

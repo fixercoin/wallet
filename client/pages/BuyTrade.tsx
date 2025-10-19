@@ -10,14 +10,21 @@ import { copyToClipboard, shortenAddress } from "@/lib/wallet";
 
 export default function BuyTrade() {
   const navigate = useNavigate();
-  const { state } = useLocation() as { state?: { order?: any; room?: { id: string } } };
+  const { state } = useLocation() as { state?: { order?: any; room?: { id: string; buyer_wallet?: string; seller_wallet?: string } } };
   const order = state?.order || null;
+  const room = state?.room as any;
   const openChat: boolean = !!(state && state.openChat);
   const initialPhaseFromNav: string | undefined = state?.initialPhase;
   const { toast } = useToast();
   const { wallet, balance } = useWallet();
-  const roomId = (state as any)?.room?.id || (order && order.id) || "global";
+  const roomId = room?.id || (order && order.id) || "global";
   const { events, send } = useDurableRoom(roomId, API_BASE);
+  const counterpartyWallet = useMemo(() => {
+    if (!room) return "";
+    return wallet?.publicKey === (room.seller_wallet || "")
+      ? room.buyer_wallet || ""
+      : room.seller_wallet || "";
+  }, [room, wallet?.publicKey]);
 
   type Phase =
     | "entry"
@@ -236,6 +243,28 @@ export default function BuyTrade() {
         <div className="wallet-card rounded-2xl p-6 space-y-5">
           {isSeller ? (
             <div className="space-y-4">
+              {counterpartyWallet ? (
+                <div className="p-3 rounded-xl border bg-white flex items-center justify-between">
+                  <div className="text-xs text-gray-500">Buyer wallet</div>
+                  <div className="flex items-center gap-2">
+                    <code className="font-mono text-sm">
+                      {shortenAddress(counterpartyWallet, 8)}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Copy buyer address"
+                      onClick={async () => {
+                        const ok = await copyToClipboard(counterpartyWallet);
+                        if (ok) toast({ title: "Buyer address copied" });
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
               {!hasReceived ? (
                 <Button
                   onClick={handleReceived}

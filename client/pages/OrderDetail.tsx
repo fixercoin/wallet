@@ -92,11 +92,7 @@ export default function OrderDetail() {
                 <div className="flex items-center justify-between">
                   <div className="text-xs opacity-80">Exchange Rate</div>
                   <div className="font-semibold">
-                    1 {order.token} ={" "}
-                    {order.pricePKRPerQuote < 1
-                      ? Number(order.pricePKRPerQuote).toFixed(6)
-                      : Number(order.pricePKRPerQuote).toFixed(2)}{" "}
-                    PKR
+                    1 {order.token} = {formatCurrency(Number(order.pricePKRPerQuote), { from: "PKR", minimumFractionDigits: Number(order.pricePKRPerQuote) < 1 ? 6 : 2 })}
                   </div>
                 </div>
               )}

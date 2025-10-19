@@ -117,12 +117,8 @@ export function broadcastNotification(
 export function sendChatMessage(send: any, message: ChatMessage) {
   try {
     send?.({
-      kind: "chat",
-      data: {
-        id: message.id,
-        text: JSON.stringify(message),
-        at: message.timestamp,
-      },
+      type: "chat",
+      text: JSON.stringify(message),
     });
   } catch (e) {
     console.error("Failed to send chat message", e);

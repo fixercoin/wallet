@@ -425,7 +425,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           {formatAmount(getTokenBalance(token), token.symbol)}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500">{token.name}</div>
+                      <div className="text-xs text-white">{token.name}</div>
                     </div>
                   </div>
                 </SelectItem>

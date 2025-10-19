@@ -386,7 +386,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             setShowRecoveryPhrase(false);
                           }
                         }}
-                        className="bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-1 rounded-md border border-[hsl(var(--border))]"
+                        className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
                       >
                         <option value="hidden">Hidden</option>
                         <option value="show">Show</option>

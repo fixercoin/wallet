@@ -69,6 +69,10 @@ export default function BuyTrade() {
         token,
       }),
     });
+    setChatLog((prev) => [
+      ...prev,
+      `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+    ].slice(-100));
     toast({
       title: "Trade request sent",
       description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
@@ -78,6 +82,7 @@ export default function BuyTrade() {
 
   const notifySeller = () => {
     send?.({ type: "chat", text: JSON.stringify({ type: "buyer_notify" }) });
+    setChatLog((prev) => [...prev, "Buyer notified seller"].slice(-100));
     toast({ title: "Seller notified" });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };

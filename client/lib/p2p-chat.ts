@@ -12,7 +12,7 @@ export interface ChatMessage {
 }
 
 export interface ChatNotification {
-  type: "trade_initiated" | "message" | "status_change";
+  type: "trade_initiated" | "message" | "status_change" | "payment_received";
   roomId: string;
   initiatorWallet: string;
   initiatorRole: "buyer" | "seller";
@@ -67,6 +67,18 @@ export function getUnreadNotifications(wallet: string): ChatNotification[] {
   try {
     const all = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || "[]");
     return all.filter((n: ChatNotification) => n.initiatorWallet !== wallet);
+  } catch {
+    return [];
+  }
+}
+
+// Get payment received notifications for seller
+export function getPaymentReceivedNotifications(sellerWallet: string): ChatNotification[] {
+  try {
+    const all = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || "[]");
+    return all.filter((n: ChatNotification) =>
+      n.type === "payment_received" && n.initiatorWallet !== sellerWallet
+    );
   } catch {
     return [];
   }

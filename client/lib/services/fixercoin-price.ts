@@ -1,5 +1,6 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { FIXERCOIN_TOKEN_INFO } from "./fixercoin";
+import { dexscreenerAPI } from "./dexscreener";
 
 export interface FixercoinPriceData {
   price: number;

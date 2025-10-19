@@ -1,518 +1,742 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import {
-  ArrowLeft,
-  CircleDollarSign,
-  Copy,
-  IndianRupee,
-  MessageSquareMore,
-} from "lucide-react";
-
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useWallet } from "@/contexts/WalletContext";
+import { copyToClipboard } from "@/lib/wallet";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Plus, MessageSquare, MoreVertical } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useEffect, useMemo, useState } from "react";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { listOrders } from "@/lib/p2p";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { getTokenAccounts } from "@/lib/services/solana-rpc";
 
-// Types
-type TradeSide = "buy" | "sell";
+type ExpressP2PProps = {
+  onBack: () => void;
+};
 
-interface TradeHistoryEntry {
-  id: string;
-  type:
-    | "request"
-    | "release_usdc"
-    | "system"
-    | "confirm"
-    | "timeout"
-    | "paid"
-    | "message";
-  message: string;
-  createdAt: number;
-  imageUrl?: string;
-}
-
-// Formatters
-const rateFormatter = new Intl.NumberFormat("en-PK", {
-  style: "currency",
-  currency: "PKR",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const usdcFormatter = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const usdcFormatterPrecise = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 4,
-});
-
-// Helpers
-const createId = () =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-const initialHistory: TradeHistoryEntry[] = [
-  {
-    id: createId(),
-    type: "system",
-    message: "Session started.",
-    createdAt: Date.now() - 1000 * 60 * 5,
-  },
-];
-
-const EXPRESS_WALLET_ADDRESS = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qFE1TZMHJY7S4q8YDT3k3dDdHr";
-
-const shortenAddress = (address: string) =>
-  address.length <= 10
-    ? address
-    : `${address.slice(0, 4)}...${address.slice(-4)}`;
-
-// Pricing model (internal only)
-const RATE_MIN = 272.25;
-const RATE_MAX = 285.5;
-const INTERNAL_CHARGE_PER_USDC = 2; // do not show in UI
-
-export const ExpressP2P: React.FC = () => {
+export function ExpressP2P({ onBack }: ExpressP2PProps) {
+  const { wallet, tokens = [] } = useWallet();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+  const [paymentDetails, setPaymentDetails] = useState<{
+    accountName: string;
+    accountNumber: string;
+    method: "easypaisa" | "bank_account";
+  } | null>(null);
+  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [buyTokenMint, setBuyTokenMint] = useState<string>("USDC");
+  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [sellTokenMint, setSellTokenMint] = useState<string>("USDC");
 
-  const [side, setSide] = useState<TradeSide>("buy");
-  const [buyPkAmount, setBuyPkAmount] = useState("");
-  const [sellUsdcAmount, setSellUsdcAmount] = useState("");
-  const [rate, setRate] = useState(279.25);
-  const [history, setHistory] = useState<TradeHistoryEntry[]>(initialHistory);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [waitOpen, setWaitOpen] = useState(false);
-  const [countdown, setCountdown] = useState(60);
-
-  const [expressUsdcBalance, setExpressUsdcBalance] = useState<number | null>(
+  // Pricing state
+  const [usdToPkr, setUsdToPkr] = useState<number | null>(null);
+  const [buyTokenPriceUsd, setBuyTokenPriceUsd] = useState<number | null>(null);
+  const [sellTokenPriceUsd, setSellTokenPriceUsd] = useState<number | null>(
     null,
   );
-  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
-  const [orderSummary, setOrderSummary] = useState<{
-    side: TradeSide;
-    pkrAmount: number;
-    usdcAmount: number;
-  } | null>(null);
 
-  // Chat form
-  const [chatText, setChatText] = useState("");
-  const [chatFile, setChatFile] = useState<File | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const navigate = useNavigate();
+  const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
-  const fetchExpressBalance = useCallback(async () => {
-    setIsBalanceLoading(true);
-    try {
-      const accounts = await getTokenAccounts(EXPRESS_WALLET_ADDRESS);
-      const usdcAccount = accounts.find(
-        (account) =>
-          account.mint === USDC_MINT ||
-          account.symbol?.toUpperCase() === "USDC",
-      );
-      const amount = Number(usdcAccount?.balance ?? 0);
-      setExpressUsdcBalance(Number.isFinite(amount) ? amount : 0);
-    } catch (error) {
-      console.error("Error fetching EXPRESS LIVE balance:", error);
-      setExpressUsdcBalance((prev) => (prev == null ? 0 : prev));
-    } finally {
-      setIsBalanceLoading(false);
+  const [checkingOrders, setCheckingOrders] = useState(true);
+  const [detectedOrder, setDetectedOrder] = useState<any | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersDialogOpen, setOrdersDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+
+  // Prompt dialogs
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+  const [paymentAccountName, setPaymentAccountName] = useState("");
+  const [paymentAccountNumber, setPaymentAccountNumber] = useState("");
+  const [paymentMethodChoice, setPaymentMethodChoice] = useState<
+    "easypaisa" | "bank_account"
+  >("easypaisa");
+  const [showWalletPrompt, setShowWalletPrompt] = useState(false);
+  const [walletInput, setWalletInput] = useState("");
+  const [showPendingPrompt, setShowPendingPrompt] = useState(false);
+
+  useEffect(() => {
+    if (showPaymentPrompt) {
+      setPaymentAccountName(paymentDetails?.accountName ?? "");
+      setPaymentAccountNumber(paymentDetails?.accountNumber ?? "");
+      setPaymentMethodChoice(paymentDetails?.method ?? "easypaisa");
     }
+  }, [showPaymentPrompt, paymentDetails]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+
+    async function poll() {
+      try {
+        const res = await listOrders("global");
+        if (cancelled) return;
+        const list = Array.isArray(res?.orders) ? res.orders : [];
+        setOrders(list);
+        const buy =
+          list.find(
+            (o: any) => String(o.side || o.type).toLowerCase() === "buy",
+          ) || list[0];
+        if (buy) {
+          setDetectedOrder(buy);
+          setSelectedOrder(buy);
+          setCheckingOrders(false);
+          return;
+        }
+      } catch {}
+      if (!cancelled) {
+        timer = window.setTimeout(poll, 2500);
+      }
+    }
+
+    poll();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
   }, []);
 
-  useEffect(() => {
-    fetchExpressBalance();
-    const interval = window.setInterval(() => {
-      setRate((current) => {
-        const jitter = (Math.random() - 0.5) * 0.6;
-        const next = Number((current + jitter).toFixed(2));
-        if (next < RATE_MIN) return RATE_MIN;
-        if (next > RATE_MAX) return RATE_MAX;
-        return next;
-      });
-      fetchExpressBalance();
-    }, 15000);
-    return () => window.clearInterval(interval);
-  }, [fetchExpressBalance]);
+  const handleCopyAddress = async () => {
+    if (!wallet) return;
+    const success = await copyToClipboard(wallet.publicKey);
+    toast({
+      title: success ? "Address copied" : "Copy failed",
+      description: success
+        ? "Wallet address copied to clipboard"
+        : "Please copy the address manually.",
+      variant: success ? "default" : "destructive",
+    });
+  };
 
+  const tokenOptions = useMemo(() => {
+    const set = new Set<string>(["USDC", "SOL", "FIXERCOIN"]);
+    for (const t of tokens) set.add(String(t.symbol || "").toUpperCase());
+    return Array.from(set);
+  }, [tokens]);
+
+  // Resolve symbol to known Solana mint
+  const symbolToMint = (sym: string): string | null => {
+    const s = String(sym || "").toUpperCase();
+    const known: Record<string, string> = {
+      SOL: TOKEN_MINTS.SOL,
+      USDC: TOKEN_MINTS.USDC,
+      USDT: TOKEN_MINTS.USDT,
+      FIXERCOIN: TOKEN_MINTS.FIXERCOIN,
+      LOCKER: TOKEN_MINTS.LOCKER,
+    };
+    if (known[s]) return known[s];
+    const t = tokens.find((x) => String(x.symbol || "").toUpperCase() === s);
+    return t?.mint || null;
+  };
+
+  // Load USD→PKR rate (cached)
   useEffect(() => {
-    if (!waitOpen) return;
-    setCountdown(60);
-    const id = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(id);
-          setWaitOpen(false);
-          toast({ title: "Service is not acceptable" });
-          logHistory({
-            type: "timeout",
-            message: "No confirmation within 60s.",
-          });
-          return 0;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const cached = localStorage.getItem("usd_to_pkr");
+        if (cached) {
+          const { rate, ts } = JSON.parse(cached);
+          if (
+            typeof rate === "number" &&
+            Date.now() - ts < 6 * 60 * 60 * 1000
+          ) {
+            if (!cancelled) setUsdToPkr(rate);
+          }
         }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [waitOpen, toast]);
+      } catch {}
+      try {
+        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        if (!res.ok) return;
+        const data = await res.json();
+        const rate = data?.rates?.PKR;
+        if (typeof rate === "number" && isFinite(rate) && !cancelled) {
+          setUsdToPkr(rate);
+          try {
+            localStorage.setItem(
+              "usd_to_pkr",
+              JSON.stringify({ rate, ts: Date.now() }),
+            );
+          } catch {}
+        }
+      } catch {}
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const usdcBalance = useMemo(
-    () => (expressUsdcBalance == null ? 0 : expressUsdcBalance),
-    [expressUsdcBalance],
-  );
-
-  const shortExpressWallet = useMemo(
-    () => shortenAddress(EXPRESS_WALLET_ADDRESS),
-    [],
-  );
-
-  const handleCopyAddress = useCallback(async () => {
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(EXPRESS_WALLET_ADDRESS);
-        toast({ title: "Wallet address copied" });
-      } else {
-        throw new Error("Clipboard unavailable");
-      }
-    } catch (error) {
-      console.error("Copy failed:", error);
-      toast({ title: "Unable to copy address" });
-    }
-  }, [toast]);
-
-  const buyPk = useMemo(() => {
-    const n = Number(buyPkAmount.replace(/[^0-9.]/g, ""));
-    return !Number.isFinite(n) || n <= 0 ? 0 : n;
-  }, [buyPkAmount]);
-
-  const sellUsdc = useMemo(() => {
-    const n = Number(sellUsdcAmount.replace(/[^0-9.]/g, ""));
-    return !Number.isFinite(n) || n <= 0 ? 0 : n;
-  }, [sellUsdcAmount]);
-
-  // Estimates (internal charges applied silently)
-  const buyNetUsdc = useMemo(() => {
-    if (buyPk <= 0) return 0;
-    const effectiveRate = rate + INTERNAL_CHARGE_PER_USDC; // PKR per USDC
-    return Number((buyPk / effectiveRate).toFixed(4));
-  }, [buyPk, rate]);
-
-  const sellNetPkr = useMemo(() => {
-    if (sellUsdc <= 0) return 0;
-    const effectiveRate = Math.max(0, rate - INTERNAL_CHARGE_PER_USDC);
-    return Number((sellUsdc * effectiveRate).toFixed(2));
-  }, [sellUsdc, rate]);
-
-  const logHistory = (entry: Omit<TradeHistoryEntry, "id" | "createdAt">) =>
-    setHistory((p) => [
-      ...p,
-      { id: createId(), createdAt: Date.now(), ...entry },
-    ]);
-
-  const onConfirm = () => {
-    if (side === "buy") {
-      if (buyPk <= 0) {
-        toast({ title: "Enter PKR amount" });
+  // Load token USD price for buy and sell symbols
+  useEffect(() => {
+    let cancelled = false;
+    const loadBuy = async () => {
+      const mint = symbolToMint(buyTokenMint);
+      if (!mint) {
+        setBuyTokenPriceUsd(null);
         return;
       }
-      if (buyNetUsdc > usdcBalance) {
-        toast({ title: "Insufficient USDC available" });
+      if (buyTokenMint.toUpperCase() === "USDC") {
+        setBuyTokenPriceUsd(1);
         return;
       }
-      toast({ title: "Buyer request sent" });
-      logHistory({
-        type: "confirm",
-        message: `Buy ~${usdcFormatterPrecise.format(buyNetUsdc)} USDC`,
-      });
-      setOrderSummary({
-        side,
-        pkrAmount: buyPk,
-        usdcAmount: buyNetUsdc,
-      });
-      setWaitOpen(true);
-      return;
-    }
-    if (sellUsdc <= 0) {
-      toast({ title: "Enter USDC amount" });
-      return;
-    }
-    if (sellUsdc > usdcBalance) {
-      toast({ title: "Insufficient USDC available" });
-      return;
-    }
-    toast({ title: "Waiting for buyer payment" });
-    logHistory({
-      type: "confirm",
-      message: `Sell ~${rateFormatter.format(sellNetPkr)} PKR`,
-    });
-    setOrderSummary({
-      side,
-      pkrAmount: sellNetPkr,
-      usdcAmount: sellUsdc,
-    });
-    setWaitOpen(true);
-  };
+      try {
+        const dex = await dexscreenerAPI.getTokenByMint(mint);
+        if (!cancelled)
+          setBuyTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
+      } catch {
+        if (!cancelled) setBuyTokenPriceUsd(null);
+      }
+    };
+    loadBuy();
+    return () => {
+      cancelled = true;
+    };
+  }, [buyTokenMint, tokens]);
 
-  const simulateCounterpartyConfirmed = () => {
-    setWaitOpen(false);
-    logHistory({
-      type: "release_usdc",
-      message:
-        side === "buy" ? "Seller released USDC" : "Buyer confirmed payment",
-    });
-    toast({ title: side === "buy" ? "USDC released" : "Payment confirmed" });
-  };
+  useEffect(() => {
+    let cancelled = false;
+    const loadSell = async () => {
+      const mint = symbolToMint(sellTokenMint);
+      if (!mint) {
+        setSellTokenPriceUsd(null);
+        return;
+      }
+      if (sellTokenMint.toUpperCase() === "USDC") {
+        setSellTokenPriceUsd(1);
+        return;
+      }
+      try {
+        const dex = await dexscreenerAPI.getTokenByMint(mint);
+        if (!cancelled)
+          setSellTokenPriceUsd(dex?.priceUsd ? parseFloat(dex.priceUsd) : null);
+      } catch {
+        if (!cancelled) setSellTokenPriceUsd(null);
+      }
+    };
+    loadSell();
+    return () => {
+      cancelled = true;
+    };
+  }, [sellTokenMint, tokens]);
 
-  const handleSendChat = () => {
-    if (!chatText && !chatFile) return;
-    const imageUrl = chatFile ? URL.createObjectURL(chatFile) : undefined;
-    logHistory({
-      type: "message",
-      message: chatText || (chatFile ? "Proof uploaded" : ""),
-      imageUrl,
-    });
-    setChatText("");
-    setChatFile(null);
-    if (fileRef.current) fileRef.current.value = "";
-  };
+  const buyEstimate = useMemo(() => {
+    const amt = Number(amountPKR);
+    if (!isFinite(amt) || amt <= 0) return null;
+    if (!usdToPkr || !buyTokenPriceUsd || buyTokenPriceUsd <= 0) return null;
+    const pricePKR = buyTokenPriceUsd * usdToPkr;
+    if (pricePKR <= 0) return null;
+    return amt / pricePKR;
+  }, [amountPKR, usdToPkr, buyTokenPriceUsd]);
 
-  const title = side === "buy" ? "Buy" : "Sell";
-  const estLabel =
-    side === "buy"
-      ? `Est. ${usdcFormatterPrecise.format(buyNetUsdc)} USDC`
-      : `Est. ${rateFormatter.format(sellNetPkr)}`;
+  const sellEstimatePKR = useMemo(() => {
+    const qty = Number(sellAmountTokens);
+    if (!isFinite(qty) || qty <= 0) return null;
+    if (!usdToPkr || !sellTokenPriceUsd || sellTokenPriceUsd <= 0) return null;
+    const pricePKR = sellTokenPriceUsd * usdToPkr;
+    return qty * pricePKR;
+  }, [sellAmountTokens, usdToPkr, sellTokenPriceUsd]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-4 text-[hsl(var(--foreground))]">
-      <div className="mx-auto w-full max-w-md">
-        {/* Top bar */}
-        <div className="mb-4 flex items-center justify-between">
+    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80"
-              aria-label="Back"
-              onClick={() => window.history.back()}
+              onClick={onBack}
+              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+              aria-label="Back to dashboard"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-3xl font-bold">{title}</h1>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            {wallet?.publicKey === adminAddress ? (
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full border border-[hsl(var(--border))]/70 bg-white/80"
-                aria-label="Open chat"
+                onClick={() => navigate("/")}
+                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+                aria-label="Add post"
               >
-                <MessageSquareMore className="h-5 w-5" />
+                <Plus className="h-5 w-5" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
-                Open chat
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            ) : null}
+          </div>
+
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  aria-label="Menu"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setShowPaymentPrompt(true)}>
+                  Payment method
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setShowWalletPrompt(true)}>
+                  Wallet address
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setShowPendingPrompt(true)}>
+                  Pending orders
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-
-        {/* Card */}
-        <Card className="bg-white">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                {side === "buy" ? (
-                  <CircleDollarSign className="h-7 w-7 text-blue-600" />
-                ) : (
-                  <IndianRupee className="h-7 w-7 text-blue-600" />
-                )}
-              </div>
-              <div>
-                <p className="text-base text-muted-foreground">
-                  {side === "buy" ? "Available USDC" : "Available PKR"}
-                </p>
-                <p className="text-3xl font-semibold">
-                  {side === "buy"
-                    ? usdcFormatter.format(usdcBalance)
-                    : rateFormatter.format(sellNetPkr)}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-5">
-            {/* Tabs */}
-            <Tabs value={side} onValueChange={(v) => setSide(v as TradeSide)}>
-              <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                <TabsTrigger
-                  value="buy"
-                  className="justify-start border-b-2 data-[state=active]:border-black data-[state=inactive]:border-transparent"
-                >
-                  Buy
-                </TabsTrigger>
-                <TabsTrigger
-                  value="sell"
-                  className="justify-start border-b-2 data-[state=active]:border-black data-[state=inactive]:border-transparent"
-                >
-                  Sell
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Buy */}
-              <TabsContent value="buy" className="mt-4 space-y-4">
-                <div className="relative">
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="Enter amount"
-                    value={buyPkAmount}
-                    onChange={(e) => setBuyPkAmount(e.target.value)}
-                    className="h-14 rounded-xl pr-16 text-lg"
-                  />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-lg font-semibold text-muted-foreground">
-                    PKR
-                  </span>
-                </div>
-                <p className="text-lg text-muted-foreground">{estLabel}</p>
-                <Button
-                  className="h-14 w-full rounded-2xl text-lg font-semibold"
-                  onClick={onConfirm}
-                >
-                  Confirm
-                </Button>
-              </TabsContent>
-
-              {/* Sell */}
-              <TabsContent value="sell" className="mt-4 space-y-4">
-                <div className="relative">
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="Enter amount"
-                    value={sellUsdcAmount}
-                    onChange={(e) => setSellUsdcAmount(e.target.value)}
-                    className="h-14 rounded-xl pr-20 text-lg"
-                  />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-lg font-semibold text-muted-foreground">
-                    USDC
-                  </span>
-                </div>
-                <p className="text-lg text-muted-foreground">{estLabel}</p>
-                <Button
-                  className="h-14 w-full rounded-2xl text-lg font-semibold"
-                  onClick={onConfirm}
-                >
-                  Confirm
-                </Button>
-              </TabsContent>
-            </Tabs>
-
-            <div className="pt-1 text-xs text-muted-foreground">
-              1 USDC ≈ {rateFormatter.format(rate)}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Chat (history) */}
-        <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Chat</DialogTitle>
-              <DialogDescription>
-                Send a message or upload payment proof.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-2 space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-              {history.map((h) => (
-                <div key={h.id} className="rounded-lg border p-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium capitalize">
-                      {h.type.replace("_", " ")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(h.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <div className="text-foreground break-words">{h.message}</div>
-                  {h.imageUrl && (
-                    <img
-                      src={h.imageUrl}
-                      alt="proof"
-                      className="mt-2 max-h-64 w-auto rounded-md border"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center gap-2">
-              <Input
-                value={chatText}
-                onChange={(e) => setChatText(e.target.value)}
-                placeholder="Type a message"
-                className="flex-1"
-              />
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => setChatFile(e.target.files?.[0] || null)}
-              />
-              <Button onClick={handleSendChat} className="rounded-xl">
-                Send
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Wait modal */}
-        <Dialog open={waitOpen} onOpenChange={setWaitOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Waiting for confirmation</DialogTitle>
-              <DialogDescription>Expires in {countdown}s.</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={simulateCounterpartyConfirmed}
-                className="rounded-xl"
-              >
-                Mark confirmed
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {countdown}s
-              </span>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      <div className="w-full px-4 py-8">
+        <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
+          {checkingOrders ? (
+            <>
+              <div
+                className="express-p2p-brand"
+                role="status"
+                aria-label="Scanning for express P2P orders"
+              >
+                <div className="express-p2p-badge" aria-hidden>
+                  <div className="express-p2p-official">OFFICIAL</div>
+                  <div className="express-p2p-title">FIXORIUM P2P SERVICE</div>
+                </div>
+
+                <div className="express-p2p-currencies" aria-hidden>
+                  <div className="p2p-token pkr" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg"
+                      alt="PKR"
+                    />
+                  </div>
+                  <div className="p2p-token sol" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/0QsCpPRr/logo.png"
+                      alt="SOL"
+                    />
+                  </div>
+                  <div className="p2p-token usdc" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp"
+                      alt="USDC"
+                    />
+                  </div>
+                  <div className="p2p-token fixer" aria-hidden>
+                    <img
+                      src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png"
+                      alt="FIXERCOIN"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : detectedOrder ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setOrdersDialogOpen(true)}
+                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center gap-3"
+              >
+                <MessageSquare className="h-4 w-4 text-[hsl(var(--primary))]" />
+                <span className="text-sm font-medium">Detected orders</span>
+                <span className="ml-auto inline-flex items-center justify-center rounded-full bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-0.5">
+                  {orders.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/express/buy-trade", {
+                    state: { order: detectedOrder },
+                  })
+                }
+                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-sm text-gray-500">Buy order detected</p>
+                  <p className="font-semibold">
+                    {String(
+                      detectedOrder?.quoteAsset ||
+                        detectedOrder?.token ||
+                        "Token",
+                    ).toUpperCase()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Price (PKR)</p>
+                  <p className="font-medium">
+                    {detectedOrder?.pricePKRPerQuote ?? "—"}
+                  </p>
+                </div>
+              </button>
+            </>
+          ) : null}
+
+          <div className="w-full border-t border-white/30 pt-4">
+            <div className="flex gap-2 mb-4">
+              <button
+                className={`flex-1 py-2 rounded-lg ${activeTab === "buy" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                onClick={() => setActiveTab("buy")}
+              >
+                Buy
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg ${activeTab === "sell" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                onClick={() => setActiveTab("sell")}
+              >
+                Sell
+              </button>
+            </div>
+
+            {activeTab === "buy" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    PKR Amount
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={amountPKR}
+                    onChange={(e) => setAmountPKR(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Select Token
+                  </label>
+                  <select
+                    value={buyTokenMint}
+                    onChange={(e) => setBuyTokenMint(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                  >
+                    {tokenOptions.map((sym) => (
+                      <option key={sym} value={sym}>
+                        {sym}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {buyEstimate !== null ? (
+                  <div className="p-3 rounded-lg border bg-white/90">
+                    <div className="text-xs text-gray-500">Estimate</div>
+                    <div className="font-semibold mt-1">
+                      {buyEstimate.toLocaleString(undefined, {
+                        maximumFractionDigits:
+                          buyTokenMint === "FIXERCOIN" ? 8 : 6,
+                      })}{" "}
+                      {buyTokenMint}
+                    </div>
+                  </div>
+                ) : null}
+                <Button
+                  className="w-full wallet-button-primary"
+                  onClick={() => {
+                    if (selectedOrder) {
+                      navigate("/express/buy-trade", {
+                        state: { order: selectedOrder },
+                      });
+                    } else {
+                      setOrdersDialogOpen(true);
+                    }
+                  }}
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
+
+            {activeTab === "sell" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Token
+                  </label>
+                  <select
+                    value={sellTokenMint}
+                    onChange={(e) => setSellTokenMint(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                  >
+                    {tokenOptions.map((sym) => (
+                      <option key={sym} value={sym}>
+                        {sym}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Amount (tokens)
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={sellAmountTokens}
+                    onChange={(e) => setSellAmountTokens(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+                {sellEstimatePKR !== null ? (
+                  <div className="p-3 rounded-lg border bg-white/90">
+                    <div className="text-xs text-gray-500">Estimate</div>
+                    <div className="font-semibold mt-1">
+                      PKR{" "}
+                      {sellEstimatePKR.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+                <Button
+                  className="w-full wallet-button-secondary"
+                  onClick={() => {
+                    const sell =
+                      orders.find(
+                        (o) =>
+                          String(o.side || o.type).toLowerCase() === "sell",
+                      ) || selectedOrder;
+                    if (sell) {
+                      navigate("/express/buy-trade", {
+                        state: { order: sell },
+                      });
+                    } else {
+                      setOrdersDialogOpen(true);
+                    }
+                  }}
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={ordersDialogOpen} onOpenChange={setOrdersDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Available Orders</DialogTitle>
+            <DialogDescription>Select an order to continue</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 overflow-auto space-y-2">
+            {orders.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setSelectedOrder(o)}
+                className={
+                  "w-full text-left rounded-lg border border-white/50 p-3 bg-white/80 " +
+                  (selectedOrder?.id === o.id
+                    ? "ring-2 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]"
+                    : "hover:bg-white/90")
+                }
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">
+                      {String(
+                        o?.quoteAsset || o?.token || "Token",
+                      ).toUpperCase()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {String(o?.side || o?.type || "").toUpperCase()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Price (PKR)</p>
+                    <p className="font-medium">{o?.pricePKRPerQuote ?? "—"}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+            {orders.length === 0 ? (
+              <p className="text-sm text-gray-500">No orders available.</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              className="w-full"
+              onClick={() => {
+                const o = selectedOrder || orders[0];
+                if (o) {
+                  setOrdersDialogOpen(false);
+                  navigate("/express/buy-trade", { state: { order: o } });
+                }
+              }}
+              disabled={!selectedOrder && orders.length === 0}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPaymentPrompt} onOpenChange={setShowPaymentPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add payment method</DialogTitle>
+            <DialogDescription>
+              Enter your preferred payment method.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="payment-account-name">Account name</Label>
+              <Input
+                id="payment-account-name"
+                placeholder="Account holder name"
+                value={paymentAccountName}
+                onChange={(e) => setPaymentAccountName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-account-number">Account number</Label>
+              <Input
+                id="payment-account-number"
+                placeholder="e.g. 03001234567"
+                value={paymentAccountNumber}
+                inputMode="numeric"
+                onChange={(e) => setPaymentAccountNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Payment method</Label>
+              <Select
+                value={paymentMethodChoice}
+                onValueChange={(value: "easypaisa" | "bank_account") =>
+                  setPaymentMethodChoice(value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easypaisa">Easypaisa</SelectItem>
+                  <SelectItem value="bank_account">Bank account</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                const trimmedName = paymentAccountName.trim();
+                const trimmedNumber = paymentAccountNumber.trim();
+                if (!trimmedName || !trimmedNumber) {
+                  return;
+                }
+                const details = {
+                  accountName: trimmedName,
+                  accountNumber: trimmedNumber,
+                  method: paymentMethodChoice,
+                } as const;
+                setPaymentDetails(details);
+                setShowPaymentPrompt(false);
+                toast({
+                  title: "Saved",
+                  description: `${
+                    paymentMethodChoice === "easypaisa"
+                      ? "Easypaisa"
+                      : "Bank account"
+                  } • ${trimmedName} (${trimmedNumber})`,
+                });
+              }}
+              disabled={
+                !paymentAccountName.trim() || !paymentAccountNumber.trim()
+              }
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWalletPrompt} onOpenChange={setShowWalletPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add wallet address</DialogTitle>
+            <DialogDescription>
+              Paste the wallet address to use for transfers.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Wallet address"
+            value={walletInput}
+            onChange={(e) => setWalletInput(e.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowWalletPrompt(false);
+                if (walletInput.trim())
+                  toast({
+                    title: "Saved",
+                    description: "Wallet address added",
+                  });
+              }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPendingPrompt} onOpenChange={setShowPendingPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check pending orders</DialogTitle>
+            <DialogDescription>
+              Click continue to view your pending orders.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowPendingPrompt(false);
+                setOrdersDialogOpen(true);
+              }}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
+}
+
+export default ExpressP2P;

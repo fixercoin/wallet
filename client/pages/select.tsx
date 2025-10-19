@@ -11,8 +11,8 @@ export default function Select() {
       <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Back button at top-left */}
-      <div className="absolute top-4 left-4 z-30">
+      {/* Back button and Pending Orders at top-left */}
+      <div className="absolute top-4 left-4 z-30 flex items-center gap-4">
         <button
           onClick={() => navigate("/")}
           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
@@ -20,19 +20,19 @@ export default function Select() {
         >
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
-      </div>
-
-      {/* Pending Orders and Appeal at top-right */}
-      <div className="absolute top-4 right-4 z-30 flex flex-col items-end gap-1">
         <button
           onClick={() => navigate("/express/pending-orders")}
           className="text-sm font-medium text-white hover:text-blue-300 transition-colors cursor-pointer"
         >
           📋 PENDING ORDERS
         </button>
+      </div>
+
+      {/* Appeal at top-right */}
+      <div className="absolute top-4 right-4 z-30">
         <a
           href="mailto:info@fixorium.com.pk"
-          className="text-xs text-white/70 hover:text-blue-300 transition-colors underline"
+          className="text-sm text-white/70 hover:text-blue-300 transition-colors underline"
         >
           APPEAL
         </a>

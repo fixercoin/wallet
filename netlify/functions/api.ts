@@ -10,6 +10,10 @@ import {
   uploadProof,
   addEasypaisaPayment,
   listEasypaisaPayments,
+  listTradeRooms,
+  getTradeRoom,
+  createTradeRoom,
+  updateTradeRoom,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [

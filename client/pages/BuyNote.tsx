@@ -46,6 +46,7 @@ export default function BuyNote() {
 
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<BuyOrder | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     try {

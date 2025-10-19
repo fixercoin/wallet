@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { ArrowLeft } from "lucide-react";
 
 export default function OrderDetail() {

@@ -36,7 +36,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500">
               <Flame className="h-4 w-4 text-white" />
             </span>
-            <span className="truncate text-sm/6 opacity-90">Meme Rush</span>
+            <span className="truncate text-xs opacity-90">fixorium</span>
           </div>
           <button aria-label="Search" className="p-1.5 rounded-lg hover:bg-white/5">
             <Search className="h-4 w-4 text-white/80" />

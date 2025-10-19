@@ -231,8 +231,8 @@ export default function ExpressAddPost() {
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => navigate("/express")}
             className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-gray-100"
@@ -244,7 +244,7 @@ export default function ExpressAddPost() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <div className="w-full px-4 py-6 space-y-4">
         <div>
           <div className="mb-1 text-xs font-medium text-muted-foreground">
             Offer Type

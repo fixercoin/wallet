@@ -35,6 +35,7 @@ export default function BuyTrade() {
     paymentMethod?: string;
   } | null>(null);
   const [failMsg, setFailMsg] = useState<string>("");
+  const [chatLog, setChatLog] = useState<string[]>([]);
 
   const [amountPKR, setAmountPKR] = useState<number | "">("");
   const [token, setToken] = useState<string>(
@@ -68,6 +69,12 @@ export default function BuyTrade() {
         token,
       }),
     });
+    setChatLog((prev) =>
+      [
+        ...prev,
+        `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      ].slice(-100),
+    );
     toast({
       title: "Trade request sent",
       description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
@@ -77,6 +84,7 @@ export default function BuyTrade() {
 
   const notifySeller = () => {
     send?.({ type: "chat", text: JSON.stringify({ type: "buyer_notify" }) });
+    setChatLog((prev) => [...prev, "Buyer notified seller"].slice(-100));
     toast({ title: "Seller notified" });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };
@@ -89,6 +97,7 @@ export default function BuyTrade() {
         setPhase(initialPhaseFromNav as Phase);
       }
       setUnread(true);
+      setChatLog([]);
     }
 
     const last = events[events.length - 1];
@@ -104,6 +113,9 @@ export default function BuyTrade() {
 
     setUnread(true);
 
+    const append = (msg: string) =>
+      setChatLog((prev) => [...prev, msg].slice(-100));
+
     if (payload.type === "seller_approved") {
       setSellerInfo({
         accountName: String(payload.accountName || ""),
@@ -118,12 +130,14 @@ export default function BuyTrade() {
         description: "Payment details received",
       });
     } else if (payload.type === "seller_verified") {
+      append("Seller verified buyer's payment.");
       setPhase("seller_verified");
       toast({
         title: "Seller verified payment",
         description: "Proceed to transfer",
       });
     } else if (payload.type === "seller_transferred") {
+      append("Seller marked transfer as completed.");
       setPhase("seller_transferred");
       toast({
         title: "Transfer complete",
@@ -149,6 +163,7 @@ export default function BuyTrade() {
       } catch {}
       setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
     } else if (payload.type === "order_failed") {
+      append(`Order failed: ${String(payload.reason || "Unknown reason")}`);
       setFailMsg(String(payload.reason || "Order could not complete"));
       setPhase("failed");
     }
@@ -189,38 +204,54 @@ export default function BuyTrade() {
     });
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
+    <div
+      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white"
+      style={{ fontSize: "10px" }}
+    >
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
+          <button
             onClick={() => navigate("/", { state: { goP2P: true } })}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
             aria-label="Back to Express P2P"
           >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+            <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
+          </button>
 
-          <div className="flex-1 text-center font-medium">Buy Trade</div>
+          <div className="flex-1 text-center font-semibold uppercase">
+            Buy Trade
+          </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={clearUnread}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] relative"
-            aria-label="Incoming messages from seller"
+            className="relative h-9 w-9 rounded-lg hover:bg-[#1a2540]/50"
+            aria-label="Incoming messages"
           >
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5 text-white" />
             {unread && (
               <span className="absolute -top-0.5 -right-0.5 inline-block w-2.5 h-2.5 bg-red-500 rounded-full" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="wallet-card rounded-2xl p-6 space-y-5">
+        <div className="rounded-2xl p-6 space-y-5 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
+          {/* Chat window */}
+          <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30 max-h-48 overflow-auto custom-scrollbar">
+            {chatLog.length === 0 ? (
+              <div className="text-xs text-white/60">No messages yet</div>
+            ) : (
+              <ul className="space-y-1">
+                {chatLog.map((m, i) => (
+                  <li key={i} className="text-xs text-white/90">
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {phase === "entry" && (
             <>
               <div>

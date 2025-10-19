@@ -10,13 +10,14 @@ import { copyToClipboard, shortenAddress } from "@/lib/wallet";
 
 export default function BuyTrade() {
   const navigate = useNavigate();
-  const { state } = useLocation() as { state?: { order?: any } };
+  const { state } = useLocation() as { state?: { order?: any; room?: { id: string } } };
   const order = state?.order || null;
   const openChat: boolean = !!(state && state.openChat);
   const initialPhaseFromNav: string | undefined = state?.initialPhase;
   const { toast } = useToast();
-  const { wallet } = useWallet();
-  const { events, send } = useDurableRoom("global", API_BASE);
+  const { wallet, balance } = useWallet();
+  const roomId = (state as any)?.room?.id || (order && order.id) || "global";
+  const { events, send } = useDurableRoom(roomId, API_BASE);
 
   type Phase =
     | "entry"
@@ -143,6 +144,36 @@ export default function BuyTrade() {
   const [sellerAccountName, setSellerAccountName] = useState("");
   const [sellerAccountNumber, setSellerAccountNumber] = useState("");
 
+  const [hasReceived, setHasReceived] = useState(false);
+  const [sendAmount, setSendAmount] = useState("");
+  const [toWallet, setToWallet] = useState("");
+  const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
+
+  const handleReceived = () => {
+    send?.({
+      type: "chat",
+      text: JSON.stringify({ type: "seller_verified", orderId: order?.id || roomId }),
+    });
+    toast({ title: "Payment received" });
+    setHasReceived(true);
+    setPhase("seller_verified");
+  };
+
+  const handleSendTransaction = () => {
+    // Here you could trigger an actual blockchain transfer if desired
+    setReadyToConfirmSend(true);
+    toast({ title: "Transaction prepared" });
+  };
+
+  const handleSentAsset = () => {
+    send?.({
+      type: "chat",
+      text: JSON.stringify({ type: "seller_transferred", orderId: order?.id || roomId }),
+    });
+    toast({ title: "Assets sent" });
+    setPhase("seller_transferred");
+  };
+
   const sellerApprove = () => {
     send?.({
       type: "chat",
@@ -203,208 +234,56 @@ export default function BuyTrade() {
 
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="wallet-card rounded-2xl p-6 space-y-5">
-          {phase === "entry" && (
-            <>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  PKR Amount
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={amountPKR}
-                  onChange={(e) =>
-                    setAmountPKR(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Select Token
-                </label>
-                <select
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="w-full border rounded-xl px-3 py-2 bg-white"
+          {isSeller ? (
+            <div className="space-y-4">
+              {!hasReceived ? (
+                <Button
+                  onClick={handleReceived}
+                  className="wallet-button-primary w-full"
                 >
-                  <option value="USDC">USDC</option>
-                  <option value="SOL">SOL</option>
-                  <option value="FIXERCOIN">FIXERCOIN</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg border bg-white">
-                  <div className="text-xs text-gray-500">Token price (PKR)</div>
-                  <div className="font-semibold mt-1">{pricePKR ?? "—"}</div>
-                </div>
-                <div className="p-3 rounded-lg border bg-white">
-                  <div className="text-xs text-gray-500">Estimated tokens</div>
-                  <div className="font-semibold mt-1">
-                    {estimatedTokens ? estimatedTokens.toFixed(6) : "0"}
+                  I have received
+                </Button>
+              ) : (
+                <>
+                  <div className="p-4 rounded-xl border bg-white">
+                    <div className="text-sm font-medium mb-2">Wallet balance</div>
+                    <div className="font-semibold">{balance.toFixed(6)} SOL</div>
                   </div>
-                </div>
-              </div>
-
-              <Button
-                className="w-full wallet-button-primary"
-                disabled={!canConfirm}
-                onClick={handleConfirm}
-              >
-                Confirm
-              </Button>
-            </>
-          )}
-
-          {phase === "awaiting_seller_approval" && (
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-gray-600">
-                Waiting for seller approval…
-              </p>
-              <Button
-                onClick={notifySeller}
-                className="wallet-button-secondary"
-              >
-                Notify seller
-              </Button>
-            </div>
-          )}
-
-          {phase === "seller_approved" && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl border bg-white">
-                <div className="text-xs text-gray-500">Order serial</div>
-                <div className="font-mono text-sm">{order?.id || "—"}</div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <div className="text-xs text-gray-500">Account name</div>
-                    <div className="font-semibold">
-                      {sellerInfo?.accountName || "—"}
-                    </div>
+                  <div className="grid gap-3">
+                    <input
+                      className="border rounded-lg px-3 py-2"
+                      placeholder="Amount"
+                      value={sendAmount}
+                      onChange={(e) => setSendAmount(e.target.value)}
+                    />
+                    <input
+                      className="border rounded-lg px-3 py-2"
+                      placeholder="To wallet"
+                      value={toWallet}
+                      onChange={(e) => setToWallet(e.target.value)}
+                    />
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Account number</div>
-                    <div className="font-semibold">
-                      {sellerInfo?.accountNumber || "—"}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 text-sm">
-                  Payment method:{" "}
-                  {sellerInfo?.paymentMethod || order?.paymentMethod || "—"}
-                </div>
-              </div>
-              <Button
-                onClick={notifySeller}
-                className="wallet-button-primary w-full"
-              >
-                Notify seller
-              </Button>
-            </div>
-          )}
-
-          {phase === "awaiting_seller_verified" && (
-            <p className="text-sm text-gray-600 text-center">
-              Waiting for seller to verify payment…
-            </p>
-          )}
-
-          {phase === "seller_verified" && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl border bg-white">
-                <div className="text-xs text-gray-500">Your wallet address</div>
-                <div className="flex items-center justify-between mt-1">
-                  <code className="font-mono text-sm">
-                    {wallet ? shortenAddress(wallet.publicKey, 8) : "No wallet"}
-                  </code>
-                  {wallet && (
+                  {!readyToConfirmSend ? (
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Copy address"
-                      onClick={async () => {
-                        const ok = await copyToClipboard(wallet.publicKey);
-                        if (ok) toast({ title: "Address copied" });
-                      }}
+                      onClick={handleSendTransaction}
+                      className="wallet-button-primary w-full"
                     >
-                      <Copy className="h-4 w-4" />
+                      Send transaction
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleSentAsset}
+                      className="wallet-button-secondary w-full"
+                    >
+                      I have sent asset
                     </Button>
                   )}
-                </div>
-              </div>
-              <p className="text-sm text-gray-600">
-                After transfer is sent, you will receive a completion message.
-              </p>
+                </>
+              )}
             </div>
-          )}
-
-          {phase === "failed" && (
-            <div className="space-y-3">
-              <div className="p-4 rounded-xl border bg-red-50 text-red-700">
-                {failMsg}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  className="wallet-button-secondary flex-1"
-                  onClick={() => setPhase("awaiting_seller_approval")}
-                >
-                  Continue
-                </Button>
-                <Button
-                  className="wallet-button-primary flex-1"
-                  onClick={() => navigate("/", { state: { goP2P: true } })}
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {isSeller && (
-            <div className="mt-6 p-4 rounded-xl border bg-white space-y-3">
-              <div className="text-sm font-medium">Seller controls</div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  className="border rounded-lg px-3 py-2"
-                  placeholder="Account name"
-                  value={sellerAccountName}
-                  onChange={(e) => setSellerAccountName(e.target.value)}
-                />
-                <input
-                  className="border rounded-lg px-3 py-2"
-                  placeholder="Account number"
-                  value={sellerAccountNumber}
-                  onChange={(e) => setSellerAccountNumber(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={sellerApprove}
-                  className="wallet-button-secondary"
-                >
-                  Approve
-                </Button>
-                <Button
-                  onClick={sellerVerified}
-                  className="wallet-button-secondary"
-                >
-                  Verified
-                </Button>
-                <Button
-                  onClick={sellerTransferred}
-                  className="wallet-button-secondary"
-                >
-                  I have transferred
-                </Button>
-                <Button onClick={sellerFail} className="wallet-button-primary">
-                  Fail order
-                </Button>
-              </div>
+          ) : (
+            <div className="text-center text-sm text-gray-600">
+              Waiting for seller actions…
             </div>
           )}
         </div>

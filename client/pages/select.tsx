@@ -15,18 +15,12 @@ export default function Select() {
           <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-[#FF7A5C]/20 via-transparent to-transparent rounded-full blur-2xl animate-pulse group-hover:animate-none" />
           <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-[#FF5A8C]/20 via-transparent to-transparent rounded-full blur-2xl animate-pulse group-hover:animate-none" style={{ animationDelay: '1s' }} />
 
-          <div className="text-center relative z-10 flex-1 flex items-center justify-center">
-            <div>
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white/95 tracking-wide">
-                Welcome to
-              </div>
-              <div className="text-3xl sm:text-4xl md:text-5xl font-black mt-2 bg-gradient-to-r from-[#FF7A5C] via-[#FF5A8C] to-[#FF7A5C] bg-clip-text text-transparent drop-shadow-xl">
-                Fixorium
-              </div>
-              <div className="mt-3 sm:mt-4 text-sm sm:text-base text-white/80">
-                The official peer-to-peer trading platform
-              </div>
-            </div>
+          <div className="flex-1 flex items-center justify-center relative z-10 w-full">
+            <img
+              src="https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2F2b43145023ad4337a2667c4286647a78?format=webp&width=800"
+              alt="P2P Payment"
+              className="w-32 sm:w-40 md:w-48 h-auto object-contain drop-shadow-lg"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full relative z-10">

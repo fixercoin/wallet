@@ -73,11 +73,14 @@ export function getUnreadNotifications(wallet: string): ChatNotification[] {
 }
 
 // Get payment received notifications for seller
-export function getPaymentReceivedNotifications(sellerWallet: string): ChatNotification[] {
+export function getPaymentReceivedNotifications(
+  sellerWallet: string,
+): ChatNotification[] {
   try {
     const all = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || "[]");
-    return all.filter((n: ChatNotification) =>
-      n.type === "payment_received" && n.initiatorWallet !== sellerWallet
+    return all.filter(
+      (n: ChatNotification) =>
+        n.type === "payment_received" && n.initiatorWallet !== sellerWallet,
     );
   } catch {
     return [];

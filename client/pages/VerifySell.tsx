@@ -3,14 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, CheckCircle, Clock, Copy, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle,
+  Clock,
+  Copy,
+  Send,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { API_BASE } from "@/lib/p2p";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
-import { 
-  getPaymentReceivedNotifications, 
+import {
+  getPaymentReceivedNotifications,
   clearNotificationsForRoom,
   saveChatMessage,
   sendChatMessage,
@@ -30,17 +37,19 @@ export default function VerifySell() {
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [phase, setPhase] = useState<"select" | "verify" | "chat" | "completed">("select");
+  const [phase, setPhase] = useState<
+    "select" | "verify" | "chat" | "completed"
+  >("select");
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState<string>("");
   const [buyerConfirmed, setBuyerConfirmed] = useState(false);
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
 
-  const selectedOrder = orders.find(o => o.id === selectedOrderId);
+  const selectedOrder = orders.find((o) => o.id === selectedOrderId);
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
-    
+
     const notifications = getPaymentReceivedNotifications(wallet.publicKey);
     const ordersList = notifications.map((notif) => ({
       id: notif.data?.orderId || notif.roomId,
@@ -51,9 +60,9 @@ export default function VerifySell() {
       buyerWallet: notif.initiatorWallet,
       timestamp: notif.timestamp,
     }));
-    
+
     setOrders(ordersList);
-    
+
     if (ordersList.length > 0 && !selectedOrderId) {
       setSelectedOrderId(ordersList[0].id);
     }
@@ -75,8 +84,11 @@ export default function VerifySell() {
       if (msg.roomId === selectedOrder.roomId) {
         saveChatMessage(msg);
         setChatLog((prev) => [...prev, msg]);
-        
-        if (msg.type === "buyer_confirmed_receipt" && msg.senderWallet !== wallet?.publicKey) {
+
+        if (
+          msg.type === "buyer_confirmed_receipt" &&
+          msg.senderWallet !== wallet?.publicKey
+        ) {
           setBuyerConfirmed(true);
           toast({
             title: "Order Confirmed",
@@ -111,10 +123,10 @@ export default function VerifySell() {
   const handleVerified = async () => {
     if (!selectedOrder) return;
     setLoading(true);
-    
+
     try {
       setPhase("chat");
-      
+
       const message: ChatMessage = {
         id: `msg-${Date.now()}`,
         roomId: selectedOrder.roomId,
@@ -236,7 +248,9 @@ export default function VerifySell() {
             >
               <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
             </button>
-            <div className="flex-1 text-center font-semibold">Verify Payments</div>
+            <div className="flex-1 text-center font-semibold">
+              Verify Payments
+            </div>
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-10">
@@ -267,7 +281,9 @@ export default function VerifySell() {
                   className="w-full p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:border-[#FF7A5C] hover:bg-[#1a2540]/70 transition-all text-left"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-white">{order.token}</span>
+                    <span className="font-semibold text-white">
+                      {order.token}
+                    </span>
                     <span className="text-xs text-white/60">
                       {Number(order.amountTokens).toFixed(6)} {order.token}
                     </span>
@@ -303,7 +319,9 @@ export default function VerifySell() {
             >
               <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
             </button>
-            <div className="flex-1 text-center font-semibold">Verify Payment</div>
+            <div className="flex-1 text-center font-semibold">
+              Verify Payment
+            </div>
           </div>
         </div>
 
@@ -321,7 +339,9 @@ export default function VerifySell() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">From Buyer</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">{shortenAddress(selectedOrder.buyerWallet)}</span>
+                    <span className="font-mono text-xs">
+                      {shortenAddress(selectedOrder.buyerWallet)}
+                    </span>
                     <button
                       onClick={() => {
                         copyToClipboard(selectedOrder.buyerWallet);
@@ -341,7 +361,8 @@ export default function VerifySell() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Amount</span>
                   <span className="font-semibold">
-                    {Number(selectedOrder.amountTokens).toFixed(6)} {selectedOrder.token}
+                    {Number(selectedOrder.amountTokens).toFixed(6)}{" "}
+                    {selectedOrder.token}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -353,7 +374,10 @@ export default function VerifySell() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Rate</span>
                   <span className="font-semibold">
-                    {(selectedOrder.amountPKR / selectedOrder.amountTokens).toFixed(2)} PKR/{selectedOrder.token}
+                    {(
+                      selectedOrder.amountPKR / selectedOrder.amountTokens
+                    ).toFixed(2)}{" "}
+                    PKR/{selectedOrder.token}
                   </span>
                 </div>
               </div>
@@ -373,8 +397,7 @@ export default function VerifySell() {
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      I HAVE VERIFIED
+                      <CheckCircle className="w-5 h-5 mr-2" />I HAVE VERIFIED
                     </>
                   )}
                 </Button>
@@ -428,7 +451,8 @@ export default function VerifySell() {
                     {shortenAddress(selectedOrder.buyerWallet)}
                   </div>
                   <div className="text-xs text-white/60">
-                    {Number(selectedOrder.amountTokens).toFixed(6)} {selectedOrder.token}
+                    {Number(selectedOrder.amountTokens).toFixed(6)}{" "}
+                    {selectedOrder.token}
                   </div>
                 </div>
                 <button
@@ -478,7 +502,9 @@ export default function VerifySell() {
                       type="text"
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && handleSendMessage()
+                      }
                       placeholder="Type message..."
                       className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-xs focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
                     />
@@ -503,8 +529,8 @@ export default function VerifySell() {
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        I HAVE COMPLETED TRANSFER
+                        <CheckCircle className="w-4 h-4 mr-2" />I HAVE COMPLETED
+                        TRANSFER
                       </>
                     )}
                   </Button>

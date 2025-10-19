@@ -151,7 +151,10 @@ export default function BuyTrade() {
     broadcastNotification(send, notification);
 
     setChatLog((prev) => [...prev, message]);
-    toast({ title: "Seller notified", description: "Waiting for seller to verify payment..." });
+    toast({
+      title: "Seller notified",
+      description: "Waiting for seller to verify payment...",
+    });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };
 
@@ -636,7 +639,8 @@ export default function BuyTrade() {
                   ✓ Assets transferred!
                 </div>
                 <p className="text-sm text-green-800 mt-2">
-                  Seller has completed the transfer. Please confirm receipt to finalize the order.
+                  Seller has completed the transfer. Please confirm receipt to
+                  finalize the order.
                 </p>
               </div>
               <Button

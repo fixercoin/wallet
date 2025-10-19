@@ -16,7 +16,10 @@ import { Button } from "@/components/ui/button";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
-import { getUnreadNotifications, getPaymentReceivedNotifications } from "@/lib/p2p-chat";
+import {
+  getUnreadNotifications,
+  getPaymentReceivedNotifications,
+} from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 
 export default function ExpressPendingOrders() {
@@ -86,7 +89,9 @@ export default function ExpressPendingOrders() {
     loadRooms();
     const count = getUnreadNotifications(wallet.publicKey).length;
     setUnreadCount(count);
-    const verifyCount = getPaymentReceivedNotifications(wallet.publicKey).length;
+    const verifyCount = getPaymentReceivedNotifications(
+      wallet.publicKey,
+    ).length;
     setPendingVerificationCount(verifyCount);
   }, [wallet?.publicKey, filter, events]);
 
@@ -274,10 +279,12 @@ export default function ExpressPendingOrders() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm text-white">
-                {pendingVerificationCount} Payment{pendingVerificationCount !== 1 ? 's' : ''} to Verify
+                {pendingVerificationCount} Payment
+                {pendingVerificationCount !== 1 ? "s" : ""} to Verify
               </div>
               <p className="text-xs text-white/80 mt-1">
-                Buyer{pendingVerificationCount !== 1 ? 's have' : ' has'} confirmed payment. Review and verify to proceed.
+                Buyer{pendingVerificationCount !== 1 ? "s have" : " has"}{" "}
+                confirmed payment. Review and verify to proceed.
               </p>
               <button
                 onClick={() => navigate("/verify-sell")}

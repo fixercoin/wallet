@@ -42,14 +42,14 @@ export default function Select() {
               onClick={() => navigate("/buy-now")}
               className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
-              buy
+              BUY
             </Button>
 
             <Button
               onClick={() => navigate("/sell-now")}
               className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
-              sell
+              SELL
             </Button>
           </div>
         </div>

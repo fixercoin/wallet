@@ -47,7 +47,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
@@ -62,8 +62,8 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
         </div>
       </div>
 
-      <div className="w-full md:max-w-md mx-auto px-0 sm:px-4 py-6 relative z-20">
-        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl p-6 space-y-6 text-white">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        <div className="bg-transparent p-6 space-y-6 text-white">
           {/* QR Code */}
           <div className="text-center space-y-4">
             <div className="inline-block bg-white p-3 rounded-lg">
@@ -85,13 +85,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
               <Input
                 value={wallet.publicKey}
                 readOnly
-                className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
+                className="font-mono text-sm bg-[#1a2540]/50 text-white placeholder:text-gray-300"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyAddress}
-                className="shrink-0 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                className="shrink-0 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
               >
                 {copied ? (
                   <Check className="h-4 w-4" />

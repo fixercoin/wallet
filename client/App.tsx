@@ -16,7 +16,9 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
+import MobileShell from "@/components/ui/MobileShell";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -32,6 +34,11 @@ import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
 import ExpressPostView from "./pages/ExpressPostView";
 import ExpressStartTrade from "./pages/ExpressStartTrade";
 import BuyCrypto from "./pages/BuyCrypto";
+import BuyNote from "./pages/BuyNote";
+import SellNote from "./pages/SellNote";
+import VerifySell from "./pages/VerifySell";
+import OrdersList from "./pages/OrdersList";
+import OrderDetail from "./pages/OrderDetail";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +47,11 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
+      <Route path="/buynote" element={<BuyNote />} />
+      <Route path="/sellnote" element={<SellNote />} />
+      <Route path="/verify-sell" element={<VerifySell />} />
+      <Route path="/orders/:status" element={<OrdersList />} />
+      <Route path="/order/:orderId" element={<OrderDetail />} />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
@@ -68,6 +80,33 @@ function AppRoutes() {
 }
 
 function App() {
+  const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobileMatch(e.matches);
+    try {
+      mq.addEventListener("change", handler);
+    } catch (e) {
+      // Safari fallback
+      // @ts-ignore
+      mq.addListener(handler);
+    }
+    return () => {
+      try {
+        mq.removeEventListener("change", handler);
+      } catch (e) {
+        // @ts-ignore
+        mq.removeListener(handler);
+      }
+    };
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
@@ -76,9 +115,19 @@ function App() {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
+              <CurrencyProvider>
+                <BrowserRouter>
+                  {isMobileMatch ? (
+                    <MobileShell>
+                      <AppRoutes />
+                    </MobileShell>
+                  ) : (
+                    <div className="min-h-screen">
+                      <AppRoutes />
+                    </div>
+                  )}
+                </BrowserRouter>
+              </CurrencyProvider>
             </TooltipProvider>
           </ExpressP2PProvider>
         </WalletProvider>

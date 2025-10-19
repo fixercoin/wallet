@@ -1,4 +1,3 @@
-import React, { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare, Copy } from "lucide-react";
@@ -7,18 +6,29 @@ import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
+import {
+  saveChatMessage,
+  loadChatHistory,
+  saveNotification,
+  clearNotificationsForRoom,
+  parseWebSocketMessage,
+  type ChatMessage,
+  type ChatNotification,
+} from "@/lib/p2p-chat";
 
 export default function BuyTrade() {
   const navigate = useNavigate();
-  const { state } = useLocation() as { state?: { order?: any; room?: { id: string; buyer_wallet?: string; seller_wallet?: string } } };
+  const { state } = useLocation() as {
+    state?: { order?: any; room?: { id: string; buyer_wallet?: string; seller_wallet?: string } };
+  };
   const order = state?.order || null;
   const room = state?.room as any;
   const openChat: boolean = !!(state && state.openChat);
   const initialPhaseFromNav: string | undefined = state?.initialPhase;
   const { toast } = useToast();
   const { wallet, balance } = useWallet();
-  const roomId = room?.id || (order && order.id) || "global";
-  const { events, send } = useDurableRoom(roomId, API_BASE);
+  const derivedRoomId = room?.id || (order && order.id) || "global";
+  const { events, send } = useDurableRoom(derivedRoomId, API_BASE);
   const counterpartyWallet = useMemo(() => {
     if (!room) return "";
     return wallet?.publicKey === (room.seller_wallet || "")
@@ -33,6 +43,7 @@ export default function BuyTrade() {
     | "awaiting_seller_verified"
     | "seller_verified"
     | "seller_transferred"
+    | "completed"
     | "failed";
 
   const [phase, setPhase] = useState<Phase>("entry");
@@ -43,6 +54,9 @@ export default function BuyTrade() {
     paymentMethod?: string;
   } | null>(null);
   const [failMsg, setFailMsg] = useState<string>("");
+  const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
+  const [messageInput, setMessageInput] = useState<string>("");
+  const [userRole, setUserRole] = useState<"buyer" | "seller">("buyer");
 
   const [amountPKR, setAmountPKR] = useState<number | "">("");
   const [token, setToken] = useState<string>(
@@ -63,86 +77,159 @@ export default function BuyTrade() {
     return Number(amountPKR) / pricePKR;
   }, [amountPKR, pricePKR]);
 
-  const canConfirm =
-    Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
+  const canConfirm = Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
 
   const handleConfirm = () => {
-    if (!canConfirm) return;
-    send?.({
-      type: "chat",
-      text: JSON.stringify({
-        type: "buyer_confirm",
+    if (!canConfirm || !derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: userRole,
+      type: "buyer_confirm",
+      text: `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      metadata: {
         amountPKR: Number(amountPKR),
         token,
-      }),
-    });
-    toast({
-      title: "Trade request sent",
-      description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
-    });
+        estimatedTokens: estimatedTokens.toFixed(6),
+      },
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+
+    const notification: ChatNotification = {
+      type: "trade_initiated",
+      roomId: derivedRoomId,
+      initiatorWallet: wallet.publicKey,
+      initiatorRole: userRole,
+      message: `Trade initiated: ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      data: { amountPKR: Number(amountPKR), token },
+      timestamp: Date.now(),
+    };
+
+    saveNotification(notification);
+
+    setChatLog((prev) => [...prev, message]);
+    toast({ title: "Trade request sent", description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}` });
     setPhase("awaiting_seller_approval");
   };
 
   const notifySeller = () => {
-    send?.({ type: "chat", text: JSON.stringify({ type: "buyer_notify" }) });
-    toast({ title: "Seller notified" });
+    if (!derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: userRole,
+      type: "buyer_notify",
+      text: "Buyer confirmed payment and notified seller to verify",
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+
+    const notification: ChatNotification = {
+      type: "payment_received",
+      roomId: derivedRoomId,
+      initiatorWallet: wallet.publicKey,
+      initiatorRole: "buyer",
+      message: `Buyer has confirmed payment - ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      data: { amountPKR: Number(amountPKR), token, estimatedTokens: estimatedTokens.toFixed(6), orderId: derivedRoomId },
+      timestamp: Date.now(),
+    };
+
+    saveNotification(notification);
+
+    setChatLog((prev) => [...prev, message]);
+    toast({ title: "Seller notified", description: "Waiting for seller to verify payment..." });
     setPhase((p) => (p === "seller_approved" ? "awaiting_seller_verified" : p));
   };
 
+  // Initialize role, history and clear notifications
   useEffect(() => {
-    // If navigated here with openChat flag, set phase accordingly
+    if (!order?.id || !wallet) return;
+
+    const rid = order.id;
+
+    const role = order.type === "buy" ? "buyer" : "seller";
+    setUserRole(role);
+
+    const history = loadChatHistory(rid);
+    setChatLog(history);
+
+    clearNotificationsForRoom(rid);
+  }, [order?.id, wallet]);
+
+  // Listen for incoming WebSocket messages
+  useEffect(() => {
+    const last = events[events.length - 1];
+    if (!last) return;
+
+    if (last.kind === "chat") {
+      const txt = last.data?.text || "";
+      const msg = parseWebSocketMessage(txt);
+
+      if (msg && msg.roomId === derivedRoomId) {
+        saveChatMessage(msg);
+        setChatLog((prev) => {
+          const exists = prev.find((m) => m.id === msg.id);
+          return exists ? prev : [...prev, msg];
+        });
+        setUnread(true);
+
+        if (msg.type === "seller_approved") {
+          setSellerInfo({
+            accountName: String(msg.metadata?.accountName || ""),
+            accountNumber: String(msg.metadata?.accountNumber || ""),
+            paymentMethod: String(msg.metadata?.paymentMethod || ""),
+          });
+          setPhase("seller_approved");
+          toast({ title: "Seller approved", description: "Payment details received" });
+        } else if (msg.type === "seller_verified") {
+          setPhase("seller_verified");
+          toast({ title: "Seller verified payment", description: "Assets are being transferred to you" });
+        } else if (msg.type === "seller_transferred" || msg.type === "seller_completed") {
+          setPhase("seller_transferred");
+          toast({ title: "Seller completed transfer", description: "Please confirm receipt to finalize order" });
+        } else if (msg.type === "buyer_confirmed_receipt") {
+          setPhase("completed");
+          toast({ title: "Order Complete", description: "Trade finalized successfully" });
+          try {
+            const completedRaw = localStorage.getItem("orders_completed");
+            const completed = completedRaw ? JSON.parse(completedRaw) : [];
+            const orderToSave = order ? { ...order, status: "completed", completedAt: Date.now() } : null;
+            if (orderToSave) {
+              completed.unshift(orderToSave);
+              localStorage.setItem("orders_completed", JSON.stringify(completed));
+            }
+            const pendingRaw = localStorage.getItem("orders_pending");
+            const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+            const filtered = Array.isArray(pending) && order?.id ? pending.filter((o: any) => o.id !== order.id) : pending;
+            localStorage.setItem("orders_pending", JSON.stringify(filtered));
+          } catch {}
+          setTimeout(() => navigate("/", { state: { goP2P: true } }), 2000);
+        } else if (msg.type === "order_failed") {
+          setFailMsg(String(msg.metadata?.reason || "Order could not complete"));
+          setPhase("failed");
+        }
+      }
+    }
+  }, [events, derivedRoomId, wallet?.publicKey, order, navigate]);
+
+  // Auto-open chat if flagged
+  useEffect(() => {
     if (openChat) {
       if (initialPhaseFromNav && typeof initialPhaseFromNav === "string") {
-        // ensure phase is one of allowed values
         setPhase(initialPhaseFromNav as Phase);
       }
       setUnread(true);
     }
-
-    const last = events[events.length - 1];
-    if (!last || last.kind !== "chat") return;
-    const txt = last.data?.text || "";
-    let payload: any = null;
-    try {
-      payload = JSON.parse(txt);
-    } catch {
-      if (txt.startsWith("seller:")) payload = { type: txt.slice(7) };
-    }
-    if (!payload?.type) return;
-
-    setUnread(true);
-
-    if (payload.type === "seller_approved") {
-      setSellerInfo({
-        accountName: String(payload.accountName || ""),
-        accountNumber: String(payload.accountNumber || ""),
-        paymentMethod: String(
-          payload.paymentMethod || order?.paymentMethod || "",
-        ),
-      });
-      setPhase("seller_approved");
-      toast({
-        title: "Seller approved",
-        description: "Payment details received",
-      });
-    } else if (payload.type === "seller_verified") {
-      setPhase("seller_verified");
-      toast({
-        title: "Seller verified payment",
-        description: "Proceed to transfer",
-      });
-    } else if (payload.type === "seller_transferred") {
-      setPhase("seller_transferred");
-      toast({
-        title: "Transfer complete",
-        description: "Check assets in wallet",
-      });
-      setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
-    } else if (payload.type === "order_failed") {
-      setFailMsg(String(payload.reason || "Order could not complete"));
-      setPhase("failed");
-    }
-  }, [events]);
+  }, [openChat, initialPhaseFromNav]);
 
   const clearUnread = () => setUnread(false);
 
@@ -157,95 +244,179 @@ export default function BuyTrade() {
   const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
 
   const handleReceived = () => {
-    send?.({
-      type: "chat",
-      text: JSON.stringify({ type: "seller_verified", orderId: order?.id || roomId }),
-    });
+    if (!derivedRoomId || !wallet) return;
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "seller",
+      type: "seller_verified",
+      text: "Seller verified buyer's payment",
+      timestamp: Date.now(),
+    };
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
     toast({ title: "Payment received" });
     setHasReceived(true);
     setPhase("seller_verified");
   };
 
   const handleSendTransaction = () => {
-    // Here you could trigger an actual blockchain transfer if desired
     setReadyToConfirmSend(true);
     toast({ title: "Transaction prepared" });
   };
 
   const handleSentAsset = () => {
-    send?.({
-      type: "chat",
-      text: JSON.stringify({ type: "seller_transferred", orderId: order?.id || roomId }),
-    });
+    if (!derivedRoomId || !wallet) return;
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "seller",
+      type: "seller_transferred",
+      text: "Seller marked transfer as completed",
+      timestamp: Date.now(),
+    };
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
     toast({ title: "Assets sent" });
     setPhase("seller_transferred");
   };
 
   const sellerApprove = () => {
-    send?.({
-      type: "chat",
-      text: JSON.stringify({
-        type: "seller_approved",
+    if (!derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "seller",
+      type: "seller_approved",
+      text: `Seller approved. Payment details: ${sellerAccountName} - ${sellerAccountNumber}`,
+      metadata: {
         accountName: sellerAccountName,
         accountNumber: sellerAccountNumber,
         paymentMethod: order?.paymentMethod || "easypaisa",
-      }),
-    });
+      },
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+    setChatLog((prev) => [...prev, message]);
   };
-  const sellerVerified = () =>
-    send?.({ type: "chat", text: JSON.stringify({ type: "seller_verified" }) });
-  const sellerTransferred = () =>
-    send?.({
-      type: "chat",
-      text: JSON.stringify({ type: "seller_transferred" }),
-    });
-  const sellerFail = () =>
-    send?.({
-      type: "chat",
-      text: JSON.stringify({
-        type: "order_failed",
-        reason: "Seller cancelled",
-      }),
-    });
+
+  const sellerVerified = () => {
+    if (!derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "seller",
+      type: "seller_verified",
+      text: "Seller verified buyer's payment",
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+    setChatLog((prev) => [...prev, message]);
+  };
+
+  const sellerTransferred = () => {
+    if (!derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "seller",
+      type: "seller_transferred",
+      text: "Seller marked transfer as completed",
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+    setChatLog((prev) => [...prev, message]);
+  };
+
+  const sellerFail = () => {
+    if (!derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "seller",
+      type: "order_failed",
+      text: "Order failed - Seller cancelled",
+      metadata: { reason: "Seller cancelled" },
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+    setChatLog((prev) => [...prev, message]);
+  };
+
+  const buyerConfirmReceipt = () => {
+    if (!derivedRoomId || !wallet) return;
+
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: "buyer",
+      type: "buyer_confirmed_receipt",
+      text: "Buyer confirmed receipt of assets",
+      timestamp: Date.now(),
+    };
+
+    saveChatMessage(message);
+    send?.({ type: "chat", text: JSON.stringify(message) });
+    setChatLog((prev) => [...prev, message]);
+    setPhase("completed");
+  };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
+    <div
+      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white"
+      style={{ fontSize: "10px" }}
+    >
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
+          <button
             onClick={() => navigate("/", { state: { goP2P: true } })}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
             aria-label="Back to Express P2P"
           >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+            <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
+          </button>
 
-          <div className="flex-1 text-center font-medium">Buy Trade</div>
+          <div className="flex-1 text-center font-semibold uppercase">Buy Trade</div>
 
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={clearUnread}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-[hsl(var(--foreground))] relative"
-            aria-label="Incoming messages from seller"
+            className="relative h-9 w-9 rounded-lg hover:bg-[#1a2540]/50"
+            aria-label="Incoming messages"
           >
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5 text-white" />
             {unread && (
               <span className="absolute -top-0.5 -right-0.5 inline-block w-2.5 h-2.5 bg-red-500 rounded-full" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="wallet-card rounded-2xl p-6 space-y-5">
+        <div className="rounded-2xl p-6 space-y-5 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
           {isSeller ? (
             <div className="space-y-4">
               {counterpartyWallet ? (
-                <div className="p-3 rounded-xl border bg-white flex items-center justify-between">
-                  <div className="text-xs text-gray-500">Buyer wallet</div>
+                <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30 flex items-center justify-between">
+                  <div className="text-xs text-white/70">Buyer wallet</div>
                   <div className="flex items-center gap-2">
                     <code className="font-mono text-sm">
                       {shortenAddress(counterpartyWallet, 8)}
@@ -266,44 +437,35 @@ export default function BuyTrade() {
               ) : null}
 
               {!hasReceived ? (
-                <Button
-                  onClick={handleReceived}
-                  className="wallet-button-primary w-full"
-                >
+                <Button onClick={handleReceived} className="wallet-button-primary w-full">
                   I have received
                 </Button>
               ) : (
                 <>
-                  <div className="p-4 rounded-xl border bg-white">
+                  <div className="p-4 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
                     <div className="text-sm font-medium mb-2">Wallet balance</div>
                     <div className="font-semibold">{balance.toFixed(6)} SOL</div>
                   </div>
                   <div className="grid gap-3">
                     <input
-                      className="border rounded-lg px-3 py-2"
+                      className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
                       placeholder="Amount"
                       value={sendAmount}
                       onChange={(e) => setSendAmount(e.target.value)}
                     />
                     <input
-                      className="border rounded-lg px-3 py-2"
+                      className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
                       placeholder="To wallet"
                       value={toWallet}
                       onChange={(e) => setToWallet(e.target.value)}
                     />
                   </div>
                   {!readyToConfirmSend ? (
-                    <Button
-                      onClick={handleSendTransaction}
-                      className="wallet-button-primary w-full"
-                    >
+                    <Button onClick={handleSendTransaction} className="wallet-button-primary w-full">
                       Send transaction
                     </Button>
                   ) : (
-                    <Button
-                      onClick={handleSentAsset}
-                      className="wallet-button-secondary w-full"
-                    >
+                    <Button onClick={handleSentAsset} className="wallet-button-secondary w-full">
                       I have sent asset
                     </Button>
                   )}
@@ -311,9 +473,7 @@ export default function BuyTrade() {
               )}
             </div>
           ) : (
-            <div className="text-center text-sm text-gray-600">
-              Waiting for seller actions…
-            </div>
+            <div className="text-center text-sm text-white/70">Waiting for seller actions…</div>
           )}
         </div>
       </div>

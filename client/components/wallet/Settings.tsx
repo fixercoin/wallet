@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft,
   Copy,
   LogOut,
@@ -11,8 +18,10 @@ import {
   Key,
   Eye,
   EyeOff,
+  DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import bs58 from "bs58";
@@ -35,12 +44,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
+  const { currency, setCurrency } = useCurrency();
 
   if (wallets.length === 0) {
     return (
       <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-        <div className="max-w-md mx-auto pt-8">
-          <div className="bg-transparent border-0 shadow-none rounded-lg p-6">
+        <div className="w-full max-w-md mx-auto pt-8 px-4">
+          <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">
                 No accounts available. Create a wallet from the dashboard using
@@ -49,7 +59,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mt-4">
                 <Button
                   onClick={onBack}
-                  className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white"
+                  className="w-full bg-[#1a2540]/50 text-white"
                 >
                   Back to Dashboard
                 </Button>
@@ -181,7 +191,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
         <div>
           <div className="bg-transparent border-0 shadow-none rounded-lg p-6">
             <div className="px-6 pt-2">
@@ -220,6 +230,42 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     ))}
                   </select>
                 </div>
+              </section>
+
+              <section>
+                <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="font-medium">CURRENCY PREFERENCE</span>
+                </div>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => {
+                    const selectedCurrency = value as "USD" | "PKR";
+                    setCurrency(selectedCurrency);
+                    try {
+                      localStorage.setItem(
+                        "preferred_currency",
+                        selectedCurrency,
+                      );
+                    } catch {}
+                    toast({
+                      title: "Currency Changed",
+                      description: `Currency preference set to ${selectedCurrency}`,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a2540]/95 border border-[#FF7A5C]/30">
+                    <SelectItem value="USD" className="text-white">
+                      USD (United States Dollar)
+                    </SelectItem>
+                    <SelectItem value="PKR" className="text-white">
+                      PKR (Pakistani Rupee)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </section>
 
               <section>
@@ -337,7 +383,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             setShowRecoveryPhrase(false);
                           }
                         }}
-                        className="bg-[hsl(var(--input))] text-[hsl(var(--foreground))] p-1 rounded-md border border-[hsl(var(--border))]"
+                        className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
                       >
                         <option value="hidden">Hidden</option>
                         <option value="show">Show</option>

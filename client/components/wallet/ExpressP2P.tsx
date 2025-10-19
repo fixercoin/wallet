@@ -263,8 +263,8 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
   return (
     <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10 border-b border-white/60">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -320,7 +320,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="w-full px-4 py-8">
         <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
           {checkingOrders ? (
             <>

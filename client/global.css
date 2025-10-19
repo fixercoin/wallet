@@ -101,6 +101,17 @@
     @apply border-border;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 100svh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: auto;
+    background: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family:
@@ -134,7 +145,12 @@
     color: hsl(var(--foreground)) !important;
   }
 
-  /* P2P page white text override */
+  /* P2P page white text override and mobile fullscreen */
+  .express-p2p-page {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .express-p2p-page p,
   .express-p2p-page span,
   .express-p2p-page a,
@@ -156,10 +172,66 @@
     color: white !important;
   }
 
+  /* Dropdown menu text override */
+  [role="menu"] p,
+  [role="menu"] span,
+  [role="menu"] a,
+  [role="menu"] li,
+  [role="menu"] label,
+  [role="menu"] small,
+  [role="menu"] strong,
+  [role="menu"] em,
+  [role="menu"] h1,
+  [role="menu"] h2,
+  [role="menu"] h3,
+  [role="menu"] h4,
+  [role="menu"] h5,
+  [role="menu"] h6 {
+    color: white !important;
+  }
+
+  /* Select menu text override */
+  [role="listbox"] p,
+  [role="listbox"] span,
+  [role="listbox"] a,
+  [role="listbox"] li,
+  [role="listbox"] label,
+  [role="listbox"] small,
+  [role="listbox"] strong,
+  [role="listbox"] em,
+  [role="listbox"] h1,
+  [role="listbox"] h2,
+  [role="listbox"] h3,
+  [role="listbox"] h4,
+  [role="listbox"] h5,
+  [role="listbox"] h6,
+  [role="option"] p,
+  [role="option"] span,
+  [role="option"] a,
+  [role="option"] li,
+  [role="option"] label,
+  [role="option"] small,
+  [role="option"] strong,
+  [role="option"] em {
+    color: white !important;
+  }
+
   /* Remove white borders and lines from express-p2p-page */
   .express-p2p-page .border-white,
   .express-p2p-page [class*="border-white"] {
     border-color: transparent !important;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 }
 

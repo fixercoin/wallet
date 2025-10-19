@@ -23,8 +23,12 @@ import {
   Flame,
   Lock,
   Coins,
+  Bell,
 } from "lucide-react";
+import { ADMIN_WALLET } from "@/lib/p2p";
+import { getPaymentReceivedNotifications } from "@/lib/p2p-chat";
 import { useWallet } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { AddTokenDialog } from "./AddTokenDialog";
@@ -52,6 +56,7 @@ interface DashboardProps {
 }
 
 import { useNavigate } from "react-router-dom";
+import { TopBar } from "./TopBar";
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
@@ -80,6 +85,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +112,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Check for pending payment verifications if admin
+  useEffect(() => {
+    if (
+      wallet?.publicKey &&
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
+    ) {
+      const notifications = getPaymentReceivedNotifications(wallet.publicKey);
+      setPendingOrdersCount(notifications.length);
+
+      // Poll for updates every 5 seconds
+      const interval = setInterval(() => {
+        const updated = getPaymentReceivedNotifications(wallet.publicKey);
+        setPendingOrdersCount(updated.length);
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [wallet?.publicKey]);
 
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
@@ -271,10 +298,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, []);
 
-  const formatPKR = (amount: number): string => {
-    if (!amount || !isFinite(amount)) return "PKR 0.00";
-    return `PKR ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  // Currency formatting from context
+  const { formatCurrency } = useCurrency();
 
   // Get SOL token data from tokens list
   const getSolToken = () => {
@@ -377,78 +402,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
-          <div className="flex items-center gap-3 text-white font-bold tracking-wide">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2Fcb7c54ed71c4445994802d2be5063923%2F5dbc95a4895e477594adad3ce67d2790?format=webp&width=800"
-              alt="Fixorium logo"
-              className="h-8 w-8 rounded-full object-contain"
-            />
-            <span className="text-cream">FIXORIUM</span>
-          </div>
-          <div className="flex items-center gap-1 ml-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-full bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>MY-WALLET</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onAirdrop}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Gift className="h-4 w-4" />
-                  <span>C-BUILDER</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onBurn}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Flame className="h-4 w-4" />
-                  <span>SPL-BURN</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onLock}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Lock className="h-4 w-4" />
-                  <span>LOCK-SPL</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => navigate("/fixorium/token-listing")}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Coins className="h-4 w-4" />
-                  <span>LISTING</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={onSettings}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>SETTINGS</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+      <TopBar
+        onAccounts={onAccounts}
+        onAirdrop={onAirdrop}
+        onBurn={onBurn}
+        onLock={onLock}
+        onSettings={onSettings}
+      />
 
-      <div className="max-w-md mx-auto px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}
         <div className="text-center space-y-2 mb-8">
           {wallet
@@ -494,10 +456,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <>
                     <div className="text-[40px] font-bold text-white leading-tight">
-                      $
-                      {total.toLocaleString(undefined, {
+                      {formatCurrency(total, {
+                        from: "USD",
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
                       })}
                     </div>
                     {hasValidPriceChange && (
@@ -506,14 +467,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <>
                             <ArrowUpRight className="h-4 w-4 text-green-400" />
                             <span className="text-sm font-medium text-green-400">
-                              +$
-                              {Math.abs(totalChange24h).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                },
-                              )}{" "}
+                              +
+                              {formatCurrency(Math.abs(totalChange24h), {
+                                from: "USD",
+                                minimumFractionDigits: 2,
+                              })}{" "}
                               (+{change24hPercent.toFixed(2)}%)
                             </span>
                           </>
@@ -521,14 +479,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <>
                             <ArrowDownLeft className="h-4 w-4 text-red-400" />
                             <span className="text-sm font-medium text-red-400">
-                              -$
-                              {Math.abs(totalChange24h).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                },
-                              )}{" "}
+                              -
+                              {formatCurrency(Math.abs(totalChange24h), {
+                                from: "USD",
+                                minimumFractionDigits: 2,
+                              })}{" "}
                               ({change24hPercent.toFixed(2)}%)
                             </span>
                           </>
@@ -567,14 +522,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Tokens List */}
-        <div className="mb-4">
+        <div className="mb-4 flex gap-2">
           <Button
             onClick={() => navigate("/buy-crypto")}
-            className="w-full h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
-            aria-label="PAY TO BUY CRYPTO CURRENCY"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
+            aria-label="EXPRESS P2P SERVICE"
           >
-            <span className="mr-0">PAY TO BUY CRYPTO CURRENCY</span>
+            <span className="mr-0">EXPRESS P2P SERVICE</span>
           </Button>
+
+          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+            <Button
+              onClick={() => navigate("/verify-sell")}
+              className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
+              aria-label={`${pendingOrdersCount} pending orders`}
+            >
+              <span className="relative">
+                {pendingOrdersCount}
+                {pendingOrdersCount > 0 && (
+                  <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+                    !
+                  </span>
+                )}
+              </span>
+            </Button>
+          )}
         </div>
 
         <div className="space-y-3">

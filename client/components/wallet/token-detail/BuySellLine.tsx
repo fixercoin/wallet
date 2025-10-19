@@ -24,15 +24,30 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
   const [token, setToken] = useState<DexscreenerToken | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Known stablecoin mints on Solana
+  const STABLE_MINTS = new Set<string>([
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+  ]);
+
   useEffect(() => {
     let mounted = true;
     setError(null);
+
+    // For stablecoins, skip remote fetch (DexScreener often lacks tx breakdown)
+    if (STABLE_MINTS.has(mint)) {
+      setToken(null);
+      return () => {
+        mounted = false;
+      };
+    }
+
     dexscreenerAPI
       .getTokenByMint(mint)
       .then((t) => {
         if (!mounted) return;
         setToken(t);
-        if (!t) setError("No DexScreener data found for this token");
+        if (!t) setError("Trade breakdown unavailable for this token");
       })
       .catch(() => {
         if (!mounted) return;
@@ -44,6 +59,16 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
   }, [mint]);
 
   const data: Point[] = useMemo(() => {
+    const isStable = STABLE_MINTS.has(mint);
+    if (isStable) {
+      // Provide a neutral placeholder dataset for stablecoins
+      return [
+        { label: "5m", buys: 0, sells: 0 },
+        { label: "1h", buys: 0, sells: 0 },
+        { label: "6h", buys: 0, sells: 0 },
+        { label: "24h", buys: 0, sells: 0 },
+      ];
+    }
     if (!token) return [];
     const tx = token.txns;
     if (!tx) return [];
@@ -53,10 +78,17 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
       { label: "6h", buys: tx.h6.buys, sells: tx.h6.sells },
       { label: "24h", buys: tx.h24.buys, sells: tx.h24.sells },
     ];
-  }, [token]);
+  }, [token, mint]);
 
+  const isStable = STABLE_MINTS.has(mint);
   return (
     <div className="w-full h-64">
+      {isStable && (
+        <div className="text-xs text-gray-500 mb-2">
+          Stablecoin detected — showing neutral activity (buy/sell data not
+          available).
+        </div>
+      )}
       {error && (
         <div className="text-xs text-red-500 mb-2" role="alert">
           {error}

@@ -428,9 +428,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           try {
             const dexTokens =
               await dexscreenerAPI.getTokensByMints(mintsToFetch);
-            const dexMap = new Map(
-              dexTokens.map((t) => [t.baseToken.address, t]),
-            );
+            const dexMap = new Map<string, any>();
+            dexTokens.forEach((t) => {
+              const matchMint = mintsToFetch.find(
+                (m) =>
+                  m === t.baseToken?.address || m === t.quoteToken?.address,
+              );
+              if (matchMint) dexMap.set(matchMint, t);
+            });
 
             mintsToFetch.forEach((mint) => {
               const dexToken = dexMap.get(mint);
@@ -462,16 +467,54 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
-        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change
+        // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
+        try {
+          const stableSymbols = allTokens
+            .filter((t) => stableMints.includes(t.mint))
+            .map((t) => (t.symbol || "").toUpperCase());
+          const uniqSyms = Array.from(new Set(stableSymbols)).filter(Boolean);
+          if (uniqSyms.length > 0) {
+            const params = new URLSearchParams({ symbols: uniqSyms.join(",") });
+            const resp = await fetch(
+              `/api/stable-24h?${params.toString()}`,
+            ).catch(() => new Response("", { status: 0 } as any));
+            if (resp.ok) {
+              const st = await resp.json();
+              const data = st?.data || {};
+              Object.keys(data).forEach((sym) => {
+                const entry = data[sym];
+                const mint = entry?.mint as string | undefined;
+                const ch = entry?.change24h;
+                const price = entry?.priceUsd;
+                if (mint && typeof ch === "number" && isFinite(ch)) {
+                  changeMap[mint] = ch;
+                }
+                if (mint && typeof price === "number" && price > 0) {
+                  prices[mint] = price;
+                }
+              });
+            }
+          }
+        } catch {}
+
+        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
         stableMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;
           if (
             typeof changeMap[mint] !== "number" ||
             !isFinite(changeMap[mint]!)
           ) {
-            changeMap[mint] = 0; // Stablecoin: show 0% if no data
+            changeMap[mint] = 0;
           }
         });
+
+        // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
+        if (
+          typeof changeMap[lockerMint] !== "number" ||
+          !isFinite(changeMap[lockerMint]!)
+        ) {
+          changeMap[lockerMint] = 0;
+        }
 
         const solMint = "So11111111111111111111111111111111111111112";
         if (Object.keys(prices).length > 0 && prices[solMint]) {

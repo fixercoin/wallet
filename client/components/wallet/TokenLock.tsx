@@ -706,7 +706,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
@@ -723,8 +723,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
-        <div className="bg-transparent border-0 rounded-2xl p-6 space-y-5 text-white">
+      <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
+        <div className="bg-transparent rounded-2xl p-6 space-y-5 text-white">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
@@ -739,7 +739,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 bg-transparent border-[#FF7A5C]/30">
+                <SelectTrigger className="mt-1 bg-transparent">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent>
@@ -783,7 +783,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 bg-transparent border-[#FF7A5C]/30">
+                <SelectTrigger className="mt-1 bg-transparent">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent>

@@ -48,7 +48,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -62,7 +62,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
         </div>
       </div>
 
-      <div className="w-full px-0 sm:px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="bg-transparent p-6 space-y-6 text-white">
           {/* QR Code */}
           <div className="text-center space-y-4">

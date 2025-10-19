@@ -49,7 +49,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   if (wallets.length === 0) {
     return (
       <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-        <div className="w-full pt-8">
+        <div className="w-full max-w-md mx-auto pt-8 px-4">
           <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">
@@ -177,7 +177,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10 border-b border-[#FF7A5C]/20">
-        <div className="w-full px-4 py-3 flex items-center gap-3">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -191,7 +191,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         </div>
       </div>
 
-      <div className="w-full p-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
         <div>
           <div className="bg-transparent border-0 shadow-none rounded-lg p-6">
             <div className="px-6 pt-2">

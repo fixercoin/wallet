@@ -86,9 +86,11 @@ function App() {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
+              <CurrencyProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </CurrencyProvider>
             </TooltipProvider>
           </ExpressP2PProvider>
         </WalletProvider>

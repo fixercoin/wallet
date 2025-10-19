@@ -482,7 +482,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="w-full px-4 py-3 flex items-center gap-3">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -498,7 +498,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="w-full p-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
         <div className="bg-transparent p-6 rounded-2xl">
           <div className="space-y-4">
             <div>

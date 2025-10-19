@@ -98,7 +98,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
       {/* Header */}
       <div className="bg-transparent sticky top-0 z-20">
-        <div className="w-full px-4 py-3 flex items-center justify-between">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -126,7 +126,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
         </div>
       </div>
 
-      <div className="w-full px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="bg-transparent overflow-hidden">
           {/* Price Section (inside single card) */}
           <PriceCard

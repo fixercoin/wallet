@@ -707,7 +707,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="w-full px-4 py-3 flex items-center gap-3">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -723,7 +723,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="w-full px-4 py-6 space-y-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
         <div className="bg-transparent rounded-2xl p-6 space-y-5 text-white">
           <div className="flex items-center gap-2">
             <LockIcon className="h-5 w-5 text-purple-500" />

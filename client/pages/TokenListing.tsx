@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -96,7 +97,7 @@ export default function TokenListing() {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -112,7 +113,7 @@ export default function TokenListing() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="bg-transparent rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-[hsl(var(--foreground))]">

@@ -322,7 +322,7 @@ export default function BuyCrypto() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
             <div className="grid grid-cols-2 gap-2 p-1 bg-[#0f1520]/50 rounded-xl">

@@ -410,7 +410,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onSettings={onSettings}
       />
 
-      <div className="w-full px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}
         <div className="text-center space-y-2 mb-8">
           {wallet

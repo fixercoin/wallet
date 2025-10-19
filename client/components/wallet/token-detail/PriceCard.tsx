@@ -52,11 +52,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           )}
           <div>
             <h2 className="text-2xl font-bold text-white">
-              $
-              {currentPrice.toLocaleString(undefined, {
-                minimumFractionDigits: 8,
-                maximumFractionDigits: 8,
-              })}
+              {formatCurrency(currentPrice, { from: "USD", minimumFractionDigits: 8 })}
             </h2>
             <div className="flex items-center gap-2 mt-1">
               {priceChangePercent !== null ? (

@@ -219,7 +219,8 @@ export default function BuyTrade() {
           });
         } else if (
           msg.type === "seller_transferred" ||
-          msg.type === "seller_completed"
+          msg.type === "seller_completed" ||
+          msg.type === "seller_sent"
         ) {
           setPhase("seller_transferred");
           toast({

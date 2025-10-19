@@ -113,6 +113,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [refreshBalance, refreshTokens]);
 
+  // Check for pending payment verifications if admin
+  useEffect(() => {
+    if (wallet?.publicKey === ADMIN_WALLET) {
+      const notifications = getPaymentReceivedNotifications(wallet.publicKey);
+      setPendingOrdersCount(notifications.length);
+
+      // Poll for updates every 5 seconds
+      const interval = setInterval(() => {
+        const updated = getPaymentReceivedNotifications(wallet.publicKey);
+        setPendingOrdersCount(updated.length);
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [wallet?.publicKey]);
+
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
   useEffect(() => {

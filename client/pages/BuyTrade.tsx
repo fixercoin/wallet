@@ -455,7 +455,11 @@ export default function BuyTrade() {
     setPhase("completed");
   };
 
-  async function resizeImageToDataUrl(file: File, maxDim = 1024, quality = 0.8): Promise<string> {
+  async function resizeImageToDataUrl(
+    file: File,
+    maxDim = 1024,
+    quality = 0.8,
+  ): Promise<string> {
     const img = document.createElement("img");
     const fileUrl = URL.createObjectURL(file);
     try {
@@ -507,7 +511,11 @@ export default function BuyTrade() {
       setChatLog((prev) => [...prev, message]);
     } catch (e) {
       console.error("Attachment failed", e);
-      toast({ title: "Upload failed", description: "Could not attach image", variant: "destructive" });
+      toast({
+        title: "Upload failed",
+        description: "Could not attach image",
+        variant: "destructive",
+      });
     }
   }
 
@@ -693,7 +701,9 @@ export default function BuyTrade() {
                 />
                 <Button
                   type="button"
-                  onClick={() => document.getElementById("attach-input")?.click()}
+                  onClick={() =>
+                    document.getElementById("attach-input")?.click()
+                  }
                   className="wallet-button-secondary px-3"
                 >
                   <Plus className="h-4 w-4" />
@@ -852,73 +862,75 @@ export default function BuyTrade() {
                   )}
 
                   <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
-                {chatLog.length === 0 ? (
-                  <div className="text-xs text-white/60 text-center py-4">
-                    No messages yet
-                  </div>
-                ) : (
-                  chatLog.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`text-xs p-2 rounded ${
-                        msg.senderWallet === wallet?.publicKey
-                          ? "bg-[#FF7A5C]/20 text-white/90"
-                          : "bg-[#1a2540]/50 text-white/70"
-                      }`}
-                    >
-                      <div className="font-semibold text-white/80">
-                        {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                    {chatLog.length === 0 ? (
+                      <div className="text-xs text-white/60 text-center py-4">
+                        No messages yet
                       </div>
-                      <div>{msg.text}</div>
-                      {msg.metadata?.attachmentDataUrl && (
-                        <div className="mt-2">
-                          <img
-                            src={msg.metadata.attachmentDataUrl}
-                            alt="attachment"
-                            className="rounded-lg max-h-48 border border-white/20"
-                          />
+                    ) : (
+                      chatLog.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`text-xs p-2 rounded ${
+                            msg.senderWallet === wallet?.publicKey
+                              ? "bg-[#FF7A5C]/20 text-white/90"
+                              : "bg-[#1a2540]/50 text-white/70"
+                          }`}
+                        >
+                          <div className="font-semibold text-white/80">
+                            {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                          </div>
+                          <div>{msg.text}</div>
+                          {msg.metadata?.attachmentDataUrl && (
+                            <div className="mt-2">
+                              <img
+                                src={msg.metadata.attachmentDataUrl}
+                                alt="attachment"
+                                className="rounded-lg max-h-48 border border-white/20"
+                              />
+                            </div>
+                          )}
+                          <div className="text-xs text-white/50 mt-1">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </div>
                         </div>
-                      )}
-                      <div className="text-xs text-white/50 mt-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
-                  placeholder="Type a message..."
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                />
-                <input
-                  id="attach-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.currentTarget.files?.[0];
-                    if (f) handleImageAttachment(f);
-                    e.currentTarget.value = "";
-                  }}
-                />
-                <Button
-                  type="button"
-                  onClick={() => document.getElementById("attach-input")?.click()}
-                  className="wallet-button-secondary px-3"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={sendTextMessage}
-                  className="wallet-button-primary px-4"
-                  disabled={!messageInput.trim()}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                      placeholder="Type a message..."
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                    />
+                    <input
+                      id="attach-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.currentTarget.files?.[0];
+                        if (f) handleImageAttachment(f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        document.getElementById("attach-input")?.click()
+                      }
+                      className="wallet-button-secondary px-3"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={sendTextMessage}
+                      className="wallet-button-primary px-4"
+                      disabled={!messageInput.trim()}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </>
               )}
             </div>

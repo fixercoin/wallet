@@ -261,11 +261,8 @@ export const handler = async (event: any) => {
     // P2P Trade Rooms endpoints
     if (path === "/p2p/rooms" && method === "GET") {
       const wallet = event.queryStringParameters?.wallet;
-      const rooms: any[] = [];
-      if (wallet) {
-        // Filter rooms by wallet - would be implemented with persistent storage
-      }
-      return jsonResponse(200, { rooms });
+      const result = listTradeRooms(wallet);
+      return jsonResponse(200, result);
     }
 
     if (path === "/p2p/rooms" && method === "POST") {
@@ -273,23 +270,15 @@ export const handler = async (event: any) => {
       try {
         body = event.body ? JSON.parse(event.body) : {};
       } catch {}
-      const { buyer_wallet, seller_wallet, order_id } = body;
-      if (!buyer_wallet || !seller_wallet || !order_id) {
-        return jsonResponse(400, {
-          error: "Missing required fields: buyer_wallet, seller_wallet, order_id",
-        });
+      const result = createTradeRoom({
+        buyer_wallet: body?.buyer_wallet || "",
+        seller_wallet: body?.seller_wallet || "",
+        order_id: body?.order_id || "",
+      });
+      if ("error" in result) {
+        return jsonResponse(result.status, { error: result.error });
       }
-      const roomId = `room-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const room = {
-        id: roomId,
-        buyer_wallet,
-        seller_wallet,
-        order_id,
-        status: "pending",
-        created_at: Date.now(),
-        updated_at: Date.now(),
-      };
-      return jsonResponse(201, { room });
+      return jsonResponse(result.status, { room: result.room });
     }
 
     if (path.startsWith("/p2p/rooms/") && method === "GET") {
@@ -297,16 +286,10 @@ export const handler = async (event: any) => {
       if (!roomId) {
         return jsonResponse(400, { error: "Room ID required" });
       }
-      // Return a placeholder room
-      const room = {
-        id: roomId,
-        buyer_wallet: "",
-        seller_wallet: "",
-        order_id: roomId,
-        status: "pending",
-        created_at: Date.now(),
-        updated_at: Date.now(),
-      };
+      const room = getTradeRoom(roomId);
+      if (!room) {
+        return jsonResponse(404, { error: "Room not found" });
+      }
       return jsonResponse(200, { room });
     }
 
@@ -319,16 +302,11 @@ export const handler = async (event: any) => {
       if (!roomId) {
         return jsonResponse(400, { error: "Room ID required" });
       }
-      const updatedRoom = {
-        id: roomId,
-        buyer_wallet: body.buyer_wallet || "",
-        seller_wallet: body.seller_wallet || "",
-        order_id: body.order_id || roomId,
-        status: body.status || "pending",
-        created_at: body.created_at || Date.now(),
-        updated_at: Date.now(),
-      };
-      return jsonResponse(200, { room: updatedRoom });
+      const result = updateTradeRoom(roomId, body || {});
+      if ("error" in result) {
+        return jsonResponse(result.status, { error: result.error });
+      }
+      return jsonResponse(result.status, { room: result.room });
     }
 
     if (

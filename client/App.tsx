@@ -80,6 +80,7 @@ function AppRoutes() {
       <Route path="/express/post-order" element={<ExpressAddPost />} />
       <Route path="/express/post/:orderId" element={<ExpressPostView />} />
       <Route path="/express/start-trade" element={<ExpressStartTrade />} />
+      <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

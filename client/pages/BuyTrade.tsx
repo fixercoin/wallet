@@ -69,10 +69,12 @@ export default function BuyTrade() {
         token,
       }),
     });
-    setChatLog((prev) => [
-      ...prev,
-      `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
-    ].slice(-100));
+    setChatLog((prev) =>
+      [
+        ...prev,
+        `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+      ].slice(-100),
+    );
     toast({
       title: "Trade request sent",
       description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
@@ -111,7 +113,8 @@ export default function BuyTrade() {
 
     setUnread(true);
 
-    const append = (msg: string) => setChatLog((prev) => [...prev, msg].slice(-100));
+    const append = (msg: string) =>
+      setChatLog((prev) => [...prev, msg].slice(-100));
 
     if (payload.type === "seller_approved") {
       setSellerInfo({
@@ -215,7 +218,9 @@ export default function BuyTrade() {
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
 
-          <div className="flex-1 text-center font-semibold uppercase">Buy Trade</div>
+          <div className="flex-1 text-center font-semibold uppercase">
+            Buy Trade
+          </div>
 
           <button
             onClick={clearUnread}
@@ -239,7 +244,9 @@ export default function BuyTrade() {
             ) : (
               <ul className="space-y-1">
                 {chatLog.map((m, i) => (
-                  <li key={i} className="text-xs text-white/90">{m}</li>
+                  <li key={i} className="text-xs text-white/90">
+                    {m}
+                  </li>
                 ))}
               </ul>
             )}

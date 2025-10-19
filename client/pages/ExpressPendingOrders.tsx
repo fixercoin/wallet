@@ -116,7 +116,9 @@ export default function ExpressPendingOrders() {
         style={{ fontSize: "10px" }}
       >
         <div className="bg-[#1a2540]/60 border border-[#FF7A5C]/30 rounded-xl p-6 shadow max-w-sm w-full text-center">
-          <h2 className="text-base font-semibold text-white">Wallet Not Connected</h2>
+          <h2 className="text-base font-semibold text-white">
+            Wallet Not Connected
+          </h2>
           <p className="text-sm text-white/80 mt-2">
             Please connect your wallet to view your pending orders.
           </p>
@@ -145,7 +147,9 @@ export default function ExpressPendingOrders() {
           >
             <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
           </button>
-          <div className="flex-1 text-center font-semibold uppercase">Pending Orders</div>
+          <div className="flex-1 text-center font-semibold uppercase">
+            Pending Orders
+          </div>
           <div className="w-9" />
         </div>
       </div>
@@ -249,7 +253,9 @@ export default function ExpressPendingOrders() {
                   <div>
                     <div className="text-white/60 text-xs">Party</div>
                     <span className="font-semibold text-white">
-                      {wallet.publicKey === room.buyer_wallet ? "Buyer" : "Seller"}
+                      {wallet.publicKey === room.buyer_wallet
+                        ? "Buyer"
+                        : "Seller"}
                     </span>
                   </div>
                   <div>

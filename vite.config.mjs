@@ -89,9 +89,7 @@ export default {
                   }
                 } else if (msg && msg.type === "ping") {
                   try {
-                    ws.send(
-                      JSON.stringify({ kind: "pong", ts: Date.now() }),
-                    );
+                    ws.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
                   } catch {}
                 }
               });

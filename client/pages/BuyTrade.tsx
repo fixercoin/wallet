@@ -6,6 +6,7 @@ import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
+import { useState, useEffect, useMemo } from "react";
 import {
   saveChatMessage,
   loadChatHistory,

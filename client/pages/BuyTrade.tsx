@@ -36,6 +36,7 @@ export default function BuyTrade() {
   const { wallet, balance, tokens } = useWallet();
   const derivedRoomId = room?.id || (order && order.id) || "global";
   const { events, send } = useDurableRoom(derivedRoomId, API_BASE);
+  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
   const counterpartyWallet = useMemo(() => {
     if (!room) return "";
     return wallet?.publicKey === (room.seller_wallet || "")
@@ -120,6 +121,7 @@ export default function BuyTrade() {
 
     saveNotification(notification);
     broadcastNotification(send, notification);
+    broadcastNotification(sendGlobal, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({
@@ -162,6 +164,7 @@ export default function BuyTrade() {
 
     saveNotification(notification);
     broadcastNotification(send, notification);
+    broadcastNotification(sendGlobal, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({

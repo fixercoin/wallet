@@ -338,6 +338,46 @@ export const handler = async (event: any) => {
       return jsonResponse(200, listTradeMessages(tradeId));
     }
 
+    if (
+      path.startsWith("/p2p/rooms/") &&
+      path.endsWith("/messages") &&
+      method === "GET"
+    ) {
+      const roomId = path
+        .replace(/^\/p2p\/rooms\//, "")
+        .replace(/\/messages$/, "");
+      return jsonResponse(200, { messages: listTradeMessages(roomId) });
+    }
+
+    if (
+      path.startsWith("/p2p/rooms/") &&
+      path.endsWith("/messages") &&
+      method === "POST"
+    ) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const roomId = path
+        .replace(/^\/p2p\/rooms\//, "")
+        .replace(/\/messages$/, "");
+      const { sender_wallet, message, attachment_url } = body;
+      if (!sender_wallet || !message) {
+        return jsonResponse(400, {
+          error: "Missing required fields: sender_wallet, message",
+        });
+      }
+      const msg = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        room_id: roomId,
+        sender_wallet,
+        message,
+        attachment_url,
+        created_at: Date.now(),
+      };
+      return jsonResponse(201, { message: msg });
+    }
+
     if (path === "/p2p/trades/recent" && method === "GET") {
       const since = Number(event.queryStringParameters?.since || 0);
       const limit = Number(event.queryStringParameters?.limit || 100);

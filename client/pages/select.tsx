@@ -33,7 +33,7 @@ export default function Select() {
         </div>
 
         {/* Actions card under banner with only border color */}
-        <div className="mt-6 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border-2 border-[#FF5A8C] p-4 sm:p-6">
+        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white/30 p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}

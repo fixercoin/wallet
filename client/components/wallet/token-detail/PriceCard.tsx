@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface PriceCardProps {
   token: TokenInfo;

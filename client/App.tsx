@@ -42,6 +42,7 @@ import OrderDetail from "./pages/OrderDetail";
 import Select from "./pages/select";
 import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
+import AdminBroadcast from "./pages/AdminBroadcast";
 
 const queryClient = new QueryClient();
 

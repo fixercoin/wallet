@@ -23,26 +23,11 @@ export default function Select() {
       </div>
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
-        {/* Banner */}
-        <div
-          className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl shadow-2xl relative overflow-hidden group p-6 sm:p-8 flex flex-col items-center justify-between"
-          style={{
-            backgroundImage:
-              "url('https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2Ff98a0c38026744178f6ea91c30482956?format=webp&width=800')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-transparent rounded-2xl sm:rounded-3xl" />
-          {/* Spacer layers keep visual balance in banner */}
-          <div className="flex-1" />
-          <div className="flex-1" />
-          <div className="flex-1" />
-        </div>
+        {/* Banner without any background color */}
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl relative overflow-hidden p-6 sm:p-8 flex flex-col items-center justify-center" />
 
-        {/* Actions card under banner */}
-        <div className="mt-6 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl p-4 sm:p-6">
+        {/* Actions card under banner with only border color */}
+        <div className="mt-6 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border-2 border-[#FF5A8C] p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}

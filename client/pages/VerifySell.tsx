@@ -3,27 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { useWallet } from "@/contexts/WalletContext";
 import { API_BASE } from "@/lib/p2p";
+import { getPaymentReceivedNotifications, clearNotificationsForRoom } from "@/lib/p2p-chat";
 
 const STORAGE_KEY = "sell_pending_verification";
 
 export default function VerifySell() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { wallet } = useWallet();
   const { send } = useDurableRoom("global", API_BASE);
 
   const [loading, setLoading] = useState(false);
-  const [order, setOrder] = useState<any | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setOrder(JSON.parse(raw));
-    } catch {}
-  }, []);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const handleVerified = async () => {
     if (!order) return;

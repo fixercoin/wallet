@@ -49,9 +49,14 @@ export function loadChatHistory(roomId: string): ChatMessage[] {
 // Store notifications for both parties
 export function saveNotification(notification: ChatNotification) {
   try {
-    const existing = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || "[]");
+    const existing = JSON.parse(
+      localStorage.getItem(NOTIFICATIONS_KEY) || "[]",
+    );
     existing.push(notification);
-    localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(existing.slice(-50))); // Keep last 50
+    localStorage.setItem(
+      NOTIFICATIONS_KEY,
+      JSON.stringify(existing.slice(-50)),
+    ); // Keep last 50
   } catch (e) {
     console.error("Failed to save notification", e);
   }
@@ -94,10 +99,7 @@ export function broadcastNotification(
 }
 
 // Send chat message via WebSocket
-export function sendChatMessage(
-  send: any,
-  message: ChatMessage,
-) {
+export function sendChatMessage(send: any, message: ChatMessage) {
   try {
     send?.({
       kind: "chat",

@@ -242,7 +242,9 @@ export default function BuyNote() {
                 <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-80">Token</span>
-                    <span className="font-semibold text-[#FF7A5C]">{order.token}</span>
+                    <span className="font-semibold text-[#FF7A5C]">
+                      {order.token}
+                    </span>
                   </div>
                 </div>
                 <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">

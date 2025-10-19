@@ -444,12 +444,11 @@ export default function ExpressPendingOrders() {
                       ✓ Payment confirmed. Assets being transferred...
                     </div>
                   )}
-                {room.status === "completed" &&
-                  selectedRoomId !== room.id && (
-                    <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
-                      ✓ Trade completed successfully!
-                    </div>
-                  )}
+                {room.status === "completed" && selectedRoomId !== room.id && (
+                  <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
+                    ✓ Trade completed successfully!
+                  </div>
+                )}
               </div>
             ))}
           </div>

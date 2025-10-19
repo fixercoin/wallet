@@ -217,7 +217,10 @@ export default function BuyTrade() {
               : null;
             if (orderToSave) {
               completed.unshift(orderToSave);
-              localStorage.setItem("orders_completed", JSON.stringify(completed));
+              localStorage.setItem(
+                "orders_completed",
+                JSON.stringify(completed),
+              );
             }
             const pendingRaw = localStorage.getItem("orders_pending");
             const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
@@ -229,13 +232,18 @@ export default function BuyTrade() {
           } catch {}
           setTimeout(() => navigate("/", { state: { goP2P: true } }), 1200);
         } else if (msg.type === "order_failed") {
-          setFailMsg(String(msg.metadata?.reason || "Order could not complete"));
+          setFailMsg(
+            String(msg.metadata?.reason || "Order could not complete"),
+          );
           setPhase("failed");
         }
       }
     } else if (last.kind === "notification") {
       const notif = last.data as ChatNotification;
-      if (notif?.roomId === roomId && notif.initiatorWallet !== wallet?.publicKey) {
+      if (
+        notif?.roomId === roomId &&
+        notif.initiatorWallet !== wallet?.publicKey
+      ) {
         // Notification for this room from other party
         saveNotification(notif);
         toast({

@@ -288,8 +288,7 @@ export default function BuyTrade() {
     () =>
       tokens.find(
         (t) =>
-          (t.symbol || "").toUpperCase() ===
-          String(sellerToken).toUpperCase(),
+          (t.symbol || "").toUpperCase() === String(sellerToken).toUpperCase(),
       ),
     [tokens, sellerToken],
   );
@@ -523,20 +522,31 @@ export default function BuyTrade() {
               ) : (
                 <>
                   <div className="p-4 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
-                    <div className="text-sm font-medium mb-2">Select token and balance</div>
+                    <div className="text-sm font-medium mb-2">
+                      Select token and balance
+                    </div>
                     <select
                       value={sellerToken}
                       onChange={(e) => setSellerToken(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white cursor-pointer"
                     >
                       {tokens.map((t) => (
-                        <option key={t.mint} value={t.symbol} className="bg-[#1a2540] text-white">
-                          {t.symbol} — {typeof t.balance === "number" ? t.balance.toFixed(6) : 0}
+                        <option
+                          key={t.mint}
+                          value={t.symbol}
+                          className="bg-[#1a2540] text-white"
+                        >
+                          {t.symbol} —{" "}
+                          {typeof t.balance === "number"
+                            ? t.balance.toFixed(6)
+                            : 0}
                         </option>
                       ))}
                     </select>
                     <div className="mt-2 font-semibold">
-                      Wallet balance: {sellerTokenInfo?.balance?.toFixed(6) || "0.000000"} {sellerToken}
+                      Wallet balance:{" "}
+                      {sellerTokenInfo?.balance?.toFixed(6) || "0.000000"}{" "}
+                      {sellerToken}
                     </div>
                   </div>
                   <div className="grid gap-3">
@@ -573,7 +583,9 @@ export default function BuyTrade() {
 
               <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
                 {chatLog.length === 0 ? (
-                  <div className="text-xs text-white/60 text-center py-4">No messages yet</div>
+                  <div className="text-xs text-white/60 text-center py-4">
+                    No messages yet
+                  </div>
                 ) : (
                   chatLog.map((msg) => (
                     <div
@@ -689,25 +701,34 @@ export default function BuyTrade() {
                           Seller Payment Details
                         </div>
                         <div>
-                          <div className="text-xs text-white/60">Account Name</div>
+                          <div className="text-xs text-white/60">
+                            Account Name
+                          </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.accountName}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-white/60">Account Number</div>
+                          <div className="text-xs text-white/60">
+                            Account Number
+                          </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.accountNumber}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-white/60">Payment Method</div>
+                          <div className="text-xs text-white/60">
+                            Payment Method
+                          </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.paymentMethod}
                           </div>
                         </div>
                       </div>
-                      <Button onClick={notifySeller} className="wallet-button-primary w-full">
+                      <Button
+                        onClick={notifySeller}
+                        className="wallet-button-primary w-full"
+                      >
                         I've Sent Payment
                       </Button>
                     </>
@@ -726,7 +747,10 @@ export default function BuyTrade() {
                   )}
 
                   {phase === "seller_transferred" && (
-                    <Button onClick={buyerConfirmReceipt} className="wallet-button-primary w-full">
+                    <Button
+                      onClick={buyerConfirmReceipt}
+                      className="wallet-button-primary w-full"
+                    >
                       Confirm Receipt
                     </Button>
                   )}
@@ -745,7 +769,9 @@ export default function BuyTrade() {
 
                   <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
                     {chatLog.length === 0 ? (
-                      <div className="text-xs text-white/60 text-center py-4">No messages yet</div>
+                      <div className="text-xs text-white/60 text-center py-4">
+                        No messages yet
+                      </div>
                     ) : (
                       chatLog.map((msg) => (
                         <div

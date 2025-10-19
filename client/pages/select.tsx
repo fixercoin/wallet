@@ -31,7 +31,7 @@ export default function Select() {
             backgroundRepeat: "no-repeat",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 rounded-2xl sm:rounded-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-transparent rounded-2xl sm:rounded-3xl" />
 
           <div className="flex-1" />
 

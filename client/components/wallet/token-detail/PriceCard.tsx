@@ -105,11 +105,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Total Value</span>
             <span className="text-white font-medium">
-              $
-              {totalValue.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formatCurrency(totalValue, { from: "USD", minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>

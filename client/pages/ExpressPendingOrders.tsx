@@ -6,27 +6,86 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Check,
+  X,
+  Bell,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { Button } from "@/components/ui/button";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
+import { API_BASE } from "@/lib/p2p";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 
 export default function ExpressPendingOrders() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
+  const { events } = useDurableRoom("global", API_BASE);
 
   const [rooms, setRooms] = useState<TradeRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<
     "all" | "pending" | "confirmed" | "completed"
   >("all");
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [processingRoomId, setProcessingRoomId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Listen for notifications and auto-open chat
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+
+    const last = events[events.length - 1];
+    if (!last) return;
+
+    if (last.kind === "notification") {
+      const notif = last.data;
+      if (notif?.roomId && notif?.initiatorWallet !== wallet.publicKey) {
+        toast({
+          title: "New Trade Alert 🔔",
+          description: notif.message,
+        });
+
+        // Auto-open chat window for the other party
+        if (
+          notif.type === "trade_initiated" ||
+          notif.type === "status_change"
+        ) {
+          const room: TradeRoom = {
+            id: notif.roomId,
+            buyer_wallet: "",
+            seller_wallet: "",
+            order_id: notif.roomId,
+            status: "pending",
+            created_at: Date.now(),
+            updated_at: Date.now(),
+          };
+
+          navigate("/express/buy-trade", {
+            state: {
+              room,
+              order: {
+                id: notif.roomId,
+                type: "sell",
+                token: notif.data?.token || "USDC",
+              },
+              openChat: true,
+            },
+          });
+        }
+      }
+    }
+  }, [events, wallet?.publicKey, navigate, toast]);
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
     loadRooms();
-  }, [wallet?.publicKey, filter]);
+    const count = getUnreadNotifications(wallet.publicKey).length;
+    setUnreadCount(count);
+  }, [wallet?.publicKey, filter, events]);
 
   const loadRooms = async () => {
     if (!wallet?.publicKey) {
@@ -109,6 +168,48 @@ export default function ExpressPendingOrders() {
     return map[status] || status;
   };
 
+  const handleVerifyOrder = async (room: TradeRoom) => {
+    setProcessingRoomId(room.id);
+    try {
+      toast({
+        title: "Order Verified",
+        description: `Order ${room.id.slice(0, 12)}... has been verified`,
+      });
+      setSelectedRoomId(null);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      loadRooms();
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error?.message || "Could not verify order",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingRoomId(null);
+    }
+  };
+
+  const handleCancelOrder = async (room: TradeRoom) => {
+    setProcessingRoomId(room.id);
+    try {
+      toast({
+        title: "Order Cancelled",
+        description: `Order ${room.id.slice(0, 12)}... has been cancelled`,
+      });
+      setSelectedRoomId(null);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      loadRooms();
+    } catch (error: any) {
+      toast({
+        title: "Cancellation Failed",
+        description: error?.message || "Could not cancel order",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingRoomId(null);
+    }
+  };
+
   if (!wallet?.publicKey) {
     return (
       <div
@@ -150,7 +251,14 @@ export default function ExpressPendingOrders() {
           <div className="flex-1 text-center font-semibold uppercase">
             Pending Orders
           </div>
-          <div className="w-9" />
+          <div className="relative">
+            <Bell className="w-5 h-5 text-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -268,41 +376,75 @@ export default function ExpressPendingOrders() {
                     </span>
                   </div>
                   <div className="text-right">
-                    <div className="text-white/60 text-xs">Action</div>
-                    <div className="flex justify-end gap-2">
+                    <div className="text-white/60 text-xs">Details</div>
+                    <button
+                      onClick={() =>
+                        setSelectedRoomId(
+                          selectedRoomId === room.id ? null : room.id,
+                        )
+                      }
+                      className="text-[#FF7A5C] hover:text-[#FF5A8C] font-semibold text-xs"
+                    >
+                      {selectedRoomId === room.id ? "Hide" : "Show"} →
+                    </button>
+                  </div>
+                </div>
+
+                {selectedRoomId === room.id && (
+                  <div className="mt-4 pt-4 border-t border-[#FF7A5C]/20 space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={() => handleVerifyOrder(room)}
+                        disabled={processingRoomId === room.id}
+                        className="h-9 rounded-lg bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white font-semibold text-xs flex items-center justify-center gap-1 shadow transition-all"
+                      >
+                        <Check className="w-3 h-3" />
+                        Verify
+                      </Button>
+                      <Button
+                        onClick={() => handleCancelOrder(room)}
+                        disabled={processingRoomId === room.id}
+                        className="h-9 rounded-lg bg-gradient-to-r from-[#ef4444] to-[#dc2626] hover:from-[#dc2626] hover:to-[#b91c1c] text-white font-semibold text-xs flex items-center justify-center gap-1 shadow transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                        Cancel
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
                       <button
                         onClick={() =>
                           navigate("/express/buy-trade", {
                             state: { room, openChat: true },
                           })
                         }
-                        className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white text-xs font-semibold shadow hover:opacity-90"
+                        className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white text-xs font-semibold shadow hover:opacity-90 transition-all"
                       >
-                        Continue
+                        Continue Chat
                       </button>
                       <button
                         onClick={() =>
                           navigate("/express/buy-trade", { state: { room } })
                         }
-                        className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-xs hover:bg-[#1a2540]/60"
+                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-xs hover:bg-[#1a2540]/60 transition-all"
                       >
-                        View Chat →
+                        View Details
                       </button>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {room.status === "pending" && (
+                {room.status === "pending" && selectedRoomId !== room.id && (
                   <div className="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-200">
                     ⏳ Waiting for counterparty action
                   </div>
                 )}
-                {room.status === "payment_confirmed" && (
-                  <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-200">
-                    ✓ Payment confirmed. Assets being transferred...
-                  </div>
-                )}
-                {room.status === "completed" && (
+                {room.status === "payment_confirmed" &&
+                  selectedRoomId !== room.id && (
+                    <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-200">
+                      ✓ Payment confirmed. Assets being transferred...
+                    </div>
+                  )}
+                {room.status === "completed" && selectedRoomId !== room.id && (
                   <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
                     ✓ Trade completed successfully!
                   </div>

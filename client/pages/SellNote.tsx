@@ -8,6 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
+import {
+  saveChatMessage,
+  saveNotification,
+  broadcastNotification,
+  sendChatMessage,
+  type ChatMessage,
+  type ChatNotification,
+} from "@/lib/p2p-chat";
 
 interface SellOrder {
   id: string;
@@ -58,19 +66,47 @@ export default function SellNote() {
     }
     setLoading(true);
     try {
-      send?.({
-        type: "chat",
-        text: JSON.stringify({
-          type: "seller_sent",
+      const roomId = order.id;
+
+      // Create and send chat message
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        roomId,
+        senderWallet: wallet.publicKey,
+        senderRole: "seller",
+        type: "seller_sent",
+        text: `Seller sent ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}`,
+        metadata: {
           orderId: order.id,
           token: order.token,
           amountTokens: order.amountTokens,
           amountPKR: order.amountPKR,
           sellerWallet: order.sellerWallet,
           adminWallet: order.adminWallet,
-          note: "Seller marked transfer as sent. Buyer please verify.",
-        }),
-      });
+        },
+        timestamp: Date.now(),
+      };
+
+      saveChatMessage(message);
+      sendChatMessage(send, message);
+
+      // Send notification to buyer
+      const notification: ChatNotification = {
+        type: "status_change",
+        roomId,
+        initiatorWallet: wallet.publicKey,
+        initiatorRole: "seller",
+        message: `Transfer sent: ${order.amountTokens.toFixed(6)} ${order.token} to ${ADMIN_WALLET}`,
+        data: {
+          amountTokens: order.amountTokens,
+          token: order.token,
+        },
+        timestamp: Date.now(),
+      };
+
+      saveNotification(notification);
+      broadcastNotification(send, notification);
+
       try {
         localStorage.setItem(
           "sell_pending_verification",
@@ -87,6 +123,11 @@ export default function SellNote() {
           }),
         );
       } catch {}
+
+      toast({
+        title: "Transfer marked sent",
+        description: "Buyer will be notified",
+      });
 
       navigate("/express/buy-trade", {
         state: {

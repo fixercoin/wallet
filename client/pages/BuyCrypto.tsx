@@ -393,7 +393,7 @@ export default function BuyCrypto() {
                   />
                 </div>
 
-                <div className="bg-transparent p-4 rounded-lg">
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">Exchange Rate:</span>
@@ -497,7 +497,7 @@ export default function BuyCrypto() {
                   />
                 </div>
 
-                <div className="bg-transparent p-4 rounded-lg">
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">Exchange Rate:</span>

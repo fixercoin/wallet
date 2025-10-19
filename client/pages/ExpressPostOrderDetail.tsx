@@ -264,7 +264,9 @@ export default function ExpressPostOrderDetail() {
                 trade.
               </p>
             ) : (
-              <p>��� Your order is hidden. Go online to accept trade requests.</p>
+              <p>
+                ��� Your order is hidden. Go online to accept trade requests.
+              </p>
             )}
           </div>
         </div>

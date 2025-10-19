@@ -161,6 +161,7 @@ export default function BuyTrade() {
     };
 
     saveNotification(notification);
+    broadcastNotification(send, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({

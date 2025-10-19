@@ -6,9 +6,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Check,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { Button } from "@/components/ui/button";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
 import type { TradeRoom } from "@/lib/p2p-api";
 
@@ -22,6 +25,8 @@ export default function ExpressPendingOrders() {
   const [filter, setFilter] = useState<
     "all" | "pending" | "confirmed" | "completed"
   >("all");
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [processingRoomId, setProcessingRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -107,6 +112,48 @@ export default function ExpressPendingOrders() {
       cancelled: "Cancelled",
     };
     return map[status] || status;
+  };
+
+  const handleVerifyOrder = async (room: TradeRoom) => {
+    setProcessingRoomId(room.id);
+    try {
+      toast({
+        title: "Order Verified",
+        description: `Order ${room.id.slice(0, 12)}... has been verified`,
+      });
+      setSelectedRoomId(null);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      loadRooms();
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error?.message || "Could not verify order",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingRoomId(null);
+    }
+  };
+
+  const handleCancelOrder = async (room: TradeRoom) => {
+    setProcessingRoomId(room.id);
+    try {
+      toast({
+        title: "Order Cancelled",
+        description: `Order ${room.id.slice(0, 12)}... has been cancelled`,
+      });
+      setSelectedRoomId(null);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      loadRooms();
+    } catch (error: any) {
+      toast({
+        title: "Cancellation Failed",
+        description: error?.message || "Could not cancel order",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingRoomId(null);
+    }
   };
 
   if (!wallet?.publicKey) {
@@ -268,45 +315,80 @@ export default function ExpressPendingOrders() {
                     </span>
                   </div>
                   <div className="text-right">
-                    <div className="text-white/60 text-xs">Action</div>
-                    <div className="flex justify-end gap-2">
+                    <div className="text-white/60 text-xs">Details</div>
+                    <button
+                      onClick={() =>
+                        setSelectedRoomId(
+                          selectedRoomId === room.id ? null : room.id,
+                        )
+                      }
+                      className="text-[#FF7A5C] hover:text-[#FF5A8C] font-semibold text-xs"
+                    >
+                      {selectedRoomId === room.id ? "Hide" : "Show"} →
+                    </button>
+                  </div>
+                </div>
+
+                {selectedRoomId === room.id && (
+                  <div className="mt-4 pt-4 border-t border-[#FF7A5C]/20 space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={() => handleVerifyOrder(room)}
+                        disabled={processingRoomId === room.id}
+                        className="h-9 rounded-lg bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white font-semibold text-xs flex items-center justify-center gap-1 shadow transition-all"
+                      >
+                        <Check className="w-3 h-3" />
+                        Verify
+                      </Button>
+                      <Button
+                        onClick={() => handleCancelOrder(room)}
+                        disabled={processingRoomId === room.id}
+                        className="h-9 rounded-lg bg-gradient-to-r from-[#ef4444] to-[#dc2626] hover:from-[#dc2626] hover:to-[#b91c1c] text-white font-semibold text-xs flex items-center justify-center gap-1 shadow transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                        Cancel
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
                       <button
                         onClick={() =>
                           navigate("/express/buy-trade", {
                             state: { room, openChat: true },
                           })
                         }
-                        className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white text-xs font-semibold shadow hover:opacity-90"
+                        className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white text-xs font-semibold shadow hover:opacity-90 transition-all"
                       >
-                        Continue
+                        Continue Chat
                       </button>
                       <button
                         onClick={() =>
                           navigate("/express/buy-trade", { state: { room } })
                         }
-                        className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-xs hover:bg-[#1a2540]/60"
+                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/40 text-white text-xs hover:bg-[#1a2540]/60 transition-all"
                       >
-                        View Chat →
+                        View Details
                       </button>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {room.status === "pending" && (
+                {room.status === "pending" && selectedRoomId !== room.id && (
                   <div className="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-200">
                     ⏳ Waiting for counterparty action
                   </div>
                 )}
-                {room.status === "payment_confirmed" && (
-                  <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-200">
-                    ✓ Payment confirmed. Assets being transferred...
-                  </div>
-                )}
-                {room.status === "completed" && (
-                  <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
-                    ✓ Trade completed successfully!
-                  </div>
-                )}
+                {room.status === "payment_confirmed" &&
+                  selectedRoomId !== room.id && (
+                    <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-200">
+                      ✓ Payment confirmed. Assets being transferred...
+                    </div>
+                  )}
+                {room.status === "completed" &&
+                  selectedRoomId !== room.id && (
+                    <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
+                      ✓ Trade completed successfully!
+                    </div>
+                  )}
               </div>
             ))}
           </div>

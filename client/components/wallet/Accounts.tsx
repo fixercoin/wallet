@@ -22,7 +22,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-      <div className="max-w-md mx-auto">
+      <div className="w-full">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
             variant="ghost"

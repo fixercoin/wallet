@@ -16,7 +16,7 @@ export default function MobileShell({ children, className }: MobileShellProps) {
     >
       <div
         className={cn(
-          "relative w-[min(430px,100vw)] h-[100svh] bg-background text-foreground rounded-[24px] shadow-2xl border border-transparent overflow-hidden",
+          "relative w-screen h-screen bg-background text-foreground overflow-hidden",
           "supports-[padding:max(0px,env(safe-area-inset-top))]:pt-[max(0px,env(safe-area-inset-top))]",
           "supports-[padding:max(0px,env(safe-area-inset-bottom))]:pb-[max(0px,env(safe-area-inset-bottom))]",
           className,

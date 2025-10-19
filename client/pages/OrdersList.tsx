@@ -8,6 +8,7 @@ import { ADMIN_WALLET } from "@/lib/p2p";
 export default function OrdersList() {
   const navigate = useNavigate();
   const { status } = useParams();
+  const { wallet } = useWallet();
   const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
@@ -58,6 +59,22 @@ export default function OrdersList() {
                 <div>
                   <div className="text-xs opacity-80">Order Number</div>
                   <div className="font-semibold">{o.id}</div>
+                  {(o.token || o.amountPKR || o.amountTokens) && (
+                    <div className="text-xs text-white/70 mt-1">
+                      {o.token && <span>{o.token}</span>}
+                      {typeof o.amountPKR === "number" &&
+                        isFinite(o.amountPKR) && (
+                          <span> • {Number(o.amountPKR).toFixed(2)} PKR</span>
+                        )}
+                      {typeof o.amountTokens === "number" &&
+                        isFinite(o.amountTokens) && (
+                          <span>
+                            {o.amountPKR ? " • " : " • "}
+                            {Number(o.amountTokens).toFixed(6)} {o.token || ""}
+                          </span>
+                        )}
+                    </div>
+                  )}
                 </div>
                 {wallet?.publicKey === ADMIN_WALLET ? (
                   <button

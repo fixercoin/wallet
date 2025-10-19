@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(new URL(import.meta.url)));
 
 let apiServer = null;
 
-export default defineConfig({
+export default {
   base: "./",
   plugins: [
     react(),
@@ -54,4 +54,4 @@ export default defineConfig({
       "@utils": path.resolve(__dirname, "utils"),
     },
   },
-});
+};

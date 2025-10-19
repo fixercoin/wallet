@@ -30,6 +30,16 @@ export type TradeMessage = {
   proof?: { filename: string; url?: string };
 };
 
+export type TradeRoom = {
+  id: string;
+  buyer_wallet: string;
+  seller_wallet: string;
+  order_id: string;
+  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  created_at: number;
+  updated_at: number;
+};
+
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
 // In-memory store (per server instance) with on-disk persistence to data/p2p-store.json

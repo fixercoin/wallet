@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { listTradeRooms, getTradeRoom } from "@/lib/p2p-api";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
-import { getUnreadNotifications } from "@/lib/p2p-chat";
+import { getUnreadNotifications, getPaymentReceivedNotifications } from "@/lib/p2p-chat";
 import type { TradeRoom } from "@/lib/p2p-api";
 
 export default function ExpressPendingOrders() {
@@ -33,6 +33,7 @@ export default function ExpressPendingOrders() {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [processingRoomId, setProcessingRoomId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
 
   // Listen for notifications and auto-open chat
   useEffect(() => {
@@ -85,6 +86,8 @@ export default function ExpressPendingOrders() {
     loadRooms();
     const count = getUnreadNotifications(wallet.publicKey).length;
     setUnreadCount(count);
+    const verifyCount = getPaymentReceivedNotifications(wallet.publicKey).length;
+    setPendingVerificationCount(verifyCount);
   }, [wallet?.publicKey, filter, events]);
 
   const loadRooms = async () => {

@@ -755,7 +755,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
       {/* Form Container - Centered */}
       <div className="flex-1 flex items-center justify-center relative z-20">
-      <div className="w-full max-w-md px-4 py-6">
+        <div className="w-full max-w-md px-4 py-6">
           {isLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
               <div className="text-[hsl(var(--foreground))]">
@@ -999,7 +999,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
               </Alert>
             )}
           </div>
-      </div>
+        </div>
       </div>
     </div>
   );

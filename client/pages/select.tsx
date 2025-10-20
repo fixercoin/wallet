@@ -39,7 +39,8 @@ export default function Select() {
     return (payload && (payload.roomId || payload.orderId)) || null;
   }, [payload]);
 
-  const { send, events } = useDurableRoom(derivedRoomId || "global", API_BASE);
+  const effectiveRoomId: string = useMemo(() => derivedRoomId || "global", [derivedRoomId]);
+  const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
 
   const [showConfirmation, setShowConfirmation] = useState(
     !!location.state?.confirmation,
@@ -53,17 +54,16 @@ export default function Select() {
   const [messageInput, setMessageInput] = useState<string>("");
 
   useEffect(() => {
-    if (!derivedRoomId) return;
-    const history = loadChatHistory(derivedRoomId);
+    const history = loadChatHistory(effectiveRoomId);
     setChatLog(history);
-  }, [derivedRoomId]);
+  }, [effectiveRoomId]);
 
   useEffect(() => {
-    if (!events.length || !derivedRoomId) return;
+    if (!events.length) return;
     const last = events[events.length - 1] as any;
     if (last.kind === "chat" && last.data?.text) {
       const msg = parseWebSocketMessage(last.data.text);
-      if (msg && msg.roomId === derivedRoomId) {
+      if (msg && msg.roomId === effectiveRoomId) {
         saveChatMessage(msg);
         setChatLog((prev) => {
           if (prev.find((m) => m.id === msg.id)) return prev;
@@ -71,15 +71,15 @@ export default function Select() {
         });
       }
     }
-  }, [events, derivedRoomId]);
+  }, [events, effectiveRoomId]);
 
   const sendTextMessage = () => {
-    if (!messageInput.trim() || !derivedRoomId || !wallet?.publicKey) return;
+    if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;
     const userRole: "buyer" | "seller" =
       payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
     const message: ChatMessage = {
       id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
+      roomId: effectiveRoomId,
       senderWallet: wallet.publicKey,
       senderRole: userRole,
       type: "message",
@@ -130,14 +130,14 @@ export default function Select() {
   }
 
   async function handleImageAttachment(file: File) {
-    if (!file || !derivedRoomId || !wallet?.publicKey) return;
+    if (!file || !effectiveRoomId || !wallet?.publicKey) return;
     try {
       const dataUrl = await resizeImageToDataUrl(file);
       const userRole: "buyer" | "seller" =
         payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
       const message: ChatMessage = {
         id: `msg-${Date.now()}`,
-        roomId: derivedRoomId,
+        roomId: effectiveRoomId,
         senderWallet: wallet.publicKey,
         senderRole: userRole,
         type: "attachment",
@@ -286,7 +286,7 @@ export default function Select() {
       </div>
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}
@@ -304,10 +304,10 @@ export default function Select() {
           </div>
         </div>
 
-        {openChat && derivedRoomId && (
-          <div className="w-[350px]">
+        {wallet?.publicKey && (
+          <div className="w-[300px] order-1">
             <div className="rounded-2xl p-3 space-y-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
-              <div className="w-[350px] h-[350px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+              <div className="w-[300px] h-[300px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
                 {chatLog.length === 0 ? (
                   <div className="text-xs text-white/60 text-center py-4">
                     Chat conversation will appear here
@@ -440,10 +440,10 @@ export default function Select() {
                 ) : (
                   <Button
                     onClick={() => {
-                      if (!derivedRoomId || !wallet?.publicKey) return;
+                      if (!effectiveRoomId || !wallet?.publicKey) return;
                       const message: ChatMessage = {
                         id: `msg-${Date.now()}`,
-                        roomId: derivedRoomId,
+                        roomId: effectiveRoomId,
                         senderWallet: wallet.publicKey,
                         senderRole: "seller",
                         type: "admin_transferred",

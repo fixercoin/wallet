@@ -14,6 +14,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
+import { listOrders } from "@/lib/p2p";
 import {
   saveChatMessage,
   saveNotification,
@@ -44,6 +45,29 @@ export default function Select() {
     [derivedRoomId],
   );
   const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
+
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoadingOrders(true);
+        const res = await listOrders(effectiveRoomId);
+        if (!mounted) return;
+        setOrders(res.orders || []);
+      } catch (e) {
+        console.error("Failed to load orders", e);
+      } finally {
+        if (mounted) setLoadingOrders(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [effectiveRoomId]);
 
   const [showConfirmation, setShowConfirmation] = useState(
     !!location.state?.confirmation,
@@ -284,7 +308,7 @@ export default function Select() {
         </button>
       </div>
 
-      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
           <span className="text-sm text-white/70 select-none">
             info@fixorium.com.pk
@@ -294,14 +318,14 @@ export default function Select() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}
-              className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
+              className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               BUY
             </Button>
 
             <Button
               onClick={() => navigate("/sell-now")}
-              className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
+              className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               SELL
             </Button>
@@ -310,163 +334,63 @@ export default function Select() {
 
         {wallet?.publicKey && (
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
-            <div className="w-full rounded-2xl p-4 sm:p-6 space-y-3 bg-[#1a2540]/60">
-              <div className="w-full h-[300px] overflow-y-auto custom-scrollbar space-y-2 bg-[#0f1520]/50">
-                {chatLog.length === 0 ? (
-                  <div className="text-xs text-white/60 text-center py-4">
-                    Chat conversation will appear here
-                  </div>
-                ) : (
-                  chatLog.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`text-xs p-2 rounded ${
-                        msg.senderWallet === wallet?.publicKey
-                          ? "bg-[#FF7A5C]/20 text-white/90"
-                          : "bg-[#1a2540]/50 text-white/70"
-                      }`}
-                    >
-                      <div className="font-semibold text-white/80">
-                        {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
-                      </div>
-                      <div>{msg.text}</div>
-                      {msg.metadata?.attachmentDataUrl && (
-                        <div className="mt-2">
-                          <img
-                            src={msg.metadata.attachmentDataUrl}
-                            alt="attachment"
-                            className="rounded-lg max-h-48"
-                          />
+            {/* Orders list displayed as prompt messages - moved above image */}
+            <div className="mb-3 space-y-3">
+              {loadingOrders ? (
+                <div className="text-sm text-white/60">Loading orders...</div>
+              ) : orders.length === 0 ? (
+                <div className="text-sm text-white/60">
+                  No orders available.
+                </div>
+              ) : (
+                orders.map((o: any) => (
+                  <div
+                    key={o.id || o.orderId}
+                    className="p-4 bg-[#0f1520]/50 border border-white/10"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm text-white/90">
+                          {o.title ||
+                            o.token ||
+                            o.type ||
+                            `Order ${o.id || o.orderId}`}
                         </div>
-                      )}
-                      <div className="text-[10px] text-white/50 mt-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
+                        <div className="text-xs text-white/70 mt-1">
+                          {o.description ||
+                            o.message ||
+                            o.details ||
+                            `Amount: ${o.amount || o.estimatedTokens || ""}`}
+                        </div>
+                        <div className="text-xs text-white/60 mt-2">
+                          Payment: {o.paymentMethod || o.payment || "—"}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Button
+                          onClick={() =>
+                            navigate("/express/buy-trade", {
+                              state: { order: o, openChat: true },
+                            })
+                          }
+                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                        >
+                          Continue
+                        </Button>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
-                  placeholder="Type a message..."
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                />
-                <input
-                  id="attach-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.currentTarget.files?.[0];
-                    if (f) handleImageAttachment(f);
-                    e.currentTarget.value = "";
-                  }}
-                />
-                <Button
-                  type="button"
-                  onClick={() =>
-                    document.getElementById("attach-input")?.click()
-                  }
-                  className="wallet-button-secondary px-3"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={sendTextMessage}
-                  className="wallet-button-primary px-4"
-                  disabled={!messageInput.trim()}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            {wallet?.publicKey === ADMIN_WALLET && (
-              <div className="mt-3 w-full rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60">
-                <div className="text-sm font-medium mb-2">
-                  Admin: Send assets
-                </div>
-                <div className="p-3 rounded-xl bg-[#0f1520]/50">
-                  <div className="text-xs font-medium mb-2">
-                    Select token and balance
-                  </div>
-                  <select
-                    value={adminTokenSymbol}
-                    onChange={(e) => setAdminTokenSymbol(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white cursor-pointer"
-                  >
-                    {tokens.map((t) => (
-                      <option
-                        key={t.mint}
-                        value={t.symbol}
-                        className="bg-[#1a2540] text-white"
-                      >
-                        {t.symbol} —{" "}
-                        {typeof t.balance === "number"
-                          ? t.balance.toFixed(6)
-                          : 0}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="mt-2 text-xs">
-                    Wallet balance:{" "}
-                    {adminTokenInfo?.balance?.toFixed(6) || "0.000000"}{" "}
-                    {adminTokenSymbol}
-                  </div>
-                </div>
-                <div className="grid gap-2 mt-3">
-                  <input
-                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white placeholder-white/40"
-                    placeholder="Amount"
-                    value={adminAmount}
-                    onChange={(e) => setAdminAmount(e.target.value)}
-                  />
-                  <input
-                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white placeholder-white/40"
-                    placeholder="To wallet"
-                    value={adminToWallet}
-                    onChange={(e) => setAdminToWallet(e.target.value)}
-                  />
-                </div>
-                {!readyToConfirmSend ? (
-                  <Button
-                    onClick={() => {
-                      setReadyToConfirmSend(true);
-                      toast({ title: "Transaction prepared" });
-                    }}
-                    className="wallet-button-primary w-full mt-3"
-                  >
-                    Send transaction
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      if (!effectiveRoomId || !wallet?.publicKey) return;
-                      const message: ChatMessage = {
-                        id: `msg-${Date.now()}`,
-                        roomId: effectiveRoomId,
-                        senderWallet: wallet.publicKey,
-                        senderRole: "seller",
-                        type: "admin_transferred",
-                        text: `Admin sent ${adminAmount || "0"} ${adminTokenSymbol} to ${adminToWallet || ""}`,
-                        timestamp: Date.now(),
-                      };
-                      saveChatMessage(message);
-                      sendChatMessage(send, message);
-                      toast({ title: "Assets sent" });
-                      setReadyToConfirmSend(false);
-                      setAdminAmount("");
-                    }}
-                    className="wallet-button-secondary w-full mt-3"
-                  >
-                    I have sent asset
-                  </Button>
-                )}
-              </div>
-            )}
+            <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
+                alt="Payment illustration"
+                className="max-h-[320px] w-full object-contain"
+              />
+            </div>
           </div>
         )}
       </div>

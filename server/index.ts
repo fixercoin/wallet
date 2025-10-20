@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
+import { handleWalletBalance } from "./routes/wallet-balance";
+import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
   handleDexscreenerSearch,
@@ -10,7 +12,30 @@ import {
   handleJupiterPrice,
   handleJupiterQuote,
   handleJupiterSwap,
+  handleJupiterTokens,
 } from "./routes/jupiter-proxy";
+import { handleForexRate } from "./routes/forex-rate";
+import { handleStable24h } from "./routes/stable-24h";
+import {
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
+  handleListTradeRooms,
+  handleCreateTradeRoom,
+  handleGetTradeRoom,
+  handleUpdateTradeRoom,
+  handleListTradeMessages,
+  handleAddTradeMessage,
+} from "./routes/p2p-orders";
+import {
+  handleListOrders,
+  handleCreateOrder,
+  handleGetOrder,
+  handleUpdateOrder,
+  handleDeleteOrder,
+} from "./routes/orders";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -20,17 +45,50 @@ export async function createServer(): Promise<express.Application> {
   app.use(express.json());
 
   // DexScreener routes
-  app.get("/dexscreener/tokens", handleDexscreenerTokens);
-  app.get("/dexscreener/search", handleDexscreenerSearch);
-  app.get("/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
+  app.get("/api/dexscreener/search", handleDexscreenerSearch);
+  app.get("/api/dexscreener/trending", handleDexscreenerTrending);
 
   // Jupiter routes
-  app.get("/jupiter/price", handleJupiterPrice);
-  app.get("/jupiter/quote", handleJupiterQuote);
-  app.post("/jupiter/swap", handleJupiterSwap);
+  app.get("/api/jupiter/price", handleJupiterPrice);
+  app.get("/api/jupiter/quote", handleJupiterQuote);
+  app.post("/api/jupiter/swap", handleJupiterSwap);
+  app.get("/api/jupiter/tokens", handleJupiterTokens);
 
   // Solana RPC proxy
-  app.post("/solana-rpc", handleSolanaRpc);
+  app.post("/api/solana-rpc", handleSolanaRpc);
+
+  // Wallet routes
+  app.get("/api/wallet/balance", handleWalletBalance);
+
+  // Exchange rate routes
+  app.get("/api/exchange-rate", handleExchangeRate);
+  app.get("/api/forex/rate", handleForexRate);
+  app.get("/api/stable-24h", handleStable24h);
+
+  // Orders routes (new API)
+  app.get("/api/orders", handleListOrders);
+  app.post("/api/orders", handleCreateOrder);
+  app.get("/api/orders/:orderId", handleGetOrder);
+  app.put("/api/orders/:orderId", handleUpdateOrder);
+  app.delete("/api/orders/:orderId", handleDeleteOrder);
+
+  // P2P Orders routes (legacy API)
+  app.get("/api/p2p/orders", handleListP2POrders);
+  app.post("/api/p2p/orders", handleCreateP2POrder);
+  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
+  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
+  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+
+  // Trade Rooms routes
+  app.get("/api/p2p/rooms", handleListTradeRooms);
+  app.post("/api/p2p/rooms", handleCreateTradeRoom);
+  app.get("/api/p2p/rooms/:roomId", handleGetTradeRoom);
+  app.put("/api/p2p/rooms/:roomId", handleUpdateTradeRoom);
+
+  // Trade Messages routes
+  app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
+  app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
 
   // Health check
   app.get("/health", (req, res) => {

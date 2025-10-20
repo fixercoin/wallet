@@ -134,44 +134,46 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Main welcome screen
   if (activeTab === "create" && !generatedWallet) {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] flex items-center justify-center p-4">
-        <div className="w-full max-w-md mx-auto">
-          <div className="relative bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
-            <div className="text-center pb-6">
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
-                alt="Wallet"
-                className="mx-auto w-[300px] h-[300px] object-contain"
-              />
-            </div>
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-            <div className="space-y-4">
-              <Button
-                onClick={handleCreateWallet}
-                disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-2xl border-0 shadow-lg uppercase"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                CREATE NEW WALLET
-              </Button>
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 relative z-10">
+          <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="space-y-6">
+              <div className="text-center pb-2">
+                <img
+                  src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
+                  alt="Wallet"
+                  className="mx-auto w-[240px] h-[240px] object-contain"
+                />
+              </div>
 
-              <Button
-                onClick={() => setActiveTab("recover")}
-                variant="ghost"
-                className="w-full h-12 rounded-2xl uppercase"
-              >
-                <Import className="h-5 w-5 mr-2" />
-                IMPORT WALLET
-              </Button>
-
-              {error && (
-                <Alert
-                  className="mt-4 bg-red-500/20 border-red-400/30 text-red-200"
-                  variant="destructive"
+              <div className="space-y-4">
+                <Button
+                  onClick={handleCreateWallet}
+                  disabled={isLoading}
+                  className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                 >
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+                  <Plus className="h-5 w-5 mr-2" />
+                  CREATE NEW WALLET
+                </Button>
+
+                <Button
+                  onClick={() => setActiveTab("recover")}
+                  variant="ghost"
+                  className="w-full h-12 rounded-xl text-white hover:bg-[#FF7A5C]/10"
+                >
+                  <Import className="h-5 w-5 mr-2" />
+                  IMPORT WALLET
+                </Button>
+
+                {error && (
+                  <Alert className="bg-red-500/10 text-red-200">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -182,32 +184,31 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Recovery screen
   if (activeTab === "recover") {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
-          <div className="relative bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+        <div className="w-full relative z-10 p-4">
+          <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
             {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg">
-                <div className="text-[hsl(var(--muted-foreground))]">
-                  Importing wallet...
-                </div>
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
+                <div className="text-white">Importing wallet...</div>
               </div>
             )}
-
-            <div className="text-center"></div>
 
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4 text-sm">
                     <span
                       onClick={() => setRecoverMode("mnemonic")}
-                      className={`cursor-pointer ${recoverMode === "mnemonic" ? "text-[hsl(var(--foreground))] font-semibold" : "text-[hsl(var(--muted-foreground))]"}`}
+                      className={`${recoverMode === "mnemonic" ? "font-semibold" : "opacity-70"} cursor-pointer`}
                     >
                       Recovery Phrase
                     </span>
                     <span
                       onClick={() => setRecoverMode("privateKey")}
-                      className={`cursor-pointer ${recoverMode === "privateKey" ? "text-[hsl(var(--foreground))] font-semibold" : "text-[hsl(var(--muted-foreground))]"}`}
+                      className={`${recoverMode === "privateKey" ? "font-semibold" : "opacity-70"} cursor-pointer`}
                     >
                       Private Key
                     </span>
@@ -217,6 +218,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowPrivateKeyInput((s) => !s)}
+                      className="text-white hover:bg-[#FF7A5C]/10"
                     >
                       {showPrivateKeyInput ? (
                         <EyeOff className="h-4 w-4" />
@@ -234,14 +236,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       onChange={(e) => setRecoveryPhrase(e.target.value)}
                       placeholder="Paste your 12 or 24-word recovery phrase here..."
                       aria-label="Recovery Phrase"
-                      className="w-full h-32 p-4 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-yellow-500/40 focus:border-yellow-500/50"
+                      className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
                     />
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                    <p className="text-xs text-gray-300">
                       Derivation Path (Solana default) →
-                      <span className="ml-2 font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                      <span className="ml-2 font-mono text-[11px] text-gray-300">
                         m/44&apos;/501&apos;/0&apos;/0&apos;
                       </span>
-                      <span className="ml-1 text-[hsl(var(--muted-foreground))]">
+                      <span className="ml-1 text-gray-300">
                         (compatible with Phantom and other Solana wallets)
                       </span>
                     </p>
@@ -256,7 +258,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         : "Hidden"
                     }
                     aria-label="Private Key"
-                    className="w-full h-32 p-4 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-yellow-500/40 focus:border-yellow-500/50"
+                    className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
                   />
                 )}
               </div>
@@ -265,7 +267,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   variant="outline"
                   onClick={() => setActiveTab("create")}
-                  className="flex-1"
+                  className="flex-1 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                 >
                   Back
                 </Button>
@@ -273,7 +275,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <Button
                     onClick={handleRecoverWallet}
                     disabled={!isMnemonicWordCountValid || isLoading}
-                    className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 text-white shadow-lg"
+                    className="flex-1 h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Recover Wallet
                   </Button>
@@ -303,7 +305,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       }
                     }}
                     disabled={!privateKeyInput.trim()}
-                    className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 text-white shadow-lg"
+                    className="flex-1 h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Import Wallet
                   </Button>
@@ -311,10 +313,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               </div>
 
               {error && (
-                <Alert
-                  variant="destructive"
-                  className="bg-red-500/20 border-red-400/30 text-red-200"
-                >
+                <Alert className="bg-red-500/10 text-red-200">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -328,31 +327,30 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Mnemonic display screen
   if (activeTab === "mnemonic" && generatedWallet) {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
-          <div className="relative bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg p-6">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+        <div className="w-full relative z-10 p-4">
+          <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
             {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg">
-                <div className="text-[hsl(var(--muted-foreground))]">
-                  Creating wallet...
-                </div>
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
+                <div className="text-white">Creating wallet...</div>
               </div>
             )}
 
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[hsl(var(--foreground))]">
-                Secret Recovery Phrase
-              </div>
-              <div className="text-[hsl(var(--muted-foreground))]">
-                Save these words in a safe place. They're the only way to
-                recover your wallet.
-              </div>
-            </div>
-
             <div className="space-y-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold">Secret Recovery Phrase</div>
+                <div className="opacity-80">
+                  Save these words in a safe place. They&apos;re the only way to
+                  recover your wallet.
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                  <Label className="text-lg font-semibold">
                     Recovery Phrase
                   </Label>
                   <div className="flex gap-2">
@@ -360,6 +358,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="outline"
                       size="sm"
                       onClick={() => setShowMnemonic(!showMnemonic)}
+                      className="bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                     >
                       {showMnemonic ? (
                         <EyeOff className="h-4 w-4" />
@@ -372,6 +371,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="outline"
                       size="sm"
                       onClick={copyFullMnemonic}
+                      className="bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                     >
                       <Copy className="h-4 w-4" />
                       Copy All
@@ -379,11 +379,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6">
-                  <p className="text-[hsl(var(--muted-foreground))] text-xs leading-relaxed text-center uppercase">
+                <div className="bg-[#1a2540]/50 rounded-xl p-6">
+                  <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>
@@ -394,12 +394,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   id="confirm-backup"
                   checked={confirmedMnemonic}
                   onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                  className="rounded border border-[hsl(var(--border))] bg-[hsl(var(--input))]"
+                  className="rounded bg-[#1a2540]/50"
                 />
-                <Label
-                  htmlFor="confirm-backup"
-                  className="text-sm text-[hsl(var(--muted-foreground))]"
-                >
+                <Label htmlFor="confirm-backup" className="text-sm opacity-80">
                   I have safely backed up my recovery phrase
                 </Label>
               </div>
@@ -408,14 +405,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   variant="outline"
                   onClick={() => setActiveTab("create")}
-                  className="flex-1"
+                  className="flex-1 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
                 >
                   Back
                 </Button>
                 <Button
                   onClick={handleConfirmWallet}
                   disabled={!confirmedMnemonic}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 text-white shadow-lg"
+                  className="flex-1 h-12 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
                 >
                   Create Wallet
                 </Button>

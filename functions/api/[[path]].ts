@@ -115,7 +115,20 @@ async function fetchDexscreenerData(path: string) {
   const now = Date.now();
   const cached = DEX_CACHE.get(path);
   if (cached && cached.expiresAt > now) {
-    return cached.data;
+    // Only return cache if it contains meaningful data with priceChange fields
+    const hasPriceChangeData =
+      Array.isArray(cached.data?.pairs) &&
+      cached.data.pairs.some(
+        (p: any) =>
+          p?.priceChange &&
+          (typeof p.priceChange.h24 === "number" ||
+            typeof p.priceChange.h6 === "number" ||
+            typeof p.priceChange.h1 === "number" ||
+            typeof p.priceChange.m5 === "number"),
+      );
+    if (hasPriceChangeData) {
+      return cached.data;
+    }
   }
   const existing = DEX_INFLIGHT.get(path);
   if (existing) return existing;
@@ -199,11 +212,17 @@ import {
   addEasypaisaPayment,
   listEasypaisaPayments,
 } from "../../utils/p2pStore";
+import {
+  addEasypaisaPaymentCF,
+  listEasypaisaPaymentsCF,
+} from "../../utils/p2pStoreCf";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
   const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  const db: any = (env as any)?.FIXORIUM_WALLET_DB;
+  const hasDb = !!db && typeof db.prepare === "function";
 
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -264,22 +283,35 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(400, { error: "invalid payload" });
       }
 
-      const result = addEasypaisaPayment({
-        msisdn,
-        amount,
-        currency,
-        reference,
-        sender,
-        ts: isFinite(ts) ? ts : Date.now(),
+      const result = hasDb
+        ? await addEasypaisaPaymentCF(db, {
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          })
+        : addEasypaisaPayment({
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          });
+      return jsonCors((result as any).status, {
+        payment: (result as any).payment,
       });
-      return jsonCors(result.status, { payment: result.payment });
     }
 
     if (normalizedPath === "/easypaisa/payments" && request.method === "GET") {
       const msisdn =
         url.searchParams.get("msisdn") || (env as any)?.EASYPAY_MSISDN || "";
       const since = Number(url.searchParams.get("since") || 0);
-      const data = listEasypaisaPayments({ msisdn, since });
+      const data = hasDb
+        ? await listEasypaisaPaymentsCF(db, { msisdn, since })
+        : listEasypaisaPayments({ msisdn, since });
       return jsonCors(200, data);
     }
 
@@ -415,6 +447,149 @@ export const onRequest = async ({ request, env }) => {
           error: "Failed to fetch forex rate",
           details,
         });
+      }
+    }
+
+    // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
+    if (normalizedPath === "/exchange-rate") {
+      const token = (
+        url.searchParams.get("token") || "FIXERCOIN"
+      ).toUpperCase();
+
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
+      };
+
+      const PKR_PER_USD = 280; // base FX
+      const MARKUP = 1.0425; // 4.25%
+
+      let priceUsd: number | null = null;
+      try {
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else if (TOKEN_MINTS[token]) {
+          const data = await fetchDexscreenerData(
+            `/tokens/${TOKEN_MINTS[token]}`,
+          );
+          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          const price =
+            pairs.length > 0 && pairs[0]?.priceUsd
+              ? Number(pairs[0].priceUsd)
+              : null;
+          if (typeof price === "number" && isFinite(price) && price > 0) {
+            priceUsd = price;
+          }
+        }
+      } catch {}
+
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return jsonCors(200, {
+        token,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+      });
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (normalizedPath === "/stable-24h") {
+      const symbolsParam = (
+        url.searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
+      };
+
+      const ids = symbols
+        .map((s) => COINGECKO_IDS[s]?.id)
+        .filter(Boolean)
+        .join(",");
+      if (!ids) {
+        return jsonCors(400, { error: "No supported symbols provided" });
+      }
+
+      const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd&include_24hr_change=true`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      try {
+        const resp = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        clearTimeout(timeoutId);
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
+        if (resp.ok) {
+          const json = await resp.json();
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            const d = json?.[meta.id];
+            const price = typeof d?.usd === "number" ? d.usd : 1;
+            const change =
+              typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = {
+              priceUsd: price,
+              change24h: change,
+              mint: meta.mint,
+            };
+          });
+        } else {
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+          });
+        }
+        return jsonCors(200, { data: result });
+      } catch (e) {
+        clearTimeout(timeoutId);
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
+        symbols.forEach((sym) => {
+          const meta = COINGECKO_IDS[sym];
+          if (!meta) return;
+          result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+        });
+        return jsonCors(200, { data: result });
       }
     }
 

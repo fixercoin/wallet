@@ -360,8 +360,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             try {
               dexTokens.forEach((dt: any) => {
                 const mint = dt?.baseToken?.address;
-                const ch = dt?.priceChange?.h24;
-                if (mint && typeof ch === "number" && isFinite(ch)) {
+                const pc = dt?.priceChange;
+                const candidates = [pc?.h24, pc?.h6, pc?.h1, pc?.m5];
+                const ch = candidates.find(
+                  (v: any) => typeof v === "number" && isFinite(v),
+                );
+                if (mint && typeof ch === "number") {
                   changeMap[mint] = ch;
                 }
               });
@@ -401,21 +405,115 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           console.warn("Failed to fetch FIXERCOIN price:", err);
         }
 
+        // Fetch DexScreener data for stablecoins (USDC, USDT) and LOCKER to get accurate price changes
+        const stableMints = allTokens
+          .filter((t) => {
+            const sym = (t.symbol || "").toUpperCase();
+            const name = t.name || "";
+            return (
+              sym === "USDC" ||
+              sym === "USDT" ||
+              /USD\s*COIN/i.test(name) ||
+              /TETHER/i.test(name)
+            );
+          })
+          .map((t) => t.mint);
+
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
-        if (!prices[lockerMint] || typeof changeMap[lockerMint] !== "number") {
+        const mintsToFetch = [
+          ...new Set([...stableMints, lockerMint].filter(Boolean)),
+        ];
+
+        if (mintsToFetch.length > 0) {
           try {
-            const lockerDex = await dexscreenerAPI.getTokenByMint(lockerMint);
-            if (lockerDex) {
-              const price = lockerDex.priceUsd
-                ? parseFloat(lockerDex.priceUsd)
-                : 0;
-              if (price > 0) prices[lockerMint] = price;
-              if (typeof lockerDex.priceChange?.h24 === "number")
-                changeMap[lockerMint] = lockerDex.priceChange.h24;
-            }
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(mintsToFetch);
+            const dexMap = new Map<string, any>();
+            dexTokens.forEach((t) => {
+              const matchMint = mintsToFetch.find(
+                (m) =>
+                  m === t.baseToken?.address || m === t.quoteToken?.address,
+              );
+              if (matchMint) dexMap.set(matchMint, t);
+            });
+
+            mintsToFetch.forEach((mint) => {
+              const dexToken = dexMap.get(mint);
+              if (dexToken) {
+                // Update price if available
+                if (dexToken.priceUsd) {
+                  const price = parseFloat(dexToken.priceUsd);
+                  if (price > 0) prices[mint] = price;
+                }
+                // Extract price change (h24 is preferred, fallback to h6, h1, m5)
+                const pc = dexToken.priceChange || {};
+                const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+                const priceChange = candidates.find(
+                  (v: any) => typeof v === "number" && isFinite(v),
+                );
+                if (typeof priceChange === "number") {
+                  changeMap[mint] = priceChange;
+                  console.log(
+                    `[Price Refresh] ${mint}: 24h change = ${priceChange.toFixed(2)}%`,
+                  );
+                }
+              }
+            });
           } catch (e) {
-            console.warn("Failed to fetch LOCKER price from DexScreener:", e);
+            console.warn(
+              "Failed to fetch USDC/LOCKER price data from DexScreener:",
+              e,
+            );
           }
+        }
+
+        // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
+        try {
+          const stableSymbols = allTokens
+            .filter((t) => stableMints.includes(t.mint))
+            .map((t) => (t.symbol || "").toUpperCase());
+          const uniqSyms = Array.from(new Set(stableSymbols)).filter(Boolean);
+          if (uniqSyms.length > 0) {
+            const params = new URLSearchParams({ symbols: uniqSyms.join(",") });
+            const resp = await fetch(
+              `/api/stable-24h?${params.toString()}`,
+            ).catch(() => new Response("", { status: 0 } as any));
+            if (resp.ok) {
+              const st = await resp.json();
+              const data = st?.data || {};
+              Object.keys(data).forEach((sym) => {
+                const entry = data[sym];
+                const mint = entry?.mint as string | undefined;
+                const ch = entry?.change24h;
+                const price = entry?.priceUsd;
+                if (mint && typeof ch === "number" && isFinite(ch)) {
+                  changeMap[mint] = ch;
+                }
+                if (mint && typeof price === "number" && price > 0) {
+                  prices[mint] = price;
+                }
+              });
+            }
+          }
+        } catch {}
+
+        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
+        stableMints.forEach((mint) => {
+          if (!prices[mint]) prices[mint] = 1;
+          if (
+            typeof changeMap[mint] !== "number" ||
+            !isFinite(changeMap[mint]!)
+          ) {
+            changeMap[mint] = 0;
+          }
+        });
+
+        // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
+        if (
+          typeof changeMap[lockerMint] !== "number" ||
+          !isFinite(changeMap[lockerMint]!)
+        ) {
+          changeMap[lockerMint] = 0;
         }
 
         const solMint = "So11111111111111111111111111111111111111112";

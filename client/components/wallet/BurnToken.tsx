@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Keypair,
   PublicKey,
@@ -28,9 +29,9 @@ interface BurnTokenProps {
   onBack: () => void;
 }
 
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const FIXER_MINT_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const LOCKER_MINT_ADDRESS = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+const SOL_MINT = TOKEN_MINTS.SOL;
+const FIXER_MINT_ADDRESS = TOKEN_MINTS.FIXERCOIN;
+const LOCKER_MINT_ADDRESS = TOKEN_MINTS.LOCKER;
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
 );
@@ -492,13 +493,17 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm"
+            className="h-10 w-10 rounded-full text-white hover:bg-[#FF7A5C]/10"
             onClick={onBack}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -507,44 +512,42 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             <div className="text-xs uppercase tracking-wide text-orange-500">
               Burn SPL Tokens
             </div>
-            <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">
+            <h1 className="text-xl font-semibold text-white">
               Destroy tokens securely
             </h1>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            <p className="text-xs text-gray-300">
               Permanently remove SPL tokens from your wallet balance.
             </p>
           </div>
         </div>
 
-        <div className="wallet-card rounded-2xl p-6 space-y-5">
+        <div className="bg-transparent p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+            <span className="text-sm font-semibold text-white">
               Burn tokens you control
             </span>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-[hsl(var(--muted-foreground))]">
-                Select token
-              </Label>
+              <Label className="text-xs text-gray-300">Select token</Label>
               <Select
                 value={selectedMint}
                 onValueChange={setSelectedMint}
                 disabled={!splTokens.length || isLoading}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-[#1a2540]/50 text-white">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#1a2540]/95 text-white">
                   {splTokens.map((token) => (
                     <SelectItem key={token.mint} value={token.mint}>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">
                           {token.symbol || token.mint.slice(0, 6)}
                         </span>
-                        <span className="text-[10px] text-gray-500 uppercase">
+                        <span className="text-[10px] text-gray-300 uppercase">
                           Balance:{" "}
                           {formatNumber(token.balance, token.decimals ?? 0)}
                         </span>
@@ -554,7 +557,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 </SelectContent>
               </Select>
               {splTokens.length === 0 ? (
-                <p className="mt-2 text-[11px] text-gray-500">
+                <p className="mt-2 text-[11px] text-gray-300">
                   Add or receive SPL tokens with a positive balance to burn them
                   from this wallet.
                 </p>
@@ -562,13 +565,13 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </div>
 
             {selectedToken ? (
-              <div className="rounded-xl border border-white/50 bg-white/80 p-4 space-y-3">
+              <div className="rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                    <p className="text-xs uppercase tracking-wide text-gray-300">
                       Selected token
                     </p>
-                    <p className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                    <p className="text-lg font-semibold text-white">
                       {selectedToken.symbol || selectedToken.mint.slice(0, 6)} ·{" "}
                       {formatNumber(
                         selectedToken.balance,
@@ -576,7 +579,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                       )}
                     </p>
                   </div>
-                  <div className="text-right text-[11px] text-gray-500">
+                  <div className="text-right text-[11px] text-gray-300">
                     <p>Mint address</p>
                     <a
                       className="font-medium text-orange-500 underline-offset-4 hover:underline"
@@ -592,10 +595,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             ) : null}
 
             <div>
-              <Label
-                htmlFor="burn-amount"
-                className="text-xs text-[hsl(var(--muted-foreground))]"
-              >
+              <Label htmlFor="burn-amount" className="text-xs text-gray-300">
                 Amount to burn
               </Label>
               <div className="mt-1 flex items-center gap-3">
@@ -607,20 +607,20 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   disabled={isLoading || !selectedToken}
                   placeholder="0.0"
                   inputMode="decimal"
-                  className="h-11"
+                  className="h-11 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
                 />
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={handleUseMax}
                   disabled={isLoading || !selectedToken}
-                  className="wallet-button-secondary h-11 rounded-full px-4 text-sm"
+                  className="h-11 rounded-full px-4 text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/20"
                 >
                   Max
                 </Button>
               </div>
               {selectedToken ? (
-                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500">
+                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-300">
                   <span>
                     Available:{" "}
                     {formatNumber(
@@ -638,7 +638,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </div>
 
             <Button
-              className="h-11 w-full border-0 font-semibold dash-btn"
+              className="h-11 w-full border-0 font-semibold rounded-xl bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
               onClick={handleBurn}
               disabled={isConfirmDisabled}
             >
@@ -655,7 +655,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               )}
             </Button>
 
-            <p className="text-center text-[11px] text-gray-500">
+            <p className="text-center text-[11px] text-gray-300">
               Burning permanently removes the selected tokens from circulation
               and cannot be reversed.
             </p>
@@ -663,14 +663,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         </div>
 
         {txSig || rewardSig ? (
-          <div className="wallet-card rounded-2xl p-6 space-y-3">
+          <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6 space-y-3">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />
-              <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              <span className="text-sm font-semibold text-white">
                 Recent burn
               </span>
             </div>
-            <div className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+            <div className="space-y-2 text-sm text-gray-300">
               {txSig ? (
                 <div className="break-all">
                   Burn transaction:{" "}

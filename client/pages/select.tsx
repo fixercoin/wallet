@@ -284,13 +284,13 @@ export default function Select() {
             <div className="flex gap-2">
               <Button
                 onClick={() => navigate("/orders/pending")}
-                className="px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20"
+                className="wallet-button-secondary px-3 py-1.5"
               >
                 Pending
               </Button>
               <Button
                 onClick={() => navigate("/orders/completed")}
-                className="wallet-button-primary px-3 py-1.5"
+                className="wallet-button-secondary px-3 py-1.5"
               >
                 Completed
               </Button>

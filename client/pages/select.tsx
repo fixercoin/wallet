@@ -308,7 +308,7 @@ export default function Select() {
         </button>
       </div>
 
-      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
           <span className="text-sm text-white/70 select-none">
             info@fixorium.com.pk
@@ -334,16 +334,8 @@ export default function Select() {
 
         {wallet?.publicKey && (
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
-            <div className="w-full rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60 flex items-center justify-center">
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                alt="Payment illustration"
-                className="max-h-[320px] w-full object-contain"
-              />
-            </div>
-
-            {/* Orders list displayed as prompt messages */}
-            <div className="mt-4 space-y-3">
+            {/* Orders list displayed as prompt messages - moved above image */}
+            <div className="mb-3 space-y-3">
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
@@ -369,6 +361,14 @@ export default function Select() {
                   </div>
                 ))
               )}
+            </div>
+
+            <div className="w-full rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60 flex items-center justify-center">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
+                alt="Payment illustration"
+                className="max-h-[320px] w-full object-contain"
+              />
             </div>
 
           </div>

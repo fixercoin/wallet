@@ -283,23 +283,7 @@ export default function Select() {
 
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              <Button
-                onClick={() => navigate("/orders/pending")}
-                className="wallet-button-secondary px-3 py-1.5"
-              >
-                Pending
-              </Button>
-              <Button
-                onClick={() => navigate("/orders/completed")}
-                className="wallet-button-secondary px-3 py-1.5"
-              >
-                Completed
-              </Button>
-            </div>
-          </div>
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
           <Button asChild className="wallet-button-secondary px-3 py-1.5">
             <a href="mailto:info@fixorium.com.pk">Appeal</a>
           </Button>

@@ -339,19 +339,40 @@ export default function Select() {
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
-                <div className="text-sm text-white/60">No orders available.</div>
+                <div className="text-sm text-white/60">
+                  No orders available.
+                </div>
               ) : (
                 orders.map((o: any) => (
-                  <div key={o.id || o.orderId} className="p-4 bg-[#0f1520]/50 border border-white/10">
+                  <div
+                    key={o.id || o.orderId}
+                    className="p-4 bg-[#0f1520]/50 border border-white/10"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <div className="font-semibold text-sm text-white/90">{o.title || o.token || o.type || `Order ${o.id || o.orderId}`}</div>
-                        <div className="text-xs text-white/70 mt-1">{o.description || o.message || o.details || `Amount: ${o.amount || o.estimatedTokens || ''}`}</div>
-                        <div className="text-xs text-white/60 mt-2">Payment: {o.paymentMethod || o.payment || '—'}</div>
+                        <div className="font-semibold text-sm text-white/90">
+                          {o.title ||
+                            o.token ||
+                            o.type ||
+                            `Order ${o.id || o.orderId}`}
+                        </div>
+                        <div className="text-xs text-white/70 mt-1">
+                          {o.description ||
+                            o.message ||
+                            o.details ||
+                            `Amount: ${o.amount || o.estimatedTokens || ""}`}
+                        </div>
+                        <div className="text-xs text-white/60 mt-2">
+                          Payment: {o.paymentMethod || o.payment || "—"}
+                        </div>
                       </div>
                       <div className="flex-shrink-0">
                         <Button
-                          onClick={() => navigate("/express/buy-trade", { state: { order: o, openChat: true } })}
+                          onClick={() =>
+                            navigate("/express/buy-trade", {
+                              state: { order: o, openChat: true },
+                            })
+                          }
                           className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
                         >
                           Continue
@@ -370,7 +391,6 @@ export default function Select() {
                 className="max-h-[320px] w-full object-contain"
               />
             </div>
-
           </div>
         )}
       </div>

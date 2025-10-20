@@ -999,7 +999,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
               </Alert>
             )}
           </div>
-        </div>
+      </div>
       </div>
     </div>
   );

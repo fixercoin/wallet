@@ -450,7 +450,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 // If wallet has no balances, don't show any amount
                 if (!hasAnyBalance) {
                   return (
-                    <div className="text-3xl font-bold text-white leading-tight">
+                    <div className="text-2xl font-bold text-white leading-tight">
                       $ 0.000
                     </div>
                   );
@@ -487,7 +487,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 return (
                   <>
-                    <div className="text-3xl font-bold text-white leading-tight">
+                    <div className="text-2xl font-bold text-white leading-tight">
                       {formatCurrency(total, {
                         from: "USD",
                         minimumFractionDigits: 2,

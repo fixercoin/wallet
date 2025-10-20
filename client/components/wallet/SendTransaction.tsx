@@ -735,6 +735,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
+      {/* Header and Form Wrapper */}
+      <div className="w-full max-w-md">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
@@ -753,8 +755,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         </div>
       </div>
 
-      <div className={`flex-1 flex ${step === "confirm" ? "items-center justify-center" : "items-start"} px-4 py-6 relative z-20`}>
-        <div className="w-full max-w-md bg-transparent relative">
+      <div className="px-4 py-6 relative">
           {isLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
               <div className="text-[hsl(var(--foreground))]">

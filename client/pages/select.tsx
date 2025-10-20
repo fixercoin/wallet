@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Send } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
@@ -19,6 +19,8 @@ import {
   saveNotification,
   broadcastNotification,
   sendChatMessage,
+  loadChatHistory,
+  parseWebSocketMessage,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
@@ -29,7 +31,7 @@ export default function Select() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const { toast } = useToast();
-  const { wallet } = useWallet();
+  const { wallet, tokens } = useWallet();
   const action = (location.state?.action || null) as ActionType | null;
   const payload = (location.state?.payload || null) as any;
 
@@ -37,13 +39,134 @@ export default function Select() {
     return (payload && (payload.roomId || payload.orderId)) || null;
   }, [payload]);
 
-  const { send } = useDurableRoom(derivedRoomId || "global", API_BASE);
+  const { send, events } = useDurableRoom(derivedRoomId || "global", API_BASE);
 
   const [showConfirmation, setShowConfirmation] = useState(
     !!location.state?.confirmation,
   );
-
+  const [openChat, setOpenChat] = useState<boolean>(
+    Boolean(location.state?.openChat || action || false),
+  );
   const confirmationData = location.state?.confirmation;
+
+  const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
+  const [messageInput, setMessageInput] = useState<string>("");
+
+  useEffect(() => {
+    if (!derivedRoomId) return;
+    const history = loadChatHistory(derivedRoomId);
+    setChatLog(history);
+  }, [derivedRoomId]);
+
+  useEffect(() => {
+    if (!events.length || !derivedRoomId) return;
+    const last = events[events.length - 1] as any;
+    if (last.kind === "chat" && last.data?.text) {
+      const msg = parseWebSocketMessage(last.data.text);
+      if (msg && msg.roomId === derivedRoomId) {
+        saveChatMessage(msg);
+        setChatLog((prev) => {
+          if (prev.find((m) => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+      }
+    }
+  }, [events, derivedRoomId]);
+
+  const sendTextMessage = () => {
+    if (!messageInput.trim() || !derivedRoomId || !wallet?.publicKey) return;
+    const userRole: "buyer" | "seller" =
+      payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
+    const message: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      roomId: derivedRoomId,
+      senderWallet: wallet.publicKey,
+      senderRole: userRole,
+      type: "message",
+      text: messageInput.trim(),
+      timestamp: Date.now(),
+    };
+    saveChatMessage(message);
+    sendChatMessage(send, message);
+    setChatLog((prev) => [...prev, message]);
+    setMessageInput("");
+  };
+
+  async function resizeImageToDataUrl(
+    file: File,
+    maxDim: number = 1024,
+    quality: number = 0.8,
+  ): Promise<string> {
+    const img = new Image();
+    const fileUrl = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = fileUrl;
+      });
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      if (width >= height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas unsupported");
+      ctx.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL("image/jpeg", quality);
+    } finally {
+      URL.revokeObjectURL(fileUrl);
+    }
+  }
+
+  async function handleImageAttachment(file: File) {
+    if (!file || !derivedRoomId || !wallet?.publicKey) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      const userRole: "buyer" | "seller" =
+        payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        roomId: derivedRoomId,
+        senderWallet: wallet.publicKey,
+        senderRole: userRole,
+        type: "attachment",
+        text: "Sent an image",
+        metadata: { attachmentDataUrl: dataUrl, filename: file.name },
+        timestamp: Date.now(),
+      };
+      saveChatMessage(message);
+      sendChatMessage(send, message);
+      setChatLog((prev) => [...prev, message]);
+    } catch (e) {
+      toast({
+        title: "Upload failed",
+        description: "Could not attach image",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const [adminTokenSymbol, setAdminTokenSymbol] = useState<string>(
+    tokens[0]?.symbol || "SOL",
+  );
+  const [adminAmount, setAdminAmount] = useState<string>("");
+  const [adminToWallet, setAdminToWallet] = useState<string>("");
+  const adminTokenInfo = useMemo(
+    () => tokens.find((t) => t.symbol === adminTokenSymbol),
+    [tokens, adminTokenSymbol],
+  );
+  const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
 
   const handleConfirmPayment = async () => {
     try {
@@ -94,21 +217,7 @@ export default function Select() {
           title: "Payment marked",
           description: "Seller will be notified for verification",
         });
-        navigate("/express/buy-trade", {
-          state: {
-            order: {
-              id: roomId,
-              type: "buy",
-              token: payload.token,
-              amountPKR: payload.amountPKR,
-              pricePKRPerQuote: payload.pricePKRPerQuote,
-              quoteAsset: payload.token,
-              paymentMethod: payload.paymentMethod,
-            },
-            openChat: true,
-            initialPhase: "awaiting_seller_verified",
-          },
-        });
+        setOpenChat(true);
       } else if (action === "seller_sent") {
         const roomId = payload.roomId as string;
         const message: ChatMessage = {
@@ -145,21 +254,7 @@ export default function Select() {
           title: "Transfer marked sent",
           description: "Buyer will be notified",
         });
-        navigate("/express/buy-trade", {
-          state: {
-            order: {
-              id: roomId,
-              type: "sell",
-              token: payload.token,
-              amountPKR: payload.amountPKR,
-              pricePKRPerQuote: payload.pricePKRPerQuote,
-              quoteAsset: payload.token,
-              paymentMethod: payload.paymentMethod,
-            },
-            openChat: true,
-            initialPhase: "awaiting_seller_verified",
-          },
-        });
+        setOpenChat(true);
       }
     } finally {
       setShowConfirmation(false);
@@ -168,11 +263,9 @@ export default function Select() {
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
-      {/* Decorative blobs */}
       <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Back button at top-left */}
       <div className="absolute top-4 left-4 z-30">
         <button
           onClick={() => navigate("/")}
@@ -183,7 +276,6 @@ export default function Select() {
         </button>
       </div>
 
-      {/* Appeal at top-right */}
       <div className="absolute top-4 right-4 z-30">
         <a
           href="mailto:info@fixorium.com.pk"
@@ -193,29 +285,7 @@ export default function Select() {
         </a>
       </div>
 
-      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
-        {/* Banner with image (no background color) */}
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square rounded-2xl sm:rounded-3xl relative overflow-hidden p-0 flex items-center justify-center">
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets%2Fd0658813d4084fba91e188ce3fc9ac4f%2Ff98a0c38026744178f6ea91c30482956?format=webp&width=800"
-            alt="Banner"
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Fixorium P2P brief card */}
-        <div className="mt-0 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl border border-white p-4 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold uppercase">
-            FIXORIUM P2P
-          </h3>
-          <p className="mt-1 text-sm sm:text-base text-white/80 uppercase">
-            Buy and sell crypto directly with peers using secure escrow, fast
-            settlement, and low fees. Choose BUY or SELL to start a trade in
-            seconds.
-          </p>
-        </div>
-
-        {/* Actions card under banner with only border color */}
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
         <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
@@ -233,9 +303,170 @@ export default function Select() {
             </Button>
           </div>
         </div>
+
+        {openChat && derivedRoomId && (
+          <div className="w-[350px]">
+            <div className="rounded-2xl p-3 space-y-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
+              <div className="w-[350px] h-[350px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+                {chatLog.length === 0 ? (
+                  <div className="text-xs text-white/60 text-center py-4">
+                    Chat conversation will appear here
+                  </div>
+                ) : (
+                  chatLog.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`text-xs p-2 rounded ${
+                        msg.senderWallet === wallet?.publicKey
+                          ? "bg-[#FF7A5C]/20 text-white/90"
+                          : "bg-[#1a2540]/50 text-white/70"
+                      }`}
+                    >
+                      <div className="font-semibold text-white/80">
+                        {msg.senderRole === "buyer" ? "Buyer" : "Seller"}
+                      </div>
+                      <div>{msg.text}</div>
+                      {msg.metadata?.attachmentDataUrl && (
+                        <div className="mt-2">
+                          <img
+                            src={msg.metadata.attachmentDataUrl}
+                            alt="attachment"
+                            className="rounded-lg max-h-48 border border-white/20"
+                          />
+                        </div>
+                      )}
+                      <div className="text-[10px] text-white/50 mt-1">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                  placeholder="Type a message..."
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                />
+                <input
+                  id="attach-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.currentTarget.files?.[0];
+                    if (f) handleImageAttachment(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById("attach-input")?.click()
+                  }
+                  className="wallet-button-secondary px-3"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={sendTextMessage}
+                  className="wallet-button-primary px-4"
+                  disabled={!messageInput.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {wallet?.publicKey === ADMIN_WALLET && (
+              <div className="mt-3 rounded-2xl p-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
+                <div className="text-sm font-medium mb-2">
+                  Admin: Send assets
+                </div>
+                <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+                  <div className="text-xs font-medium mb-2">
+                    Select token and balance
+                  </div>
+                  <select
+                    value={adminTokenSymbol}
+                    onChange={(e) => setAdminTokenSymbol(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white cursor-pointer"
+                  >
+                    {tokens.map((t) => (
+                      <option
+                        key={t.mint}
+                        value={t.symbol}
+                        className="bg-[#1a2540] text-white"
+                      >
+                        {t.symbol} —{" "}
+                        {typeof t.balance === "number"
+                          ? t.balance.toFixed(6)
+                          : 0}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-2 text-xs">
+                    Wallet balance:{" "}
+                    {adminTokenInfo?.balance?.toFixed(6) || "0.000000"}{" "}
+                    {adminTokenSymbol}
+                  </div>
+                </div>
+                <div className="grid gap-2 mt-3">
+                  <input
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                    placeholder="Amount"
+                    value={adminAmount}
+                    onChange={(e) => setAdminAmount(e.target.value)}
+                  />
+                  <input
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                    placeholder="To wallet"
+                    value={adminToWallet}
+                    onChange={(e) => setAdminToWallet(e.target.value)}
+                  />
+                </div>
+                {!readyToConfirmSend ? (
+                  <Button
+                    onClick={() => {
+                      setReadyToConfirmSend(true);
+                      toast({ title: "Transaction prepared" });
+                    }}
+                    className="wallet-button-primary w-full mt-3"
+                  >
+                    Send transaction
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      if (!derivedRoomId || !wallet?.publicKey) return;
+                      const message: ChatMessage = {
+                        id: `msg-${Date.now()}`,
+                        roomId: derivedRoomId,
+                        senderWallet: wallet.publicKey,
+                        senderRole: "seller",
+                        type: "admin_transferred",
+                        text: `Admin sent ${adminAmount || "0"} ${adminTokenSymbol} to ${adminToWallet || ""}`,
+                        timestamp: Date.now(),
+                      };
+                      saveChatMessage(message);
+                      sendChatMessage(send, message);
+                      toast({ title: "Assets sent" });
+                      setReadyToConfirmSend(false);
+                      setAdminAmount("");
+                    }}
+                    className="wallet-button-secondary w-full mt-3"
+                  >
+                    I have sent asset
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Confirmation Modal */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

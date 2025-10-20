@@ -475,33 +475,41 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[hsl(var(--foreground))] p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={onBack}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+            aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-[hsl(var(--foreground))] flex items-center gap-2">
-            <Gift className="h-5 w-5" /> Airdrop Distribution
-          </h1>
+          <div className="flex-1 text-center font-medium text-sm">
+            AIRDROP DISTRIBUTION
+          </div>
         </div>
+      </div>
 
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm p-6 rounded-lg">
+      <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
+        <div className="bg-transparent p-6 rounded-2xl">
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-300">
                 Select Token (only available here)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] mt-2">
+                <SelectTrigger className="w-full bg-[#1a2540]/50 text-white placeholder:text-gray-300 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                <SelectContent className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
                       {t.symbol} {t.balance ? ` — ${t.balance}` : ""}
@@ -520,7 +528,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-[hsl(var(--input))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                  className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}
@@ -537,7 +545,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 semicolons)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] rounded-md h-40 font-mono text-sm"
+                className="w-full mt-2 p-2 bg-[#1a2540]/50 text-white rounded-md h-40 font-mono text-sm border border-[#FF7A5C]/30 placeholder:text-gray-300"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"
@@ -555,7 +563,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 onClick={validateAndStart}
                 disabled={isRunning || recipients.length === 0}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg"
+                className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
               >
                 {isRunning
                   ? `Running (${progress.sent}/${progress.total})`
@@ -564,7 +572,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 variant="outline"
                 onClick={handleDownloadList}
-                className="bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white"
               >
                 LIST
               </Button>

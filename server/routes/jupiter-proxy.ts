@@ -265,16 +265,36 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
         return res.json(data);
       }
       lastText = await response.text().catch(() => "");
+
+      // If 404 or 400, likely means no route exists for this pair
+      if (response.status === 404 || response.status === 400) {
+        console.warn(
+          `Jupiter quote returned ${response.status} - likely no route for this pair`,
+          { inputMint: req.query.inputMint, outputMint: req.query.outputMint },
+        );
+        return res.status(response.status).json({
+          error: `No swap route found for this pair`,
+          details: lastText,
+          code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+        });
+      }
+
+      // Retry on rate limit or server errors
       if (response.status === 429 || response.status >= 500) {
+        console.warn(
+          `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/3)`,
+        );
         await new Promise((r) => setTimeout(r, attempt * 500));
         continue;
       }
       break;
     }
 
-    return res
-      .status(lastStatus || 500)
-      .json({ error: `Quote failed`, details: lastText });
+    return res.status(lastStatus || 500).json({
+      error: `Quote API error`,
+      details: lastText,
+      code: lastStatus === 504 ? "TIMEOUT" : "API_ERROR",
+    });
   } catch (error) {
     console.error("Jupiter quote proxy error:", {
       params: req.query,

@@ -4,6 +4,7 @@ export type EventMessage =
   | { kind: "snapshot"; data: { orders: any[] } }
   | { kind: "order:new"; data: any }
   | { kind: "chat"; data: { id: string; text: string; at: number } }
+  | { kind: "notification"; data: any }
   | { kind: "pong"; ts: number };
 
 export function useDurableRoom(roomId: string, httpBase: string = "") {

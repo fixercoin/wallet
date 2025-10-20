@@ -85,7 +85,30 @@ class JupiterAPI {
       const txt = await response.text().catch(() => "");
 
       if (!response.ok) {
-        // Fallback: try direct Jupiter API (CORS-enabled)
+        try {
+          const errorData = txt ? JSON.parse(txt) : {};
+          const errorCode = errorData?.code;
+
+          // If no route found, return null to trigger indicative pricing fallback
+          if (errorCode === "NO_ROUTE_FOUND" || response.status === 404) {
+            console.warn(
+              `No swap route available from Jupiter for ${inputMint} -> ${outputMint}`,
+            );
+            return null;
+          }
+
+          // For other client errors (400, etc), also return null
+          if (response.status === 400) {
+            console.warn(
+              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}`,
+            );
+            return null;
+          }
+        } catch (parseErr) {
+          console.debug("Could not parse error response:", parseErr);
+        }
+
+        // Fallback: try direct Jupiter API (CORS-enabled) for retries
         const directUrl = `${this.baseUrl}/quote?${params.toString()}`;
         const directResp = await this.fetchWithTimeout(directUrl, 12000).catch(
           () => new Response("", { status: 0 } as any),
@@ -96,7 +119,7 @@ class JupiterAPI {
           } catch {}
         }
         console.warn(
-          "Jupiter proxy quote non-ok response:",
+          "Jupiter quote unavailable (proxy & direct):",
           response.status,
           txt,
         );

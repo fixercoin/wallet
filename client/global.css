@@ -216,7 +216,6 @@
     color: white !important;
   }
 
-
   /* Remove white borders and lines from express-p2p-page */
   .express-p2p-page .border-white,
   .express-p2p-page [class*="border-white"] {

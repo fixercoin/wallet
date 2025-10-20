@@ -786,7 +786,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         >
                           <div className="flex items-center justify-between w-full">
                             <span className="font-medium text-white">
-                              {t.symbol} ~ {(t.symbol === "SOL" ? balance : t.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                              {t.symbol} ~{" "}
+                              {(t.symbol === "SOL"
+                                ? balance
+                                : t.balance || 0
+                              ).toLocaleString(undefined, {
+                                maximumFractionDigits: 8,
+                              })}
                             </span>
                           </div>
                         </SelectItem>

@@ -14,6 +14,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
+import { listOrders } from "@/lib/p2p";
 import {
   saveChatMessage,
   saveNotification,

@@ -944,13 +944,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {/* Alerts */}
             {isLoading && (
               <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
-                Signing with local wallet and submitting transaction...
+                Signing & Connecting - submitting transaction  ...
               </Alert>
             )}
             {indicative && (
               <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
                 <AlertDescription>
-                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no
+                   Jupiter has no
                   direct route for this pair. Price is estimated from DEX data
                   and may vary. You can still attempt the swap, but execution
                   depends on available liquidity.

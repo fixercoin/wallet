@@ -807,7 +807,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Enter Solana address"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                   />
                 </div>
 
@@ -834,7 +834,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                   />
                   <div className="flex gap-2">
                     <Button
@@ -892,7 +892,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Add a note"
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                   />
                 </div>
 

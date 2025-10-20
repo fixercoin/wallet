@@ -208,7 +208,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     </span>
                     <span
                       onClick={() => setRecoverMode("privateKey")}
-                      className={`${recoverMode === "privateKey" ? "font-semibold" : "opacity-70"} cursor-pointer`}
+                      className={`${recoverMode === "privateKey" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
                     >
                       Private Key
                     </span>

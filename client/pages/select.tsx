@@ -75,7 +75,8 @@ export default function Select() {
 
   const sendTextMessage = () => {
     if (!messageInput.trim() || !derivedRoomId || !wallet?.publicKey) return;
-    const userRole: "buyer" | "seller" = payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
+    const userRole: "buyer" | "seller" =
+      payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
     const message: ChatMessage = {
       id: `msg-${Date.now()}`,
       roomId: derivedRoomId,
@@ -132,7 +133,8 @@ export default function Select() {
     if (!file || !derivedRoomId || !wallet?.publicKey) return;
     try {
       const dataUrl = await resizeImageToDataUrl(file);
-      const userRole: "buyer" | "seller" = payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
+      const userRole: "buyer" | "seller" =
+        payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
       const message: ChatMessage = {
         id: `msg-${Date.now()}`,
         roomId: derivedRoomId,
@@ -147,14 +149,23 @@ export default function Select() {
       sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
     } catch (e) {
-      toast({ title: "Upload failed", description: "Could not attach image", variant: "destructive" });
+      toast({
+        title: "Upload failed",
+        description: "Could not attach image",
+        variant: "destructive",
+      });
     }
   }
 
-  const [adminTokenSymbol, setAdminTokenSymbol] = useState<string>(tokens[0]?.symbol || "SOL");
+  const [adminTokenSymbol, setAdminTokenSymbol] = useState<string>(
+    tokens[0]?.symbol || "SOL",
+  );
   const [adminAmount, setAdminAmount] = useState<string>("");
   const [adminToWallet, setAdminToWallet] = useState<string>("");
-  const adminTokenInfo = useMemo(() => tokens.find((t) => t.symbol === adminTokenSymbol), [tokens, adminTokenSymbol]);
+  const adminTokenInfo = useMemo(
+    () => tokens.find((t) => t.symbol === adminTokenSymbol),
+    [tokens, adminTokenSymbol],
+  );
   const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
 
   const handleConfirmPayment = async () => {
@@ -352,7 +363,9 @@ export default function Select() {
                 />
                 <Button
                   type="button"
-                  onClick={() => document.getElementById("attach-input")?.click()}
+                  onClick={() =>
+                    document.getElementById("attach-input")?.click()
+                  }
                   className="wallet-button-secondary px-3"
                 >
                   <Plus className="h-4 w-4" />
@@ -369,22 +382,35 @@ export default function Select() {
 
             {wallet?.publicKey === ADMIN_WALLET && (
               <div className="mt-3 rounded-2xl p-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
-                <div className="text-sm font-medium mb-2">Admin: Send assets</div>
+                <div className="text-sm font-medium mb-2">
+                  Admin: Send assets
+                </div>
                 <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
-                  <div className="text-xs font-medium mb-2">Select token and balance</div>
+                  <div className="text-xs font-medium mb-2">
+                    Select token and balance
+                  </div>
                   <select
                     value={adminTokenSymbol}
                     onChange={(e) => setAdminTokenSymbol(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white cursor-pointer"
                   >
                     {tokens.map((t) => (
-                      <option key={t.mint} value={t.symbol} className="bg-[#1a2540] text-white">
-                        {t.symbol} — {typeof t.balance === "number" ? t.balance.toFixed(6) : 0}
+                      <option
+                        key={t.mint}
+                        value={t.symbol}
+                        className="bg-[#1a2540] text-white"
+                      >
+                        {t.symbol} —{" "}
+                        {typeof t.balance === "number"
+                          ? t.balance.toFixed(6)
+                          : 0}
                       </option>
                     ))}
                   </select>
                   <div className="mt-2 text-xs">
-                    Wallet balance: {adminTokenInfo?.balance?.toFixed(6) || "0.000000"} {adminTokenSymbol}
+                    Wallet balance:{" "}
+                    {adminTokenInfo?.balance?.toFixed(6) || "0.000000"}{" "}
+                    {adminTokenSymbol}
                   </div>
                 </div>
                 <div className="grid gap-2 mt-3">

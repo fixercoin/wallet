@@ -285,7 +285,6 @@ export default function Select() {
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg sm:text-xl font-semibold text-white/90">Chat</h1>
             <div className="flex gap-2">
               <Button
                 onClick={() => navigate("/orders/pending")}

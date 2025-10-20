@@ -236,7 +236,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       onChange={(e) => setRecoveryPhrase(e.target.value)}
                       placeholder="Paste your 12 or 24-word recovery phrase here..."
                       aria-label="Recovery Phrase"
-                      className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
+                      className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg border border-transparent text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
                     />
                     <p className="text-xs text-gray-300">
                       Derivation Path (Solana default) →
@@ -258,7 +258,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         : "Hidden"
                     }
                     aria-label="Private Key"
-                    className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
+                    className="w-full h-32 p-4 bg-[#1a2540]/50 rounded-lg border border-transparent text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/30"
                   />
                 )}
               </div>

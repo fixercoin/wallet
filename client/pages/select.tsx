@@ -363,7 +363,7 @@ export default function Select() {
               )}
             </div>
 
-            <div className="w-full rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60 flex items-center justify-center">
+            <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
               <img
                 src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
                 alt="Payment illustration"

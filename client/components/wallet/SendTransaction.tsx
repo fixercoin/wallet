@@ -782,7 +782,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         <SelectItem
                           key={t.mint}
                           value={t.mint}
-                          className="text-[hsl(var(--foreground))]"
+                          className="text-white"
                         >
                           <div className="flex items-center justify-between w-full">
                             <span className="font-medium">{t.symbol}</span>

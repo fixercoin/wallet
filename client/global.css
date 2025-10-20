@@ -190,7 +190,7 @@
     color: white !important;
   }
 
-  /* Select menu text override */
+  /* Select listbox text override */
   [role="listbox"] p,
   [role="listbox"] span,
   [role="listbox"] a,

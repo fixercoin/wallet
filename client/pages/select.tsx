@@ -305,9 +305,9 @@ export default function Select() {
         </div>
 
         {wallet?.publicKey && (
-          <div className="w-[300px] order-1">
-            <div className="rounded-2xl p-3 space-y-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
-              <div className="w-[300px] h-[300px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+          <div className="w-full order-1">
+            <div className="rounded-2xl p-3 space-y-3 bg-[#1a2540]/60">
+              <div className="w-full h-[300px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg">
                 {chatLog.length === 0 ? (
                   <div className="text-xs text-white/60 text-center py-4">
                     Chat conversation will appear here
@@ -331,7 +331,7 @@ export default function Select() {
                           <img
                             src={msg.metadata.attachmentDataUrl}
                             alt="attachment"
-                            className="rounded-lg max-h-48 border border-white/20"
+                            className="rounded-lg max-h-48"
                           />
                         </div>
                       )}
@@ -381,18 +381,18 @@ export default function Select() {
             </div>
 
             {wallet?.publicKey === ADMIN_WALLET && (
-              <div className="mt-3 rounded-2xl p-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
+              <div className="mt-3 rounded-2xl p-3 bg-[#1a2540]/60">
                 <div className="text-sm font-medium mb-2">
                   Admin: Send assets
                 </div>
-                <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+                <div className="p-3 rounded-xl bg-[#0f1520]/50">
                   <div className="text-xs font-medium mb-2">
                     Select token and balance
                   </div>
                   <select
                     value={adminTokenSymbol}
                     onChange={(e) => setAdminTokenSymbol(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white cursor-pointer"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white cursor-pointer"
                   >
                     {tokens.map((t) => (
                       <option
@@ -415,13 +415,13 @@ export default function Select() {
                 </div>
                 <div className="grid gap-2 mt-3">
                   <input
-                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white placeholder-white/40"
                     placeholder="Amount"
                     value={adminAmount}
                     onChange={(e) => setAdminAmount(e.target.value)}
                   />
                   <input
-                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white placeholder-white/40"
                     placeholder="To wallet"
                     value={adminToWallet}
                     onChange={(e) => setAdminToWallet(e.target.value)}

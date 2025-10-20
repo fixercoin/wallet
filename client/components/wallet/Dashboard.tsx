@@ -481,7 +481,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 return (
                   <>
-                    <div className="text-[40px] font-bold text-white leading-tight">
+                    <div className="text-3xl font-bold text-white leading-tight">
                       {formatCurrency(total, {
                         from: "USD",
                         minimumFractionDigits: 2,

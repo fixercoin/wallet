@@ -267,7 +267,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   variant="outline"
                   onClick={() => setActiveTab("create")}
-                  className="flex-1 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                  className="flex-1 h-12 rounded-xl bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10 uppercase"
                 >
                   Back
                 </Button>
@@ -383,7 +383,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• ••••••���••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>
@@ -405,7 +405,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   variant="outline"
                   onClick={() => setActiveTab("create")}
-                  className="flex-1 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                  className="flex-1 h-12 rounded-xl bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10 uppercase"
                 >
                   Back
                 </Button>

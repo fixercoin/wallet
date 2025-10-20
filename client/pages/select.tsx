@@ -46,6 +46,29 @@ export default function Select() {
   );
   const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
 
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoadingOrders(true);
+        const res = await listOrders(effectiveRoomId);
+        if (!mounted) return;
+        setOrders(res.orders || []);
+      } catch (e) {
+        console.error("Failed to load orders", e);
+      } finally {
+        if (mounted) setLoadingOrders(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [effectiveRoomId]);
+
   const [showConfirmation, setShowConfirmation] = useState(
     !!location.state?.confirmation,
   );
@@ -295,14 +318,14 @@ export default function Select() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}
-              className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
+              className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               BUY
             </Button>
 
             <Button
               onClick={() => navigate("/sell-now")}
-              className="w-full py-2 sm:py-3 rounded-lg bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
+              className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               SELL
             </Button>
@@ -315,8 +338,37 @@ export default function Select() {
               <img
                 src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
                 alt="Payment illustration"
-                className="max-h-[320px] w-auto object-contain rounded-xl"
+                className="max-h-[320px] w-full object-contain"
               />
+            </div>
+
+            {/* Orders list displayed as prompt messages */}
+            <div className="mt-4 space-y-3">
+              {loadingOrders ? (
+                <div className="text-sm text-white/60">Loading orders...</div>
+              ) : orders.length === 0 ? (
+                <div className="text-sm text-white/60">No orders available.</div>
+              ) : (
+                orders.map((o: any) => (
+                  <div key={o.id || o.orderId} className="p-4 bg-[#0f1520]/50 border border-white/10">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm text-white/90">{o.title || o.token || o.type || `Order ${o.id || o.orderId}`}</div>
+                        <div className="text-xs text-white/70 mt-1">{o.description || o.message || o.details || `Amount: ${o.amount || o.estimatedTokens || ''}`}</div>
+                        <div className="text-xs text-white/60 mt-2">Payment: {o.paymentMethod || o.payment || '—'}</div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Button
+                          onClick={() => navigate("/express/buy-trade", { state: { order: o, openChat: true } })}
+                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                        >
+                          Continue
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
           </div>

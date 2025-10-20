@@ -777,7 +777,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300">
                       <SelectValue placeholder="Select token" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                    <SelectContent className="bg-[#0f1520] border border-white/10 text-white">
                       {availableTokens.map((t) => (
                         <SelectItem
                           key={t.mint}

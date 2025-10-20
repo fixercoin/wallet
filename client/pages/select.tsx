@@ -276,32 +276,29 @@ export default function Select() {
         </button>
       </div>
 
-      <div className="absolute top-4 right-4 z-30">
-        <a
-          href="mailto:info@fixorium.com.pk"
-          className="text-sm text-white/70 hover:text-blue-300 transition-colors underline"
-        >
-          APPEAL
-        </a>
-      </div>
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
         <div className="w-full order-0 flex items-center justify-between">
-          <h1 className="text-lg sm:text-xl font-semibold text-white/90">Chat</h1>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => navigate("/orders/pending")}
-              className="px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20"
-            >
-              Pending
-            </Button>
-            <Button
-              onClick={() => navigate("/orders/completed")}
-              className="wallet-button-primary px-3 py-1.5"
-            >
-              Completed
-            </Button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg sm:text-xl font-semibold text-white/90">Chat</h1>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate("/orders/pending")}
+                className="px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20"
+              >
+                Pending
+              </Button>
+              <Button
+                onClick={() => navigate("/orders/completed")}
+                className="wallet-button-primary px-3 py-1.5"
+              >
+                Completed
+              </Button>
+            </div>
           </div>
+          <Button asChild className="wallet-button-secondary px-3 py-1.5">
+            <a href="mailto:info@fixorium.com.pk">Appeal</a>
+          </Button>
         </div>
         <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">

@@ -39,7 +39,11 @@ export default function Select() {
     return (payload && (payload.roomId || payload.orderId)) || null;
   }, [payload]);
 
-  const { send, events } = useDurableRoom(derivedRoomId || "global", API_BASE);
+  const effectiveRoomId: string = useMemo(
+    () => derivedRoomId || "global",
+    [derivedRoomId],
+  );
+  const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
 
   const [showConfirmation, setShowConfirmation] = useState(
     !!location.state?.confirmation,
@@ -47,23 +51,26 @@ export default function Select() {
   const [openChat, setOpenChat] = useState<boolean>(
     Boolean(location.state?.openChat || action || false),
   );
+
+  useEffect(() => {
+    if (wallet?.publicKey === ADMIN_WALLET) setOpenChat(true);
+  }, [wallet]);
   const confirmationData = location.state?.confirmation;
 
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState<string>("");
 
   useEffect(() => {
-    if (!derivedRoomId) return;
-    const history = loadChatHistory(derivedRoomId);
+    const history = loadChatHistory(effectiveRoomId);
     setChatLog(history);
-  }, [derivedRoomId]);
+  }, [effectiveRoomId]);
 
   useEffect(() => {
-    if (!events.length || !derivedRoomId) return;
+    if (!events.length) return;
     const last = events[events.length - 1] as any;
     if (last.kind === "chat" && last.data?.text) {
       const msg = parseWebSocketMessage(last.data.text);
-      if (msg && msg.roomId === derivedRoomId) {
+      if (msg && msg.roomId === effectiveRoomId) {
         saveChatMessage(msg);
         setChatLog((prev) => {
           if (prev.find((m) => m.id === msg.id)) return prev;
@@ -71,15 +78,15 @@ export default function Select() {
         });
       }
     }
-  }, [events, derivedRoomId]);
+  }, [events, effectiveRoomId]);
 
   const sendTextMessage = () => {
-    if (!messageInput.trim() || !derivedRoomId || !wallet?.publicKey) return;
+    if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;
     const userRole: "buyer" | "seller" =
       payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
     const message: ChatMessage = {
       id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
+      roomId: effectiveRoomId,
       senderWallet: wallet.publicKey,
       senderRole: userRole,
       type: "message",
@@ -130,14 +137,14 @@ export default function Select() {
   }
 
   async function handleImageAttachment(file: File) {
-    if (!file || !derivedRoomId || !wallet?.publicKey) return;
+    if (!file || !effectiveRoomId || !wallet?.publicKey) return;
     try {
       const dataUrl = await resizeImageToDataUrl(file);
       const userRole: "buyer" | "seller" =
         payload?.sellerWallet === wallet.publicKey ? "seller" : "buyer";
       const message: ChatMessage = {
         id: `msg-${Date.now()}`,
-        roomId: derivedRoomId,
+        roomId: effectiveRoomId,
         senderWallet: wallet.publicKey,
         senderRole: userRole,
         type: "attachment",
@@ -188,7 +195,7 @@ export default function Select() {
           senderWallet: wallet.publicKey,
           senderRole: "buyer",
           type: "buyer_paid",
-          text: `Payment sent: ${payload.amountPKR} PKR via ${payload.paymentMethod}\n\nSend ${estimatedTokens.toFixed(6)} ${payload.token} to:\n${payload.buyerWallet}`,
+          text: `I have paid fiat.\nOrder: ${roomId}\nBuyer: ${wallet.publicKey}\nAmount: ${payload.amountPKR} PKR via ${payload.paymentMethod}\nPlease send ${estimatedTokens.toFixed(6)} ${payload.token} to ${payload.buyerWallet}`,
           metadata: {
             orderId: roomId,
             token: payload.token,
@@ -226,12 +233,13 @@ export default function Select() {
           senderWallet: wallet.publicKey,
           senderRole: "seller",
           type: "seller_sent",
-          text: `Seller sent ${Number(payload.amountTokens).toFixed(6)} ${payload.token} to ${ADMIN_WALLET}\n\nBuyer, please send ${Number(payload.amountPKR).toFixed(2)} PKR via ${payload.paymentMethod}`,
+          text: `I have sent assets.\nOrder: ${roomId}\nPayment method: ${payload.paymentMethod}\nSent ${Number(payload.amountTokens).toFixed(6)} ${payload.token} to ${ADMIN_WALLET}\nBuyer, please send ${Number(payload.amountPKR).toFixed(2)} PKR`,
           metadata: {
             orderId: roomId,
             token: payload.token,
             amountTokens: payload.amountTokens,
             amountPKR: payload.amountPKR,
+            paymentMethod: payload.paymentMethod,
             sellerWallet: payload.sellerWallet,
             adminWallet: payload.adminWallet,
           },
@@ -276,17 +284,13 @@ export default function Select() {
         </button>
       </div>
 
-      <div className="absolute top-4 right-4 z-30">
-        <a
-          href="mailto:info@fixorium.com.pk"
-          className="text-sm text-white/70 hover:text-blue-300 transition-colors underline"
-        >
-          APPEAL
-        </a>
-      </div>
-
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
+          <span className="text-sm text-white/70 select-none">
+            info@fixorium.com.pk
+          </span>
+        </div>
+        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}
@@ -304,10 +308,10 @@ export default function Select() {
           </div>
         </div>
 
-        {openChat && derivedRoomId && (
-          <div className="w-[350px]">
-            <div className="rounded-2xl p-3 space-y-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
-              <div className="w-[350px] h-[350px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+        {wallet?.publicKey && (
+          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
+            <div className="w-full rounded-2xl p-4 sm:p-6 space-y-3 bg-[#1a2540]/60">
+              <div className="w-full h-[300px] overflow-y-auto custom-scrollbar space-y-2 bg-[#0f1520]/50">
                 {chatLog.length === 0 ? (
                   <div className="text-xs text-white/60 text-center py-4">
                     Chat conversation will appear here
@@ -331,7 +335,7 @@ export default function Select() {
                           <img
                             src={msg.metadata.attachmentDataUrl}
                             alt="attachment"
-                            className="rounded-lg max-h-48 border border-white/20"
+                            className="rounded-lg max-h-48"
                           />
                         </div>
                       )}
@@ -381,18 +385,18 @@ export default function Select() {
             </div>
 
             {wallet?.publicKey === ADMIN_WALLET && (
-              <div className="mt-3 rounded-2xl p-3 bg-[#1a2540]/60 border border-[#FF7A5C]/30">
+              <div className="mt-3 w-full rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60">
                 <div className="text-sm font-medium mb-2">
                   Admin: Send assets
                 </div>
-                <div className="p-3 rounded-xl bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+                <div className="p-3 rounded-xl bg-[#0f1520]/50">
                   <div className="text-xs font-medium mb-2">
                     Select token and balance
                   </div>
                   <select
                     value={adminTokenSymbol}
                     onChange={(e) => setAdminTokenSymbol(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white cursor-pointer"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white cursor-pointer"
                   >
                     {tokens.map((t) => (
                       <option
@@ -415,13 +419,13 @@ export default function Select() {
                 </div>
                 <div className="grid gap-2 mt-3">
                   <input
-                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white placeholder-white/40"
                     placeholder="Amount"
                     value={adminAmount}
                     onChange={(e) => setAdminAmount(e.target.value)}
                   />
                   <input
-                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
+                    className="px-3 py-2 rounded-lg bg-[#1a2540]/50 text-white placeholder-white/40"
                     placeholder="To wallet"
                     value={adminToWallet}
                     onChange={(e) => setAdminToWallet(e.target.value)}
@@ -440,10 +444,10 @@ export default function Select() {
                 ) : (
                   <Button
                     onClick={() => {
-                      if (!derivedRoomId || !wallet?.publicKey) return;
+                      if (!effectiveRoomId || !wallet?.publicKey) return;
                       const message: ChatMessage = {
                         id: `msg-${Date.now()}`,
-                        roomId: derivedRoomId,
+                        roomId: effectiveRoomId,
                         senderWallet: wallet.publicKey,
                         senderRole: "seller",
                         type: "admin_transferred",

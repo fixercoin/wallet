@@ -661,8 +661,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-        <div className="w-full max-w-md mx-auto pt-8 px-4">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
           <div className="bg-transparent p-8 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
@@ -730,13 +730,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   }
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex flex-col">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+      {/* Header - Fixed at top with transparent background */}
+      <div className="sticky top-0 z-10 bg-transparent">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
@@ -753,8 +753,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         </div>
       </div>
 
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="bg-transparent relative">
+      {/* Form Container - Centered */}
+      <div className="flex-1 flex items-center justify-center relative z-20">
+        <div className="w-full max-w-md px-4 py-6">
           {isLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
               <div className="text-[hsl(var(--foreground))]">

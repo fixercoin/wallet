@@ -448,7 +448,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   ) ||
                   (typeof balance === "number" && balance > 0);
                 // If wallet has no balances, don't show any amount
-                if (!hasAnyBalance) return null;
+                if (!hasAnyBalance) {
+                  return (
+                    <>
+                      <div className="text-xs text-gray-300 uppercase tracking-wider">
+                        TOTAL BALANCE
+                      </div>
+                      <div className="text-2xl font-bold text-white leading-tight">
+                        $ 0.000
+                      </div>
+                    </>
+                  );
+                }
 
                 // Calculate 24h change
                 let totalChange24h = 0;
@@ -481,7 +492,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 return (
                   <>
-                    <div className="text-[40px] font-bold text-white leading-tight">
+                    <div className="text-xs text-gray-300 uppercase tracking-wider">
+                      TOTAL BALANCE
+                    </div>
+                    <div className="text-2xl font-bold text-white leading-tight">
                       {formatCurrency(total, {
                         from: "USD",
                         minimumFractionDigits: 2,

@@ -793,7 +793,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Enter Solana address"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    className="font-mono text-sm bg-transparent border-white/30 text-white placeholder-gray-400"
+                    className="font-mono text-sm bg-transparent border-white/30 text-white caret-white placeholder-gray-400"
                   />
                 </div>
 
@@ -817,7 +817,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="bg-transparent border-white/30 text-white placeholder-gray-400"
+                    className="bg-transparent border-white/30 text-white caret-white placeholder-gray-400"
                   />
                   <div className="flex gap-2">
                     <Button
@@ -872,7 +872,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Add a note"
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    className="bg-transparent border-white/30 text-white placeholder-gray-400"
+                    className="bg-transparent border-white/30 text-white caret-white placeholder-gray-400"
                   />
                 </div>
 

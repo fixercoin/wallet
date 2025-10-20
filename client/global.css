@@ -213,7 +213,7 @@
   [role="option"] small,
   [role="option"] strong,
   [role="option"] em {
-    color: white !important;
+    color: hsl(var(--foreground)) !important;
   }
 
   /* Remove white borders and lines from express-p2p-page */

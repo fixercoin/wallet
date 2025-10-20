@@ -190,31 +190,6 @@
     color: white !important;
   }
 
-  /* Select menu text override */
-  [role="listbox"] p,
-  [role="listbox"] span,
-  [role="listbox"] a,
-  [role="listbox"] li,
-  [role="listbox"] label,
-  [role="listbox"] small,
-  [role="listbox"] strong,
-  [role="listbox"] em,
-  [role="listbox"] h1,
-  [role="listbox"] h2,
-  [role="listbox"] h3,
-  [role="listbox"] h4,
-  [role="listbox"] h5,
-  [role="listbox"] h6,
-  [role="option"] p,
-  [role="option"] span,
-  [role="option"] a,
-  [role="option"] li,
-  [role="option"] label,
-  [role="option"] small,
-  [role="option"] strong,
-  [role="option"] em {
-    color: hsl(var(--foreground)) !important;
-  }
 
   /* Remove white borders and lines from express-p2p-page */
   .express-p2p-page .border-white,

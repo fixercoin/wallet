@@ -661,8 +661,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
-        <div className="w-full max-w-md mx-auto pt-8 px-4">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
           <div className="bg-transparent p-8 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">

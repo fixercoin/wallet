@@ -284,7 +284,7 @@ export default function Select() {
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-4">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
-          <span className="text-sm text-white/70 select-none">APPEAL</span>
+          <span className="text-sm text-white/70 select-none">info@fixorium.com.pk</span>
         </div>
         <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">

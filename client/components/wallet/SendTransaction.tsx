@@ -730,7 +730,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   }
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex flex-col">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
@@ -753,8 +753,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         </div>
       </div>
 
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="bg-transparent relative">
+      <div className={`flex-1 flex ${step === "confirm" ? "items-center justify-center" : "items-start"} px-4 py-6 relative z-20`}>
+        <div className="w-full max-w-md bg-transparent relative">
           {isLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
               <div className="text-[hsl(var(--foreground))]">

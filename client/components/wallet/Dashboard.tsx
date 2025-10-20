@@ -448,7 +448,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   ) ||
                   (typeof balance === "number" && balance > 0);
                 // If wallet has no balances, don't show any amount
-                if (!hasAnyBalance) return null;
+                if (!hasAnyBalance) {
+                  return (
+                    <div className="text-3xl font-bold text-white leading-tight">
+                      $ 0.000
+                    </div>
+                  );
+                }
 
                 // Calculate 24h change
                 let totalChange24h = 0;

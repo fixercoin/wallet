@@ -324,8 +324,8 @@ export default function Select() {
 
         {wallet?.publicKey && (
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
-            <div className="rounded-2xl p-4 sm:p-6 space-y-3 bg-[#1a2540]/60">
-              <div className="w-full h-[300px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#0f1520]/50 rounded-lg">
+            <div className="w-full rounded-2xl p-4 sm:p-6 space-y-3 bg-[#1a2540]/60">
+              <div className="w-full h-[300px] overflow-y-auto custom-scrollbar space-y-2 bg-[#0f1520]/50">
                 {chatLog.length === 0 ? (
                   <div className="text-xs text-white/60 text-center py-4">
                     Chat conversation will appear here
@@ -399,7 +399,7 @@ export default function Select() {
             </div>
 
             {wallet?.publicKey === ADMIN_WALLET && (
-              <div className="mt-3 rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60">
+              <div className="mt-3 w-full rounded-2xl p-4 sm:p-6 bg-[#1a2540]/60">
                 <div className="text-sm font-medium mb-2">
                   Admin: Send assets
                 </div>

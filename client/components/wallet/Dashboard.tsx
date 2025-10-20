@@ -451,8 +451,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 if (!hasAnyBalance) {
                   return (
                     <>
-                      <div className="text-xs text-gray-300 uppercase tracking-wider">TOTAL BALANCE</div>
-                      <div className="text-2xl font-bold text-white leading-tight">$ 0.000</div>
+                      <div className="text-xs text-gray-300 uppercase tracking-wider">
+                        TOTAL BALANCE
+                      </div>
+                      <div className="text-2xl font-bold text-white leading-tight">
+                        $ 0.000
+                      </div>
                     </>
                   );
                 }
@@ -488,7 +492,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 return (
                   <>
-                    <div className="text-xs text-gray-300 uppercase tracking-wider">TOTAL BALANCE</div>
+                    <div className="text-xs text-gray-300 uppercase tracking-wider">
+                      TOTAL BALANCE
+                    </div>
                     <div className="text-2xl font-bold text-white leading-tight">
                       {formatCurrency(total, {
                         from: "USD",

@@ -48,6 +48,10 @@ export default function Select() {
   const [openChat, setOpenChat] = useState<boolean>(
     Boolean(location.state?.openChat || action || false),
   );
+
+  useEffect(() => {
+    if (wallet?.publicKey === ADMIN_WALLET) setOpenChat(true);
+  }, [wallet]);
   const confirmationData = location.state?.confirmation;
 
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
@@ -188,7 +192,7 @@ export default function Select() {
           senderWallet: wallet.publicKey,
           senderRole: "buyer",
           type: "buyer_paid",
-          text: `Payment sent: ${payload.amountPKR} PKR via ${payload.paymentMethod}\n\nSend ${estimatedTokens.toFixed(6)} ${payload.token} to:\n${payload.buyerWallet}`,
+          text: `I have paid fiat.\nOrder: ${roomId}\nBuyer: ${wallet.publicKey}\nAmount: ${payload.amountPKR} PKR via ${payload.paymentMethod}\nPlease send ${estimatedTokens.toFixed(6)} ${payload.token} to ${payload.buyerWallet}`,
           metadata: {
             orderId: roomId,
             token: payload.token,
@@ -226,12 +230,13 @@ export default function Select() {
           senderWallet: wallet.publicKey,
           senderRole: "seller",
           type: "seller_sent",
-          text: `Seller sent ${Number(payload.amountTokens).toFixed(6)} ${payload.token} to ${ADMIN_WALLET}\n\nBuyer, please send ${Number(payload.amountPKR).toFixed(2)} PKR via ${payload.paymentMethod}`,
+          text: `I have sent assets.\nOrder: ${roomId}\nPayment method: ${payload.paymentMethod}\nSent ${Number(payload.amountTokens).toFixed(6)} ${payload.token} to ${ADMIN_WALLET}\nBuyer, please send ${Number(payload.amountPKR).toFixed(2)} PKR`,
           metadata: {
             orderId: roomId,
             token: payload.token,
             amountTokens: payload.amountTokens,
             amountPKR: payload.amountPKR,
+            paymentMethod: payload.paymentMethod,
             sellerWallet: payload.sellerWallet,
             adminWallet: payload.adminWallet,
           },

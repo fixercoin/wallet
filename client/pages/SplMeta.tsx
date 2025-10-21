@@ -117,7 +117,7 @@ export default function SplMeta() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
       <div className="max-w-md mx-auto px-4 py-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold tracking-wider text-white">SPL-META</h1>

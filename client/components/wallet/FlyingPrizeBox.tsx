@@ -10,23 +10,6 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
     <>
       <style>
         {`
-          @keyframes flyLeftToRight {
-            0% {
-              transform: translateX(100vw) rotate(0deg);
-              opacity: 0;
-            }
-            10% {
-              opacity: 1;
-            }
-            90% {
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(-100vw) rotate(0deg);
-              opacity: 0;
-            }
-          }
-
           @keyframes pulse-glow {
             0%, 100% {
               filter: drop-shadow(0 0 15px rgba(255, 122, 92, 0.6)) drop-shadow(0 0 30px rgba(255, 90, 140, 0.4));
@@ -36,26 +19,34 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
             }
           }
 
-          .flying-prize-box {
-            animation: flyLeftToRight 15s linear infinite;
+          @keyframes subtle-bounce {
+            0%, 100% {
+              transform: translateY(0px);
+            }
+            50% {
+              transform: translateY(-8px);
+            }
           }
 
           .prize-box-container {
-            animation: pulse-glow 2s ease-in-out infinite;
+            animation: pulse-glow 2.5s ease-in-out infinite, subtle-bounce 2.5s ease-in-out infinite;
           }
         `}
       </style>
       <div
-        className="flying-prize-box fixed pointer-events-auto"
+        className="flex flex-col items-center justify-center gap-3 cursor-pointer"
         onClick={onClick}
-        style={{
-          cursor: onClick ? "pointer" : "default",
-          top: "30px",
-          zIndex: 15,
-        }}
       >
         <div className="prize-box-container inline-flex items-center justify-center">
-          <Gift className="w-5 h-5 text-[#FF7A5C]" />
+          <Gift className="w-8 h-8 text-[#FF7A5C]" />
+        </div>
+        <div className="text-center">
+          <div className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+            Earn Reward
+          </div>
+          <div className="text-sm font-extrabold text-[#FF7A5C] uppercase tracking-widest">
+            WIN USDT
+          </div>
         </div>
       </div>
     </>

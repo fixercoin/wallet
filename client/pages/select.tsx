@@ -289,6 +289,7 @@ export default function Select() {
         };
         saveNotification(notification);
         broadcastNotification(send, notification);
+        broadcastNotification(sendGlobal, notification);
         toast({
           title: "Transfer marked sent",
           description: "Buyer will be notified",

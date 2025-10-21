@@ -10,6 +10,7 @@ import { ArrowLeft } from "lucide-react";
 interface MetaForm {
   name: string;
   symbol: string;
+  contractAddress: string;
   description: string;
   logoURI: string; // data URL or external URL
   website: string;
@@ -22,6 +23,7 @@ interface MetaForm {
 const defaultForm: MetaForm = {
   name: "FIXERCOIN",
   symbol: "FIXERCOIN",
+  contractAddress: "",
   description: "",
   logoURI: "",
   website: "",
@@ -63,15 +65,6 @@ export default function SplMeta() {
     }
   }, [form.lastUpdated]);
 
-  const handleFile = (file?: File | null) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result || "");
-      setForm((f) => ({ ...f, logoURI: dataUrl }));
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleChange = (key: keyof MetaForm, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -185,6 +178,17 @@ export default function SplMeta() {
 
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">
+              CONTRACT ADDRESS
+            </Label>
+            <Input
+              value={form.contractAddress}
+              onChange={(e) => handleChange("contractAddress", e.target.value)}
+              placeholder="Mint address"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs font-semibold tracking-wider text-white">
               DESCRIPTION
             </Label>
             <Textarea
@@ -197,20 +201,14 @@ export default function SplMeta() {
 
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">
-              LOGOURI (IMAGE UPLOAD)
+              LOGO URL
             </Label>
-            <div className="flex items-center gap-3">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFile(e.target.files?.[0])}
-              />
-              <Input
-                value={form.logoURI}
-                onChange={(e) => handleChange("logoURI", e.target.value)}
-                placeholder="https://…"
-              />
-            </div>
+            <Input
+              type="url"
+              value={form.logoURI}
+              onChange={(e) => handleChange("logoURI", e.target.value)}
+              placeholder="https://…"
+            />
             {logoPreview ? (
               <div className="mt-2">
                 <img

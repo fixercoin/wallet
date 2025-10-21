@@ -463,12 +463,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
-                A community challenge inside the Fixorium Wallet. Complete simple tasks, earn rewards, and join random prize draws — all directly from your wallet.
+                A community challenge inside the Fixorium Wallet. Complete
+                simple tasks, earn rewards, and join random prize draws — all
+                directly from your wallet.
               </p>
 
               {/* How it works */}
               <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-sm font-bold text-white mb-3">How It Works</h3>
+                <h3 className="text-sm font-bold text-white mb-3">
+                  How It Works
+                </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>✅ Connect your Fixorium Wallet</p>
                   <p>✅ Join the quest challenge</p>
@@ -480,7 +484,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Complete Tasks */}
               <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-sm font-bold text-white mb-3">Complete Tasks</h3>
+                <h3 className="text-sm font-bold text-white mb-3">
+                  Complete Tasks
+                </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <div className="flex items-start gap-2">
                     <span className="text-[#FF7A5C]">•</span>
@@ -507,7 +513,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-sm font-bold text-white mb-3">🎁 Rewards</h3>
+                <h3 className="text-sm font-bold text-white mb-3">
+                  🎁 Rewards
+                </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>💰 fixercoin tokens</p>
                   <p>🖼️ NFTs and airdrops</p>
@@ -519,24 +527,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Progress Bar */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-white">Progress</span>
+                  <span className="text-xs font-semibold text-white">
+                    Progress
+                  </span>
                   <span className="text-xs text-gray-400">2/5 tasks</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-white/20">
-                  <div className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full" style={{ width: "40%" }}></div>
+                  <div
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full"
+                    style={{ width: "40%" }}
+                  ></div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
-                <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-                >
+                <Button className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg">
                   Join Quest
                 </Button>
-                <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-                >
+                <Button className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg">
                   Complete Task
                 </Button>
                 <Button
@@ -686,9 +695,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
             aria-label="Quest Rewards"
           >
-            <FlyingPrizeBox onClick={(e) => {
-              e.stopPropagation();
-            }} />
+            <FlyingPrizeBox
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
           </Button>
         </div>
 

@@ -68,11 +68,11 @@ import bs58 from "bs58";
 import nacl from "tweetnacl";
 
 const QUEST_TASKS = [
-  { id: "follow_x", label: "Follow fixercoin on Twitter/X" },
-  { id: "join_community", label: "Join Telegram or Discord" },
-  { id: "share_updates", label: "Share fixercoin updates" },
-  { id: "visit_links", label: "Visit official links" },
-  { id: "watch_videos", label: "Watch promo videos" },
+  { id: "follow_x", label: "Follow fixercoin on Twitter/X", type: "link", href: "https://twitter.com/fixorium" },
+  { id: "join_community", label: "Join Telegram", type: "link", href: "https://t.me/fixorium" },
+  { id: "share_updates", label: "Share fixercoin updates on X", type: "share" },
+  { id: "visit_links", label: "Visit official website", type: "link", href: "https://fixorium.com.pk" },
+  { id: "watch_videos", label: "Watch promo videos", type: "link", href: "https://www.youtube.com/channel/UCoFLDQasgIdX5tj3UbT9fyQ" },
 ] as const;
 
 const REWARD_PER_TASK = 50; // FIXERCOIN per completed task
@@ -148,6 +148,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
     setCompletedTasks(next);
     saveTasks(next);
+  };
+
+  const markTaskCompleted = (taskId: string) => {
+    if (completedTasks.has(taskId)) return;
+    const next = new Set(completedTasks);
+    next.add(taskId);
+    setCompletedTasks(next);
+    saveTasks(next);
+    toast({ title: "+50 FIXERCOIN", description: "Task completed. Keep going!" });
+  };
+
+  const openAndComplete = (taskId: string, url: string) => {
+    try { window.open(url, "_blank", "noopener,noreferrer"); } catch {}
+    markTaskCompleted(taskId);
+  };
+
+  const shareOnX = () => {
+    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
+    const shareUrl = encodeURIComponent("https://fixorium.com.pk");
+    const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
+    try { window.open(intent, "_blank", "noopener,noreferrer"); } catch {}
+    markTaskCompleted("share_updates");
   };
 
   const completeNextTask = () => {
@@ -575,15 +597,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   {QUEST_TASKS.map((t) => (
-                    <label key={t.id} className="flex items-start gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 accent-[#FF7A5C]"
-                        checked={completedTasks.has(t.id)}
-                        onChange={() => toggleTask(t.id)}
-                      />
-                      <span>{t.label}</span>
-                    </label>
+                    <div key={t.id} className="flex items-center justify-between gap-2">
+                      <label className="flex items-start gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 accent-[#FF7A5C]"
+                          checked={completedTasks.has(t.id)}
+                          onChange={() => toggleTask(t.id)}
+                        />
+                        <span>{t.label}</span>
+                      </label>
+                      {t.type === "link" ? (
+                        <button
+                          onClick={() => openAndComplete(t.id as string, (t as any).href as string)}
+                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                        >
+                          Open
+                        </button>
+                      ) : t.type === "share" ? (
+                        <button
+                          onClick={shareOnX}
+                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                        >
+                          Share
+                        </button>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </div>

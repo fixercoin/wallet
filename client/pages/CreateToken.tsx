@@ -278,7 +278,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-transparent text-white"
+                  className="bg-[#e6f7ff]/40 text-black placeholder:text-gray-500"
                 />
               </div>
               <div className="space-y-2">

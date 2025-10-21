@@ -528,7 +528,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Quest Modal */}
       {showQuestModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
-          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-white/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
+          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border-2 border-[#ffffff]/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
               <button
@@ -555,21 +555,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </p>
 
               {/* How it works */}
-              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="bg-white/5 rounded-lg p-3 border-2 border-[#ffffff]/10">
                 <h3 className="text-sm font-bold text-white mb-3">
                   How It Works
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>✅ Connect your Fixorium Wallet</p>
                   <p>✅ Join the quest challenge</p>
-                  <p>✅ Complete simple tasks</p>
+                  <p>�� Complete simple tasks</p>
                   <p>✅ Earn points for each task</p>
                   <p>✅ Win random rewards</p>
                 </div>
               </div>
 
               {/* Complete Tasks */}
-              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="bg-white/5 rounded-lg p-3 border-2 border-[#ffffff]/10">
                 <h3 className="text-sm font-bold text-white mb-3">
                   Complete Tasks
                 </h3>
@@ -589,7 +589,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               {/* Rewards */}
-              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="bg-white/5 rounded-lg p-3 border-2 border-[#ffffff]/10">
                 <h3 className="text-sm font-bold text-white mb-3">
                   🎁 Rewards
                 </h3>
@@ -609,7 +609,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </span>
                   <span className="text-xs text-gray-400">{tasksDone}/{tasksTotal} tasks</span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-2 border border-white/20">
+                <div className="w-full bg-white/10 rounded-full h-2 border-2 border-[#ffffff]/20">
                   <div
                     className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full"
                     style={{ width: `${progressPct}%` }}
@@ -752,21 +752,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={onReceive}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-white text-white"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border-2 border-[#ffffff] text-white"
           >
             <ArrowDownLeft className="h-4 w-4" />
           </Button>
 
           <Button
             onClick={onSwap}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-white text-white"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border-2 border-[#ffffff] text-white"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
 
           <Button
             onClick={() => setShowQuestModal(true)}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-white text-white"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border-2 border-[#ffffff] text-white"
             aria-label="Quest Rewards"
           >
             <FlyingPrizeBox

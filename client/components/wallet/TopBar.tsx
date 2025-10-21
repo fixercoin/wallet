@@ -17,6 +17,7 @@ import {
   Lock,
   Coins,
   Settings,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -84,6 +85,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 <BurnIcon className="h-4 w-4" />
                 <span>SPL-BURN</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => navigate("/fixorium/spl-meta")}
+                className="flex items-center gap-2 text-xs"
+              >
+                <FileText className="h-4 w-4" />
+                <span>SPL-META</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={onLock}

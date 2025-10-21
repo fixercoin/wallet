@@ -43,6 +43,7 @@ import Select from "./pages/select";
 import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
+import SplMeta from "./pages/SplMeta";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ function AppRoutes() {
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
+      <Route path="/fixorium/spl-meta" element={<SplMeta />} />
       <Route path="/express/orderbook" element={<OrderBook />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/express/pay" element={<ExpressPay />} />

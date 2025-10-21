@@ -50,8 +50,6 @@ export default function SplMeta() {
     setLogoPreview(form.logoURI || "");
   }, [form.logoURI]);
 
-
-
   const handleChange = (key: keyof MetaForm, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
   };
@@ -252,7 +250,6 @@ export default function SplMeta() {
               placeholder="PAIR ADDRESS"
             />
           </div>
-
 
           <div className="flex gap-2 pt-2">
             <Button

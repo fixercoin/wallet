@@ -440,9 +440,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Flying Prize Box - Header Area */}
-      <div className="w-full flex justify-center py-4 relative z-20 overflow-hidden">
-        <FlyingPrizeBox onClick={() => setShowQuestModal(true)} />
-      </div>
+      <FlyingPrizeBox onClick={() => setShowQuestModal(true)} />
 
       {/* Quest Modal */}
       {showQuestModal && (

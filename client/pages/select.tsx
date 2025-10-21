@@ -436,7 +436,7 @@ export default function Select() {
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 && !payload ? (
-                <div className="text-sm text-white/60">Fixorium P2P — Secure, fast, and low-fee peer-to-peer crypto trading. No orders available.</div>
+                <div className="text-sm text-white/60">FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO TRADING. NO ORDERS AVAILABLE.</div>
               ) : (
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"

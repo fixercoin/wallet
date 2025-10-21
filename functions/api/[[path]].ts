@@ -1050,6 +1050,51 @@ export const onRequest = async ({ request, env }) => {
       return jsonCors(200, data);
     }
 
+    // SPL-META submit (POST)
+    if (normalizedPath === "/spl-meta/submit") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+      const {
+        name,
+        symbol,
+        description = "",
+        logoURI = "",
+        website = "",
+        twitter = "",
+        telegram = "",
+        dexpair = "",
+        lastUpdated,
+      } = body || {};
+
+      if (!name || !symbol) {
+        return jsonCors(400, { error: "Missing required fields: name, symbol" });
+      }
+
+      const payload = {
+        name: String(name),
+        symbol: String(symbol),
+        description: String(description),
+        logoURI: String(logoURI),
+        website: String(website),
+        twitter: String(twitter),
+        telegram: String(telegram),
+        dexpair: String(dexpair),
+        lastUpdated: lastUpdated
+          ? new Date(lastUpdated).toISOString()
+          : new Date().toISOString(),
+        receivedAt: new Date().toISOString(),
+        source: "spl-meta-form",
+      };
+
+      console.log("[SPL-META] Submission received:", payload);
+      return jsonCors(202, { status: "queued", payload });
+    }
+
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

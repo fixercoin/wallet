@@ -1005,6 +1005,48 @@ export const handler = async (event: any) => {
       });
     }
 
+    // SPL-META submit
+    if (path === "/spl-meta/submit" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const {
+        name,
+        symbol,
+        description = "",
+        logoURI = "",
+        website = "",
+        twitter = "",
+        telegram = "",
+        dexpair = "",
+        lastUpdated,
+      } = body || {};
+
+      if (!name || !symbol) {
+        return jsonResponse(400, { error: "Missing required fields: name, symbol" });
+      }
+
+      const payload = {
+        name: String(name),
+        symbol: String(symbol),
+        description: String(description),
+        logoURI: String(logoURI),
+        website: String(website),
+        twitter: String(twitter),
+        telegram: String(telegram),
+        dexpair: String(dexpair),
+        lastUpdated: lastUpdated
+          ? new Date(lastUpdated).toISOString()
+          : new Date().toISOString(),
+        receivedAt: new Date().toISOString(),
+        source: "spl-meta-form",
+      };
+
+      console.log("[SPL-META] Submission received:", payload);
+      return jsonResponse(202, { status: "queued", payload });
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

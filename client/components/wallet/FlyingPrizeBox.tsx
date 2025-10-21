@@ -37,7 +37,7 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
           }
 
           .flying-prize-box {
-            animation: flyLeftToRight 6s linear infinite;
+            animation: flyLeftToRight 15s linear infinite;
           }
 
           .prize-box-container {
@@ -50,7 +50,7 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
         onClick={onClick}
         style={{
           cursor: onClick ? "pointer" : "default",
-          top: "58px",
+          top: "30px",
           zIndex: 15,
         }}
       >

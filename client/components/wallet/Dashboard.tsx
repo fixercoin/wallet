@@ -496,8 +496,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        {/* Balance Section */}
-        <div className="text-center space-y-2 mb-8">
+        {/* Balance Section with Prize Box */}
+        <div className="text-center space-y-4 mb-8 bg-gradient-to-b from-white/5 to-white/[0.02] rounded-2xl p-6 border border-white/10">
+          {/* Flying Prize Box - Center Header */}
+          <FlyingPrizeBox onClick={() => setShowQuestModal(true)} />
+
+          <div className="text-center space-y-2">
           {wallet
             ? (() => {
                 const total = getTotalPortfolioValue();
@@ -593,6 +597,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 );
               })()
             : "Connect wallet to see balance"}
+          </div>
         </div>
 
         {/* Action Buttons */}

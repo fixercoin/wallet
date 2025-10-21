@@ -123,32 +123,23 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
           />
 
           {/* Prize Box */}
-          <div className="prize-box-container relative inline-block">
+          <div className="prize-box-container relative inline-flex items-center justify-center">
             <div
-              className={`relative bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] rounded-3xl p-6 transition-all duration-300 ${
-                isHovered ? "scale-110 shadow-2xl" : "shadow-2xl"
+              className={`relative bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] rounded-lg p-1.5 transition-all duration-300 flex items-center justify-center ${
+                isHovered ? "scale-110 shadow-lg" : "shadow-md"
               }`}
               style={{
-                minWidth: "180px",
+                width: "32px",
+                height: "32px",
                 textAlign: "center",
               }}
             >
               {/* Gift Icon */}
-              <div className="flex justify-center mb-3">
-                <Gift className="w-10 h-10 text-white drop-shadow-lg" />
-              </div>
-
-              {/* Text */}
-              <div className="text-white font-bold text-base uppercase tracking-wider">
-                Earn
-              </div>
-              <div className="text-white font-extrabold text-2xl uppercase tracking-widest drop-shadow-md">
-                USDT
-              </div>
+              <Gift className="w-4 h-4 text-white drop-shadow" />
 
               {/* Shimmer effect */}
               <div
-                className="absolute inset-0 rounded-3xl opacity-0 transition-opacity"
+                className="absolute inset-0 rounded-lg opacity-0 transition-opacity"
                 style={{
                   background:
                     "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
@@ -161,10 +152,11 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
 
             {/* Glow effect rings */}
             <div
-              className="absolute inset-0 rounded-3xl opacity-50"
+              className="absolute rounded-lg opacity-50"
               style={{
-                border: "3px solid rgba(255, 122, 92, 0.3)",
-                transform: "scale(1.2)",
+                width: "38px",
+                height: "38px",
+                border: "1px solid rgba(255, 122, 92, 0.4)",
                 pointerEvents: "none",
               }}
             />

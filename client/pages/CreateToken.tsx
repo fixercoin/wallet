@@ -254,11 +254,6 @@ export default function CreateToken() {
             <CardTitle className="text-lg">Create Token</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Requires at least <strong>0.002 SOL</strong> for rent and fees.
-              </AlertDescription>
-            </Alert>
 
             <div className="grid gap-3">
               <div className="space-y-2">
@@ -268,7 +263,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
-                  className="bg-[#e6f7ff]/40 text-black placeholder:text-gray-500"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -278,7 +273,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-[#e6f7ff]/40 text-black placeholder:text-gray-500"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -288,7 +283,7 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
-                  className="bg-[#e6f7ff]/40 text-black placeholder:text-gray-500"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="text-xs text-gray-400">

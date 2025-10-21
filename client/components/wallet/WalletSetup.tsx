@@ -14,7 +14,6 @@ import {
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { FlyingPrizeBox } from "./FlyingPrizeBox";
 
 interface WalletSetupProps {
   onComplete: () => void;

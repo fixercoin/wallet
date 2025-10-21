@@ -118,7 +118,7 @@ export default function SplMeta() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520]">
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="max-w-md mx-auto px-4 py-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold tracking-wider text-white">SPL-META</h1>
           <button
@@ -134,6 +134,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">NAME</Label>
             <Input
+              className="text-black"
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="FIXERCOIN"
@@ -143,6 +144,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">SYMBOL</Label>
             <Input
+              className="text-black"
               value={form.symbol}
               onChange={(e) => handleChange("symbol", e.target.value)}
               placeholder="FIXERCOIN"
@@ -152,6 +154,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">DESCRIPTION</Label>
             <Textarea
+              className="text-black"
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
               rows={4}
@@ -162,8 +165,9 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">LOGOURI (IMAGE UPLOAD)</Label>
             <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
+              <Input className="text-black" type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
               <Input
+                className="text-black"
                 value={form.logoURI}
                 onChange={(e) => handleChange("logoURI", e.target.value)}
                 placeholder="https://…"
@@ -179,6 +183,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">WEBSITE</Label>
             <Input
+              className="text-black"
               type="url"
               value={form.website}
               onChange={(e) => handleChange("website", e.target.value)}
@@ -189,6 +194,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">TWITTER</Label>
             <Input
+              className="text-black"
               type="url"
               value={form.twitter}
               onChange={(e) => handleChange("twitter", e.target.value)}
@@ -199,6 +205,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">TELEGRAM</Label>
             <Input
+              className="text-black"
               type="url"
               value={form.telegram}
               onChange={(e) => handleChange("telegram", e.target.value)}
@@ -209,6 +216,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">DEXPAIR</Label>
             <Input
+              className="text-black"
               value={form.dexpair}
               onChange={(e) => handleChange("dexpair", e.target.value)}
               placeholder="PAIR ADDRESS"
@@ -218,6 +226,7 @@ export default function SplMeta() {
           <div>
             <Label className="text-xs font-semibold tracking-wider text-white">LASTUPDATED</Label>
             <Input
+              className="text-black"
               type="datetime-local"
               value={datetimeLocal}
               onChange={(e) => {

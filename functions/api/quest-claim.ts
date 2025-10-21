@@ -22,14 +22,22 @@ const FIXER_MINT = new PublicKey(
 
 function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With",
+  );
   headers.set("Vary", "Origin");
   return headers;
 }
 
 function jsonCors(status: number, body: any) {
-  const headers = applyCors(new Headers({ "Content-Type": "application/json" }));
+  const headers = applyCors(
+    new Headers({ "Content-Type": "application/json" }),
+  );
   return new Response(typeof body === "string" ? body : JSON.stringify(body), {
     status,
     headers,
@@ -119,7 +127,10 @@ const ixTransferChecked = (
   });
 };
 
-async function getMintDecimals(rpcUrl: string, mint: PublicKey): Promise<number> {
+async function getMintDecimals(
+  rpcUrl: string,
+  mint: PublicKey,
+): Promise<number> {
   try {
     const res = await rpcCall(rpcUrl, "getTokenSupply", [mint.toBase58()]);
     const dec = res?.value?.decimals;
@@ -129,9 +140,18 @@ async function getMintDecimals(rpcUrl: string, mint: PublicKey): Promise<number>
   return 6;
 }
 
-export const onRequestPost = async ({ request, env }: { request: Request; env: Record<string, any>; }) => {
+export const onRequestPost = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Record<string, any>;
+}) => {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: applyCors(new Headers()) });
+    return new Response(null, {
+      status: 204,
+      headers: applyCors(new Headers()),
+    });
   }
 
   const rpcUrl = pickRpcUrl(env);
@@ -142,14 +162,18 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
   } catch {}
 
   const recipientStr = String(body?.recipient || "").trim();
-  const completedTasks = (Array.isArray(body?.tasks) ? body.tasks : []) as string[];
+  const completedTasks = (
+    Array.isArray(body?.tasks) ? body.tasks : []
+  ) as string[];
   const count = Number(body?.count ?? completedTasks.length);
   const authMessage = String(body?.authMessage || "");
   const authSignature58 = String(body?.authSignature || "");
 
   const TOTAL_TASKS = 5; // must complete all tasks to claim
   if (!recipientStr || !authMessage || !authSignature58) {
-    return jsonCors(400, { error: "recipient, authMessage and authSignature are required" });
+    return jsonCors(400, {
+      error: "recipient, authMessage and authSignature are required",
+    });
   }
 
   if (!Number.isFinite(count) || count < TOTAL_TASKS) {
@@ -196,7 +220,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
   const decimals = await getMintDecimals(rpcUrl, FIXER_MINT);
   const perTask = BigInt(50);
   const tokens = perTask * BigInt(count);
-  const amountRaw = tokens * (BigInt(10) ** BigInt(decimals));
+  const amountRaw = tokens * BigInt(10) ** BigInt(decimals);
 
   try {
     const rewardOwner = rewardKey.publicKey;
@@ -209,13 +233,18 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
     tx.add(
       ixCreateAtaIdempotent(rewardOwner, sourceAta, rewardOwner, FIXER_MINT),
     );
-    tx.add(
-      ixCreateAtaIdempotent(rewardOwner, destAta, recipient, FIXER_MINT),
-    );
+    tx.add(ixCreateAtaIdempotent(rewardOwner, destAta, recipient, FIXER_MINT));
 
     // Transfer FIXERCOIN to recipient
     tx.add(
-      ixTransferChecked(sourceAta, FIXER_MINT, destAta, rewardOwner, amountRaw, decimals),
+      ixTransferChecked(
+        sourceAta,
+        FIXER_MINT,
+        destAta,
+        rewardOwner,
+        amountRaw,
+        decimals,
+      ),
     );
 
     const bh = await rpcCall(rpcUrl, "getLatestBlockhash", []);
@@ -239,7 +268,10 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
             const chunk = 0x8000;
             for (let i = 0; i < raw.length; i += chunk) {
               const slice = raw.subarray(i, i + chunk);
-              binary += String.fromCharCode.apply(null, Array.from(slice) as any);
+              binary += String.fromCharCode.apply(
+                null,
+                Array.from(slice) as any,
+              );
             }
             // eslint-disable-next-line no-undef
             return btoa(binary);

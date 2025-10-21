@@ -277,7 +277,6 @@ export default function CreateToken() {
             <CardTitle className="text-lg">Create Token</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-
             <div className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="name">Token Name</Label>

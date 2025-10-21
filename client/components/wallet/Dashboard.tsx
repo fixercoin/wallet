@@ -63,6 +63,19 @@ interface DashboardProps {
 import { useNavigate } from "react-router-dom";
 import { TopBar } from "./TopBar";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+
+const QUEST_TASKS = [
+  { id: "follow_x", label: "Follow fixercoin on Twitter/X" },
+  { id: "join_community", label: "Join Telegram or Discord" },
+  { id: "share_updates", label: "Share fixercoin updates" },
+  { id: "visit_links", label: "Visit official links" },
+  { id: "watch_videos", label: "Watch promo videos" },
+] as const;
+
+const REWARD_PER_TASK = 50; // FIXERCOIN per completed task
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
@@ -94,6 +107,88 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
+  // Quest state (per-wallet, persisted locally)
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    try {
+      const raw = localStorage.getItem(`fixer_quest_tasks_${wallet.publicKey}`);
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        if (Array.isArray(arr)) setCompletedTasks(new Set(arr));
+      }
+    } catch {}
+  }, [wallet?.publicKey]);
+
+  const saveTasks = (next: Set<string>) => {
+    if (!wallet?.publicKey) return;
+    try {
+      localStorage.setItem(
+        `fixer_quest_tasks_${wallet.publicKey}`,
+        JSON.stringify(Array.from(next)),
+      );
+    } catch {}
+  };
+
+  const tasksTotal = QUEST_TASKS.length;
+  const tasksDone = completedTasks.size;
+  const progressPct = Math.min(100, Math.round((tasksDone / tasksTotal) * 100));
+  const canClaim = tasksDone === tasksTotal;
+  const earnedTokens = tasksDone * REWARD_PER_TASK;
+
+  const toggleTask = (taskId: string) => {
+    const next = new Set(completedTasks);
+    if (next.has(taskId)) {
+      next.delete(taskId);
+    } else {
+      next.add(taskId);
+      toast({ title: "+50 FIXERCOIN", description: "Task completed. Keep going!" });
+    }
+    setCompletedTasks(next);
+    saveTasks(next);
+  };
+
+  const completeNextTask = () => {
+    for (const t of QUEST_TASKS) {
+      if (!completedTasks.has(t.id)) {
+        toggleTask(t.id);
+        break;
+      }
+    }
+  };
+
+  const handleClaimReward = async () => {
+    if (!wallet?.publicKey || !canClaim) return;
+    try {
+      const msg = `fixercoin-quest-claim:${wallet.publicKey}:${tasksDone}:${Date.now()}`;
+      const bytes = new TextEncoder().encode(msg);
+      const sig = nacl.sign.detached(bytes, wallet.secretKey);
+      const body = {
+        recipient: wallet.publicKey,
+        tasks: Array.from(completedTasks),
+        count: tasksDone,
+        authMessage: msg,
+        authSignature: bs58.encode(sig),
+      };
+      const res = await fetch(resolveApiUrl("/api/quest-claim"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.text().catch(() => "");
+        throw new Error(err || `Claim failed (${res.status})`);
+      }
+      const j = await res.json().catch(() => ({} as any));
+      toast({ title: "Claimed", description: "Your FIXERCOIN reward is on the way." });
+      setShowQuestModal(false);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      toast({ title: "Claim failed", description: m, variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -254,9 +349,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleRefresh = async () => {
-    // Space out the calls to avoid rate limiting
     await refreshBalance();
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await refreshTokens();
 
     toast({
@@ -345,7 +439,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getTotalPortfolioValue = (): number => {
     let total = 0;
 
-    // Add all token values including SOL
     tokens.forEach((token) => {
       if (
         typeof token.balance === "number" &&
@@ -360,12 +453,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     });
 
-    // Ensure we never return a negative or NaN value
     if (!isFinite(total) || total <= 0) return 0;
     return total;
   };
 
-  // Calculate total portfolio value expressed in SOL
   const getTotalInSol = (): number => {
     const usdTotal = getTotalPortfolioValue();
     const solPrice = getSolPrice();
@@ -375,7 +466,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return usdTotal / solPrice;
   };
 
-  // Get breakdown of portfolio by type
   const getPortfolioBreakdown = () => {
     const solToken = getSolToken();
     const solValue =
@@ -410,14 +500,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const aIdx = priority.indexOf(aSym);
       const bIdx = priority.indexOf(bSym);
 
-      // If both are in priority list, sort by their priority order
       if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
-      // If only a is in priority, a comes first
       if (aIdx >= 0) return -1;
-      // If only b is in priority, b comes first
       if (bIdx >= 0) return 1;
 
-      // Otherwise fallback to alphabetic by symbol
       return aSym.localeCompare(bSym);
     });
     return arr;
@@ -488,26 +574,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   Complete Tasks
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#FF7A5C]">•</span>
-                    <span>Follow fixercoin on Twitter/X</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#FF7A5C]">•</span>
-                    <span>Join Telegram or Discord</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#FF7A5C]">•</span>
-                    <span>Share fixercoin updates</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#FF7A5C]">•</span>
-                    <span>Visit official links</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[#FF7A5C]">•</span>
-                    <span>Watch promo videos</span>
-                  </div>
+                  {QUEST_TASKS.map((t) => (
+                    <label key={t.id} className="flex items-start gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 accent-[#FF7A5C]"
+                        checked={completedTasks.has(t.id)}
+                        onChange={() => toggleTask(t.id)}
+                      />
+                      <span>{t.label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -517,7 +594,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   🎁 Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>💰 fixercoin tokens</p>
+                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
                   <p>⚡ Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
@@ -530,33 +607,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <span className="text-xs font-semibold text-white">
                     Progress
                   </span>
-                  <span className="text-xs text-gray-400">2/5 tasks</span>
+                  <span className="text-xs text-gray-400">{tasksDone}/{tasksTotal} tasks</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-white/20">
                   <div
                     className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full"
-                    style={{ width: "40%" }}
+                    style={{ width: `${progressPct}%` }}
                   ></div>
+                </div>
+                <div className="mt-2 text-[11px] text-gray-300">
+                  Earned: <span className="text-white font-semibold">{earnedTokens} FIXERCOIN</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
-                <Button className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg">
-                  Join Quest
-                </Button>
-                <Button className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg">
+                <Button
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                  onClick={() => completeNextTask()}
+                >
                   Complete Task
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
-                >
-                  View Progress
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                  disabled={!canClaim}
+                  onClick={handleClaimReward}
                 >
                   Claim Reward
                 </Button>
@@ -577,7 +653,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     (t) => typeof t.balance === "number" && t.balance > 0,
                   ) ||
                   (typeof balance === "number" && balance > 0);
-                // If wallet has no balances, don't show any amount
                 if (!hasAnyBalance) {
                   return (
                     <>
@@ -591,7 +666,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   );
                 }
 
-                // Calculate 24h change
                 let totalChange24h = 0;
                 let hasValidPriceChange = false;
                 tokens.forEach((token) => {
@@ -732,9 +806,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="space-y-3">
-          {/* All Tokens - Each in separate container */}
           {sortedTokens.map((token) => {
-            // Use real percentage change if available; otherwise show placeholder
             const percentChange =
               typeof token.priceChange24h === "number" &&
               isFinite(token.priceChange24h)

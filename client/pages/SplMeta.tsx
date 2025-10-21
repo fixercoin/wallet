@@ -166,7 +166,6 @@ export default function SplMeta() {
               NAME
             </Label>
             <Input
-             
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="FIXERCOIN"
@@ -178,7 +177,6 @@ export default function SplMeta() {
               SYMBOL
             </Label>
             <Input
-             
               value={form.symbol}
               onChange={(e) => handleChange("symbol", e.target.value)}
               placeholder="FIXERCOIN"
@@ -190,7 +188,6 @@ export default function SplMeta() {
               DESCRIPTION
             </Label>
             <Textarea
-             
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
               rows={4}
@@ -204,13 +201,11 @@ export default function SplMeta() {
             </Label>
             <div className="flex items-center gap-3">
               <Input
-               
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
               <Input
-               
                 value={form.logoURI}
                 onChange={(e) => handleChange("logoURI", e.target.value)}
                 placeholder="https://…"
@@ -232,7 +227,6 @@ export default function SplMeta() {
               WEBSITE
             </Label>
             <Input
-             
               type="url"
               value={form.website}
               onChange={(e) => handleChange("website", e.target.value)}
@@ -245,7 +239,6 @@ export default function SplMeta() {
               TWITTER
             </Label>
             <Input
-             
               type="url"
               value={form.twitter}
               onChange={(e) => handleChange("twitter", e.target.value)}
@@ -258,7 +251,6 @@ export default function SplMeta() {
               TELEGRAM
             </Label>
             <Input
-             
               type="url"
               value={form.telegram}
               onChange={(e) => handleChange("telegram", e.target.value)}
@@ -271,7 +263,6 @@ export default function SplMeta() {
               DEXPAIR
             </Label>
             <Input
-             
               value={form.dexpair}
               onChange={(e) => handleChange("dexpair", e.target.value)}
               placeholder="PAIR ADDRESS"
@@ -283,7 +274,6 @@ export default function SplMeta() {
               LASTUPDATED
             </Label>
             <Input
-             
               type="datetime-local"
               value={datetimeLocal}
               onChange={(e) => {

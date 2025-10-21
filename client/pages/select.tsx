@@ -45,6 +45,7 @@ export default function Select() {
     [derivedRoomId],
   );
   const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
+  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -234,19 +235,25 @@ export default function Select() {
         saveChatMessage(message);
         sendChatMessage(send, message);
         const notification: ChatNotification = {
-          type: "status_change",
+          type: "payment_received",
           roomId,
           initiatorWallet: wallet.publicKey,
           initiatorRole: "buyer",
-          message: `Payment received: ${payload.amountPKR} PKR - Waiting for verification`,
-          data: { amountPKR: payload.amountPKR, token: payload.token },
+          message: `Buyer has confirmed payment - ${estimatedTokens.toFixed(6)} ${payload.token} for PKR ${Number(payload.amountPKR).toFixed(2)}`,
+          data: {
+            amountPKR: Number(payload.amountPKR),
+            token: payload.token,
+            estimatedTokens: estimatedTokens.toFixed(6),
+            orderId: roomId,
+          },
           timestamp: Date.now(),
         };
         saveNotification(notification);
         broadcastNotification(send, notification);
+        broadcastNotification(sendGlobal, notification);
         toast({
-          title: "Payment marked",
-          description: "Seller will be notified for verification",
+          title: "Seller notified",
+          description: "Waiting for seller to verify payment...",
         });
         setOpenChat(true);
       } else if (action === "seller_sent") {
@@ -282,6 +289,7 @@ export default function Select() {
         };
         saveNotification(notification);
         broadcastNotification(send, notification);
+        broadcastNotification(sendGlobal, notification);
         toast({
           title: "Transfer marked sent",
           description: "Buyer will be notified",
@@ -314,6 +322,11 @@ export default function Select() {
             info@fixorium.com.pk
           </span>
         </div>
+        <img
+          src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2Fda8d138bd45a4eceb9b1e4baae32a4a2?format=webp&width=800"
+          alt="Payment illustration"
+          className="mx-auto mb-4 max-h-[220px] w-full sm:w-3/4 md:w-1/2 object-contain"
+        />
         <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
@@ -339,9 +352,49 @@ export default function Select() {
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
-                <div className="text-sm text-white/60">
-                  No orders available.
-                </div>
+                payload && payload.roomId ? (
+                  <div className="p-4 bg-[#0f1520]/50 border border-white/10">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm text-white/90">
+                          Order {payload.roomId}
+                        </div>
+                        <div className="text-xs text-white/70 mt-1">
+                          {action === "buyer_paid"
+                            ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
+                            : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
+                        </div>
+                        <div className="text-xs text-white/60 mt-2">
+                          Payment: {payload.paymentMethod || "—"}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Button
+                          onClick={() =>
+                            navigate("/express/buy-trade", {
+                              state: {
+                                order: {
+                                  id: payload.roomId,
+                                  token: payload.token,
+                                  pricePKRPerQuote: payload.pricePKRPerQuote,
+                                  paymentMethod: payload.paymentMethod,
+                                  type:
+                                    action === "buyer_paid" ? "buy" : "sell",
+                                },
+                                openChat: true,
+                              },
+                            })
+                          }
+                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                        >
+                          Continue
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div />
+                )
               ) : (
                 orders.map((o: any) => (
                   <div
@@ -385,11 +438,20 @@ export default function Select() {
             </div>
 
             <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                alt="Payment illustration"
-                className="max-h-[320px] w-full object-contain"
-              />
+              {loadingOrders ? (
+                <div className="text-sm text-white/60">Loading orders...</div>
+              ) : orders.length === 0 && !payload ? (
+                <div className="text-sm text-white/60">
+                  FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
+                  TRADING. NO ORDERS AVAILABLE.
+                </div>
+              ) : (
+                <img
+                  src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
+                  alt="Payment illustration"
+                  className="max-h-[320px] w-full object-contain"
+                />
+              )}
             </div>
           </div>
         )}

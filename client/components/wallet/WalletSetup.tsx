@@ -140,67 +140,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-        {/* Flying Prize Box - Header Area */}
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
-          <FlyingPrizeBox onClick={() => setShowQuestModal(true)} />
-        </div>
-
-        {/* Quest Modal */}
-        {showQuestModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-white/20 shadow-2xl max-w-md w-full p-8 animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">Quest Program</h2>
-                <button
-                  onClick={() => setShowQuestModal(false)}
-                  className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <X className="w-6 h-6 text-white" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-gray-300">
-                  Complete daily quests and earn <span className="text-green-400 font-bold">USDT</span> rewards!
-                </p>
-
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold text-white">Daily Login</p>
-                        <p className="text-sm text-gray-400">+0.5 USDT</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold text-white">First Trade</p>
-                        <p className="text-sm text-gray-400">+1.0 USDT</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold text-white">Referral Bonus</p>
-                        <p className="text-sm text-gray-400">+5.0 USDT per friend</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => setShowQuestModal(false)}
-                  className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
-                >
-                  Start Questing
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
           <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
             <div className="space-y-6">
@@ -446,7 +385,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• ••��••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>

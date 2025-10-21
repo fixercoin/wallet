@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, Import, Plus } from "lucide-react";
+import { Eye, EyeOff, Copy, Import, Plus, X } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -14,6 +14,7 @@ import {
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
 
 interface WalletSetupProps {
   onComplete: () => void;

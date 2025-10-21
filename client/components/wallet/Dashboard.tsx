@@ -621,7 +621,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={() => setShowQuestModal(true)}
-            className="h-12 w-12 rounded-full p-0 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white shadow-lg flex items-center justify-center relative"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
             aria-label="Quest Rewards"
           >
             <FlyingPrizeBox onClick={(e) => {

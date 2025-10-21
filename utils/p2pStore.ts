@@ -27,6 +27,22 @@ export type TradeMessage = {
   message: string;
   from: string;
   ts: number;
+  proof?: { filename: string; url?: string };
+};
+
+export type TradeRoom = {
+  id: string;
+  buyer_wallet: string;
+  seller_wallet: string;
+  order_id: string;
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
+  created_at: number;
+  updated_at: number;
 };
 
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
@@ -57,11 +73,13 @@ const store: {
     { id: string; filename: string; data: string; ts: number }[]
   >;
   easypaisa: EasypaisaPayment[];
+  rooms: TradeRoom[];
 } = (globalThis as any).__P2P_STORE || {
   posts: [],
   messages: {},
   proofs: {},
   easypaisa: [],
+  rooms: [],
 };
 (globalThis as any).__P2P_STORE = store;
 
@@ -76,6 +94,7 @@ async function saveStoreToFile() {
           messages: store.messages,
           proofs: store.proofs,
           easypaisa: store.easypaisa,
+          rooms: store.rooms,
         },
         null,
         2,
@@ -103,6 +122,8 @@ try {
         store.proofs = parsed.proofs;
       if (Array.isArray(parsed.easypaisa))
         store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
+      if (Array.isArray(parsed.rooms))
+        store.rooms = parsed.rooms as TradeRoom[];
     }
   }
 } catch (e) {
@@ -111,6 +132,18 @@ try {
 
 export function listPosts() {
   return { posts: store.posts };
+}
+
+export function deletePost(id: string, adminWalletHeader?: string) {
+  const admin = adminWalletHeader || "";
+  if (admin !== ADMIN_WALLET) {
+    return { error: "unauthorized", status: 401 } as const;
+  }
+  const idx = store.posts.findIndex((p) => p.id === id);
+  if (idx === -1) return { error: "not_found", status: 404 } as const;
+  const removed = store.posts.splice(idx, 1)[0];
+  void saveStoreToFile();
+  return { ok: true, post: removed, status: 200 } as const;
 }
 
 export function getPost(id: string) {
@@ -243,6 +276,7 @@ export function addTradeMessage(
   tradeId: string,
   message: string,
   from: string,
+  proof?: { filename: string; url?: string },
 ) {
   if (!message) return { error: "invalid message", status: 400 } as const;
   const entry: TradeMessage = {
@@ -250,6 +284,7 @@ export function addTradeMessage(
     message,
     from: from || "unknown",
     ts: Date.now(),
+    proof,
   };
   store.messages[tradeId] = store.messages[tradeId] || [];
   store.messages[tradeId].push(entry);
@@ -307,4 +342,71 @@ export function listEasypaisaPayments(filters: {
   if (filters.since) arr = arr.filter((p) => p.ts >= Number(filters.since));
   arr.sort((a, b) => b.ts - a.ts);
   return { payments: arr } as const;
+}
+
+// ===== TRADE ROOM FUNCTIONS =====
+
+export function listTradeRooms(wallet?: string) {
+  let rooms = store.rooms.slice();
+  if (wallet) {
+    rooms = rooms.filter(
+      (r) => r.buyer_wallet === wallet || r.seller_wallet === wallet,
+    );
+  }
+  rooms.sort((a, b) => b.created_at - a.created_at);
+  return { rooms } as const;
+}
+
+export function getTradeRoom(roomId: string) {
+  const room = store.rooms.find((r) => r.id === roomId);
+  return room || null;
+}
+
+export function createTradeRoom(input: {
+  buyer_wallet: string;
+  seller_wallet: string;
+  order_id: string;
+}) {
+  const { buyer_wallet, seller_wallet, order_id } = input;
+  if (!buyer_wallet || !seller_wallet || !order_id) {
+    return { error: "Missing required fields", status: 400 } as const;
+  }
+
+  const now = Date.now();
+  const room: TradeRoom = {
+    id: `room-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    buyer_wallet,
+    seller_wallet,
+    order_id,
+    status: "pending",
+    created_at: now,
+    updated_at: now,
+  };
+
+  store.rooms.push(room);
+  void saveStoreToFile();
+  return { room, status: 201 } as const;
+}
+
+export function updateTradeRoom(
+  roomId: string,
+  updates: Partial<Omit<TradeRoom, "id" | "created_at">>,
+) {
+  const idx = store.rooms.findIndex((r) => r.id === roomId);
+  if (idx === -1) {
+    return { error: "Room not found", status: 404 } as const;
+  }
+
+  const existing = store.rooms[idx];
+  const updated: TradeRoom = {
+    ...existing,
+    ...updates,
+    id: existing.id,
+    created_at: existing.created_at,
+    updated_at: Date.now(),
+  };
+
+  store.rooms[idx] = updated;
+  void saveStoreToFile();
+  return { room: updated, status: 200 } as const;
 }

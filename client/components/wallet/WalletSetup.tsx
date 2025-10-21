@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, Import, Plus, X } from "lucide-react";
+import { Eye, EyeOff, Copy, Import, Plus } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -385,7 +385,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• ••��••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>

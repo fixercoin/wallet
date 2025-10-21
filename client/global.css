@@ -101,6 +101,17 @@
     @apply border-border;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 100svh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: auto;
+    background: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family:
@@ -132,6 +143,95 @@
   textarea,
   select {
     color: hsl(var(--foreground)) !important;
+  }
+
+  /* P2P page white text override and mobile fullscreen */
+  .express-p2p-page {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .express-p2p-page p,
+  .express-p2p-page span,
+  .express-p2p-page a,
+  .express-p2p-page li,
+  .express-p2p-page label,
+  .express-p2p-page small,
+  .express-p2p-page strong,
+  .express-p2p-page em,
+  .express-p2p-page h1,
+  .express-p2p-page h2,
+  .express-p2p-page h3,
+  .express-p2p-page h4,
+  .express-p2p-page h5,
+  .express-p2p-page h6,
+  .express-p2p-page input,
+  .express-p2p-page textarea,
+  .express-p2p-page select,
+  .express-p2p-page div {
+    color: white !important;
+  }
+
+  /* Dropdown menu text override */
+  [role="menu"] p,
+  [role="menu"] span,
+  [role="menu"] a,
+  [role="menu"] li,
+  [role="menu"] label,
+  [role="menu"] small,
+  [role="menu"] strong,
+  [role="menu"] em,
+  [role="menu"] h1,
+  [role="menu"] h2,
+  [role="menu"] h3,
+  [role="menu"] h4,
+  [role="menu"] h5,
+  [role="menu"] h6 {
+    color: white !important;
+  }
+
+  /* Select listbox text override */
+  [role="listbox"] p,
+  [role="listbox"] span,
+  [role="listbox"] a,
+  [role="listbox"] li,
+  [role="listbox"] label,
+  [role="listbox"] small,
+  [role="listbox"] strong,
+  [role="listbox"] em,
+  [role="listbox"] h1,
+  [role="listbox"] h2,
+  [role="listbox"] h3,
+  [role="listbox"] h4,
+  [role="listbox"] h5,
+  [role="listbox"] h6,
+  [role="option"] p,
+  [role="option"] span,
+  [role="option"] a,
+  [role="option"] li,
+  [role="option"] label,
+  [role="option"] small,
+  [role="option"] strong,
+  [role="option"] em {
+    color: white !important;
+  }
+
+  /* Remove white borders and lines from express-p2p-page */
+  .express-p2p-page .border-white,
+  .express-p2p-page [class*="border-white"] {
+    border-color: transparent !important;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 }
 
@@ -251,6 +351,126 @@
     }
   }
 
+  /* From Uiverse.io by Li-Deheng — multi-circle loader */
+  .loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    --color: hsl(var(--primary));
+    --animation: 1.6s ease-in-out infinite;
+    background-color: white;
+    padding: 2px;
+    border-radius: 9999px;
+  }
+
+  .loader .circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 14px;
+    height: 14px;
+    border: solid 1.5px var(--color);
+    border-radius: 50%;
+    margin: 0 4px;
+    background-color: transparent;
+    animation: circle-keys var(--animation);
+  }
+
+  .loader .circle .dot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color);
+    animation: dot-keys var(--animation);
+  }
+
+  .loader .circle .outline {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    animation: outline-keys var(--animation);
+  }
+
+  .circle:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+
+  .circle:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+
+  .circle:nth-child(2) .dot {
+    animation-delay: 0.3s;
+  }
+
+  .circle:nth-child(3) .dot {
+    animation-delay: 0.6s;
+  }
+
+  .circle:nth-child(1) .outline {
+    animation-delay: 0.6s;
+  }
+
+  .circle:nth-child(2) .outline {
+    animation-delay: 0.9s;
+  }
+
+  .circle:nth-child(3) .outline {
+    animation-delay: 1.2s;
+  }
+
+  @keyframes circle-keys {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    50% {
+      transform: scale(1.5);
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes dot-keys {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(0);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes outline-keys {
+    0% {
+      transform: scale(0);
+      outline: solid 20px var(--color);
+      outline-offset: 0;
+      opacity: 1;
+    }
+
+    100% {
+      transform: scale(1);
+      outline: solid 0 transparent;
+      outline-offset: 20px;
+      opacity: 0;
+    }
+  }
+
   /* Glass morphism effect */
   .glass {
     @apply bg-white/20 backdrop-blur-md border border-white/30;
@@ -258,6 +478,10 @@
 
   .glass-dark {
     @apply bg-gray-900/20 backdrop-blur-md border border-gray-700/30;
+  }
+
+  .transparent-cardboard {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl;
   }
 
   /* Dashboard button - shining light blue styling */
@@ -500,5 +724,47 @@
       #f09819 51%,
       #ff512f 100%
     );
+  }
+
+  /* Status indicator dot with circular waves */
+  .status-dot {
+    position: absolute;
+    height: 8px;
+    width: 8px;
+    border-radius: 9999px;
+    background-color: var(--status-color, #22c55e);
+  }
+  .status-dot::before,
+  .status-dot::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 9999px;
+    border: 2px solid var(--status-color, #22c55e);
+    opacity: 0.6;
+    animation: status-ripple 1.5s ease-out infinite;
+  }
+  .status-dot::after {
+    animation-delay: 0.75s;
+  }
+  .status-red {
+    --status-color: #ef4444 !important;
+  }
+  .status-yellow {
+    --status-color: #f59e0b !important;
+  }
+  .status-green {
+    --status-color: #22c55e !important;
+  }
+
+  @keyframes status-ripple {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
   }
 }

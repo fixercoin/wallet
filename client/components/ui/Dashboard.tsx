@@ -349,7 +349,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => onTokenClick(token.mint)}
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-gray-700 flex-shrink-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
                         <AvatarImage src={token.logoURI} alt={token.symbol} />
                         <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
                           {token.symbol.slice(0, 2).toUpperCase()}

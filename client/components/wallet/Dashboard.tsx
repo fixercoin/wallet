@@ -477,7 +477,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, []);
 
   // Currency formatting from context
-  const { formatCurrency } = useCurrency();
+  const { currency, formatCurrency } = useCurrency();
 
   // Get SOL token data from tokens list
   const getSolToken = () => {
@@ -741,11 +741,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 if (!hasAnyBalance) {
                   return (
                     <>
-                      <div className="text-xs text-gray-300 uppercase tracking-wider">
-                        TOTAL BALANCE
-                      </div>
-                      <div className="text-2xl font-bold text-white leading-tight">
-                        $ 0.000
+                      <div className="text-2xl font-bold text-white leading-tight flex items-baseline justify-center gap-2">
+                        <span>
+                          {(0).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        <span className="text-xs text-gray-300">
+                          {currency}
+                        </span>
                       </div>
                     </>
                   );
@@ -781,14 +786,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 return (
                   <>
-                    <div className="text-xs text-gray-300 uppercase tracking-wider">
-                      TOTAL BALANCE
-                    </div>
-                    <div className="text-2xl font-bold text-white leading-tight">
-                      {formatCurrency(total, {
-                        from: "USD",
-                        minimumFractionDigits: 2,
-                      })}
+                    <div className="text-2xl font-bold text-white leading-tight flex items-baseline justify-center gap-2">
+                      <span>
+                        {currency === "PKR"
+                          ? (total * (usdToPkr || 0)).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )
+                          : total.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                      </span>
+                      <span className="text-xs text-gray-300">{currency}</span>
                     </div>
                     {hasValidPriceChange && (
                       <div className="flex items-center justify-center gap-2">

@@ -12,10 +12,10 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
         {`
           @keyframes pulse-glow {
             0%, 100% {
-              filter: drop-shadow(0 0 15px rgba(255, 122, 92, 0.6)) drop-shadow(0 0 30px rgba(255, 90, 140, 0.4));
+              filter: drop-shadow(0 0 8px rgba(255, 200, 70, 0.8)) drop-shadow(0 0 15px rgba(255, 200, 70, 0.5));
             }
             50% {
-              filter: drop-shadow(0 0 25px rgba(255, 122, 92, 0.8)) drop-shadow(0 0 50px rgba(255, 90, 140, 0.6));
+              filter: drop-shadow(0 0 12px rgba(255, 200, 70, 1)) drop-shadow(0 0 25px rgba(255, 200, 70, 0.7));
             }
           }
 
@@ -24,30 +24,20 @@ export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
               transform: translateY(0px);
             }
             50% {
-              transform: translateY(-8px);
+              transform: translateY(-6px);
             }
           }
 
-          .prize-box-container {
+          .prize-box-gift {
             animation: pulse-glow 2.5s ease-in-out infinite, subtle-bounce 2.5s ease-in-out infinite;
           }
         `}
       </style>
       <div
-        className="flex flex-col items-center justify-center gap-3 cursor-pointer"
+        className="prize-box-gift inline-flex items-center justify-center cursor-pointer"
         onClick={onClick}
       >
-        <div className="prize-box-container inline-flex items-center justify-center">
-          <Gift className="w-8 h-8 text-[#FF7A5C]" />
-        </div>
-        <div className="text-center">
-          <div className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
-            Earn Reward
-          </div>
-          <div className="text-sm font-extrabold text-[#FF7A5C] uppercase tracking-widest">
-            WIN USDT
-          </div>
-        </div>
+        <Gift className="w-5 h-5 text-yellow-300" />
       </div>
     </>
   );

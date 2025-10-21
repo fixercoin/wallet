@@ -20,7 +20,7 @@ interface MetaForm {
 }
 
 const defaultForm: MetaForm = {
-  name: "FixerCoin",
+  name: "FIXERCOIN",
   symbol: "FIXERCOIN",
   description: "",
   logoURI: "",
@@ -136,7 +136,7 @@ export default function SplMeta() {
             <Input
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              placeholder="FixerCoin"
+              placeholder="FIXERCOIN"
             />
           </div>
 
@@ -229,9 +229,9 @@ export default function SplMeta() {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button onClick={saveLocal} className="flex-1">SAVE</Button>
-            <Button onClick={submitToApis} className="flex-1">SUBMIT</Button>
-            <Button variant="secondary" onClick={copyJson} className="flex-1">COPY JSON</Button>
+            <Button onClick={saveLocal} className="flex-1 text-white">SAVE</Button>
+            <Button onClick={submitToApis} className="flex-1 text-white">SUBMIT</Button>
+            <Button variant="secondary" onClick={copyJson} className="flex-1 text-white">COPY JSON</Button>
           </div>
 
           <div className="mt-4">

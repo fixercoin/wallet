@@ -86,6 +86,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <BurnIcon className="h-4 w-4" />
                 <span>SPL-BURN</span>
               </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 text-xs">
+                <FileText className="h-4 w-4" />
+                <span>SPL-META</span>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={onLock}
                 className="flex items-center gap-2 text-xs"

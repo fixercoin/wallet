@@ -234,7 +234,16 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: R
         id: Date.now(),
         method: "sendTransaction",
         params: [
-          Buffer.from(raw).toString("base64"),
+          ((): string => {
+            let binary = "";
+            const chunk = 0x8000;
+            for (let i = 0; i < raw.length; i += chunk) {
+              const slice = raw.subarray(i, i + chunk);
+              binary += String.fromCharCode.apply(null, Array.from(slice) as any);
+            }
+            // eslint-disable-next-line no-undef
+            return btoa(binary);
+          })(),
           { skipPreflight: false, preflightCommitment: "confirmed" },
         ],
       };

@@ -742,8 +742,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   return (
                     <>
                       <div className="text-2xl font-bold text-white leading-tight flex items-baseline justify-center gap-2">
-                        <span>{(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        <span className="text-xs text-gray-300">{currency}</span>
+                        <span>
+                          {(0).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        <span className="text-xs text-gray-300">
+                          {currency}
+                        </span>
                       </div>
                     </>
                   );
@@ -782,8 +789,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className="text-2xl font-bold text-white leading-tight flex items-baseline justify-center gap-2">
                       <span>
                         {currency === "PKR"
-                          ? (total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                          : total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ? (total * (usdToPkr || 0)).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )
+                          : total.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                       </span>
                       <span className="text-xs text-gray-300">{currency}</span>
                     </div>

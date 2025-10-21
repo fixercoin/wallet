@@ -87,6 +87,24 @@ export default function SplMeta() {
     }
   };
 
+  const submitToApis = async () => {
+    const payload = { ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() };
+    try {
+      const res = await fetch("/api/spl-meta/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.text().catch(() => "");
+        throw new Error(err || `Submit failed (${res.status})`);
+      }
+      toast({ title: "SUBMITTED", description: "REQUEST QUEUED FOR DIRECTORY UPDATE" });
+    } catch (e) {
+      toast({ title: "SUBMIT FAILED", description: String(e), variant: "destructive" });
+    }
+  };
+
   const copyJson = async () => {
     const payload = { ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() };
     const text = JSON.stringify(payload, null, 2);
@@ -221,6 +239,7 @@ export default function SplMeta() {
 
           <div className="flex gap-2 pt-2">
             <Button onClick={saveLocal} className="flex-1">SAVE</Button>
+            <Button onClick={submitToApis} className="flex-1">SUBMIT</Button>
             <Button variant="secondary" onClick={copyJson} className="flex-1">COPY JSON</Button>
           </div>
 

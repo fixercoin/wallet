@@ -8,6 +8,7 @@ import {
   handleDexscreenerSearch,
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
+import { handleSubmitSplMeta } from "./routes/spl-meta";
 import {
   handleJupiterPrice,
   handleJupiterQuote,
@@ -89,6 +90,9 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // SPL-META submit
+  app.post("/api/spl-meta/submit", handleSubmitSplMeta);
 
   // Health check
   app.get("/health", (req, res) => {

@@ -29,7 +29,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showQuestModal, setShowQuestModal] = useState(false);
 
   // Create wallet state
   const [generatedWallet, setGeneratedWallet] = useState<any>(null);

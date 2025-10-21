@@ -1024,7 +1024,9 @@ export const handler = async (event: any) => {
       } = body || {};
 
       if (!name || !symbol) {
-        return jsonResponse(400, { error: "Missing required fields: name, symbol" });
+        return jsonResponse(400, {
+          error: "Missing required fields: name, symbol",
+        });
       }
 
       const payload = {

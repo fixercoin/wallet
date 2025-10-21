@@ -1072,7 +1072,9 @@ export const onRequest = async ({ request, env }) => {
       } = body || {};
 
       if (!name || !symbol) {
-        return jsonCors(400, { error: "Missing required fields: name, symbol" });
+        return jsonCors(400, {
+          error: "Missing required fields: name, symbol",
+        });
       }
 
       const payload = {

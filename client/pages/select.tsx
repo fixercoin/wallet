@@ -322,7 +322,11 @@ export default function Select() {
             info@fixorium.com.pk
           </span>
         </div>
-        <img src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2Fda8d138bd45a4eceb9b1e4baae32a4a2?format=webp&width=800" alt="Payment illustration" className="mx-auto mb-4 max-h-[220px] w-full sm:w-3/4 md:w-1/2 object-contain" />
+        <img
+          src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2Fda8d138bd45a4eceb9b1e4baae32a4a2?format=webp&width=800"
+          alt="Payment illustration"
+          className="mx-auto mb-4 max-h-[220px] w-full sm:w-3/4 md:w-1/2 object-contain"
+        />
         <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
@@ -374,7 +378,8 @@ export default function Select() {
                                   token: payload.token,
                                   pricePKRPerQuote: payload.pricePKRPerQuote,
                                   paymentMethod: payload.paymentMethod,
-                                  type: action === "buyer_paid" ? "buy" : "sell",
+                                  type:
+                                    action === "buyer_paid" ? "buy" : "sell",
                                 },
                                 openChat: true,
                               },
@@ -436,7 +441,10 @@ export default function Select() {
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 && !payload ? (
-                <div className="text-sm text-white/60">FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO TRADING. NO ORDERS AVAILABLE.</div>
+                <div className="text-sm text-white/60">
+                  FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
+                  TRADING. NO ORDERS AVAILABLE.
+                </div>
               ) : (
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"

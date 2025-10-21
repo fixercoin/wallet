@@ -24,6 +24,7 @@ import {
   Lock,
   Coins,
   Bell,
+  X,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -61,6 +62,7 @@ interface DashboardProps {
 
 import { useNavigate } from "react-router-dom";
 import { TopBar } from "./TopBar";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
@@ -88,6 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
+  const [showQuestModal, setShowQuestModal] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -436,6 +439,133 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onSettings={onSettings}
       />
 
+      {/* Quest Modal */}
+      {showQuestModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
+          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-white/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
+              <button
+                onClick={() => setShowQuestModal(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {/* Tagline */}
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[#FF7A5C] uppercase tracking-wider">
+                  🚀 Grow. Earn. Win.
+                </p>
+              </div>
+
+              {/* About */}
+              <p className="text-xs text-gray-300 leading-relaxed">
+                A community challenge inside the Fixorium Wallet. Complete
+                simple tasks, earn rewards, and join random prize draws — all
+                directly from your wallet.
+              </p>
+
+              {/* How it works */}
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-3">
+                  How It Works
+                </h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>✅ Connect your Fixorium Wallet</p>
+                  <p>✅ Join the quest challenge</p>
+                  <p>✅ Complete simple tasks</p>
+                  <p>✅ Earn points for each task</p>
+                  <p>✅ Win random rewards</p>
+                </div>
+              </div>
+
+              {/* Complete Tasks */}
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-3">
+                  Complete Tasks
+                </h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Follow fixercoin on Twitter/X</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Join Telegram or Discord</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Share fixercoin updates</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Visit official links</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Watch promo videos</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rewards */}
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-3">
+                  🎁 Rewards
+                </h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>💰 fixercoin tokens</p>
+                  <p>🖼️ NFTs and airdrops</p>
+                  <p>⚡ Early access to wallet updates</p>
+                  <p>👑 Premium features for top participants</p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-white">
+                    Progress
+                  </span>
+                  <span className="text-xs text-gray-400">2/5 tasks</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 border border-white/20">
+                  <div
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full"
+                    style={{ width: "40%" }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-2">
+                <Button className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg">
+                  Join Quest
+                </Button>
+                <Button className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg">
+                  Complete Task
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                >
+                  View Progress
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                >
+                  Claim Reward
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}
         <div className="text-center space-y-2 mb-8">
@@ -558,6 +688,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
           >
             <RefreshCw className="h-4 w-4" />
+          </Button>
+
+          <Button
+            onClick={() => setShowQuestModal(true)}
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
+            aria-label="Quest Rewards"
+          >
+            <FlyingPrizeBox
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
           </Button>
         </div>
 

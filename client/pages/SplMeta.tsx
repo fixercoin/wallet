@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 interface MetaForm {
   name: string;
@@ -20,7 +21,7 @@ interface MetaForm {
 
 const defaultForm: MetaForm = {
   name: "FixerCoin",
-  symbol: "FXR",
+  symbol: "FIXERCOIN",
   description: "",
   logoURI: "",
   website: "",
@@ -101,14 +102,21 @@ export default function SplMeta() {
     <div className="min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold tracking-wider">SPL-META</h1>
-          <Button variant="secondary" onClick={() => navigate("/")}>BACK TO WALLET</Button>
+          <h1 className="text-xl font-bold tracking-wider text-white">SPL-META</h1>
+          <button
+            aria-label="Go back"
+            className="p-2 rounded-lg hover:bg-white/10 text-white"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <Label className="text-xs font-semibold tracking-wider">NAME</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">NAME</Label>
             <Input
+              className="text-white placeholder-white/40"
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="FixerCoin"
@@ -116,17 +124,19 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">SYMBOL</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">SYMBOL</Label>
             <Input
+              className="text-white placeholder-white/40"
               value={form.symbol}
               onChange={(e) => handleChange("symbol", e.target.value)}
-              placeholder="FXR"
+              placeholder="FIXERCOIN"
             />
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">DESCRIPTION</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">DESCRIPTION</Label>
             <Textarea
+              className="text-white placeholder-white/40"
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
               rows={4}
@@ -135,10 +145,11 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">LOGOURI (IMAGE UPLOAD)</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">LOGOURI (IMAGE UPLOAD)</Label>
             <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
+              <Input className="text-white" type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
               <Input
+                className="text-white placeholder-white/40"
                 value={form.logoURI}
                 onChange={(e) => handleChange("logoURI", e.target.value)}
                 placeholder="https://…"
@@ -152,8 +163,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">WEBSITE</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">WEBSITE</Label>
             <Input
+              className="text-white placeholder-white/40"
               type="url"
               value={form.website}
               onChange={(e) => handleChange("website", e.target.value)}
@@ -162,8 +174,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">TWITTER</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">TWITTER</Label>
             <Input
+              className="text-white placeholder-white/40"
               type="url"
               value={form.twitter}
               onChange={(e) => handleChange("twitter", e.target.value)}
@@ -172,8 +185,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">TELEGRAM</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">TELEGRAM</Label>
             <Input
+              className="text-white placeholder-white/40"
               type="url"
               value={form.telegram}
               onChange={(e) => handleChange("telegram", e.target.value)}
@@ -182,17 +196,19 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">DEXPAIR</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">DEXPAIR</Label>
             <Input
+              className="text-white placeholder-white/40"
               value={form.dexpair}
               onChange={(e) => handleChange("dexpair", e.target.value)}
-              placeholder="RAYDIUM PAIR ADDRESS"
+              placeholder="PAIR ADDRESS"
             />
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider">LASTUPDATED</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">LASTUPDATED</Label>
             <Input
+              className="text-white"
               type="datetime-local"
               value={datetimeLocal}
               onChange={(e) => {
@@ -209,7 +225,7 @@ export default function SplMeta() {
           </div>
 
           <div className="mt-4">
-            <Label className="text-xs font-semibold tracking-wider">PREVIEW JSON</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">PREVIEW JSON</Label>
             <pre className="mt-2 text-xs bg-black/30 p-3 rounded-lg border border-white/10 overflow-auto">
 {JSON.stringify({ ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() }, null, 2)}
             </pre>

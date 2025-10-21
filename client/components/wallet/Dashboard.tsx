@@ -496,12 +496,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        {/* Balance Section with Prize Box */}
-        <div className="text-center space-y-4 mb-8 bg-gradient-to-b from-white/5 to-white/[0.02] rounded-2xl p-6 border border-white/10">
-          {/* Flying Prize Box - Center Header */}
-          <FlyingPrizeBox onClick={() => setShowQuestModal(true)} />
-
-          <div className="text-center space-y-2">
+        {/* Balance Section */}
+        <div className="text-center space-y-2 mb-8">
           {wallet
             ? (() => {
                 const total = getTotalPortfolioValue();
@@ -597,7 +593,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 );
               })()
             : "Connect wallet to see balance"}
-          </div>
         </div>
 
         {/* Action Buttons */}
@@ -629,10 +624,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mb-4 flex gap-2">
           <Button
             onClick={() => navigate("/select")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center gap-2"
             aria-label="EXPRESS P2P SERVICE"
           >
             <span className="mr-0">EXPRESS P2P SERVICE</span>
+            <div className="relative">
+              <FlyingPrizeBox onClick={(e) => {
+                e.stopPropagation();
+                setShowQuestModal(true);
+              }} />
+            </div>
           </Button>
 
           {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (

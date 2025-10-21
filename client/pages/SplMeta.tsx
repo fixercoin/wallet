@@ -50,20 +50,6 @@ export default function SplMeta() {
     setLogoPreview(form.logoURI || "");
   }, [form.logoURI]);
 
-  const datetimeLocal = useMemo(() => {
-    try {
-      const d = new Date(form.lastUpdated || Date.now());
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const yyyy = d.getFullYear();
-      const mm = pad(d.getMonth() + 1);
-      const dd = pad(d.getDate());
-      const hh = pad(d.getHours());
-      const mi = pad(d.getMinutes());
-      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-    } catch {
-      return "";
-    }
-  }, [form.lastUpdated]);
 
 
   const handleChange = (key: keyof MetaForm, value: string) => {
@@ -267,22 +253,6 @@ export default function SplMeta() {
             />
           </div>
 
-          <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">
-              LASTUPDATED
-            </Label>
-            <Input
-              type="datetime-local"
-              value={datetimeLocal}
-              onChange={(e) => {
-                const v = e.target.value;
-                const iso = v
-                  ? new Date(v).toISOString()
-                  : new Date().toISOString();
-                handleChange("lastUpdated", iso);
-              }}
-            />
-          </div>
 
           <div className="flex gap-2 pt-2">
             <Button

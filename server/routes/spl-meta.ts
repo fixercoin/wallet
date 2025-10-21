@@ -16,7 +16,9 @@ export const handleSubmitSplMeta: RequestHandler = async (req, res) => {
 
     // Basic validation
     if (!name || !symbol) {
-      return res.status(400).json({ error: "Missing required fields: name, symbol" });
+      return res
+        .status(400)
+        .json({ error: "Missing required fields: name, symbol" });
     }
 
     const payload = {
@@ -28,7 +30,9 @@ export const handleSubmitSplMeta: RequestHandler = async (req, res) => {
       twitter: String(twitter || ""),
       telegram: String(telegram || ""),
       dexpair: String(dexpair || ""),
-      lastUpdated: lastUpdated ? new Date(lastUpdated).toISOString() : new Date().toISOString(),
+      lastUpdated: lastUpdated
+        ? new Date(lastUpdated).toISOString()
+        : new Date().toISOString(),
       receivedAt: new Date().toISOString(),
       source: "spl-meta-form",
     };

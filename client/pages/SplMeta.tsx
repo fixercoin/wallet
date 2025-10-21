@@ -79,16 +79,26 @@ export default function SplMeta() {
 
   const saveLocal = () => {
     try {
-      const payload = { ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() };
+      const payload = {
+        ...form,
+        lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString(),
+      };
       localStorage.setItem("spl_meta_form", JSON.stringify(payload));
       toast({ title: "SAVED", description: "SPL-META FORM SAVED LOCALLY" });
     } catch (e) {
-      toast({ title: "SAVE FAILED", description: String(e), variant: "destructive" });
+      toast({
+        title: "SAVE FAILED",
+        description: String(e),
+        variant: "destructive",
+      });
     }
   };
 
   const submitToApis = async () => {
-    const payload = { ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() };
+    const payload = {
+      ...form,
+      lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString(),
+    };
     try {
       const res = await fetch("/api/spl-meta/submit", {
         method: "POST",
@@ -99,20 +109,34 @@ export default function SplMeta() {
         const err = await res.text().catch(() => "");
         throw new Error(err || `Submit failed (${res.status})`);
       }
-      toast({ title: "SUBMITTED", description: "REQUEST QUEUED FOR DIRECTORY UPDATE" });
+      toast({
+        title: "SUBMITTED",
+        description: "REQUEST QUEUED FOR DIRECTORY UPDATE",
+      });
     } catch (e) {
-      toast({ title: "SUBMIT FAILED", description: String(e), variant: "destructive" });
+      toast({
+        title: "SUBMIT FAILED",
+        description: String(e),
+        variant: "destructive",
+      });
     }
   };
 
   const copyJson = async () => {
-    const payload = { ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() };
+    const payload = {
+      ...form,
+      lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString(),
+    };
     const text = JSON.stringify(payload, null, 2);
     try {
       await navigator.clipboard.writeText(text);
       toast({ title: "COPIED", description: "JSON COPIED TO CLIPBOARD" });
     } catch (e) {
-      toast({ title: "COPY FAILED", description: String(e), variant: "destructive" });
+      toast({
+        title: "COPY FAILED",
+        description: String(e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -124,7 +148,9 @@ export default function SplMeta() {
 
       <div className="max-w-md mx-auto px-4 py-6 text-white">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold tracking-wider text-white">SPL-META</h1>
+          <h1 className="text-xl font-bold tracking-wider text-white">
+            SPL-META
+          </h1>
           <button
             aria-label="Go back"
             className="p-2 rounded-lg hover:bg-white/10 text-white"
@@ -136,7 +162,9 @@ export default function SplMeta() {
 
         <div className="space-y-4">
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">NAME</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              NAME
+            </Label>
             <Input
               className="text-black"
               value={form.name}
@@ -146,7 +174,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">SYMBOL</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              SYMBOL
+            </Label>
             <Input
               className="text-black"
               value={form.symbol}
@@ -156,7 +186,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">DESCRIPTION</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              DESCRIPTION
+            </Label>
             <Textarea
               className="text-black"
               value={form.description}
@@ -167,9 +199,16 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">LOGOURI (IMAGE UPLOAD)</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              LOGOURI (IMAGE UPLOAD)
+            </Label>
             <div className="flex items-center gap-3">
-              <Input className="text-black" type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
+              <Input
+                className="text-black"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFile(e.target.files?.[0])}
+              />
               <Input
                 className="text-black"
                 value={form.logoURI}
@@ -179,13 +218,19 @@ export default function SplMeta() {
             </div>
             {logoPreview ? (
               <div className="mt-2">
-                <img src={logoPreview} alt="LOGO PREVIEW" className="h-16 w-16 rounded-md object-cover border border-white/10" />
+                <img
+                  src={logoPreview}
+                  alt="LOGO PREVIEW"
+                  className="h-16 w-16 rounded-md object-cover border border-white/10"
+                />
               </div>
             ) : null}
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">WEBSITE</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              WEBSITE
+            </Label>
             <Input
               className="text-black"
               type="url"
@@ -196,7 +241,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">TWITTER</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              TWITTER
+            </Label>
             <Input
               className="text-black"
               type="url"
@@ -207,7 +254,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">TELEGRAM</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              TELEGRAM
+            </Label>
             <Input
               className="text-black"
               type="url"
@@ -218,7 +267,9 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">DEXPAIR</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              DEXPAIR
+            </Label>
             <Input
               className="text-black"
               value={form.dexpair}
@@ -228,29 +279,56 @@ export default function SplMeta() {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold tracking-wider text-white">LASTUPDATED</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              LASTUPDATED
+            </Label>
             <Input
               className="text-black"
               type="datetime-local"
               value={datetimeLocal}
               onChange={(e) => {
                 const v = e.target.value;
-                const iso = v ? new Date(v).toISOString() : new Date().toISOString();
+                const iso = v
+                  ? new Date(v).toISOString()
+                  : new Date().toISOString();
                 handleChange("lastUpdated", iso);
               }}
             />
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button onClick={saveLocal} className="flex-1 wallet-button-primary">SAVE</Button>
-            <Button onClick={submitToApis} className="flex-1 wallet-button-primary">SUBMIT</Button>
-            <Button onClick={copyJson} className="flex-1 wallet-button-primary">COPY JSON</Button>
+            <Button
+              onClick={saveLocal}
+              className="flex-1 wallet-button-primary"
+            >
+              SAVE
+            </Button>
+            <Button
+              onClick={submitToApis}
+              className="flex-1 wallet-button-primary"
+            >
+              SUBMIT
+            </Button>
+            <Button onClick={copyJson} className="flex-1 wallet-button-primary">
+              COPY JSON
+            </Button>
           </div>
 
           <div className="mt-4">
-            <Label className="text-xs font-semibold tracking-wider text-white">PREVIEW JSON</Label>
+            <Label className="text-xs font-semibold tracking-wider text-white">
+              PREVIEW JSON
+            </Label>
             <pre className="mt-2 text-xs bg-black/30 p-3 rounded-lg border border-white/10 overflow-auto text-white">
-{JSON.stringify({ ...form, lastUpdated: new Date(form.lastUpdated || Date.now()).toISOString() }, null, 2)}
+              {JSON.stringify(
+                {
+                  ...form,
+                  lastUpdated: new Date(
+                    form.lastUpdated || Date.now(),
+                  ).toISOString(),
+                },
+                null,
+                2,
+              )}
             </pre>
           </div>
         </div>

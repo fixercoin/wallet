@@ -387,7 +387,7 @@ export default function Select() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-white/60">No orders available.</div>
+                  <div />
                 )
               ) : (
                 orders.map((o: any) => (

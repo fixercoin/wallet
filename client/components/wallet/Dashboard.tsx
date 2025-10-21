@@ -441,10 +441,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Quest Modal */}
       {showQuestModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-white/20 shadow-2xl max-w-md w-full p-8 animate-fade-in">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
+          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-white/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-white">Quest Program</h2>
+              <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
               <button
                 onClick={() => setShowQuestModal(false)}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors"
@@ -453,43 +453,105 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </button>
             </div>
 
-            <div className="space-y-4">
-              <p className="text-gray-300">
-                Complete daily quests and earn <span className="text-green-400 font-bold">USDT</span> rewards!
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {/* Tagline */}
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[#FF7A5C] uppercase tracking-wider">
+                  🚀 Grow. Earn. Win.
+                </p>
+              </div>
+
+              {/* About */}
+              <p className="text-xs text-gray-300 leading-relaxed">
+                A community challenge inside the Fixorium Wallet. Complete simple tasks, earn rewards, and join random prize draws — all directly from your wallet.
               </p>
 
-              <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-white">Daily Login</p>
-                      <p className="text-sm text-gray-400">+0.5 USDT</p>
-                    </div>
+              {/* How it works */}
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-3">How It Works</h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>✅ Connect your Fixorium Wallet</p>
+                  <p>✅ Join the quest challenge</p>
+                  <p>✅ Complete simple tasks</p>
+                  <p>✅ Earn points for each task</p>
+                  <p>✅ Win random rewards</p>
+                </div>
+              </div>
+
+              {/* Complete Tasks */}
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-3">Complete Tasks</h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Follow fixercoin on Twitter/X</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-white">First Trade</p>
-                      <p className="text-sm text-gray-400">+1.0 USDT</p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Join Telegram or Discord</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-white">Referral Bonus</p>
-                      <p className="text-sm text-gray-400">+5.0 USDT per friend</p>
-                    </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Share fixercoin updates</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Visit official links</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#FF7A5C]">•</span>
+                    <span>Watch promo videos</span>
                   </div>
                 </div>
               </div>
 
-              <Button
-                onClick={() => setShowQuestModal(false)}
-                className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
-              >
-                Start Questing
-              </Button>
+              {/* Rewards */}
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-3">🎁 Rewards</h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>💰 fixercoin tokens</p>
+                  <p>🖼️ NFTs and airdrops</p>
+                  <p>⚡ Early access to wallet updates</p>
+                  <p>👑 Premium features for top participants</p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-white">Progress</span>
+                  <span className="text-xs text-gray-400">2/5 tasks</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 border border-white/20">
+                  <div className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full" style={{ width: "40%" }}></div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                >
+                  Join Quest
+                </Button>
+                <Button
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                >
+                  Complete Task
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                >
+                  View Progress
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                >
+                  Claim Reward
+                </Button>
+              </div>
             </div>
           </div>
         </div>

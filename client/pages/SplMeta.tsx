@@ -117,7 +117,11 @@ export default function SplMeta() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements (same as dashboard) */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
       <div className="max-w-md mx-auto px-4 py-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold tracking-wider text-white">SPL-META</h1>
@@ -238,9 +242,9 @@ export default function SplMeta() {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button onClick={saveLocal} className="flex-1 text-white">SAVE</Button>
-            <Button onClick={submitToApis} className="flex-1 text-white">SUBMIT</Button>
-            <Button variant="secondary" onClick={copyJson} className="flex-1 text-white">COPY JSON</Button>
+            <Button onClick={saveLocal} className="flex-1 wallet-button-primary">SAVE</Button>
+            <Button onClick={submitToApis} className="flex-1 wallet-button-primary">SUBMIT</Button>
+            <Button onClick={copyJson} className="flex-1 wallet-button-primary">COPY JSON</Button>
           </div>
 
           <div className="mt-4">

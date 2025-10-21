@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Gift } from "lucide-react";
 
 interface FlyingPrizeBoxProps {
@@ -6,161 +6,56 @@ interface FlyingPrizeBoxProps {
 }
 
 export const FlyingPrizeBox: React.FC<FlyingPrizeBoxProps> = ({ onClick }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <>
       <style>
         {`
-          @keyframes floatingLarge {
-            0%, 100% {
-              transform: translateY(0px) rotate(0deg);
-            }
-            50% {
-              transform: translateY(-15px) rotate(3deg);
-            }
-          }
-
-          @keyframes pulse-glow-large {
-            0%, 100% {
-              box-shadow: 0 0 30px rgba(255, 122, 92, 0.7), 0 0 60px rgba(255, 90, 140, 0.5);
-            }
-            50% {
-              box-shadow: 0 0 50px rgba(255, 122, 92, 0.9), 0 0 100px rgba(255, 90, 140, 0.7);
-            }
-          }
-
-          @keyframes sparkle-large {
-            0%, 100% {
+          @keyframes flyLeftToRight {
+            0% {
+              transform: translateX(100vw) rotate(0deg);
               opacity: 0;
             }
-            50% {
+            10% {
               opacity: 1;
+            }
+            90% {
+              opacity: 1;
+            }
+            100% {
+              transform: translateX(-100vw) rotate(0deg);
+              opacity: 0;
             }
           }
 
-          @keyframes shimmer {
-            0% {
-              transform: translateX(-100%);
+          @keyframes pulse-glow {
+            0%, 100% {
+              filter: drop-shadow(0 0 15px rgba(255, 122, 92, 0.6)) drop-shadow(0 0 30px rgba(255, 90, 140, 0.4));
             }
-            100% {
-              transform: translateX(100%);
+            50% {
+              filter: drop-shadow(0 0 25px rgba(255, 122, 92, 0.8)) drop-shadow(0 0 50px rgba(255, 90, 140, 0.6));
             }
           }
 
           .flying-prize-box {
-            animation: floatingLarge 3.5s ease-in-out infinite;
-          }
-
-          .flying-prize-box.hovered {
-            animation: floatingLarge 2.5s ease-in-out infinite;
+            animation: flyLeftToRight 6s linear infinite;
           }
 
           .prize-box-container {
-            animation: pulse-glow-large 2.5s ease-in-out infinite;
-          }
-
-          .sparkle-particle {
-            animation: sparkle-large 1.5s ease-in-out infinite;
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: radial-gradient(circle, #FFD700, #FF7A5C);
-            border-radius: 50%;
-          }
-
-          .prize-box-wrapper {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            animation: pulse-glow 2s ease-in-out infinite;
           }
         `}
       </style>
-      <div className="prize-box-wrapper">
-        <div
-          className="flying-prize-box"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onClick={onClick}
-          style={{
-            cursor: onClick ? "pointer" : "default",
-            position: "relative",
-          }}
-        >
-          {/* Sparkle particles */}
-          <div
-            className="sparkle-particle"
-            style={{
-              left: "-50px",
-              top: "15px",
-              animationDelay: "0s",
-            }}
-          />
-          <div
-            className="sparkle-particle"
-            style={{
-              right: "-50px",
-              top: "30px",
-              animationDelay: "0.5s",
-            }}
-          />
-          <div
-            className="sparkle-particle"
-            style={{
-              left: "20px",
-              top: "-30px",
-              animationDelay: "1s",
-            }}
-          />
-          <div
-            className="sparkle-particle"
-            style={{
-              right: "20px",
-              bottom: "-30px",
-              animationDelay: "0.3s",
-            }}
-          />
-
-          {/* Prize Box */}
-          <div className="prize-box-container relative inline-flex items-center justify-center">
-            <div
-              className={`relative bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] rounded-lg p-1.5 transition-all duration-300 flex items-center justify-center ${
-                isHovered ? "scale-110 shadow-lg" : "shadow-md"
-              }`}
-              style={{
-                width: "32px",
-                height: "32px",
-                textAlign: "center",
-              }}
-            >
-              {/* Gift Icon */}
-              <Gift className="w-4 h-4 text-white drop-shadow" />
-
-              {/* Shimmer effect */}
-              <div
-                className="absolute inset-0 rounded-lg opacity-0 transition-opacity"
-                style={{
-                  background:
-                    "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
-                  animation: isHovered
-                    ? "shimmer 2s infinite"
-                    : "none",
-                }}
-              />
-            </div>
-
-            {/* Glow effect rings */}
-            <div
-              className="absolute rounded-lg opacity-50"
-              style={{
-                width: "38px",
-                height: "38px",
-                border: "1px solid rgba(255, 122, 92, 0.4)",
-                pointerEvents: "none",
-              }}
-            />
-          </div>
+      <div
+        className="flying-prize-box fixed pointer-events-auto"
+        onClick={onClick}
+        style={{
+          cursor: onClick ? "pointer" : "default",
+          top: "58px",
+          zIndex: 15,
+        }}
+      >
+        <div className="prize-box-container inline-flex items-center justify-center">
+          <Gift className="w-5 h-5 text-[#FF7A5C]" />
         </div>
       </div>
     </>

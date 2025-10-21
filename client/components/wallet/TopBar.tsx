@@ -107,6 +107,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <Coins className="h-4 w-4" />
                 <span>LISTING</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => navigate("/fixorium/create-token")}
+                className="flex items-center gap-2 text-xs"
+              >
+                <FileText className="h-4 w-4" />
+                <span>DEPLOY</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={onSettings}

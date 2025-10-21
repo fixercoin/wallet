@@ -45,6 +45,7 @@ export default function Select() {
     [derivedRoomId],
   );
   const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
+  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -234,19 +235,25 @@ export default function Select() {
         saveChatMessage(message);
         sendChatMessage(send, message);
         const notification: ChatNotification = {
-          type: "status_change",
+          type: "payment_received",
           roomId,
           initiatorWallet: wallet.publicKey,
           initiatorRole: "buyer",
-          message: `Payment received: ${payload.amountPKR} PKR - Waiting for verification`,
-          data: { amountPKR: payload.amountPKR, token: payload.token },
+          message: `Buyer has confirmed payment - ${estimatedTokens.toFixed(6)} ${payload.token} for PKR ${Number(payload.amountPKR).toFixed(2)}`,
+          data: {
+            amountPKR: Number(payload.amountPKR),
+            token: payload.token,
+            estimatedTokens: estimatedTokens.toFixed(6),
+            orderId: roomId,
+          },
           timestamp: Date.now(),
         };
         saveNotification(notification);
         broadcastNotification(send, notification);
+        broadcastNotification(sendGlobal, notification);
         toast({
-          title: "Payment marked",
-          description: "Seller will be notified for verification",
+          title: "Seller notified",
+          description: "Waiting for seller to verify payment...",
         });
         setOpenChat(true);
       } else if (action === "seller_sent") {

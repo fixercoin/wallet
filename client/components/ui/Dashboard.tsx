@@ -43,6 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onTokenClick,
   onSettings,
 }) => {
+  const navigate = useNavigate();
   const {
     wallet,
     balance,

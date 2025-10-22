@@ -138,6 +138,24 @@ export class FixoriumWalletProvider {
       );
     }
 
+    const callerOrigin = this.getCallerOrigin();
+    const isExternalCall = !this.isOwnOrigin(callerOrigin);
+
+    if (isExternalCall && !this.isTrustedOrigin(callerOrigin)) {
+      if (!this.approvalHandler) {
+        throw new Error(
+          "Wallet connection approval handler is not configured.",
+        );
+      }
+
+      const approved = await this.approvalHandler(callerOrigin);
+      if (!approved) {
+        throw new Error("User rejected wallet connection request.");
+      }
+
+      this.markOriginAsTrusted(callerOrigin);
+    }
+
     if (options?.onlyIfTrusted && !this.connected) {
       throw new Error("Fixorium wallet is not trusted yet.");
     }

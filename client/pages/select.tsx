@@ -334,6 +334,105 @@ export default function SelectPage() {
     }
   }, [amountPKR, exchangeRate]);
 
+  // Inline Sell section state and effects
+  const SELL_TOKENS = BUY_TOKENS;
+  type SellToken = (typeof SELL_TOKENS)[number];
+  const [sellToken, setSellToken] = useState<SellToken>("FIXERCOIN");
+  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [sellExchangeRate, setSellExchangeRate] = useState<number>(0);
+  const [sellEstimatedPKR, setSellEstimatedPKR] = useState<number>(0);
+  const [sellFetchingRate, setSellFetchingRate] = useState<boolean>(false);
+  const [sellSubmitting, setSellSubmitting] = useState<boolean>(false);
+  const [sellAccountName, setSellAccountName] = useState<string>("");
+  const [sellAccountNumber, setSellAccountNumber] = useState<string>("");
+  const [sellPaymentMethod, setSellPaymentMethod] = useState<string>("easypaisa");
+
+  const sellAvailableBalance = useMemo(() => {
+    const t = tokens.find((tk) => (tk.symbol || "").toUpperCase() === sellToken);
+    return t?.balance ? Number(t.balance) : 0;
+  }, [tokens, sellToken]);
+
+  useEffect(() => {
+    const fetchSellRate = async () => {
+      setSellFetchingRate(true);
+      try {
+        const res = await fetch(`/api/exchange-rate?token=${sellToken}`);
+        if (!res.ok) throw new Error(`Rate ${res.status}`);
+        const data = await res.json();
+        const rate = data.rate || data.priceInPKR || 0;
+        setSellExchangeRate(typeof rate === "number" && rate > 0 ? rate : 0);
+      } catch (e) {
+        console.error("Failed to fetch sell exchange rate", e);
+        setSellExchangeRate(0);
+      } finally {
+        setSellFetchingRate(false);
+      }
+    };
+    fetchSellRate();
+  }, [sellToken]);
+
+  useEffect(() => {
+    const amt = Number(sellAmountTokens);
+    if (amt > 0 && sellExchangeRate > 0) {
+      setSellEstimatedPKR(amt * sellExchangeRate);
+    } else {
+      setSellEstimatedPKR(0);
+    }
+  }, [sellAmountTokens, sellExchangeRate]);
+
+  const handleConfirmSell = async () => {
+    if (!wallet?.publicKey) {
+      toast({ title: "Wallet Not Connected", variant: "destructive" });
+      return;
+    }
+    const amt = Number(sellAmountTokens);
+    if (!amt || amt <= 0 || amt > sellAvailableBalance || sellExchangeRate <= 0) {
+      toast({ title: "Invalid amount", description: "Enter valid token amount", variant: "destructive" });
+      return;
+    }
+    if (!sellAccountName || !sellAccountNumber) {
+      toast({ title: "Missing details", description: "Enter account name and number", variant: "destructive" });
+      return;
+    }
+    setSellSubmitting(true);
+    try {
+      const roomId = `ORD-${Date.now()}`;
+      const payloadForSell = {
+        roomId,
+        token: sellToken,
+        amountTokens: amt,
+        amountPKR: Number((amt * sellExchangeRate).toFixed(2)),
+        paymentMethod: sellPaymentMethod,
+        sellerWallet: wallet.publicKey,
+        adminWallet: ADMIN_WALLET,
+        sellerAccountName: sellAccountName,
+        sellerAccountNumber: sellAccountNumber,
+      };
+      navigate("/select", {
+        state: {
+          action: "seller_sent",
+          payload: payloadForSell,
+          confirmation: {
+            title: "Confirm Token Transfer",
+            message: `You are confirming to send ${amt.toFixed(6)} ${sellToken} to admin wallet and receive PKR ${Number((amt * sellExchangeRate).toFixed(2))} via ${sellPaymentMethod}.`,
+            details: [
+              { label: "Token", value: sellToken },
+              { label: "Amount (Token)", value: amt.toFixed(6) },
+              { label: "Estimated PKR", value: Number((amt * sellExchangeRate).toFixed(2)) },
+              { label: "Admin Wallet", value: ADMIN_WALLET || "—" },
+              { label: "Account Name", value: sellAccountName },
+              { label: "Account Number", value: sellAccountNumber },
+              { label: "Payment Method", value: sellPaymentMethod },
+            ],
+            buttonText: "Confirm",
+          },
+        },
+      });
+    } finally {
+      setSellSubmitting(false);
+    }
+  };
+
   const handleConfirmFiatTransfer = async () => {
     if (!wallet?.publicKey) {
       toast({ title: "Wallet Not Connected", variant: "destructive" });

@@ -759,6 +759,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       onChange={(e) => setBuyUsdAmount(e.target.value)}
                       className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
                     />
+                    {buyUsdAmount && solUsdPrice && solUsdPrice > 0 && (
+                      <div className="text-sm text-white/70 mt-3">
+                        {(parseFloat(buyUsdAmount) / solUsdPrice).toFixed(6)} SOL
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 

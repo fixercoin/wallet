@@ -94,9 +94,22 @@ export class FixoriumWalletProvider {
   private getCallerOrigin(): string {
     if (typeof window === "undefined") return "unknown";
     try {
+      if (document.referrer) {
+        const refUrl = new URL(document.referrer);
+        return refUrl.origin;
+      }
       return window.location.origin;
     } catch {
       return "unknown";
+    }
+  }
+
+  private isInIframe(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
     }
   }
 

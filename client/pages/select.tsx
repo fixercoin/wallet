@@ -505,7 +505,10 @@ export default function Select() {
         <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
             <Button
-              onClick={() => navigate("/buy-now")}
+              onClick={() => {
+                const el = document.getElementById("buy-details");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               BUY
@@ -516,6 +519,66 @@ export default function Select() {
               className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               SELL
+            </Button>
+          </div>
+        </div>
+
+        <div id="buy-details" className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+          <div className="space-y-4">
+            <div>
+              <label className="block font-medium text-white/80 mb-2">Select Token</label>
+              <Select value={buyToken} onValueChange={(v) => setBuyToken(v as BuyToken)}>
+                <SelectTrigger className="bg-[#1a2540]/50 border-white/10 text-white">
+                  <SelectValue placeholder="Select token" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a2540] border-white/10">
+                  {BUY_TOKENS.map((t) => (
+                    <SelectItem key={t} value={t} className="text-white">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block font-medium text-white/80 mb-2">Amount (PKR)</label>
+              <input
+                type="number"
+                value={amountPKR}
+                onChange={(e) => setAmountPKR(e.target.value)}
+                placeholder="Enter amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="100"
+              />
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#1a2540]/40 border border-[#FF7A5C]/30">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-white/70">Exchange Rate</span>
+                <span className="font-semibold text-[#FF7A5C]">
+                  {fetchingRate ? "Fetching..." : `1 ${buyToken} = ${exchangeRate > 0 ? (exchangeRate < 1 ? exchangeRate.toFixed(6) : exchangeRate.toFixed(2)) : "0.00"} PKR`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm mt-2">
+                <span className="text-white/70">You Will Receive</span>
+                <span className="font-bold text-[#FF7A5C]">{estimatedTokens.toFixed(6)} {buyToken}</span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#1a2540]/40 border border-white/10 text-sm">
+              <div className="flex justify-between"><span className="text-white/70">Seller Name</span><span className="text-white">ameer nawaz khan</span></div>
+              <div className="flex justify-between mt-2"><span className="text-white/70">Account Number</span><span className="text-white">03107044833</span></div>
+              <div className="flex justify-between mt-2"><span className="text-white/70">Payment Method</span><span className="text-white">easypaisa</span></div>
+            </div>
+
+            <Button
+              onClick={handleConfirmFiatTransfer}
+              disabled={submittingBuy || !amountPKR || Number(amountPKR) <= 0 || exchangeRate <= 0}
+              className="w-full h-12 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg disabled:opacity-50"
+            >
+              Confirm Fiat Transfer
             </Button>
           </div>
         </div>

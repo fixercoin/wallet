@@ -297,6 +297,89 @@ export default function Select() {
   );
   const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
 
+  // Inline Buy section state
+  const BUY_TOKENS = ["FIXERCOIN", "SOL", "USDC", "USDT"] as const;
+  type BuyToken = (typeof BUY_TOKENS)[number];
+  const [buyToken, setBuyToken] = useState<BuyToken>("FIXERCOIN");
+  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [exchangeRate, setExchangeRate] = useState<number>(0);
+  const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
+  const [fetchingRate, setFetchingRate] = useState<boolean>(false);
+  const [submittingBuy, setSubmittingBuy] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchRate = async () => {
+      setFetchingRate(true);
+      try {
+        const res = await fetch(`/api/exchange-rate?token=${buyToken}`);
+        if (!res.ok) throw new Error(`Rate ${res.status}`);
+        const data = await res.json();
+        const rate = data.rate || data.priceInPKR || 0;
+        setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 0);
+      } catch (e) {
+        console.error("Failed to fetch exchange rate", e);
+        setExchangeRate(0);
+      } finally {
+        setFetchingRate(false);
+      }
+    };
+    fetchRate();
+  }, [buyToken]);
+
+  useEffect(() => {
+    if (amountPKR && exchangeRate > 0) {
+      setEstimatedTokens(Number(amountPKR) / exchangeRate);
+    } else {
+      setEstimatedTokens(0);
+    }
+  }, [amountPKR, exchangeRate]);
+
+  const handleConfirmFiatTransfer = async () => {
+    if (!wallet?.publicKey) {
+      toast({ title: "Wallet Not Connected", variant: "destructive" });
+      return;
+    }
+    if (!amountPKR || Number(amountPKR) <= 0 || exchangeRate <= 0) {
+      toast({ title: "Invalid amount", description: "Enter PKR amount", variant: "destructive" });
+      return;
+    }
+    setSubmittingBuy(true);
+    try {
+      const roomId = `ORD-${Date.now()}`;
+      const payloadForBuy = {
+        roomId,
+        token: buyToken,
+        amountPKR: Number(amountPKR),
+        estimatedTokens: Number((Number(amountPKR) / exchangeRate).toFixed(6)),
+        pricePKRPerQuote: exchangeRate,
+        paymentMethod: "easypaisa",
+        buyerWallet: wallet.publicKey,
+        seller: { accountName: "ameer nawaz khan", accountNumber: "03107044833" },
+      };
+      navigate("/select", {
+        state: {
+          action: "buyer_paid",
+          payload: payloadForBuy,
+          confirmation: {
+            title: "Confirm Fiat Transfer",
+            message: `You are confirming PKR ${Number(amountPKR).toFixed(2)} payment via easypaisa`,
+            details: [
+              { label: "Token", value: buyToken },
+              { label: "Amount (PKR)", value: Number(amountPKR).toFixed(2) },
+              { label: "Estimated Receive", value: `${payloadForBuy.estimatedTokens.toFixed(6)} ${buyToken}` },
+              { label: "Seller Name", value: "ameer nawaz khan" },
+              { label: "Account Number", value: "03107044833" },
+              { label: "Payment Method", value: "easypaisa" },
+            ],
+            buttonText: "Confirm",
+          },
+        },
+      });
+    } finally {
+      setSubmittingBuy(false);
+    }
+  };
+
   const handleConfirmPayment = async () => {
     try {
       if (!action || !payload) {

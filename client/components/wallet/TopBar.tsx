@@ -104,7 +104,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 className="flex items-center gap-2 text-xs"
               >
                 <FileText className="h-4 w-4" />
-                <span>DEPLOY</span>
+                <span>MINT-SPL</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

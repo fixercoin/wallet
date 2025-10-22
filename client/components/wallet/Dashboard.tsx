@@ -752,7 +752,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {currency}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400">Daily Up/Down</p>
                     </>
                   );
                 }

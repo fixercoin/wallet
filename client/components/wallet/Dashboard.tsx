@@ -801,7 +801,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               maximumFractionDigits: 2,
                             })}
                       </span>
-                      <span className="text-xs text-gray-300">{currency}</span>
+                      <span className="text-2xl text-gray-300">{currency}</span>
                     </div>
                     {hasValidPriceChange && (
                       <div className="flex items-center justify-center gap-2">

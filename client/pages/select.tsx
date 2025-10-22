@@ -441,116 +441,113 @@ export default function Select() {
           </div>
         </div>
 
-        {wallet?.publicKey && (
-          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
-            {/* Orders list displayed as prompt messages - moved above image */}
-            <div className="mb-3 space-y-3">
-              {loadingOrders ? (
-                <div className="text-sm text-white/60">Loading orders...</div>
-              ) : orders.length === 0 ? (
-                payload && payload.roomId ? (
-                  <div className="p-4 bg-[#0f1520]/50 border border-white/10">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-white/90">
-                          Order {payload.roomId}
-                        </div>
-                        <div className="text-xs text-white/70 mt-1">
-                          {action === "buyer_paid"
-                            ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
-                            : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
-                        </div>
-                        <div className="text-xs text-white/60 mt-2">
-                          Payment: {payload.paymentMethod || "—"}
-                        </div>
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
+          {/* Orders list displayed as prompt messages - moved above image */}
+          <div className="mb-3 space-y-3">
+            {loadingOrders ? (
+              <div className="text-sm text-white/60">Loading orders...</div>
+            ) : orders.length === 0 ? (
+              payload && payload.roomId ? (
+                <div className="p-4 bg-[#0f1520]/50 border border-white/10">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-white/90">
+                        Order {payload.roomId}
                       </div>
-                      <div className="flex-shrink-0">
-                        <Button
-                          onClick={() =>
-                            navigate("/express/buy-trade", {
-                              state: {
-                                order: {
-                                  id: payload.roomId,
-                                  token: payload.token,
-                                  pricePKRPerQuote: payload.pricePKRPerQuote,
-                                  paymentMethod: payload.paymentMethod,
-                                  type:
-                                    action === "buyer_paid" ? "buy" : "sell",
-                                },
-                                openChat: true,
+                      <div className="text-xs text-white/70 mt-1">
+                        {action === "buyer_paid"
+                          ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
+                          : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
+                      </div>
+                      <div className="text-xs text-white/60 mt-2">
+                        Payment: {payload.paymentMethod || "—"}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button
+                        onClick={() =>
+                          navigate("/express/buy-trade", {
+                            state: {
+                              order: {
+                                id: payload.roomId,
+                                token: payload.token,
+                                pricePKRPerQuote: payload.pricePKRPerQuote,
+                                paymentMethod: payload.paymentMethod,
+                                type: action === "buyer_paid" ? "buy" : "sell",
                               },
-                            })
-                          }
-                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                        >
-                          Continue
-                        </Button>
-                      </div>
+                              openChat: true,
+                            },
+                          })
+                        }
+                        className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                      >
+                        Continue
+                      </Button>
                     </div>
                   </div>
-                ) : (
-                  <div />
-                )
-              ) : (
-                orders.map((o: any) => (
-                  <div
-                    key={o.id || o.orderId}
-                    className="p-4 bg-[#0f1520]/50 border border-white/10"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-white/90">
-                          {o.title ||
-                            o.token ||
-                            o.type ||
-                            `Order ${o.id || o.orderId}`}
-                        </div>
-                        <div className="text-xs text-white/70 mt-1">
-                          {o.description ||
-                            o.message ||
-                            o.details ||
-                            `Amount: ${o.amount || o.estimatedTokens || ""}`}
-                        </div>
-                        <div className="text-xs text-white/60 mt-2">
-                          Payment: {o.paymentMethod || o.payment || "—"}
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Button
-                          onClick={() =>
-                            navigate("/express/buy-trade", {
-                              state: { order: o, openChat: true },
-                            })
-                          }
-                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                        >
-                          Continue
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
-              {loadingOrders ? (
-                <div className="text-sm text-white/60">Loading orders...</div>
-              ) : orders.length === 0 && !payload ? (
-                <div className="text-sm text-white/60">
-                  FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
-                  TRADING. NO ORDERS AVAILABLE.
                 </div>
               ) : (
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                  alt="Payment illustration"
-                  className="max-h-[320px] w-full object-contain"
-                />
-              )}
-            </div>
+                <div />
+              )
+            ) : (
+              orders.map((o: any) => (
+                <div
+                  key={o.id || o.orderId}
+                  className="p-4 bg-[#0f1520]/50 border border-white/10"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-white/90">
+                        {o.title ||
+                          o.token ||
+                          o.type ||
+                          `Order ${o.id || o.orderId}`}
+                      </div>
+                      <div className="text-xs text-white/70 mt-1">
+                        {o.description ||
+                          o.message ||
+                          o.details ||
+                          `Amount: ${o.amount || o.estimatedTokens || ""}`}
+                      </div>
+                      <div className="text-xs text-white/60 mt-2">
+                        Payment: {o.paymentMethod || o.payment || "—"}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button
+                        onClick={() =>
+                          navigate("/express/buy-trade", {
+                            state: { order: o, openChat: true },
+                          })
+                        }
+                        className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-        )}
+
+          <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
+            {loadingOrders ? (
+              <div className="text-sm text-white/60">Loading orders...</div>
+            ) : orders.length === 0 && !payload ? (
+              <div className="text-sm text-white/60">
+                FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
+                TRADING. NO ORDERS AVAILABLE.
+              </div>
+            ) : (
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
+                alt="Payment illustration"
+                className="max-h-[320px] w-full object-contain"
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>

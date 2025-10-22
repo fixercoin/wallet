@@ -589,7 +589,7 @@ export default function BuyTrade() {
                   onClick={handleReceived}
                   className="wallet-button-primary w-full"
                 >
-                  I have received
+                  Confirm Transaction
                 </Button>
               ) : (
                 <>
@@ -630,26 +630,18 @@ export default function BuyTrade() {
                     />
                     <input
                       className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
-                      placeholder="To wallet"
+                      placeholder="Paste wallet address"
                       value={toWallet}
                       onChange={(e) => setToWallet(e.target.value)}
                     />
                   </div>
-                  {!readyToConfirmSend ? (
-                    <Button
-                      onClick={handleSendTransaction}
-                      className="wallet-button-primary w-full"
-                    >
-                      Send transaction
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleSentAsset}
-                      className="wallet-button-secondary w-full"
-                    >
-                      I have sent asset
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleSentAsset}
+                    className="wallet-button-primary w-full"
+                    disabled={!sendAmount || !toWallet}
+                  >
+                    Confirm Send Transaction
+                  </Button>
                 </>
               )}
 

@@ -65,6 +65,41 @@ export class FixoriumWalletProvider {
     this.defaultConnection = connection;
   }
 
+  setConnectionApprovalHandler(handler: ConnectionApprovalHandler | null) {
+    this.approvalHandler = handler;
+  }
+
+  markOriginAsTrusted(origin: string) {
+    this.trustedOrigins.add(origin);
+  }
+
+  isTrustedOrigin(origin: string): boolean {
+    return this.trustedOrigins.has(origin) || this.isOwnOrigin(origin);
+  }
+
+  private isOwnOrigin(origin: string): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      return new URL(origin).origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }
+
+  private getCurrentOrigin(): string {
+    if (typeof window === "undefined") return "unknown";
+    return window.location.origin;
+  }
+
+  private getCallerOrigin(): string {
+    if (typeof window === "undefined") return "unknown";
+    try {
+      return window.location.origin;
+    } catch {
+      return "unknown";
+    }
+  }
+
   setWallet(nextWallet: WalletData | null) {
     const previousKey = this.publicKeyCache?.toBase58() ?? null;
 

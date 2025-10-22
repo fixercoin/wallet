@@ -322,7 +322,6 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 flex flex-col items-center gap-6">
-          <div className="w-full p-2 rounded-lg bg-yellow-100 text-black text-[10px] text-center mb-2" style={{ color: '#000' }}>/// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR DETAIL BY USING DROP DOWN ///</div>
           {detectedOrder ? (
             <>
               <button
@@ -439,6 +438,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 >
                   Continue
                 </Button>
+                <div className="w-full p-2 rounded-lg bg-yellow-100 text-black text-[10px] text-center mt-2" style={{ color: '#000' }}>/// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR DETAIL BY USING DROP DOWN ///</div>
               </div>
             )}
 
@@ -503,6 +503,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 >
                   Continue
                 </Button>
+                <div className="w-full p-2 rounded-lg bg-yellow-100 text-black text-[10px] text-center mt-2" style={{ color: '#000' }}>/// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR DETAIL BY USING DROP DOWN ///</div>
               </div>
             )}
           </div>

@@ -13,7 +13,6 @@ import {
   SystemProgram,
   Transaction,
   PublicKey,
-  clusterApiUrl,
 } from "@solana/web3.js";
 import {
   MINT_SIZE,

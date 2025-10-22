@@ -912,6 +912,57 @@ export default function SelectPage() {
         </div>
       </div>
 
+      <Sheet open={showPending} onOpenChange={setShowPending}>
+        <SheetContent side="right" className="bg-[#0f1520] text-white border-l border-white/10">
+          <SheetHeader>
+            <SheetTitle>Pending Orders ({orders.length})</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-3">
+            {loadingOrders ? (
+              <div className="text-sm text-white/60">Loading orders...</div>
+            ) : orders.length === 0 ? (
+              <div className="text-sm text-white/60">No pending orders</div>
+            ) : (
+              orders.map((o: any) => (
+                <div
+                  key={o.id || o.orderId}
+                  className="p-4 bg-[#0f1520]/50 border border-white/10 rounded-lg"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-white/90">
+                        {o.title || o.token || o.type || `Order ${o.id || o.orderId}`}
+                      </div>
+                      <div className="text-xs text-white/70 mt-1">
+                        {o.description || o.message || o.details || ""}
+                      </div>
+                      <div className="text-xs text-white/60 mt-2">
+                        Payment: {o.paymentMethod || o.payment || "—"}
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <div className="flex-shrink-0">
+                        <Button
+                          onClick={() => {
+                            navigate("/express/buy-trade", {
+                              state: { order: o, openChat: true },
+                            });
+                            setShowPending(false);
+                          }}
+                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                        >
+                          Continue
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

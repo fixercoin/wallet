@@ -592,6 +592,8 @@ export default function SelectPage() {
           description: "Waiting for seller to verify payment...",
         });
         setOpenChat(true);
+        setStatusStage("waiting");
+        setShowStatusPrompt(true);
       } else if (action === "seller_sent") {
         const roomId = payload.roomId as string;
         const message: ChatMessage = {

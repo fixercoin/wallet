@@ -748,7 +748,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             maximumFractionDigits: 2,
                           })}
                         </span>
-                        <span className="text-xs text-gray-300">
+                        <span className="text-2xl text-gray-300">
                           {currency}
                         </span>
                       </div>

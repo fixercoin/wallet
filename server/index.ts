@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
+import { handleSolanaSend } from "./routes/solana-send";
+import { handleSolanaSimulate } from "./routes/solana-simulate";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {

@@ -964,17 +964,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                             value={token.mint}
                             className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20"
                           >
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage
-                                  src={token.logoURI}
-                                  alt={token.symbol}
-                                />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                  {token.symbol.slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>{token.symbol}</span>
+                            <div className="flex items-center gap-3 justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{token.symbol}</span>
+                              </div>
+                              <span className="text-xs text-white/70">
+                                {formatAmount(getTokenBalance(token))}
+                              </span>
                             </div>
                           </SelectItem>
                         ))}

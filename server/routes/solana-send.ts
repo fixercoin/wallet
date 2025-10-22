@@ -3,7 +3,14 @@ export async function handleSolanaSend(rawTx: string) {
     jsonrpc: "2.0",
     id: 1,
     method: "sendTransaction",
-    params: [rawTx, { skipPreflight: false, preflightCommitment: "confirmed" }],
+    params: [
+      rawTx,
+      {
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+        encoding: "base64",
+      },
+    ],
   };
 
   const response = await fetch(

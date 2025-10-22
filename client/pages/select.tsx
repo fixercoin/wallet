@@ -147,6 +147,14 @@ export default function SelectPage() {
   const [openChat, setOpenChat] = useState<boolean>(
     Boolean(location.state?.openChat || action || false),
   );
+  const [showPending, setShowPending] = useState<boolean>(false);
+  const isAdmin = useMemo(() => {
+    return (
+      !!ADMIN_WALLET &&
+      !!wallet?.publicKey &&
+      String(wallet.publicKey).toLowerCase() === String(ADMIN_WALLET).toLowerCase()
+    );
+  }, [wallet?.publicKey]);
 
   useEffect(() => {
     if (wallet?.publicKey === ADMIN_WALLET) setOpenChat(true);

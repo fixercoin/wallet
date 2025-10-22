@@ -538,7 +538,9 @@ export const handler = async (event: any) => {
       } catch {}
       const { signedBase64 } = body || {};
       if (!signedBase64) {
-        return jsonResponse(400, { error: "Missing signedBase64 in request body" });
+        return jsonResponse(400, {
+          error: "Missing signedBase64 in request body",
+        });
       }
       try {
         const result = await handleSolanaSimulate(signedBase64);
@@ -558,7 +560,9 @@ export const handler = async (event: any) => {
       } catch {}
       const { signedBase64 } = body || {};
       if (!signedBase64) {
-        return jsonResponse(400, { error: "Missing signedBase64 in request body" });
+        return jsonResponse(400, {
+          error: "Missing signedBase64 in request body",
+        });
       }
       try {
         const result = await handleSolanaSend(signedBase64);

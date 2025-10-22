@@ -419,8 +419,8 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   </select>
                 </div>
                 {buyEstimate !== null ? (
-                  <div className="p-3 rounded-lg border bg-white/90">
-                    <div className="text-xs text-gray-500">Estimate</div>
+                  <div className="p-3 rounded-lg border bg-black text-white">
+                    <div className="text-xs text-white/70">Estimate</div>
                     <div className="font-semibold mt-1">
                       {buyEstimate.toLocaleString(undefined, {
                         maximumFractionDigits:

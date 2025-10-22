@@ -649,16 +649,16 @@ export default function SelectPage() {
               value={headerEmail}
               onChange={(e) => setHeaderEmail(e.target.value)}
               placeholder="info@fixorium.com.pk"
-              className="w-full pr-12 px-3 py-2 h-10 rounded-lg bg-[#1a2540]/50 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
+              className="w-full pr-9 px-3 py-2 h-10 rounded-lg bg-[#1a2540]/50 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
             />
             <button
               onClick={() => setShowPending(true)}
               aria-label="Open pending orders"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm relative"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm relative"
             >
-              <MessageSquare className="w-5 h-5 text-white" />
+              <MessageSquare className="w-4 h-4 text-white" />
               {orders.length > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-[#FF5A8C] text-[10px] font-bold text-white">
+                <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 flex items-center justify-center rounded-full bg-[#FF5A8C] text-[9px] font-bold text-white">
                   {orders.length}
                 </span>
               )}

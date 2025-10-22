@@ -270,7 +270,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0"
               aria-label="Back to dashboard"
             >
               <ArrowLeft className="h-4 w-4" />

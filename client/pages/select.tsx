@@ -15,6 +15,7 @@ import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
 import { listOrders } from "@/lib/p2p";
+import { listP2POrders } from "@/lib/pnp-api";
 import {
   saveChatMessage,
   saveNotification,

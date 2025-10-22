@@ -79,15 +79,38 @@ class JupiterAPI {
       const url = `/api/jupiter/quote?${params.toString()}`;
       console.log("Jupiter quote proxy request:", url);
 
-      const response = await this.fetchWithTimeout(url, 15000).catch(
+      const response = await this.fetchWithTimeout(url, 8000).catch(
         () => new Response("", { status: 0 } as any),
       );
       const txt = await response.text().catch(() => "");
 
       if (!response.ok) {
-        // Fallback: try direct Jupiter API (CORS-enabled)
+        try {
+          const errorData = txt ? JSON.parse(txt) : {};
+          const errorCode = errorData?.code;
+
+          // If no route found, return null to trigger indicative pricing fallback
+          if (errorCode === "NO_ROUTE_FOUND" || response.status === 404) {
+            console.warn(
+              `No swap route available from Jupiter for ${inputMint} -> ${outputMint}`,
+            );
+            return null;
+          }
+
+          // For other client errors (400, etc), also return null
+          if (response.status === 400) {
+            console.warn(
+              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}`,
+            );
+            return null;
+          }
+        } catch (parseErr) {
+          console.debug("Could not parse error response:", parseErr);
+        }
+
+        // Fallback: try direct Jupiter API (CORS-enabled) for retries
         const directUrl = `${this.baseUrl}/quote?${params.toString()}`;
-        const directResp = await this.fetchWithTimeout(directUrl, 12000).catch(
+        const directResp = await this.fetchWithTimeout(directUrl, 8000).catch(
           () => new Response("", { status: 0 } as any),
         );
         if (directResp.ok) {
@@ -96,7 +119,7 @@ class JupiterAPI {
           } catch {}
         }
         console.warn(
-          "Jupiter proxy quote non-ok response:",
+          "Jupiter quote unavailable (proxy & direct):",
           response.status,
           txt,
         );
@@ -236,7 +259,7 @@ class JupiterAPI {
     );
 
     // Limit concurrent requests to avoid rate limiting
-    const maxConcurrent = 2; // Reduced concurrency for proxy
+    const maxConcurrent = Math.min(8, tokenMints.length); // Increased concurrency to speed up fetching
     for (let i = 0; i < tokenMints.length; i += maxConcurrent) {
       const batch = tokenMints.slice(i, i + maxConcurrent);
       const batchPromises = batch.map(async (mint) => {
@@ -254,7 +277,7 @@ class JupiterAPI {
 
       // Small delay between batches to avoid rate limiting
       if (i + maxConcurrent < tokenMints.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Increased delay
+        await new Promise((resolve) => setTimeout(resolve, 200)); // Reduced delay
       }
     }
 

@@ -22,6 +22,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 
@@ -42,6 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onTokenClick,
   onSettings,
 }) => {
+  const navigate = useNavigate();
   const {
     wallet,
     balance,
@@ -127,9 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(
-          "https://api.exchangerate.host/latest?base=USD&symbols=PKR",
-        );
+        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -331,6 +331,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
 
+        {/* All Tokens Button */}
+        <div className="mb-8">
+          <Button
+            onClick={() => navigate("/all-tokens")}
+            className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-lg"
+          >
+            All Tokens
+          </Button>
+        </div>
+
         {/* Tokens List */}
         <div className="space-y-3">
           {/* All Tokens - Each in separate container */}
@@ -351,7 +361,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => onTokenClick(token.mint)}
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-gray-700 flex-shrink-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
                         <AvatarImage src={token.logoURI} alt={token.symbol} />
                         <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
                           {token.symbol.slice(0, 2).toUpperCase()}

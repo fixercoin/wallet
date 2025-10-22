@@ -637,8 +637,12 @@ export default function SelectPage() {
             info@fixorium.com.pk
           </span>
         </div>
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
+
+        <div
+          id="trade-card"
+          className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-3"
+        >
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full mb-4">
             <Button
               onClick={() => {
                 setActiveSide("buy");
@@ -663,12 +667,6 @@ export default function SelectPage() {
               SELL
             </Button>
           </div>
-        </div>
-
-        <div
-          id="trade-card"
-          className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-3"
-        >
           {activeSide === "buy" ? (
             <div className="space-y-4">
               <div>

@@ -105,6 +105,9 @@ export async function createServer(): Promise<express.Application> {
   // SPL-META submit
   app.post("/api/spl-meta/submit", handleSubmitSplMeta);
 
+  // Fixorium tokens
+  app.get("/api/fixorium-tokens", handleFixoriumTokens);
+
   // Health check
   app.get("/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

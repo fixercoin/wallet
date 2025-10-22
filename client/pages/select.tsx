@@ -153,6 +153,8 @@ export default function SelectPage() {
     Boolean(location.state?.openChat || action || false),
   );
   const [showPending, setShowPending] = useState<boolean>(false);
+  const [showStatusPrompt, setShowStatusPrompt] = useState<boolean>(false);
+  const [statusStage, setStatusStage] = useState<"waiting" | "completed" | null>(null);
   const isAdmin = useMemo(() => {
     return (
       !!ADMIN_WALLET &&

@@ -236,6 +236,17 @@
 }
 
 @layer components {
+  /* Global: match PKR Amount input color and style across app */
+  input, textarea, select {
+    background-color: rgba(230, 247, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem !important;
+    color: inherit !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   /* Wallet-specific styles */
   .wallet-gradient {
     @apply bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100;

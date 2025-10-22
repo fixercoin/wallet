@@ -29,7 +29,7 @@ const tryJupiterEndpoints = async (
       console.log(`Trying Jupiter API: ${url}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(url, {
         method: "GET",
@@ -155,10 +155,10 @@ export const handleJupiterTokens: RequestHandler = async (req, res) => {
 
     for (const t of typesToTry) {
       const endpoints = baseEndpoints(t);
-      for (let attempt = 1; attempt <= 3; attempt++) {
+      for (let attempt = 1; attempt <= 2; attempt++) {
         for (const endpoint of endpoints) {
           try {
-            const response = await fetchWithTimeout(endpoint, 15000);
+            const response = await fetchWithTimeout(endpoint, 8000);
             if (!response.ok) {
               lastError = `${endpoint} -> ${response.status} ${response.statusText}`;
               // retry on rate limiting / server errors
@@ -176,7 +176,7 @@ export const handleJupiterTokens: RequestHandler = async (req, res) => {
             console.warn(`Jupiter tokens fetch failed: ${lastError}`);
           }
         }
-        await new Promise((r) => setTimeout(r, attempt * 500));
+        await new Promise((r) => setTimeout(r, attempt * 250));
       }
     }
 
@@ -257,8 +257,8 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
     // Try up to 3 attempts with small backoff on 5xx/429
     let lastStatus = 0;
     let lastText = "";
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const response = await fetchWithTimeout(15000);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const response = await fetchWithTimeout(8000);
       lastStatus = response.status;
       if (response.ok) {
         const data = await response.json();
@@ -282,9 +282,9 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
       // Retry on rate limit or server errors
       if (response.status === 429 || response.status >= 500) {
         console.warn(
-          `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/3)`,
+          `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/2)`,
         );
-        await new Promise((r) => setTimeout(r, attempt * 500));
+        await new Promise((r) => setTimeout(r, attempt * 250));
         continue;
       }
       break;

@@ -169,6 +169,12 @@ export default function SelectPage() {
   }, [wallet]);
   const confirmationData = location.state?.confirmation;
 
+  useEffect(() => {
+    if (location.state?.confirmation) {
+      setShowConfirmation(true);
+    }
+  }, [location.state?.confirmation]);
+
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState<string>("");
 

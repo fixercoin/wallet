@@ -340,14 +340,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!solToken) throw new Error("SOL token not found");
 
       const usdAmount = parseFloat(buyUsdAmount);
-      const solPrice = await jupiterAPI.getTokenPrices([solToken.mint]);
-      const solUsdPrice = solPrice[solToken.mint] ?? null;
 
-      if (!solUsdPrice || solUsdPrice <= 0) {
+      // Use the state solUsdPrice if available, otherwise fetch it
+      let fetchedSolUsdPrice = solUsdPrice;
+      if (!fetchedSolUsdPrice || fetchedSolUsdPrice <= 0) {
+        const solPrice = await jupiterAPI.getTokenPrices([solToken.mint]);
+        fetchedSolUsdPrice = solPrice[solToken.mint] ?? null;
+      }
+
+      if (!fetchedSolUsdPrice || fetchedSolUsdPrice <= 0) {
         throw new Error("Unable to fetch SOL price");
       }
 
-      const solAmountNeeded = usdAmount / solUsdPrice;
+      const solAmountNeeded = usdAmount / fetchedSolUsdPrice;
       if (solAmountNeeded > balance) {
         throw new Error("Insufficient SOL balance for this purchase");
       }
@@ -845,17 +850,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                             value={token.mint}
                             className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20"
                           >
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage
-                                  src={token.logoURI}
-                                  alt={token.symbol}
-                                />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                  {token.symbol.slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>{token.symbol}</span>
+                            <div className="flex items-center gap-3 justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{token.symbol}</span>
+                              </div>
+                              <span className="text-xs text-white/70">
+                                {formatAmount(getTokenBalance(token))}
+                              </span>
                             </div>
                           </SelectItem>
                         ))}
@@ -877,7 +887,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   className="w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all mt-4"
                   disabled={!buyUsdAmount || !buyToken || isLoading}
                 >
-                  {isLoading ? "Processing..." : "Confirm Buy"}
+                  {isLoading ? "Processing..." : "CONFIRM BUY"}
                 </Button>
               </>
             ) : (
@@ -954,17 +964,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                             value={token.mint}
                             className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20"
                           >
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage
-                                  src={token.logoURI}
-                                  alt={token.symbol}
-                                />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                  {token.symbol.slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>{token.symbol}</span>
+                            <div className="flex items-center gap-3 justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{token.symbol}</span>
+                              </div>
+                              <span className="text-xs text-white/70">
+                                {formatAmount(getTokenBalance(token))}
+                              </span>
                             </div>
                           </SelectItem>
                         ))}
@@ -986,7 +1001,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   className="w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all mt-4"
                   disabled={!sellTokenAmount || !sellToken || isLoading}
                 >
-                  {isLoading ? "Processing..." : "Confirm Sell"}
+                  {isLoading ? "Processing..." : "CONFIRM SELL"}
                 </Button>
               </>
             )}

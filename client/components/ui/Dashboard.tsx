@@ -331,6 +331,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
 
+        {/* All Tokens Button */}
+        <div className="mb-8">
+          <Button
+            onClick={() => navigate("/all-tokens")}
+            className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-lg"
+          >
+            All Tokens
+          </Button>
+        </div>
+
         {/* Tokens List */}
         <div className="space-y-3">
           {/* All Tokens - Each in separate container */}

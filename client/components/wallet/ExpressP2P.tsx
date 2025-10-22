@@ -409,7 +409,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <select
                     value={buyTokenMint}
                     onChange={(e) => setBuyTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-black text-white border-white/10"
+                    className="w-full border rounded-xl px-3 py-2 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]"
                   >
                     {tokenOptions.map((sym) => (
                       <option key={sym} value={sym}>
@@ -419,8 +419,8 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   </select>
                 </div>
                 {buyEstimate !== null ? (
-                  <div className="p-3 rounded-lg border bg-black text-white">
-                    <div className="text-xs text-white/70">Estimate</div>
+                  <div className="p-3 rounded-lg border bg-[#e6f7ff]/20 text-[hsl(var(--foreground))]">
+                    <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       {buyEstimate.toLocaleString(undefined, {
                         maximumFractionDigits:
@@ -456,7 +456,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <select
                     value={sellTokenMint}
                     onChange={(e) => setSellTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-black text-white border-white/10"
+                    className="w-full border rounded-xl px-3 py-2 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]"
                   >
                     {tokenOptions.map((sym) => (
                       <option key={sym} value={sym}>
@@ -478,8 +478,8 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   />
                 </div>
                 {sellEstimatePKR !== null ? (
-                  <div className="p-3 rounded-lg border bg-black text-white">
-                    <div className="text-xs text-white/70">Estimate</div>
+                  <div className="p-3 rounded-lg border bg-[#e6f7ff]/20 text-[hsl(var(--foreground))]">
+                    <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       PKR{" "}
                       {sellEstimatePKR.toLocaleString(undefined, {

@@ -803,12 +803,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </span>
                       <span className="text-xs text-gray-300">{currency}</span>
                     </div>
+                    <p className="text-xs text-gray-400">Daily Up/Down</p>
                     {hasValidPriceChange && (
                       <div className="flex items-center justify-center gap-2">
                         {isPositive ? (
                           <>
                             <ArrowUpRight className="h-4 w-4 text-green-400" />
-                            <span className="text-sm font-medium text-green-400">
+                            <span style={{ fontSize: "12px" }} className="font-medium text-green-400">
                               +
                               {formatCurrency(Math.abs(totalChange24h), {
                                 from: "USD",
@@ -820,7 +821,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         ) : (
                           <>
                             <ArrowDownLeft className="h-4 w-4 text-red-400" />
-                            <span className="text-sm font-medium text-red-400">
+                            <span style={{ fontSize: "12px" }} className="font-medium text-red-400">
                               -
                               {formatCurrency(Math.abs(totalChange24h), {
                                 from: "USD",

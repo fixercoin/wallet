@@ -136,10 +136,12 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
+          <WalletConnectionSetup />
           <ExpressP2PProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <ConnectionAcceptanceDialog />
               <CurrencyProvider>
                 <BrowserRouter>
                   {isMobileMatch ? (

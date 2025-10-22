@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,20 +53,20 @@ export default function CreateToken() {
 
   if (!wallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center">
-        <Card className="w-[90%] max-w-md">
-          <CardHeader>
-            <CardTitle>Wallet Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-300">
-              Please set up or import a wallet first.
-            </p>
-            <div className="mt-4">
-              <Button onClick={() => navigate("/")}>Go to Dashboard</Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+        <div className="relative z-20 w-[90%] max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+          <h2 className="text-xl font-bold mb-4">Wallet Required</h2>
+          <p className="text-sm text-gray-300 mb-6">
+            Please set up or import a wallet first.
+          </p>
+          <div>
+            <Button onClick={() => navigate("/")} className="w-full">
+              Go to Dashboard
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -242,29 +241,36 @@ export default function CreateToken() {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
-      <div className="bg-transparent sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold tracking-wide">
-            <span className="text-cream">FIXORIUM</span>
-            <span className="text-gray-400 text-xs">/ create token</span>
-          </div>
-          <Button
-            variant="ghost"
-            className="h-8 px-3 text-white hover:bg-[#FF7A5C]/10"
-            onClick={() => navigate(-1)}
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
+      <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="absolute top-4 left-4 z-30">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
+          aria-label="Go back"
+        >
+          <svg
+            className="w-5 h-5 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Back
-          </Button>
-        </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="rounded-2xl sm:rounded-3xl bg-[#0f1520]/30 border border-white/10 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Create Token</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center mt-20">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+          <h1 className="text-xl sm:text-2xl font-bold mb-6">Create Token</h1>
+          <div className="space-y-4">
             <div className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="name">Token Name</Label>
@@ -273,7 +279,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -283,7 +289,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -293,7 +299,7 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -304,7 +310,7 @@ export default function CreateToken() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Short token description"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -315,7 +321,7 @@ export default function CreateToken() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://yourtoken.site"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -326,7 +332,7 @@ export default function CreateToken() {
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
                   placeholder="https://twitter.com/yourhandle"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -337,7 +343,7 @@ export default function CreateToken() {
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value)}
                   placeholder="https://t.me/yourgroup"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -349,7 +355,7 @@ export default function CreateToken() {
             <Button
               disabled={!hasMinSol || isLoading}
               onClick={createTokenOnChain}
-              className="w-full h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+              className="w-full h-12 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg disabled:opacity-50"
             >
               {isLoading ? "Creating..." : "Create Token on Solana"}
             </Button>
@@ -359,8 +365,8 @@ export default function CreateToken() {
                 Balance is below 0.002 SOL.
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

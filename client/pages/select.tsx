@@ -656,7 +656,7 @@ export default function SelectPage() {
       </div>
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-start">
           <span className="text-sm text-white/70 select-none">
             info@fixorium.com.pk
           </span>

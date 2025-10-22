@@ -139,24 +139,9 @@ export default function CreateToken() {
         ),
       );
 
-      // Mint total supply to payer's ATA
+      // Mint total supply to payer's ATA (user owns the tokens)
       const amount = maxSupply * BigInt(10 ** decimals);
       tx.add(createMintToInstruction(mint.publicKey, ata, payerPub, amount));
-
-      // Revoke mint authority so no more tokens can be created
-      try {
-        tx.add(
-          createSetAuthorityInstruction(
-            mint.publicKey,
-            payerPub,
-            AuthorityType.MintTokens,
-            null,
-          ),
-        );
-      } catch (e) {
-        // If the instruction helper is not available for some reason, continue — server-side will reject if necessary
-        console.warn("Failed to add setAuthority instruction:", e);
-      }
 
       // recent blockhash and fee payer
       const { blockhash } = await conn.getLatestBlockhash();

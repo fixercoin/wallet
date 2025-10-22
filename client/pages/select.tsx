@@ -27,6 +27,7 @@ import {
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ActionType = "buyer_paid" | "seller_sent";
 

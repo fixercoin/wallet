@@ -340,10 +340,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!solToken) throw new Error("SOL token not found");
 
       const usdAmount = parseFloat(buyUsdAmount);
-      const solPrice = await jupiterAPI.getTokenPrices([solToken.mint]);
-      const solUsdPrice = solPrice[solToken.mint] ?? null;
 
-      if (!solUsdPrice || solUsdPrice <= 0) {
+      // Use the state solUsdPrice if available, otherwise fetch it
+      let fetchedSolUsdPrice = solUsdPrice;
+      if (!fetchedSolUsdPrice || fetchedSolUsdPrice <= 0) {
+        const solPrice = await jupiterAPI.getTokenPrices([solToken.mint]);
+        fetchedSolUsdPrice = solPrice[solToken.mint] ?? null;
+      }
+
+      if (!fetchedSolUsdPrice || fetchedSolUsdPrice <= 0) {
         throw new Error("Unable to fetch SOL price");
       }
 

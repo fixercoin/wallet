@@ -61,6 +61,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
   const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(null);
+  const [solUsdPrice, setSolUsdPrice] = useState<number | null>(null);
   const [lastSwapFromToken, setLastSwapFromToken] = useState<TokenInfo | null>(null);
   const [lastSwapToToken, setLastSwapToToken] = useState<TokenInfo | null>(null);
 

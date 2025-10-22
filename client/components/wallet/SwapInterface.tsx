@@ -231,6 +231,26 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     loadSellTokenPrice();
   }, [sellToken?.mint]);
 
+  // Load SOL price
+  useEffect(() => {
+    const loadSolPrice = async () => {
+      try {
+        const jupMap = await jupiterAPI.getTokenPrices(["So11111111111111111111111111111111111111112"]);
+        let price: number | null = jupMap["So11111111111111111111111111111111111111112"] ?? null;
+
+        if (price == null || !(price > 0)) {
+          const tokenData = await dexscreenerAPI.getTokenByMint("So11111111111111111111111111111111111111112");
+          price = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd) : null;
+        }
+
+        setSolUsdPrice(price ?? null);
+      } catch (e) {
+        setSolUsdPrice(null);
+      }
+    };
+    loadSolPrice();
+  }, []);
+
   const getTokenBalance = (token?: TokenInfo) => {
     if (!token) return 0;
     if (token.symbol === "SOL") return balance || 0;

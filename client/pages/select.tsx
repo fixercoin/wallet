@@ -22,6 +22,7 @@ import {
   sendChatMessage,
   loadChatHistory,
   parseWebSocketMessage,
+  getUnreadNotifications,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";

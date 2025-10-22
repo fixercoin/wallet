@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { PublicKey } from "@solana/web3.js";
 
 interface AddTokenDialogProps {
@@ -62,10 +63,7 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Special handling for FIXERCOIN
-      if (
-        contractAddress.trim() ===
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"
-      ) {
+      if (contractAddress.trim() === TOKEN_MINTS.FIXERCOIN) {
         mockTokenInfo.symbol = "FIXERCOIN";
         mockTokenInfo.name = "FIXERCOIN";
         mockTokenInfo.decimals = 6;

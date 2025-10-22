@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +18,22 @@ import {
   Settings,
   Bot,
   Plus,
-  MoreVertical,
+  Menu,
   Gift,
+  Flame,
+  Lock,
+  Coins,
+  Bell,
+  X,
 } from "lucide-react";
+import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
+import {
+  getPaymentReceivedNotifications,
+  saveNotification,
+} from "@/lib/p2p-chat";
+import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { AddTokenDialog } from "./AddTokenDialog";
@@ -40,12 +52,50 @@ interface DashboardProps {
   onSwap: () => void;
   onAutoBot: () => void;
   onAirdrop: () => void;
-  onP2P: () => void;
   onTokenClick: (tokenMint: string) => void;
   onSettings: () => void;
   onOpenSetup?: () => void;
   onAccounts?: () => void;
+  onLock: () => void;
+  onBurn: () => void;
 }
+
+import { useNavigate } from "react-router-dom";
+import { TopBar } from "./TopBar";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+
+const QUEST_TASKS = [
+  {
+    id: "follow_x",
+    label: "Follow fixercoin on Twitter/X",
+    type: "link",
+    href: "https://twitter.com/fixorium",
+  },
+  {
+    id: "join_community",
+    label: "Join Telegram",
+    type: "link",
+    href: "https://t.me/fixorium",
+  },
+  { id: "share_updates", label: "Share fixercoin updates on X", type: "share" },
+  {
+    id: "visit_links",
+    label: "Visit official website",
+    type: "link",
+    href: "https://fixorium.com.pk",
+  },
+  {
+    id: "watch_videos",
+    label: "Watch promo videos",
+    type: "link",
+    href: "https://www.youtube.com/channel/UCoFLDQasgIdX5tj3UbT9fyQ",
+  },
+] as const;
+
+const REWARD_PER_TASK = 50; // FIXERCOIN per completed task
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onSend,
@@ -53,11 +103,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSwap,
   onAutoBot,
   onAirdrop,
-  onP2P,
   onTokenClick,
   onSettings,
   onOpenSetup,
   onAccounts,
+  onLock,
+  onBurn,
 }) => {
   const {
     wallet,
@@ -69,8 +120,270 @@ export const Dashboard: React.FC<DashboardProps> = ({
     addCustomToken,
   } = useWallet();
   const { toast } = useToast();
+  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
+  const [showQuestModal, setShowQuestModal] = useState(false);
+  const navigate = useNavigate();
+  const [isServiceDown, setIsServiceDown] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
+  // Quest state (per-wallet, persisted locally)
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    try {
+      const raw = localStorage.getItem(`fixer_quest_tasks_${wallet.publicKey}`);
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        if (Array.isArray(arr)) setCompletedTasks(new Set(arr));
+      }
+    } catch {}
+  }, [wallet?.publicKey]);
+
+  const saveTasks = (next: Set<string>) => {
+    if (!wallet?.publicKey) return;
+    try {
+      localStorage.setItem(
+        `fixer_quest_tasks_${wallet.publicKey}`,
+        JSON.stringify(Array.from(next)),
+      );
+    } catch {}
+  };
+
+  const tasksTotal = QUEST_TASKS.length;
+  const tasksDone = completedTasks.size;
+  const progressPct = Math.min(100, Math.round((tasksDone / tasksTotal) * 100));
+  const canClaim = tasksDone === tasksTotal;
+  const earnedTokens = tasksDone * REWARD_PER_TASK;
+
+  const toggleTask = (taskId: string) => {
+    const next = new Set(completedTasks);
+    if (next.has(taskId)) {
+      next.delete(taskId);
+    } else {
+      next.add(taskId);
+      toast({
+        title: "+50 FIXERCOIN",
+        description: "Task completed. Keep going!",
+      });
+    }
+    setCompletedTasks(next);
+    saveTasks(next);
+  };
+
+  const markTaskCompleted = (taskId: string) => {
+    if (completedTasks.has(taskId)) return;
+    const next = new Set(completedTasks);
+    next.add(taskId);
+    setCompletedTasks(next);
+    saveTasks(next);
+    toast({
+      title: "+50 FIXERCOIN",
+      description: "Task completed. Keep going!",
+    });
+  };
+
+  const openAndComplete = (taskId: string, url: string) => {
+    try {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {}
+    markTaskCompleted(taskId);
+  };
+
+  const shareOnX = () => {
+    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
+    const shareUrl = encodeURIComponent("https://fixorium.com.pk");
+    const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
+    try {
+      window.open(intent, "_blank", "noopener,noreferrer");
+    } catch {}
+    markTaskCompleted("share_updates");
+  };
+
+  const completeNextTask = () => {
+    for (const t of QUEST_TASKS) {
+      if (!completedTasks.has(t.id)) {
+        toggleTask(t.id);
+        break;
+      }
+    }
+  };
+
+  const handleClaimReward = async () => {
+    if (!wallet?.publicKey || !canClaim) return;
+    try {
+      const msg = `fixercoin-quest-claim:${wallet.publicKey}:${tasksDone}:${Date.now()}`;
+      const bytes = new TextEncoder().encode(msg);
+      const sig = nacl.sign.detached(bytes, wallet.secretKey);
+      const body = {
+        recipient: wallet.publicKey,
+        tasks: Array.from(completedTasks),
+        count: tasksDone,
+        authMessage: msg,
+        authSignature: bs58.encode(sig),
+      };
+      const res = await fetch(resolveApiUrl("/api/quest-claim"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.text().catch(() => "");
+        throw new Error(err || `Claim failed (${res.status})`);
+      }
+      const j = await res.json().catch(() => ({}) as any);
+      toast({
+        title: "Claimed",
+        description: "Your FIXERCOIN reward is on the way.",
+      });
+      setShowQuestModal(false);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      toast({ title: "Claim failed", description: m, variant: "destructive" });
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    let running = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (running) return;
+      running = true;
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch (err) {
+      } finally {
+        running = false;
+      }
+    };
+
+    const id = window.setInterval(tick, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [refreshBalance, refreshTokens]);
+
+  // Check for pending payment verifications if admin
+  useEffect(() => {
+    if (
+      wallet?.publicKey &&
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
+    ) {
+      const notifications = getPaymentReceivedNotifications(wallet.publicKey);
+      setPendingOrdersCount(notifications.length);
+
+      // Poll for updates every 5 seconds
+      const interval = setInterval(() => {
+        const updated = getPaymentReceivedNotifications(wallet.publicKey);
+        setPendingOrdersCount(updated.length);
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [wallet?.publicKey]);
+
+  // Persist incoming notifications and update pending badge (admin only)
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    const last = events?.[events.length - 1];
+    if (!last || last.kind !== "notification") return;
+    const notif = last.data as any;
+    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
+      return;
+    try {
+      saveNotification(notif);
+    } catch {}
+    if (
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
+    ) {
+      const updated = getPaymentReceivedNotifications(wallet.publicKey);
+      setPendingOrdersCount(updated.length);
+    }
+  }, [events, wallet?.publicKey]);
+
+  // Periodically check Express P2P service health (require consecutive failures before marking down)
+  const healthFailureRef = useRef(0);
+  useEffect(() => {
+    let stopped = false;
+    const FAILURE_THRESHOLD = 2; // require N consecutive failures
+
+    const check = async () => {
+      try {
+        const controller = new AbortController();
+        const to = setTimeout(() => controller.abort(), 4000); // slightly longer timeout
+        const res = await fetch("/health", { signal: controller.signal });
+        clearTimeout(to);
+
+        if (!res.ok) {
+          healthFailureRef.current += 1;
+          setIsServiceDown(healthFailureRef.current >= FAILURE_THRESHOLD);
+          return;
+        }
+
+        const data = await res.json().catch(() => null);
+        if (data && data.status === "ok") {
+          healthFailureRef.current = 0;
+          setIsServiceDown(false);
+        } else {
+          healthFailureRef.current += 1;
+          setIsServiceDown(healthFailureRef.current >= FAILURE_THRESHOLD);
+        }
+      } catch {
+        healthFailureRef.current += 1;
+        setIsServiceDown(healthFailureRef.current >= FAILURE_THRESHOLD);
+      }
+    };
+
+    void check();
+    const id = setInterval(() => {
+      if (!stopped) void check();
+    }, 10000);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  // Refresh quietly when user scrolls down significantly
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let lastRefresh = 0;
+    const THRESHOLD = 50; // pixels scrolled down
+    const COOLDOWN = 1000; // ms between auto refreshes
+
+    const doScrollRefresh = async () => {
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch {}
+    };
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      const now = Date.now();
+      if (y - lastY > THRESHOLD && now - lastRefresh > COOLDOWN) {
+        lastRefresh = now;
+        void doScrollRefresh();
+      }
+      lastY = y;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [refreshBalance, refreshTokens]);
 
   const handleCopyAddress = async () => {
     if (!wallet) return;
@@ -91,9 +404,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleRefresh = async () => {
-    // Space out the calls to avoid rate limiting
     await refreshBalance();
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await refreshTokens();
 
     toast({
@@ -164,10 +476,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, []);
 
-  const formatPKR = (amount: number): string => {
-    if (!amount || !isFinite(amount)) return "PKR 0.00";
-    return `PKR ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  // Currency formatting from context
+  const { currency, formatCurrency } = useCurrency();
 
   // Get SOL token data from tokens list
   const getSolToken = () => {
@@ -184,7 +494,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getTotalPortfolioValue = (): number => {
     let total = 0;
 
-    // Add all token values including SOL
     tokens.forEach((token) => {
       if (
         typeof token.balance === "number" &&
@@ -199,12 +508,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     });
 
-    // Ensure we never return a negative or NaN value
     if (!isFinite(total) || total <= 0) return 0;
     return total;
   };
 
-  // Calculate total portfolio value expressed in SOL
   const getTotalInSol = (): number => {
     const usdTotal = getTotalPortfolioValue();
     const solPrice = getSolPrice();
@@ -214,7 +521,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return usdTotal / solPrice;
   };
 
-  // Get breakdown of portfolio by type
   const getPortfolioBreakdown = () => {
     const solToken = getSolToken();
     const solValue =
@@ -240,7 +546,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
+    const priority = ["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"];
     const arr = [...tokens];
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
@@ -249,14 +555,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const aIdx = priority.indexOf(aSym);
       const bIdx = priority.indexOf(bSym);
 
-      // If both are in priority list, sort by their priority order
       if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
-      // If only a is in priority, a comes first
       if (aIdx >= 0) return -1;
-      // If only b is in priority, b comes first
       if (bIdx >= 0) return 1;
 
-      // Otherwise fallback to alphabetic by symbol
       return aSym.localeCompare(bSym);
     });
     return arr;
@@ -265,105 +567,288 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      {isLoading ? (
-        <div className="dashboard-loader-overlay">
-          <div
-            className="dashboard-loader"
-            role="status"
-            aria-label="Loading dashboard data"
-          />
-        </div>
-      ) : null}
-      {/* Header */}
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between relative">
-          <div className="flex items-center gap-3 text-[hsl(var(--foreground))] font-bold tracking-wide">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2Fcb7c54ed71c4445994802d2be5063923%2F5dbc95a4895e477594adad3ce67d2790?format=webp&width=800"
-              alt="Fixorium logo"
-              className="h-8 w-8 rounded-full object-contain"
-            />
-            <span className="text-cream">FIXORIUM</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" className="h-8 w-8 p-0 dash-btn-circle">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>ALL WALLET</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={onAirdrop}
-                  className="flex items-center gap-2"
-                >
-                  <Gift className="h-4 w-4" />
-                  <span>MULTI-SEND</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={onSettings}
-                  className="flex items-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>SETTINGS</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        {/* Balance Section */}
-        <div className="text-center space-y-1 mb-8">
-          <div
-            className="text-sm font-semibold text-[hsl(var(--foreground))]"
-            style={{ fontSize: 14 }}
-          >
-            TOTAL BALANCE
-          </div>
-          <div
-            className="text-sm text-[hsl(var(--muted-foreground))]"
-            style={{ fontSize: 14 }}
-          >
-            {wallet
-              ? (() => {
-                  const total = getTotalPortfolioValue();
-                  const hasAnyBalance =
-                    tokens.some(
-                      (t) => typeof t.balance === "number" && t.balance > 0,
-                    ) ||
-                    (typeof balance === "number" && balance > 0);
-                  // If wallet has no balances, don't show any amount
-                  if (!hasAnyBalance) return null;
+      <TopBar
+        onAccounts={onAccounts}
+        onAirdrop={onAirdrop}
+        onBurn={onBurn}
+        onLock={onLock}
+        onSettings={onSettings}
+      />
 
-                  return (
-                    <div className="text-[30px] font-semibold text-[hsl(var(--foreground))] leading-tight">
-                      {total.toLocaleString(undefined, {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3,
-                      })}
+      {/* Quest Modal */}
+      {showQuestModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
+          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-[#ffffff66]/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
+              <button
+                onClick={() => setShowQuestModal(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {/* Tagline */}
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[#FF7A5C] uppercase tracking-wider">
+                  🚀 Grow. Earn. Win.
+                </p>
+              </div>
+
+              {/* About */}
+              <p className="text-xs text-gray-300 leading-relaxed">
+                A community challenge inside the Fixorium Wallet. Complete
+                simple tasks, earn rewards, and join random prize draws — all
+                directly from your wallet.
+              </p>
+
+              {/* How it works */}
+              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+                <h3 className="text-sm font-bold text-white mb-3">
+                  How It Works
+                </h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>✅ Connect your Fixorium Wallet</p>
+                  <p>✅ Join the quest challenge</p>
+                  <p>✅ Complete simple tasks</p>
+                  <p>�� Earn points for each task</p>
+                  <p>✅ Win random rewards</p>
+                </div>
+              </div>
+
+              {/* Complete Tasks */}
+              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+                <h3 className="text-sm font-bold text-white mb-3">
+                  Complete Tasks
+                </h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  {QUEST_TASKS.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <label className="flex items-start gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 accent-[#FF7A5C]"
+                          checked={completedTasks.has(t.id)}
+                          onChange={() => toggleTask(t.id)}
+                        />
+                        <span>{t.label}</span>
+                      </label>
+                      {t.type === "link" ? (
+                        <button
+                          onClick={() =>
+                            openAndComplete(
+                              t.id as string,
+                              (t as any).href as string,
+                            )
+                          }
+                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                        >
+                          Open
+                        </button>
+                      ) : t.type === "share" ? (
+                        <button
+                          onClick={shareOnX}
+                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                        >
+                          Share
+                        </button>
+                      ) : null}
                     </div>
-                  );
-                })()
-              : "Connect wallet to see balance"}
+                  ))}
+                </div>
+              </div>
+
+              {/* Rewards */}
+              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+                <h3 className="text-sm font-bold text-white mb-3">
+                  🎁 Rewards
+                </h3>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>🖼️ NFTs and airdrops</p>
+                  <p>⚡ Early access to wallet updates</p>
+                  <p>👑 Premium features for top participants</p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-white">
+                    Progress
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {tasksDone}/{tasksTotal} tasks
+                  </span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
+                  <div
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full"
+                    style={{ width: `${progressPct}%` }}
+                  ></div>
+                </div>
+                <div className="mt-2 text-[11px] text-gray-300">
+                  Earned:{" "}
+                  <span className="text-white font-semibold">
+                    {earnedTokens} FIXERCOIN
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                  onClick={() => completeNextTask()}
+                >
+                  Complete Task
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                  disabled={!canClaim}
+                  onClick={handleClaimReward}
+                >
+                  Claim Reward
+                </Button>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        {/* Balance Section */}
+        <div className="text-center space-y-2 mb-8">
+          {wallet
+            ? (() => {
+                const total = getTotalPortfolioValue();
+                const hasAnyBalance =
+                  tokens.some(
+                    (t) => typeof t.balance === "number" && t.balance > 0,
+                  ) ||
+                  (typeof balance === "number" && balance > 0);
+                if (!hasAnyBalance) {
+                  return (
+                    <>
+                      <div className="text-2xl font-bold text-white leading-tight flex items-baseline justify-center gap-2">
+                        <span>
+                          {(0).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        <span className="text-2xl text-gray-300">
+                          {currency}
+                        </span>
+                      </div>
+                    </>
+                  );
+                }
+
+                let totalChange24h = 0;
+                let hasValidPriceChange = false;
+                tokens.forEach((token) => {
+                  if (
+                    typeof token.balance === "number" &&
+                    typeof token.price === "number" &&
+                    typeof token.priceChange24h === "number" &&
+                    isFinite(token.balance) &&
+                    isFinite(token.price) &&
+                    isFinite(token.priceChange24h) &&
+                    token.balance > 0 &&
+                    token.price > 0
+                  ) {
+                    const currentValue = token.balance * token.price;
+                    const previousPrice =
+                      token.price / (1 + token.priceChange24h / 100);
+                    const previousValue = token.balance * previousPrice;
+                    const change = currentValue - previousValue;
+                    totalChange24h += change;
+                    hasValidPriceChange = true;
+                  }
+                });
+
+                const change24hPercent = hasValidPriceChange
+                  ? (totalChange24h / (total - totalChange24h)) * 100
+                  : 0;
+                const isPositive = totalChange24h >= 0;
+
+                return (
+                  <>
+                    <div className="text-2xl font-bold text-white leading-tight flex items-baseline justify-center gap-2">
+                      <span>
+                        {currency === "PKR"
+                          ? (total * (usdToPkr || 0)).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )
+                          : total.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                      </span>
+                      <span className="text-2xl text-gray-300">{currency}</span>
+                    </div>
+                    {hasValidPriceChange && (
+                      <div className="flex items-center justify-center gap-2">
+                        {isPositive ? (
+                          <>
+                            <ArrowUpRight className="h-4 w-4 text-green-400" />
+                            <span
+                              style={{ fontSize: "12px" }}
+                              className="font-medium text-green-400"
+                            >
+                              +
+                              {formatCurrency(Math.abs(totalChange24h), {
+                                from: "USD",
+                                minimumFractionDigits: 2,
+                              })}{" "}
+                              (+{change24hPercent.toFixed(2)}%)
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDownLeft className="h-4 w-4 text-red-400" />
+                            <span
+                              style={{ fontSize: "12px" }}
+                              className="font-medium text-red-400"
+                            >
+                              -
+                              {formatCurrency(Math.abs(totalChange24h), {
+                                from: "USD",
+                                minimumFractionDigits: 2,
+                              })}{" "}
+                              ({change24hPercent.toFixed(2)}%)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            : "Connect wallet to see balance"}
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 dash-btn font-semibold border-0"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
             SEND
@@ -371,34 +856,61 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={onReceive}
-            className="h-12 w-12 rounded-full dash-btn-circle p-0 border-0"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
           >
             <ArrowDownLeft className="h-4 w-4" />
           </Button>
 
           <Button
             onClick={onSwap}
-            className="h-12 w-12 rounded-full dash-btn-circle p-0 border-0"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
-        </div>
 
-        {/* EXPRESS P2P SERVICE */}
-        <div className="mb-4">
           <Button
-            onClick={onP2P}
-            className="w-full h-12 dash-btn font-semibold border-0"
+            onClick={() => setShowQuestModal(true)}
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="Quest Rewards"
           >
-            EXPRESS P2P SERVICE
+            <FlyingPrizeBox
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
           </Button>
         </div>
 
         {/* Tokens List */}
+        <div className="mb-4 flex gap-2">
+          <Button
+            onClick={() => navigate("/express")}
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
+            aria-label="EXPRESS P2P SERVICE"
+          >
+            <span className="mr-0">EXPRESS P2P SERVICE</span>
+          </Button>
+
+          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+            <Button
+              onClick={() => navigate("/verify-sell")}
+              className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
+              aria-label={`${pendingOrdersCount} pending orders`}
+            >
+              <span className="relative">
+                {pendingOrdersCount}
+                {pendingOrdersCount > 0 && (
+                  <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+                    !
+                  </span>
+                )}
+              </span>
+            </Button>
+          )}
+        </div>
+
         <div className="space-y-3">
-          {/* All Tokens - Each in separate container */}
           {sortedTokens.map((token) => {
-            // Use real percentage change if available; otherwise show placeholder
             const percentChange =
               typeof token.priceChange24h === "number" &&
               isFinite(token.priceChange24h)
@@ -409,28 +921,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
             return (
               <Card
                 key={token.mint}
-                className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-md"
+                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md"
               >
                 <CardContent className="p-0">
                   <div
-                    className="flex items-center justify-between p-4 rounded-md hover:bg-[hsl(var(--card))]/90 cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
                     onClick={() => onTokenClick(token.mint)}
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-gray-700 flex-shrink-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
                         <AvatarImage src={token.logoURI} alt={token.symbol} />
                         <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
                           {token.symbol.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[hsl(var(--foreground))] text-sm">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-semibold text-white text-sm">
                             {token.symbol}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-xs text-gray-300">
                             ${formatTokenPriceDisplay(token.price)}
                           </span>
                           {percentChange !== null ? (
@@ -443,22 +955,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 {isPositive ? "+" : ""}
                                 {percentChange.toFixed(2)}%
                               </span>
-                              <span className="text-xs text-gray-500">24h</span>
+                              <span className="text-xs text-gray-400">24h</span>
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-500">—</span>
+                            <span className="text-xs text-gray-400">—</span>
                           )}
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                      <p className="text-sm font-semibold text-white">
                         {formatBalance(
                           token.symbol === "SOL" ? balance : token.balance || 0,
                         )}
                       </p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                      <p className="text-xs text-gray-300">
                         {typeof token.price === "number" && token.price > 0
                           ? `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
                           : "$0.00"}
@@ -471,7 +983,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           })}
 
           {tokens.length === 0 && (
-            <div className="text-center py-8 text-[hsl(var(--muted-foreground))]">
+            <div className="text-center py-8 text-gray-300">
               <p className="text-sm">No tokens found</p>
             </div>
           )}

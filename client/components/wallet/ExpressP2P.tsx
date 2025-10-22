@@ -263,7 +263,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="bg-transparent sticky top-0 z-10">
         <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button

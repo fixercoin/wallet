@@ -9,7 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Send, MessageSquare } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Send,
+  MessageSquare,
+  Loader2,
+  CheckCircle,
+} from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
@@ -47,7 +54,7 @@ export default function SelectPage() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const { toast } = useToast();
-  const { wallet, tokens } = useWallet();
+  const { wallet, tokens, refreshTokens } = useWallet();
   const action = (location.state?.action || null) as ActionType | null;
   const payload = (location.state?.payload || null) as any;
 
@@ -153,6 +160,10 @@ export default function SelectPage() {
     Boolean(location.state?.openChat || action || false),
   );
   const [showPending, setShowPending] = useState<boolean>(false);
+  const [showStatusPrompt, setShowStatusPrompt] = useState<boolean>(false);
+  const [statusStage, setStatusStage] = useState<
+    "waiting" | "completed" | null
+  >(null);
   const isAdmin = useMemo(() => {
     return (
       !!ADMIN_WALLET &&
@@ -165,7 +176,20 @@ export default function SelectPage() {
   useEffect(() => {
     if (wallet?.publicKey === ADMIN_WALLET) setOpenChat(true);
   }, [wallet]);
+
+  useEffect(() => {
+    if (activeSide === "sell") {
+      refreshTokens().catch(() => undefined);
+    }
+    // intentionally not depending on refreshTokens to avoid effect loop
+  }, [activeSide]);
   const confirmationData = location.state?.confirmation;
+
+  useEffect(() => {
+    if (location.state?.confirmation) {
+      setShowConfirmation(true);
+    }
+  }, [location.state?.confirmation]);
 
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState<string>("");
@@ -186,6 +210,10 @@ export default function SelectPage() {
           if (prev.find((m) => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
+        if (msg.type === "seller_sent") {
+          setStatusStage((prev) => (prev === "waiting" ? "completed" : prev));
+          setShowStatusPrompt((prev) => (prev ? true : false));
+        }
       }
     } else if (last.kind === "notification") {
       const notif = last.data as any;
@@ -394,7 +422,11 @@ export default function SelectPage() {
       }
     };
     fetchSellRate();
-  }, [sellToken]);
+    if (activeSide === "sell") {
+      refreshTokens().catch(() => undefined);
+    }
+    // intentionally not depending on refreshTokens to avoid effect loop
+  }, [sellToken, activeSide]);
 
   useEffect(() => {
     const amt = Number(sellAmountTokens);
@@ -586,6 +618,8 @@ export default function SelectPage() {
           description: "Waiting for seller to verify payment...",
         });
         setOpenChat(true);
+        setStatusStage("waiting");
+        setShowStatusPrompt(true);
       } else if (action === "seller_sent") {
         const roomId = payload.roomId as string;
         const message: ChatMessage = {
@@ -625,6 +659,8 @@ export default function SelectPage() {
           description: "Buyer will be notified",
         });
         setOpenChat(true);
+        setStatusStage("completed");
+        setShowStatusPrompt(true);
       }
     } finally {
       setShowConfirmation(false);
@@ -896,7 +932,8 @@ export default function SelectPage() {
           <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
             {loadingOrders ? (
               <div className="text-sm text-white/60">Loading orders...</div>
-            ) : orders.length === 0 && !payload ? null : (
+            ) : orders.length === 0 && !payload ? null : showConfirmation ||
+              showStatusPrompt ? null : (
               <img
                 src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
                 alt="Payment illustration"
@@ -1002,6 +1039,40 @@ export default function SelectPage() {
               className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
             >
               {confirmationData?.buttonText || "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showStatusPrompt} onOpenChange={setShowStatusPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Order Status</DialogTitle>
+            <DialogDescription>
+              {statusStage === "waiting"
+                ? "Waiting for seller to verify payment and send assets..."
+                : "Order completed."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 flex flex-col items-center gap-3">
+            {statusStage === "waiting" ? (
+              <div className="flex items-center gap-3 text-white/90">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Waiting for seller...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-green-400">
+                <CheckCircle className="w-6 h-6" />
+                <span>Order completed</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowStatusPrompt(false)}
+              className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

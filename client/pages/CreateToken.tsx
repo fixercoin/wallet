@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { useNavigate } from "react-router-dom";
@@ -33,11 +32,20 @@ export default function CreateToken() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [logoURI, setLogoURI] = useState("");
+  const [description, setDescription] = useState("");
+  const [website, setWebsite] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [telegram, setTelegram] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const decimals = 6;
   const maxSupply = 1_000_000_000n; // 1 billion
 
   const conn = (connection as any) || defaultConnection;
+
+  // Fixorium wallet address that will hold mint authority
+  const FIXORIUM_MINT_AUTHORITY = new PublicKey(
+    "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA",
+  );
 
   const hasMinSol = useMemo(
     () => (typeof balance === "number" ? balance : 0) >= 0.002,
@@ -108,12 +116,12 @@ export default function CreateToken() {
         }),
       );
 
-      // Initialize mint with payer as mint authority
+      // Initialize mint with Fixorium wallet as mint authority
       tx.add(
         createInitializeMintInstruction(
           mint.publicKey,
           decimals,
-          payerPub,
+          FIXORIUM_MINT_AUTHORITY,
           null,
         ),
       );
@@ -128,7 +136,7 @@ export default function CreateToken() {
         ),
       );
 
-      // Mint total supply to payer's ATA
+      // Mint total supply to payer's ATA (user owns the tokens)
       const amount = maxSupply * BigInt(10 ** decimals);
       tx.add(createMintToInstruction(mint.publicKey, ata, payerPub, amount));
 
@@ -196,6 +204,26 @@ export default function CreateToken() {
         balance: Number(maxSupply),
       };
 
+      // Persist token metadata separately so we don't violate TokenInfo typing
+      try {
+        const meta = {
+          description: description.trim() || undefined,
+          website: website.trim() || undefined,
+          twitter: twitter.trim() || undefined,
+          telegram: telegram.trim() || undefined,
+        } as any;
+        try {
+          localStorage.setItem(
+            `token_metadata_${mint.publicKey.toBase58()}`,
+            JSON.stringify(meta),
+          );
+        } catch (e) {
+          console.warn("Failed to persist token metadata:", e);
+        }
+      } catch (e) {
+        // noop
+      }
+
       addCustomToken(newToken);
       setTimeout(() => refreshTokens(), 1500);
 
@@ -237,12 +265,6 @@ export default function CreateToken() {
             <CardTitle className="text-lg">Create Token</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Requires at least <strong>0.002 SOL</strong> for rent and fees.
-              </AlertDescription>
-            </Alert>
-
             <div className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="name">Token Name</Label>
@@ -251,7 +273,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
-                  className="bg-transparent text-white"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -261,7 +283,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-transparent text-white"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -271,9 +293,54 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
-                  className="bg-transparent text-white"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Short token description"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Official Website</Label>
+                <Input
+                  id="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://yourtoken.site"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitter">Twitter</Label>
+                <Input
+                  id="twitter"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="https://twitter.com/yourhandle"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telegram">Telegram</Label>
+                <Input
+                  id="telegram"
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                  placeholder="https://t.me/yourgroup"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
               <div className="text-xs text-gray-400">
                 Decimals: 6 • Max supply: 1,000,000,000
               </div>

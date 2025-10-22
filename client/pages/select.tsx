@@ -15,6 +15,7 @@ import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
 import { listOrders } from "@/lib/p2p";
+import { listP2POrders } from "@/lib/p2p-api";
 import {
   saveChatMessage,
   saveNotification,
@@ -22,6 +23,7 @@ import {
   sendChatMessage,
   loadChatHistory,
   parseWebSocketMessage,
+  getUnreadNotifications,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
@@ -50,6 +52,59 @@ export default function Select() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
+  // Load orders: Admin sees all orders, others see pending orders from unread notifications
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    const isAdmin =
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase();
+
+    if (isAdmin) {
+      // Admin: Load all orders from the backend
+      const loadAllOrders = async () => {
+        try {
+          const allOrders = await listP2POrders();
+          if (Array.isArray(allOrders) && allOrders.length) {
+            setOrders((prev) => {
+              const byId = new Map<string, any>();
+              [...allOrders, ...prev].forEach((o: any) => {
+                const key = String(o.id || o.orderId);
+                if (key && !byId.has(key)) byId.set(key, o);
+              });
+              return Array.from(byId.values());
+            });
+          }
+        } catch (err) {
+          console.error("Failed to load all orders for admin:", err);
+        }
+      };
+      loadAllOrders();
+    } else {
+      // Non-admin: Load unread notifications
+      try {
+        const unread = getUnreadNotifications(wallet.publicKey);
+        if (Array.isArray(unread) && unread.length) {
+          const mapped = unread.map((n: any) => ({
+            id: n.roomId || n.data?.orderId || `room-${n.timestamp}`,
+            token: n.data?.token,
+            type: n.initiatorRole === "buyer" ? "buy" : "sell",
+            message: n.message,
+            paymentMethod: n.data?.paymentMethod,
+          }));
+          setOrders((prev) => {
+            const byId = new Map<string, any>();
+            [...mapped, ...prev].forEach((o: any) => {
+              const key = String(o.id || o.orderId);
+              if (!byId.has(key)) byId.set(key, o);
+            });
+            return Array.from(byId.values());
+          });
+        }
+      } catch {}
+    }
+  }, [wallet?.publicKey]);
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -57,7 +112,15 @@ export default function Select() {
         setLoadingOrders(true);
         const res = await listOrders(effectiveRoomId);
         if (!mounted) return;
-        setOrders(res.orders || []);
+        const fetched = Array.isArray(res.orders) ? res.orders : [];
+        setOrders((prev) => {
+          const byId = new Map<string, any>();
+          [...fetched, ...prev].forEach((o: any) => {
+            const key = String(o.id || o.orderId || "");
+            if (key && !byId.has(key)) byId.set(key, o);
+          });
+          return Array.from(byId.values());
+        });
       } catch (e) {
         console.error("Failed to load orders", e);
       } finally {
@@ -102,8 +165,41 @@ export default function Select() {
           return [...prev, msg];
         });
       }
+    } else if (last.kind === "notification") {
+      const notif = last.data as any;
+      if (!notif) return;
+      // Only reflect for admin wallet to show pending verifications
+      const isAdmin =
+        ADMIN_WALLET &&
+        wallet?.publicKey &&
+        String(wallet.publicKey).toLowerCase() ===
+          String(ADMIN_WALLET).toLowerCase();
+      if (!isAdmin) return;
+      try {
+        if (notif.initiatorWallet !== wallet.publicKey) {
+          saveNotification(notif);
+        }
+      } catch {}
+      const virtualOrder = {
+        id: notif.roomId || notif.data?.orderId || `room-${Date.now()}`,
+        token: notif.data?.token,
+        type: notif.initiatorRole === "buyer" ? "buy" : "sell",
+        message: notif.message,
+        paymentMethod: notif.data?.paymentMethod,
+      };
+      setOrders((prev) => {
+        const existsIdx = prev.findIndex(
+          (o) => String(o.id || o.orderId) === String(virtualOrder.id),
+        );
+        if (existsIdx >= 0) {
+          const copy = prev.slice();
+          copy[existsIdx] = { ...copy[existsIdx], ...virtualOrder };
+          return copy;
+        }
+        return [virtualOrder, ...prev];
+      });
     }
-  }, [events, effectiveRoomId]);
+  }, [events, effectiveRoomId, wallet?.publicKey]);
 
   const sendTextMessage = () => {
     if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;
@@ -345,116 +441,113 @@ export default function Select() {
           </div>
         </div>
 
-        {wallet?.publicKey && (
-          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
-            {/* Orders list displayed as prompt messages - moved above image */}
-            <div className="mb-3 space-y-3">
-              {loadingOrders ? (
-                <div className="text-sm text-white/60">Loading orders...</div>
-              ) : orders.length === 0 ? (
-                payload && payload.roomId ? (
-                  <div className="p-4 bg-[#0f1520]/50 border border-white/10">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-white/90">
-                          Order {payload.roomId}
-                        </div>
-                        <div className="text-xs text-white/70 mt-1">
-                          {action === "buyer_paid"
-                            ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
-                            : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
-                        </div>
-                        <div className="text-xs text-white/60 mt-2">
-                          Payment: {payload.paymentMethod || "—"}
-                        </div>
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
+          {/* Orders list displayed as prompt messages - moved above image */}
+          <div className="mb-3 space-y-3">
+            {loadingOrders ? (
+              <div className="text-sm text-white/60">Loading orders...</div>
+            ) : orders.length === 0 ? (
+              payload && payload.roomId ? (
+                <div className="p-4 bg-[#0f1520]/50 border border-white/10">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-white/90">
+                        Order {payload.roomId}
                       </div>
-                      <div className="flex-shrink-0">
-                        <Button
-                          onClick={() =>
-                            navigate("/express/buy-trade", {
-                              state: {
-                                order: {
-                                  id: payload.roomId,
-                                  token: payload.token,
-                                  pricePKRPerQuote: payload.pricePKRPerQuote,
-                                  paymentMethod: payload.paymentMethod,
-                                  type:
-                                    action === "buyer_paid" ? "buy" : "sell",
-                                },
-                                openChat: true,
+                      <div className="text-xs text-white/70 mt-1">
+                        {action === "buyer_paid"
+                          ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
+                          : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
+                      </div>
+                      <div className="text-xs text-white/60 mt-2">
+                        Payment: {payload.paymentMethod || "—"}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button
+                        onClick={() =>
+                          navigate("/express/buy-trade", {
+                            state: {
+                              order: {
+                                id: payload.roomId,
+                                token: payload.token,
+                                pricePKRPerQuote: payload.pricePKRPerQuote,
+                                paymentMethod: payload.paymentMethod,
+                                type: action === "buyer_paid" ? "buy" : "sell",
                               },
-                            })
-                          }
-                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                        >
-                          Continue
-                        </Button>
-                      </div>
+                              openChat: true,
+                            },
+                          })
+                        }
+                        className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                      >
+                        Continue
+                      </Button>
                     </div>
                   </div>
-                ) : (
-                  <div />
-                )
-              ) : (
-                orders.map((o: any) => (
-                  <div
-                    key={o.id || o.orderId}
-                    className="p-4 bg-[#0f1520]/50 border border-white/10"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-white/90">
-                          {o.title ||
-                            o.token ||
-                            o.type ||
-                            `Order ${o.id || o.orderId}`}
-                        </div>
-                        <div className="text-xs text-white/70 mt-1">
-                          {o.description ||
-                            o.message ||
-                            o.details ||
-                            `Amount: ${o.amount || o.estimatedTokens || ""}`}
-                        </div>
-                        <div className="text-xs text-white/60 mt-2">
-                          Payment: {o.paymentMethod || o.payment || "—"}
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Button
-                          onClick={() =>
-                            navigate("/express/buy-trade", {
-                              state: { order: o, openChat: true },
-                            })
-                          }
-                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                        >
-                          Continue
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
-              {loadingOrders ? (
-                <div className="text-sm text-white/60">Loading orders...</div>
-              ) : orders.length === 0 && !payload ? (
-                <div className="text-sm text-white/60">
-                  FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
-                  TRADING. NO ORDERS AVAILABLE.
                 </div>
               ) : (
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                  alt="Payment illustration"
-                  className="max-h-[320px] w-full object-contain"
-                />
-              )}
-            </div>
+                <div />
+              )
+            ) : (
+              orders.map((o: any) => (
+                <div
+                  key={o.id || o.orderId}
+                  className="p-4 bg-[#0f1520]/50 border border-white/10"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-white/90">
+                        {o.title ||
+                          o.token ||
+                          o.type ||
+                          `Order ${o.id || o.orderId}`}
+                      </div>
+                      <div className="text-xs text-white/70 mt-1">
+                        {o.description ||
+                          o.message ||
+                          o.details ||
+                          `Amount: ${o.amount || o.estimatedTokens || ""}`}
+                      </div>
+                      <div className="text-xs text-white/60 mt-2">
+                        Payment: {o.paymentMethod || o.payment || "—"}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button
+                        onClick={() =>
+                          navigate("/express/buy-trade", {
+                            state: { order: o, openChat: true },
+                          })
+                        }
+                        className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-        )}
+
+          <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
+            {loadingOrders ? (
+              <div className="text-sm text-white/60">Loading orders...</div>
+            ) : orders.length === 0 && !payload ? (
+              <div className="text-sm text-white/60">
+                FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
+                TRADING. NO ORDERS AVAILABLE.
+              </div>
+            ) : (
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
+                alt="Payment illustration"
+                className="max-h-[320px] w-full object-contain"
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>

@@ -618,7 +618,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <p>✅ Connect your Fixorium Wallet</p>
                   <p>✅ Join the quest challenge</p>
                   <p>✅ Complete simple tasks</p>
-                  <p>✅ Earn points for each task</p>
+                  <p>�� Earn points for each task</p>
                   <p>✅ Win random rewards</p>
                 </div>
               </div>
@@ -748,7 +748,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             maximumFractionDigits: 2,
                           })}
                         </span>
-                        <span className="text-xs text-gray-300">
+                        <span className="text-2xl text-gray-300">
                           {currency}
                         </span>
                       </div>
@@ -801,14 +801,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               maximumFractionDigits: 2,
                             })}
                       </span>
-                      <span className="text-xs text-gray-300">{currency}</span>
+                      <span className="text-2xl text-gray-300">{currency}</span>
                     </div>
                     {hasValidPriceChange && (
                       <div className="flex items-center justify-center gap-2">
                         {isPositive ? (
                           <>
                             <ArrowUpRight className="h-4 w-4 text-green-400" />
-                            <span className="text-sm font-medium text-green-400">
+                            <span
+                              style={{ fontSize: "12px" }}
+                              className="font-medium text-green-400"
+                            >
                               +
                               {formatCurrency(Math.abs(totalChange24h), {
                                 from: "USD",
@@ -820,7 +823,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         ) : (
                           <>
                             <ArrowDownLeft className="h-4 w-4 text-red-400" />
-                            <span className="text-sm font-medium text-red-400">
+                            <span
+                              style={{ fontSize: "12px" }}
+                              className="font-medium text-red-400"
+                            >
                               -
                               {formatCurrency(Math.abs(totalChange24h), {
                                 from: "USD",

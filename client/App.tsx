@@ -49,6 +49,19 @@ import SplMeta from "./pages/SplMeta";
 
 const queryClient = new QueryClient();
 
+function WalletConnectionSetup() {
+  useEffect(() => {
+    const provider = ensureFixoriumProvider();
+    if (!provider) return;
+
+    provider.setConnectionApprovalHandler(async (origin: string) => {
+      return requestWalletConnection(origin);
+    });
+  }, []);
+
+  return null;
+}
+
 function AppRoutes() {
   return (
     <Routes>

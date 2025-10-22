@@ -20,9 +20,9 @@ When an external website calls `window.fixorium.connect()`, the wallet will:
 async function connectWallet() {
   try {
     const result = await window.fixorium.connect();
-    console.log('Connected:', result.publicKey.toString());
+    console.log("Connected:", result.publicKey.toString());
   } catch (error) {
-    console.error('Connection failed:', error.message);
+    console.error("Connection failed:", error.message);
   }
 }
 ```
@@ -46,21 +46,18 @@ When a user calls `connect()` from an external website:
 
 ```html
 <!-- External website -->
-<iframe 
-  id="wallet-frame" 
-  src="https://wallet.fixorium.com.pk">
-</iframe>
+<iframe id="wallet-frame" src="https://wallet.fixorium.com.pk"> </iframe>
 
 <script>
   async function connectToWallet() {
-    const frame = document.getElementById('wallet-frame');
+    const frame = document.getElementById("wallet-frame");
     const fixorium = frame.contentWindow.fixorium;
-    
+
     try {
       const account = await fixorium.connect();
-      console.log('Wallet connected:', account.publicKey.toString());
+      console.log("Wallet connected:", account.publicKey.toString());
     } catch (error) {
-      console.error('Wallet connection denied');
+      console.error("Wallet connection denied");
     }
   }
 </script>
@@ -71,6 +68,7 @@ When a user calls `connect()` from an external website:
 ### Automatic Origin Detection
 
 The wallet detects external calls by:
+
 - Checking the document referrer
 - Detecting iframe context (window.self !== window.top)
 - Comparing origins of referrer and current location
@@ -78,6 +76,7 @@ The wallet detects external calls by:
 ### Trusted Origins
 
 Once a user approves a connection from an origin:
+
 - The origin is stored in browser localStorage
 - Future connections from that origin require no approval
 - Users can clear the data to revoke trust
@@ -97,20 +96,19 @@ After connecting, the wallet provides standard Solana provider methods:
 ```javascript
 try {
   const { publicKey } = await window.fixorium.connect();
-  
+
   const transaction = new Transaction();
   // ... add instructions
-  
+
   const signed = await window.fixorium.signTransaction(transaction);
   const signature = await connection.sendRawTransaction(signed.serialize());
-  
 } catch (error) {
-  if (error.message.includes('rejected')) {
-    console.log('User rejected the connection');
-  } else if (error.message.includes('not available')) {
-    console.log('Wallet not initialized');
+  if (error.message.includes("rejected")) {
+    console.log("User rejected the connection");
+  } else if (error.message.includes("not available")) {
+    console.log("Wallet not initialized");
   } else {
-    console.error('Unexpected error:', error);
+    console.error("Unexpected error:", error);
   }
 }
 ```

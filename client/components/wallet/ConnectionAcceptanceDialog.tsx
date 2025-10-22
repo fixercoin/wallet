@@ -19,11 +19,10 @@ interface ConnectionRequest {
 }
 
 let pendingRequest: ConnectionRequest | null = null;
-let requestListeners: Set<(request: ConnectionRequest | null) => void> = new Set();
+let requestListeners: Set<(request: ConnectionRequest | null) => void> =
+  new Set();
 
-export const requestWalletConnection = (
-  origin: string,
-): Promise<boolean> => {
+export const requestWalletConnection = (origin: string): Promise<boolean> => {
   return new Promise((resolve) => {
     const id = `req-${Date.now()}-${Math.random()}`;
     const request: ConnectionRequest = {
@@ -56,9 +55,8 @@ export const subscribeToPendingConnection = (
 export const ConnectionAcceptanceDialog: React.FC = () => {
   const { wallet } = useWallet();
   const [open, setOpen] = useState(false);
-  const [currentRequest, setCurrentRequest] = useState<ConnectionRequest | null>(
-    null,
-  );
+  const [currentRequest, setCurrentRequest] =
+    useState<ConnectionRequest | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToPendingConnection((request) => {
@@ -154,9 +152,7 @@ export const ConnectionAcceptanceDialog: React.FC = () => {
           <Button variant="outline" onClick={handleReject}>
             Reject
           </Button>
-          <Button onClick={handleApprove}>
-            Approve
-          </Button>
+          <Button onClick={handleApprove}>Approve</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

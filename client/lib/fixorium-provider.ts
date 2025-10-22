@@ -29,9 +29,7 @@ const DEFAULT_COMMITMENT: SendOptions["preflightCommitment"] = "confirmed";
 
 const encoder = new TextEncoder();
 
-export type ConnectionApprovalHandler = (
-  origin: string,
-) => Promise<boolean>;
+export type ConnectionApprovalHandler = (origin: string) => Promise<boolean>;
 
 export class FixoriumWalletProvider {
   readonly isFixorium = true;
@@ -411,7 +409,9 @@ export const ensureFixoriumProvider = () => {
 
   providerInstance = new FixoriumWalletProvider();
   const trustedOrigins = loadTrustedOrigins();
-  trustedOrigins.forEach((origin) => providerInstance!.markOriginAsTrusted(origin));
+  trustedOrigins.forEach((origin) =>
+    providerInstance!.markOriginAsTrusted(origin),
+  );
 
   const win = window as unknown as {
     solana?: any;

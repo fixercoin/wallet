@@ -652,6 +652,17 @@
     display: none !important;
   }
 
+  /* Ensure select dropdowns on express page use black background and white text where possible */
+  .express-p2p-page select {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.08) !important;
+  }
+  .express-p2p-page select option {
+    background: #000 !important;
+    color: #fff !important;
+  }
+
   .express-detecting-text {
     text-transform: uppercase;
     letter-spacing: 0.35em;

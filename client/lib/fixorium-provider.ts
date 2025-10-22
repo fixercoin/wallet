@@ -369,7 +369,32 @@ export class FixoriumWalletProvider {
   }
 }
 
+const TRUSTED_ORIGINS_KEY = "fixorium_trusted_origins";
+
 let providerInstance: FixoriumWalletProvider | null = null;
+
+const loadTrustedOrigins = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(TRUSTED_ORIGINS_KEY);
+    if (stored) {
+      return new Set(JSON.parse(stored) as string[]);
+    }
+  } catch {
+    return new Set();
+  }
+  return new Set();
+};
+
+const saveTrustedOrigins = (origins: Set<string>) => {
+  try {
+    localStorage.setItem(
+      TRUSTED_ORIGINS_KEY,
+      JSON.stringify(Array.from(origins)),
+    );
+  } catch {
+    return;
+  }
+};
 
 export const ensureFixoriumProvider = () => {
   if (typeof window === "undefined") {
@@ -382,6 +407,8 @@ export const ensureFixoriumProvider = () => {
   }
 
   providerInstance = new FixoriumWalletProvider();
+  const trustedOrigins = loadTrustedOrigins();
+  trustedOrigins.forEach((origin) => providerInstance!.markOriginAsTrusted(origin));
 
   const win = window as unknown as {
     solana?: any;

@@ -28,8 +28,13 @@ export default function TokenDetailsPage() {
       <div className="min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-bold">Token Not Found</h2>
-          <p className="text-gray-400">The token you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate("/")} className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C]">
+          <p className="text-gray-400">
+            The token you're looking for doesn't exist.
+          </p>
+          <Button
+            onClick={() => navigate("/")}
+            className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C]"
+          >
             Go Back to Dashboard
           </Button>
         </div>
@@ -41,7 +46,10 @@ export default function TokenDetailsPage() {
     const success = await copyToClipboard(token.mint);
     if (success) {
       setIsCopied(true);
-      toast({ title: "Copied", description: "Mint address copied to clipboard" });
+      toast({
+        title: "Copied",
+        description: "Mint address copied to clipboard",
+      });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
@@ -129,7 +137,9 @@ export default function TokenDetailsPage() {
                   className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                   title="Copy mint address"
                 >
-                  <Copy className={`w-5 h-5 ${isCopied ? "text-green-400" : ""}`} />
+                  <Copy
+                    className={`w-5 h-5 ${isCopied ? "text-green-400" : ""}`}
+                  />
                 </button>
               </div>
             </div>
@@ -145,7 +155,9 @@ export default function TokenDetailsPage() {
               {percentChange !== null && (
                 <div className="space-y-2">
                   <label className="text-sm text-gray-400">24h Change</label>
-                  <p className={`text-2xl font-bold ${isPositive ? "text-green-400" : "text-red-400"}`}>
+                  <p
+                    className={`text-2xl font-bold ${isPositive ? "text-green-400" : "text-red-400"}`}
+                  >
                     {isPositive ? "+" : ""}
                     {percentChange.toFixed(2)}%
                   </p>

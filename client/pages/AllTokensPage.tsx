@@ -11,7 +11,9 @@ export default function AllTokensPage() {
   const { wallet, tokens } = useWallet();
   const [fixoriumTokens, setFixoriumTokens] = useState<any[]>([]);
   const [isLoadingFixorium, setIsLoadingFixorium] = useState(false);
-  const [activeTab, setActiveTab] = useState<"my-tokens" | "all-tokens">("my-tokens");
+  const [activeTab, setActiveTab] = useState<"my-tokens" | "all-tokens">(
+    "my-tokens",
+  );
 
   useEffect(() => {
     if (!wallet) {
@@ -67,7 +69,10 @@ export default function AllTokensPage() {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-8 relative z-10">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as any)}
+        >
           <TabsList className="grid w-full grid-cols-2 bg-white/10 border border-white/20">
             <TabsTrigger
               value="my-tokens"
@@ -98,7 +103,9 @@ export default function AllTokensPage() {
             ) : (
               <div className="text-center py-12 text-gray-400">
                 <p className="text-lg">No tokens in your wallet</p>
-                <p className="text-sm mt-2">Create or import tokens to get started</p>
+                <p className="text-sm mt-2">
+                  Create or import tokens to get started
+                </p>
               </div>
             )}
           </TabsContent>

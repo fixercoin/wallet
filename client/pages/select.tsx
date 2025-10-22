@@ -640,6 +640,21 @@ export default function SelectPage() {
         </button>
       </div>
 
+      <div className="absolute top-4 right-4 z-30">
+        <button
+          onClick={() => setShowPending(true)}
+          className="relative p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
+          aria-label="Open pending orders"
+        >
+          <MessageSquare className="w-5 h-5 text-white" />
+          {orders.length > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-[#FF5A8C] text-[10px] font-bold text-white">
+              {orders.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
           <span className="text-sm text-white/70 select-none">

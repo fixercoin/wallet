@@ -523,7 +523,7 @@ export default function Select() {
           </div>
         </div>
 
-        <div id="buy-details" className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+        <div id="buy-details" className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-3">
           <div className="space-y-4">
             <div>
               <label className="block font-medium text-white/80 mb-2">Select Token</label>

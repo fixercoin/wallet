@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Send } from "lucide-react";
+import { ArrowLeft, Plus, Send, MessageSquare } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
@@ -34,6 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 type ActionType = "buyer_paid" | "seller_sent";
 
@@ -146,6 +152,15 @@ export default function SelectPage() {
   const [openChat, setOpenChat] = useState<boolean>(
     Boolean(location.state?.openChat || action || false),
   );
+  const [showPending, setShowPending] = useState<boolean>(false);
+  const isAdmin = useMemo(() => {
+    return (
+      !!ADMIN_WALLET &&
+      !!wallet?.publicKey &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
+    );
+  }, [wallet?.publicKey]);
 
   useEffect(() => {
     if (wallet?.publicKey === ADMIN_WALLET) setOpenChat(true);
@@ -631,14 +646,27 @@ export default function SelectPage() {
         </button>
       </div>
 
+      <div className="absolute top-4 right-4 z-30">
+        <button
+          onClick={() => setShowPending(true)}
+          aria-label="Open pending orders"
+          className="relative p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
+        >
+          <MessageSquare className="w-4 h-4 text-white" />
+          {orders.length > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 flex items-center justify-center rounded-full bg-[#FF5A8C] text-[9px] font-bold text-white">
+              {orders.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
-          <span className="text-sm text-white/70 select-none">
-            info@fixorium.com.pk
-          </span>
-        </div>
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
+        <div
+          id="trade-card"
+          className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-3"
+        >
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full mb-4">
             <Button
               onClick={() => {
                 setActiveSide("buy");
@@ -663,12 +691,6 @@ export default function SelectPage() {
               SELL
             </Button>
           </div>
-        </div>
-
-        <div
-          id="trade-card"
-          className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-3"
-        >
           {activeSide === "buy" ? (
             <div className="space-y-4">
               <div>
@@ -871,58 +893,38 @@ export default function SelectPage() {
         </div>
 
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
-          {/* Orders list displayed as prompt messages - moved above image */}
-          <div className="mb-3 space-y-3">
+          <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
+            {loadingOrders ? (
+              <div className="text-sm text-white/60">Loading orders...</div>
+            ) : orders.length === 0 && !payload ? null : (
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
+                alt="Payment illustration"
+                className="max-h-[320px] w-full object-contain"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Sheet open={showPending} onOpenChange={setShowPending}>
+        <SheetContent
+          side="right"
+          className="bg-[#0f1520] text-white border-l border-white/10"
+        >
+          <SheetHeader>
+            <SheetTitle>Pending Orders ({orders.length})</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-3">
             {loadingOrders ? (
               <div className="text-sm text-white/60">Loading orders...</div>
             ) : orders.length === 0 ? (
-              payload && payload.roomId ? (
-                <div className="p-4 bg-[#0f1520]/50 border border-white/10">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm text-white/90">
-                        Order {payload.roomId}
-                      </div>
-                      <div className="text-xs text-white/70 mt-1">
-                        {action === "buyer_paid"
-                          ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
-                          : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
-                      </div>
-                      <div className="text-xs text-white/60 mt-2">
-                        Payment: {payload.paymentMethod || "—"}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <Button
-                        onClick={() =>
-                          navigate("/express/buy-trade", {
-                            state: {
-                              order: {
-                                id: payload.roomId,
-                                token: payload.token,
-                                pricePKRPerQuote: payload.pricePKRPerQuote,
-                                paymentMethod: payload.paymentMethod,
-                                type: action === "buyer_paid" ? "buy" : "sell",
-                              },
-                              openChat: true,
-                            },
-                          })
-                        }
-                        className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                      >
-                        Continue
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div />
-              )
+              <div className="text-sm text-white/60">No pending orders</div>
             ) : (
               orders.map((o: any) => (
                 <div
                   key={o.id || o.orderId}
-                  className="p-4 bg-[#0f1520]/50 border border-white/10"
+                  className="p-4 bg-[#0f1520]/50 border border-white/10 rounded-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -933,51 +935,34 @@ export default function SelectPage() {
                           `Order ${o.id || o.orderId}`}
                       </div>
                       <div className="text-xs text-white/70 mt-1">
-                        {o.description ||
-                          o.message ||
-                          o.details ||
-                          `Amount: ${o.amount || o.estimatedTokens || ""}`}
+                        {o.description || o.message || o.details || ""}
                       </div>
                       <div className="text-xs text-white/60 mt-2">
                         Payment: {o.paymentMethod || o.payment || "—"}
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
-                      <Button
-                        onClick={() =>
-                          navigate("/express/buy-trade", {
-                            state: { order: o, openChat: true },
-                          })
-                        }
-                        className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                      >
-                        Continue
-                      </Button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex-shrink-0">
+                        <Button
+                          onClick={() => {
+                            navigate("/express/buy-trade", {
+                              state: { order: o, openChat: true },
+                            });
+                            setShowPending(false);
+                          }}
+                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                        >
+                          Continue
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
             )}
           </div>
-
-          <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
-            {loadingOrders ? (
-              <div className="text-sm text-white/60">Loading orders...</div>
-            ) : orders.length === 0 && !payload ? (
-              <div className="text-sm text-white/60">
-                FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
-                TRADING. NO ORDERS AVAILABLE.
-              </div>
-            ) : (
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                alt="Payment illustration"
-                className="max-h-[320px] w-full object-contain"
-              />
-            )}
-          </div>
-        </div>
-      </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="sm:max-w-md">

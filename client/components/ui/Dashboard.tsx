@@ -22,6 +22,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 

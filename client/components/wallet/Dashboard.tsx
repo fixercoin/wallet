@@ -618,7 +618,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <p>✅ Connect your Fixorium Wallet</p>
                   <p>✅ Join the quest challenge</p>
                   <p>✅ Complete simple tasks</p>
-                  <p>✅ Earn points for each task</p>
+                  <p>�� Earn points for each task</p>
                   <p>✅ Win random rewards</p>
                 </div>
               </div>
@@ -752,6 +752,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {currency}
                         </span>
                       </div>
+                      <p className="text-xs text-gray-400">Daily Up/Down</p>
                     </>
                   );
                 }

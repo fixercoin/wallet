@@ -515,7 +515,10 @@ export default function SelectPage() {
             </Button>
 
             <Button
-              onClick={() => navigate("/sell-now")}
+              onClick={() => {
+                const el = document.getElementById("sell-details");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
             >
               SELL

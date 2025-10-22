@@ -479,7 +479,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 </div>
                 {sellEstimatePKR !== null ? (
                   <div className="p-3 rounded-lg border bg-black text-white">
-                    <div className="text-xs text-gray-500">Estimate</div>
+                    <div className="text-xs text-white/70">Estimate</div>
                     <div className="font-semibold mt-1">
                       PKR{" "}
                       {sellEstimatePKR.toLocaleString(undefined, {

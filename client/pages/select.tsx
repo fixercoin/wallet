@@ -1016,6 +1016,40 @@ export default function SelectPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showStatusPrompt} onOpenChange={setShowStatusPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Order Status</DialogTitle>
+            <DialogDescription>
+              {statusStage === "waiting"
+                ? "Waiting for seller to verify payment and send assets..."
+                : "Order completed."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 flex flex-col items-center gap-3">
+            {statusStage === "waiting" ? (
+              <div className="flex items-center gap-3 text-white/90">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Waiting for seller...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-green-400">
+                <CheckCircle className="w-6 h-6" />
+                <span>Order completed</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowStatusPrompt(false)}
+              className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

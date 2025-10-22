@@ -39,6 +39,7 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
+import { handleFixoriumTokens } from "./routes/fixorium-tokens";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

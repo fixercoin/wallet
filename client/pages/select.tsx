@@ -188,6 +188,10 @@ export default function SelectPage() {
           if (prev.find((m) => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
+        if (msg.type === "seller_sent") {
+          setStatusStage((prev) => (prev === "waiting" ? "completed" : prev));
+          setShowStatusPrompt((prev) => (prev ? true : false));
+        }
       }
     } else if (last.kind === "notification") {
       const notif = last.data as any;

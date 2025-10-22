@@ -255,7 +255,7 @@ export default function CreateToken() {
         </button>
       </div>
 
-      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center">
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center mt-20">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
           <h1 className="text-xl sm:text-2xl font-bold mb-6">Create Token</h1>
           <div className="space-y-4">
@@ -267,7 +267,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -277,7 +277,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -287,7 +287,7 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -298,7 +298,7 @@ export default function CreateToken() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Short token description"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -309,7 +309,7 @@ export default function CreateToken() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://yourtoken.site"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -320,7 +320,7 @@ export default function CreateToken() {
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
                   placeholder="https://twitter.com/yourhandle"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 
@@ -331,7 +331,7 @@ export default function CreateToken() {
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value)}
                   placeholder="https://t.me/yourgroup"
-                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
                 />
               </div>
 

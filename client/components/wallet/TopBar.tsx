@@ -15,7 +15,6 @@ import {
   Gift,
   Flame as BurnIcon,
   Lock,
-  Coins,
   Settings,
   FileText,
 } from "lucide-react";
@@ -101,18 +100,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>LOCK-SPL</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => navigate("/fixorium/token-listing")}
-                className="flex items-center gap-2 text-xs"
-              >
-                <Coins className="h-4 w-4" />
-                <span>LISTING</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onSelect={() => navigate("/fixorium/create-token")}
                 className="flex items-center gap-2 text-xs"
               >
                 <FileText className="h-4 w-4" />
-                <span>DEPLOY</span>
+                <span>MINT-SPL</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

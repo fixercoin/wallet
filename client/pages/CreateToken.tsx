@@ -21,8 +21,6 @@ import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   createMintToInstruction,
-  createSetAuthorityInstruction,
-  AuthorityType,
 } from "@solana/spl-token";
 import { connection as defaultConnection } from "@/lib/wallet";
 
@@ -43,6 +41,11 @@ export default function CreateToken() {
   const maxSupply = 1_000_000_000n; // 1 billion
 
   const conn = (connection as any) || defaultConnection;
+
+  // Fixorium wallet address that will hold mint authority
+  const FIXORIUM_MINT_AUTHORITY = new PublicKey(
+    "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA",
+  );
 
   const hasMinSol = useMemo(
     () => (typeof balance === "number" ? balance : 0) >= 0.002,
@@ -113,12 +116,12 @@ export default function CreateToken() {
         }),
       );
 
-      // Initialize mint with payer as mint authority
+      // Initialize mint with Fixorium wallet as mint authority
       tx.add(
         createInitializeMintInstruction(
           mint.publicKey,
           decimals,
-          payerPub,
+          FIXORIUM_MINT_AUTHORITY,
           null,
         ),
       );
@@ -133,24 +136,9 @@ export default function CreateToken() {
         ),
       );
 
-      // Mint total supply to payer's ATA
+      // Mint total supply to payer's ATA (user owns the tokens)
       const amount = maxSupply * BigInt(10 ** decimals);
       tx.add(createMintToInstruction(mint.publicKey, ata, payerPub, amount));
-
-      // Revoke mint authority so no more tokens can be created
-      try {
-        tx.add(
-          createSetAuthorityInstruction(
-            mint.publicKey,
-            payerPub,
-            AuthorityType.MintTokens,
-            null,
-          ),
-        );
-      } catch (e) {
-        // If the instruction helper is not available for some reason, continue — server-side will reject if necessary
-        console.warn("Failed to add setAuthority instruction:", e);
-      }
 
       // recent blockhash and fee payer
       const { blockhash } = await conn.getLatestBlockhash();

@@ -172,7 +172,8 @@ export default function SelectPage() {
     if (activeSide === "sell") {
       refreshTokens().catch(() => undefined);
     }
-  }, [activeSide, refreshTokens]);
+    // intentionally not depending on refreshTokens to avoid effect loop
+  }, [activeSide]);
   const confirmationData = location.state?.confirmation;
 
   useEffect(() => {
@@ -415,7 +416,8 @@ export default function SelectPage() {
     if (activeSide === "sell") {
       refreshTokens().catch(() => undefined);
     }
-  }, [sellToken, activeSide, refreshTokens]);
+    // intentionally not depending on refreshTokens to avoid effect loop
+  }, [sellToken, activeSide]);
 
   useEffect(() => {
     const amt = Number(sellAmountTokens);

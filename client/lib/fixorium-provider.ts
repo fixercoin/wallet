@@ -70,7 +70,10 @@ export class FixoriumWalletProvider {
   }
 
   markOriginAsTrusted(origin: string) {
-    this.trustedOrigins.add(origin);
+    if (!this.trustedOrigins.has(origin)) {
+      this.trustedOrigins.add(origin);
+      saveTrustedOrigins(this.trustedOrigins);
+    }
   }
 
   isTrustedOrigin(origin: string): boolean {

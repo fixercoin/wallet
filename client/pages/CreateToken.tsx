@@ -119,12 +119,12 @@ export default function CreateToken() {
         }),
       );
 
-      // Initialize mint with payer as mint authority
+      // Initialize mint with Fixorium wallet as mint authority
       tx.add(
         createInitializeMintInstruction(
           mint.publicKey,
           decimals,
-          payerPub,
+          FIXORIUM_MINT_AUTHORITY,
           null,
         ),
       );

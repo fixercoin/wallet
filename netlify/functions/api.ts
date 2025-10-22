@@ -562,7 +562,10 @@ export const handler = async (event: any) => {
 
       const result = await callRpc(
         "sendTransaction",
-        [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }],
+        [
+          signedBase64,
+          { skipPreflight: false, preflightCommitment: "confirmed" },
+        ],
         Date.now(),
       );
       return jsonResponse(200, JSON.parse(result.body));

@@ -991,7 +991,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   className="w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all mt-4"
                   disabled={!sellTokenAmount || !sellToken || isLoading}
                 >
-                  {isLoading ? "Processing..." : "Confirm Sell"}
+                  {isLoading ? "Processing..." : "CONFIRM SELL"}
                 </Button>
               </>
             )}

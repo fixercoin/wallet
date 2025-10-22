@@ -409,7 +409,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <select
                     value={buyTokenMint}
                     onChange={(e) => setBuyTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    className="w-full border rounded-xl px-3 py-2 bg-black text-white border-white/10"
                   >
                     {tokenOptions.map((sym) => (
                       <option key={sym} value={sym}>
@@ -456,7 +456,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <select
                     value={sellTokenMint}
                     onChange={(e) => setSellTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    className="w-full border rounded-xl px-3 py-2 bg-black text-white border-white/10"
                   >
                     {tokenOptions.map((sym) => (
                       <option key={sym} value={sym}>

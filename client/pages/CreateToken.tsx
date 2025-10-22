@@ -62,7 +62,9 @@ export default function CreateToken() {
             Please set up or import a wallet first.
           </p>
           <div>
-            <Button onClick={() => navigate("/")} className="w-full">Go to Dashboard</Button>
+            <Button onClick={() => navigate("/")} className="w-full">
+              Go to Dashboard
+            </Button>
           </div>
         </div>
       </div>
@@ -249,8 +251,18 @@ export default function CreateToken() {
           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
           aria-label="Go back"
         >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="w-5 h-5 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
       </div>

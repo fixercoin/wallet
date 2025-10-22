@@ -368,13 +368,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
           <div className="w-full border-t border-white/30 pt-4">
             <div className="flex gap-2 mb-4">
               <button
-                className={`flex-1 py-2 rounded-lg ${activeTab === "buy" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                className={`flex-1 py-2 rounded-lg ${activeTab === "buy" ? "bg-yellow-200 text-black font-medium" : "bg-yellow-50 text-black"}`}
                 onClick={() => setActiveTab("buy")}
               >
                 Buy
               </button>
               <button
-                className={`flex-1 py-2 rounded-lg ${activeTab === "sell" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                className={`flex-1 py-2 rounded-lg ${activeTab === "sell" ? "bg-yellow-200 text-black font-medium" : "bg-yellow-50 text-black"}`}
                 onClick={() => setActiveTab("sell")}
               >
                 Sell

@@ -152,9 +152,12 @@ export class FixoriumWalletProvider {
     }
 
     const callerOrigin = this.getCallerOrigin();
-    const isExternalCall = !this.isOwnOrigin(callerOrigin);
+    const isCurrentOrigin = this.isOwnOrigin(callerOrigin);
+    const isInFrame = this.isInIframe();
+    const requiresApproval =
+      (isInFrame || !isCurrentOrigin) && !this.isTrustedOrigin(callerOrigin);
 
-    if (isExternalCall && !this.isTrustedOrigin(callerOrigin)) {
+    if (requiresApproval) {
       if (!this.approvalHandler) {
         throw new Error(
           "Wallet connection approval handler is not configured.",

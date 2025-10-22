@@ -262,15 +262,15 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   }, [sellAmountTokens, usdToPkr, sellTokenPriceUsd]);
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      <div className="bg-transparent sticky top-0 z-10">
         <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="h-10 w-10 p-0 rounded-full border border-white/40 bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0"
               aria-label="Back to dashboard"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -280,7 +280,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/")}
-                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
                 aria-label="Add post"
               >
                 <Plus className="h-5 w-5" />
@@ -296,7 +296,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 p-0 rounded-full border border-white/40 bg-white/80 backdrop-blur-sm text-[hsl(var(--foreground))] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-10 w-10 p-0 rounded-full border border-white/40 bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0"
                   aria-label="Menu"
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -320,54 +320,14 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
         </div>
       </div>
 
-      <div className="w-full px-4 py-8">
-        <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
-          {checkingOrders ? (
-            <>
-              <div
-                className="express-p2p-brand"
-                role="status"
-                aria-label="Scanning for express P2P orders"
-              >
-                <div className="express-p2p-badge" aria-hidden>
-                  <div className="express-p2p-official">OFFICIAL</div>
-                  <div className="express-p2p-title">FIXORIUM P2P SERVICE</div>
-                </div>
-
-                <div className="express-p2p-currencies" aria-hidden>
-                  <div className="p2p-token pkr" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg"
-                      alt="PKR"
-                    />
-                  </div>
-                  <div className="p2p-token sol" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/0QsCpPRr/logo.png"
-                      alt="SOL"
-                    />
-                  </div>
-                  <div className="p2p-token usdc" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp"
-                      alt="USDC"
-                    />
-                  </div>
-                  <div className="p2p-token fixer" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png"
-                      alt="FIXERCOIN"
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : detectedOrder ? (
+      <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 flex flex-col items-center gap-6">
+          {detectedOrder ? (
             <>
               <button
                 type="button"
                 onClick={() => setOrdersDialogOpen(true)}
-                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center gap-3"
+                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-black text-white transition flex items-center gap-3"
               >
                 <MessageSquare className="h-4 w-4 text-[hsl(var(--primary))]" />
                 <span className="text-sm font-medium">Detected orders</span>
@@ -383,7 +343,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     state: { order: detectedOrder },
                   })
                 }
-                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center justify-between"
+                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-black text-white transition flex items-center justify-between"
               >
                 <div>
                   <p className="text-sm text-gray-500">Buy order detected</p>
@@ -408,13 +368,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
           <div className="w-full border-t border-white/30 pt-4">
             <div className="flex gap-2 mb-4">
               <button
-                className={`flex-1 py-2 rounded-lg ${activeTab === "buy" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                className={`flex-1 py-2 rounded-lg ${activeTab === "buy" ? "bg-yellow-200 text-black font-medium" : "bg-yellow-50 text-black"}`}
                 onClick={() => setActiveTab("buy")}
               >
                 Buy
               </button>
               <button
-                className={`flex-1 py-2 rounded-lg ${activeTab === "sell" ? "bg-pink-100 font-medium" : "bg-white/80"}`}
+                className={`flex-1 py-2 rounded-lg ${activeTab === "sell" ? "bg-yellow-200 text-black font-medium" : "bg-yellow-50 text-black"}`}
                 onClick={() => setActiveTab("sell")}
               >
                 Sell
@@ -439,20 +399,28 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <label className="block text-xs text-gray-500 mb-1">
                     Select Token
                   </label>
-                  <select
+                  <Select
                     value={buyTokenMint}
-                    onChange={(e) => setBuyTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    onValueChange={(v) => setBuyTokenMint(v)}
                   >
-                    {tokenOptions.map((sym) => (
-                      <option key={sym} value={sym}>
-                        {sym}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="mt-1 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
+                      <SelectValue placeholder="Select token" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
+                      {tokenOptions.map((sym) => (
+                        <SelectItem
+                          key={sym}
+                          value={sym}
+                          className="text-[hsl(var(--foreground))]"
+                        >
+                          {sym}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {buyEstimate !== null ? (
-                  <div className="p-3 rounded-lg border bg-white/90">
+                  <div className="p-3 rounded-lg border border-white/10 bg-transparent text-[hsl(var(--foreground))]">
                     <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       {buyEstimate.toLocaleString(undefined, {
@@ -477,6 +445,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 >
                   Continue
                 </Button>
+                <div
+                  className="w-full p-2 rounded-lg bg-transparent text-black text-[10px] text-center mt-2"
+                  style={{ color: "#000" }}
+                >
+                  /// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR
+                  DETAIL BY USING DROP DOWN ///
+                </div>
               </div>
             )}
 
@@ -486,17 +461,25 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <label className="block text-xs text-gray-500 mb-1">
                     Token
                   </label>
-                  <select
+                  <Select
                     value={sellTokenMint}
-                    onChange={(e) => setSellTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-white"
+                    onValueChange={(v) => setSellTokenMint(v)}
                   >
-                    {tokenOptions.map((sym) => (
-                      <option key={sym} value={sym}>
-                        {sym}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="mt-1 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
+                      <SelectValue placeholder="Select token" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
+                      {tokenOptions.map((sym) => (
+                        <SelectItem
+                          key={sym}
+                          value={sym}
+                          className="text-[hsl(var(--foreground))]"
+                        >
+                          {sym}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
@@ -511,7 +494,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   />
                 </div>
                 {sellEstimatePKR !== null ? (
-                  <div className="p-3 rounded-lg border bg-white/90">
+                  <div className="p-3 rounded-lg border border-white/10 bg-transparent text-[hsl(var(--foreground))]">
                     <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       PKR{" "}
@@ -540,6 +523,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 >
                   Continue
                 </Button>
+                <div
+                  className="w-full p-2 rounded-lg bg-transparent text-black text-[10px] text-center mt-2"
+                  style={{ color: "#000" }}
+                >
+                  /// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR
+                  DETAIL BY USING DROP DOWN ///
+                </div>
               </div>
             )}
           </div>
@@ -562,7 +552,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   "w-full text-left rounded-lg border border-white/50 p-3 bg-white/80 " +
                   (selectedOrder?.id === o.id
                     ? "ring-2 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]"
-                    : "hover:bg-white/90")
+                    : "hover:bg-black text-white")
                 }
               >
                 <div className="flex items-center justify-between">

@@ -236,6 +236,19 @@
 }
 
 @layer components {
+  /* Global: match PKR Amount input color and style across app */
+  input,
+  textarea,
+  select {
+    background-color: rgba(230, 247, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem !important;
+    color: inherit !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   /* Wallet-specific styles */
   .wallet-gradient {
     @apply bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100;
@@ -634,6 +647,22 @@
   /* Subtle reveal animation */
   .express-p2p-brand {
     animation: fadeIn 0.6s ease-out;
+  }
+
+  /* Hide large branded badge — replaced by inline token icons in the card */
+  .express-p2p-badge {
+    display: none !important;
+  }
+
+  /* Ensure select dropdowns on express page use black background and white text where possible */
+  .express-p2p-page select {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  .express-p2p-page select option {
+    background: #000 !important;
+    color: #fff !important;
   }
 
   .express-detecting-text {

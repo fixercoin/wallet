@@ -15,5 +15,12 @@ export async function handleSolanaSend(rawTx: string) {
     },
   );
 
-  return await response.json();
+  const json = await response.json();
+
+  // Handle JSON-RPC error responses
+  if (json?.error) {
+    throw new Error(json.error.message || `RPC error: ${JSON.stringify(json.error)}`);
+  }
+
+  return json;
 }

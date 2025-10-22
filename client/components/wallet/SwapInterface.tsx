@@ -718,33 +718,32 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           </Button>
         </div>
 
-        {/* BUY/SELL Toggle */}
-        <div className="flex gap-2 mb-4">
-          <Button
-            onClick={() => setMode("buy")}
-            className={`flex-1 rounded-lg font-semibold transition-all ${
-              mode === "buy"
-                ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white hover:from-[#FF6B4D] hover:to-[#FF4D7D]"
-                : "bg-[#1a2540]/50 text-white/70 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 hover:text-white"
-            }`}
-          >
-            BUY
-          </Button>
-          <Button
-            onClick={() => setMode("sell")}
-            className={`flex-1 rounded-lg font-semibold transition-all ${
-              mode === "sell"
-                ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white hover:from-[#FF6B4D] hover:to-[#FF4D7D]"
-                : "bg-[#1a2540]/50 text-white/70 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 hover:text-white"
-            }`}
-          >
-            SELL
-          </Button>
-        </div>
-
         {/* Card */}
         <div className="bg-transparent border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
+            {/* BUY/SELL Toggle */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setMode("buy")}
+                className={`flex-1 rounded-lg font-semibold transition-all ${
+                  mode === "buy"
+                    ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white hover:from-[#FF6B4D] hover:to-[#FF4D7D]"
+                    : "bg-[#1a2540]/50 text-white/70 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 hover:text-white"
+                }`}
+              >
+                BUY
+              </Button>
+              <Button
+                onClick={() => setMode("sell")}
+                className={`flex-1 rounded-lg font-semibold transition-all ${
+                  mode === "sell"
+                    ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white hover:from-[#FF6B4D] hover:to-[#FF4D7D]"
+                    : "bg-[#1a2540]/50 text-white/70 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 hover:text-white"
+                }`}
+              >
+                SELL
+              </Button>
+            </div>
             {mode === "buy" ? (
               <>
                 {/* BUY MODE */}

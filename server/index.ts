@@ -60,6 +60,14 @@ export async function createServer(): Promise<express.Application> {
 
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);
+  app.post("/api/solana-simulate", (req, res) => {
+    const { signedBase64 } = req.body;
+    handleSolanaSimulate(signedBase64).then((result) => res.json(result)).catch((err) => res.status(500).json({ error: err.message }));
+  });
+  app.post("/api/solana-send", (req, res) => {
+    const { signedBase64 } = req.body;
+    handleSolanaSend(signedBase64).then((result) => res.json(result)).catch((err) => res.status(500).json({ error: err.message }));
+  });
 
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);

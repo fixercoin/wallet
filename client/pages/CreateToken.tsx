@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +21,8 @@ import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   createMintToInstruction,
+  createSetAuthorityInstruction,
+  AuthorityType,
 } from "@solana/spl-token";
 import { connection as defaultConnection } from "@/lib/wallet";
 
@@ -33,6 +34,10 @@ export default function CreateToken() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [logoURI, setLogoURI] = useState("");
+  const [description, setDescription] = useState("");
+  const [website, setWebsite] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [telegram, setTelegram] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const decimals = 6;
   const maxSupply = 1_000_000_000n; // 1 billion
@@ -46,7 +51,7 @@ export default function CreateToken() {
 
   if (!wallet) {
     return (
-      <div className="min-h-screen bg-white text-[hsl(var(--foreground))] flex items-center justify-center">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center">
         <Card className="w-[90%] max-w-md">
           <CardHeader>
             <CardTitle>Wallet Required</CardTitle>
@@ -132,6 +137,21 @@ export default function CreateToken() {
       const amount = maxSupply * BigInt(10 ** decimals);
       tx.add(createMintToInstruction(mint.publicKey, ata, payerPub, amount));
 
+      // Revoke mint authority so no more tokens can be created
+      try {
+        tx.add(
+          createSetAuthorityInstruction(
+            mint.publicKey,
+            payerPub,
+            AuthorityType.MintTokens,
+            null,
+          ),
+        );
+      } catch (e) {
+        // If the instruction helper is not available for some reason, continue — server-side will reject if necessary
+        console.warn("Failed to add setAuthority instruction:", e);
+      }
+
       // recent blockhash and fee payer
       const { blockhash } = await conn.getLatestBlockhash();
       tx.recentBlockhash = blockhash;
@@ -196,6 +216,26 @@ export default function CreateToken() {
         balance: Number(maxSupply),
       };
 
+      // Persist token metadata separately so we don't violate TokenInfo typing
+      try {
+        const meta = {
+          description: description.trim() || undefined,
+          website: website.trim() || undefined,
+          twitter: twitter.trim() || undefined,
+          telegram: telegram.trim() || undefined,
+        } as any;
+        try {
+          localStorage.setItem(
+            `token_metadata_${mint.publicKey.toBase58()}`,
+            JSON.stringify(meta),
+          );
+        } catch (e) {
+          console.warn("Failed to persist token metadata:", e);
+        }
+      } catch (e) {
+        // noop
+      }
+
       addCustomToken(newToken);
       setTimeout(() => refreshTokens(), 1500);
 
@@ -214,8 +254,8 @@ export default function CreateToken() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white">
+      <div className="bg-transparent sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold tracking-wide">
             <span className="text-cream">FIXORIUM</span>
@@ -223,7 +263,7 @@ export default function CreateToken() {
           </div>
           <Button
             variant="ghost"
-            className="h-8 px-3 text-cream hover:bg-[#38bdf8]/20"
+            className="h-8 px-3 text-white hover:bg-[#FF7A5C]/10"
             onClick={() => navigate(-1)}
           >
             Back
@@ -232,17 +272,11 @@ export default function CreateToken() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="bg-gray-800/50 border-gray-700">
+        <Card className="bg-transparent border-0">
           <CardHeader>
             <CardTitle className="text-lg">Create Token</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Requires at least <strong>0.002 SOL</strong> for rent and fees.
-              </AlertDescription>
-            </Alert>
-
             <div className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="name">Token Name</Label>
@@ -251,6 +285,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -260,6 +295,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
               <div className="space-y-2">
@@ -269,8 +305,54 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Short token description"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Official Website</Label>
+                <Input
+                  id="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://yourtoken.site"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitter">Twitter</Label>
+                <Input
+                  id="twitter"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="https://twitter.com/yourhandle"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telegram">Telegram</Label>
+                <Input
+                  id="telegram"
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                  placeholder="https://t.me/yourgroup"
+                  className="bg-[#e6f7ff]/40 text-white placeholder:text-white/70"
+                />
+              </div>
+
               <div className="text-xs text-gray-400">
                 Decimals: 6 • Max supply: 1,000,000,000
               </div>
@@ -279,7 +361,7 @@ export default function CreateToken() {
             <Button
               disabled={!hasMinSol || isLoading}
               onClick={createTokenOnChain}
-              className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
+              className="w-full h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
             >
               {isLoading ? "Creating..." : "Create Token on Solana"}
             </Button>

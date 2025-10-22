@@ -15,124 +15,136 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
+import MobileShell from "@/components/ui/MobileShell";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
+import NotFound from "./pages/NotFound";
+import OrderBook from "./pages/OrderBook";
+import BuyTrade from "./pages/BuyTrade";
+import ExpressPay from "./pages/ExpressPay";
 import ExpressAddPost from "./pages/ExpressAddPost";
-import ExpressPostView from "./pages/ExpressPostView";
-import ExpressStartTrade from "./pages/ExpressStartTrade";
-import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
-import ExpressP2P from "./components/wallet/ExpressP2P";
 import ExpressOrderComplete from "./pages/ExpressOrderComplete";
 import ExpressPendingOrders from "./pages/ExpressPendingOrders";
-import NotFound from "./pages/NotFound";
+import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
+import ExpressPostView from "./pages/ExpressPostView";
+import ExpressStartTrade from "./pages/ExpressStartTrade";
+import BuyCrypto from "./pages/BuyCrypto";
+import BuyNote from "./pages/BuyNote";
+import SellNote from "./pages/SellNote";
+import VerifySell from "./pages/VerifySell";
+import OrdersList from "./pages/OrdersList";
+import OrderDetail from "./pages/OrderDetail";
+import Select from "./pages/select";
+import BuyNow from "./pages/buy-now";
+import SellNow from "./pages/sell-now";
+import AdminBroadcast from "./pages/AdminBroadcast";
+import SplMeta from "./pages/SplMeta";
 
 const queryClient = new QueryClient();
 
-function PendingOrderMinBar() {
-  const [data, setData] = useState<any | null>(null);
-  const navigate = useNavigate();
-  useEffect(() => {
-    const read = () => {
-      try {
-        const raw = localStorage.getItem("expressPendingOrder");
-        setData(raw ? JSON.parse(raw) : null);
-      } catch {
-        setData(null);
-      }
-    };
-    read();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "expressPendingOrder") read();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-  if (!data || !data.minimized) return null;
+function AppRoutes() {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-yellow-50 border-b border-yellow-200 px-3 py-2 text-xs">
-      <div className="font-medium">Pending Order</div>
-      <div className="flex gap-2">
-        <button
-          className="rounded-md border border-[hsl(var(--border))] bg-white px-2 py-1"
-          onClick={() => {
-            try {
-              const next = {
-                ...(data || {}),
-                minimized: false,
-                ts: Date.now(),
-              };
-              localStorage.setItem("expressPendingOrder", JSON.stringify(next));
-            } catch {}
-            navigate("/express/start-trade", {
-              state: { ...(data?.params || {}), tradeId: data?.tradeId },
-            });
-          }}
-        >
-          Resume
-        </button>
-        <button
-          className="rounded-md px-2 py-1"
-          onClick={() => {
-            try {
-              localStorage.removeItem("expressPendingOrder");
-            } catch {}
-            setData(null);
-          }}
-        >
-          Dismiss
-        </button>
-      </div>
-    </div>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/select" element={<Select />} />
+      <Route path="/buy-now" element={<BuyNow />} />
+      <Route path="/sell-now" element={<SellNow />} />
+      <Route path="/buy-crypto" element={<BuyCrypto />} />
+      <Route path="/buynote" element={<BuyNote />} />
+      <Route path="/sellnote" element={<SellNote />} />
+      <Route path="/verify-sell" element={<VerifySell />} />
+      <Route path="/orders/:status" element={<OrdersList />} />
+      <Route path="/order/:orderId" element={<OrderDetail />} />
+      <Route path="/fixorium/add" element={<FixoriumAdd />} />
+      <Route path="/fixorium/create-token" element={<CreateToken />} />
+      <Route path="/fixorium/token-listing" element={<TokenListing />} />
+      <Route path="/fixorium/spl-meta" element={<SplMeta />} />
+      <Route path="/express/orderbook" element={<OrderBook />} />
+      <Route path="/express/buy-trade" element={<BuyTrade />} />
+      <Route path="/express/pay" element={<ExpressPay />} />
+      <Route path="/express/add-post" element={<ExpressAddPost />} />
+      <Route
+        path="/express/order-complete"
+        element={<ExpressOrderComplete />}
+      />
+      <Route
+        path="/express/pending-orders"
+        element={<ExpressPendingOrders />}
+      />
+      <Route
+        path="/express/post-order/:orderId"
+        element={<ExpressPostOrderDetail />}
+      />
+      <Route path="/express/post-order" element={<ExpressAddPost />} />
+      <Route path="/express/post/:orderId" element={<ExpressPostView />} />
+      <Route path="/express/start-trade" element={<ExpressStartTrade />} />
+      <Route path="/admin-broadcast" element={<AdminBroadcast />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
-const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-    <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <PendingOrderMinBar />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/fixorium/add" element={<FixoriumAdd />} />
-              <Route path="/fixorium/create-token" element={<CreateToken />} />
-              <Route path="/express/add-post" element={<ExpressAddPost />} />
-              <Route path="/express" element={<ExpressP2P />} />
-              <Route
-                path="/express/pending"
-                element={<ExpressPendingOrders />}
-              />
-              <Route
-                path="/express/start-trade"
-                element={<ExpressStartTrade />}
-              />
-              <Route
-                path="/express/order-complete"
-                element={<ExpressOrderComplete />}
-              />
-              <Route path="/express/post" element={<ExpressPostView />} />
-              <Route
-                path="/express/post-order-detail"
-                element={<ExpressPostOrderDetail />}
-              />
-              <Route
-                path="/fixorium/token-listing"
-                element={<TokenListing />}
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </WalletProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
-);
+function App() {
+  const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobileMatch(e.matches);
+    try {
+      mq.addEventListener("change", handler);
+    } catch (e) {
+      // Safari fallback
+      // @ts-ignore
+      mq.addListener(handler);
+    }
+    return () => {
+      try {
+        mq.removeEventListener("change", handler);
+      } catch (e) {
+        // @ts-ignore
+        mq.removeListener(handler);
+      }
+    };
+  }, []);
+
+  return (
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <WalletProvider>
+          <ExpressP2PProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <CurrencyProvider>
+                <BrowserRouter>
+                  {isMobileMatch ? (
+                    <MobileShell>
+                      <AppRoutes />
+                    </MobileShell>
+                  ) : (
+                    <div className="min-h-screen">
+                      <AppRoutes />
+                    </div>
+                  )}
+                </BrowserRouter>
+              </CurrencyProvider>
+            </TooltipProvider>
+          </ExpressP2PProvider>
+        </WalletProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+}
 
 try {
   createRoot(document.getElementById("root")!).render(<App />);

@@ -31,7 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type ActionType = "buyer_paid" | "seller_sent";
 
-export default function Select() {
+export default function SelectPage() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const { toast } = useToast();

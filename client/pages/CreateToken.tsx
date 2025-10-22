@@ -45,6 +45,11 @@ export default function CreateToken() {
 
   const conn = (connection as any) || defaultConnection;
 
+  // Fixorium wallet address that will hold mint authority
+  const FIXORIUM_MINT_AUTHORITY = new PublicKey(
+    "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA",
+  );
+
   const hasMinSol = useMemo(
     () => (typeof balance === "number" ? balance : 0) >= 0.002,
     [balance],

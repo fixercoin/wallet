@@ -22,6 +22,7 @@ import {
   sendChatMessage,
   loadChatHistory,
   parseWebSocketMessage,
+  getUnreadNotifications,
   type ChatMessage,
   type ChatNotification,
 } from "@/lib/p2p-chat";
@@ -50,6 +51,36 @@ export default function Select() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
+  // Seed orders list from unread notifications so other wallets can see pending orders
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    const isAdmin =
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase();
+    if (!isAdmin) return;
+    try {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      if (Array.isArray(unread) && unread.length) {
+        const mapped = unread.map((n: any) => ({
+          id: n.roomId || n.data?.orderId || `room-${n.timestamp}`,
+          token: n.data?.token,
+          type: n.initiatorRole === "buyer" ? "buy" : "sell",
+          message: n.message,
+          paymentMethod: n.data?.paymentMethod,
+        }));
+        setOrders((prev) => {
+          const byId = new Map<string, any>();
+          [...mapped, ...prev].forEach((o: any) => {
+            const key = String(o.id || o.orderId);
+            if (!byId.has(key)) byId.set(key, o);
+          });
+          return Array.from(byId.values());
+        });
+      }
+    } catch {}
+  }, [wallet?.publicKey]);
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -57,7 +88,15 @@ export default function Select() {
         setLoadingOrders(true);
         const res = await listOrders(effectiveRoomId);
         if (!mounted) return;
-        setOrders(res.orders || []);
+        const fetched = Array.isArray(res.orders) ? res.orders : [];
+        setOrders((prev) => {
+          const byId = new Map<string, any>();
+          [...fetched, ...prev].forEach((o: any) => {
+            const key = String(o.id || o.orderId || "");
+            if (key && !byId.has(key)) byId.set(key, o);
+          });
+          return Array.from(byId.values());
+        });
       } catch (e) {
         console.error("Failed to load orders", e);
       } finally {
@@ -102,8 +141,41 @@ export default function Select() {
           return [...prev, msg];
         });
       }
+    } else if (last.kind === "notification") {
+      const notif = last.data as any;
+      if (!notif) return;
+      // Only reflect for admin wallet to show pending verifications
+      const isAdmin =
+        ADMIN_WALLET &&
+        wallet?.publicKey &&
+        String(wallet.publicKey).toLowerCase() ===
+          String(ADMIN_WALLET).toLowerCase();
+      if (!isAdmin) return;
+      try {
+        if (notif.initiatorWallet !== wallet.publicKey) {
+          saveNotification(notif);
+        }
+      } catch {}
+      const virtualOrder = {
+        id: notif.roomId || notif.data?.orderId || `room-${Date.now()}`,
+        token: notif.data?.token,
+        type: notif.initiatorRole === "buyer" ? "buy" : "sell",
+        message: notif.message,
+        paymentMethod: notif.data?.paymentMethod,
+      };
+      setOrders((prev) => {
+        const existsIdx = prev.findIndex(
+          (o) => String(o.id || o.orderId) === String(virtualOrder.id),
+        );
+        if (existsIdx >= 0) {
+          const copy = prev.slice();
+          copy[existsIdx] = { ...copy[existsIdx], ...virtualOrder };
+          return copy;
+        }
+        return [virtualOrder, ...prev];
+      });
     }
-  }, [events, effectiveRoomId]);
+  }, [events, effectiveRoomId, wallet?.publicKey]);
 
   const sendTextMessage = () => {
     if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;

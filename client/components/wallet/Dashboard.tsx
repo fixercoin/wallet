@@ -803,7 +803,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </span>
                       <span className="text-xs text-gray-300">{currency}</span>
                     </div>
-                    <p className="text-xs text-gray-400">Daily Up/Down</p>
                     {hasValidPriceChange && (
                       <div className="flex items-center justify-center gap-2">
                         {isPositive ? (

@@ -15,7 +15,6 @@ import {
   Gift,
   Flame as BurnIcon,
   Lock,
-  Coins,
   Settings,
   FileText,
 } from "lucide-react";

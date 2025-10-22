@@ -34,7 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 type ActionType = "buyer_paid" | "seller_sent";
 
@@ -152,7 +157,8 @@ export default function SelectPage() {
     return (
       !!ADMIN_WALLET &&
       !!wallet?.publicKey &&
-      String(wallet.publicKey).toLowerCase() === String(ADMIN_WALLET).toLowerCase()
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase()
     );
   }, [wallet?.publicKey]);
 
@@ -656,7 +662,6 @@ export default function SelectPage() {
       </div>
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
-
         <div
           id="trade-card"
           className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-3"
@@ -891,9 +896,7 @@ export default function SelectPage() {
           <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
             {loadingOrders ? (
               <div className="text-sm text-white/60">Loading orders...</div>
-            ) : orders.length === 0 && !payload ? (
-              null
-            ) : (
+            ) : orders.length === 0 && !payload ? null : (
               <img
                 src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
                 alt="Payment illustration"
@@ -905,7 +908,10 @@ export default function SelectPage() {
       </div>
 
       <Sheet open={showPending} onOpenChange={setShowPending}>
-        <SheetContent side="right" className="bg-[#0f1520] text-white border-l border-white/10">
+        <SheetContent
+          side="right"
+          className="bg-[#0f1520] text-white border-l border-white/10"
+        >
           <SheetHeader>
             <SheetTitle>Pending Orders ({orders.length})</SheetTitle>
           </SheetHeader>
@@ -923,7 +929,10 @@ export default function SelectPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="font-semibold text-sm text-white/90">
-                        {o.title || o.token || o.type || `Order ${o.id || o.orderId}`}
+                        {o.title ||
+                          o.token ||
+                          o.type ||
+                          `Order ${o.id || o.orderId}`}
                       </div>
                       <div className="text-xs text-white/70 mt-1">
                         {o.description || o.message || o.details || ""}

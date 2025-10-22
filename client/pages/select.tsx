@@ -441,7 +441,6 @@ export default function Select() {
           </div>
         </div>
 
-        {wallet?.publicKey && (
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
             {/* Orders list displayed as prompt messages - moved above image */}
             <div className="mb-3 space-y-3">
@@ -550,7 +549,6 @@ export default function Select() {
               )}
             </div>
           </div>
-        )}
       </div>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>

@@ -322,47 +322,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 flex flex-col items-center gap-6">
-          {checkingOrders ? (
-            <>
-              <div
-                className="express-p2p-brand"
-                role="status"
-                aria-label="Scanning for express P2P orders"
-              >
-                <div className="express-p2p-badge" aria-hidden>
-                  <div className="express-p2p-official">OFFICIAL</div>
-                  <div className="express-p2p-title">FIXORIUM P2P SERVICE</div>
-                </div>
-
-                <div className="express-p2p-currencies" aria-hidden>
-                  <div className="p2p-token pkr" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg"
-                      alt="PKR"
-                    />
-                  </div>
-                  <div className="p2p-token sol" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/0QsCpPRr/logo.png"
-                      alt="SOL"
-                    />
-                  </div>
-                  <div className="p2p-token usdc" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp"
-                      alt="USDC"
-                    />
-                  </div>
-                  <div className="p2p-token fixer" aria-hidden>
-                    <img
-                      src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png"
-                      alt="FIXERCOIN"
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : detectedOrder ? (
+          {detectedOrder ? (
             <>
               <button
                 type="button"

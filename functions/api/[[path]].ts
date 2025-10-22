@@ -216,6 +216,8 @@ import {
   addEasypaisaPaymentCF,
   listEasypaisaPaymentsCF,
 } from "../../utils/p2pStoreCf";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);

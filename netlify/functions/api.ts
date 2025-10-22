@@ -15,6 +15,8 @@ import {
   createTradeRoom,
   updateTradeRoom,
 } from "../../utils/p2pStore";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
@@ -526,6 +528,50 @@ export const handler = async (event: any) => {
 
       const result = await callRpc(methodName, params, id);
       return jsonResponse(200, result.body);
+    }
+
+    // Solana simulate transaction
+    if (path === "/solana-simulate" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonResponse(400, {
+          error: "Missing signedBase64 in request body",
+        });
+      }
+      try {
+        const result = await handleSolanaSimulate(signedBase64);
+        return jsonResponse(200, result);
+      } catch (e: any) {
+        return jsonResponse(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
+    // Solana send transaction
+    if (path === "/solana-send" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonResponse(400, {
+          error: "Missing signedBase64 in request body",
+        });
+      }
+      try {
+        const result = await handleSolanaSend(signedBase64);
+        return jsonResponse(200, result);
+      } catch (e: any) {
+        return jsonResponse(500, {
+          error: e?.message || String(e),
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR

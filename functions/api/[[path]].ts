@@ -216,6 +216,8 @@ import {
   addEasypaisaPaymentCF,
   listEasypaisaPaymentsCF,
 } from "../../utils/p2pStoreCf";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
@@ -318,6 +320,48 @@ export const onRequest = async ({ request, env }) => {
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);
+    }
+
+    // Solana simulate transaction
+    if (normalizedPath === "/solana-simulate" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSimulate(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
+    // Solana send transaction
+    if (normalizedPath === "/solana-send" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSend(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR

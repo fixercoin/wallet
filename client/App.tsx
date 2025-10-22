@@ -28,6 +28,8 @@ import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
+import TokenDetailsPage from "./pages/TokenDetailsPage";
+import AllTokensPage from "./pages/AllTokensPage";
 import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
@@ -83,6 +85,8 @@ function AppRoutes() {
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
       <Route path="/fixorium/spl-meta" element={<SplMeta />} />
+      <Route path="/token/:mint" element={<TokenDetailsPage />} />
+      <Route path="/all-tokens" element={<AllTokensPage />} />
       <Route path="/express" element={<Express />} />
       <Route path="/express/orderbook" element={<OrderBook />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />

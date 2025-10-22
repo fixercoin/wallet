@@ -22,6 +22,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 
@@ -42,6 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onTokenClick,
   onSettings,
 }) => {
+  const navigate = useNavigate();
   const {
     wallet,
     balance,
@@ -326,6 +328,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="h-12 w-12 rounded-full border-gray-600 bg-gray-800 hover:bg-gray-700 text-white p-0"
           >
             <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* All Tokens Button */}
+        <div className="mb-8">
+          <Button
+            onClick={() => navigate("/all-tokens")}
+            className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-lg"
+          >
+            All Tokens
           </Button>
         </div>
 

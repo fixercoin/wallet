@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
+import { handleSolanaSend } from "./routes/solana-send";
+import { handleSolanaSimulate } from "./routes/solana-simulate";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
@@ -37,6 +39,7 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
+import { handleFixoriumTokens } from "./routes/fixorium-tokens";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -58,6 +61,18 @@ export async function createServer(): Promise<express.Application> {
 
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);
+  app.post("/api/solana-simulate", (req, res) => {
+    const { signedBase64 } = req.body;
+    handleSolanaSimulate(signedBase64)
+      .then((result) => res.json(result))
+      .catch((err) => res.status(500).json({ error: err.message }));
+  });
+  app.post("/api/solana-send", (req, res) => {
+    const { signedBase64 } = req.body;
+    handleSolanaSend(signedBase64)
+      .then((result) => res.json(result))
+      .catch((err) => res.status(500).json({ error: err.message }));
+  });
 
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
@@ -93,6 +108,9 @@ export async function createServer(): Promise<express.Application> {
 
   // SPL-META submit
   app.post("/api/spl-meta/submit", handleSubmitSplMeta);
+
+  // Fixorium tokens
+  app.get("/api/fixorium-tokens", handleFixoriumTokens);
 
   // Health check
   app.get("/health", (req, res) => {

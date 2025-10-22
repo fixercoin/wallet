@@ -334,7 +334,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
               <button
                 type="button"
                 onClick={() => setOrdersDialogOpen(true)}
-                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center gap-3"
+                className="w-full rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-black text-white transition flex items-center gap-3"
               >
                 <MessageSquare className="h-4 w-4 text-[hsl(var(--primary))]" />
                 <span className="text-sm font-medium">Detected orders</span>
@@ -350,7 +350,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                     state: { order: detectedOrder },
                   })
                 }
-                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-white/90 transition flex items-center justify-between"
+                className="w-full text-left rounded-xl border border-white/50 bg-white/80 p-4 hover:bg-black text-white transition flex items-center justify-between"
               >
                 <div>
                   <p className="text-sm text-gray-500">Buy order detected</p>
@@ -478,7 +478,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   />
                 </div>
                 {sellEstimatePKR !== null ? (
-                  <div className="p-3 rounded-lg border bg-white/90">
+                  <div className="p-3 rounded-lg border bg-black text-white">
                     <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       PKR{" "}
@@ -529,7 +529,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   "w-full text-left rounded-lg border border-white/50 p-3 bg-white/80 " +
                   (selectedOrder?.id === o.id
                     ? "ring-2 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]"
-                    : "hover:bg-white/90")
+                    : "hover:bg-black text-white")
                 }
               >
                 <div className="flex items-center justify-between">

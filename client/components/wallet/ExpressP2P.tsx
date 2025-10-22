@@ -420,7 +420,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   </Select>
                 </div>
                 {buyEstimate !== null ? (
-                  <div className="p-3 rounded-lg border bg-[#e6f7ff]/20 text-[hsl(var(--foreground))]">
+                  <div className="p-3 rounded-lg border border-white/10 bg-transparent text-[hsl(var(--foreground))]">
                     <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       {buyEstimate.toLocaleString(undefined, {
@@ -480,7 +480,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   />
                 </div>
                 {sellEstimatePKR !== null ? (
-                  <div className="p-3 rounded-lg border bg-[#e6f7ff]/20 text-[hsl(var(--foreground))]">
+                  <div className="p-3 rounded-lg border border-white/10 bg-transparent text-[hsl(var(--foreground))]">
                     <div className="text-xs text-gray-500">Estimate</div>
                     <div className="font-semibold mt-1">
                       PKR{" "}

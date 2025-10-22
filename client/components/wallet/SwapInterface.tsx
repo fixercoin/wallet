@@ -352,7 +352,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         throw new Error("Unable to fetch SOL price");
       }
 
-      const solAmountNeeded = usdAmount / solUsdPrice;
+      const solAmountNeeded = usdAmount / fetchedSolUsdPrice;
       if (solAmountNeeded > balance) {
         throw new Error("Insufficient SOL balance for this purchase");
       }

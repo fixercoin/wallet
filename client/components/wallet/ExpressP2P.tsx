@@ -321,7 +321,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
       </div>
 
       <div className="w-full px-4 py-8">
-        <div className="wallet-card rounded-2xl p-6 flex flex-col items-center gap-6">
+        <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 flex flex-col items-center gap-6">
           {checkingOrders ? (
             <>
               <div

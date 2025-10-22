@@ -311,6 +311,7 @@ export default function SelectPage() {
     [tokens, adminTokenSymbol],
   );
   const [readyToConfirmSend, setReadyToConfirmSend] = useState(false);
+  const [headerEmail, setHeaderEmail] = useState<string>("info@fixorium.com.pk");
 
   // Inline Buy section state
   const BUY_TOKENS = ["FIXERCOIN", "SOL", "USDC", "USDT"] as const;
@@ -657,9 +658,13 @@ export default function SelectPage() {
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-start">
-          <span className="text-sm text-white/70 select-none">
-            info@fixorium.com.pk
-          </span>
+          <input
+            type="email"
+            value={headerEmail}
+            onChange={(e) => setHeaderEmail(e.target.value)}
+            placeholder="info@fixorium.com.pk"
+            className="w-full px-3 py-2 h-10 rounded-lg bg-[#1a2540]/50 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
+          />
         </div>
 
         <div

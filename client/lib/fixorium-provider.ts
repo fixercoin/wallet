@@ -29,6 +29,10 @@ const DEFAULT_COMMITMENT: SendOptions["preflightCommitment"] = "confirmed";
 
 const encoder = new TextEncoder();
 
+export type ConnectionApprovalHandler = (
+  origin: string,
+) => Promise<boolean>;
+
 export class FixoriumWalletProvider {
   readonly isFixorium = true;
   readonly name = "Fixorium Wallet";
@@ -46,6 +50,8 @@ export class FixoriumWalletProvider {
     Set<(...args: any[]) => void>
   >();
   private initializedEventDispatched = false;
+  private approvalHandler: ConnectionApprovalHandler | null = null;
+  private trustedOrigins = new Set<string>();
 
   get publicKey(): PublicKey | null {
     return this.publicKeyCache;

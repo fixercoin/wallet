@@ -83,7 +83,15 @@ export default function Select() {
         setLoadingOrders(true);
         const res = await listOrders(effectiveRoomId);
         if (!mounted) return;
-        setOrders(res.orders || []);
+        const fetched = Array.isArray(res.orders) ? res.orders : [];
+        setOrders((prev) => {
+          const byId = new Map<string, any>();
+          [...fetched, ...prev].forEach((o: any) => {
+            const key = String(o.id || o.orderId || "");
+            if (key && !byId.has(key)) byId.set(key, o);
+          });
+          return Array.from(byId.values());
+        });
       } catch (e) {
         console.error("Failed to load orders", e);
       } finally {

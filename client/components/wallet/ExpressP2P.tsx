@@ -280,7 +280,7 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/")}
-                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
                 aria-label="Add post"
               >
                 <Plus className="h-5 w-5" />

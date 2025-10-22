@@ -399,13 +399,20 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <label className="block text-xs text-gray-500 mb-1">
                     Select Token
                   </label>
-                  <Select value={buyTokenMint} onValueChange={(v) => setBuyTokenMint(v)}>
+                  <Select
+                    value={buyTokenMint}
+                    onValueChange={(v) => setBuyTokenMint(v)}
+                  >
                     <SelectTrigger className="mt-1 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
                       <SelectValue placeholder="Select token" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
                       {tokenOptions.map((sym) => (
-                        <SelectItem key={sym} value={sym} className="text-[hsl(var(--foreground))]">
+                        <SelectItem
+                          key={sym}
+                          value={sym}
+                          className="text-[hsl(var(--foreground))]"
+                        >
                           {sym}
                         </SelectItem>
                       ))}
@@ -438,7 +445,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 >
                   Continue
                 </Button>
-                <div className="w-full p-2 rounded-lg bg-transparent text-black text-[10px] text-center mt-2" style={{ color: '#000' }}>/// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR DETAIL BY USING DROP DOWN ///</div>
+                <div
+                  className="w-full p-2 rounded-lg bg-transparent text-black text-[10px] text-center mt-2"
+                  style={{ color: "#000" }}
+                >
+                  /// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR
+                  DETAIL BY USING DROP DOWN ///
+                </div>
               </div>
             )}
 
@@ -448,13 +461,20 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <label className="block text-xs text-gray-500 mb-1">
                     Token
                   </label>
-                  <Select value={sellTokenMint} onValueChange={(v) => setSellTokenMint(v)}>
+                  <Select
+                    value={sellTokenMint}
+                    onValueChange={(v) => setSellTokenMint(v)}
+                  >
                     <SelectTrigger className="mt-1 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
                       <SelectValue placeholder="Select token" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
                       {tokenOptions.map((sym) => (
-                        <SelectItem key={sym} value={sym} className="text-[hsl(var(--foreground))]">
+                        <SelectItem
+                          key={sym}
+                          value={sym}
+                          className="text-[hsl(var(--foreground))]"
+                        >
                           {sym}
                         </SelectItem>
                       ))}
@@ -503,7 +523,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                 >
                   Continue
                 </Button>
-                <div className="w-full p-2 rounded-lg bg-transparent text-black text-[10px] text-center mt-2" style={{ color: '#000' }}>/// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR DETAIL BY USING DROP DOWN ///</div>
+                <div
+                  className="w-full p-2 rounded-lg bg-transparent text-black text-[10px] text-center mt-2"
+                  style={{ color: "#000" }}
+                >
+                  /// CHECK ESTIMATED PRICE BEFORE MOVING FORWARD & ADD YOUR
+                  DETAIL BY USING DROP DOWN ///
+                </div>
               </div>
             )}
           </div>

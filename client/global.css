@@ -237,7 +237,9 @@
 
 @layer components {
   /* Global: match PKR Amount input color and style across app */
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     background-color: rgba(230, 247, 255, 0.2) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 0.375rem;
@@ -656,7 +658,7 @@
   .express-p2p-page select {
     background: #000 !important;
     color: #fff !important;
-    border-color: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
   }
   .express-p2p-page select option {
     background: #000 !important;

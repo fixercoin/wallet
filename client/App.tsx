@@ -28,6 +28,8 @@ import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
+import TokenDetailsPage from "./pages/TokenDetailsPage";
+import AllTokensPage from "./pages/AllTokensPage";
 import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";

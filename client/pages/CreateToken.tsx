@@ -227,7 +227,7 @@ export default function CreateToken() {
       setTimeout(() => refreshTokens(), 1500);
 
       toast({ title: "Token Created", description: `Mint tx: ${signature}` });
-      navigate("/");
+      navigate(`/token/${mint.publicKey.toBase58()}`);
     } catch (e: any) {
       console.error("Create token error:", e);
       toast({

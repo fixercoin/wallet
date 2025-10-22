@@ -11,12 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ArrowLeft,
-  Settings,
-  Check,
-  ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, Settings, Check, ExternalLink } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
@@ -36,19 +31,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const { toast } = useToast();
 
   const [mode, setMode] = useState<"buy" | "sell">("buy");
-  
+
   // Buy mode state
   const [buyUsdAmount, setBuyUsdAmount] = useState("");
   const [buyToken, setBuyToken] = useState<TokenInfo | null>(null);
   const [buyTokenAmount, setBuyTokenAmount] = useState("");
   const [buyQuote, setBuyQuote] = useState<JupiterQuoteResponse | null>(null);
-  
+
   // Sell mode state
   const [sellTokenAmount, setSellTokenAmount] = useState("");
   const [sellToken, setSellToken] = useState<TokenInfo | null>(null);
   const [sellUsdPrice, setSellUsdPrice] = useState("");
   const [sellQuote, setSellQuote] = useState<JupiterQuoteResponse | null>(null);
-  
+
   const [slippage, setSlippage] = useState("0.5");
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
@@ -60,10 +55,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
-  const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(null);
+  const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(
+    null,
+  );
   const [solUsdPrice, setSolUsdPrice] = useState<number | null>(null);
-  const [lastSwapFromToken, setLastSwapFromToken] = useState<TokenInfo | null>(null);
-  const [lastSwapToToken, setLastSwapToToken] = useState<TokenInfo | null>(null);
+  const [lastSwapFromToken, setLastSwapFromToken] = useState<TokenInfo | null>(
+    null,
+  );
+  const [lastSwapToToken, setLastSwapToToken] = useState<TokenInfo | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -235,11 +236,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   useEffect(() => {
     const loadSolPrice = async () => {
       try {
-        const jupMap = await jupiterAPI.getTokenPrices(["So11111111111111111111111111111111111111112"]);
-        let price: number | null = jupMap["So11111111111111111111111111111111111111112"] ?? null;
+        const jupMap = await jupiterAPI.getTokenPrices([
+          "So11111111111111111111111111111111111111112",
+        ]);
+        let price: number | null =
+          jupMap["So11111111111111111111111111111111111111112"] ?? null;
 
         if (price == null || !(price > 0)) {
-          const tokenData = await dexscreenerAPI.getTokenByMint("So11111111111111111111111111111111111111112");
+          const tokenData = await dexscreenerAPI.getTokenByMint(
+            "So11111111111111111111111111111111111111112",
+          );
           price = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd) : null;
         }
 
@@ -568,7 +574,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return jb.result as string;
       };
 
-      const solReceived = jupiterAPI.parseSwapAmount(quote.outAmount, solToken.decimals);
+      const solReceived = jupiterAPI.parseSwapAmount(
+        quote.outAmount,
+        solToken.decimals,
+      );
       const sig = await submitQuote(quote);
       setTxSignature(sig);
       setLastSwapFromToken(sellToken);
@@ -761,7 +770,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     />
                     {buyUsdAmount && solUsdPrice && solUsdPrice > 0 && (
                       <div className="text-sm text-white/70 mt-3">
-                        {(parseFloat(buyUsdAmount) / solUsdPrice).toFixed(6)} SOL
+                        {(parseFloat(buyUsdAmount) / solUsdPrice).toFixed(6)}{" "}
+                        SOL
                       </div>
                     )}
                   </CardContent>
@@ -887,7 +897,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     />
                     {sellToken && (
                       <div className="text-sm text-white/70 mt-2">
-                        Balance: {formatAmount(getTokenBalance(sellToken))} {sellToken.symbol}
+                        Balance: {formatAmount(getTokenBalance(sellToken))}{" "}
+                        {sellToken.symbol}
                       </div>
                     )}
                   </CardContent>

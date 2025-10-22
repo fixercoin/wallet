@@ -54,6 +54,11 @@ export default function Select() {
   // Seed orders list from unread notifications so other wallets can see pending orders
   useEffect(() => {
     if (!wallet?.publicKey) return;
+    const isAdmin =
+      ADMIN_WALLET &&
+      String(wallet.publicKey).toLowerCase() ===
+        String(ADMIN_WALLET).toLowerCase();
+    if (!isAdmin) return;
     try {
       const unread = getUnreadNotifications(wallet.publicKey);
       if (Array.isArray(unread) && unread.length) {
@@ -139,9 +144,15 @@ export default function Select() {
     } else if (last.kind === "notification") {
       const notif = last.data as any;
       if (!notif) return;
-      // Persist and reflect in orders list for the counterparty
+      // Only reflect for admin wallet to show pending verifications
+      const isAdmin =
+        ADMIN_WALLET &&
+        wallet?.publicKey &&
+        String(wallet.publicKey).toLowerCase() ===
+          String(ADMIN_WALLET).toLowerCase();
+      if (!isAdmin) return;
       try {
-        if (!wallet?.publicKey || notif.initiatorWallet !== wallet.publicKey) {
+        if (notif.initiatorWallet !== wallet.publicKey) {
           saveNotification(notif);
         }
       } catch {}

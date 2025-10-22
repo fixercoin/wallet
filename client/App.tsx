@@ -85,6 +85,8 @@ function AppRoutes() {
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
       <Route path="/fixorium/spl-meta" element={<SplMeta />} />
+      <Route path="/token/:mint" element={<TokenDetailsPage />} />
+      <Route path="/all-tokens" element={<AllTokensPage />} />
       <Route path="/express" element={<Express />} />
       <Route path="/express/orderbook" element={<OrderBook />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />

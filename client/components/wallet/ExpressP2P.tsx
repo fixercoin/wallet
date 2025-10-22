@@ -406,17 +406,18 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
                   <label className="block text-xs text-gray-500 mb-1">
                     Select Token
                   </label>
-                  <select
-                    value={buyTokenMint}
-                    onChange={(e) => setBuyTokenMint(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]"
-                  >
-                    {tokenOptions.map((sym) => (
-                      <option key={sym} value={sym}>
-                        {sym}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={buyTokenMint} onValueChange={(v) => setBuyTokenMint(v)}>
+                    <SelectTrigger className="mt-1 bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
+                      <SelectValue placeholder="Select token" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#e6f7ff]/20 border-white/10 text-[hsl(var(--foreground))]">
+                      {tokenOptions.map((sym) => (
+                        <SelectItem key={sym} value={sym} className="text-[hsl(var(--foreground))]">
+                          {sym}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {buyEstimate !== null ? (
                   <div className="p-3 rounded-lg border bg-[#e6f7ff]/20 text-[hsl(var(--foreground))]">

@@ -647,6 +647,11 @@
     animation: fadeIn 0.6s ease-out;
   }
 
+  /* Hide large branded badge — replaced by inline token icons in the card */
+  .express-p2p-badge {
+    display: none !important;
+  }
+
   .express-detecting-text {
     text-transform: uppercase;
     letter-spacing: 0.35em;

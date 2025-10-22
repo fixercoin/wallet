@@ -528,6 +528,46 @@ export const handler = async (event: any) => {
       return jsonResponse(200, result.body);
     }
 
+    // Solana Simulate Transaction
+    if (path === "/solana-simulate" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const signedBase64 = body?.signedBase64;
+      if (!signedBase64 || typeof signedBase64 !== "string") {
+        return jsonResponse(400, { error: "Missing signedBase64" });
+      }
+
+      const result = await callRpc(
+        "simulateTransaction",
+        [signedBase64, { encoding: "base64", commitment: "processed" }],
+        Date.now(),
+      );
+      return jsonResponse(200, JSON.parse(result.body));
+    }
+
+    // Solana Send Transaction
+    if (path === "/solana-send" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const signedBase64 = body?.signedBase64;
+      if (!signedBase64 || typeof signedBase64 !== "string") {
+        return jsonResponse(400, { error: "Missing signedBase64" });
+      }
+
+      const result = await callRpc(
+        "sendTransaction",
+        [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }],
+        Date.now(),
+      );
+      return jsonResponse(200, JSON.parse(result.body));
+    }
+
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
     if (path === "/forex/rate" && method === "GET") {
       const base = (event.queryStringParameters?.base || "USD").toUpperCase();

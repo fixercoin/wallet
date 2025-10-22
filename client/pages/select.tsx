@@ -52,34 +52,57 @@ export default function Select() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Seed orders list from unread notifications so other wallets can see pending orders
+  // Load orders: Admin sees all orders, others see pending orders from unread notifications
   useEffect(() => {
     if (!wallet?.publicKey) return;
     const isAdmin =
       ADMIN_WALLET &&
       String(wallet.publicKey).toLowerCase() ===
         String(ADMIN_WALLET).toLowerCase();
-    if (!isAdmin) return;
-    try {
-      const unread = getUnreadNotifications(wallet.publicKey);
-      if (Array.isArray(unread) && unread.length) {
-        const mapped = unread.map((n: any) => ({
-          id: n.roomId || n.data?.orderId || `room-${n.timestamp}`,
-          token: n.data?.token,
-          type: n.initiatorRole === "buyer" ? "buy" : "sell",
-          message: n.message,
-          paymentMethod: n.data?.paymentMethod,
-        }));
-        setOrders((prev) => {
-          const byId = new Map<string, any>();
-          [...mapped, ...prev].forEach((o: any) => {
-            const key = String(o.id || o.orderId);
-            if (!byId.has(key)) byId.set(key, o);
+
+    if (isAdmin) {
+      // Admin: Load all orders from the backend
+      const loadAllOrders = async () => {
+        try {
+          const allOrders = await listP2POrders();
+          if (Array.isArray(allOrders) && allOrders.length) {
+            setOrders((prev) => {
+              const byId = new Map<string, any>();
+              [...allOrders, ...prev].forEach((o: any) => {
+                const key = String(o.id || o.orderId);
+                if (key && !byId.has(key)) byId.set(key, o);
+              });
+              return Array.from(byId.values());
+            });
+          }
+        } catch (err) {
+          console.error("Failed to load all orders for admin:", err);
+        }
+      };
+      loadAllOrders();
+    } else {
+      // Non-admin: Load unread notifications
+      try {
+        const unread = getUnreadNotifications(wallet.publicKey);
+        if (Array.isArray(unread) && unread.length) {
+          const mapped = unread.map((n: any) => ({
+            id: n.roomId || n.data?.orderId || `room-${n.timestamp}`,
+            token: n.data?.token,
+            type: n.initiatorRole === "buyer" ? "buy" : "sell",
+            message: n.message,
+            paymentMethod: n.data?.paymentMethod,
+          }));
+          setOrders((prev) => {
+            const byId = new Map<string, any>();
+            [...mapped, ...prev].forEach((o: any) => {
+              const key = String(o.id || o.orderId);
+              if (!byId.has(key)) byId.set(key, o);
+            });
+            return Array.from(byId.values());
           });
-          return Array.from(byId.values());
-        });
-      }
-    } catch {}
+        }
+      } catch {}
+    }
   }, [wallet?.publicKey]);
 
   useEffect(() => {

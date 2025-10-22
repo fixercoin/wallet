@@ -734,13 +734,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     </label>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1">
-                        <div className="text-3xl font-bold text-white">$</div>
+                        <div className="text-2xl font-bold text-white">$</div>
                         <Input
                           type="number"
                           placeholder="0.00"
                           value={buyUsdAmount}
                           onChange={(e) => setBuyUsdAmount(e.target.value)}
-                          className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0 mt-1"
+                          className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0 inline-block"
                         />
                       </div>
                     </div>

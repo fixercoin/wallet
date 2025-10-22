@@ -15,6 +15,8 @@ import {
   createTradeRoom,
   updateTradeRoom,
 } from "../../utils/p2pStore";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",

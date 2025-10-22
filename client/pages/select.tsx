@@ -586,6 +586,100 @@ export default function SelectPage() {
           </div>
         </div>
 
+        <div id="sell-details" className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10 order-4 mt-4">
+          <div className="space-y-4">
+            <div>
+              <label className="block font-medium text-white/80 mb-2">Select Token</label>
+              <Select value={sellToken} onValueChange={(v) => setSellToken(v as SellToken)}>
+                <SelectTrigger className="bg-[#1a2540]/50 border-white/10 text-white">
+                  <SelectValue placeholder="Select token" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a2540] border-white/10">
+                  {SELL_TOKENS.map((t) => (
+                    <SelectItem key={t} value={t} className="text-white">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="mt-2 text-xs text-white/60">
+                Balance: <span className="text-white/80">{Number(sellAvailableBalance).toFixed(6)} {sellToken}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-white/80 mb-2">Amount ({sellToken})</label>
+              <input
+                type="number"
+                value={sellAmountTokens}
+                onChange={(e) => setSellAmountTokens(e.target.value)}
+                placeholder={`Enter amount in ${sellToken}`}
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="0.000001"
+              />
+              <div className="mt-1 text-xs text-white/60">Estimated PKR: <span className="text-[#FF7A5C] font-semibold">{sellEstimatedPKR.toFixed(2)}</span></div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#1a2540]/40 border border-[#FF7A5C]/30">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-white/70">Exchange Rate</span>
+                <span className="font-semibold text-[#FF7A5C]">
+                  {sellFetchingRate ? "Fetching..." : `1 ${sellToken} = ${sellExchangeRate > 0 ? (sellExchangeRate < 1 ? sellExchangeRate.toFixed(6) : sellExchangeRate.toFixed(2)) : "0.00"} PKR`}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="block text-sm text-white/70 mb-1">Account Name</label>
+                <input
+                  type="text"
+                  value={sellAccountName}
+                  onChange={(e) => setSellAccountName(e.target.value)}
+                  placeholder="Your account name"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-white/70 mb-1">Account Number</label>
+                <input
+                  type="text"
+                  value={sellAccountNumber}
+                  onChange={(e) => setSellAccountNumber(e.target.value)}
+                  placeholder="e.g. 0310xxxxxxx"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-white/70 mb-1">Payment Method</label>
+                <input
+                  type="text"
+                  value={sellPaymentMethod}
+                  onChange={(e) => setSellPaymentMethod(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-white/10 text-white"
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={handleConfirmSell}
+              disabled={
+                sellSubmitting ||
+                !sellAmountTokens ||
+                Number(sellAmountTokens) <= 0 ||
+                Number(sellAmountTokens) > sellAvailableBalance ||
+                !sellAccountName ||
+                !sellAccountNumber ||
+                sellExchangeRate <= 0
+              }
+              className="w-full h-12 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-lg disabled:opacity-50"
+            >
+              Confirm Transaction
+            </Button>
+          </div>
+        </div>
+
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
           {/* Orders list displayed as prompt messages - moved above image */}
           <div className="mb-3 space-y-3">

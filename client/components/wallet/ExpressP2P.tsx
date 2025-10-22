@@ -322,6 +322,13 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
 
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl p-6 flex flex-col items-center gap-6">
+          {/* Token icons row */}
+          <div className="w-full flex items-center justify-center gap-3 mb-2">
+            <img src="https://i.postimg.cc/YqdkZCdh/19763513-7xx0-9fxc-170402.jpg" alt="PKR" className="w-10 h-10 rounded-md object-cover" />
+            <img src="https://i.postimg.cc/0QsCpPRr/logo.png" alt="SOL" className="w-10 h-10 rounded-md object-cover" />
+            <img src="https://i.postimg.cc/1z9GtMpJ/s-usdc.webp" alt="USDC" className="w-10 h-10 rounded-md object-cover" />
+            <img src="https://i.postimg.cc/zGdmt2XL/6x2D7UQ.png" alt="FIXERCOIN" className="w-10 h-10 rounded-md object-cover" />
+          </div>
           {detectedOrder ? (
             <>
               <button

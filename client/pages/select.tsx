@@ -128,8 +128,35 @@ export default function Select() {
           return [...prev, msg];
         });
       }
+    } else if (last.kind === "notification") {
+      const notif = last.data as any;
+      if (!notif) return;
+      // Persist and reflect in orders list for the counterparty
+      try {
+        if (!wallet?.publicKey || notif.initiatorWallet !== wallet.publicKey) {
+          saveNotification(notif);
+        }
+      } catch {}
+      const virtualOrder = {
+        id: notif.roomId || notif.data?.orderId || `room-${Date.now()}`,
+        token: notif.data?.token,
+        type: notif.initiatorRole === "buyer" ? "buy" : "sell",
+        message: notif.message,
+        paymentMethod: notif.data?.paymentMethod,
+      };
+      setOrders((prev) => {
+        const existsIdx = prev.findIndex(
+          (o) => String(o.id || o.orderId) === String(virtualOrder.id),
+        );
+        if (existsIdx >= 0) {
+          const copy = prev.slice();
+          copy[existsIdx] = { ...copy[existsIdx], ...virtualOrder };
+          return copy;
+        }
+        return [virtualOrder, ...prev];
+      });
     }
-  }, [events, effectiveRoomId]);
+  }, [events, effectiveRoomId, wallet?.publicKey]);
 
   const sendTextMessage = () => {
     if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;

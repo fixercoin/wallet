@@ -633,6 +633,8 @@ export default function SelectPage() {
           description: "Buyer will be notified",
         });
         setOpenChat(true);
+        setStatusStage("completed");
+        setShowStatusPrompt(true);
       }
     } finally {
       setShowConfirmation(false);

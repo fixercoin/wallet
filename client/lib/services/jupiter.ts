@@ -80,8 +80,8 @@ class JupiterAPI {
       console.log("Jupiter quote proxy request:", url);
 
       const response = await this.fetchWithTimeout(url, 8000).catch(
-    () => new Response("", { status: 0 } as any),
-  );
+        () => new Response("", { status: 0 } as any),
+      );
       const txt = await response.text().catch(() => "");
 
       if (!response.ok) {

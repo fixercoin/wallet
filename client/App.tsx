@@ -19,6 +19,8 @@ import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
 import MobileShell from "@/components/ui/MobileShell";
+import { ConnectionAcceptanceDialog, requestWalletConnection } from "@/components/wallet/ConnectionAcceptanceDialog";
+import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";

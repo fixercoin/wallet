@@ -8,7 +8,10 @@ import {
   SYSVAR_RENT_PUBKEY,
   Keypair,
 } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
 
 const FXM_MINT = "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63";
@@ -54,7 +57,7 @@ const getOrCreateATA = async (
   instructions: TransactionInstruction[],
 ): Promise<PublicKey> => {
   const ata = await getAssociatedTokenAddress(owner, mint);
-  
+
   try {
     const account = await connection.getAccountInfo(ata);
     if (account) return ata;
@@ -75,7 +78,11 @@ const getAssociatedTokenAddress = async (
   owner: PublicKey,
   mint: PublicKey,
 ): Promise<PublicKey> => {
-  const seeds = [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()];
+  const seeds = [
+    owner.toBuffer(),
+    TOKEN_PROGRAM_ID.toBuffer(),
+    mint.toBuffer(),
+  ];
   const [ata] = PublicKey.findProgramAddressSync(
     seeds,
     ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -115,12 +122,12 @@ const transferTokensInstruction = (
 ): TransactionInstruction => {
   const data = Buffer.alloc(1 + 8 + 1);
   data[0] = 12; // TransferChecked instruction
-  
+
   // Write amount as little-endian u64
   for (let i = 0; i < 8; i++) {
-    data[1 + i] = Number((amount >> BigInt(i * 8)) & 0xFFn);
+    data[1 + i] = Number((amount >> BigInt(i * 8)) & 0xffn);
   }
-  
+
   data[1 + 8] = decimals;
 
   return new TransactionInstruction({
@@ -213,7 +220,13 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
     const { userPublicKey, inputMint, outputMint, inputAmount, outputAmount } =
       req.body;
 
-    if (!userPublicKey || !inputMint || !outputMint || !inputAmount || !outputAmount) {
+    if (
+      !userPublicKey ||
+      !inputMint ||
+      !outputMint ||
+      !inputAmount ||
+      !outputAmount
+    ) {
       return res.status(400).json({
         error: "Missing required parameters",
       });
@@ -253,7 +266,10 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
 
     if (isInputFXM) {
       // FXM -> SOL: Transfer FXM from user to liquidity wallet
-      const userFxmAta = await getAssociatedTokenAddress(userPubkey, fxmMintPubkey);
+      const userFxmAta = await getAssociatedTokenAddress(
+        userPubkey,
+        fxmMintPubkey,
+      );
       const liquidityFxmAta = await getAssociatedTokenAddress(
         liquidityPubkey,
         fxmMintPubkey,
@@ -292,7 +308,10 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
       // through a separate transaction signed by the liquidity wallet holder.
     } else {
       // SOL -> FXM: Transfer SOL from user to liquidity wallet
-      const userFxmAta = await getAssociatedTokenAddress(userPubkey, fxmMintPubkey);
+      const userFxmAta = await getAssociatedTokenAddress(
+        userPubkey,
+        fxmMintPubkey,
+      );
 
       // Create user FXM ATA if needed
       try {
@@ -378,8 +397,10 @@ async function getFXMPrice(): Promise<number | null> {
     );
     if (response.ok) {
       const data = await response.json();
-      return data.data?.["Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63"]
-        ?.price || null;
+      return (
+        data.data?.["Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63"]?.price ||
+        null
+      );
     }
   } catch (err) {
     console.warn("Error fetching FXM price from Jupiter:", err);
@@ -395,8 +416,10 @@ async function getSOLPrice(): Promise<number | null> {
     );
     if (response.ok) {
       const data = await response.json();
-      return data.data?.["So11111111111111111111111111111111111111112"]?.price ||
-        null;
+      return (
+        data.data?.["So11111111111111111111111111111111111111112"]?.price ||
+        null
+      );
     }
   } catch (err) {
     console.warn("Error fetching SOL price:", err);

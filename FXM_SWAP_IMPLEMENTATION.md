@@ -1,9 +1,11 @@
 # Fixorium FXM↔SOL Custom Swap Implementation
 
 ## Overview
+
 Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pair in the Wallet Swap page. When users select FXM and SOL (in either direction), the system bypasses Jupiter and uses the Fixorium internal swap engine.
 
 ## Key Constants
+
 - **FXM Mint**: `Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63`
 - **Liquidity Wallet**: `Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA`
 - **Memo Format**: `Fixorium Swap FXM↔SOL | SwapID: ####`
@@ -11,6 +13,7 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
 ## Implementation Files
 
 ### Backend
+
 1. **server/routes/fixorium-swap.ts** (NEW)
    - `handleFixoriumSwapRate`: GET endpoint to fetch live FXM↔SOL rates
    - `handleFixoriumSwap`: POST endpoint to execute swaps and return signed transactions
@@ -23,6 +26,7 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
    - Registered `/api/fixorium-swap` (POST) route
 
 ### Frontend
+
 1. **client/lib/services/fixorium-swap.ts** (NEW)
    - `FixoriumSwapService` class with methods:
      - `isFxmSolPair()`: Check if swap pair is FXM↔SOL
@@ -35,7 +39,6 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
      - `fxmSwapQuote`: Store FXM swap rate information
      - `fxmSwapId`: Track the swap ID for traceability
      - `secondaryTxSignature`: For future two-transaction flows
-   
    - Modified execution flows:
      - `executeBuySwap()`: Now checks for FXM↔SOL pairs and routes accordingly
      - `executeSellSwap()`: Checks for FXM↔SOL before Jupiter fallback
@@ -43,7 +46,6 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
      - Added `executeFxmSellSwap()`: Handles FXM sale swaps
      - Added `submitJupiterQuote()`: Extracted Jupiter submission logic
      - Added `submitJupiterQuoteSell()`: Extracted Jupiter sell logic
-   
    - Updated success screen:
      - Shows "Fixorium Internal" swap type for FXM swaps
      - Displays Phase 1 transaction with Solscan link
@@ -53,6 +55,7 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
 ## Swap Flow
 
 ### FXM → SOL
+
 1. User enters USD amount → Frontend calculates FXM needed
 2. User clicks "Buy FXM"
 3. System detects it's FXM (input: SOL, output: FXM)
@@ -64,6 +67,7 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
 9. Backend monitors and sends SOL back from liquidity wallet
 
 ### SOL → FXM (Sell)
+
 1. User enters token amount
 2. User clicks "Sell FXM"
 3. System detects FXM↔SOL pair
@@ -75,21 +79,24 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
 9. Backend monitors and sends FXM back from liquidity wallet
 
 ## Transaction Features
+
 - **Memo Instruction**: Every swap includes a memo with format "Fixorium Swap FXM↔SOL | SwapID: ####"
 - **Traceability**: Swap ID in memo allows tracking individual swaps
 - **Solscan Links**: Both transaction links visible on success screen
 - **Token ATAs**: Automatic creation of Associated Token Accounts if needed
 
 ## Behavior Matrix
-| Input | Output | Route | Handler |
-|-------|--------|-------|---------|
-| SOL | FXM | Fixorium | executeFxmBuySwap |
-| FXM | SOL | Fixorium | executeFxmSellSwap |
-| Other | Other | Jupiter | Standard Jupiter flow |
-| FXM | Other | Jupiter | Standard Jupiter flow |
-| Other | FXM | Jupiter | Standard Jupiter flow |
+
+| Input | Output | Route    | Handler               |
+| ----- | ------ | -------- | --------------------- |
+| SOL   | FXM    | Fixorium | executeFxmBuySwap     |
+| FXM   | SOL    | Fixorium | executeFxmSellSwap    |
+| Other | Other  | Jupiter  | Standard Jupiter flow |
+| FXM   | Other  | Jupiter  | Standard Jupiter flow |
+| Other | FXM    | Jupiter  | Standard Jupiter flow |
 
 ## Future Enhancements
+
 1. Real-time two-transaction monitoring
 2. Automatic backend processing of reciprocal transfers
 3. Custom slippage settings for Fixorium swaps
@@ -97,6 +104,7 @@ Implemented a custom internal swap flow for the Fixorium (FXM) ↔ SOL token pai
 5. Audit logging for all Fixorium swaps
 
 ## Testing Checklist
+
 - [ ] FXM → SOL swap with various amounts
 - [ ] SOL → FXM swap with various amounts
 - [ ] Verify memo is included in transaction

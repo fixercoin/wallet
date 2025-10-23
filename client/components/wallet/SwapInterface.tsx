@@ -484,8 +484,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const signedBase64 = (() => {
         let bin = "";
         const arr = serialized;
-        for (let i = 0; i < arr.length; i++)
-          bin += String.fromCharCode(arr[i]);
+        for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
         try {
           return btoa(bin);
         } catch (e) {
@@ -599,8 +598,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     const signedBase64 = (() => {
       let bin = "";
       const arr = serialized;
-      for (let i = 0; i < arr.length; i++)
-        bin += String.fromCharCode(arr[i]);
+      for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
       try {
         return btoa(bin);
       } catch (e) {
@@ -825,8 +823,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const signedBase64 = (() => {
         let bin = "";
         const arr = serialized;
-        for (let i = 0; i < arr.length; i++)
-          bin += String.fromCharCode(arr[i]);
+        for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
         try {
           return btoa(bin);
         } catch (e) {
@@ -940,8 +937,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     const signedBase64 = (() => {
       let bin = "";
       const arr = serialized;
-      for (let i = 0; i < arr.length; i++)
-        bin += String.fromCharCode(arr[i]);
+      for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
       try {
         return btoa(bin);
       } catch (e) {
@@ -1052,7 +1048,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   <>
                     <div className="pt-2 border-t border-[#FF7A5C]/20">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-white/70">Phase 1 Transaction:</span>
+                        <span className="text-white/70">
+                          Phase 1 Transaction:
+                        </span>
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs text-emerald-400">
                             {txSignature.slice(0, 8)}...{txSignature.slice(-8)}

@@ -127,6 +127,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [tokenCategory, setTokenCategory] = useState<"main" | "fixorium">(
+    "main",
+  );
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -546,7 +549,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"];
+    const priority = ["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER", "FXM"];
     const arr = [...tokens];
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
@@ -563,6 +566,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
     return arr;
   }, [tokens]);
+
+  const MAIN_TOKEN_SYMBOLS = new Set([
+    "SOL",
+    "USDC",
+    "USDT",
+    "FIXERCOIN",
+    "LOCKER",
+  ]);
+  const FIXORIUM_TOKEN_SYMBOLS = new Set(["FXM"]);
+
+  const filteredTokens = useMemo(() => {
+    const set =
+      tokenCategory === "main" ? MAIN_TOKEN_SYMBOLS : FIXORIUM_TOKEN_SYMBOLS;
+    return sortedTokens.filter((t) =>
+      set.has(String(t.symbol || "").toUpperCase()),
+    );
+  }, [sortedTokens, tokenCategory]);
 
   if (!wallet) return null;
 
@@ -857,6 +877,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Button
             onClick={onReceive}
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="Receive"
           >
             <ArrowDownLeft className="h-4 w-4" />
           </Button>
@@ -864,6 +885,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Button
             onClick={onSwap}
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="Swap"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -879,16 +901,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
               }}
             />
           </Button>
+
+          <Button
+            onClick={() => navigate("/express")}
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="P2P"
+          >
+            <span className="text-[12px] font-bold tracking-wide">P2P</span>
+          </Button>
         </div>
 
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
           <Button
-            onClick={() => navigate("/express")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
-            aria-label="EXPRESS P2P SERVICE"
+            onClick={() => setTokenCategory("main")}
+            className={`flex-1 h-12 rounded-xl font-semibold relative shadow-lg flex items-center justify-center border ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border-[#D8B4FE]" : "bg-[#C4B5FD]/30 text-white border-[#C4B5FD]/40 hover:bg-[#C4B5FD]/40"}`}
+            aria-label="MAIN TOKENS"
           >
-            <span className="mr-0">EXPRESS P2P SERVICE</span>
+            <span className="mr-0">MAIN TOKENS</span>
+          </Button>
+
+          <Button
+            onClick={() => setTokenCategory("fixorium")}
+            className={`flex-1 h-12 rounded-xl font-semibold relative shadow-lg flex items-center justify-center border ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border-[#D8B4FE]" : "bg-[#C4B5FD]/30 text-white border-[#C4B5FD]/40 hover:bg-[#C4B5FD]/40"}`}
+            aria-label="FIXORIUM TOKENS"
+          >
+            <span className="mr-0">FIXORIUM TOKENS</span>
           </Button>
 
           {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
@@ -910,7 +948,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="space-y-3">
-          {sortedTokens.map((token) => {
+          {filteredTokens.map((token) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&
               isFinite(token.priceChange24h)
@@ -982,7 +1020,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             );
           })}
 
-          {tokens.length === 0 && (
+          {filteredTokens.length === 0 && (
             <div className="text-center py-8 text-gray-300">
               <p className="text-sm">No tokens found</p>
             </div>

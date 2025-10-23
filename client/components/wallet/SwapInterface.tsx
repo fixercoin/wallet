@@ -72,18 +72,40 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     const loadTokens = async () => {
       try {
         const jupiterTokens = await jupiterAPI.getStrictTokenList();
-        const popularTokens: TokenInfo[] = (jupiterTokens || [])
-          .slice(0, 50)
-          .map((jt: any) => ({
-            mint: jt.address,
-            symbol: jt.symbol,
-            name: jt.name,
-            decimals: jt.decimals,
-            logoURI: jt.logoURI,
-          }));
-        setSupportedMints(
-          new Set((jupiterTokens || []).map((t: any) => t.address)),
+
+        // Ensure we have tokens (including fallback)
+        if (!jupiterTokens || jupiterTokens.length === 0) {
+          console.warn("No Jupiter tokens loaded, using user tokens only");
+          setAvailableTokens(tokens || []);
+          setSupportedMints(
+            new Set((tokens || []).map((t: TokenInfo) => t.mint)),
+          );
+          return;
+        }
+
+        const popularTokens: TokenInfo[] = jupiterTokens.map((jt: any) => ({
+          mint: jt.address,
+          symbol: jt.symbol,
+          name: jt.name,
+          decimals: jt.decimals,
+          logoURI: jt.logoURI,
+        }));
+
+        // Set supported mints from Jupiter (including any fallback tokens)
+        const supportedMintSet = new Set(
+          jupiterTokens.map((t: any) => t.address),
         );
+        setSupportedMints(supportedMintSet);
+
+        // Log FXM token status for debugging
+        const fxmMint = "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63";
+        if (supportedMintSet.has(fxmMint)) {
+          console.log("FXM token is in supported list");
+        } else {
+          console.warn(
+            "FXM token NOT in supported list - this may cause swap issues",
+          );
+        }
 
         const userTokens = tokens || [];
         const combined = [
@@ -95,7 +117,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         setAvailableTokens(combined);
       } catch (err) {
         console.error("Error loading tokens:", err);
+        // Fallback to user tokens
         setAvailableTokens(tokens || []);
+        setSupportedMints(
+          new Set((tokens || []).map((t: TokenInfo) => t.mint)),
+        );
       }
     };
 
@@ -364,6 +390,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         10,
       );
 
+      // Check if the selected token is supported
+      if (!supportedMints.has(buyToken.mint)) {
+        console.warn(
+          `Token ${buyToken.symbol} (${buyToken.mint}) is not in supported mints list`,
+        );
+        throw new Error(
+          `Token ${buyToken.symbol} is not supported for swaps. Please try a different token.`,
+        );
+      }
+
       const quote = await jupiterAPI.getQuote(
         solToken.mint,
         buyToken.mint,
@@ -372,7 +408,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
 
       if (!quote) {
-        throw new Error("Unable to get swap quote");
+        throw new Error(
+          `No swap route available for ${buyToken.symbol}. This token may have limited liquidity or may not be supported on Jupiter.`,
+        );
       }
 
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
@@ -542,6 +580,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         10,
       );
 
+      // Check if the selected token is supported
+      if (!supportedMints.has(sellToken.mint)) {
+        console.warn(
+          `Token ${sellToken.symbol} (${sellToken.mint}) is not in supported mints list`,
+        );
+        throw new Error(
+          `Token ${sellToken.symbol} is not supported for swaps. Please try a different token.`,
+        );
+      }
+
       const quote = await jupiterAPI.getQuote(
         sellToken.mint,
         solToken.mint,
@@ -550,7 +598,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
 
       if (!quote) {
-        throw new Error("Unable to get swap quote");
+        throw new Error(
+          `No swap route available for ${sellToken.symbol}. This token may have limited liquidity or may not be supported on Jupiter.`,
+        );
       }
 
       setUseLocalPool(false);

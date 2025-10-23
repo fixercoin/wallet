@@ -79,9 +79,24 @@ class JupiterAPI {
       const url = `/api/jupiter/quote?${params.toString()}`;
       console.log("Jupiter quote proxy request:", url);
 
-      const response = await this.fetchWithTimeout(url, 8000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
+      let response: Response;
+      try {
+        response = await this.fetchWithTimeout(url, 8000);
+      } catch (timeoutErr) {
+        console.warn("Jupiter quote request timed out:", timeoutErr);
+        // Try direct Jupiter API as fallback
+        const directUrl = `${this.baseUrl}/quote?${params.toString()}`;
+        try {
+          const directResp = await this.fetchWithTimeout(directUrl, 8000);
+          if (directResp.ok) {
+            return await directResp.json();
+          }
+        } catch (directErr) {
+          console.warn("Direct Jupiter API also failed:", directErr);
+        }
+        return null;
+      }
+
       const txt = await response.text().catch(() => "");
 
       if (!response.ok) {
@@ -100,7 +115,8 @@ class JupiterAPI {
           // For other client errors (400, etc), also return null
           if (response.status === 400) {
             console.warn(
-              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}`,
+              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}, details:`,
+              errorData,
             );
             return null;
           }
@@ -127,7 +143,12 @@ class JupiterAPI {
       }
 
       try {
-        return JSON.parse(txt);
+        const data = JSON.parse(txt);
+        if (!data || typeof data !== "object") {
+          console.warn("Invalid quote response format:", typeof data);
+          return null;
+        }
+        return data as JupiterQuoteResponse;
       } catch (e) {
         console.warn("Failed to parse Jupiter proxy quote response:", e);
         return null;
@@ -305,25 +326,163 @@ class JupiterAPI {
   async getStrictTokenList(): Promise<JupiterToken[]> {
     // Try strict, then fallback to all; use small timeout wrapper to avoid hanging
     const fetchWithTimeout = async (url: string, ms = 10000) => {
-      const timeout = new Promise<Response>((resolve) =>
-        setTimeout(() => resolve(new Response("", { status: 504 })), ms),
-      );
-      return (await Promise.race([fetch(url), timeout])) as Response;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), ms);
+
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+        clearTimeout(timeout);
+        return response;
+      } catch (error) {
+        clearTimeout(timeout);
+        throw error;
+      }
     };
-    try {
-      let response = await fetchWithTimeout("/api/jupiter/tokens?type=strict");
-      if (!response.ok) {
-        response = await fetchWithTimeout("/api/jupiter/tokens?type=all");
+
+    const typesToTry = ["strict", "all"];
+
+    for (const type of typesToTry) {
+      try {
+        const response = await fetchWithTimeout(
+          `/api/jupiter/tokens?type=${type}`,
+          10000,
+        );
+
+        if (!response.ok) {
+          console.warn(
+            `Token list fetch returned ${response.status} for type=${type}`,
+          );
+          continue;
+        }
+
+        // Validate response is actually JSON and contains data
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          console.warn(`Invalid content-type for token list: ${contentType}`);
+          continue;
+        }
+
+        // Read and validate response body before parsing
+        const responseText = await response.text();
+        if (!responseText || responseText.trim().length === 0) {
+          console.warn(
+            `Empty response body from token list fetch (type=${type})`,
+          );
+          continue;
+        }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.warn(
+            `Failed to parse token list JSON (type=${type}):`,
+            parseError,
+          );
+          continue;
+        }
+
+        // Validate it's an array and has tokens
+        if (!Array.isArray(data)) {
+          console.warn(
+            `Token list response is not an array (type=${type}), got:`,
+            typeof data,
+          );
+          continue;
+        }
+
+        if (data.length === 0) {
+          console.warn(
+            `Token list is empty (type=${type}), trying fallback...`,
+          );
+          continue;
+        }
+
+        // Validate first item has required fields
+        const firstToken = data[0];
+        if (!firstToken.address || !firstToken.symbol) {
+          console.warn(
+            `Token list has invalid format (type=${type}), missing address or symbol`,
+          );
+          continue;
+        }
+
+        console.log(`Successfully loaded ${data.length} tokens (type=${type})`);
+        return data;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.warn(`Error fetching token list (type=${type}):`, errorMsg);
+        // Continue to next type
       }
-      if (!response.ok) {
-        return [];
-      }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.debug("Error fetching strict token list from Jupiter:", error);
-      return [];
     }
+
+    console.error(
+      "Failed to fetch token list from all endpoints, using fallback",
+    );
+    return this.getFallbackTokenList();
+  }
+
+  private getFallbackTokenList(): JupiterToken[] {
+    // Fallback list with essential tokens including FXM
+    return [
+      {
+        address: "So11111111111111111111111111111111111111112",
+        chainId: 101,
+        decimals: 9,
+        name: "Solana",
+        symbol: "SOL",
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      },
+      {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        chainId: 101,
+        decimals: 6,
+        name: "USDC Coin",
+        symbol: "USDC",
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+      },
+      {
+        address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        chainId: 101,
+        decimals: 6,
+        name: "Tether USD",
+        symbol: "USDT",
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
+      },
+      {
+        address: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+        chainId: 101,
+        decimals: 6,
+        name: "Fixorium Market Token",
+        symbol: "FXM",
+        logoURI: "",
+      },
+      {
+        address: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        chainId: 101,
+        decimals: 6,
+        name: "FixerCoin",
+        symbol: "FIXERCOIN",
+        logoURI: "",
+      },
+      {
+        address: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+        chainId: 101,
+        decimals: 6,
+        name: "Locker",
+        symbol: "LOCKER",
+        logoURI: "",
+      },
+    ];
   }
 
   formatSwapAmount(amount: number, decimals: number): string {

@@ -232,6 +232,9 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
     });
 
     const url = `${JUPITER_SWAP_BASE}/quote?${params.toString()}`;
+    console.log(
+      `Jupiter quote request: ${inputMint} -> ${outputMint}, amount: ${amount}`,
+    );
 
     const fetchWithTimeout = (timeoutMs: number) => {
       const timeoutPromise = new Promise<Response>((resolve) => {
@@ -254,40 +257,60 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
       return Promise.race([fetchPromise, timeoutPromise]) as Promise<Response>;
     };
 
-    // Try up to 3 attempts with small backoff on 5xx/429
+    // Try up to 2 attempts with small backoff on 5xx/429
     let lastStatus = 0;
     let lastText = "";
     for (let attempt = 1; attempt <= 2; attempt++) {
-      const response = await fetchWithTimeout(8000);
-      lastStatus = response.status;
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-      lastText = await response.text().catch(() => "");
+      try {
+        const response = await fetchWithTimeout(8000);
+        lastStatus = response.status;
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Jupiter quote successful (${response.status})`);
+          return res.json(data);
+        }
 
-      // If 404 or 400, likely means no route exists for this pair
-      if (response.status === 404 || response.status === 400) {
-        console.warn(
-          `Jupiter quote returned ${response.status} - likely no route for this pair`,
-          { inputMint: req.query.inputMint, outputMint: req.query.outputMint },
-        );
-        return res.status(response.status).json({
-          error: `No swap route found for this pair`,
-          details: lastText,
-          code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
-        });
-      }
+        lastText = await response
+          .text()
+          .catch(() => "(unable to read response)");
 
-      // Retry on rate limit or server errors
-      if (response.status === 429 || response.status >= 500) {
-        console.warn(
-          `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/2)`,
-        );
-        await new Promise((r) => setTimeout(r, attempt * 250));
-        continue;
+        // If 404 or 400, likely means no route exists for this pair
+        if (response.status === 404 || response.status === 400) {
+          console.warn(
+            `Jupiter quote returned ${response.status} - likely no route for this pair: ${inputMint} -> ${outputMint}`,
+          );
+          return res.status(response.status).json({
+            error: `No swap route found for this pair`,
+            details: lastText,
+            code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+          });
+        }
+
+        // Retry on rate limit or server errors
+        if (response.status === 429 || response.status >= 500) {
+          console.warn(
+            `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/2)`,
+          );
+          await new Promise((r) => setTimeout(r, attempt * 250));
+          continue;
+        }
+
+        // Other error status, don't retry
+        break;
+      } catch (fetchError) {
+        const errorMsg =
+          fetchError instanceof Error ? fetchError.message : String(fetchError);
+        console.warn(`Fetch error on attempt ${attempt}/2:`, errorMsg);
+
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, attempt * 250));
+          continue;
+        }
+
+        lastText = errorMsg;
+        lastStatus = 500;
+        break;
       }
-      break;
     }
 
     return res.status(lastStatus || 500).json({

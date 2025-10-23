@@ -74,6 +74,7 @@ export default function CreatePool() {
   const [pools, setPools] = useState<any[]>([]);
   const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
   const [copiedPoolId, setCopiedPoolId] = useState<string | null>(null);
+  const [userEditedAmountB, setUserEditedAmountB] = useState(false);
 
   const handleCopyPoolId = (poolId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -142,9 +143,9 @@ export default function CreatePool() {
     }
   }, [walletTokens]);
 
-  // Auto-adjust amount B based on real price
+  // Auto-adjust amount B based on real price (only if user hasn't manually edited it)
   useEffect(() => {
-    if (tokenA && tokenB && amountA && tokenPrices[tokenA.mint]) {
+    if (!userEditedAmountB && tokenA && tokenB && amountA && tokenPrices[tokenA.mint]) {
       const priceA = tokenPrices[tokenA.mint] || 0;
       const priceB = tokenPrices[tokenB.mint] || 0;
 
@@ -154,7 +155,7 @@ export default function CreatePool() {
         setAmountB(calculatedAmountB.toFixed(tokenB.decimals));
       }
     }
-  }, [tokenA, tokenB, amountA, tokenPrices]);
+  }, [tokenA, tokenB, amountA, tokenPrices, userEditedAmountB]);
 
   if (!wallet) {
     return (
@@ -254,6 +255,7 @@ export default function CreatePool() {
     const temp = amountA;
     setAmountA(amountB);
     setAmountB(temp);
+    setUserEditedAmountB(false);
   };
 
   return (
@@ -411,8 +413,11 @@ export default function CreatePool() {
               type="number"
               placeholder="0.00"
               value={amountB}
-              disabled
-              className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500 opacity-50 cursor-not-allowed"
+              onChange={(e) => {
+                setAmountB(e.target.value);
+                setUserEditedAmountB(true);
+              }}
+              className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500"
             />
             <div className="flex justify-between text-xs text-gray-400">
               <span>

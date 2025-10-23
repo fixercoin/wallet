@@ -71,6 +71,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     null,
   );
   const [useLocalPool, setUseLocalPool] = useState(false);
+  const [useFxmSwap, setUseFxmSwap] = useState(false);
+  const [fxmSwapQuote, setFxmSwapQuote] =
+    useState<FixoriumSwapRateResponse | null>(null);
+  const [fxmSwapId, setFxmSwapId] = useState<string | null>(null);
+  const [secondaryTxSignature, setSecondaryTxSignature] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const loadTokens = async () => {

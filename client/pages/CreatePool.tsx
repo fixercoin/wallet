@@ -249,7 +249,7 @@ export default function CreatePool() {
             <Select
               value={tokenA?.mint || ""}
               onValueChange={(value) => {
-                const selected = COMMON_TOKENS.find((t) => t.mint === value);
+                const selected = walletTokens.find((t) => t.mint === value);
                 setTokenA(selected || null);
               }}
             >
@@ -257,20 +257,26 @@ export default function CreatePool() {
                 <SelectValue placeholder="Select token" />
               </SelectTrigger>
               <SelectContent>
-                {COMMON_TOKENS.map((token) => (
-                  <SelectItem key={token.mint} value={token.mint}>
-                    <span className="flex items-center gap-2">
-                      {token.logoURI && (
-                        <img
-                          src={token.logoURI}
-                          alt={token.symbol}
-                          className="w-4 h-4"
-                        />
-                      )}
-                      {token.symbol}
-                    </span>
+                {walletTokens.length > 0 ? (
+                  walletTokens.map((token) => (
+                    <SelectItem key={token.mint} value={token.mint}>
+                      <span className="flex items-center gap-2">
+                        {token.logoURI && (
+                          <img
+                            src={token.logoURI}
+                            alt={token.symbol}
+                            className="w-4 h-4"
+                          />
+                        )}
+                        {token.symbol}
+                      </span>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No tokens available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>

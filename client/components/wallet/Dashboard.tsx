@@ -893,8 +893,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Send"
           >
-            <ArrowUpRight className="h-5 w-5" />
             <span className="text-[10px] leading-none">SEND</span>
+            <ArrowUpRight className="h-5 w-5" />
           </Button>
 
           <Button
@@ -902,8 +902,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Receive"
           >
-            <ArrowDownLeft className="h-5 w-5" />
             <span className="text-[10px] leading-none">RECEIVE</span>
+            <ArrowDownLeft className="h-5 w-5" />
           </Button>
 
           <Button
@@ -911,8 +911,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Swap"
           >
-            <ArrowRightLeft className="h-5 w-5" />
             <span className="text-[10px] leading-none">SWAP</span>
+            <ArrowRightLeft className="h-5 w-5" />
           </Button>
         </div>
 

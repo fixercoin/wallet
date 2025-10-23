@@ -935,6 +935,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <Button
               onClick={() => setTokenCategory("fixorium")}
+              style={
+                tokenCategory === "fixorium"
+                  ? { backgroundColor: "#E9D5FF", color: "#000" }
+                  : { backgroundColor: "rgba(233,213,255,0.2)", color: "#E9D5FF" }
+              }
               className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
               aria-label="FIXORIUM TOKENS"
             >

@@ -336,9 +336,16 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
     const serialized = tx.serialize({ requireAllSignatures: false });
     const base64 = serialized.toString("base64");
 
+    const transactionType = isInputFXM ? "user_transfer" : "user_transfer";
+    const description = isInputFXM
+      ? `Transfer ${inputAmount} FXM to Fixorium liquidity wallet`
+      : `Transfer ${inputAmount} SOL to Fixorium liquidity wallet`;
+
     const response: SwapExecuteResponse = {
       transaction: base64,
       swapId,
+      transactionType,
+      description,
     };
 
     res.json(response);

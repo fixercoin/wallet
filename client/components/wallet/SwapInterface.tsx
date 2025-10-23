@@ -19,6 +19,7 @@ import { resolveApiUrl } from "@/lib/api-client";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { localSwapAPI } from "@/lib/services/localswap";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
 
 interface SwapInterfaceProps {
@@ -65,6 +66,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [lastSwapToToken, setLastSwapToToken] = useState<TokenInfo | null>(
     null,
   );
+  const [useLocalPool, setUseLocalPool] = useState(false);
 
   useEffect(() => {
     const loadTokens = async () => {

@@ -68,6 +68,7 @@ export default function CreatePool() {
   const [fee, setFee] = useState(DEFAULT_FEE);
   const [isLoading, setIsLoading] = useState(false);
   const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
+  const [tokenBalances, setTokenBalances] = useState<Record<string, number>>({});
   const [pools, setPools] = useState<any[]>([]);
   const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
   const [copiedPoolId, setCopiedPoolId] = useState<string | null>(null);
@@ -99,33 +100,41 @@ export default function CreatePool() {
     }
   }, [tokens, tokenA]);
 
-  // Fetch token prices
+  // Fetch token prices and balances
   useEffect(() => {
-    const fetchPrices = async () => {
+    const fetchPricesAndBalances = async () => {
       try {
         const prices: Record<string, number> = {};
-        const tokensToPrice =
+        const balances: Record<string, number> = {};
+        const tokensToFetch =
           walletTokens.length > 0 ? walletTokens : COMMON_TOKENS;
 
-        for (const token of tokensToPrice) {
+        for (const token of tokensToFetch) {
           try {
-            const response = await fetch(`/api/token-price?mint=${token.mint}`);
-            if (response.ok) {
-              const data = await response.json();
-              prices[token.mint] = data.price || 0;
+            // Fetch price
+            const priceResponse = await fetch(`/api/token-price?mint=${token.mint}`);
+            if (priceResponse.ok) {
+              const priceData = await priceResponse.json();
+              prices[token.mint] = priceData.price || 0;
+            }
+
+            // Fetch balance from wallet
+            if (token.balance !== undefined) {
+              balances[token.mint] = token.balance;
             }
           } catch (err) {
-            console.error(`Error fetching price for ${token.mint}:`, err);
+            console.error(`Error fetching data for ${token.mint}:`, err);
           }
         }
         setTokenPrices(prices);
+        setTokenBalances(balances);
       } catch (error) {
-        console.error("Error fetching prices:", error);
+        console.error("Error fetching prices and balances:", error);
       }
     };
 
     if (walletTokens.length > 0) {
-      fetchPrices();
+      fetchPricesAndBalances();
     }
   }, [walletTokens]);
 
@@ -291,6 +300,11 @@ export default function CreatePool() {
                           />
                         )}
                         {token.symbol}
+                        {tokenBalances[token.mint] !== undefined && (
+                          <span className="text-xs text-gray-500">
+                            ({tokenBalances[token.mint].toFixed(4)})
+                          </span>
+                        )}
                       </span>
                     </SelectItem>
                   ))
@@ -315,11 +329,16 @@ export default function CreatePool() {
               onChange={(e) => setAmountA(e.target.value)}
               className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500"
             />
-            {tokenA && tokenPrices[tokenA.mint] && (
-              <p className="text-xs text-gray-400">
-                Price: ${tokenPrices[tokenA.mint].toFixed(4)}
-              </p>
-            )}
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>
+                {tokenA && tokenPrices[tokenA.mint] && (
+                  <>Price: ${tokenPrices[tokenA.mint].toFixed(4)}</>
+                )}
+              </span>
+              {tokenA && tokenBalances[tokenA.mint] !== undefined && (
+                <span>Balance: {tokenBalances[tokenA.mint].toFixed(4)}</span>
+              )}
+            </div>
           </div>
 
           {/* Swap Tokens Button */}
@@ -362,6 +381,11 @@ export default function CreatePool() {
                           />
                         )}
                         {token.symbol}
+                        {tokenBalances[token.mint] !== undefined && (
+                          <span className="text-xs text-gray-500">
+                            ({tokenBalances[token.mint].toFixed(4)})
+                          </span>
+                        )}
                       </span>
                     </SelectItem>
                   ))
@@ -386,11 +410,16 @@ export default function CreatePool() {
               disabled
               className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500 opacity-50 cursor-not-allowed"
             />
-            {tokenB && tokenPrices[tokenB.mint] && (
-              <p className="text-xs text-gray-400">
-                Price: ${tokenPrices[tokenB.mint].toFixed(4)}
-              </p>
-            )}
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>
+                {tokenB && tokenPrices[tokenB.mint] && (
+                  <>Price: ${tokenPrices[tokenB.mint].toFixed(4)}</>
+                )}
+              </span>
+              {tokenB && tokenBalances[tokenB.mint] !== undefined && (
+                <span>Balance: {tokenBalances[tokenB.mint].toFixed(4)}</span>
+              )}
+            </div>
           </div>
 
           {/* Fee Selection */}

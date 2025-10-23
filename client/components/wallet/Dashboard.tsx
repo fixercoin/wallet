@@ -1009,7 +1009,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             );
           })}
 
-          {tokens.length === 0 && (
+          {filteredTokens.length === 0 && (
             <div className="text-center py-8 text-gray-300">
               <p className="text-sm">No tokens found</p>
             </div>

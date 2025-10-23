@@ -8,7 +8,8 @@ const FIXORIUM_TOKENS: TokenInfo[] = [
     symbol: "FXM",
     name: "FIXORIUM",
     decimals: 6,
-    logoURI: "https://cdn.builder.io/api/v1/image/assets%2F2d0b2b3809b6429b9e89e004f5d46d31%2F4014ec1ff0b64b6491c04ad7c29f00c8?format=webp&width=800",
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F2d0b2b3809b6429b9e89e004f5d46d31%2F4014ec1ff0b64b6491c04ad7c29f00c8?format=webp&width=800",
     balance: 0,
     price: 0,
     priceChange24h: 0,

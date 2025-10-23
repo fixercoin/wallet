@@ -108,7 +108,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onSelect={() => window.dispatchEvent(new CustomEvent('openRewardsQuest'))}
+                onSelect={() =>
+                  window.dispatchEvent(new CustomEvent("openRewardsQuest"))
+                }
                 className="flex items-center gap-2 text-xs"
               >
                 <Gift className="h-4 w-4" />

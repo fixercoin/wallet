@@ -416,7 +416,6 @@ export default function CreatePool() {
               "Create Standard Pool"
             )}
           </Button>
-
         </div>
 
         {/* Created Pools Display */}

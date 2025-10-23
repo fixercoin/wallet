@@ -69,15 +69,21 @@ export default function FixoriumMyTokens() {
                         {token.logoURI ? (
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                         ) : (
-                          <AvatarFallback className="bg-[#FF7A5C] text-white">{(token.symbol||"?").slice(0,2)}</AvatarFallback>
+                          <AvatarFallback className="bg-[#FF7A5C] text-white">
+                            {(token.symbol || "?").slice(0, 2)}
+                          </AvatarFallback>
                         )}
                       </Avatar>
                       <div>
                         <div className="font-semibold">{token.name}</div>
-                        <div className="text-xs text-gray-400">{token.symbol}</div>
+                        <div className="text-xs text-gray-400">
+                          {token.symbol}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-400 break-words text-right max-w-[45%]">{token.mint}</div>
+                    <div className="text-xs text-gray-400 break-words text-right max-w-[45%]">
+                      {token.mint}
+                    </div>
                   </div>
                 ))}
               </div>

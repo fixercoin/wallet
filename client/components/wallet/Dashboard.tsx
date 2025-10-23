@@ -427,7 +427,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatBalance = (amount: number | undefined, symbol?: string): string => {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     const amt = typeof amount === "number" && isFinite(amount) ? amount : 0;
     const sym = String(symbol || "").toUpperCase();
     if (sym === "FIXERCOIN" || sym === "LOCKER") {
@@ -911,7 +914,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <ArrowRightLeft className="h-4 w-4" />
             <span>SWAP</span>
           </Button>
-
 
           <Button
             onClick={() => navigate("/express")}

@@ -293,24 +293,30 @@ export default function CreateToken() {
             <h1 className="text-xl sm:text-2xl font-bold">Create Token</h1>
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-3 text-gray-300 hover:text-white flex items-center gap-2"
-              >
-                <span className="text-xs font-semibold">CREATE POOL</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 text-gray-300 hover:text-white flex items-center gap-2"
+                >
+                  <span className="text-xs font-semibold">CREATE POOL</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/create-pool")}>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/create-pool")}
+                >
                   Create Pool
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/my-tokens")}>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/my-tokens")}
+                >
                   My Tokens
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/token-listing")}>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/token-listing")}
+                >
                   Listed
                 </DropdownMenuItem>
               </DropdownMenuContent>

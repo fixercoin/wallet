@@ -316,32 +316,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-8 flex-wrap">
           <Button
             onClick={onSend}
             variant="outline"
             aria-label="Send"
-            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2 px-3"
           >
             <ArrowUpRight className="h-5 w-5" />
+            <span className="text-[10px] leading-none">SEND</span>
           </Button>
 
           <Button
             onClick={onReceive}
             variant="outline"
             aria-label="Receive"
-            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2 px-3"
           >
             <ArrowDownLeft className="h-5 w-5" />
+            <span className="text-[10px] leading-none">RECEIVE</span>
           </Button>
 
           <Button
             onClick={onSwap}
             variant="outline"
             aria-label="Swap"
-            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2 px-3"
           >
             <RefreshCw className="h-5 w-5" />
+            <span className="text-[10px] leading-none">SWAP</span>
           </Button>
         </div>
 

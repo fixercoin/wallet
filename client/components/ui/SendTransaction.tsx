@@ -774,8 +774,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                           className="text-white"
                         >
                           <div className="flex items-center justify-between w-full">
-                            <span className="font-medium">{t.symbol}</span>
-                            <span className="text-xs text-gray-400">
+                            <span className="font-medium text-white">
+                              {t.symbol} ~{" "}
                               {(t.symbol === "SOL"
                                 ? balance
                                 : t.balance || 0
@@ -799,7 +799,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Enter Solana address"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    className="font-mono text-sm bg-white/5 border-white/20 text-white placeholder-gray-400"
+                    className="font-mono text-sm bg-transparent border-white/30 text-white caret-white placeholder-gray-400"
                   />
                 </div>
 
@@ -823,7 +823,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder-gray-400"
+                    className="bg-transparent border-white/30 text-white caret-white placeholder-gray-400"
                   />
                   <div className="flex gap-2">
                     <Button
@@ -878,7 +878,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Add a note"
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder-gray-400"
+                    className="bg-transparent border-white/30 text-white caret-white placeholder-gray-400"
                   />
                 </div>
 

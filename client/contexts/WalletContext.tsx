@@ -18,6 +18,7 @@ import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -35,6 +36,7 @@ interface WalletContextType {
   refreshTokens: () => Promise<void>;
   addCustomToken: (token: TokenInfo) => void;
   logout: () => void;
+  updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
 }
 
@@ -254,6 +256,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  const updateWalletLabel = (publicKey: string, label: string) => {
+    setWallets((prev) =>
+      prev.map((w) => (w.publicKey === publicKey ? { ...w, label } : w)),
+    );
+  };
+
   const refreshBalance = async () => {
     if (!wallet) return;
 
@@ -323,6 +331,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
+      // Ensure known default tokens are present even with zero balance
+      DEFAULT_TOKENS.forEach((def) => {
+        if (!allTokens.some((t) => t.mint === def.mint)) {
+          allTokens.push({ ...def, balance: 0 });
+        }
+      });
+
       // Price fetching logic (same as before) - trimmed for brevity but preserved
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
@@ -331,9 +346,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
         try {
-          let dexTokens = [] as any[];
+          let dexTokens: any[] = [];
           try {
-            dexTokens = await dexscreenerAPI.getTokensByMints(tokenMints);
+            const dexPromise = dexscreenerAPI.getTokensByMints(tokenMints);
+            const timeout = new Promise<any[]>((resolve) =>
+              setTimeout(() => resolve([]), 4500),
+            );
+            dexTokens = await Promise.race([dexPromise, timeout]);
           } catch (fetchErr) {
             dexTokens = [];
           }
@@ -348,8 +367,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             try {
               dexTokens.forEach((dt: any) => {
                 const mint = dt?.baseToken?.address;
-                const ch = dt?.priceChange?.h24;
-                if (mint && typeof ch === "number" && isFinite(ch)) {
+                const pc = dt?.priceChange;
+                const candidates = [pc?.h24, pc?.h6, pc?.h1, pc?.m5];
+                const ch = candidates.find(
+                  (v: any) => typeof v === "number" && isFinite(v),
+                );
+                if (mint && typeof ch === "number") {
                   changeMap[mint] = ch;
                 }
               });
@@ -359,7 +382,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           } else {
             prices = {};
           }
+
+          // If SOL price is missing from DexScreener, don't throw immediately
+          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          const solMint = "So11111111111111111111111111111111111111112";
+          const hasSufficientData =
+            Object.keys(prices).length > 0 && prices[solMint];
+
+          if (!hasSufficientData) {
+            throw new Error(
+              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
+            );
+          }
         } catch (dexErr) {
+          console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};
         }
 
@@ -372,29 +408,128 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               changeMap[fixercoinMint] = fixerData.priceChange24h;
             }
           }
-        } catch {}
+        } catch (err) {
+          console.warn("Failed to fetch FIXERCOIN price:", err);
+        }
+
+        // Fetch DexScreener data for stablecoins (USDC, USDT) and LOCKER to get accurate price changes
+        const stableMints = allTokens
+          .filter((t) => {
+            const sym = (t.symbol || "").toUpperCase();
+            const name = t.name || "";
+            return (
+              sym === "USDC" ||
+              sym === "USDT" ||
+              /USD\s*COIN/i.test(name) ||
+              /TETHER/i.test(name)
+            );
+          })
+          .map((t) => t.mint);
 
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
-        if (!prices[lockerMint] || typeof changeMap[lockerMint] !== "number") {
+        const mintsToFetch = [
+          ...new Set([...stableMints, lockerMint].filter(Boolean)),
+        ];
+
+        if (mintsToFetch.length > 0) {
           try {
-            const lockerDex = await dexscreenerAPI.getTokenByMint(lockerMint);
-            if (lockerDex) {
-              const price = lockerDex.priceUsd
-                ? parseFloat(lockerDex.priceUsd)
-                : 0;
-              if (price > 0) prices[lockerMint] = price;
-              if (typeof lockerDex.priceChange?.h24 === "number")
-                changeMap[lockerMint] = lockerDex.priceChange.h24;
-            }
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(mintsToFetch);
+            const dexMap = new Map<string, any>();
+            dexTokens.forEach((t) => {
+              const matchMint = mintsToFetch.find(
+                (m) =>
+                  m === t.baseToken?.address || m === t.quoteToken?.address,
+              );
+              if (matchMint) dexMap.set(matchMint, t);
+            });
+
+            mintsToFetch.forEach((mint) => {
+              const dexToken = dexMap.get(mint);
+              if (dexToken) {
+                // Update price if available
+                if (dexToken.priceUsd) {
+                  const price = parseFloat(dexToken.priceUsd);
+                  if (price > 0) prices[mint] = price;
+                }
+                // Extract price change (h24 is preferred, fallback to h6, h1, m5)
+                const pc = dexToken.priceChange || {};
+                const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+                const priceChange = candidates.find(
+                  (v: any) => typeof v === "number" && isFinite(v),
+                );
+                if (typeof priceChange === "number") {
+                  changeMap[mint] = priceChange;
+                  console.log(
+                    `[Price Refresh] ${mint}: 24h change = ${priceChange.toFixed(2)}%`,
+                  );
+                }
+              }
+            });
           } catch (e) {
-            // noop
+            console.warn(
+              "Failed to fetch USDC/LOCKER price data from DexScreener:",
+              e,
+            );
           }
         }
 
-        if (Object.keys(prices).length > 0) {
+        // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
+        try {
+          const stableSymbols = allTokens
+            .filter((t) => stableMints.includes(t.mint))
+            .map((t) => (t.symbol || "").toUpperCase());
+          const uniqSyms = Array.from(new Set(stableSymbols)).filter(Boolean);
+          if (uniqSyms.length > 0) {
+            const params = new URLSearchParams({ symbols: uniqSyms.join(",") });
+            const resp = await fetch(
+              `/api/stable-24h?${params.toString()}`,
+            ).catch(() => new Response("", { status: 0 } as any));
+            if (resp.ok) {
+              const st = await resp.json();
+              const data = st?.data || {};
+              Object.keys(data).forEach((sym) => {
+                const entry = data[sym];
+                const mint = entry?.mint as string | undefined;
+                const ch = entry?.change24h;
+                const price = entry?.priceUsd;
+                if (mint && typeof ch === "number" && isFinite(ch)) {
+                  changeMap[mint] = ch;
+                }
+                if (mint && typeof price === "number" && price > 0) {
+                  prices[mint] = price;
+                }
+              });
+            }
+          }
+        } catch {}
+
+        // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
+        stableMints.forEach((mint) => {
+          if (!prices[mint]) prices[mint] = 1;
+          if (
+            typeof changeMap[mint] !== "number" ||
+            !isFinite(changeMap[mint]!)
+          ) {
+            changeMap[mint] = 0;
+          }
+        });
+
+        // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
+        if (
+          typeof changeMap[lockerMint] !== "number" ||
+          !isFinite(changeMap[lockerMint]!)
+        ) {
+          changeMap[lockerMint] = 0;
+        }
+
+        const solMint = "So11111111111111111111111111111111111111112";
+        if (Object.keys(prices).length > 0 && prices[solMint]) {
           priceSource = "dexscreener";
         } else {
-          throw new Error("DexScreener returned no prices");
+          throw new Error(
+            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`,
+          );
         }
       } catch (dexError) {
         try {
@@ -406,13 +541,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             throw new Error("Jupiter also returned no prices");
           }
         } catch (jupiterError) {
-          prices = { So11111111111111111111111111111111111111112: 100 };
+          try {
+            const solPricePromise = solPriceService.getSolPrice();
+            const timeout = new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), 3000),
+            );
+            const solPriceData = await Promise.race([solPricePromise, timeout]);
+            prices = {
+              So11111111111111111111111111111111111111112:
+                solPriceData?.price || 100,
+            };
+            priceSource = solPriceData ? "coingecko" : "static";
+          } catch {
+            prices = { So11111111111111111111111111111111111111112: 100 };
+            priceSource = "static";
+          }
           try {
             const fixercoinPrice = await fixercoinPriceService.getPrice();
             prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
               fixercoinPrice;
           } catch {}
-          priceSource = "static";
         }
       }
 
@@ -444,6 +592,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         };
       });
 
+      console.log(
+        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
+      );
       setTokens(enhancedTokens);
     } catch (error) {
       console.error("Error refreshing tokens:", error);
@@ -519,6 +670,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     refreshTokens,
     addCustomToken,
     logout,
+    updateWalletLabel,
     connection: globalConnection,
   };
 

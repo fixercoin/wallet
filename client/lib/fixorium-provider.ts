@@ -29,6 +29,8 @@ const DEFAULT_COMMITMENT: SendOptions["preflightCommitment"] = "confirmed";
 
 const encoder = new TextEncoder();
 
+export type ConnectionApprovalHandler = (origin: string) => Promise<boolean>;
+
 export class FixoriumWalletProvider {
   readonly isFixorium = true;
   readonly name = "Fixorium Wallet";
@@ -46,6 +48,8 @@ export class FixoriumWalletProvider {
     Set<(...args: any[]) => void>
   >();
   private initializedEventDispatched = false;
+  private approvalHandler: ConnectionApprovalHandler | null = null;
+  private trustedOrigins = new Set<string>();
 
   get publicKey(): PublicKey | null {
     return this.publicKeyCache;
@@ -57,6 +61,57 @@ export class FixoriumWalletProvider {
 
   setDefaultConnection(connection: Connection | null) {
     this.defaultConnection = connection;
+  }
+
+  setConnectionApprovalHandler(handler: ConnectionApprovalHandler | null) {
+    this.approvalHandler = handler;
+  }
+
+  markOriginAsTrusted(origin: string) {
+    if (!this.trustedOrigins.has(origin)) {
+      this.trustedOrigins.add(origin);
+      saveTrustedOrigins(this.trustedOrigins);
+    }
+  }
+
+  isTrustedOrigin(origin: string): boolean {
+    return this.trustedOrigins.has(origin) || this.isOwnOrigin(origin);
+  }
+
+  private isOwnOrigin(origin: string): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      return new URL(origin).origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }
+
+  private getCurrentOrigin(): string {
+    if (typeof window === "undefined") return "unknown";
+    return window.location.origin;
+  }
+
+  private getCallerOrigin(): string {
+    if (typeof window === "undefined") return "unknown";
+    try {
+      if (document.referrer) {
+        const refUrl = new URL(document.referrer);
+        return refUrl.origin;
+      }
+      return window.location.origin;
+    } catch {
+      return "unknown";
+    }
+  }
+
+  private isInIframe(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
   }
 
   setWallet(nextWallet: WalletData | null) {
@@ -95,6 +150,27 @@ export class FixoriumWalletProvider {
       throw new Error(
         "No Fixorium wallet is available. Please create or import a wallet first.",
       );
+    }
+
+    const callerOrigin = this.getCallerOrigin();
+    const isCurrentOrigin = this.isOwnOrigin(callerOrigin);
+    const isInFrame = this.isInIframe();
+    const requiresApproval =
+      (isInFrame || !isCurrentOrigin) && !this.isTrustedOrigin(callerOrigin);
+
+    if (requiresApproval) {
+      if (!this.approvalHandler) {
+        throw new Error(
+          "Wallet connection approval handler is not configured.",
+        );
+      }
+
+      const approved = await this.approvalHandler(callerOrigin);
+      if (!approved) {
+        throw new Error("User rejected wallet connection request.");
+      }
+
+      this.markOriginAsTrusted(callerOrigin);
     }
 
     if (options?.onlyIfTrusted && !this.connected) {
@@ -294,7 +370,32 @@ export class FixoriumWalletProvider {
   }
 }
 
+const TRUSTED_ORIGINS_KEY = "fixorium_trusted_origins";
+
 let providerInstance: FixoriumWalletProvider | null = null;
+
+const loadTrustedOrigins = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(TRUSTED_ORIGINS_KEY);
+    if (stored) {
+      return new Set(JSON.parse(stored) as string[]);
+    }
+  } catch {
+    return new Set();
+  }
+  return new Set();
+};
+
+const saveTrustedOrigins = (origins: Set<string>) => {
+  try {
+    localStorage.setItem(
+      TRUSTED_ORIGINS_KEY,
+      JSON.stringify(Array.from(origins)),
+    );
+  } catch {
+    return;
+  }
+};
 
 export const ensureFixoriumProvider = () => {
   if (typeof window === "undefined") {
@@ -307,6 +408,10 @@ export const ensureFixoriumProvider = () => {
   }
 
   providerInstance = new FixoriumWalletProvider();
+  const trustedOrigins = loadTrustedOrigins();
+  trustedOrigins.forEach((origin) =>
+    providerInstance!.markOriginAsTrusted(origin),
+  );
 
   const win = window as unknown as {
     solana?: any;

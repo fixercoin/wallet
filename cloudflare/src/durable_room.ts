@@ -13,6 +13,11 @@ export interface Order {
   accountNumber?: string;
 }
 
+interface AdminStatus {
+  buyOnline: boolean;
+  sellOnline: boolean;
+}
+
 type Client = { ws: WebSocket; id: string };
 
 export class DurableRoom implements DurableObject {
@@ -22,8 +27,13 @@ export class DurableRoom implements DurableObject {
   constructor(state: DurableObjectState, _env: Env) {
     this.state = state;
     this.state.blockConcurrencyWhile(async () => {
-      const saved = (await this.state.storage.get<Order[]>("orders")) || [];
-      await this.state.storage.put("orders", saved);
+      const savedOrders =
+        (await this.state.storage.get<Order[]>("orders")) || [];
+      await this.state.storage.put("orders", savedOrders);
+      const savedStatus =
+        (await this.state.storage.get<AdminStatus>("admin_status")) ||
+        ({ buyOnline: false, sellOnline: false } as AdminStatus);
+      await this.state.storage.put("admin_status", savedStatus);
     });
   }
 
@@ -53,11 +63,40 @@ export class DurableRoom implements DurableObject {
             typeof evt.data === "string" ? evt.data : String(evt.data),
           );
           if (msg?.type === "chat") {
+            let text = String(msg.text || "");
+            try {
+              const inner = JSON.parse(text);
+              if (inner && inner.type === "admin_status") {
+                const prev =
+                  (await this.state.storage.get<AdminStatus>("admin_status")) ||
+                  ({ buyOnline: false, sellOnline: false } as AdminStatus);
+                const next: AdminStatus = { ...prev };
+                if (
+                  inner.scope === "buy" &&
+                  typeof inner.online === "boolean"
+                ) {
+                  next.buyOnline = !!inner.online;
+                } else if (
+                  inner.scope === "sell" &&
+                  typeof inner.online === "boolean"
+                ) {
+                  next.sellOnline = !!inner.online;
+                } else {
+                  if (typeof inner.buyOnline === "boolean")
+                    next.buyOnline = !!inner.buyOnline;
+                  if (typeof inner.sellOnline === "boolean")
+                    next.sellOnline = !!inner.sellOnline;
+                }
+                await this.state.storage.put("admin_status", next);
+              }
+            } catch {}
             await this.broadcast("chat", {
               id: cid,
-              text: String(msg.text || ""),
+              text,
               at: Date.now(),
             });
+          } else if (msg?.kind === "notification") {
+            await this.broadcast("notification", msg.data);
           } else if (msg?.type === "ping") {
             server.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
           }
@@ -69,8 +108,21 @@ export class DurableRoom implements DurableObject {
       });
 
       // Send initial snapshot
-      const orders = (await this.state.storage.get<Order[]>("orders")) || [];
-      server.send(JSON.stringify({ kind: "snapshot", data: { orders } }));
+      const [orders, adminStatus] = await Promise.all([
+        this.state.storage.get<Order[]>("orders").then((v) => v || []),
+        this.state.storage
+          .get<AdminStatus>("admin_status")
+          .then(
+            (v) =>
+              v || ({ buyOnline: false, sellOnline: false } as AdminStatus),
+          ),
+      ]);
+      server.send(
+        JSON.stringify({
+          kind: "snapshot",
+          data: { orders, admin_status: adminStatus },
+        }),
+      );
 
       return new Response(null, { status: 101, webSocket: client });
     }

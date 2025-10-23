@@ -1,14 +1,27 @@
 import React, { useMemo, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { useNavigate } from "react-router-dom";
 import { TokenInfo } from "@/lib/wallet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, ArrowLeft } from "lucide-react";
 import {
   Keypair,
   SystemProgram,
@@ -25,6 +38,17 @@ import {
 } from "@solana/spl-token";
 import { connection as defaultConnection } from "@/lib/wallet";
 
+const DECIMAL_OPTIONS = [6, 8, 9, 10];
+const MAX_SUPPLY_OPTIONS = [
+  { label: "1 Million", value: 1_000_000n },
+  { label: "10 Million", value: 10_000_000n },
+  { label: "100 Million", value: 100_000_000n },
+  { label: "1 Billion", value: 1_000_000_000n },
+  { label: "10 Billion", value: 10_000_000_000n },
+  { label: "100 Billion", value: 100_000_000_000n },
+  { label: "1 Trillion", value: 1_000_000_000_000n },
+];
+
 export default function CreateToken() {
   const { wallet, balance, addCustomToken, refreshTokens, connection } =
     useWallet();
@@ -33,11 +57,26 @@ export default function CreateToken() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [logoURI, setLogoURI] = useState("");
+  const [description, setDescription] = useState("");
+  const [website, setWebsite] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [telegram, setTelegram] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const decimals = 6;
-  const maxSupply = 1_000_000_000n; // 1 billion
+  const [decimals, setDecimals] = useState(6);
+  const [maxSupply, setMaxSupply] = useState(1_000_000_000n);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleNavigate = (path: string) => {
+    setDropdownOpen(false);
+    navigate(path);
+  };
 
   const conn = (connection as any) || defaultConnection;
+
+  // Fixorium wallet address that will hold mint authority
+  const FIXORIUM_MINT_AUTHORITY = new PublicKey(
+    "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA",
+  );
 
   const hasMinSol = useMemo(
     () => (typeof balance === "number" ? balance : 0) >= 0.002,
@@ -46,20 +85,20 @@ export default function CreateToken() {
 
   if (!wallet) {
     return (
-      <div className="min-h-screen bg-white text-[hsl(var(--foreground))] flex items-center justify-center">
-        <Card className="w-[90%] max-w-md">
-          <CardHeader>
-            <CardTitle>Wallet Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-300">
-              Please set up or import a wallet first.
-            </p>
-            <div className="mt-4">
-              <Button onClick={() => navigate("/")}>Go to Dashboard</Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+        <div className="relative z-20 w-[90%] max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+          <h2 className="text-xl font-bold mb-4">Wallet Required</h2>
+          <p className="text-sm text-gray-300 mb-6">
+            Please set up or import a wallet first.
+          </p>
+          <div>
+            <Button onClick={() => navigate("/")} className="w-full">
+              Go to Dashboard
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -108,12 +147,12 @@ export default function CreateToken() {
         }),
       );
 
-      // Initialize mint with payer as mint authority
+      // Initialize mint with Fixorium wallet as mint authority
       tx.add(
         createInitializeMintInstruction(
           mint.publicKey,
           decimals,
-          payerPub,
+          FIXORIUM_MINT_AUTHORITY,
           null,
         ),
       );
@@ -128,7 +167,7 @@ export default function CreateToken() {
         ),
       );
 
-      // Mint total supply to payer's ATA
+      // Mint total supply to payer's ATA (user owns the tokens)
       const amount = maxSupply * BigInt(10 ** decimals);
       tx.add(createMintToInstruction(mint.publicKey, ata, payerPub, amount));
 
@@ -196,11 +235,31 @@ export default function CreateToken() {
         balance: Number(maxSupply),
       };
 
+      // Persist token metadata separately so we don't violate TokenInfo typing
+      try {
+        const meta = {
+          description: description.trim() || undefined,
+          website: website.trim() || undefined,
+          twitter: twitter.trim() || undefined,
+          telegram: telegram.trim() || undefined,
+        } as any;
+        try {
+          localStorage.setItem(
+            `token_metadata_${mint.publicKey.toBase58()}`,
+            JSON.stringify(meta),
+          );
+        } catch (e) {
+          console.warn("Failed to persist token metadata:", e);
+        }
+      } catch (e) {
+        // noop
+      }
+
       addCustomToken(newToken);
       setTimeout(() => refreshTokens(), 1500);
 
       toast({ title: "Token Created", description: `Mint tx: ${signature}` });
-      navigate("/");
+      navigate(`/token/${mint.publicKey.toBase58()}`);
     } catch (e: any) {
       console.error("Create token error:", e);
       toast({
@@ -214,35 +273,56 @@ export default function CreateToken() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold tracking-wide">
-            <span className="text-cream">FIXORIUM</span>
-            <span className="text-gray-400 text-xs">/ create token</span>
-          </div>
-          <Button
-            variant="ghost"
-            className="h-8 px-3 text-cream hover:bg-[#38bdf8]/20"
-            onClick={() => navigate(-1)}
-          >
-            Back
-          </Button>
-        </div>
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
+      <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="absolute top-4 left-4 z-30">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 text-white" />
+        </button>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="bg-gray-800/50 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-lg">Create Token</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Requires at least <strong>0.002 SOL</strong> for rent and fees.
-              </AlertDescription>
-            </Alert>
-
+      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center mt-20">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold">Create Token</h1>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 text-gray-300 hover:text-white flex items-center gap-2"
+                >
+                  <span className="text-xs font-semibold">CREATE POOL</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/create-pool")}
+                >
+                  Create Pool
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/my-tokens")}
+                >
+                  My Tokens
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/token-listing")}
+                >
+                  Listed
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="space-y-4">
             <div className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="name">Token Name</Label>
@@ -251,6 +331,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
               <div className="space-y-2">
@@ -260,6 +341,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
               <div className="space-y-2">
@@ -269,17 +351,75 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
-              <div className="text-xs text-gray-400">
-                Decimals: 6 • Max supply: 1,000,000,000
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Short token description"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Official Website</Label>
+                <Input
+                  id="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://yourtoken.site"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitter">Twitter</Label>
+                <Input
+                  id="twitter"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="https://twitter.com/yourhandle"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telegram">Telegram</Label>
+                <Input
+                  id="telegram"
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                  placeholder="https://t.me/yourgroup"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="decimals">Decimals</Label>
+                  <div className="h-10 flex items-center px-3 border border-white/30 rounded-md bg-transparent text-white/70">
+                    {decimals}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxSupply">Max Supply</Label>
+                  <div className="h-10 flex items-center px-3 border border-white/30 rounded-md bg-transparent text-white/70">
+                    1 Billion
+                  </div>
+                </div>
               </div>
             </div>
 
             <Button
               disabled={!hasMinSol || isLoading}
               onClick={createTokenOnChain}
-              className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
+              className="w-full h-12 rounded-lg font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg disabled:opacity-50"
             >
               {isLoading ? "Creating..." : "Create Token on Solana"}
             </Button>
@@ -289,8 +429,8 @@ export default function CreateToken() {
                 Balance is below 0.002 SOL.
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

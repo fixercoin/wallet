@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface PriceCardProps {
   token: TokenInfo;
@@ -22,9 +23,14 @@ export const PriceCard: React.FC<PriceCardProps> = ({
   withinCard = false,
 }) => {
   const currentPrice = token.price || 0;
-  const priceChangePercent = token.priceChange24h || 0;
+  const priceChangePercent =
+    typeof token.priceChange24h === "number" && isFinite(token.priceChange24h)
+      ? token.priceChange24h
+      : null;
   const totalValue = (token.balance || 0) * currentPrice;
-  const isPositive = priceChangePercent >= 0;
+  const isPositive = priceChangePercent !== null && priceChangePercent >= 0;
+
+  const { formatCurrency } = useCurrency();
 
   const content = (
     <div className="p-6">
@@ -46,27 +52,34 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           )}
           <div>
             <h2 className="text-2xl font-bold text-white">
-              $
-              {currentPrice.toLocaleString(undefined, {
+              {formatCurrency(currentPrice, {
+                from: "USD",
                 minimumFractionDigits: 8,
-                maximumFractionDigits: 8,
               })}
             </h2>
             <div className="flex items-center gap-2 mt-1">
-              {isPositive ? (
-                <TrendingUp className="h-4 w-4 text-green-400" />
+              {priceChangePercent !== null ? (
+                <>
+                  {priceChangePercent >= 0 ? (
+                    <TrendingUp className="h-4 w-4 text-green-400" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-red-400" />
+                  )}
+                  <span
+                    className={`text-sm font-medium ${
+                      priceChangePercent >= 0
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {priceChangePercent >= 0 ? "+" : ""}
+                    {priceChangePercent.toFixed(2)}%
+                  </span>
+                  <span className="text-gray-400 text-sm">24h</span>
+                </>
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-400" />
+                <span className="text-sm font-medium text-gray-400">—</span>
               )}
-              <span
-                className={`text-sm font-medium ${
-                  isPositive ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {isPositive ? "+" : ""}
-                {priceChangePercent.toFixed(2)}%
-              </span>
-              <span className="text-gray-400 text-sm">24h</span>
             </div>
           </div>
         </div>
@@ -95,10 +108,9 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Total Value</span>
             <span className="text-white font-medium">
-              $
-              {totalValue.toLocaleString(undefined, {
+              {formatCurrency(totalValue, {
+                from: "USD",
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
               })}
             </span>
           </div>

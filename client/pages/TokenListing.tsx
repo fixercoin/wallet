@@ -1,203 +1,186 @@
-import React, { useMemo, useState } from "react";
-import { useWallet } from "@/contexts/WalletContext";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { PublicKey } from "@solana/web3.js";
-import { TokenInfo } from "@/lib/wallet";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ArrowLeft, Copy, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface FixoriumToken {
+  mint: string;
+  symbol: string;
+  name: string;
+  decimals?: number;
+  logoURI?: string;
+}
+
+interface TokenWithPrice extends FixoriumToken {
+  price?: number;
+}
 
 export default function TokenListing() {
-  const { wallet, balance, addCustomToken, refreshTokens } = useWallet();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [mint, setMint] = useState("");
-  const [name, setName] = useState("");
-  const [symbol, setSymbol] = useState("");
-  const [decimals, setDecimals] = useState<number>(6);
-  const [logoURI, setLogoURI] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const [tokens, setTokens] = useState<TokenWithPrice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [copiedMint, setCopiedMint] = useState<string | null>(null);
 
-  const hasMinSol = useMemo(
-    () => (typeof balance === "number" ? balance : 0) >= 0.002,
-    [balance],
-  );
-
-  if (!wallet) {
-    return (
-      <div className="min-h-screen bg-white text-[hsl(var(--foreground))] flex items-center justify-center">
-        <Card className="w-[90%] max-w-md">
-          <CardHeader>
-            <CardTitle>Wallet Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-300">
-              Please set up or import a wallet first.
-            </p>
-            <div className="mt-4">
-              <Button onClick={() => navigate("/")}>Go to Dashboard</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const handleList = async () => {
-    if (!hasMinSol) {
-      toast({
-        title: "Insufficient SOL",
-        description: "You need at least 0.002 SOL to list a token.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      new PublicKey(mint.trim());
-    } catch {
-      toast({
-        title: "Invalid Mint Address",
-        description: "Enter a valid Solana mint address.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!name.trim() || !symbol.trim()) {
-      toast({
-        title: "Missing fields",
-        description: "Enter token name and symbol.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const token: TokenInfo = {
-        mint: mint.trim(),
-        name: name.trim(),
-        symbol: symbol.trim().toUpperCase(),
-        decimals: Number(decimals) || 6,
-        logoURI: logoURI || undefined,
-        balance: 0,
-      };
-      addCustomToken(token);
-      setTimeout(() => refreshTokens(), 800);
-      toast({
-        title: "Token Listed",
-        description: `${symbol.toUpperCase()} added to wallet.`,
-      });
-      navigate("/");
-    } catch (e: any) {
-      toast({
-        title: "Listing failed",
-        description: e?.message || String(e),
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleCopyMint = (mint: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(mint);
+    setCopiedMint(mint);
+    toast({
+      title: "Copied",
+      description: "Contract address copied to clipboard",
+    });
+    setTimeout(() => setCopiedMint(null), 2000);
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchTokens() {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/fixorium-tokens");
+        if (!res.ok) throw new Error("Failed to fetch tokens");
+        const j = await res.json();
+        const t = j?.tokens || j?.data || [];
+        const tokenList = Array.isArray(t) ? t : [];
+
+        // Fetch prices for each token
+        const tokensWithPrices = await Promise.all(
+          tokenList.map(async (token: FixoriumToken) => {
+            try {
+              const priceRes = await fetch(
+                `/api/dexscreener?mint=${token.mint}`,
+              );
+              if (priceRes.ok) {
+                const priceData = await priceRes.json();
+                return {
+                  ...token,
+                  price: priceData?.priceUsd
+                    ? parseFloat(priceData.priceUsd)
+                    : undefined,
+                };
+              }
+            } catch (e) {
+              console.error(`Failed to fetch price for ${token.mint}:`, e);
+            }
+            return token;
+          }),
+        );
+
+        if (!cancelled) setTokens(tokensWithPrices);
+      } catch (e) {
+        console.error("Failed to load Fixorium tokens:", e);
+        if (!cancelled) setTokens([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    void fetchTokens();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
-      <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold tracking-wide">
-            <span className="text-cream">FIXORIUM</span>
-            <span className="text-gray-400 text-xs">/ token listing</span>
-          </div>
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
-            className="h-8 px-3 text-cream hover:bg-[#38bdf8]/20"
+            size="icon"
             onClick={() => navigate(-1)}
+            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+            aria-label="Back"
           >
-            Back
+            <ArrowLeft className="h-4 w-4" />
           </Button>
+          <div className="flex-1 text-center font-medium text-[10px]">
+            FIXORIUM TOKENS
+          </div>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        <Card className="bg-gray-800/50 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-lg">Token Listing</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Requires at least <strong>0.002 SOL</strong> in your wallet to
-                confirm listing.
-              </AlertDescription>
-            </Alert>
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="text-sm text-gray-300">Loading tokens...</div>
+          </div>
+        ) : tokens.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-sm text-gray-300">No tokens found</div>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {tokens.map((token) => (
+              <Card
+                key={token.mint}
+                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl cursor-pointer hover:border-[#FF7A5C]/50 transition-colors overflow-hidden"
+                onClick={() => navigate(`/token/${token.mint}`)}
+              >
+                <div className="p-3">
+                  <div className="flex items-center gap-3">
+                    {/* Token Logo - Left */}
+                    <Avatar className="h-10 w-10 flex-shrink-0">
+                      {token.logoURI ? (
+                        <AvatarImage src={token.logoURI} alt={token.symbol} />
+                      ) : (
+                        <AvatarFallback className="bg-[#FF7A5C] text-white text-xs font-semibold">
+                          {(token.symbol || "?").slice(0, 2)}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
 
-            <div className="grid gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="mint">Token Mint Address</Label>
-                <Input
-                  id="mint"
-                  value={mint}
-                  onChange={(e) => setMint(e.target.value)}
-                  placeholder="Mint address"
-                  className="font-mono"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Token Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="My Token"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="symbol">Symbol</Label>
-                <Input
-                  id="symbol"
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                  placeholder="MTK"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="decimals">Decimals</Label>
-                <Input
-                  id="decimals"
-                  type="number"
-                  value={decimals}
-                  onChange={(e) => setDecimals(Number(e.target.value) || 0)}
-                  placeholder="6"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="logo">Logo URL</Label>
-                <Input
-                  id="logo"
-                  value={logoURI}
-                  onChange={(e) => setLogoURI(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
+                    {/* Token Name and Symbol - Next to Logo */}
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="text-[10px] font-semibold">
+                        {token.name}
+                      </div>
+                      <div className="text-[9px] text-gray-400">
+                        {token.symbol}
+                      </div>
+                    </div>
 
-            <Button
-              disabled={!hasMinSol || isLoading}
-              onClick={handleList}
-              className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
-            >
-              {isLoading ? "Listing..." : "Confirm Listing"}
-            </Button>
+                    {/* Price - Center */}
+                    <div className="flex-1 flex flex-col justify-center items-center">
+                      <div className="text-[9px] text-gray-400 mb-0.5">
+                        Price
+                      </div>
+                      <div className="text-[11px] font-semibold text-[#FF7A5C]">
+                        {token.price !== undefined
+                          ? token.price > 0.01
+                            ? `$${token.price.toFixed(4)}`
+                            : `$${token.price.toExponential(2)}`
+                          : "—"}
+                      </div>
+                    </div>
 
-            {!hasMinSol && (
-              <p className="text-red-400 text-xs">
-                Balance is below 0.002 SOL.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                    {/* Contract Address - Right */}
+                    <div className="flex flex-col justify-center items-end gap-1">
+                      <div className="text-[9px] text-gray-400">Contract</div>
+                      <button
+                        onClick={(e) => handleCopyMint(token.mint, e)}
+                        className="p-1 rounded hover:bg-white/10 transition-colors"
+                        title="Copy contract address"
+                      >
+                        {copiedMint === token.mint ? (
+                          <Check className="h-3.5 w-3.5 text-green-400" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5 text-gray-400 hover:text-white" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

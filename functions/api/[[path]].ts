@@ -106,6 +106,47 @@ async function tryDexscreenerEndpoints(path: string) {
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
 }
 
+// In-memory cache and inflight dedupe for DexScreener requests (per-isolate, best-effort)
+const DEX_CACHE_TTL_MS = 30_000;
+const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const DEX_INFLIGHT = new Map<string, Promise<any>>();
+
+async function fetchDexscreenerData(path: string) {
+  const now = Date.now();
+  const cached = DEX_CACHE.get(path);
+  if (cached && cached.expiresAt > now) {
+    // Only return cache if it contains meaningful data with priceChange fields
+    const hasPriceChangeData =
+      Array.isArray(cached.data?.pairs) &&
+      cached.data.pairs.some(
+        (p: any) =>
+          p?.priceChange &&
+          (typeof p.priceChange.h24 === "number" ||
+            typeof p.priceChange.h6 === "number" ||
+            typeof p.priceChange.h1 === "number" ||
+            typeof p.priceChange.m5 === "number"),
+      );
+    if (hasPriceChangeData) {
+      return cached.data;
+    }
+  }
+  const existing = DEX_INFLIGHT.get(path);
+  if (existing) return existing;
+
+  const request = (async () => {
+    try {
+      const data = await tryDexscreenerEndpoints(path);
+      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
+      return data;
+    } finally {
+      DEX_INFLIGHT.delete(path);
+    }
+  })();
+
+  DEX_INFLIGHT.set(path, request);
+  return request;
+}
+
 function jsonCors(status: number, body: any) {
   const headers = applyCors(
     new Headers({ "Content-Type": "application/json" }),
@@ -171,11 +212,19 @@ import {
   addEasypaisaPayment,
   listEasypaisaPayments,
 } from "../../utils/p2pStore";
+import {
+  addEasypaisaPaymentCF,
+  listEasypaisaPaymentsCF,
+} from "../../utils/p2pStoreCf";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
   const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  const db: any = (env as any)?.FIXORIUM_WALLET_DB;
+  const hasDb = !!db && typeof db.prepare === "function";
 
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -236,28 +285,83 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(400, { error: "invalid payload" });
       }
 
-      const result = addEasypaisaPayment({
-        msisdn,
-        amount,
-        currency,
-        reference,
-        sender,
-        ts: isFinite(ts) ? ts : Date.now(),
+      const result = hasDb
+        ? await addEasypaisaPaymentCF(db, {
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          })
+        : addEasypaisaPayment({
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          });
+      return jsonCors((result as any).status, {
+        payment: (result as any).payment,
       });
-      return jsonCors(result.status, { payment: result.payment });
     }
 
     if (normalizedPath === "/easypaisa/payments" && request.method === "GET") {
       const msisdn =
         url.searchParams.get("msisdn") || (env as any)?.EASYPAY_MSISDN || "";
       const since = Number(url.searchParams.get("since") || 0);
-      const data = listEasypaisaPayments({ msisdn, since });
+      const data = hasDb
+        ? await listEasypaisaPaymentsCF(db, { msisdn, since })
+        : listEasypaisaPayments({ msisdn, since });
       return jsonCors(200, data);
     }
 
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);
+    }
+
+    // Solana simulate transaction
+    if (normalizedPath === "/solana-simulate" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSimulate(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
+    // Solana send transaction
+    if (normalizedPath === "/solana-send" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSend(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
@@ -390,13 +494,165 @@ export const onRequest = async ({ request, env }) => {
       }
     }
 
+    // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
+    if (normalizedPath === "/exchange-rate") {
+      const token = (
+        url.searchParams.get("token") || "FIXERCOIN"
+      ).toUpperCase();
+
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
+      };
+
+      const PKR_PER_USD = 280; // base FX
+      const MARKUP = 1.0425; // 4.25%
+
+      let priceUsd: number | null = null;
+      try {
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else if (TOKEN_MINTS[token]) {
+          const data = await fetchDexscreenerData(
+            `/tokens/${TOKEN_MINTS[token]}`,
+          );
+          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          const price =
+            pairs.length > 0 && pairs[0]?.priceUsd
+              ? Number(pairs[0].priceUsd)
+              : null;
+          if (typeof price === "number" && isFinite(price) && price > 0) {
+            priceUsd = price;
+          }
+        }
+      } catch {}
+
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return jsonCors(200, {
+        token,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+      });
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (normalizedPath === "/stable-24h") {
+      const symbolsParam = (
+        url.searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
+      };
+
+      const ids = symbols
+        .map((s) => COINGECKO_IDS[s]?.id)
+        .filter(Boolean)
+        .join(",");
+      if (!ids) {
+        return jsonCors(400, { error: "No supported symbols provided" });
+      }
+
+      const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd&include_24hr_change=true`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      try {
+        const resp = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        clearTimeout(timeoutId);
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
+        if (resp.ok) {
+          const json = await resp.json();
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            const d = json?.[meta.id];
+            const price = typeof d?.usd === "number" ? d.usd : 1;
+            const change =
+              typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = {
+              priceUsd: price,
+              change24h: change,
+              mint: meta.mint,
+            };
+          });
+        } else {
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+          });
+        }
+        return jsonCors(200, { data: result });
+      } catch (e) {
+        clearTimeout(timeoutId);
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
+        symbols.forEach((sym) => {
+          const meta = COINGECKO_IDS[sym];
+          if (!meta) return;
+          result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+        });
+        return jsonCors(200, { data: result });
+      }
+    }
+
     // DexScreener: /api/dexscreener/tokens?mints=...
     if (normalizedPath === "/dexscreener/tokens") {
       const mints = url.searchParams.get("mints");
       if (!mints) {
         return jsonCors(400, { error: "Missing 'mints' query parameter" });
       }
-      const data = await tryDexscreenerEndpoints(`/tokens/${mints}`);
+      const rawMints = mints
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const uniqSorted = Array.from(new Set(rawMints)).sort();
+      if (uniqSorted.length === 0) {
+        return jsonCors(400, { error: "No valid token mints provided" });
+      }
+      const pathForFetch = `/tokens/${uniqSorted.join(",")}`;
+      const data = await fetchDexscreenerData(pathForFetch);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs.filter((p: any) => p?.chainId === "solana")
         : [];
@@ -412,7 +668,7 @@ export const onRequest = async ({ request, env }) => {
       if (!q) {
         return jsonCors(400, { error: "Missing 'q' query parameter" });
       }
-      const data = await tryDexscreenerEndpoints(
+      const data = await fetchDexscreenerData(
         `/search/?q=${encodeURIComponent(q)}`,
       );
       const pairs = Array.isArray(data?.pairs)
@@ -426,7 +682,7 @@ export const onRequest = async ({ request, env }) => {
 
     // DexScreener: /api/dexscreener/trending
     if (normalizedPath === "/dexscreener/trending") {
-      const data = await tryDexscreenerEndpoints(`/pairs/solana`);
+      const data = await fetchDexscreenerData(`/pairs/solana`);
       const pairs = Array.isArray(data?.pairs)
         ? data.pairs
             .filter(
@@ -836,6 +1092,164 @@ export const onRequest = async ({ request, env }) => {
       }
       const data = await resp.json();
       return jsonCors(200, data);
+    }
+
+    // SPL-META submit (POST)
+    if (normalizedPath === "/spl-meta/submit") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+      const {
+        name,
+        symbol,
+        description = "",
+        logoURI = "",
+        website = "",
+        twitter = "",
+        telegram = "",
+        dexpair = "",
+        lastUpdated,
+      } = body || {};
+
+      if (!name || !symbol) {
+        return jsonCors(400, {
+          error: "Missing required fields: name, symbol",
+        });
+      }
+
+      const payload = {
+        name: String(name),
+        symbol: String(symbol),
+        description: String(description),
+        logoURI: String(logoURI),
+        website: String(website),
+        twitter: String(twitter),
+        telegram: String(telegram),
+        dexpair: String(dexpair),
+        lastUpdated: lastUpdated
+          ? new Date(lastUpdated).toISOString()
+          : new Date().toISOString(),
+        receivedAt: new Date().toISOString(),
+        source: "spl-meta-form",
+      };
+
+      console.log("[SPL-META] Submission received:", payload);
+      return jsonCors(202, { status: "queued", payload });
+    }
+
+    // Token Price: /api/token-price?mint=<mint>
+    if (normalizedPath === "/token-price") {
+      const mint = url.searchParams.get("mint");
+      if (!mint) {
+        return jsonCors(400, { error: "Missing mint parameter" });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const resp = await fetch(`https://api.jup.ag/price?ids=${mint}`, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return jsonCors(resp.status, {
+            error: "Failed to fetch token price",
+            mint,
+            price: 0,
+          });
+        }
+
+        const data = await resp.json();
+        const priceData = data.data?.[mint];
+
+        if (priceData && priceData.price) {
+          return jsonCors(200, {
+            mint,
+            price: priceData.price,
+            lastUpdateUnixTime: data.timeTaken,
+          });
+        }
+
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Token not found or price unavailable",
+        });
+      } catch (error) {
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Error fetching token price",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Create Pool: /api/create-pool (POST)
+    if (normalizedPath === "/create-pool") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+
+      const {
+        tokenA,
+        tokenB,
+        amountA,
+        amountB,
+        fee = 0.01,
+        walletAddress,
+      } = body || {};
+
+      if (!tokenA || !tokenB || !amountA || !amountB || !walletAddress) {
+        return jsonCors(400, {
+          error:
+            "Missing required fields: tokenA, tokenB, amountA, amountB, walletAddress",
+        });
+      }
+
+      if (tokenA === tokenB) {
+        return jsonCors(400, {
+          error: "Token A and Token B must be different",
+        });
+      }
+
+      try {
+        const poolData = {
+          poolId: `pool_${Math.random().toString(36).substr(2, 9)}`,
+          tokenA,
+          tokenB,
+          amountA: String(amountA),
+          amountB: String(amountB),
+          fee: Number(fee),
+          walletAddress,
+          createdAt: new Date().toISOString(),
+          status: "active",
+          totalLiquidity: `${amountA}-${amountB}`,
+        };
+
+        console.log("[CREATE-POOL] Pool created:", poolData);
+        return jsonCors(201, poolData);
+      } catch (error) {
+        return jsonCors(502, {
+          error: "Failed to create pool",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });

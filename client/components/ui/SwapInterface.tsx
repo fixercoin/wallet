@@ -418,15 +418,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         {token.symbol.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{token.symbol}</span>
-                        <span className="text-xs text-gray-400">
-                          {formatAmount(getTokenBalance(token), token.symbol)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500">{token.name}</div>
-                    </div>
+                    <span className="font-medium">
+                      {token.symbol} ~{" "}
+                      {formatAmount(getTokenBalance(token), token.symbol)}
+                    </span>
                   </div>
                 </SelectItem>
               ))}
@@ -439,8 +434,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-gray-900 p-4">
-        <div className="max-w-md mx-auto pt-8">
+      <div className="min-h-screen bg-gray-900 px-0 py-4 sm:px-4">
+        <div className="max-w-none sm:max-w-md mx-auto pt-8">
           <Card className="bg-gray-800/50 border-gray-700 shadow-2xl">
             <CardContent className="p-8 text-center">
               <div className="mb-6">
@@ -511,8 +506,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gray-900 px-0 py-4 sm:px-4">
+      <div className="max-w-none sm:max-w-md mx-auto">
         <div className="flex items-center justify-between mb-6 pt-4">
           <div className="flex items-center gap-3">
             <Button

@@ -184,13 +184,14 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
     const { mints } = req.query;
 
     if (!mints || typeof mints !== "string") {
+      console.warn(`[DexScreener] Invalid mints parameter:`, mints);
       return res.status(400).json({
         error:
           "Missing or invalid 'mints' parameter. Expected comma-separated token mints.",
       });
     }
 
-    console.log(`DexScreener tokens request for: ${mints}`);
+    console.log(`[DexScreener] Tokens request for mints: ${mints}`);
 
     const rawMints = mints
       .split(",")
@@ -241,11 +242,11 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       });
 
     console.log(
-      `DexScreener response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)`,
+      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)`,
     );
     res.json({ schemaVersion, pairs: solanaPairs });
   } catch (error) {
-    console.error("DexScreener tokens proxy error:", {
+    console.error("[DexScreener] ❌ Tokens proxy error:", {
       mints: req.query.mints,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -257,7 +258,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
         details: String(error),
       },
       schemaVersion: "1.0.0",
-      pairs: [], // Return empty pairs array to maintain API compatibility
+      pairs: [],
     });
   }
 };
@@ -272,7 +273,7 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
       });
     }
 
-    console.log(`DexScreener search request for: ${q}`);
+    console.log(`[DexScreener] Search request for: ${q}`);
 
     const data = await fetchDexscreenerData(
       `/search/?q=${encodeURIComponent(q)}`,
@@ -283,13 +284,15 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
       .filter((pair: DexscreenerToken) => pair.chainId === "solana")
       .slice(0, 20); // Limit to 20 results
 
-    console.log(`DexScreener search response: ${solanaPairs.length} results`);
+    console.log(
+      `[DexScreener] ✅ Search response: ${solanaPairs.length} results`,
+    );
     res.json({
       schemaVersion: data.schemaVersion || "1.0.0",
       pairs: solanaPairs,
     });
   } catch (error) {
-    console.error("DexScreener search proxy error:", {
+    console.error("[DexScreener] ❌ Search proxy error:", {
       query: req.query.q,
       error: error instanceof Error ? error.message : String(error),
     });
@@ -307,7 +310,7 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
 
 export const handleDexscreenerTrending: RequestHandler = async (req, res) => {
   try {
-    console.log("DexScreener trending tokens request");
+    console.log("[DexScreener] Trending tokens request");
 
     const data = await fetchDexscreenerData("/pairs/solana");
 
@@ -328,14 +331,14 @@ export const handleDexscreenerTrending: RequestHandler = async (req, res) => {
       .slice(0, 50); // Top 50 trending
 
     console.log(
-      `DexScreener trending response: ${trendingPairs.length} trending pairs`,
+      `[DexScreener] ✅ Trending response: ${trendingPairs.length} trending pairs`,
     );
     res.json({
       schemaVersion: data.schemaVersion || "1.0.0",
       pairs: trendingPairs,
     });
   } catch (error) {
-    console.error("DexScreener trending proxy error:", {
+    console.error("[DexScreener] ❌ Trending proxy error:", {
       error: error instanceof Error ? error.message : String(error),
     });
 

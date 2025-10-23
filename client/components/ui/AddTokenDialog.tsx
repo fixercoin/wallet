@@ -141,7 +141,7 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
               placeholder="Enter token contract address..."
               value={contractAddress}
               onChange={(e) => setContractAddress(e.target.value)}
-              className="font-mono text-sm"
+              className="font-mono text-sm bg-transparent border-[#FF7A5C]/30 text-white"
             />
           </div>
 

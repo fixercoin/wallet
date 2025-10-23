@@ -250,7 +250,7 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
     const instructions: TransactionInstruction[] = [];
 
     if (isInputFXM) {
-      // FXM -> SOL: Transfer FXM from user to liquidity wallet, then SOL from liquidity to user
+      // FXM -> SOL: Transfer FXM from user to liquidity wallet
       const userFxmAta = await getAssociatedTokenAddress(userPubkey, fxmMintPubkey);
       const liquidityFxmAta = await getAssociatedTokenAddress(
         liquidityPubkey,
@@ -285,22 +285,12 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
         ),
       );
 
-      // SOL transfer from liquidity to user
-      const solAmountLamports = Math.floor(parseFloat(outputAmount) * 1e9);
-      instructions.push(
-        SystemProgram.transfer({
-          fromPubkey: liquidityPubkey,
-          toPubkey: userPubkey,
-          lamports: solAmountLamports,
-        }),
-      );
+      // Note: SOL transfer from liquidity to user is handled off-chain
+      // after this transaction is confirmed. The user will receive SOL
+      // through a separate transaction signed by the liquidity wallet holder.
     } else {
-      // SOL -> FXM: Transfer SOL from user to liquidity, then FXM from liquidity to user
+      // SOL -> FXM: Transfer SOL from user to liquidity wallet
       const userFxmAta = await getAssociatedTokenAddress(userPubkey, fxmMintPubkey);
-      const liquidityFxmAta = await getAssociatedTokenAddress(
-        liquidityPubkey,
-        fxmMintPubkey,
-      );
 
       // Create user FXM ATA if needed
       try {
@@ -326,19 +316,9 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
         }),
       );
 
-      // Transfer FXM from liquidity to user
-      const outputAmountBigInt = BigInt(
-        Math.floor(parseFloat(outputAmount) * 1e6),
-      );
-      instructions.push(
-        transferTokensInstruction(
-          liquidityFxmAta,
-          userFxmAta,
-          liquidityPubkey,
-          outputAmountBigInt,
-          6,
-        ),
-      );
+      // Note: FXM transfer from liquidity to user is handled off-chain
+      // after this transaction is confirmed. The user will receive FXM
+      // through a separate transaction signed by the liquidity wallet holder.
     }
 
     // Add memo instruction

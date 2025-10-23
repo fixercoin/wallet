@@ -20,7 +20,11 @@ import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { localSwapAPI } from "@/lib/services/localswap";
-import { Keypair, VersionedTransaction } from "@solana/web3.js";
+import {
+  fixoriumSwapAPI,
+  FixoriumSwapRateResponse,
+} from "@/lib/services/fixorium-swap";
+import { Keypair, VersionedTransaction, Transaction } from "@solana/web3.js";
 
 interface SwapInterfaceProps {
   onBack: () => void;

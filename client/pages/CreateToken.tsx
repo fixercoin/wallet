@@ -8,6 +8,21 @@ import { resolveApiUrl } from "@/lib/api-client";
 import { useNavigate } from "react-router-dom";
 import { TokenInfo } from "@/lib/wallet";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import {
   Keypair,
   SystemProgram,
   Transaction,
@@ -23,6 +38,17 @@ import {
 } from "@solana/spl-token";
 import { connection as defaultConnection } from "@/lib/wallet";
 
+const DECIMAL_OPTIONS = [6, 8, 9, 10];
+const MAX_SUPPLY_OPTIONS = [
+  { label: "1 Million", value: 1_000_000n },
+  { label: "10 Million", value: 10_000_000n },
+  { label: "100 Million", value: 100_000_000n },
+  { label: "1 Billion", value: 1_000_000_000n },
+  { label: "10 Billion", value: 10_000_000_000n },
+  { label: "100 Billion", value: 100_000_000_000n },
+  { label: "1 Trillion", value: 1_000_000_000_000n },
+];
+
 export default function CreateToken() {
   const { wallet, balance, addCustomToken, refreshTokens, connection } =
     useWallet();
@@ -36,8 +62,14 @@ export default function CreateToken() {
   const [twitter, setTwitter] = useState("");
   const [telegram, setTelegram] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const decimals = 6;
-  const maxSupply = 1_000_000_000n; // 1 billion
+  const [decimals, setDecimals] = useState(6);
+  const [maxSupply, setMaxSupply] = useState(1_000_000_000n);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleNavigate = (path: string) => {
+    setDropdownOpen(false);
+    navigate(path);
+  };
 
   const conn = (connection as any) || defaultConnection;
 
@@ -269,7 +301,32 @@ export default function CreateToken() {
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center mt-20">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
-          <h1 className="text-xl sm:text-2xl font-bold mb-6">Create Token</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold">Create Token</h1>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-gray-300 hover:text-white"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/create-pool")}>
+                  Create Pool
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/my-tokens")}>
+                  My Tokens
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/token-listing")}>
+                  Listed
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className="space-y-4">
             <div className="grid gap-3">
               <div className="space-y-2">
@@ -347,8 +404,47 @@ export default function CreateToken() {
                 />
               </div>
 
-              <div className="text-xs text-gray-400">
-                Decimals: 6 • Max supply: 1,000,000,000
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="decimals">Decimals</Label>
+                  <Select
+                    value={decimals.toString()}
+                    onValueChange={(value) => setDecimals(parseInt(value))}
+                  >
+                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DECIMAL_OPTIONS.map((decimal) => (
+                        <SelectItem key={decimal} value={decimal.toString()}>
+                          {decimal}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxSupply">Max Supply</Label>
+                  <Select
+                    value={maxSupply.toString()}
+                    onValueChange={(value) => setMaxSupply(BigInt(value))}
+                  >
+                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAX_SUPPLY_OPTIONS.map((option) => (
+                        <SelectItem
+                          key={option.value.toString()}
+                          value={option.value.toString()}
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

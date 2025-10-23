@@ -12,6 +12,7 @@ import {
   Copy,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRightLeft,
   TrendingUp,
   Eye,
   EyeOff,
@@ -868,7 +869,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+            className="flex-1 h-12 rounded-xl font-semibold border border-[#D8B4FE] bg-[#E9D5FF] hover:bg-[#D8B4FE] text-black shadow-lg"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
             SEND
@@ -887,7 +888,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
             aria-label="Swap"
           >
-            <RefreshCw className="h-4 w-4" />
+            <ArrowRightLeft className="h-4 w-4" />
           </Button>
 
           <Button
@@ -913,21 +914,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
-          <Button
-            onClick={() => setTokenCategory("main")}
-            className={`flex-1 h-12 rounded-xl font-semibold relative shadow-lg flex items-center justify-center border ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border-[#D8B4FE]" : "bg-[#C4B5FD]/30 text-white border-[#C4B5FD]/40 hover:bg-[#C4B5FD]/40"}`}
-            aria-label="MAIN TOKENS"
-          >
-            <span className="mr-0">MAIN TOKENS</span>
-          </Button>
+          <div className="flex-1 h-12 rounded-xl bg-[#C4B5FD]/30 border border-[#C4B5FD]/40 shadow-lg flex items-center p-1 gap-1">
+            <Button
+              onClick={() => setTokenCategory("main")}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#C4B5FD]/40"}`}
+              aria-label="MAIN TOKENS"
+            >
+              <span>MAIN TOKENS</span>
+            </Button>
 
-          <Button
-            onClick={() => setTokenCategory("fixorium")}
-            className={`flex-1 h-12 rounded-xl font-semibold relative shadow-lg flex items-center justify-center border ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border-[#D8B4FE]" : "bg-[#C4B5FD]/30 text-white border-[#C4B5FD]/40 hover:bg-[#C4B5FD]/40"}`}
-            aria-label="FIXORIUM TOKENS"
-          >
-            <span className="mr-0">FIXORIUM TOKENS</span>
-          </Button>
+            <Button
+              onClick={() => setTokenCategory("fixorium")}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#C4B5FD]/40"}`}
+              aria-label="FIXORIUM TOKENS"
+            >
+              <span>FIXORIUM TOKENS</span>
+            </Button>
+          </div>
 
           {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
             <Button

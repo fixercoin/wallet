@@ -301,7 +301,32 @@ export default function CreateToken() {
 
       <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center mt-20">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
-          <h1 className="text-xl sm:text-2xl font-bold mb-6">Create Token</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold">Create Token</h1>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-gray-300 hover:text-white"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/create-pool")}>
+                  Create Pool
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/my-tokens")}>
+                  My Tokens
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/token-listing")}>
+                  Listed
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className="space-y-4">
             <div className="grid gap-3">
               <div className="space-y-2">

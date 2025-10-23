@@ -918,7 +918,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Tokens List */}
         <div className="mb-4 flex flex-col sm:flex-row gap-2">
-          <div className="flex-1 h-12 rounded-xl flex items-center p-0 gap-1 flex-col sm:flex-row">
+          <div className="flex-1 h-12 rounded-xl flex items-center p-0 gap-1 flex-row">
             <Button
               onClick={() => setTokenCategory("main")}
               style={

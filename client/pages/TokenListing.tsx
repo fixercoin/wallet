@@ -1,101 +1,51 @@
-import React, { useState } from "react";
-import { useWallet } from "@/contexts/WalletContext";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { PublicKey } from "@solana/web3.js";
-import { TokenInfo } from "@/lib/wallet";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft } from "lucide-react";
 
+interface FixoriumToken {
+  mint: string;
+  symbol: string;
+  name: string;
+  decimals?: number;
+  logoURI?: string;
+}
+
 export default function TokenListing() {
-  const { wallet, balance, addCustomToken, refreshTokens } = useWallet();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [mint, setMint] = useState("");
-  const [name, setName] = useState("");
-  const [symbol, setSymbol] = useState("");
-  const [decimals, setDecimals] = useState<number>(6);
-  const [logoURI, setLogoURI] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [tokens, setTokens] = useState<FixoriumToken[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!wallet) {
-    return (
-      <div className="min-h-screen bg-white text-[hsl(var(--foreground))] flex items-center justify-center">
-        <Card className="w-[90%] max-w-md">
-          <CardHeader>
-            <CardTitle>Wallet Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-300">
-              Please set up or import a wallet first.
-            </p>
-            <div className="mt-4">
-              <Button onClick={() => navigate("/")}>Go to Dashboard</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const handleList = async () => {
-    try {
-      new PublicKey(mint.trim());
-    } catch {
-      toast({
-        title: "Invalid Mint Address",
-        description: "Enter a valid Solana mint address.",
-        variant: "destructive",
-      });
-      return;
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchTokens() {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/fixorium-tokens");
+        if (!res.ok) throw new Error("Failed to fetch tokens");
+        const j = await res.json();
+        const t = j?.tokens || j?.data || [];
+        if (!cancelled) setTokens(Array.isArray(t) ? t : []);
+      } catch (e) {
+        console.error("Failed to load Fixorium tokens:", e);
+        if (!cancelled) setTokens([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     }
-    if (!name.trim() || !symbol.trim()) {
-      toast({
-        title: "Missing fields",
-        description: "Enter token name and symbol.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const token: TokenInfo = {
-        mint: mint.trim(),
-        name: name.trim(),
-        symbol: symbol.trim().toUpperCase(),
-        decimals: Number(decimals) || 6,
-        logoURI: logoURI || undefined,
-        balance: 0,
-      };
-      addCustomToken(token);
-      setTimeout(() => refreshTokens(), 800);
-      toast({
-        title: "Token Listed",
-        description: `${symbol.toUpperCase()} added to wallet.`,
-      });
-      navigate("/");
-    } catch (e: any) {
-      toast({
-        title: "Listing failed",
-        description: e?.message || String(e),
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    void fetchTokens();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Header */}
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
@@ -108,81 +58,56 @@ export default function TokenListing() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 text-center font-medium text-sm">
-            TOKEN LISTING
+            FIXORIUM TOKENS
           </div>
         </div>
       </div>
 
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="bg-transparent rounded-2xl p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              Token Listing
-            </span>
-          </div>
-
-          <div className="grid gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="mint">Token Mint Address</Label>
-              <Input
-                id="mint"
-                value={mint}
-                onChange={(e) => setMint(e.target.value)}
-                placeholder="Mint address"
-                className="font-mono bg-transparent text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Token Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="My Token"
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="symbol">Symbol</Label>
-              <Input
-                id="symbol"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                placeholder="MTK"
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="decimals">Decimals</Label>
-              <Input
-                id="decimals"
-                type="number"
-                value={decimals}
-                onChange={(e) => setDecimals(Number(e.target.value) || 0)}
-                placeholder="6"
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="logo">Logo URL</Label>
-              <Input
-                id="logo"
-                value={logoURI}
-                onChange={(e) => setLogoURI(e.target.value)}
-                placeholder="https://..."
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
-              />
-            </div>
-          </div>
-
-          <Button
-            disabled={isLoading}
-            onClick={handleList}
-            className="h-11 w-full border-0 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
-          >
-            {isLoading ? "Listing..." : "Confirm Listing"}
-          </Button>
-        </div>
+        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+          <CardContent className="pt-6">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="text-sm text-gray-300">Loading tokens...</div>
+              </div>
+            ) : tokens.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-sm text-gray-300">No tokens found</div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tokens.map((token) => (
+                  <div
+                    key={token.mint}
+                    className="flex items-center justify-between p-3 rounded-md bg-[#0f1520]/40 border border-white/5 cursor-pointer hover:bg-[#0f1520]/60 transition-colors"
+                    onClick={() => navigate(`/token/${token.mint}`)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        {token.logoURI ? (
+                          <AvatarImage src={token.logoURI} alt={token.symbol} />
+                        ) : (
+                          <AvatarFallback className="bg-[#FF7A5C] text-white">
+                            {(token.symbol || "?").slice(0, 2)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold text-sm">{token.name}</div>
+                        <div className="text-xs text-gray-400">
+                          {token.symbol}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 break-words text-right max-w-[45%]">
+                      {token.mint}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

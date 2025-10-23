@@ -918,39 +918,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Tokens List */}
         <div className="mb-4 flex flex-col sm:flex-row gap-2">
-          <div className="flex-1 h-12 rounded-xl flex items-center p-0 gap-1 flex-row">
-            <Button
-              onClick={() => setTokenCategory("main")}
-              style={
-                tokenCategory === "main"
-                  ? { backgroundColor: "#87CEEB", color: "#000" }
-                  : {
-                      backgroundColor: "rgba(135,206,235,0.2)",
-                      color: "#87CEEB",
-                    }
-              }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all text-xs ${tokenCategory === "main" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-[#87CEEB]/20 text-[#87CEEB] border border-transparent hover:bg-[#87CEEB]/30"}`}
-              aria-label="MAIN"
-            >
-              <span>MAIN</span>
-            </Button>
-
-            <Button
-              onClick={() => setTokenCategory("fixorium")}
-              style={
-                tokenCategory === "fixorium"
-                  ? { backgroundColor: "#87CEEB", color: "#000" }
-                  : {
-                      backgroundColor: "rgba(135,206,235,0.2)",
-                      color: "#87CEEB",
-                    }
-              }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all text-xs ${tokenCategory === "fixorium" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-transparent text-white border border-transparent hover:bg-[#87CEEB]/30"}`}
-              aria-label="FIXORIUM TOKENS"
-            >
-              <span>FIXORIUM TOKENS</span>
-            </Button>
-          </div>
+          <Button
+            onClick={() => setTokenCategory(tokenCategory === "main" ? "fixorium" : "main")}
+            className="h-12 px-4 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#87CEEB] to-[#63B8FF] hover:from-[#6BBBDB] hover:to-[#4FA8E8] text-black border border-[#63B8FF] shadow-lg"
+            aria-label="Toggle Token Category"
+          >
+            <span>{tokenCategory === "main" ? "MAIN" : "FIXORIUM TOKENS"}</span>
+          </Button>
 
           {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
             <Button

@@ -26,6 +26,7 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
+import FixoriumMyTokens from "./pages/FixoriumMyTokens";
 import CreateToken from "./pages/CreateToken";
 import CreatePool from "./pages/CreatePool";
 import TokenListing from "./pages/TokenListing";

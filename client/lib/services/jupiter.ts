@@ -79,9 +79,24 @@ class JupiterAPI {
       const url = `/api/jupiter/quote?${params.toString()}`;
       console.log("Jupiter quote proxy request:", url);
 
-      const response = await this.fetchWithTimeout(url, 8000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
+      let response: Response;
+      try {
+        response = await this.fetchWithTimeout(url, 8000);
+      } catch (timeoutErr) {
+        console.warn("Jupiter quote request timed out:", timeoutErr);
+        // Try direct Jupiter API as fallback
+        const directUrl = `${this.baseUrl}/quote?${params.toString()}`;
+        try {
+          const directResp = await this.fetchWithTimeout(directUrl, 8000);
+          if (directResp.ok) {
+            return await directResp.json();
+          }
+        } catch (directErr) {
+          console.warn("Direct Jupiter API also failed:", directErr);
+        }
+        return null;
+      }
+
       const txt = await response.text().catch(() => "");
 
       if (!response.ok) {
@@ -100,7 +115,8 @@ class JupiterAPI {
           // For other client errors (400, etc), also return null
           if (response.status === 400) {
             console.warn(
-              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}`,
+              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}, details:`,
+              errorData,
             );
             return null;
           }
@@ -127,7 +143,12 @@ class JupiterAPI {
       }
 
       try {
-        return JSON.parse(txt);
+        const data = JSON.parse(txt);
+        if (!data || typeof data !== "object") {
+          console.warn("Invalid quote response format:", typeof data);
+          return null;
+        }
+        return data as JupiterQuoteResponse;
       } catch (e) {
         console.warn("Failed to parse Jupiter proxy quote response:", e);
         return null;

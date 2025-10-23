@@ -313,32 +313,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 mb-8">
-          <Button
-            onClick={onSend}
-            variant="outline"
-            className="flex-1 h-12 bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50"
-          >
-            <ArrowUpRight className="h-4 w-4 mr-2" />
-            Send
-          </Button>
+   <div className="flex items-center gap-3 mb-8">
+     <Button
+       onClick={onSend}
+       variant="outline"
+       className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+     >
+       <ArrowUpRight className="h-4 w-4" />
+       <span>SEND</span>
+     </Button>
 
-          <Button
-            onClick={onReceive}
-            variant="outline"
-            className="h-12 w-12 rounded-full border-gray-600 bg-gray-800 hover:bg-gray-700 text-white p-0"
-          >
-            <ArrowDownLeft className="h-4 w-4" />
-          </Button>
+     <Button
+       onClick={onReceive}
+       variant="outline"
+       className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+     >
+       <ArrowDownLeft className="h-4 w-4" />
+       <span>RECEIVE</span>
+     </Button>
 
-          <Button
-            onClick={onSwap}
-            variant="outline"
-            className="h-12 w-12 rounded-full border-gray-600 bg-gray-800 hover:bg-gray-700 text-white p-0"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+     <Button
+       onClick={onSwap}
+       variant="outline"
+       className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+     >
+       <RefreshCw className="h-4 w-4" />
+       <span>SWAP</span>
+     </Button>
+   </div>
 
         {/* All Tokens Button */}
         <div className="mb-8">

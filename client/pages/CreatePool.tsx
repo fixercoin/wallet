@@ -3,6 +3,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader } from "@/components/ui/Loader";
-import { ArrowRightLeft, ArrowLeft } from "lucide-react";
+import { ArrowRightLeft, ArrowLeft, Copy, Check } from "lucide-react";
 
 interface TokenInfo {
   mint: string;
@@ -68,6 +70,18 @@ export default function CreatePool() {
   const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
   const [pools, setPools] = useState<any[]>([]);
   const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
+  const [copiedPoolId, setCopiedPoolId] = useState<string | null>(null);
+
+  const handleCopyPoolId = (poolId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(poolId);
+    setCopiedPoolId(poolId);
+    toast({
+      title: "Copied",
+      description: "Pool ID copied to clipboard",
+    });
+    setTimeout(() => setCopiedPoolId(null), 2000);
+  };
 
   // Initialize with wallet tokens, fallback to common tokens
   useEffect(() => {
@@ -422,31 +436,76 @@ export default function CreatePool() {
         {pools.length > 0 && (
           <div className="mt-8 pt-6 border-t border-white/10">
             <h2 className="text-lg font-semibold mb-4">Created Pools</h2>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {pools.map((pool, index) => (
-                <div
+                <Card
                   key={index}
-                  className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30"
+                  className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl overflow-hidden hover:border-[#FF7A5C]/50 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold">
-                      {pool.tokenASymbol}/{pool.tokenBSymbol}
-                    </span>
-                    <span className="text-xs text-green-400">✓ Created</span>
+                  <div className="p-3">
+                    <div className="space-y-3">
+                      {/* Pool Pair Info */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="text-[10px] font-semibold">
+                            {pool.tokenASymbol}/{pool.tokenBSymbol}
+                          </div>
+                          <span className="text-[9px] text-green-400">✓</span>
+                        </div>
+                        <div className="text-[9px] text-gray-400">
+                          Fee: {pool.fee}%
+                        </div>
+                      </div>
+
+                      {/* Amounts */}
+                      <div className="grid grid-cols-2 gap-2 text-[9px]">
+                        <div className="p-2 rounded bg-[#0f1520]/40 border border-white/5">
+                          <div className="text-gray-400 mb-0.5">
+                            Amount A
+                          </div>
+                          <div className="font-semibold">
+                            {pool.amountA} {pool.tokenASymbol}
+                          </div>
+                        </div>
+                        <div className="p-2 rounded bg-[#0f1520]/40 border border-white/5">
+                          <div className="text-gray-400 mb-0.5">
+                            Amount B
+                          </div>
+                          <div className="font-semibold">
+                            {pool.amountB} {pool.tokenBSymbol}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pool ID with Copy */}
+                      {pool.poolId && (
+                        <div className="flex items-center justify-between p-2 rounded bg-[#0f1520]/40 border border-white/5">
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <div className="text-[9px] text-gray-400">
+                              Pool ID
+                            </div>
+                            <div className="text-[9px] font-mono text-[#38bdf8] truncate">
+                              {pool.poolId}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) =>
+                              handleCopyPoolId(pool.poolId, e)
+                            }
+                            className="ml-2 p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0"
+                            title="Copy pool ID"
+                          >
+                            {copiedPoolId === pool.poolId ? (
+                              <Check className="h-3.5 w-3.5 text-green-400" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5 text-gray-400 hover:text-white" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 space-y-1">
-                    <p>
-                      Amount A: {pool.amountA} {pool.tokenASymbol}
-                    </p>
-                    <p>
-                      Amount B: {pool.amountB} {pool.tokenBSymbol}
-                    </p>
-                    <p>Fee: {pool.fee}%</p>
-                    {pool.poolId && (
-                      <p className="text-[#38bdf8]">ID: {pool.poolId}</p>
-                    )}
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>

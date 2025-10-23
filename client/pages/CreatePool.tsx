@@ -55,7 +55,7 @@ const POOL_FEES = [0.01, 0.05, 0.25, 1.0];
 const DEFAULT_FEE = 0.01;
 
 export default function CreatePool() {
-  const { wallet, balance } = useWallet();
+  const { wallet, balance, tokens } = useWallet();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -67,17 +67,34 @@ export default function CreatePool() {
   const [isLoading, setIsLoading] = useState(false);
   const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
   const [pools, setPools] = useState<any[]>([]);
+  const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
+
+  // Initialize with wallet tokens
+  useEffect(() => {
+    if (tokens && tokens.length > 0) {
+      setWalletTokens(tokens);
+      if (!tokenA) {
+        setTokenA(tokens[0]);
+      }
+    }
+  }, [tokens]);
 
   // Fetch token prices
   useEffect(() => {
     const fetchPrices = async () => {
       try {
         const prices: Record<string, number> = {};
-        for (const token of COMMON_TOKENS) {
-          const response = await fetch(`/api/token-price?mint=${token.mint}`);
-          if (response.ok) {
-            const data = await response.json();
-            prices[token.mint] = data.price || 0;
+        const tokensToPrice = walletTokens.length > 0 ? walletTokens : COMMON_TOKENS;
+
+        for (const token of tokensToPrice) {
+          try {
+            const response = await fetch(`/api/token-price?mint=${token.mint}`);
+            if (response.ok) {
+              const data = await response.json();
+              prices[token.mint] = data.price || 0;
+            }
+          } catch (err) {
+            console.error(`Error fetching price for ${token.mint}:`, err);
           }
         }
         setTokenPrices(prices);
@@ -86,8 +103,10 @@ export default function CreatePool() {
       }
     };
 
-    fetchPrices();
-  }, []);
+    if (walletTokens.length > 0) {
+      fetchPrices();
+    }
+  }, [walletTokens]);
 
   // Auto-adjust amount B based on real price
   useEffect(() => {

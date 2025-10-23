@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,17 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ArrowLeft,
-  ArrowUpDown,
-  Settings,
-  Check,
-  ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, Settings, Check, ExternalLink } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
@@ -34,14 +30,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     useWallet() as any;
   const { toast } = useToast();
 
-  const [fromToken, setFromToken] = useState<TokenInfo | null>(null);
-  const [toToken, setToToken] = useState<TokenInfo | null>(null);
-  const [fromAmount, setFromAmount] = useState("");
-  const [toAmount, setToAmount] = useState("");
+  const [mode, setMode] = useState<"buy" | "sell">("buy");
+
+  // Buy mode state
+  const [buyUsdAmount, setBuyUsdAmount] = useState("");
+  const [buyToken, setBuyToken] = useState<TokenInfo | null>(null);
+  const [buyTokenAmount, setBuyTokenAmount] = useState("");
+  const [buyQuote, setBuyQuote] = useState<JupiterQuoteResponse | null>(null);
+
+  // Sell mode state
+  const [sellTokenAmount, setSellTokenAmount] = useState("");
+  const [sellToken, setSellToken] = useState<TokenInfo | null>(null);
+  const [sellUsdPrice, setSellUsdPrice] = useState("");
+  const [sellQuote, setSellQuote] = useState<JupiterQuoteResponse | null>(null);
+
   const [slippage, setSlippage] = useState("0.5");
   const [isLoading, setIsLoading] = useState(false);
-  const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
-  const [indicative, setIndicative] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [availableTokens, setAvailableTokens] = useState<TokenInfo[]>(
@@ -50,8 +54,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const allTokens = availableTokens;
   const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
   const [quoteError, setQuoteError] = useState<string>("");
-  const [fromUsdPrice, setFromUsdPrice] = useState<number | null>(null);
-  const [toUsdPrice, setToUsdPrice] = useState<number | null>(null);
+  const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
+  const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(
+    null,
+  );
+  const [solUsdPrice, setSolUsdPrice] = useState<number | null>(null);
+  const [lastSwapFromToken, setLastSwapFromToken] = useState<TokenInfo | null>(
+    null,
+  );
+  const [lastSwapToToken, setLastSwapToToken] = useState<TokenInfo | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -87,190 +100,162 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     loadTokens();
 
     const sol = (tokens || []).find((t: TokenInfo) => t.symbol === "SOL");
-    if (sol && !fromToken) setFromToken(sol);
-  }, [tokens, fromToken]);
+    if (sol && !buyToken && !sellToken) {
+      setBuyToken(sol);
+      setSellToken(sol);
+    }
+  }, [tokens]);
 
+  // Buy mode: Calculate token amount from USD amount
   useEffect(() => {
-    const getQuote = async () => {
-      if (!fromAmount || !fromToken || !toToken) {
-        setQuote(null);
-        setToAmount("");
+    const calculateBuyTokenAmount = async () => {
+      if (!buyUsdAmount || !buyToken) {
+        setBuyTokenAmount("");
+        setBuyQuote(null);
         setQuoteError("");
-        setIndicative(false);
         return;
       }
 
-      if (
-        supportedMints.size > 0 &&
-        (!supportedMints.has(fromToken.mint) ||
-          !supportedMints.has(toToken.mint))
-      ) {
-        setQuote(null);
-        setToAmount("");
-        setQuoteError("Quotes unavailable for this pair on Jupiter");
-        setIndicative(false);
-        return;
-      }
-      setQuoteError("");
-
-      if (parseFloat(fromAmount) <= 0) {
-        setQuote(null);
-        setToAmount("");
-        setIndicative(false);
+      const usdAmount = parseFloat(buyUsdAmount);
+      if (usdAmount <= 0) {
+        setBuyTokenAmount("");
+        setBuyQuote(null);
+        setQuoteError("");
         return;
       }
 
-      setIsLoading(true);
       try {
-        const amount = jupiterAPI.formatSwapAmount(
-          parseFloat(fromAmount),
-          fromToken.decimals,
-        );
-        const amountInt = parseInt(amount, 10);
-        if (!amountInt || amountInt <= 0) {
-          setQuote(null);
-          setToAmount("");
-          setIndicative(false);
-          setIsLoading(false);
-          return;
-        }
-        console.log(
-          `Requesting Jupiter quote: ${fromToken.symbol} (${fromToken.mint}) -> ${toToken.symbol} (${toToken.mint}), amount: ${amountInt}`,
-        );
-        const q = await jupiterAPI.getQuote(
-          fromToken.mint,
-          toToken.mint,
-          amountInt,
-          Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
-        );
-        if (q) {
-          console.log(
-            `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
-          );
-          setQuote(q);
-          const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
-          setToAmount(out.toFixed(6));
+        const price = buyTokenUsdPrice;
+        if (price && price > 0) {
+          const tokenAmount = usdAmount / price;
+          setBuyTokenAmount(tokenAmount.toFixed(6));
           setQuoteError("");
-          setIndicative(false);
         } else {
-          console.log(
-            `No Jupiter quote available, falling back to DexScreener pricing`,
-          );
-          const [fromDex, toDex] = await Promise.all([
-            dexscreenerAPI.getTokenByMint(fromToken.mint),
-            dexscreenerAPI.getTokenByMint(toToken.mint),
-          ]);
-          const fromUsd = fromDex?.priceUsd
-            ? parseFloat(fromDex.priceUsd)
-            : null;
-          const toUsd = toDex?.priceUsd ? parseFloat(toDex.priceUsd) : null;
-
-          console.log(
-            `DexScreener prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
-          );
-
-          if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
-            const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
-            const estOutHuman = (fromHuman * fromUsd) / toUsd;
-            console.log(
-              `Using indicative pricing: ${estOutHuman.toFixed(6)} ${toToken.symbol}`,
-            );
-            setQuote(null);
-            setToAmount(estOutHuman.toFixed(6));
-            setQuoteError("");
-            setIndicative(true);
-          } else {
-            console.warn(
-              `Could not get prices from DexScreener: fromUsd=${fromUsd}, toUsd=${toUsd}`,
-            );
-            setQuote(null);
-            setToAmount("");
-            setQuoteError(
-              `No liquidity data found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
-            );
-            setIndicative(false);
-          }
+          setBuyTokenAmount("");
+          setQuoteError("Unable to fetch token price");
         }
       } catch (err) {
-        console.error("Quote error:", err);
-        setQuote(null);
-        setToAmount("");
+        console.error("Buy calculation error:", err);
+        setBuyTokenAmount("");
         setQuoteError("");
-        setIndicative(false);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    const t = setTimeout(getQuote, 300);
+    const t = setTimeout(calculateBuyTokenAmount, 300);
     return () => clearTimeout(t);
-  }, [fromAmount, fromToken, toToken, slippage]);
+  }, [buyUsdAmount, buyToken, buyTokenUsdPrice]);
 
-  // Load USD prices for selected tokens
+  // Sell mode: Calculate USD price from token amount
   useEffect(() => {
-    const loadPrices = async () => {
-      if (!fromToken && !toToken) {
-        setFromUsdPrice(null);
-        setToUsdPrice(null);
+    const calculateSellUsdPrice = async () => {
+      if (!sellTokenAmount || !sellToken) {
+        setSellUsdPrice("");
+        setSellQuote(null);
+        setQuoteError("");
         return;
       }
-      const mints: string[] = [];
-      if (fromToken?.mint) mints.push(fromToken.mint);
-      if (toToken?.mint && toToken.mint !== fromToken?.mint)
-        mints.push(toToken.mint);
-      if (mints.length === 0) {
-        setFromUsdPrice(null);
-        setToUsdPrice(null);
+
+      const tokenAmount = parseFloat(sellTokenAmount);
+      if (tokenAmount <= 0) {
+        setSellUsdPrice("");
+        setSellQuote(null);
+        setQuoteError("");
+        return;
+      }
+
+      try {
+        const price = sellTokenUsdPrice;
+        if (price && price > 0) {
+          const usdPrice = tokenAmount * price;
+          setSellUsdPrice(usdPrice.toFixed(2));
+          setQuoteError("");
+        } else {
+          setSellUsdPrice("");
+          setQuoteError("Unable to fetch token price");
+        }
+      } catch (err) {
+        console.error("Sell calculation error:", err);
+        setSellUsdPrice("");
+        setQuoteError("");
+      }
+    };
+
+    const t = setTimeout(calculateSellUsdPrice, 300);
+    return () => clearTimeout(t);
+  }, [sellTokenAmount, sellToken, sellTokenUsdPrice]);
+
+  // Load USD prices for buy token
+  useEffect(() => {
+    const loadBuyTokenPrice = async () => {
+      if (!buyToken?.mint) {
+        setBuyTokenUsdPrice(null);
         return;
       }
       try {
-        // Prefer Jupiter price API for reliable USD prices
-        const jupMap = await jupiterAPI.getTokenPrices(mints);
-        let fromPrice: number | null = fromToken?.mint
-          ? (jupMap[fromToken.mint] ?? null)
-          : null;
-        let toPrice: number | null = toToken?.mint
-          ? (jupMap[toToken.mint] ?? null)
-          : null;
+        const jupMap = await jupiterAPI.getTokenPrices([buyToken.mint]);
+        let price: number | null = jupMap[buyToken.mint] ?? null;
 
-        // Fallback to DexScreener if Jupiter didn't return prices
-        if (
-          fromPrice == null ||
-          !(fromPrice > 0) ||
-          toPrice == null ||
-          !(toPrice > 0)
-        ) {
-          const tokens = await dexscreenerAPI.getTokensByMints(mints);
-          const dsMap = dexscreenerAPI.getTokenPrices(tokens);
-          if (fromPrice == null || !(fromPrice > 0)) {
-            fromPrice = fromToken?.mint
-              ? (dsMap[fromToken.mint] ?? null)
-              : null;
-          }
-          if (toPrice == null || !(toPrice > 0)) {
-            toPrice = toToken?.mint ? (dsMap[toToken.mint] ?? null) : null;
-          }
+        if (price == null || !(price > 0)) {
+          const tokenData = await dexscreenerAPI.getTokenByMint(buyToken.mint);
+          price = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd) : null;
         }
 
-        setFromUsdPrice(fromPrice ?? null);
-        setToUsdPrice(toPrice ?? null);
+        setBuyTokenUsdPrice(price ?? null);
       } catch (e) {
-        setFromUsdPrice(null);
-        setToUsdPrice(null);
+        setBuyTokenUsdPrice(null);
       }
     };
-    loadPrices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromToken?.mint, toToken?.mint]);
+    loadBuyTokenPrice();
+  }, [buyToken?.mint]);
 
-  const handleSwapTokens = () => {
-    const prevFrom = fromToken;
-    const prevFromAmount = fromAmount;
-    setFromToken(toToken);
-    setToToken(prevFrom);
-    setFromAmount(toAmount);
-    setToAmount(prevFromAmount);
-  };
+  // Load USD prices for sell token
+  useEffect(() => {
+    const loadSellTokenPrice = async () => {
+      if (!sellToken?.mint) {
+        setSellTokenUsdPrice(null);
+        return;
+      }
+      try {
+        const jupMap = await jupiterAPI.getTokenPrices([sellToken.mint]);
+        let price: number | null = jupMap[sellToken.mint] ?? null;
+
+        if (price == null || !(price > 0)) {
+          const tokenData = await dexscreenerAPI.getTokenByMint(sellToken.mint);
+          price = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd) : null;
+        }
+
+        setSellTokenUsdPrice(price ?? null);
+      } catch (e) {
+        setSellTokenUsdPrice(null);
+      }
+    };
+    loadSellTokenPrice();
+  }, [sellToken?.mint]);
+
+  // Load SOL price
+  useEffect(() => {
+    const loadSolPrice = async () => {
+      try {
+        const jupMap = await jupiterAPI.getTokenPrices([
+          "So11111111111111111111111111111111111111112",
+        ]);
+        let price: number | null =
+          jupMap["So11111111111111111111111111111111111111112"] ?? null;
+
+        if (price == null || !(price > 0)) {
+          const tokenData = await dexscreenerAPI.getTokenByMint(
+            "So11111111111111111111111111111111111111112",
+          );
+          price = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd) : null;
+        }
+
+        setSolUsdPrice(price ?? null);
+      } catch (e) {
+        setSolUsdPrice(null);
+      }
+    };
+    loadSolPrice();
+  }, []);
 
   const getTokenBalance = (token?: TokenInfo) => {
     if (!token) return 0;
@@ -285,11 +270,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     return num.toFixed(3);
   };
 
-  const validateSwap = (): string | null => {
-    if (!fromToken || !toToken) return "Please select both tokens";
-    if (!fromAmount || parseFloat(fromAmount) <= 0)
-      return "Enter a valid amount";
-    if (parseFloat(fromAmount) > getTokenBalance(fromToken))
+  const validateBuySwap = (): string | null => {
+    if (!buyToken) return "Please select a token";
+    if (!buyUsdAmount || parseFloat(buyUsdAmount) <= 0)
+      return "Enter a valid USD amount";
+    return null;
+  };
+
+  const validateSellSwap = (): string | null => {
+    if (!sellToken) return "Please select a token";
+    if (!sellTokenAmount || parseFloat(sellTokenAmount) <= 0)
+      return "Enter a valid token amount";
+    if (parseFloat(sellTokenAmount) > getTokenBalance(sellToken))
       return "Insufficient balance";
     return null;
   };
@@ -312,192 +304,313 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
   };
 
-  const handleSwap = () => {
-    const err = validateSwap();
+  const handleBuyConfirm = () => {
+    const err = validateBuySwap();
     if (err) {
       toast({
-        title: "Invalid Swap",
+        title: "Invalid Transaction",
         description: err,
         variant: "destructive",
       });
       return;
     }
-    executeSwap();
+    executeBuySwap();
   };
 
-  const executeSwap = async () => {
-    if (!quote || !wallet) return;
+  const handleSellConfirm = () => {
+    const err = validateSellSwap();
+    if (err) {
+      toast({
+        title: "Invalid Transaction",
+        description: err,
+        variant: "destructive",
+      });
+      return;
+    }
+    executeSellSwap();
+  };
+
+  const executeBuySwap = async () => {
+    // For buy mode, we're buying the selected token with SOL
+    if (!wallet || !buyToken) return;
     setIsLoading(true);
 
     try {
-      if (!quote) throw new Error("Swap quote missing");
-      const swapRequest = {
-        quoteResponse: quote,
-        userPublicKey: wallet.publicKey,
-        wrapAndUnwrapSol: true,
-      } as any;
-      console.debug("Sending swap request to Jupiter proxy:", swapRequest);
-      const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
-      if (!swapResponse || !swapResponse.swapTransaction)
-        throw new Error("Failed to get swap transaction");
+      const solToken = allTokens.find((t) => t.symbol === "SOL");
+      if (!solToken) throw new Error("SOL token not found");
 
-      const kp = getKeypair();
-      if (!kp) throw new Error("Missing wallet key to sign transaction");
+      const usdAmount = parseFloat(buyUsdAmount);
 
-      const swapTransactionBuf = Buffer.from(
-        swapResponse.swapTransaction,
-        "base64",
+      // Use the state solUsdPrice if available, otherwise fetch it
+      let fetchedSolUsdPrice = solUsdPrice;
+      if (!fetchedSolUsdPrice || fetchedSolUsdPrice <= 0) {
+        const solPrice = await jupiterAPI.getTokenPrices([solToken.mint]);
+        fetchedSolUsdPrice = solPrice[solToken.mint] ?? null;
+      }
+
+      if (!fetchedSolUsdPrice || fetchedSolUsdPrice <= 0) {
+        throw new Error("Unable to fetch SOL price");
+      }
+
+      const solAmountNeeded = usdAmount / fetchedSolUsdPrice;
+      if (solAmountNeeded > balance) {
+        throw new Error("Insufficient SOL balance for this purchase");
+      }
+
+      const amountInt = parseInt(
+        jupiterAPI.formatSwapAmount(solAmountNeeded, solToken.decimals),
+        10,
       );
-      const tx = VersionedTransaction.deserialize(swapTransactionBuf);
-      tx.sign([kp]);
-      const serialized = Buffer.from(tx.serialize());
 
-      // If a connection is available in context, prefer it
-      if (connection && typeof connection.sendRawTransaction === "function") {
-        try {
+      const quote = await jupiterAPI.getQuote(
+        solToken.mint,
+        buyToken.mint,
+        amountInt,
+        Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
+      );
+
+      if (!quote) {
+        throw new Error("Unable to get swap quote");
+      }
+
+      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+        const swapRequest = {
+          quoteResponse: q,
+          userPublicKey: wallet.publicKey,
+          wrapAndUnwrapSol: true,
+        } as any;
+        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+        if (!swapResponse || !swapResponse.swapTransaction)
+          throw new Error("Failed to get swap transaction");
+        const kp = getKeypair();
+        if (!kp) throw new Error("Missing wallet key to sign transaction");
+        const swapTransactionBuf = Buffer.from(
+          swapResponse.swapTransaction,
+          "base64",
+        );
+        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+        tx.sign([kp]);
+        const serialized = Buffer.from(tx.serialize());
+
+        if (connection && typeof connection.sendRawTransaction === "function") {
           const sig = await connection.sendRawTransaction(serialized, {
             skipPreflight: false,
           });
-
-          // Immediately update UI and return; perform confirmation in background
-          setTxSignature(sig);
-          setStep("success");
-          setTimeout(() => refreshBalance?.(), 2000);
-          toast({
-            title: "Swap Submitted",
-            description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-          });
-
-          (async () => {
-            try {
-              const latest = await connection.getLatestBlockhash();
-              await connection.confirmTransaction({
-                blockhash: latest.blockhash,
-                lastValidBlockHeight: latest.lastValidBlockHeight,
-                signature: sig,
-              });
-              toast({
-                title: "Swap Confirmed",
-                description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-              });
-            } catch (err) {
-              console.warn("Background confirmation failed:", err);
-            }
-          })();
-
-          return;
-        } catch (e: any) {
-          console.warn(
-            "connection.sendRawTransaction failed, falling back to server send:",
-            e?.message || e,
-          );
-          // Continue to fallback to server-side submission below
+          return sig;
         }
-      }
 
-      // Fallback: submit signed transaction to server endpoints (/api/solana-simulate, /api/solana-send)
-      const signedBase64 = (() => {
-        let bin = "";
-        const arr = serialized;
-        for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
-        try {
-          return btoa(bin);
-        } catch (e) {
-          return Buffer.from(arr).toString("base64");
-        }
-      })();
+        const signedBase64 = (() => {
+          let bin = "";
+          const arr = serialized;
+          for (let i = 0; i < arr.length; i++)
+            bin += String.fromCharCode(arr[i]);
+          try {
+            return btoa(bin);
+          } catch (e) {
+            return Buffer.from(arr).toString("base64");
+          }
+        })();
 
-      // Simulate first
-      try {
         const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ signedBase64 }),
         });
-
         if (!simResp.ok) {
           const txt = await simResp.text().catch(() => "");
-          let parsed: any = null;
-          try {
-            parsed = txt ? JSON.parse(txt) : null;
-          } catch {}
-          const msg =
-            parsed?.error?.message ||
-            txt ||
-            simResp.statusText ||
-            `Simulation failed (${simResp.status})`;
-          throw new Error(msg);
+          throw new Error(txt || simResp.statusText || "Simulation failed");
         }
-
         const simJson = await simResp.json();
         if (simJson?.insufficientLamports) {
           const d = simJson.insufficientLamports;
           const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
-          toast({
-            title: "Insufficient SOL",
-            description: `You need ~${missingSOL?.toFixed(6) ?? "0.000000"} SOL more to cover fees/rent.`,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          setStep("form");
-          return;
+          throw new Error(
+            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
+          );
         }
-      } catch (e: any) {
-        throw new Error(
-          `Simulation request failed: ${e instanceof Error ? e.message : String(e)}`,
-        );
-      }
 
-      // Send via server
-      try {
         const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ signedBase64 }),
         });
-
         if (!sendResp.ok) {
           const txt = await sendResp.text().catch(() => "");
-          let parsed: any = null;
-          try {
-            parsed = txt ? JSON.parse(txt) : null;
-          } catch {}
-          const details = parsed?.error?.details
-            ? JSON.stringify(parsed.error.details)
-            : txt || sendResp.statusText;
-          throw new Error(
-            `${sendResp.status} : ${parsed?.error?.message || txt} | details: ${details}`,
-          );
+          throw new Error(txt || sendResp.statusText || "Send failed");
         }
-
         const jb = await sendResp.json();
         if (jb.error) {
-          const det = jb.error.details
-            ? JSON.stringify(jb.error.details)
-            : JSON.stringify(jb.error);
+          throw new Error(jb.error?.message || "RPC send error");
+        }
+        return jb.result as string;
+      };
+
+      const sig = await submitQuote(quote);
+      setTxSignature(sig);
+      setLastSwapFromToken(solToken);
+      setLastSwapToToken(buyToken);
+      setStep("success");
+      setTimeout(() => refreshBalance?.(), 2000);
+      toast({
+        title: "Buy Order Submitted",
+        description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+      });
+      if (connection && typeof connection.getLatestBlockhash === "function") {
+        try {
+          const latest = await connection.getLatestBlockhash();
+          await connection.confirmTransaction({
+            blockhash: latest.blockhash,
+            lastValidBlockHeight: latest.lastValidBlockHeight,
+            signature: sig,
+          });
+          toast({
+            title: "Buy Order Confirmed",
+            description: `Purchased ${buyTokenAmount} ${buyToken?.symbol}`,
+          });
+        } catch {}
+      }
+    } catch (err: any) {
+      console.error("Buy execution error:", err);
+      toast({
+        title: "Buy Failed",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const executeSellSwap = async () => {
+    // For sell mode, we're selling the selected token for SOL
+    if (!wallet || !sellToken) return;
+    setIsLoading(true);
+
+    try {
+      const solToken = allTokens.find((t) => t.symbol === "SOL");
+      if (!solToken) throw new Error("SOL token not found");
+
+      const tokenAmount = parseFloat(sellTokenAmount);
+      const amountInt = parseInt(
+        jupiterAPI.formatSwapAmount(tokenAmount, sellToken.decimals),
+        10,
+      );
+
+      const quote = await jupiterAPI.getQuote(
+        sellToken.mint,
+        solToken.mint,
+        amountInt,
+        Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
+      );
+
+      if (!quote) {
+        throw new Error("Unable to get swap quote");
+      }
+
+      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+        const swapRequest = {
+          quoteResponse: q,
+          userPublicKey: wallet.publicKey,
+          wrapAndUnwrapSol: true,
+        } as any;
+        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+        if (!swapResponse || !swapResponse.swapTransaction)
+          throw new Error("Failed to get swap transaction");
+        const kp = getKeypair();
+        if (!kp) throw new Error("Missing wallet key to sign transaction");
+        const swapTransactionBuf = Buffer.from(
+          swapResponse.swapTransaction,
+          "base64",
+        );
+        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+        tx.sign([kp]);
+        const serialized = Buffer.from(tx.serialize());
+
+        if (connection && typeof connection.sendRawTransaction === "function") {
+          const sig = await connection.sendRawTransaction(serialized, {
+            skipPreflight: false,
+          });
+          return sig;
+        }
+
+        const signedBase64 = (() => {
+          let bin = "";
+          const arr = serialized;
+          for (let i = 0; i < arr.length; i++)
+            bin += String.fromCharCode(arr[i]);
+          try {
+            return btoa(bin);
+          } catch (e) {
+            return Buffer.from(arr).toString("base64");
+          }
+        })();
+
+        const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ signedBase64 }),
+        });
+        if (!simResp.ok) {
+          const txt = await simResp.text().catch(() => "");
+          throw new Error(txt || simResp.statusText || "Simulation failed");
+        }
+        const simJson = await simResp.json();
+        if (simJson?.insufficientLamports) {
+          const d = simJson.insufficientLamports;
+          const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
           throw new Error(
-            `RPC send error: ${jb.error.message || JSON.stringify(jb.error)} | details: ${det}`,
+            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
           );
         }
 
-        const signature = jb.result as string;
-        setTxSignature(signature);
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Completed!",
-          description: `Successfully swapped ${fromAmount} ${fromToken?.symbol} for ${toAmount} ${toToken?.symbol}`,
+        const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ signedBase64 }),
         });
-        return;
-      } catch (e: any) {
-        throw new Error(
-          `Send request failed: ${e instanceof Error ? e.message : String(e)}`,
-        );
+        if (!sendResp.ok) {
+          const txt = await sendResp.text().catch(() => "");
+          throw new Error(txt || sendResp.statusText || "Send failed");
+        }
+        const jb = await sendResp.json();
+        if (jb.error) {
+          throw new Error(jb.error?.message || "RPC send error");
+        }
+        return jb.result as string;
+      };
+
+      const solReceived = jupiterAPI.parseSwapAmount(
+        quote.outAmount,
+        solToken.decimals,
+      );
+      const sig = await submitQuote(quote);
+      setTxSignature(sig);
+      setLastSwapFromToken(sellToken);
+      setLastSwapToToken(solToken);
+      setStep("success");
+      setTimeout(() => refreshBalance?.(), 2000);
+      toast({
+        title: "Sell Order Submitted",
+        description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+      });
+      if (connection && typeof connection.getLatestBlockhash === "function") {
+        try {
+          const latest = await connection.getLatestBlockhash();
+          await connection.confirmTransaction({
+            blockhash: latest.blockhash,
+            lastValidBlockHeight: latest.lastValidBlockHeight,
+            signature: sig,
+          });
+          toast({
+            title: "Sell Order Confirmed",
+            description: `Sold ${sellTokenAmount} ${sellToken?.symbol} for ${solReceived.toFixed(4)} SOL`,
+          });
+        } catch {}
       }
     } catch (err: any) {
-      console.error("Swap execution error:", err);
+      console.error("Sell execution error:", err);
       toast({
-        title: "Swap Failed",
+        title: "Sell Failed",
         description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
@@ -507,131 +620,51 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const resetSwap = () => {
-    setFromAmount("");
-    setToAmount("");
+    setBuyUsdAmount("");
+    setBuyTokenAmount("");
+    setSellTokenAmount("");
+    setSellUsdPrice("");
     setStep("form");
     setTxSignature(null);
   };
 
-  const TokenSelector: React.FC<{
-    selectedToken: TokenInfo | null;
-    onSelect: (t: TokenInfo) => void;
-    label: string;
-  }> = ({ selectedToken, onSelect, label }) => {
-    return (
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-[hsl(var(--muted-foreground))]">
-          {label}
-        </label>
-        <div>
-          <Select
-            value={selectedToken?.mint || ""}
-            onValueChange={(v) => {
-              const t = allTokens.find((x) => x.mint === v);
-              if (t) onSelect(t);
-            }}
-          >
-            <SelectTrigger className="w-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70">
-              <SelectValue placeholder="Select a token">
-                {selectedToken ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                      <AvatarImage
-                        src={selectedToken.logoURI}
-                        alt={selectedToken.symbol}
-                      />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                        {selectedToken.symbol.slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{selectedToken.symbol}</span>
-                    <span className="text-[hsl(var(--muted-foreground))] text-sm">
-                      (
-                      {formatAmount(
-                        getTokenBalance(selectedToken),
-                        selectedToken.symbol,
-                      )}
-                      )
-                    </span>
-                  </div>
-                ) : null}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-              {allTokens.map((token) => (
-                <SelectItem
-                  key={token.mint}
-                  value={token.mint}
-                  className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                >
-                  <div className="flex items-center gap-2 w-full">
-                    <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                      <AvatarImage src={token.logoURI} alt={token.symbol} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                        {token.symbol.slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{token.symbol}</span>
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {formatAmount(getTokenBalance(token), token.symbol)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {token.name}
-                      </div>
-                    </div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    );
-  };
-
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-        <div className="max-w-md mx-auto pt-8">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-lg">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+        <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 pt-8 px-0 sm:px-4">
+          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl">
             <div className="p-8 text-center">
               <div className="mb-6">
                 <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
                   <Check className="h-8 w-8 text-emerald-300" />
                 </div>
-                <h3 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-2">
-                  Swap Completed!
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Transaction Completed!
                 </h3>
-                <p className="text-[hsl(var(--muted-foreground))]">
+                <p className="text-white/80">
                   Your transaction has been successfully executed
                 </p>
               </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Swapped:
-                  </span>
-                  <span className="font-medium text-[hsl(var(--foreground))]">
-                    {fromAmount} {fromToken?.symbol}
+                  <span className="text-white/70">Sent:</span>
+                  <span className="font-medium text-white">
+                    {lastSwapFromToken?.symbol}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Received:
-                  </span>
-                  <span className="font-medium text-[hsl(var(--foreground))]">
-                    {toAmount} {toToken?.symbol}
+                  <span className="text-white/70">Received:</span>
+                  <span className="font-medium text-white">
+                    {lastSwapToToken?.symbol}
                   </span>
                 </div>
                 {txSignature && (
                   <div className="flex justify-between items-center">
-                    <span className="text-[hsl(var(--muted-foreground))]">
-                      Transaction:
-                    </span>
+                    <span className="text-white/70">Transaction:</span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-emerald-400">
                         {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
@@ -653,13 +686,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={resetSwap}
-                  className="flex-1 bg-[hsl(var(--card))]/70 border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/80"
+                  className="flex-1 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
                 >
-                  Swap Again
+                  New Transaction
                 </Button>
                 <Button
                   onClick={onBack}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white"
+                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
                 >
                   Back to Wallet
                 </Button>
@@ -672,328 +705,306 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] p-4">
-      <div className="max-w-md mx-auto">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4 pt-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
+            className="text-white hover:bg-[#FF7A5C]/10 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Swap</h1>
+          <h1 className="text-lg font-semibold text-white">
+            {mode === "buy" ? "Buy" : "Sell"}
+          </h1>
           <Button
             variant="ghost"
             size="icon"
-            className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70"
+            className="text-white hover:text-white hover:bg-[#FF7A5C]/10 transition-colors"
           >
             <Settings className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Card */}
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden">
+        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
-            {/* FROM row */}
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-3">
-                  <Input
-                    type="number"
-                    placeholder="0.000"
-                    value={fromAmount}
-                    onChange={(e) => setFromAmount(e.target.value)}
-                    className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:ring-0"
-                  />
-                  <div className="mt-2 text-xl text-[hsl(var(--muted-foreground))]">
-                    {(() => {
-                      const amt = parseFloat(fromAmount || "0");
-                      const price = fromUsdPrice ?? 0;
-                      const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
-                    })()}
-                  </div>
-                </div>
-
-                {/* Token select pill (from) */}
-                <div className="flex flex-col items-end min-w-[8.5rem]">
-                  <Select
-                    value={fromToken?.mint || ""}
-                    onValueChange={(v) => {
-                      const t = allTokens.find((x) => x.mint === v);
-                      if (t) setFromToken(t);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          {fromToken ? (
-                            <>
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage
-                                  src={fromToken.logoURI}
-                                  alt={fromToken.symbol}
-                                />
-                                <AvatarFallback className="text-xs">
-                                  {fromToken.symbol.slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">
-                                {fromToken.symbol}
-                              </span>
-                            </>
-                          ) : (
-                            <span>Select</span>
-                          )}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-                      {allTokens.map((token) => (
-                        <SelectItem
-                          key={token.mint}
-                          value={token.mint}
-                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={token.logoURI}
-                                alt={token.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {token.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {token.symbol}
-                                </span>
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {token.name}
-                              </div>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fromToken ? (
-                    <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
-                      {formatAmount(
-                        getTokenBalance(fromToken),
-                        fromToken.symbol,
-                      )}{" "}
-                      {fromToken.symbol}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {/* swap arrow */}
-            <div className="flex items-center justify-center py-1">
+            {/* BUY/SELL Toggle */}
+            <div className="flex gap-2">
               <Button
-                size="icon"
-                onClick={handleSwapTokens}
-                className="rounded-full h-9 w-9 bg-[hsl(var(--card))]/70 hover:bg-[hsl(var(--card))]/80 border border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                onClick={() => setMode("buy")}
+                className={`flex-1 rounded-lg font-semibold transition-all ${
+                  mode === "buy"
+                    ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white hover:from-[#FF6B4D] hover:to-[#FF4D7D]"
+                    : "bg-[#1a2540]/50 text-white/70 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 hover:text-white"
+                }`}
               >
-                <ArrowUpDown className="h-4 w-4" />
+                BUY
+              </Button>
+              <Button
+                onClick={() => setMode("sell")}
+                className={`flex-1 rounded-lg font-semibold transition-all ${
+                  mode === "sell"
+                    ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white hover:from-[#FF6B4D] hover:to-[#FF4D7D]"
+                    : "bg-[#1a2540]/50 text-white/70 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 hover:text-white"
+                }`}
+              >
+                SELL
               </Button>
             </div>
+            {mode === "buy" ? (
+              <>
+                {/* BUY MODE */}
+                <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+                  <CardContent className="p-4">
+                    <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] block mb-2">
+                      Amount in USD
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      value={buyUsdAmount}
+                      onChange={(e) => setBuyUsdAmount(e.target.value)}
+                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
+                    />
+                    {buyUsdAmount && solUsdPrice && solUsdPrice > 0 && (
+                      <div className="text-sm text-white/70 mt-3">
+                        {(parseFloat(buyUsdAmount) / solUsdPrice).toFixed(6)}{" "}
+                        SOL
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-            {/* TO row */}
-            <div className="bg-purple-200/60 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-3">
-                  <div className="text-xl leading-none tracking-tight text-[hsl(var(--muted-foreground))]">
-                    {toAmount
-                      ? formatAmount(toAmount, toToken?.symbol)
-                      : "0.000"}
-                  </div>
-                  <div className="mt-2 text-xl text-[hsl(var(--muted-foreground))]">
-                    {(() => {
-                      const amt = parseFloat(toAmount || "0");
-                      const price = toUsdPrice ?? 0;
-                      const usd = amt * price;
-                      return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
-                    })()}
-                  </div>
-                </div>
+                {/* Token Amount Display */}
+                {buyToken && (
+                  <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+                    <CardContent className="p-4">
+                      <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] block mb-2">
+                        You will receive
+                      </label>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl font-semibold text-white">
+                            {buyTokenAmount || "0.000000"}
+                          </div>
+                          <div className="text-sm text-white/70 mt-1">
+                            {buyToken.symbol}
+                          </div>
+                        </div>
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage
+                            src={buyToken.logoURI}
+                            alt={buyToken.symbol}
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                            {buyToken.symbol.slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                {/* Token select pill (to) */}
-                <div className="flex flex-col items-end min-w-[8.5rem]">
-                  <Select
-                    value={toToken?.mint || ""}
-                    onValueChange={(v) => {
-                      const t = allTokens.find((x) => x.mint === v);
-                      if (t) setToToken(t);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 w-auto px-3">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          {toToken ? (
-                            <>
-                              <Avatar className="h-6 w-6">
+                {/* Token Selector */}
+                <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+                  <CardContent className="p-4">
+                    <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] block mb-2">
+                      Select Token to Buy
+                    </label>
+                    <Select
+                      value={buyToken?.mint || ""}
+                      onValueChange={(v) => {
+                        const t = allTokens.find((x) => x.mint === v);
+                        if (t) setBuyToken(t);
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white hover:bg-[#1a2540]/70">
+                        <SelectValue placeholder="Select a token">
+                          {buyToken ? (
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
                                 <AvatarImage
-                                  src={toToken.logoURI}
-                                  alt={toToken.symbol}
+                                  src={buyToken.logoURI}
+                                  alt={buyToken.symbol}
                                 />
-                                <AvatarFallback className="text-xs">
-                                  {toToken.symbol.slice(0, 2)}
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                  {buyToken.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
-                                {toToken.symbol}
-                              </span>
-                            </>
-                          ) : (
-                            <span>Select</span>
-                          )}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-                      {allTokens.map((token) => (
-                        <SelectItem
-                          key={token.mint}
-                          value={token.mint}
-                          className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              <AvatarImage
-                                src={token.logoURI}
-                                alt={token.symbol}
-                              />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                                {token.symbol.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {token.symbol}
-                                </span>
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {token.name}
-                              </div>
+                              <span>{buyToken.symbol}</span>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {toToken ? (
-                    <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))] font-mono">
-                      {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
+                          ) : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                        {allTokens.map((token) => (
+                          <SelectItem
+                            key={token.mint}
+                            value={token.mint}
+                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20"
+                          >
+                            <div className="flex items-center gap-3 justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{token.symbol}</span>
+                              </div>
+                              <span className="text-xs text-white/70">
+                                {formatAmount(getTokenBalance(token))}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </CardContent>
+                </Card>
+
+                {/* Alerts */}
+                {quoteError && (
+                  <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
+                    <AlertDescription>{quoteError}</AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Confirm Button */}
+                <Button
+                  onClick={handleBuyConfirm}
+                  className="w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all mt-4"
+                  disabled={!buyUsdAmount || !buyToken || isLoading}
+                >
+                  {isLoading ? "Processing..." : "CONFIRM BUY"}
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* SELL MODE */}
+                <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+                  <CardContent className="p-4">
+                    <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] block mb-2">
+                      Token Amount
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="0.000000"
+                      value={sellTokenAmount}
+                      onChange={(e) => setSellTokenAmount(e.target.value)}
+                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
+                    />
+                    {sellToken && (
+                      <div className="text-sm text-white/70 mt-2">
+                        Balance: {formatAmount(getTokenBalance(sellToken))}{" "}
+                        {sellToken.symbol}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Price in USD */}
+                <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+                  <CardContent className="p-4">
+                    <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] block mb-2">
+                      Price in USD
+                    </label>
+                    <div className="text-2xl font-semibold text-white">
+                      ${sellUsdPrice || "0.00"}
                     </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
+                  </CardContent>
+                </Card>
 
-            {/* Quote details */}
-            {(quote || (indicative && toAmount)) && fromToken && toToken ? (
-              <div className="mt-2 bg-[hsl(var(--card))]/30 border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                    Quote
-                  </span>
-                  <span className="text-sm">
-                    1 {fromToken.symbol} ={" "}
-                    {(
-                      parseFloat(toAmount) / parseFloat(fromAmount || "1")
-                    ).toFixed(4)}{" "}
-                    {toToken.symbol}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Network fee
-                  </span>
-                  <span className="text-[hsl(var(--foreground))]">
-                    Included
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Time
-                  </span>
-                  <span className="text-[hsl(var(--foreground))]">
-                    &lt; 1 min
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    Rate includes
-                  </span>
-                  <span className="text-[hsl(var(--foreground))]">
-                    {slippage}% slippage
-                  </span>
-                </div>
-                <div className="text-right text-sm text-blue-400">
-                  More quotes
-                </div>
-              </div>
-            ) : null}
+                {/* Token Selector */}
+                <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+                  <CardContent className="p-4">
+                    <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] block mb-2">
+                      Select Token to Sell
+                    </label>
+                    <Select
+                      value={sellToken?.mint || ""}
+                      onValueChange={(v) => {
+                        const t = allTokens.find((x) => x.mint === v);
+                        if (t) setSellToken(t);
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white hover:bg-[#1a2540]/70">
+                        <SelectValue placeholder="Select a token">
+                          {sellToken ? (
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage
+                                  src={sellToken.logoURI}
+                                  alt={sellToken.symbol}
+                                />
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                  {sellToken.symbol.slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{sellToken.symbol}</span>
+                            </div>
+                          ) : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-[#1a2540]/95 border border-[#FF7A5C]/30 text-white">
+                        {allTokens.map((token) => (
+                          <SelectItem
+                            key={token.mint}
+                            value={token.mint}
+                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20"
+                          >
+                            <div className="flex items-center gap-3 justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{token.symbol}</span>
+                              </div>
+                              <span className="text-xs text-white/70">
+                                {formatAmount(getTokenBalance(token))}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </CardContent>
+                </Card>
 
-            {/* Alerts */}
-            {isLoading && (
-              <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
-                Signing with local wallet and submitting transaction...
-              </Alert>
-            )}
-            {indicative && (
-              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
-                <AlertDescription>
-                  ⚠️ <strong>Estimated price only</strong> — Jupiter has no
-                  direct route for this pair. Price is estimated from DEX data
-                  and may vary. You can still attempt the swap, but execution
-                  depends on available liquidity.
-                </AlertDescription>
-              </Alert>
-            )}
-            {quoteError && !indicative && (
-              <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
-                <AlertDescription>{quoteError}</AlertDescription>
-              </Alert>
-            )}
+                {/* Alerts */}
+                {quoteError && (
+                  <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
+                    <AlertDescription>{quoteError}</AlertDescription>
+                  </Alert>
+                )}
 
-            {/* Submit */}
-            <Button
-              onClick={handleSwap}
-              className="mt-2 w-full h-12 rounded-xl dash-btn font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed"
-              disabled={
-                (!quote && !indicative) ||
-                !!quoteError ||
-                !fromToken ||
-                !toToken ||
-                !fromAmount ||
-                isLoading
-              }
-            >
-              {indicative ? "Swap (Estimated)" : "Submit"}
-            </Button>
+                {/* Confirm Button */}
+                <Button
+                  onClick={handleSellConfirm}
+                  className="w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all mt-4"
+                  disabled={!sellTokenAmount || !sellToken || isLoading}
+                >
+                  {isLoading ? "Processing..." : "CONFIRM SELL"}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

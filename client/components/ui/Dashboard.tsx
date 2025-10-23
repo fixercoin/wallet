@@ -22,6 +22,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 
@@ -42,6 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onTokenClick,
   onSettings,
 }) => {
+  const navigate = useNavigate();
   const {
     wallet,
     balance,
@@ -85,9 +87,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatBalance = (amount: number | undefined): string => {
-    if (!amount || isNaN(amount)) return "0.00";
-    return amount.toLocaleString(undefined, {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
+    const amt = typeof amount === "number" && isFinite(amount) ? amount : 0;
+    const sym = String(symbol || "").toUpperCase();
+    if (sym === "FIXERCOIN" || sym === "LOCKER") {
+      const fixed = amt.toFixed(2);
+      const [intPart, fracPart = "00"] = fixed.split(".");
+      const sign = amt < 0 ? "-" : "";
+      const digits = intPart.replace(/^-/, "");
+      const padded = digits.padStart(4, "0");
+      return `${sign}${padded}.${fracPart}`;
+    }
+    return amt.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     });
@@ -306,26 +320,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Button
             onClick={onSend}
             variant="outline"
-            className="flex-1 h-12 bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50"
+            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
           >
-            <ArrowUpRight className="h-4 w-4 mr-2" />
-            Send
+            <ArrowUpRight className="h-4 w-4" />
+            <span>SEND</span>
           </Button>
 
           <Button
             onClick={onReceive}
             variant="outline"
-            className="h-12 w-12 rounded-full border-gray-600 bg-gray-800 hover:bg-gray-700 text-white p-0"
+            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
           >
             <ArrowDownLeft className="h-4 w-4" />
+            <span>RECEIVE</span>
           </Button>
 
           <Button
             onClick={onSwap}
             variant="outline"
-            className="h-12 w-12 rounded-full border-gray-600 bg-gray-800 hover:bg-gray-700 text-white p-0"
+            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
           >
             <RefreshCw className="h-4 w-4" />
+            <span>SWAP</span>
+          </Button>
+        </div>
+
+        {/* All Tokens Button */}
+        <div className="mb-8">
+          <Button
+            onClick={() => navigate("/all-tokens")}
+            className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-lg"
+          >
+            All Tokens
           </Button>
         </div>
 
@@ -388,6 +414,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-sm font-semibold text-white">
                         {formatBalance(
                           token.symbol === "SOL" ? balance : token.balance || 0,
+                          token.symbol,
                         )}
                       </p>
                       <p className="text-xs text-gray-400">

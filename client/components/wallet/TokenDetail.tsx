@@ -73,8 +73,11 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))] flex items-center justify-center">
-        <div className="text-center">
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
+        {/* Decorative curved accent background elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+        <div className="text-center relative z-20">
           <p className="text-white text-lg mb-4">Token not found</p>
           <Button onClick={onBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -88,16 +91,20 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   const displayToken = enhancedToken || token;
 
   return (
-    <div className="min-h-screen bg-pink-50 text-[hsl(var(--foreground))]">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+      {/* Decorative curved accent background elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
       {/* Header */}
-      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] sticky top-0 z-10">
+      <div className="bg-transparent sticky top-0 z-20">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
             aria-label="Back"
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="text-white hover:bg-[#FF7A5C]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -112,15 +119,15 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             size="sm"
             onClick={handleRefresh}
             disabled={isLoading}
-            className="text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+            className="text-white hover:bg-[#FF7A5C]/10"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        <div className="bg-transparent overflow-hidden">
           {/* Price Section (inside single card) */}
           <PriceCard
             token={displayToken}
@@ -132,7 +139,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-white">
+            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
               <div className="px-3 pt-3 text-sm font-medium text-gray-700">
                 Buys vs Sells (5m → 24h)
               </div>
@@ -143,13 +150,13 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}
-                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
+                className="h-10 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
               >
                 BUY
               </Button>
               <Button
                 onClick={() => onSell(tokenMint)}
-                className="h-10 font-semibold bg-pink-100 text-pink-900 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-100 dark:hover:bg-pink-900/40"
+                className="h-10 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
               >
                 SELL
               </Button>

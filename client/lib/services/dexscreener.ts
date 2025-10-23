@@ -153,24 +153,51 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {
-        const response = await fetch(
-          `${this.baseUrl}/tokens?mints=${mintString}`,
-          { signal: controller.signal },
-        );
+        const url = `${this.baseUrl}/tokens?mints=${mintString}`;
+        console.log(`[DexScreener] Requesting: ${url}`);
+        const response = await fetch(url, { signal: controller.signal });
+
         if (response.ok) {
           try {
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
-          } catch {}
+            console.log(
+              `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
+            );
+            // Validate that we got meaningful data (especially priceChange)
+            const withPriceChange = fetchedTokens.filter(
+              (t) =>
+                t.priceChange &&
+                (typeof t.priceChange.h24 === "number" ||
+                  typeof t.priceChange.h6 === "number" ||
+                  typeof t.priceChange.h1 === "number" ||
+                  typeof t.priceChange.m5 === "number"),
+            );
+            console.log(
+              `[DexScreener] Tokens with price change data: ${withPriceChange.length}/${fetchedTokens.length}`,
+            );
+          } catch (parseErr) {
+            console.error(
+              `[DexScreener] ❌ Failed to parse response:`,
+              parseErr,
+            );
+            fetchFailed = true;
+          }
         } else {
+          console.error(
+            `[DexScreener] ❌ Server returned ${response.status}: ${response.statusText}`,
+          );
           fetchFailed = true;
         }
       } catch (err) {
         // network/timeout -> swallow; fallback to stale cache
         fetchFailed = true;
-        console.warn(`DexScreener fetch failed for mints: ${mintString}`, err);
+        console.warn(
+          `[DexScreener] ❌ Network error fetching tokens:`,
+          err instanceof Error ? err.message : String(err),
+        );
       } finally {
         clearTimeout(timeoutId);
       }
@@ -179,7 +206,7 @@ class DexscreenerAPI {
     // If fetch failed, try to serve stale cached data instead of failing completely
     if (fetchFailed && toFetch.length > 0) {
       console.log(
-        `DexScreener: Serving stale cache for ${toFetch.length} tokens`,
+        `[DexScreener] ⚠️ Serving stale cache for ${toFetch.length} tokens`,
       );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
@@ -189,12 +216,14 @@ class DexscreenerAPI {
       });
     }
 
-    // Update cache with fetched results
+    // Update cache with fetched results (only if we got meaningful data)
     const ttl = now + DexscreenerAPI.TOKEN_CACHE_TTL_MS;
     fetchedTokens.forEach((t) => {
-      const mint = t.baseToken?.address;
-      if (mint) {
-        DexscreenerAPI.tokenCache.set(mint, { token: t, expiresAt: ttl });
+      const matchMint = normalizedMints.find(
+        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
+      );
+      if (matchMint) {
+        DexscreenerAPI.tokenCache.set(matchMint, { token: t, expiresAt: ttl });
       }
     });
 
@@ -205,9 +234,11 @@ class DexscreenerAPI {
 
     const allTokensMap = new Map<string, DexscreenerToken>();
     [...cachedResults, ...fetchedTokens].forEach((t) => {
-      const mint = t.baseToken?.address;
-      if (mint && !allTokensMap.has(mint)) {
-        allTokensMap.set(mint, t);
+      const matchMint = normalizedMints.find(
+        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
+      );
+      if (matchMint && !allTokensMap.has(matchMint)) {
+        allTokensMap.set(matchMint, t);
       }
     });
 
@@ -229,18 +260,30 @@ class DexscreenerAPI {
 
   async searchTokens(query: string): Promise<DexscreenerToken[]> {
     try {
-      const response = await fetch(
-        `/api/dexscreener/search?q=${encodeURIComponent(query)}`,
-      ).catch(() => new Response("", { status: 0 } as any));
+      const url = `/api/dexscreener/search?q=${encodeURIComponent(query)}`;
+      console.log(`[DexScreener] Searching: ${url}`);
+
+      const response = await fetch(url).catch(
+        () => new Response("", { status: 0 } as any),
+      );
 
       if (!response.ok) {
+        console.warn(
+          `[DexScreener] Search failed with status ${response.status}`,
+        );
         return [];
       }
 
       const data: DexscreenerResponse = await response.json();
+      console.log(
+        `[DexScreener] Search returned ${(data.pairs || []).length} results`,
+      );
       return data.pairs || [];
     } catch (error) {
-      console.debug("Error searching tokens via DexScreener proxy:", error);
+      console.warn(
+        `[DexScreener] Search error:`,
+        error instanceof Error ? error.message : String(error),
+      );
       return [];
     }
   }
@@ -269,21 +312,27 @@ class DexscreenerAPI {
 
   async getPopularTokens(): Promise<DexscreenerToken[]> {
     try {
+      console.log(`[DexScreener] Fetching trending tokens...`);
       // Get trending tokens on Solana via proxy
       const response = await fetch("/api/dexscreener/trending").catch(
         () => new Response("", { status: 0 } as any),
       );
 
       if (!response.ok) {
+        console.warn(
+          `[DexScreener] Trending request failed with status ${response.status}`,
+        );
         return [];
       }
 
       const data: DexscreenerResponse = await response.json();
-      return data.pairs?.slice(0, 20) || []; // Get top 20 trending tokens
+      const trending = data.pairs?.slice(0, 20) || [];
+      console.log(`[DexScreener] ✅ Got ${trending.length} trending tokens`);
+      return trending;
     } catch (error) {
-      console.debug(
-        "Error fetching popular tokens via DexScreener proxy:",
-        error,
+      console.warn(
+        `[DexScreener] Trending error:`,
+        error instanceof Error ? error.message : String(error),
       );
       return [];
     }

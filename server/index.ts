@@ -1,16 +1,24 @@
 import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
+import { handleSolanaSend } from "./routes/solana-send";
+import { handleSolanaSimulate } from "./routes/solana-simulate";
+import { handleWalletBalance } from "./routes/wallet-balance";
+import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
   handleDexscreenerSearch,
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
+import { handleSubmitSplMeta } from "./routes/spl-meta";
 import {
   handleJupiterPrice,
   handleJupiterQuote,
   handleJupiterSwap,
+  handleJupiterTokens,
 } from "./routes/jupiter-proxy";
+import { handleForexRate } from "./routes/forex-rate";
+import { handleStable24h } from "./routes/stable-24h";
 import {
   handleListP2POrders,
   handleCreateP2POrder,
@@ -24,6 +32,14 @@ import {
   handleListTradeMessages,
   handleAddTradeMessage,
 } from "./routes/p2p-orders";
+import {
+  handleListOrders,
+  handleCreateOrder,
+  handleGetOrder,
+  handleUpdateOrder,
+  handleDeleteOrder,
+} from "./routes/orders";
+import { handleFixoriumTokens } from "./routes/fixorium-tokens";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -41,11 +57,39 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/jupiter/price", handleJupiterPrice);
   app.get("/api/jupiter/quote", handleJupiterQuote);
   app.post("/api/jupiter/swap", handleJupiterSwap);
+  app.get("/api/jupiter/tokens", handleJupiterTokens);
 
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);
+  app.post("/api/solana-simulate", (req, res) => {
+    const { signedBase64 } = req.body;
+    handleSolanaSimulate(signedBase64)
+      .then((result) => res.json(result))
+      .catch((err) => res.status(500).json({ error: err.message }));
+  });
+  app.post("/api/solana-send", (req, res) => {
+    const { signedBase64 } = req.body;
+    handleSolanaSend(signedBase64)
+      .then((result) => res.json(result))
+      .catch((err) => res.status(500).json({ error: err.message }));
+  });
 
-  // P2P Orders routes
+  // Wallet routes
+  app.get("/api/wallet/balance", handleWalletBalance);
+
+  // Exchange rate routes
+  app.get("/api/exchange-rate", handleExchangeRate);
+  app.get("/api/forex/rate", handleForexRate);
+  app.get("/api/stable-24h", handleStable24h);
+
+  // Orders routes (new API)
+  app.get("/api/orders", handleListOrders);
+  app.post("/api/orders", handleCreateOrder);
+  app.get("/api/orders/:orderId", handleGetOrder);
+  app.put("/api/orders/:orderId", handleUpdateOrder);
+  app.delete("/api/orders/:orderId", handleDeleteOrder);
+
+  // P2P Orders routes (legacy API)
   app.get("/api/p2p/orders", handleListP2POrders);
   app.post("/api/p2p/orders", handleCreateP2POrder);
   app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
@@ -61,6 +105,12 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // SPL-META submit
+  app.post("/api/spl-meta/submit", handleSubmitSplMeta);
+
+  // Fixorium tokens
+  app.get("/api/fixorium-tokens", handleFixoriumTokens);
 
   // Health check
   app.get("/health", (req, res) => {

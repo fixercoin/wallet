@@ -12,6 +12,7 @@ import {
   Copy,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRightLeft,
   TrendingUp,
   Eye,
   EyeOff,

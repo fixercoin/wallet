@@ -370,6 +370,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         throw new Error("Insufficient SOL balance for this purchase");
       }
 
+      // Check if this is a FXM<->SOL swap
+      if (fixoriumSwapAPI.isFxmSolPair(solToken.mint, buyToken.mint)) {
+        setUseFxmSwap(true);
+        await executeFxmBuySwap(solToken, buyToken, solAmountNeeded);
+        return;
+      }
+
+      // Fall back to Jupiter for other pairs
       const amountInt = parseInt(
         jupiterAPI.formatSwapAmount(solAmountNeeded, solToken.decimals),
         10,
@@ -386,79 +394,182 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         throw new Error("Unable to get swap quote");
       }
 
-      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
-        const swapRequest = {
-          quoteResponse: q,
-          userPublicKey: wallet.publicKey,
-          wrapAndUnwrapSol: true,
-        } as any;
-        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
-        if (!swapResponse || !swapResponse.swapTransaction)
-          throw new Error("Failed to get swap transaction");
-        const kp = getKeypair();
-        if (!kp) throw new Error("Missing wallet key to sign transaction");
-        const swapTransactionBuf = Buffer.from(
-          swapResponse.swapTransaction,
-          "base64",
-        );
-        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
-        tx.sign([kp]);
-        const serialized = Buffer.from(tx.serialize());
+      await submitJupiterQuote(quote, solToken, buyToken, buyTokenAmount);
+    } catch (err: any) {
+      console.error("Buy execution error:", err);
+      toast({
+        title: "Buy Failed",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        if (connection && typeof connection.sendRawTransaction === "function") {
-          const sig = await connection.sendRawTransaction(serialized, {
-            skipPreflight: false,
-          });
-          return sig;
-        }
+  const executeFxmBuySwap = async (
+    solToken: TokenInfo,
+    buyToken: TokenInfo,
+    solAmount: number,
+  ) => {
+    try {
+      // Get FXM swap rate
+      const quote = await fixoriumSwapAPI.getSwapRate(
+        solToken.mint,
+        buyToken.mint,
+        solAmount.toString(),
+      );
 
-        const signedBase64 = (() => {
-          let bin = "";
-          const arr = serialized;
-          for (let i = 0; i < arr.length; i++)
-            bin += String.fromCharCode(arr[i]);
+      if (!quote) {
+        throw new Error("Unable to get FXM swap rate");
+      }
+
+      setFxmSwapQuote(quote);
+
+      // Get swap transaction
+      const swapResponse = await fixoriumSwapAPI.executeSwap({
+        userPublicKey: wallet.publicKey,
+        inputMint: solToken.mint,
+        outputMint: buyToken.mint,
+        inputAmount: solAmount.toString(),
+        outputAmount: quote.outputAmount,
+      });
+
+      if (!swapResponse) {
+        throw new Error("Failed to get swap transaction");
+      }
+
+      setFxmSwapId(swapResponse.swapId);
+
+      // Sign and submit transaction
+      const kp = getKeypair();
+      if (!kp) throw new Error("Missing wallet key to sign transaction");
+
+      const txBuf = Buffer.from(swapResponse.transaction, "base64");
+      const tx = VersionedTransaction.deserialize(txBuf);
+      tx.sign([kp]);
+      const serialized = Buffer.from(tx.serialize());
+
+      if (connection && typeof connection.sendRawTransaction === "function") {
+        const sig = await connection.sendRawTransaction(serialized, {
+          skipPreflight: false,
+        });
+        setTxSignature(sig);
+        setLastSwapFromToken(solToken);
+        setLastSwapToToken(buyToken);
+        setStep("success");
+        setTimeout(() => refreshBalance?.(), 2000);
+        toast({
+          title: "FXM Swap Submitted",
+          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+        });
+        if (connection && typeof connection.getLatestBlockhash === "function") {
           try {
-            return btoa(bin);
-          } catch (e) {
-            return Buffer.from(arr).toString("base64");
-          }
-        })();
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+            toast({
+              title: "FXM Swap Confirmed",
+              description: `Purchased ${buyTokenAmount} ${buyToken?.symbol}`,
+            });
+          } catch {}
+        }
+        return;
+      }
 
-        const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signedBase64 }),
-        });
-        if (!simResp.ok) {
-          const txt = await simResp.text().catch(() => "");
-          throw new Error(txt || simResp.statusText || "Simulation failed");
+      // Fallback to simulate and send
+      const signedBase64 = (() => {
+        let bin = "";
+        const arr = serialized;
+        for (let i = 0; i < arr.length; i++)
+          bin += String.fromCharCode(arr[i]);
+        try {
+          return btoa(bin);
+        } catch (e) {
+          return Buffer.from(arr).toString("base64");
         }
-        const simJson = await simResp.json();
-        if (simJson?.insufficientLamports) {
-          const d = simJson.insufficientLamports;
-          const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
-          throw new Error(
-            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
-          );
-        }
+      })();
 
-        const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signedBase64 }),
-        });
-        if (!sendResp.ok) {
-          const txt = await sendResp.text().catch(() => "");
-          throw new Error(txt || sendResp.statusText || "Send failed");
-        }
-        const jb = await sendResp.json();
-        if (jb.error) {
-          throw new Error(jb.error?.message || "RPC send error");
-        }
-        return jb.result as string;
-      };
+      const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signedBase64 }),
+      });
+      if (!simResp.ok) {
+        const txt = await simResp.text().catch(() => "");
+        throw new Error(txt || simResp.statusText || "Simulation failed");
+      }
+      const simJson = await simResp.json();
+      if (simJson?.insufficientLamports) {
+        const d = simJson.insufficientLamports;
+        const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
+        throw new Error(
+          `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
+        );
+      }
 
-      const sig = await submitQuote(quote);
+      const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signedBase64 }),
+      });
+      if (!sendResp.ok) {
+        const txt = await sendResp.text().catch(() => "");
+        throw new Error(txt || sendResp.statusText || "Send failed");
+      }
+      const jb = await sendResp.json();
+      if (jb.error) {
+        throw new Error(jb.error?.message || "RPC send error");
+      }
+
+      const sig = jb.result as string;
+      setTxSignature(sig);
+      setLastSwapFromToken(solToken);
+      setLastSwapToToken(buyToken);
+      setStep("success");
+      setTimeout(() => refreshBalance?.(), 2000);
+      toast({
+        title: "FXM Swap Submitted",
+        description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+      });
+    } catch (err: any) {
+      console.error("FXM buy swap error:", err);
+      throw err;
+    }
+  };
+
+  const submitJupiterQuote = async (
+    q: JupiterQuoteResponse,
+    solToken: TokenInfo,
+    buyToken: TokenInfo,
+    tokenAmount: string,
+  ) => {
+    const swapRequest = {
+      quoteResponse: q,
+      userPublicKey: wallet.publicKey,
+      wrapAndUnwrapSol: true,
+    } as any;
+    const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+    if (!swapResponse || !swapResponse.swapTransaction)
+      throw new Error("Failed to get swap transaction");
+    const kp = getKeypair();
+    if (!kp) throw new Error("Missing wallet key to sign transaction");
+    const swapTransactionBuf = Buffer.from(
+      swapResponse.swapTransaction,
+      "base64",
+    );
+    const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+    tx.sign([kp]);
+    const serialized = Buffer.from(tx.serialize());
+
+    if (connection && typeof connection.sendRawTransaction === "function") {
+      const sig = await connection.sendRawTransaction(serialized, {
+        skipPreflight: false,
+      });
+
       setTxSignature(sig);
       setLastSwapFromToken(solToken);
       setLastSwapToToken(buyToken);
@@ -478,20 +589,67 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           });
           toast({
             title: "Buy Order Confirmed",
-            description: `Purchased ${buyTokenAmount} ${buyToken?.symbol}`,
+            description: `Purchased ${tokenAmount} ${buyToken?.symbol}`,
           });
         } catch {}
       }
-    } catch (err: any) {
-      console.error("Buy execution error:", err);
-      toast({
-        title: "Buy Failed",
-        description: err instanceof Error ? err.message : String(err),
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    const signedBase64 = (() => {
+      let bin = "";
+      const arr = serialized;
+      for (let i = 0; i < arr.length; i++)
+        bin += String.fromCharCode(arr[i]);
+      try {
+        return btoa(bin);
+      } catch (e) {
+        return Buffer.from(arr).toString("base64");
+      }
+    })();
+
+    const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signedBase64 }),
+    });
+    if (!simResp.ok) {
+      const txt = await simResp.text().catch(() => "");
+      throw new Error(txt || simResp.statusText || "Simulation failed");
+    }
+    const simJson = await simResp.json();
+    if (simJson?.insufficientLamports) {
+      const d = simJson.insufficientLamports;
+      const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
+      throw new Error(
+        `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
+      );
+    }
+
+    const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signedBase64 }),
+    });
+    if (!sendResp.ok) {
+      const txt = await sendResp.text().catch(() => "");
+      throw new Error(txt || sendResp.statusText || "Send failed");
+    }
+    const jb = await sendResp.json();
+    if (jb.error) {
+      throw new Error(jb.error?.message || "RPC send error");
+    }
+
+    const sig = jb.result as string;
+    setTxSignature(sig);
+    setLastSwapFromToken(solToken);
+    setLastSwapToToken(buyToken);
+    setStep("success");
+    setTimeout(() => refreshBalance?.(), 2000);
+    toast({
+      title: "Buy Order Submitted",
+      description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+    });
   };
 
   const executeSellSwap = async () => {

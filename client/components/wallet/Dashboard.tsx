@@ -878,10 +878,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold border border-[#D8B4FE] bg-[#E9D5FF] hover:bg-[#D8B4FE] text-black shadow-lg"
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="Send"
           >
-            <ArrowUpRight className="h-4 w-4 mr-2" />
-            SEND
+            <ArrowUpRight className="h-4 w-4" />
           </Button>
 
           <Button

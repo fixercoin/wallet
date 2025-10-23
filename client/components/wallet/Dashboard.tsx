@@ -565,8 +565,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return arr;
   }, [tokens]);
 
-  const MAIN_TOKEN_SYMBOLS = new Set(["SOL", "USDC", "USDT"]);
-  const FIXORIUM_TOKEN_SYMBOLS = new Set(["FIXERCOIN", "LOCKER"]);
+  const MAIN_TOKEN_SYMBOLS = new Set(["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"]);
+  const FIXORIUM_TOKEN_SYMBOLS = new Set(["FXM"]);
 
   const filteredTokens = useMemo(() => {
     const set = tokenCategory === "main" ? MAIN_TOKEN_SYMBOLS : FIXORIUM_TOKEN_SYMBOLS;

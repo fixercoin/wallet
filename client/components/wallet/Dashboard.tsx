@@ -893,8 +893,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Send"
           >
-            <ArrowUpRight className="h-4 w-4" />
-            <span>SEND</span>
+            <ArrowUpRight className="h-5 w-5" />
           </Button>
 
           <Button
@@ -902,8 +901,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Receive"
           >
-            <ArrowDownLeft className="h-4 w-4" />
-            <span>RECEIVE</span>
+            <ArrowDownLeft className="h-5 w-5" />
           </Button>
 
           <Button
@@ -911,8 +909,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Swap"
           >
-            <ArrowRightLeft className="h-4 w-4" />
-            <span>SWAP</span>
+            <ArrowRightLeft className="h-5 w-5" />
           </Button>
 
           <Button
@@ -920,7 +917,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="P2P"
           >
-            <span className="text-[12px] font-bold tracking-wide">P2P</span>
+            <Coins className="h-5 w-5" />
           </Button>
         </div>
 

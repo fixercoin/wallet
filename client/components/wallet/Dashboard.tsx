@@ -874,35 +874,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
             : "Connect wallet to see balance"}
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: equal-width square buttons */}
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Send"
           >
             <ArrowUpRight className="h-4 w-4" />
+            <span>SEND</span>
           </Button>
 
           <Button
             onClick={onReceive}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Receive"
           >
             <ArrowDownLeft className="h-4 w-4" />
+            <span>RECEIVE</span>
           </Button>
 
           <Button
             onClick={onSwap}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Swap"
           >
             <ArrowRightLeft className="h-4 w-4" />
+            <span>SWAP</span>
           </Button>
 
           <Button
             onClick={() => setShowQuestModal(true)}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Quest Rewards"
           >
             <FlyingPrizeBox
@@ -910,11 +913,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 e.stopPropagation();
               }}
             />
+            <span>REWARDS</span>
           </Button>
 
           <Button
             onClick={() => navigate("/express")}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="P2P"
           >
             <span className="text-[12px] font-bold tracking-wide">P2P</span>

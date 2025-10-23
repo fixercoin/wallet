@@ -857,6 +857,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Button
             onClick={onReceive}
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="Receive"
           >
             <ArrowDownLeft className="h-4 w-4" />
           </Button>
@@ -864,6 +865,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Button
             onClick={onSwap}
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="Swap"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -878,6 +880,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 e.stopPropagation();
               }}
             />
+          </Button>
+
+          <Button
+            onClick={() => navigate("/express")}
+            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            aria-label="P2P"
+          >
+            <span className="text-[8px] font-bold tracking-wide">P2P</span>
           </Button>
         </div>
 

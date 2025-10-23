@@ -638,7 +638,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <p>✅ Connect your Fixorium Wallet</p>
                   <p>✅ Join the quest challenge</p>
                   <p>✅ Complete simple tasks</p>
-                  <p>�� Earn points for each task</p>
+                  <p>���� Earn points for each task</p>
                   <p>✅ Win random rewards</p>
                 </div>
               </div>
@@ -959,11 +959,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             return (
               <Card
                 key={token.mint}
-                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md"
+                className="bg-gradient-to-br from-[#C4B5FD]/20 to-[#E9D5FF]/10 backdrop-blur-xl border border-[#D8B4FE]/50 rounded-md"
               >
                 <CardContent className="p-0">
                   <div
-                    className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-4 rounded-md hover:bg-[#C4B5FD]/20 cursor-pointer transition-colors"
                     onClick={() => onTokenClick(token.mint)}
                   >
                     <div className="flex items-center gap-3">
@@ -996,7 +996,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               <span className="text-xs text-gray-400">24h</span>
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-gray-400">���</span>
                           )}
                         </div>
                       </div>

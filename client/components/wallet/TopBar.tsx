@@ -49,36 +49,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             </span>
             <span className="truncate text-xs opacity-90">fixorium</span>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-white/10"
-                aria-label="Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuItem onSelect={() => onAccounts?.()} className="flex items-center gap-2 text-xs">
-                <Wallet className="h-4 w-4" />
-                <span>Accounts</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onAirdrop} className="flex items-center gap-2 text-xs">
-                <Gift className="h-4 w-4" />
-                <span>Airdrop</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onLock} className="flex items-center gap-2 text-xs">
-                <Lock className="h-4 w-4" />
-                <span>Lock SPL</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onSettings} className="flex items-center gap-2 text-xs">
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            size="sm"
+            onClick={onSettings}
+            className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-white/10"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

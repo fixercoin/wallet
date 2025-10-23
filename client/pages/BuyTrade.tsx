@@ -36,6 +36,7 @@ export default function BuyTrade() {
   const { wallet, balance, tokens } = useWallet();
   const derivedRoomId = room?.id || (order && order.id) || "global";
   const { events, send } = useDurableRoom(derivedRoomId, API_BASE);
+  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
   const counterpartyWallet = useMemo(() => {
     if (!room) return "";
     return wallet?.publicKey === (room.seller_wallet || "")
@@ -120,6 +121,7 @@ export default function BuyTrade() {
 
     saveNotification(notification);
     broadcastNotification(send, notification);
+    broadcastNotification(sendGlobal, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({
@@ -162,6 +164,7 @@ export default function BuyTrade() {
 
     saveNotification(notification);
     broadcastNotification(send, notification);
+    broadcastNotification(sendGlobal, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({
@@ -586,7 +589,7 @@ export default function BuyTrade() {
                   onClick={handleReceived}
                   className="wallet-button-primary w-full"
                 >
-                  I have received
+                  Confirm Transaction
                 </Button>
               ) : (
                 <>
@@ -627,26 +630,18 @@ export default function BuyTrade() {
                     />
                     <input
                       className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40"
-                      placeholder="To wallet"
+                      placeholder="Paste wallet address"
                       value={toWallet}
                       onChange={(e) => setToWallet(e.target.value)}
                     />
                   </div>
-                  {!readyToConfirmSend ? (
-                    <Button
-                      onClick={handleSendTransaction}
-                      className="wallet-button-primary w-full"
-                    >
-                      Send transaction
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleSentAsset}
-                      className="wallet-button-secondary w-full"
-                    >
-                      I have sent asset
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleSentAsset}
+                    className="wallet-button-primary w-full"
+                    disabled={!sendAmount || !toWallet}
+                  >
+                    Confirm Send Transaction
+                  </Button>
                 </>
               )}
 

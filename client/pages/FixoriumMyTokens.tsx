@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface FixoriumToken {
+interface TokenInfo {
   mint: string;
   symbol: string;
   name: string;
@@ -14,15 +14,15 @@ interface FixoriumToken {
   logoURI?: string;
 }
 
-interface TokenWithPrice extends FixoriumToken {
+interface TokenWithPrice extends TokenInfo {
   price?: number;
 }
 
-export default function TokenListing() {
+export default function FixoriumMyTokens() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [tokens, setTokens] = useState<TokenWithPrice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [copiedMint, setCopiedMint] = useState<string | null>(null);
 
   const handleCopyMint = (mint: string, e: React.MouseEvent) => {
@@ -39,7 +39,7 @@ export default function TokenListing() {
   useEffect(() => {
     let cancelled = false;
     async function fetchTokens() {
-      setIsLoading(true);
+      setLoading(true);
       try {
         const res = await fetch("/api/fixorium-tokens");
         if (!res.ok) throw new Error("Failed to fetch tokens");
@@ -49,7 +49,7 @@ export default function TokenListing() {
 
         // Fetch prices for each token
         const tokensWithPrices = await Promise.all(
-          tokenList.map(async (token: FixoriumToken) => {
+          tokenList.map(async (token: TokenInfo) => {
             try {
               const priceRes = await fetch(
                 `/api/dexscreener?mint=${token.mint}`,
@@ -75,7 +75,7 @@ export default function TokenListing() {
         console.error("Failed to load Fixorium tokens:", e);
         if (!cancelled) setTokens([]);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     void fetchTokens();
@@ -101,13 +101,13 @@ export default function TokenListing() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 text-center font-medium text-[10px]">
-            FIXORIUM TOKENS
+            FIXORIUM — MY TOKENS
           </div>
         </div>
       </div>
 
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        {isLoading ? (
+        {loading ? (
           <div className="text-center py-12">
             <div className="text-sm text-gray-300">Loading tokens...</div>
           </div>

@@ -15,6 +15,8 @@ import {
   createTradeRoom,
   updateTradeRoom,
 } from "../../utils/p2pStore";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
@@ -528,6 +530,50 @@ export const handler = async (event: any) => {
       return jsonResponse(200, result.body);
     }
 
+    // Solana simulate transaction
+    if (path === "/solana-simulate" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonResponse(400, {
+          error: "Missing signedBase64 in request body",
+        });
+      }
+      try {
+        const result = await handleSolanaSimulate(signedBase64);
+        return jsonResponse(200, result);
+      } catch (e: any) {
+        return jsonResponse(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
+    // Solana send transaction
+    if (path === "/solana-send" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonResponse(400, {
+          error: "Missing signedBase64 in request body",
+        });
+      }
+      try {
+        const result = await handleSolanaSend(signedBase64);
+        return jsonResponse(200, result);
+      } catch (e: any) {
+        return jsonResponse(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
     if (path === "/forex/rate" && method === "GET") {
       const base = (event.queryStringParameters?.base || "USD").toUpperCase();
@@ -1003,6 +1049,50 @@ export const handler = async (event: any) => {
         missing: missing.length,
         missingMints: missing,
       });
+    }
+
+    // SPL-META submit
+    if (path === "/spl-meta/submit" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+      const {
+        name,
+        symbol,
+        description = "",
+        logoURI = "",
+        website = "",
+        twitter = "",
+        telegram = "",
+        dexpair = "",
+        lastUpdated,
+      } = body || {};
+
+      if (!name || !symbol) {
+        return jsonResponse(400, {
+          error: "Missing required fields: name, symbol",
+        });
+      }
+
+      const payload = {
+        name: String(name),
+        symbol: String(symbol),
+        description: String(description),
+        logoURI: String(logoURI),
+        website: String(website),
+        twitter: String(twitter),
+        telegram: String(telegram),
+        dexpair: String(dexpair),
+        lastUpdated: lastUpdated
+          ? new Date(lastUpdated).toISOString()
+          : new Date().toISOString(),
+        receivedAt: new Date().toISOString(),
+        source: "spl-meta-form",
+      };
+
+      console.log("[SPL-META] Submission received:", payload);
+      return jsonResponse(202, { status: "queued", payload });
     }
 
     return jsonResponse(404, { error: `No handler for ${path}` });

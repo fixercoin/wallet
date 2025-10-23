@@ -216,6 +216,8 @@ import {
   addEasypaisaPaymentCF,
   listEasypaisaPaymentsCF,
 } from "../../utils/p2pStoreCf";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
@@ -318,6 +320,48 @@ export const onRequest = async ({ request, env }) => {
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);
+    }
+
+    // Solana simulate transaction
+    if (normalizedPath === "/solana-simulate" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSimulate(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
+    // Solana send transaction
+    if (normalizedPath === "/solana-send" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSend(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
@@ -1048,6 +1092,393 @@ export const onRequest = async ({ request, env }) => {
       }
       const data = await resp.json();
       return jsonCors(200, data);
+    }
+
+    // SPL-META submit (POST)
+    if (normalizedPath === "/spl-meta/submit") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+      const {
+        name,
+        symbol,
+        description = "",
+        logoURI = "",
+        website = "",
+        twitter = "",
+        telegram = "",
+        dexpair = "",
+        lastUpdated,
+      } = body || {};
+
+      if (!name || !symbol) {
+        return jsonCors(400, {
+          error: "Missing required fields: name, symbol",
+        });
+      }
+
+      const payload = {
+        name: String(name),
+        symbol: String(symbol),
+        description: String(description),
+        logoURI: String(logoURI),
+        website: String(website),
+        twitter: String(twitter),
+        telegram: String(telegram),
+        dexpair: String(dexpair),
+        lastUpdated: lastUpdated
+          ? new Date(lastUpdated).toISOString()
+          : new Date().toISOString(),
+        receivedAt: new Date().toISOString(),
+        source: "spl-meta-form",
+      };
+
+      console.log("[SPL-META] Submission received:", payload);
+      return jsonCors(202, { status: "queued", payload });
+    }
+
+    // Token Price: /api/token-price?mint=<mint>
+    if (normalizedPath === "/token-price") {
+      const mint = url.searchParams.get("mint");
+      if (!mint) {
+        return jsonCors(400, { error: "Missing mint parameter" });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const resp = await fetch(`https://api.jup.ag/price?ids=${mint}`, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return jsonCors(resp.status, {
+            error: "Failed to fetch token price",
+            mint,
+            price: 0,
+          });
+        }
+
+        const data = await resp.json();
+        const priceData = data.data?.[mint];
+
+        if (priceData && priceData.price) {
+          return jsonCors(200, {
+            mint,
+            price: priceData.price,
+            lastUpdateUnixTime: data.timeTaken,
+          });
+        }
+
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Token not found or price unavailable",
+        });
+      } catch (error) {
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Error fetching token price",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Create Pool: /api/create-pool (POST)
+    if (normalizedPath === "/create-pool") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+
+      const {
+        tokenA,
+        tokenB,
+        amountA,
+        amountB,
+        fee = 0.01,
+        walletAddress,
+      } = body || {};
+
+      if (!tokenA || !tokenB || !amountA || !amountB || !walletAddress) {
+        return jsonCors(400, {
+          error:
+            "Missing required fields: tokenA, tokenB, amountA, amountB, walletAddress",
+        });
+      }
+
+      if (tokenA === tokenB) {
+        return jsonCors(400, {
+          error: "Token A and Token B must be different",
+        });
+      }
+
+      try {
+        const poolData = {
+          poolId: `pool_${Math.random().toString(36).substr(2, 9)}`,
+          tokenA,
+          tokenB,
+          amountA: String(amountA),
+          amountB: String(amountB),
+          fee: Number(fee),
+          walletAddress,
+          createdAt: new Date().toISOString(),
+          status: "active",
+          totalLiquidity: `${amountA}-${amountB}`,
+        };
+
+        // Save to database if available
+        if (hasDb) {
+          try {
+            const { createPoolCF } = await import("../../utils/poolStoreCf");
+            await createPoolCF(db, poolData);
+            console.log(
+              "[CREATE-POOL] Pool saved to database:",
+              poolData.poolId,
+            );
+          } catch (dbError) {
+            console.warn("[CREATE-POOL] Database save failed:", dbError);
+          }
+        }
+
+        console.log("[CREATE-POOL] Pool created:", poolData);
+        return jsonCors(201, poolData);
+      } catch (error) {
+        return jsonCors(502, {
+          error: "Failed to create pool",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Get Pools: /api/pools (GET)
+    if (normalizedPath === "/pools" && request.method === "GET") {
+      try {
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+        return jsonCors(200, { pools: allPools });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to fetch pools",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Get Pools for Token Pair: /api/pools?tokenA=...&tokenB=... (GET)
+    if (normalizedPath === "/pools" && request.method === "GET") {
+      try {
+        const tokenA = url.searchParams.get("tokenA");
+        const tokenB = url.searchParams.get("tokenB");
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        let filtered = allPools;
+        if (tokenA && tokenB) {
+          filtered = allPools.filter(
+            (pool: any) =>
+              (pool.tokenA === tokenA && pool.tokenB === tokenB) ||
+              (pool.tokenA === tokenB && pool.tokenB === tokenA),
+          );
+        }
+
+        return jsonCors(200, { pools: filtered });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to fetch pools",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Quote Swap: /api/swap/quote (POST)
+    if (normalizedPath === "/swap/quote" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {}
+
+        const { inputMint, outputMint, inputAmount } = body || {};
+
+        if (!inputMint || !outputMint || !inputAmount) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: inputMint, outputMint, inputAmount",
+          });
+        }
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        const pool = allPools.find(
+          (p: any) =>
+            (p.tokenA === inputMint && p.tokenB === outputMint) ||
+            (p.tokenA === outputMint && p.tokenB === inputMint),
+        );
+
+        if (!pool) {
+          return jsonCors(404, {
+            error: "No pool found for this token pair",
+          });
+        }
+
+        const isTokenA = inputMint === pool.tokenA;
+        const reserveIn = parseFloat(isTokenA ? pool.amountA : pool.amountB);
+        const reserveOut = parseFloat(isTokenA ? pool.amountB : pool.amountA);
+
+        if (reserveIn <= 0 || reserveOut <= 0) {
+          return jsonCors(400, {
+            error: "Pool has insufficient liquidity",
+          });
+        }
+
+        const input = parseFloat(inputAmount);
+        const feeMultiplier = 1 - pool.fee / 100;
+        const amountInWithFee = input * feeMultiplier;
+        const numerator = amountInWithFee * reserveOut;
+        const denominator = reserveIn + amountInWithFee;
+        const outputAmount = numerator / denominator;
+
+        const priceImpact =
+          ((input * reserveOut) / (reserveIn * (reserveIn + input)) -
+            outputAmount) /
+          ((input * reserveOut) / (reserveIn * (reserveIn + input)));
+
+        const feeAmount = input - amountInWithFee;
+
+        return jsonCors(200, {
+          inputAmount: inputAmount,
+          outputAmount: outputAmount.toFixed(8),
+          priceImpact: (Math.abs(priceImpact) * 100).toFixed(2),
+          fee: feeAmount.toFixed(8),
+          poolId: pool.poolId,
+          pool: pool,
+        });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to calculate quote",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Execute Swap: /api/swap/execute (POST)
+    if (normalizedPath === "/swap/execute" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {}
+
+        const { poolId, inputMint, inputAmount, outputAmount } = body || {};
+
+        if (!poolId || !inputMint || !inputAmount || !outputAmount) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: poolId, inputMint, inputAmount, outputAmount",
+          });
+        }
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        const poolIndex = allPools.findIndex((p: any) => p.poolId === poolId);
+        if (poolIndex === -1) {
+          return jsonCors(404, { error: "Pool not found" });
+        }
+
+        const pool = allPools[poolIndex];
+        const isTokenA = inputMint === pool.tokenA;
+
+        const newAmountA = isTokenA
+          ? (parseFloat(pool.amountA) + parseFloat(inputAmount)).toFixed(8)
+          : (parseFloat(pool.amountA) - parseFloat(outputAmount)).toFixed(8);
+
+        const newAmountB = isTokenA
+          ? (parseFloat(pool.amountB) - parseFloat(outputAmount)).toFixed(8)
+          : (parseFloat(pool.amountB) + parseFloat(inputAmount)).toFixed(8);
+
+        const updatedPool = {
+          ...pool,
+          amountA: newAmountA,
+          amountB: newAmountB,
+          totalLiquidity: `${newAmountA}-${newAmountB}`,
+        };
+
+        allPools[poolIndex] = updatedPool;
+
+        if ((env as any)?.POOLS_DATA !== undefined) {
+          (env as any).POOLS_DATA = JSON.stringify(allPools);
+        }
+
+        return jsonCors(200, {
+          success: true,
+          pool: updatedPool,
+          message: "Swap executed successfully",
+        });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to execute swap",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });

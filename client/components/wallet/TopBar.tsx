@@ -10,13 +10,13 @@ import {
 import {
   Flame,
   Menu,
-  Search,
+  Settings,
   Wallet,
   Gift,
   Flame as BurnIcon,
   Lock,
+  FileText,
   Coins,
-  Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -49,10 +49,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="truncate text-xs opacity-90">fixorium</span>
           </div>
           <button
-            aria-label="Search"
+            aria-label="Settings"
+            onClick={onSettings}
             className="p-1.5 rounded-lg hover:bg-white/5"
           >
-            <Search className="h-4 w-4 text-white/80" />
+            <Settings className="h-4 w-4 text-white/80" />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -93,19 +94,28 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>LOCK-SPL</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => navigate("/fixorium/token-listing")}
+                onSelect={() => navigate("/fixorium/create-token")}
+                className="flex items-center gap-2 text-xs"
+              >
+                <FileText className="h-4 w-4" />
+                <span>MINT-SPL</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => navigate("/express")}
                 className="flex items-center gap-2 text-xs"
               >
                 <Coins className="h-4 w-4" />
-                <span>LISTING</span>
+                <span>P2P</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onSelect={onSettings}
+                onSelect={() =>
+                  window.dispatchEvent(new CustomEvent("openRewardsQuest"))
+                }
                 className="flex items-center gap-2 text-xs"
               >
-                <Settings className="h-4 w-4" />
-                <span>SETTINGS</span>
+                <Gift className="h-4 w-4" />
+                <span>REWARDS</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

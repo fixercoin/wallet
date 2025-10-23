@@ -418,15 +418,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         {token.symbol.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{token.symbol}</span>
-                        <span className="text-xs text-gray-400">
-                          {formatAmount(getTokenBalance(token), token.symbol)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-white">{token.name}</div>
-                    </div>
+                    <span className="font-medium">
+                      {token.symbol} ~{" "}
+                      {formatAmount(getTokenBalance(token), token.symbol)}
+                    </span>
                   </div>
                 </SelectItem>
               ))}

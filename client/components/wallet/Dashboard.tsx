@@ -869,7 +869,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+            className="flex-1 h-12 rounded-xl font-semibold border border-[#D8B4FE] bg-[#E9D5FF] hover:bg-[#D8B4FE] text-black shadow-lg"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
             SEND

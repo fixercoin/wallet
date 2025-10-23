@@ -23,7 +23,24 @@ export interface SwapQuoteResponse {
 }
 
 class LocalSwapService {
+  private getPoolsFromLocalStorage(): LocalPool[] {
+    try {
+      const stored = localStorage.getItem("fixorium_pools");
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (err) {
+      console.error("Error loading from localStorage:", err);
+    }
+    return [];
+  }
+
   async getPools(): Promise<LocalPool[]> {
+    const localPools = this.getPoolsFromLocalStorage();
+    if (localPools.length > 0) {
+      return localPools;
+    }
+
     try {
       const apiUrl = resolveApiUrl();
       const response = await fetch(`${apiUrl}/api/pools`);
@@ -42,6 +59,16 @@ class LocalSwapService {
     tokenA: string,
     tokenB: string,
   ): Promise<LocalPool[]> {
+    const localPools = this.getPoolsFromLocalStorage();
+    const filtered = localPools.filter(
+      (pool) =>
+        (pool.tokenA === tokenA && pool.tokenB === tokenB) ||
+        (pool.tokenA === tokenB && pool.tokenB === tokenA),
+    );
+    if (filtered.length > 0) {
+      return filtered;
+    }
+
     try {
       const apiUrl = resolveApiUrl();
       const response = await fetch(
@@ -133,7 +160,11 @@ class LocalSwapService {
     return ((spotPrice - executionPrice) / spotPrice) * 100;
   }
 
-  hasLiquidity(pool: LocalPool, inputMint: string, inputAmount: string): boolean {
+  hasLiquidity(
+    pool: LocalPool,
+    inputMint: string,
+    inputAmount: string,
+  ): boolean {
     const input = parseFloat(inputAmount);
     const isTokenA = inputMint === pool.tokenA;
     const reserveIn = parseFloat(isTokenA ? pool.amountA : pool.amountB);

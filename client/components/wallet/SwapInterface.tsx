@@ -577,6 +577,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         10,
       );
 
+      // Check if the selected token is supported
+      if (!supportedMints.has(sellToken.mint)) {
+        console.warn(
+          `Token ${sellToken.symbol} (${sellToken.mint}) is not in supported mints list`,
+        );
+        throw new Error(
+          `Token ${sellToken.symbol} is not supported for swaps. Please try a different token.`,
+        );
+      }
+
       const quote = await jupiterAPI.getQuote(
         sellToken.mint,
         solToken.mint,
@@ -585,7 +595,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
 
       if (!quote) {
-        throw new Error("Unable to get swap quote");
+        throw new Error(
+          `No swap route available for ${sellToken.symbol}. This token may have limited liquidity or may not be supported on Jupiter.`,
+        );
       }
 
       setUseLocalPool(false);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft } from "lucide-react";
@@ -13,9 +13,13 @@ interface FixoriumToken {
   logoURI?: string;
 }
 
+interface TokenWithPrice extends FixoriumToken {
+  price?: number;
+}
+
 export default function TokenListing() {
   const navigate = useNavigate();
-  const [tokens, setTokens] = useState<FixoriumToken[]>([]);
+  const [tokens, setTokens] = useState<TokenWithPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +31,30 @@ export default function TokenListing() {
         if (!res.ok) throw new Error("Failed to fetch tokens");
         const j = await res.json();
         const t = j?.tokens || j?.data || [];
-        if (!cancelled) setTokens(Array.isArray(t) ? t : []);
+        const tokenList = Array.isArray(t) ? t : [];
+        
+        // Fetch prices for each token
+        const tokensWithPrices = await Promise.all(
+          tokenList.map(async (token: FixoriumToken) => {
+            try {
+              const priceRes = await fetch(
+                `/api/dexscreener?mint=${token.mint}`
+              );
+              if (priceRes.ok) {
+                const priceData = await priceRes.json();
+                return {
+                  ...token,
+                  price: priceData?.priceUsd ? parseFloat(priceData.priceUsd) : undefined,
+                };
+              }
+            } catch (e) {
+              console.error(`Failed to fetch price for ${token.mint}:`, e);
+            }
+            return token;
+          })
+        );
+
+        if (!cancelled) setTokens(tokensWithPrices);
       } catch (e) {
         console.error("Failed to load Fixorium tokens:", e);
         if (!cancelled) setTokens([]);
@@ -64,50 +91,64 @@ export default function TokenListing() {
       </div>
 
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
-          <CardContent className="pt-6">
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="text-sm text-gray-300">Loading tokens...</div>
-              </div>
-            ) : tokens.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-sm text-gray-300">No tokens found</div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {tokens.map((token) => (
-                  <div
-                    key={token.mint}
-                    className="flex items-center justify-between p-3 rounded-md bg-[#0f1520]/40 border border-white/5 cursor-pointer hover:bg-[#0f1520]/60 transition-colors"
-                    onClick={() => navigate(`/token/${token.mint}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="text-sm text-gray-300">Loading tokens...</div>
+          </div>
+        ) : tokens.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-sm text-gray-300">No tokens found</div>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {tokens.map((token) => (
+              <Card
+                key={token.mint}
+                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl cursor-pointer hover:border-[#FF7A5C]/50 transition-colors overflow-hidden"
+                onClick={() => navigate(`/token/${token.mint}`)}
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-4">
+                    {/* Token Logo and Info - Left */}
+                    <div className="flex flex-col items-center gap-2">
+                      <Avatar className="h-16 w-16">
                         {token.logoURI ? (
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                         ) : (
-                          <AvatarFallback className="bg-[#FF7A5C] text-white">
+                          <AvatarFallback className="bg-[#FF7A5C] text-white text-lg font-semibold">
                             {(token.symbol || "?").slice(0, 2)}
                           </AvatarFallback>
                         )}
                       </Avatar>
-                      <div>
-                        <div className="font-semibold text-sm">{token.name}</div>
-                        <div className="text-xs text-gray-400">
-                          {token.symbol}
-                        </div>
+                      <div className="text-center">
+                        <div className="text-sm font-semibold">{token.name}</div>
+                        <div className="text-xs text-gray-400">{token.symbol}</div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-400 break-words text-right max-w-[45%]">
-                      {token.mint}
+
+                    {/* Price - Center */}
+                    <div className="flex-1 flex flex-col justify-center items-center">
+                      <div className="text-xs text-gray-400 mb-1">Price</div>
+                      <div className="text-lg font-semibold text-[#FF7A5C]">
+                        {token.price !== undefined
+                          ? token.price > 0.01
+                            ? `$${token.price.toFixed(4)}`
+                            : `$${token.price.toExponential(2)}`
+                          : "—"}
+                      </div>
+                    </div>
+
+                    {/* Amount/Balance - Right */}
+                    <div className="flex flex-col justify-center items-end">
+                      <div className="text-xs text-gray-400 mb-1">Balance</div>
+                      <div className="text-lg font-semibold">0.00</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

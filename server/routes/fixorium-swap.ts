@@ -142,6 +142,10 @@ const transferTokensInstruction = (
   });
 };
 
+// Fixed exchange rate: 1000 FXM = 0.005 SOL
+// This means: 1 FXM = 0.000005 SOL, or 1 SOL = 200,000 FXM
+const FIXED_FXM_SOL_RATE = 0.000005; // 1 FXM = 0.000005 SOL
+
 // Get the swap rate for FXM<->SOL
 export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
   try {
@@ -169,31 +173,19 @@ export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
       });
     }
 
-    // Get the FXM price from Jupiter or DexScreener
-    const fxmUsdPrice = await getFXMPrice();
-    const solUsdPrice = await getSOLPrice();
-
-    if (!fxmUsdPrice || !solUsdPrice) {
-      return res.status(500).json({
-        error: "Unable to fetch token prices",
-      });
-    }
-
-    // Calculate output amount based on prices
+    // Calculate output amount based on fixed rate
     const inputAmountNum = parseFloat(inputAmount);
     let outputAmount: number;
     let rate: number;
 
     if (isInputFXM) {
-      // FXM -> SOL
-      const inputValueUsd = inputAmountNum * fxmUsdPrice;
-      outputAmount = inputValueUsd / solUsdPrice;
-      rate = solUsdPrice / fxmUsdPrice;
+      // FXM -> SOL: 1000 FXM = 0.005 SOL
+      outputAmount = inputAmountNum * FIXED_FXM_SOL_RATE;
+      rate = FIXED_FXM_SOL_RATE;
     } else {
-      // SOL -> FXM
-      const inputValueUsd = inputAmountNum * solUsdPrice;
-      outputAmount = inputValueUsd / fxmUsdPrice;
-      rate = fxmUsdPrice / solUsdPrice;
+      // SOL -> FXM: 1 SOL = 200,000 FXM
+      outputAmount = inputAmountNum / FIXED_FXM_SOL_RATE;
+      rate = 1 / FIXED_FXM_SOL_RATE;
     }
 
     const response: SwapRateResponse = {

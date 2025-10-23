@@ -1018,6 +1018,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-sm font-semibold text-white">
                         {formatBalance(
                           token.symbol === "SOL" ? balance : token.balance || 0,
+                          token.symbol,
                         )}
                       </p>
                       <p className="text-xs text-gray-300">

@@ -126,13 +126,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <Gift className="h-4 w-4" />
                 <span>REWARDS</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={onSettings}
-                className="flex items-center gap-2 text-xs"
-              >
-                <Settings className="h-4 w-4" />
-                <span>SETTINGS</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

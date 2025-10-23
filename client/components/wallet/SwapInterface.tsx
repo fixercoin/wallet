@@ -72,8 +72,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     const loadTokens = async () => {
       try {
         const jupiterTokens = await jupiterAPI.getStrictTokenList();
-        const popularTokens: TokenInfo[] = (jupiterTokens || [])
-          .slice(0, 50)
+
+        // Ensure we have tokens (including fallback)
+        if (!jupiterTokens || jupiterTokens.length === 0) {
+          console.warn("No Jupiter tokens loaded, using user tokens only");
+          setAvailableTokens(tokens || []);
+          setSupportedMints(
+            new Set((tokens || []).map((t: TokenInfo) => t.mint)),
+          );
+          return;
+        }
+
+        const popularTokens: TokenInfo[] = jupiterTokens
           .map((jt: any) => ({
             mint: jt.address,
             symbol: jt.symbol,
@@ -81,9 +91,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             decimals: jt.decimals,
             logoURI: jt.logoURI,
           }));
-        setSupportedMints(
-          new Set((jupiterTokens || []).map((t: any) => t.address)),
-        );
+
+        // Set supported mints from Jupiter (including any fallback tokens)
+        const supportedMintSet = new Set(jupiterTokens.map((t: any) => t.address));
+        setSupportedMints(supportedMintSet);
+
+        // Log FXM token status for debugging
+        const fxmMint = "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63";
+        if (supportedMintSet.has(fxmMint)) {
+          console.log("FXM token is in supported list");
+        } else {
+          console.warn("FXM token NOT in supported list - this may cause swap issues");
+        }
 
         const userTokens = tokens || [];
         const combined = [
@@ -95,7 +114,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         setAvailableTokens(combined);
       } catch (err) {
         console.error("Error loading tokens:", err);
+        // Fallback to user tokens
         setAvailableTokens(tokens || []);
+        setSupportedMints(
+          new Set((tokens || []).map((t: TokenInfo) => t.mint)),
+        );
       }
     };
 

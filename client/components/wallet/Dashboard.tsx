@@ -894,11 +894,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
           <Button
-            onClick={() => navigate("/express")}
+            onClick={() => navigate("/express?category=main")}
             className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
-            aria-label="EXPRESS P2P SERVICE"
+            aria-label="MAIN TOKENS"
           >
-            <span className="mr-0">EXPRESS P2P SERVICE</span>
+            <span className="mr-0">MAIN TOKENS</span>
+          </Button>
+
+          <Button
+            onClick={() => navigate("/express?category=fixorium")}
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#6D28D9] to-[#EC4899] hover:from-[#5B21B6] hover:to-[#DB2777] text-white shadow-lg flex items-center justify-center"
+            aria-label="FIXORIUM TOKENS"
+          >
+            <span className="mr-0">FIXORIUM TOKENS</span>
           </Button>
 
           {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (

@@ -3,7 +3,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, MessageSquare, MoreVertical } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   DropdownMenu,
@@ -51,6 +51,21 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   const [buyTokenMint, setBuyTokenMint] = useState<string>("USDC");
   const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
   const [sellTokenMint, setSellTokenMint] = useState<string>("USDC");
+
+  const location = useLocation();
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const cat = (params.get("category") || "").toLowerCase();
+      if (cat === "fixorium") {
+        setBuyTokenMint("FIXERCOIN");
+        setSellTokenMint("FIXERCOIN");
+      } else if (cat === "main") {
+        setBuyTokenMint("USDC");
+        setSellTokenMint("USDC");
+      }
+    } catch {}
+  }, []);
 
   // Pricing state
   const [usdToPkr, setUsdToPkr] = useState<number | null>(null);

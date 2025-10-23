@@ -1183,7 +1183,7 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(200, {
           mint,
           price: 0,
-          error: "Token not found or price unavailable"
+          error: "Token not found or price unavailable",
         });
       } catch (error) {
         return jsonCors(200, {
@@ -1217,7 +1217,8 @@ export const onRequest = async ({ request, env }) => {
 
       if (!tokenA || !tokenB || !amountA || !amountB || !walletAddress) {
         return jsonCors(400, {
-          error: "Missing required fields: tokenA, tokenB, amountA, amountB, walletAddress",
+          error:
+            "Missing required fields: tokenA, tokenB, amountA, amountB, walletAddress",
         });
       }
 

@@ -90,7 +90,8 @@ export default function CreatePool() {
     const fetchPrices = async () => {
       try {
         const prices: Record<string, number> = {};
-        const tokensToPrice = walletTokens.length > 0 ? walletTokens : COMMON_TOKENS;
+        const tokensToPrice =
+          walletTokens.length > 0 ? walletTokens : COMMON_TOKENS;
 
         for (const token of tokensToPrice) {
           try {

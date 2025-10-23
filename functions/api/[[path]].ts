@@ -1141,6 +1141,109 @@ export const onRequest = async ({ request, env }) => {
       return jsonCors(202, { status: "queued", payload });
     }
 
+    // Token Price: /api/token-price?mint=<mint>
+    if (normalizedPath === "/token-price") {
+      const mint = url.searchParams.get("mint");
+      if (!mint) {
+        return jsonCors(400, { error: "Missing mint parameter" });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.signal, 5000);
+
+        const resp = await fetch(`https://api.jup.ag/price?ids=${mint}`, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return jsonCors(resp.status, {
+            error: "Failed to fetch token price",
+            mint,
+          });
+        }
+
+        const data = await resp.json();
+        const priceData = data.data?.[mint];
+
+        if (priceData) {
+          return jsonCors(200, {
+            mint,
+            price: priceData.price || 0,
+            lastUpdateUnixTime: data.timeTaken,
+          });
+        }
+
+        return jsonCors(404, { error: "Token not found", mint });
+      } catch (error) {
+        return jsonCors(502, {
+          error: "Error fetching token price",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Create Pool: /api/create-pool (POST)
+    if (normalizedPath === "/create-pool") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+
+      const {
+        tokenA,
+        tokenB,
+        amountA,
+        amountB,
+        fee = 0.01,
+        walletAddress,
+      } = body || {};
+
+      if (!tokenA || !tokenB || !amountA || !amountB || !walletAddress) {
+        return jsonCors(400, {
+          error: "Missing required fields: tokenA, tokenB, amountA, amountB, walletAddress",
+        });
+      }
+
+      if (tokenA === tokenB) {
+        return jsonCors(400, {
+          error: "Token A and Token B must be different",
+        });
+      }
+
+      try {
+        const poolData = {
+          poolId: `pool_${Math.random().toString(36).substr(2, 9)}`,
+          tokenA,
+          tokenB,
+          amountA: String(amountA),
+          amountB: String(amountB),
+          fee: Number(fee),
+          walletAddress,
+          createdAt: new Date().toISOString(),
+          status: "active",
+          totalLiquidity: `${amountA}-${amountB}`,
+        };
+
+        console.log("[CREATE-POOL] Pool created:", poolData);
+        return jsonCors(201, poolData);
+      } catch (error) {
+        return jsonCors(502, {
+          error: "Failed to create pool",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

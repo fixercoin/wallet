@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader } from "@/components/ui/Loader";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, ArrowLeft } from "lucide-react";
 
 interface TokenInfo {
   mint: string;

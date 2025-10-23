@@ -8,6 +8,13 @@ import { resolveApiUrl } from "@/lib/api-client";
 import { useNavigate } from "react-router-dom";
 import { TokenInfo } from "@/lib/wallet";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Keypair,
   SystemProgram,
   Transaction,

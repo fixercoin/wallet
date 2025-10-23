@@ -70,8 +70,7 @@ export default function FixoriumMyTokens() {
             allTokens = [
               ...allTokens,
               ...fixoriumTokens.filter(
-                (ft: any) =>
-                  !userTokens.some((ut: any) => ut.mint === ft.mint),
+                (ft: any) => !userTokens.some((ut: any) => ut.mint === ft.mint),
               ),
             ];
           }

@@ -1,11 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Plus, Coins } from "lucide-react";
+import { Plus, Coins, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function FixoriumAdd() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const handleNavigate = (path: string) => {
+    setOpen(false);
+    navigate(path);
+  };
 
   return (
     <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
@@ -31,12 +44,37 @@ export default function FixoriumAdd() {
             <CardTitle className="text-lg">Choose an action</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button
-              className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
-              onClick={() => navigate("/fixorium/create-token")}
-            >
-              <Plus className="h-4 w-4 mr-2" /> Create Token
-            </Button>
+            <DropdownMenu open={open} onOpenChange={setOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0 flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/create-token")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Token
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/create-pool")}>
+                  <Coins className="h-4 w-4 mr-2" />
+                  Create Pool
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/my-tokens")}>
+                  <Coins className="h-4 w-4 mr-2" />
+                  My Tokens
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/token-listing")}>
+                  <Coins className="h-4 w-4 mr-2" />
+                  Listed
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               className="w-full h-12 bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#022c3d] font-semibold border-0"
               onClick={() => navigate("/fixorium/token-listing")}

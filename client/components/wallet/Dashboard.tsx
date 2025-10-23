@@ -418,9 +418,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatBalance = (amount: number | undefined): string => {
-    if (!amount || isNaN(amount)) return "0.00";
-    return amount.toLocaleString(undefined, {
+  const formatBalance = (amount: number | undefined, symbol?: string): string => {
+    const amt = typeof amount === "number" && isFinite(amount) ? amount : 0;
+    const sym = String(symbol || "").toUpperCase();
+    if (sym === "FIXERCOIN" || sym === "LOCKER") {
+      const fixed = amt.toFixed(2);
+      const [intPart, fracPart = "00"] = fixed.split(".");
+      const sign = amt < 0 ? "-" : "";
+      const digits = intPart.replace(/^-/, "");
+      const padded = digits.padStart(4, "0");
+      return `${sign}${padded}.${fracPart}`;
+    }
+    return amt.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     });

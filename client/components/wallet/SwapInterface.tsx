@@ -493,6 +493,50 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!solToken) throw new Error("SOL token not found");
 
       const tokenAmount = parseFloat(sellTokenAmount);
+
+      // Check for local pools first
+      let localQuote = null;
+      try {
+        localQuote = await localSwapAPI.getQuote(
+          sellToken.mint,
+          solToken.mint,
+          tokenAmount.toString(),
+        );
+      } catch (err) {
+        console.log("Local pool not available:", err);
+      }
+
+      if (localQuote) {
+        setUseLocalPool(true);
+        // Execute local swap
+        const executeLocalSwap = async () => {
+          try {
+            await localSwapAPI.executeSwap(
+              localQuote.poolId,
+              sellToken.mint,
+              tokenAmount.toString(),
+              localQuote.outputAmount,
+            );
+            setTxSignature(`local_${localQuote.poolId}`);
+            setLastSwapFromToken(sellToken);
+            setLastSwapToToken(solToken);
+            setStep("success");
+            setTimeout(() => refreshBalance?.(), 500);
+            toast({
+              title: "Swap Completed",
+              description: `Swapped ${tokenAmount} ${sellToken.symbol} for ${localQuote.outputAmount} ${solToken.symbol}`,
+            });
+          } catch (err: any) {
+            throw err;
+          }
+        };
+
+        await executeLocalSwap();
+        setIsLoading(false);
+        return;
+      }
+
+      // Fall back to Jupiter
       const amountInt = parseInt(
         jupiterAPI.formatSwapAmount(tokenAmount, sellToken.decimals),
         10,
@@ -508,6 +552,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!quote) {
         throw new Error("Unable to get swap quote");
       }
+
+      setUseLocalPool(false);
 
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
         const swapRequest = {

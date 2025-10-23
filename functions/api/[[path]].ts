@@ -1150,7 +1150,7 @@ export const onRequest = async ({ request, env }) => {
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.signal, 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
 
         const resp = await fetch(`https://api.jup.ag/price?ids=${mint}`, {
           headers: {
@@ -1165,23 +1165,30 @@ export const onRequest = async ({ request, env }) => {
           return jsonCors(resp.status, {
             error: "Failed to fetch token price",
             mint,
+            price: 0,
           });
         }
 
         const data = await resp.json();
         const priceData = data.data?.[mint];
 
-        if (priceData) {
+        if (priceData && priceData.price) {
           return jsonCors(200, {
             mint,
-            price: priceData.price || 0,
+            price: priceData.price,
             lastUpdateUnixTime: data.timeTaken,
           });
         }
 
-        return jsonCors(404, { error: "Token not found", mint });
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Token not found or price unavailable"
+        });
       } catch (error) {
-        return jsonCors(502, {
+        return jsonCors(200, {
+          mint,
+          price: 0,
           error: "Error fetching token price",
           details: error instanceof Error ? error.message : String(error),
         });

@@ -403,7 +403,12 @@ export default function CreateToken() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <Card className="bg-[#1a2540]/50 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl overflow-hidden p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="decimals" className="text-xs font-semibold text-gray-300">Decimals</Label>
+                    <Label
+                      htmlFor="decimals"
+                      className="text-xs font-semibold text-gray-300"
+                    >
+                      Decimals
+                    </Label>
                     <div className="h-12 flex items-center px-3 border border-white/30 rounded-lg bg-transparent text-white font-semibold text-lg">
                       {decimals}
                     </div>
@@ -412,7 +417,12 @@ export default function CreateToken() {
 
                 <Card className="bg-[#1a2540]/50 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl overflow-hidden p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="maxSupply" className="text-xs font-semibold text-gray-300">Max Supply</Label>
+                    <Label
+                      htmlFor="maxSupply"
+                      className="text-xs font-semibold text-gray-300"
+                    >
+                      Max Supply
+                    </Label>
                     <div className="h-12 flex items-center px-3 border border-white/30 rounded-lg bg-transparent text-white font-semibold text-lg">
                       1 Billion
                     </div>

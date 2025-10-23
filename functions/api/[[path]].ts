@@ -1247,7 +1247,10 @@ export const onRequest = async ({ request, env }) => {
           try {
             const { createPoolCF } = await import("../../utils/poolStoreCf");
             await createPoolCF(db, poolData);
-            console.log("[CREATE-POOL] Pool saved to database:", poolData.poolId);
+            console.log(
+              "[CREATE-POOL] Pool saved to database:",
+              poolData.poolId,
+            );
           } catch (dbError) {
             console.warn("[CREATE-POOL] Database save failed:", dbError);
           }

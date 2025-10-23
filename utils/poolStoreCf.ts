@@ -248,10 +248,7 @@ export async function getPoolCF(db: D1, poolId: string) {
   } as Pool;
 }
 
-export async function listPoolsForWalletCF(
-  db: D1,
-  walletAddress: string,
-) {
+export async function listPoolsForWalletCF(db: D1, walletAddress: string) {
   await ensurePoolSchema(db);
   const { results } = await db
     .prepare(

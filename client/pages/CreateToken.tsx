@@ -331,7 +331,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
               <div className="space-y-2">
@@ -341,7 +341,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
               <div className="space-y-2">
@@ -351,7 +351,7 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -362,7 +362,7 @@ export default function CreateToken() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Short token description"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -373,7 +373,7 @@ export default function CreateToken() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://yourtoken.site"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -384,7 +384,7 @@ export default function CreateToken() {
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
                   placeholder="https://twitter.com/yourhandle"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -395,7 +395,7 @@ export default function CreateToken() {
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value)}
                   placeholder="https://t.me/yourgroup"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -406,7 +406,7 @@ export default function CreateToken() {
                     value={decimals.toString()}
                     onValueChange={(value) => setDecimals(parseInt(value))}
                   >
-                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
+                    <SelectTrigger className="bg-transparent text-white border border-white/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -425,7 +425,7 @@ export default function CreateToken() {
                     value={maxSupply.toString()}
                     onValueChange={(value) => setMaxSupply(BigInt(value))}
                   >
-                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
+                    <SelectTrigger className="bg-transparent text-white border border-white/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

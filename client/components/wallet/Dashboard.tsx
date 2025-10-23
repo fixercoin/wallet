@@ -917,31 +917,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Tokens List */}
-        <div className="mb-4 flex flex-col sm:flex-row gap-2">
-          <Button
-            onClick={() => setTokenCategory(tokenCategory === "main" ? "fixorium" : "main")}
-            className="h-12 px-4 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#87CEEB] to-[#63B8FF] hover:from-[#6BBBDB] hover:to-[#4FA8E8] text-black border border-[#63B8FF] shadow-lg"
-            aria-label="Toggle Token Category"
-          >
-            <span>{tokenCategory === "main" ? "MAIN" : "FIXORIUM TOKENS"}</span>
-          </Button>
-
-          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+        <div className="mb-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
             <Button
-              onClick={() => navigate("/verify-sell")}
-              className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
-              aria-label={`${pendingOrdersCount} pending orders`}
+              onClick={() => setTokenCategory(tokenCategory === "main" ? "fixorium" : "main")}
+              className="flex-1 h-12 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#87CEEB] to-[#63B8FF] hover:from-[#6BBBDB] hover:to-[#4FA8E8] text-black border border-[#63B8FF] shadow-lg"
+              aria-label="Toggle Token Category"
             >
-              <span className="relative">
-                {pendingOrdersCount}
-                {pendingOrdersCount > 0 && (
-                  <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
-                    !
-                  </span>
-                )}
-              </span>
+              <span>{tokenCategory === "main" ? "MAIN" : "FIXORIUM TOKENS"}</span>
             </Button>
-          )}
+
+            {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+              <Button
+                onClick={() => navigate("/verify-sell")}
+                className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative flex-shrink-0"
+                aria-label={`${pendingOrdersCount} pending orders`}
+              >
+                <span className="relative">
+                  {pendingOrdersCount}
+                  {pendingOrdersCount > 0 && (
+                    <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+                      !
+                    </span>
+                  )}
+                </span>
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">

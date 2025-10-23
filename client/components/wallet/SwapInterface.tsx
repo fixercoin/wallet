@@ -1028,6 +1028,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </div>
 
               <div className="space-y-3 text-sm">
+                {useFxmSwap && (
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Swap Type:</span>
+                    <span className="font-medium text-orange-400">
+                      Fixorium Internal
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-white/70">Sent:</span>
                   <span className="font-medium text-white">
@@ -1035,32 +1043,42 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Received:</span>
+                  <span className="text-white/70">Receiving:</span>
                   <span className="font-medium text-white">
                     {lastSwapToToken?.symbol}
                   </span>
                 </div>
                 {txSignature && (
                   <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white/70">Transaction:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-emerald-400">
-                          {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
-                        </span>
-                        <a
-                          href={`https://solscan.io/tx/${txSignature}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
+                    <div className="pt-2 border-t border-[#FF7A5C]/20">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white/70">Phase 1 Transaction:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-emerald-400">
+                            {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
+                          </span>
+                          <a
+                            href={`https://solscan.io/tx/${txSignature}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </div>
+                      {useFxmSwap && (
+                        <p className="text-xs text-white/60 mb-2">
+                          Your {lastSwapFromToken?.symbol} has been transferred.
+                          {lastSwapToToken?.symbol === "SOL"
+                            ? " SOL will be sent to your wallet shortly."
+                            : " FXM will be sent to your wallet shortly."}
+                        </p>
+                      )}
                     </div>
                     {fxmSwapId && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-white/70">Swap ID:</span>
+                      <div className="flex justify-between items-start pt-2">
+                        <span className="text-white/70 text-xs">Swap ID:</span>
                         <span className="font-mono text-xs text-orange-400 text-right">
                           {fxmSwapId}
                         </span>

@@ -349,10 +349,15 @@ class JupiterAPI {
 
     for (const type of typesToTry) {
       try {
-        const response = await fetchWithTimeout(`/api/jupiter/tokens?type=${type}`, 10000);
+        const response = await fetchWithTimeout(
+          `/api/jupiter/tokens?type=${type}`,
+          10000,
+        );
 
         if (!response.ok) {
-          console.warn(`Token list fetch returned ${response.status} for type=${type}`);
+          console.warn(
+            `Token list fetch returned ${response.status} for type=${type}`,
+          );
           continue;
         }
 
@@ -366,7 +371,9 @@ class JupiterAPI {
         // Read and validate response body before parsing
         const responseText = await response.text();
         if (!responseText || responseText.trim().length === 0) {
-          console.warn(`Empty response body from token list fetch (type=${type})`);
+          console.warn(
+            `Empty response body from token list fetch (type=${type})`,
+          );
           continue;
         }
 
@@ -374,25 +381,35 @@ class JupiterAPI {
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.warn(`Failed to parse token list JSON (type=${type}):`, parseError);
+          console.warn(
+            `Failed to parse token list JSON (type=${type}):`,
+            parseError,
+          );
           continue;
         }
 
         // Validate it's an array and has tokens
         if (!Array.isArray(data)) {
-          console.warn(`Token list response is not an array (type=${type}), got:`, typeof data);
+          console.warn(
+            `Token list response is not an array (type=${type}), got:`,
+            typeof data,
+          );
           continue;
         }
 
         if (data.length === 0) {
-          console.warn(`Token list is empty (type=${type}), trying fallback...`);
+          console.warn(
+            `Token list is empty (type=${type}), trying fallback...`,
+          );
           continue;
         }
 
         // Validate first item has required fields
         const firstToken = data[0];
         if (!firstToken.address || !firstToken.symbol) {
-          console.warn(`Token list has invalid format (type=${type}), missing address or symbol`);
+          console.warn(
+            `Token list has invalid format (type=${type}), missing address or symbol`,
+          );
           continue;
         }
 
@@ -405,7 +422,9 @@ class JupiterAPI {
       }
     }
 
-    console.error("Failed to fetch token list from all endpoints, using fallback");
+    console.error(
+      "Failed to fetch token list from all endpoints, using fallback",
+    );
     return this.getFallbackTokenList();
   }
 
@@ -418,7 +437,8 @@ class JupiterAPI {
         decimals: 9,
         name: "Solana",
         symbol: "SOL",
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       },
       {
         address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -426,7 +446,8 @@ class JupiterAPI {
         decimals: 6,
         name: "USDC Coin",
         symbol: "USDC",
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
       },
       {
         address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
@@ -434,7 +455,8 @@ class JupiterAPI {
         decimals: 6,
         name: "Tether USD",
         symbol: "USDT",
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
       },
       {
         address: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",

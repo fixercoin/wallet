@@ -83,17 +83,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           return;
         }
 
-        const popularTokens: TokenInfo[] = jupiterTokens
-          .map((jt: any) => ({
-            mint: jt.address,
-            symbol: jt.symbol,
-            name: jt.name,
-            decimals: jt.decimals,
-            logoURI: jt.logoURI,
-          }));
+        const popularTokens: TokenInfo[] = jupiterTokens.map((jt: any) => ({
+          mint: jt.address,
+          symbol: jt.symbol,
+          name: jt.name,
+          decimals: jt.decimals,
+          logoURI: jt.logoURI,
+        }));
 
         // Set supported mints from Jupiter (including any fallback tokens)
-        const supportedMintSet = new Set(jupiterTokens.map((t: any) => t.address));
+        const supportedMintSet = new Set(
+          jupiterTokens.map((t: any) => t.address),
+        );
         setSupportedMints(supportedMintSet);
 
         // Log FXM token status for debugging
@@ -101,7 +102,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (supportedMintSet.has(fxmMint)) {
           console.log("FXM token is in supported list");
         } else {
-          console.warn("FXM token NOT in supported list - this may cause swap issues");
+          console.warn(
+            "FXM token NOT in supported list - this may cause swap issues",
+          );
         }
 
         const userTokens = tokens || [];

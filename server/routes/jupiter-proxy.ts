@@ -282,8 +282,7 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
           return res.status(response.status).json({
             error: `No swap route found for this pair`,
             details: lastText,
-            code:
-              response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
           });
         }
 
@@ -301,10 +300,7 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
       } catch (fetchError) {
         const errorMsg =
           fetchError instanceof Error ? fetchError.message : String(fetchError);
-        console.warn(
-          `Fetch error on attempt ${attempt}/2:`,
-          errorMsg,
-        );
+        console.warn(`Fetch error on attempt ${attempt}/2:`, errorMsg);
 
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, attempt * 250));

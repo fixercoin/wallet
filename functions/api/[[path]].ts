@@ -1071,11 +1071,10 @@ export const onRequest = async ({ request, env }) => {
           break;
         } catch (fetchError) {
           const errorMsg =
-            fetchError instanceof Error ? fetchError.message : String(fetchError);
-          console.warn(
-            `Fetch error on attempt ${attempt}/2:`,
-            errorMsg,
-          );
+            fetchError instanceof Error
+              ? fetchError.message
+              : String(fetchError);
+          console.warn(`Fetch error on attempt ${attempt}/2:`, errorMsg);
 
           if (attempt < 2) {
             await new Promise((r) => setTimeout(r, attempt * 500));

@@ -331,6 +331,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
+      // Ensure known default tokens are present even with zero balance
+      DEFAULT_TOKENS.forEach((def) => {
+        if (!allTokens.some((t) => t.mint === def.mint)) {
+          allTokens.push({ ...def, balance: 0 });
+        }
+      });
+
       // Price fetching logic (same as before) - trimmed for brevity but preserved
       let prices: Record<string, number> = {};
       let priceSource = "fallback";

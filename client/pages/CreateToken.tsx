@@ -402,43 +402,16 @@ export default function CreateToken() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="decimals">Decimals</Label>
-                  <Select
-                    value={decimals.toString()}
-                    onValueChange={(value) => setDecimals(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-transparent text-white border border-white/30">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DECIMAL_OPTIONS.map((decimal) => (
-                        <SelectItem key={decimal} value={decimal.toString()}>
-                          {decimal}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="h-10 flex items-center px-3 border border-white/30 rounded-md bg-transparent text-white/70">
+                    {decimals}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="maxSupply">Max Supply</Label>
-                  <Select
-                    value={maxSupply.toString()}
-                    onValueChange={(value) => setMaxSupply(BigInt(value))}
-                  >
-                    <SelectTrigger className="bg-transparent text-white border border-white/30">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MAX_SUPPLY_OPTIONS.map((option) => (
-                        <SelectItem
-                          key={option.value.toString()}
-                          value={option.value.toString()}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="h-10 flex items-center px-3 border border-white/30 rounded-md bg-transparent text-white/70">
+                    1 Billion
+                  </div>
                 </div>
               </div>
             </div>

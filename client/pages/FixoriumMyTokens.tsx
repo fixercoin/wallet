@@ -22,6 +22,7 @@ interface TokenWithPrice extends TokenInfo {
 export default function FixoriumMyTokens() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tokens: walletTokens } = useWallet() as any;
   const [tokens, setTokens] = useState<TokenWithPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedMint, setCopiedMint] = useState<string | null>(null);
@@ -37,20 +38,50 @@ export default function FixoriumMyTokens() {
     setTimeout(() => setCopiedMint(null), 2000);
   };
 
+  // Get user-created tokens from wallet context
+  const userTokens = useMemo(() => {
+    if (!walletTokens || !Array.isArray(walletTokens)) return [];
+    // Filter out built-in tokens (SOL, USDC, USDT, FIXERCOIN, LOCKER, FXM)
+    const builtInMints = new Set([
+      "So11111111111111111111111111111111111111112",
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+      "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+      "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+    ]);
+    return walletTokens.filter((t: any) => !builtInMints.has(t.mint));
+  }, [walletTokens]);
+
   useEffect(() => {
     let cancelled = false;
     async function fetchTokens() {
       setLoading(true);
       try {
-        const res = await fetch("/api/fixorium-tokens");
-        if (!res.ok) throw new Error("Failed to fetch tokens");
-        const j = await res.json();
-        const t = j?.tokens || j?.data || [];
-        const tokenList = Array.isArray(t) ? t : [];
+        // Combine user-created tokens with Fixorium tokens
+        let allTokens: TokenWithPrice[] = [...userTokens];
+
+        // Optionally fetch Fixorium tokens as well
+        try {
+          const res = await fetch("/api/fixorium-tokens");
+          if (res.ok) {
+            const j = await res.json();
+            const fixoriumTokens = j?.tokens || j?.data || [];
+            allTokens = [
+              ...allTokens,
+              ...fixoriumTokens.filter(
+                (ft: any) =>
+                  !userTokens.some((ut: any) => ut.mint === ft.mint),
+              ),
+            ];
+          }
+        } catch (e) {
+          console.error("Failed to load Fixorium tokens:", e);
+        }
 
         // Fetch prices for each token
         const tokensWithPrices = await Promise.all(
-          tokenList.map(async (token: TokenInfo) => {
+          allTokens.map(async (token: TokenInfo) => {
             try {
               const priceRes = await fetch(
                 `/api/dexscreener?mint=${token.mint}`,
@@ -73,8 +104,8 @@ export default function FixoriumMyTokens() {
 
         if (!cancelled) setTokens(tokensWithPrices);
       } catch (e) {
-        console.error("Failed to load Fixorium tokens:", e);
-        if (!cancelled) setTokens([]);
+        console.error("Failed to load tokens:", e);
+        if (!cancelled) setTokens(userTokens);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -83,7 +114,7 @@ export default function FixoriumMyTokens() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userTokens]);
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">

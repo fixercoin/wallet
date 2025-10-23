@@ -87,6 +87,19 @@ export default function CreatePool() {
     setTimeout(() => setCopiedPoolId(null), 2000);
   };
 
+  // Load pools from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("fixorium_pools");
+      if (stored) {
+        const loadedPools = JSON.parse(stored);
+        setPools(loadedPools);
+      }
+    } catch (err) {
+      console.error("Error loading pools from localStorage:", err);
+    }
+  }, []);
+
   // Initialize with wallet tokens, fallback to common tokens
   useEffect(() => {
     if (tokens && tokens.length > 0) {

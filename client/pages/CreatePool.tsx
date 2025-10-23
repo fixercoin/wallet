@@ -68,7 +68,9 @@ export default function CreatePool() {
   const [fee, setFee] = useState(DEFAULT_FEE);
   const [isLoading, setIsLoading] = useState(false);
   const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
-  const [tokenBalances, setTokenBalances] = useState<Record<string, number>>({});
+  const [tokenBalances, setTokenBalances] = useState<Record<string, number>>(
+    {},
+  );
   const [pools, setPools] = useState<any[]>([]);
   const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
   const [copiedPoolId, setCopiedPoolId] = useState<string | null>(null);
@@ -112,7 +114,9 @@ export default function CreatePool() {
         for (const token of tokensToFetch) {
           try {
             // Fetch price
-            const priceResponse = await fetch(`/api/token-price?mint=${token.mint}`);
+            const priceResponse = await fetch(
+              `/api/token-price?mint=${token.mint}`,
+            );
             if (priceResponse.ok) {
               const priceData = await priceResponse.json();
               prices[token.mint] = priceData.price || 0;
@@ -489,17 +493,13 @@ export default function CreatePool() {
                       {/* Amounts */}
                       <div className="grid grid-cols-2 gap-2 text-[9px]">
                         <div className="p-2 rounded bg-[#0f1520]/40 border border-white/5">
-                          <div className="text-gray-400 mb-0.5">
-                            Amount A
-                          </div>
+                          <div className="text-gray-400 mb-0.5">Amount A</div>
                           <div className="font-semibold">
                             {pool.amountA} {pool.tokenASymbol}
                           </div>
                         </div>
                         <div className="p-2 rounded bg-[#0f1520]/40 border border-white/5">
-                          <div className="text-gray-400 mb-0.5">
-                            Amount B
-                          </div>
+                          <div className="text-gray-400 mb-0.5">Amount B</div>
                           <div className="font-semibold">
                             {pool.amountB} {pool.tokenBSymbol}
                           </div>
@@ -518,9 +518,7 @@ export default function CreatePool() {
                             </div>
                           </div>
                           <button
-                            onClick={(e) =>
-                              handleCopyPoolId(pool.poolId, e)
-                            }
+                            onClick={(e) => handleCopyPoolId(pool.poolId, e)}
                             className="ml-2 p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0"
                             title="Copy pool ID"
                           >

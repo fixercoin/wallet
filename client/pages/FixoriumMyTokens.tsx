@@ -46,26 +46,28 @@ export default function FixoriumMyTokens() {
         const j = await res.json();
         const t = j?.tokens || j?.data || [];
         const tokenList = Array.isArray(t) ? t : [];
-        
+
         // Fetch prices for each token
         const tokensWithPrices = await Promise.all(
           tokenList.map(async (token: TokenInfo) => {
             try {
               const priceRes = await fetch(
-                `/api/dexscreener?mint=${token.mint}`
+                `/api/dexscreener?mint=${token.mint}`,
               );
               if (priceRes.ok) {
                 const priceData = await priceRes.json();
                 return {
                   ...token,
-                  price: priceData?.priceUsd ? parseFloat(priceData.priceUsd) : undefined,
+                  price: priceData?.priceUsd
+                    ? parseFloat(priceData.priceUsd)
+                    : undefined,
                 };
               }
             } catch (e) {
               console.error(`Failed to fetch price for ${token.mint}:`, e);
             }
             return token;
-          })
+          }),
         );
 
         if (!cancelled) setTokens(tokensWithPrices);
@@ -136,13 +138,19 @@ export default function FixoriumMyTokens() {
 
                     {/* Token Name and Symbol - Next to Logo */}
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <div className="text-[10px] font-semibold">{token.name}</div>
-                      <div className="text-[9px] text-gray-400">{token.symbol}</div>
+                      <div className="text-[10px] font-semibold">
+                        {token.name}
+                      </div>
+                      <div className="text-[9px] text-gray-400">
+                        {token.symbol}
+                      </div>
                     </div>
 
                     {/* Price - Center */}
                     <div className="flex-1 flex flex-col justify-center items-center">
-                      <div className="text-[9px] text-gray-400 mb-0.5">Price</div>
+                      <div className="text-[9px] text-gray-400 mb-0.5">
+                        Price
+                      </div>
                       <div className="text-[11px] font-semibold text-[#FF7A5C]">
                         {token.price !== undefined
                           ? token.price > 0.01

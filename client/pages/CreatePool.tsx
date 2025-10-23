@@ -1,0 +1,426 @@
+import React, { useState, useEffect } from "react";
+import { useWallet } from "@/contexts/WalletContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader } from "@/components/ui/Loader";
+import { ArrowRightLeft } from "lucide-react";
+
+interface TokenInfo {
+  mint: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  logoURI?: string;
+  price?: number;
+}
+
+const COMMON_TOKENS: TokenInfo[] = [
+  {
+    mint: "So11111111111111111111111111111111111111112",
+    name: "Solana",
+    symbol: "SOL",
+    decimals: 9,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+  },
+  {
+    mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    name: "USD Coin",
+    symbol: "USDC",
+    decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+  },
+  {
+    mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEsl",
+    name: "Tether USD",
+    symbol: "USDT",
+    decimals: 6,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
+  },
+];
+
+const POOL_FEES = [0.01, 0.05, 0.25, 1.0];
+const DEFAULT_FEE = 0.01;
+
+export default function CreatePool() {
+  const { wallet, balance } = useWallet();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
+  const [tokenB, setTokenB] = useState<TokenInfo | null>(null);
+  const [amountA, setAmountA] = useState("");
+  const [amountB, setAmountB] = useState("");
+  const [fee, setFee] = useState(DEFAULT_FEE);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
+  const [pools, setPools] = useState<any[]>([]);
+
+  // Fetch token prices
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const prices: Record<string, number> = {};
+        for (const token of COMMON_TOKENS) {
+          const response = await fetch(`/api/token-price?mint=${token.mint}`);
+          if (response.ok) {
+            const data = await response.json();
+            prices[token.mint] = data.price || 0;
+          }
+        }
+        setTokenPrices(prices);
+      } catch (error) {
+        console.error("Error fetching prices:", error);
+      }
+    };
+
+    fetchPrices();
+  }, []);
+
+  // Auto-adjust amount B based on real price
+  useEffect(() => {
+    if (tokenA && tokenB && amountA && tokenPrices[tokenA.mint]) {
+      const priceA = tokenPrices[tokenA.mint] || 0;
+      const priceB = tokenPrices[tokenB.mint] || 0;
+
+      if (priceA > 0 && priceB > 0) {
+        const valueA = parseFloat(amountA) * priceA;
+        const calculatedAmountB = valueA / priceB;
+        setAmountB(calculatedAmountB.toFixed(tokenB.decimals));
+      }
+    }
+  }, [tokenA, tokenB, amountA, tokenPrices]);
+
+  if (!wallet) {
+    return (
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+        <div className="relative z-20 w-[90%] max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+          <h2 className="text-xl font-bold mb-4">Wallet Required</h2>
+          <p className="text-sm text-gray-300 mb-6">
+            Please set up or import a wallet first.
+          </p>
+          <Button onClick={() => navigate("/")} className="w-full">
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCreatePool = async () => {
+    if (!tokenA || !tokenB) {
+      toast({
+        title: "Select tokens",
+        description: "Please select both token A and token B.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!amountA || !amountB) {
+      toast({
+        title: "Enter amounts",
+        description: "Please enter amounts for both tokens.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (tokenA.mint === tokenB.mint) {
+      toast({
+        title: "Invalid tokens",
+        description: "Token A and Token B must be different.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/create-pool", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tokenA: tokenA.mint,
+          tokenB: tokenB.mint,
+          amountA: amountA,
+          amountB: amountB,
+          fee: fee,
+          walletAddress: wallet.publicKey.toString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Pool creation failed");
+      }
+
+      const poolData = await response.json();
+
+      setPools([poolData, ...pools]);
+
+      toast({
+        title: "Pool created successfully!",
+        description: `Pool ID: ${poolData.poolId}`,
+      });
+
+      setAmountA("");
+      setAmountB("");
+    } catch (error) {
+      console.error("Pool creation error:", error);
+      toast({
+        title: "Pool creation failed",
+        description:
+          error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const swapTokens = () => {
+    setTokenA(tokenB);
+    setTokenB(tokenA);
+    const temp = amountA;
+    setAmountA(amountB);
+    setAmountB(temp);
+  };
+
+  return (
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white flex items-center justify-center relative overflow-hidden p-4">
+      <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="relative z-20 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold">Create Pool</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/fixorium/add")}
+            className="text-gray-400 hover:text-white"
+          >
+            ✕
+          </Button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Token A Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-300">
+              Token A
+            </Label>
+            <Select
+              value={tokenA?.mint || ""}
+              onValueChange={(value) => {
+                const selected = COMMON_TOKENS.find((t) => t.mint === value);
+                setTokenA(selected || null);
+              }}
+            >
+              <SelectTrigger className="w-full bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
+                <SelectValue placeholder="Select token" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_TOKENS.map((token) => (
+                  <SelectItem key={token.mint} value={token.mint}>
+                    <span className="flex items-center gap-2">
+                      {token.logoURI && (
+                        <img
+                          src={token.logoURI}
+                          alt={token.symbol}
+                          className="w-4 h-4"
+                        />
+                      )}
+                      {token.symbol}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Amount A */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-300">
+              Amount {tokenA?.symbol || "A"}
+            </Label>
+            <Input
+              type="number"
+              placeholder="0.00"
+              value={amountA}
+              onChange={(e) => setAmountA(e.target.value)}
+              className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500"
+            />
+            {tokenA && tokenPrices[tokenA.mint] && (
+              <p className="text-xs text-gray-400">
+                Price: ${tokenPrices[tokenA.mint].toFixed(4)}
+              </p>
+            )}
+          </div>
+
+          {/* Swap Tokens Button */}
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={swapTokens}
+              className="rounded-full p-2 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66]"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Token B Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-300">
+              Token B
+            </Label>
+            <Select
+              value={tokenB?.mint || ""}
+              onValueChange={(value) => {
+                const selected = COMMON_TOKENS.find((t) => t.mint === value);
+                setTokenB(selected || null);
+              }}
+            >
+              <SelectTrigger className="w-full bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
+                <SelectValue placeholder="Select token" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_TOKENS.map((token) => (
+                  <SelectItem key={token.mint} value={token.mint}>
+                    <span className="flex items-center gap-2">
+                      {token.logoURI && (
+                        <img
+                          src={token.logoURI}
+                          alt={token.symbol}
+                          className="w-4 h-4"
+                        />
+                      )}
+                      {token.symbol}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Amount B */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-300">
+              Amount {tokenB?.symbol || "B"}
+            </Label>
+            <Input
+              type="number"
+              placeholder="0.00"
+              value={amountB}
+              disabled
+              className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500 opacity-50 cursor-not-allowed"
+            />
+            {tokenB && tokenPrices[tokenB.mint] && (
+              <p className="text-xs text-gray-400">
+                Price: ${tokenPrices[tokenB.mint].toFixed(4)}
+              </p>
+            )}
+          </div>
+
+          {/* Fee Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-300">
+              Pool Fee %
+            </Label>
+            <Select
+              value={fee.toString()}
+              onValueChange={(value) => setFee(parseFloat(value))}
+            >
+              <SelectTrigger className="w-full bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POOL_FEES.map((feeValue) => (
+                  <SelectItem key={feeValue} value={feeValue.toString()}>
+                    {feeValue}%
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Create Pool Button */}
+          <Button
+            onClick={handleCreatePool}
+            disabled={isLoading}
+            className="w-full h-12 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-semibold rounded-xl border-0 shadow-lg"
+          >
+            {isLoading ? (
+              <>
+                <Loader className="h-4 w-4 mr-2" />
+                Creating Pool...
+              </>
+            ) : (
+              "Create Standard Pool"
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => navigate("/fixorium/add")}
+            className="w-full"
+          >
+            Back
+          </Button>
+        </div>
+
+        {/* Created Pools Display */}
+        {pools.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <h2 className="text-lg font-semibold mb-4">Created Pools</h2>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {pools.map((pool, index) => (
+                <div
+                  key={index}
+                  className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">
+                      {pool.tokenASymbol}/{pool.tokenBSymbol}
+                    </span>
+                    <span className="text-xs text-green-400">✓ Created</span>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <p>
+                      Amount A: {pool.amountA} {pool.tokenASymbol}
+                    </p>
+                    <p>
+                      Amount B: {pool.amountB} {pool.tokenBSymbol}
+                    </p>
+                    <p>Fee: {pool.fee}%</p>
+                    {pool.poolId && (
+                      <p className="text-[#38bdf8]">ID: {pool.poolId}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

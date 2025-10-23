@@ -887,7 +887,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
             aria-label="Swap"
           >
-            <RefreshCw className="h-4 w-4" />
+            <span className="text-[12px] font-bold tracking-wide">SWAP</span>
           </Button>
 
           <Button

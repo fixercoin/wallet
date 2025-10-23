@@ -1037,22 +1037,32 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 {txSignature && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/70">Transaction:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-emerald-400">
-                        {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
-                      </span>
-                      <a
-                        href={`https://solscan.io/tx/${txSignature}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Transaction:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs text-emerald-400">
+                          {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
+                        </span>
+                        <a
+                          href={`https://solscan.io/tx/${txSignature}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                     </div>
-                  </div>
+                    {fxmSwapId && (
+                      <div className="flex justify-between items-start">
+                        <span className="text-white/70">Swap ID:</span>
+                        <span className="font-mono text-xs text-orange-400 text-right">
+                          {fxmSwapId}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

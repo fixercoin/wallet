@@ -74,6 +74,7 @@ export default function CreatePool() {
   const [pools, setPools] = useState<any[]>([]);
   const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
   const [copiedPoolId, setCopiedPoolId] = useState<string | null>(null);
+  const [userEditedAmountB, setUserEditedAmountB] = useState(false);
 
   const handleCopyPoolId = (poolId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -85,6 +86,19 @@ export default function CreatePool() {
     });
     setTimeout(() => setCopiedPoolId(null), 2000);
   };
+
+  // Load pools from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("fixorium_pools");
+      if (stored) {
+        const loadedPools = JSON.parse(stored);
+        setPools(loadedPools);
+      }
+    } catch (err) {
+      console.error("Error loading pools from localStorage:", err);
+    }
+  }, []);
 
   // Initialize with wallet tokens, fallback to common tokens
   useEffect(() => {
@@ -142,9 +156,15 @@ export default function CreatePool() {
     }
   }, [walletTokens]);
 
-  // Auto-adjust amount B based on real price
+  // Auto-adjust amount B based on real price (only if user hasn't manually edited it)
   useEffect(() => {
-    if (tokenA && tokenB && amountA && tokenPrices[tokenA.mint]) {
+    if (
+      !userEditedAmountB &&
+      tokenA &&
+      tokenB &&
+      amountA &&
+      tokenPrices[tokenA.mint]
+    ) {
       const priceA = tokenPrices[tokenA.mint] || 0;
       const priceB = tokenPrices[tokenB.mint] || 0;
 
@@ -154,7 +174,7 @@ export default function CreatePool() {
         setAmountB(calculatedAmountB.toFixed(tokenB.decimals));
       }
     }
-  }, [tokenA, tokenB, amountA, tokenPrices]);
+  }, [tokenA, tokenB, amountA, tokenPrices, userEditedAmountB]);
 
   if (!wallet) {
     return (
@@ -228,6 +248,18 @@ export default function CreatePool() {
 
       setPools([poolData, ...pools]);
 
+      // Also persist to localStorage for client-side access
+      try {
+        const stored = localStorage.getItem("fixorium_pools");
+        const allPools = stored ? JSON.parse(stored) : [];
+        localStorage.setItem(
+          "fixorium_pools",
+          JSON.stringify([poolData, ...allPools]),
+        );
+      } catch (err) {
+        console.error("Error saving pool to localStorage:", err);
+      }
+
       toast({
         title: "Pool created successfully!",
         description: `Pool ID: ${poolData.poolId}`,
@@ -254,6 +286,7 @@ export default function CreatePool() {
     const temp = amountA;
     setAmountA(amountB);
     setAmountB(temp);
+    setUserEditedAmountB(false);
   };
 
   return (
@@ -411,8 +444,11 @@ export default function CreatePool() {
               type="number"
               placeholder="0.00"
               value={amountB}
-              disabled
-              className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500 opacity-50 cursor-not-allowed"
+              onChange={(e) => {
+                setAmountB(e.target.value);
+                setUserEditedAmountB(true);
+              }}
+              className="bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white placeholder-gray-500"
             />
             <div className="flex justify-between text-xs text-gray-400">
               <span>

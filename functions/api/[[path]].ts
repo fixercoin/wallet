@@ -1252,6 +1252,221 @@ export const onRequest = async ({ request, env }) => {
       }
     }
 
+    // Get Pools: /api/pools (GET)
+    if (normalizedPath === "/pools" && request.method === "GET") {
+      try {
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+        return jsonCors(200, { pools: allPools });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to fetch pools",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Get Pools for Token Pair: /api/pools?tokenA=...&tokenB=... (GET)
+    if (normalizedPath === "/pools" && request.method === "GET") {
+      try {
+        const tokenA = url.searchParams.get("tokenA");
+        const tokenB = url.searchParams.get("tokenB");
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        let filtered = allPools;
+        if (tokenA && tokenB) {
+          filtered = allPools.filter(
+            (pool: any) =>
+              (pool.tokenA === tokenA && pool.tokenB === tokenB) ||
+              (pool.tokenA === tokenB && pool.tokenB === tokenA),
+          );
+        }
+
+        return jsonCors(200, { pools: filtered });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to fetch pools",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Quote Swap: /api/swap/quote (POST)
+    if (normalizedPath === "/swap/quote" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {}
+
+        const { inputMint, outputMint, inputAmount } = body || {};
+
+        if (!inputMint || !outputMint || !inputAmount) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: inputMint, outputMint, inputAmount",
+          });
+        }
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        const pool = allPools.find(
+          (p: any) =>
+            (p.tokenA === inputMint && p.tokenB === outputMint) ||
+            (p.tokenA === outputMint && p.tokenB === inputMint),
+        );
+
+        if (!pool) {
+          return jsonCors(404, {
+            error: "No pool found for this token pair",
+          });
+        }
+
+        const isTokenA = inputMint === pool.tokenA;
+        const reserveIn = parseFloat(isTokenA ? pool.amountA : pool.amountB);
+        const reserveOut = parseFloat(isTokenA ? pool.amountB : pool.amountA);
+
+        if (reserveIn <= 0 || reserveOut <= 0) {
+          return jsonCors(400, {
+            error: "Pool has insufficient liquidity",
+          });
+        }
+
+        const input = parseFloat(inputAmount);
+        const feeMultiplier = 1 - pool.fee / 100;
+        const amountInWithFee = input * feeMultiplier;
+        const numerator = amountInWithFee * reserveOut;
+        const denominator = reserveIn + amountInWithFee;
+        const outputAmount = numerator / denominator;
+
+        const priceImpact =
+          ((input * reserveOut) / (reserveIn * (reserveIn + input)) -
+            outputAmount) /
+          ((input * reserveOut) / (reserveIn * (reserveIn + input)));
+
+        const feeAmount = input - amountInWithFee;
+
+        return jsonCors(200, {
+          inputAmount: inputAmount,
+          outputAmount: outputAmount.toFixed(8),
+          priceImpact: (Math.abs(priceImpact) * 100).toFixed(2),
+          fee: feeAmount.toFixed(8),
+          poolId: pool.poolId,
+          pool: pool,
+        });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to calculate quote",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Execute Swap: /api/swap/execute (POST)
+    if (normalizedPath === "/swap/execute" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {}
+
+        const { poolId, inputMint, inputAmount, outputAmount } = body || {};
+
+        if (!poolId || !inputMint || !inputAmount || !outputAmount) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: poolId, inputMint, inputAmount, outputAmount",
+          });
+        }
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        const poolIndex = allPools.findIndex((p: any) => p.poolId === poolId);
+        if (poolIndex === -1) {
+          return jsonCors(404, { error: "Pool not found" });
+        }
+
+        const pool = allPools[poolIndex];
+        const isTokenA = inputMint === pool.tokenA;
+
+        const newAmountA = isTokenA
+          ? (parseFloat(pool.amountA) + parseFloat(inputAmount)).toFixed(8)
+          : (parseFloat(pool.amountA) - parseFloat(outputAmount)).toFixed(8);
+
+        const newAmountB = isTokenA
+          ? (parseFloat(pool.amountB) - parseFloat(outputAmount)).toFixed(8)
+          : (parseFloat(pool.amountB) + parseFloat(inputAmount)).toFixed(8);
+
+        const updatedPool = {
+          ...pool,
+          amountA: newAmountA,
+          amountB: newAmountB,
+          totalLiquidity: `${newAmountA}-${newAmountB}`,
+        };
+
+        allPools[poolIndex] = updatedPool;
+
+        if ((env as any)?.POOLS_DATA !== undefined) {
+          (env as any).POOLS_DATA = JSON.stringify(allPools);
+        }
+
+        return jsonCors(200, {
+          success: true,
+          pool: updatedPool,
+          message: "Swap executed successfully",
+        });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to execute swap",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -331,7 +331,7 @@ export default function CreateToken() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Token"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
               <div className="space-y-2">
@@ -341,7 +341,7 @@ export default function CreateToken() {
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="MTK"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
               <div className="space-y-2">
@@ -351,7 +351,7 @@ export default function CreateToken() {
                   value={logoURI}
                   onChange={(e) => setLogoURI(e.target.value)}
                   placeholder="https://..."
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -362,7 +362,7 @@ export default function CreateToken() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Short token description"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -373,7 +373,7 @@ export default function CreateToken() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://yourtoken.site"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -384,7 +384,7 @@ export default function CreateToken() {
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
                   placeholder="https://twitter.com/yourhandle"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
@@ -395,50 +395,23 @@ export default function CreateToken() {
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value)}
                   placeholder="https://t.me/yourgroup"
-                  className="bg-[#1a1a1a] text-white placeholder:text-white/70"
+                  className="bg-transparent text-white placeholder:text-white/70 border border-white/30"
                 />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="decimals">Decimals</Label>
-                  <Select
-                    value={decimals.toString()}
-                    onValueChange={(value) => setDecimals(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DECIMAL_OPTIONS.map((decimal) => (
-                        <SelectItem key={decimal} value={decimal.toString()}>
-                          {decimal}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="h-10 flex items-center px-3 border border-white/30 rounded-md bg-transparent text-white/70">
+                    {decimals}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="maxSupply">Max Supply</Label>
-                  <Select
-                    value={maxSupply.toString()}
-                    onValueChange={(value) => setMaxSupply(BigInt(value))}
-                  >
-                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MAX_SUPPLY_OPTIONS.map((option) => (
-                        <SelectItem
-                          key={option.value.toString()}
-                          value={option.value.toString()}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="h-10 flex items-center px-3 border border-white/30 rounded-md bg-transparent text-white/70">
+                    1 Billion
+                  </div>
                 </div>
               </div>
             </div>

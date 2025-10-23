@@ -10,12 +10,11 @@ import {
 import {
   Flame,
   Menu,
-  Search,
+  Settings,
   Wallet,
   Gift,
   Flame as BurnIcon,
   Lock,
-  Settings,
   FileText,
   Coins,
 } from "lucide-react";
@@ -50,10 +49,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="truncate text-xs opacity-90">fixorium</span>
           </div>
           <button
-            aria-label="Search"
+            aria-label="Settings"
+            onClick={onSettings}
             className="p-1.5 rounded-lg hover:bg-white/5"
           >
-            <Search className="h-4 w-4 text-white/80" />
+            <Settings className="h-4 w-4 text-white/80" />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -87,13 +87,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>SPL-BURN</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => navigate("/fixorium/spl-meta")}
-                className="flex items-center gap-2 text-xs"
-              >
-                <FileText className="h-4 w-4" />
-                <span>SPL-META</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onSelect={onLock}
                 className="flex items-center gap-2 text-xs"
               >
@@ -123,13 +116,6 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 <Gift className="h-4 w-4" />
                 <span>REWARDS</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={onSettings}
-                className="flex items-center gap-2 text-xs"
-              >
-                <Settings className="h-4 w-4" />
-                <span>SETTINGS</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

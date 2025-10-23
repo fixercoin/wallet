@@ -30,6 +30,17 @@ import {
 } from "@solana/spl-token";
 import { connection as defaultConnection } from "@/lib/wallet";
 
+const DECIMAL_OPTIONS = [6, 8, 9, 10];
+const MAX_SUPPLY_OPTIONS = [
+  { label: "1 Million", value: 1_000_000n },
+  { label: "10 Million", value: 10_000_000n },
+  { label: "100 Million", value: 100_000_000n },
+  { label: "1 Billion", value: 1_000_000_000n },
+  { label: "10 Billion", value: 10_000_000_000n },
+  { label: "100 Billion", value: 100_000_000_000n },
+  { label: "1 Trillion", value: 1_000_000_000_000n },
+];
+
 export default function CreateToken() {
   const { wallet, balance, addCustomToken, refreshTokens, connection } =
     useWallet();
@@ -43,8 +54,8 @@ export default function CreateToken() {
   const [twitter, setTwitter] = useState("");
   const [telegram, setTelegram] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const decimals = 6;
-  const maxSupply = 1_000_000_000n; // 1 billion
+  const [decimals, setDecimals] = useState(6);
+  const [maxSupply, setMaxSupply] = useState(1_000_000_000n);
 
   const conn = (connection as any) || defaultConnection;
 

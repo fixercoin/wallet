@@ -217,13 +217,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         description: "Switched to selected account",
                       });
                     }}
-                    className="flex-1 bg-[#1a2540]/50 text-white p-2 rounded-md border border-[#FF7A5C]/30 font-mono"
+                    className="flex-1 bg-transparent text-white p-2 rounded-md border border-transparent font-mono"
                   >
                     {wallets.map((w) => (
                       <option
                         key={w.publicKey}
                         value={w.publicKey}
-                        className="text-black"
+                        className="text-white"
                       >
                         {shortenAddress(w.publicKey, 6)}
                       </option>
@@ -284,7 +284,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.target.value as "recovery" | "private",
                           )
                         }
-                        className="flex-1 bg-[#1a2540]/50 text-white p-2 rounded-md border border-[#FF7A5C]/30 font-mono"
+                        className="flex-1 bg-transparent text-white p-2 rounded-md border border-transparent font-mono"
                       >
                         <option value="recovery">RECOVERY PHRASE</option>
                         <option value="private">PRIVATE KEY</option>
@@ -383,7 +383,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             setShowRecoveryPhrase(false);
                           }
                         }}
-                        className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
+                        className="bg-transparent text-white p-1 rounded-md border border-transparent"
                       >
                         <option value="hidden">Hidden</option>
                         <option value="show">Show</option>
@@ -400,7 +400,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             : ""
                       }
                       readOnly
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white font-mono text-sm resize-none min-h-[140px]"
+                      className="bg-transparent border border-transparent text-white font-mono text-sm resize-none min-h-[140px]"
                       placeholder={
                         showRecoveryPhrase || showPrivateKey ? "" : "Hidden"
                       }

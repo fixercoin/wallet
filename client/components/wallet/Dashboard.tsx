@@ -918,18 +918,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
-          <div className="flex-1 h-12 rounded-xl bg-[#E9D5FF]/20 border border-[#E9D5FF]/30 shadow-lg flex items-center p-1 gap-1">
+          <div className="flex-1 h-12 rounded-xl bg-[#87CEEB]/20 border border-[#87CEEB]/30 shadow-lg flex items-center p-1 gap-1">
             <Button
               onClick={() => setTokenCategory("main")}
               style={
                 tokenCategory === "main"
-                  ? { backgroundColor: "#E9D5FF", color: "#000" }
+                  ? { backgroundColor: "#87CEEB", color: "#000" }
                   : {
-                      backgroundColor: "rgba(233,213,255,0.2)",
-                      color: "#E9D5FF",
+                      backgroundColor: "rgba(135,206,235,0.2)",
+                      color: "#87CEEB",
                     }
               }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-[#E9D5FF]/20 text-[#E9D5FF] border border-transparent hover:bg-[#E9D5FF]/30"}`}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-[#87CEEB]/20 text-[#87CEEB] border border-transparent hover:bg-[#87CEEB]/30"}`}
               aria-label="MAIN"
             >
               <span>MAIN</span>
@@ -939,13 +939,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={() => setTokenCategory("fixorium")}
               style={
                 tokenCategory === "fixorium"
-                  ? { backgroundColor: "#E9D5FF", color: "#000" }
+                  ? { backgroundColor: "#87CEEB", color: "#000" }
                   : {
-                      backgroundColor: "rgba(233,213,255,0.2)",
-                      color: "#E9D5FF",
+                      backgroundColor: "rgba(135,206,235,0.2)",
+                      color: "#87CEEB",
                     }
               }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-transparent text-white border border-transparent hover:bg-[#87CEEB]/30"}`}
               aria-label="FIXORIUM TOKENS"
             >
               <span>FIXORIUM TOKENS</span>

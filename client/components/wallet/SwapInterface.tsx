@@ -1000,6 +1000,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     setSellUsdPrice("");
     setStep("form");
     setTxSignature(null);
+    setSecondaryTxSignature(null);
+    setUseFxmSwap(false);
+    setFxmSwapQuote(null);
+    setFxmSwapId(null);
   };
 
   if (step === "success") {

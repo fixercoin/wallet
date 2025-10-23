@@ -275,6 +275,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [refreshBalance, refreshTokens]);
 
+  // Open rewards quest modal when requested from other components (TopBar)
+  useEffect(() => {
+    const handler = () => setShowQuestModal(true);
+    window.addEventListener("openRewardsQuest", handler as EventListener);
+    return () => {
+      window.removeEventListener("openRewardsQuest", handler as EventListener);
+    };
+  }, []);
+
   // Check for pending payment verifications if admin
   useEffect(() => {
     if (

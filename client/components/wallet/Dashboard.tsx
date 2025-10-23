@@ -929,7 +929,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       color: "#87CEEB",
                     }
               }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all text-sm sm:text-base ${tokenCategory === "main" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-[#87CEEB]/20 text-[#87CEEB] border border-transparent hover:bg-[#87CEEB]/30"}`}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all text-xs ${tokenCategory === "main" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-[#87CEEB]/20 text-[#87CEEB] border border-transparent hover:bg-[#87CEEB]/30"}`}
               aria-label="MAIN"
             >
               <span>MAIN</span>
@@ -945,7 +945,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       color: "#87CEEB",
                     }
               }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all text-sm sm:text-base ${tokenCategory === "fixorium" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-transparent text-white border border-transparent hover:bg-[#87CEEB]/30"}`}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all text-xs ${tokenCategory === "fixorium" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-transparent text-white border border-transparent hover:bg-[#87CEEB]/30"}`}
               aria-label="FIXORIUM TOKENS"
             >
               <span>FIXORIUM TOKENS</span>

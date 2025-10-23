@@ -923,7 +923,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
-          <div className="flex-1 h-12 rounded-xl bg-[#C4B5FD]/30 border border-[#C4B5FD]/40 shadow-lg flex items-center p-1 gap-1">
+          <div className="flex-1 h-12 rounded-xl bg-[#E9D5FF]/20 border border-[#E9D5FF]/30 shadow-lg flex items-center p-1 gap-1">
             <Button
               onClick={() => setTokenCategory("main")}
               className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#C4B5FD]/40"}`}

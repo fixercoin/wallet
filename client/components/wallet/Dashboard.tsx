@@ -922,6 +922,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex-1 h-12 rounded-xl bg-[#E9D5FF]/20 border border-[#E9D5FF]/30 shadow-lg flex items-center p-1 gap-1">
             <Button
               onClick={() => setTokenCategory("main")}
+              style={
+                tokenCategory === "main"
+                  ? { backgroundColor: "#E9D5FF", color: "#000" }
+                  : { backgroundColor: "rgba(233,213,255,0.2)", color: "#E9D5FF" }
+              }
               className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-[#E9D5FF]/20 text-[#E9D5FF] border border-transparent hover:bg-[#E9D5FF]/30"}`}
               aria-label="MAIN"
             >

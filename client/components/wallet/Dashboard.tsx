@@ -903,18 +903,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span>SWAP</span>
           </Button>
 
-          <Button
-            onClick={() => setShowQuestModal(true)}
-            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
-            aria-label="Quest Rewards"
-          >
-            <FlyingPrizeBox
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
-            <span>REWARDS</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
+              >
+                <FlyingPrizeBox
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                />
+                <span>MORE</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onSelect={() => setShowQuestModal(true)}>
+                <span>Quest Rewards</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => navigate("/verify-sell")}>
+                <span>Pending Orders</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button
             onClick={() => navigate("/express")}

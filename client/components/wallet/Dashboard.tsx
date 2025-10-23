@@ -922,10 +922,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex-1 h-12 rounded-xl bg-[#E9D5FF]/20 border border-[#E9D5FF]/30 shadow-lg flex items-center p-1 gap-1">
             <Button
               onClick={() => setTokenCategory("main")}
-              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
-              aria-label="MAIN TOKENS"
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-[#E9D5FF] border border-transparent hover:bg-[#E9D5FF]/30"}`}
+              aria-label="MAIN"
             >
-              <span>MAIN TOKENS</span>
+              <span>MAIN</span>
             </Button>
 
             <Button

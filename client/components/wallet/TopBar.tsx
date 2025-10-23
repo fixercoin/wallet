@@ -17,6 +17,7 @@ import {
   Lock,
   Settings,
   FileText,
+  Coins,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -105,6 +106,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 <FileText className="h-4 w-4" />
                 <span>MINT-SPL</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => navigate("/express")}
+                className="flex items-center gap-2 text-xs"
+              >
+                <Coins className="h-4 w-4" />
+                <span>P2P</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

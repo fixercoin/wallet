@@ -890,7 +890,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           <Button
             onClick={onSend}
-            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Send"
           >
             <ArrowUpRight className="h-5 w-5" />
@@ -899,7 +899,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={onReceive}
-            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Receive"
           >
             <ArrowDownLeft className="h-5 w-5" />
@@ -908,20 +908,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={onSwap}
-            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Swap"
           >
             <ArrowRightLeft className="h-5 w-5" />
             <span className="text-[10px] leading-none">SWAP</span>
-          </Button>
-
-          <Button
-            onClick={() => navigate("/express")}
-            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
-            aria-label="P2P"
-          >
-            <Coins className="h-5 w-5" />
-            <span className="text-[10px] leading-none">P2P</span>
           </Button>
         </div>
 
@@ -930,14 +921,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex-1 h-12 rounded-xl bg-[#E9D5FF]/20 border border-[#E9D5FF]/30 shadow-lg flex items-center p-1 gap-1">
             <Button
               onClick={() => setTokenCategory("main")}
-              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
-              aria-label="MAIN TOKENS"
+              style={
+                tokenCategory === "main"
+                  ? { backgroundColor: "#E9D5FF", color: "#000" }
+                  : {
+                      backgroundColor: "rgba(233,213,255,0.2)",
+                      color: "#E9D5FF",
+                    }
+              }
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-[#E9D5FF]/20 text-[#E9D5FF] border border-transparent hover:bg-[#E9D5FF]/30"}`}
+              aria-label="MAIN"
             >
-              <span>MAIN TOKENS</span>
+              <span>MAIN</span>
             </Button>
 
             <Button
               onClick={() => setTokenCategory("fixorium")}
+              style={
+                tokenCategory === "fixorium"
+                  ? { backgroundColor: "#E9D5FF", color: "#000" }
+                  : {
+                      backgroundColor: "rgba(233,213,255,0.2)",
+                      color: "#E9D5FF",
+                    }
+              }
               className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
               aria-label="FIXORIUM TOKENS"
             >

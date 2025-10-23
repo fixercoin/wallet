@@ -1021,33 +1021,71 @@ export const onRequest = async ({ request, env }) => {
         asLegacyTransaction,
       });
       const urlStr = `https://lite-api.jup.ag/swap/v1/quote?${params.toString()}`;
+      console.log(
+        `Jupiter quote request: ${inputMint} -> ${outputMint}, amount: ${amount}`,
+      );
 
       let lastStatus = 0;
       let lastText = "";
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        const resp = await fetch(urlStr, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-          },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        lastStatus = resp.status;
-        if (resp.ok) {
-          const data = await resp.json();
-          return jsonCors(200, data);
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const resp = await fetch(urlStr, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+            },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          lastStatus = resp.status;
+          if (resp.ok) {
+            const data = await resp.json();
+            console.log(`Jupiter quote successful (${resp.status})`);
+            return jsonCors(200, data);
+          }
+          lastText = await resp.text().catch(() => "(unable to read response)");
+
+          // If 404 or 400, likely means no route exists for this pair
+          if (resp.status === 404 || resp.status === 400) {
+            console.warn(
+              `Jupiter quote returned ${resp.status} - likely no route for this pair: ${inputMint} -> ${outputMint}`,
+            );
+            return jsonCors(resp.status, {
+              error: `No swap route found for this pair`,
+              details: lastText,
+              code: resp.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            });
+          }
+
+          if (resp.status === 429 || resp.status >= 500) {
+            console.warn(
+              `Jupiter API returned ${resp.status}, retrying... (attempt ${attempt}/2)`,
+            );
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+          break;
+        } catch (fetchError) {
+          const errorMsg =
+            fetchError instanceof Error ? fetchError.message : String(fetchError);
+          console.warn(
+            `Fetch error on attempt ${attempt}/2:`,
+            errorMsg,
+          );
+
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+
+          lastText = errorMsg;
+          lastStatus = 500;
+          break;
         }
-        lastText = await resp.text().catch(() => "");
-        if (resp.status === 429 || resp.status >= 500) {
-          await new Promise((r) => setTimeout(r, attempt * 500));
-          continue;
-        }
-        break;
       }
       return jsonCors(lastStatus || 500, {
         error: "Quote failed",

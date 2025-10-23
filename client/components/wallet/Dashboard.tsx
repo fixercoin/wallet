@@ -717,7 +717,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   🎁 Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>�� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
                   <p>⚡ Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
@@ -925,8 +925,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="flex-1 h-12 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#87CEEB] to-[#63B8FF] hover:from-[#6BBBDB] hover:to-[#4FA8E8] text-black border border-[#63B8FF] shadow-lg flex items-center justify-between px-4"
               aria-label="Toggle Token Category"
             >
+              <div className="flex items-center gap-2">
+                <span className={`${tokenCategory === "main" ? "font-bold" : "font-semibold opacity-70"}`}>MAIN</span>
+                <ChevronDown className="h-4 w-4" />
+              </div>
               <span className={`${tokenCategory === "fixorium" ? "font-bold" : "font-semibold opacity-70"}`}>FIXORIUM TOKENS</span>
-              <span className={`${tokenCategory === "main" ? "font-bold" : "font-semibold opacity-70"}`}>MAIN</span>
             </Button>
 
             {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (

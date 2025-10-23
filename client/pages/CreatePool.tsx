@@ -69,15 +69,21 @@ export default function CreatePool() {
   const [pools, setPools] = useState<any[]>([]);
   const [walletTokens, setWalletTokens] = useState<TokenInfo[]>([]);
 
-  // Initialize with wallet tokens
+  // Initialize with wallet tokens, fallback to common tokens
   useEffect(() => {
     if (tokens && tokens.length > 0) {
       setWalletTokens(tokens);
       if (!tokenA) {
         setTokenA(tokens[0]);
       }
+    } else {
+      // Fallback to common tokens if wallet tokens not available
+      setWalletTokens(COMMON_TOKENS);
+      if (!tokenA) {
+        setTokenA(COMMON_TOKENS[0]);
+      }
     }
-  }, [tokens]);
+  }, [tokens, tokenA]);
 
   // Fetch token prices
   useEffect(() => {

@@ -127,7 +127,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
-  const [tokenCategory, setTokenCategory] = useState<"main" | "fixorium">("main");
+  const [tokenCategory, setTokenCategory] = useState<"main" | "fixorium">(
+    "main",
+  );
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -565,12 +567,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return arr;
   }, [tokens]);
 
-  const MAIN_TOKEN_SYMBOLS = new Set(["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"]);
+  const MAIN_TOKEN_SYMBOLS = new Set([
+    "SOL",
+    "USDC",
+    "USDT",
+    "FIXERCOIN",
+    "LOCKER",
+  ]);
   const FIXORIUM_TOKEN_SYMBOLS = new Set(["FXM"]);
 
   const filteredTokens = useMemo(() => {
-    const set = tokenCategory === "main" ? MAIN_TOKEN_SYMBOLS : FIXORIUM_TOKEN_SYMBOLS;
-    return sortedTokens.filter((t) => set.has(String(t.symbol || "").toUpperCase()));
+    const set =
+      tokenCategory === "main" ? MAIN_TOKEN_SYMBOLS : FIXORIUM_TOKEN_SYMBOLS;
+    return sortedTokens.filter((t) =>
+      set.has(String(t.symbol || "").toUpperCase()),
+    );
   }, [sortedTokens, tokenCategory]);
 
   if (!wallet) return null;

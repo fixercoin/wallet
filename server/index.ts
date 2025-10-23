@@ -116,6 +116,10 @@ export async function createServer(): Promise<express.Application> {
   // Fixorium tokens
   app.get("/api/fixorium-tokens", handleFixoriumTokens);
 
+  // Fixorium swap routes
+  app.get("/api/fixorium-swap/rate", handleFixoriumSwapRate);
+  app.post("/api/fixorium-swap", handleFixoriumSwap);
+
   // Health check
   app.get("/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

@@ -904,7 +904,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mb-4 flex gap-2">
           <Button
             onClick={() => setTokenCategory("main")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#C4B5FD] to-[#A78BFA] hover:from-[#C4B5FD] hover:to-[#A78BFA] text-black shadow-lg flex items-center justify-center"
+            className={`flex-1 h-12 rounded-xl font-semibold relative shadow-lg flex items-center justify-center border ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border-[#D8B4FE]" : "bg-[#C4B5FD]/30 text-white border-[#C4B5FD]/40 hover:bg-[#C4B5FD]/40"}`}
             aria-label="MAIN TOKENS"
           >
             <span className="mr-0">MAIN TOKENS</span>
@@ -912,7 +912,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={() => setTokenCategory("fixorium")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#C4B5FD] to-[#A78BFA] hover:from-[#C4B5FD] hover:to-[#A78BFA] text-black shadow-lg flex items-center justify-center"
+            className={`flex-1 h-12 rounded-xl font-semibold relative shadow-lg flex items-center justify-center border ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border-[#D8B4FE]" : "bg-[#C4B5FD]/30 text-white border-[#C4B5FD]/40 hover:bg-[#C4B5FD]/40"}`}
             aria-label="FIXORIUM TOKENS"
           >
             <span className="mr-0">FIXORIUM TOKENS</span>

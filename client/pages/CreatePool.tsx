@@ -158,7 +158,13 @@ export default function CreatePool() {
 
   // Auto-adjust amount B based on real price (only if user hasn't manually edited it)
   useEffect(() => {
-    if (!userEditedAmountB && tokenA && tokenB && amountA && tokenPrices[tokenA.mint]) {
+    if (
+      !userEditedAmountB &&
+      tokenA &&
+      tokenB &&
+      amountA &&
+      tokenPrices[tokenA.mint]
+    ) {
       const priceA = tokenPrices[tokenA.mint] || 0;
       const priceB = tokenPrices[tokenB.mint] || 0;
 

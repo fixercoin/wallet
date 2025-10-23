@@ -176,7 +176,8 @@ class LocalSwapService {
 
     const feeMultiplier = 1 - pool.fee / 100;
     const amountInWithFee = input * feeMultiplier;
-    const maxOutput = (amountInWithFee * reserveOut) / (reserveIn + amountInWithFee);
+    const maxOutput =
+      (amountInWithFee * reserveOut) / (reserveIn + amountInWithFee);
 
     return maxOutput > 0;
   }

@@ -1356,12 +1356,8 @@ export const onRequest = async ({ request, env }) => {
         }
 
         const isTokenA = inputMint === pool.tokenA;
-        const reserveIn = parseFloat(
-          isTokenA ? pool.amountA : pool.amountB,
-        );
-        const reserveOut = parseFloat(
-          isTokenA ? pool.amountB : pool.amountA,
-        );
+        const reserveIn = parseFloat(isTokenA ? pool.amountA : pool.amountB);
+        const reserveOut = parseFloat(isTokenA ? pool.amountB : pool.amountA);
 
         if (reserveIn <= 0 || reserveOut <= 0) {
           return jsonCors(400, {

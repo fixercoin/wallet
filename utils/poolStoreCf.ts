@@ -62,10 +62,7 @@ export function deletePool(poolId: string): { status: number } {
   return { status: 204 };
 }
 
-export function listPoolsForTokenPair(
-  tokenA: string,
-  tokenB: string,
-): Pool[] {
+export function listPoolsForTokenPair(tokenA: string, tokenB: string): Pool[] {
   const pools = loadPoolsFromCache();
   return pools.filter(
     (pool) =>

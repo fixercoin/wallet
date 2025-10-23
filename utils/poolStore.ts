@@ -113,8 +113,9 @@ class PoolStore {
     const outputAmount = numerator / denominator;
 
     const priceImpact =
-      ((input * reserveOut) / (reserveIn * (reserveIn + input)) - outputAmount) /
-      (input * reserveOut / (reserveIn * (reserveIn + input)));
+      ((input * reserveOut) / (reserveIn * (reserveIn + input)) -
+        outputAmount) /
+      ((input * reserveOut) / (reserveIn * (reserveIn + input)));
 
     const feeAmount = input - amountInWithFee;
 

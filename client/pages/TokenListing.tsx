@@ -84,7 +84,7 @@ export default function TokenListing() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1 text-center font-medium text-sm">
+          <div className="flex-1 text-center font-medium text-[10px]">
             FIXORIUM TOKENS
           </div>
         </div>
@@ -110,26 +110,26 @@ export default function TokenListing() {
                 <div className="p-4">
                   <div className="flex items-start gap-4">
                     {/* Token Logo and Info - Left */}
-                    <div className="flex flex-col items-center gap-2">
-                      <Avatar className="h-16 w-16">
+                    <div className="flex flex-col items-center gap-1">
+                      <Avatar className="h-12 w-12">
                         {token.logoURI ? (
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                         ) : (
-                          <AvatarFallback className="bg-[#FF7A5C] text-white text-lg font-semibold">
+                          <AvatarFallback className="bg-[#FF7A5C] text-white text-xs font-semibold">
                             {(token.symbol || "?").slice(0, 2)}
                           </AvatarFallback>
                         )}
                       </Avatar>
                       <div className="text-center">
-                        <div className="text-sm font-semibold">{token.name}</div>
-                        <div className="text-xs text-gray-400">{token.symbol}</div>
+                        <div className="text-[10px] font-semibold">{token.name}</div>
+                        <div className="text-[9px] text-gray-400">{token.symbol}</div>
                       </div>
                     </div>
 
                     {/* Price - Center */}
                     <div className="flex-1 flex flex-col justify-center items-center">
-                      <div className="text-xs text-gray-400 mb-1">Price</div>
-                      <div className="text-lg font-semibold text-[#FF7A5C]">
+                      <div className="text-[9px] text-gray-400 mb-0.5">Price</div>
+                      <div className="text-[11px] font-semibold text-[#FF7A5C]">
                         {token.price !== undefined
                           ? token.price > 0.01
                             ? `$${token.price.toFixed(4)}`
@@ -140,8 +140,8 @@ export default function TokenListing() {
 
                     {/* Amount/Balance - Right */}
                     <div className="flex flex-col justify-center items-end">
-                      <div className="text-xs text-gray-400 mb-1">Balance</div>
-                      <div className="text-lg font-semibold">0.00</div>
+                      <div className="text-[9px] text-gray-400 mb-0.5">Balance</div>
+                      <div className="text-[11px] font-semibold">0.00</div>
                     </div>
                   </div>
                 </div>

@@ -58,10 +58,8 @@ export default function CreateToken() {
   const [isLoading, setIsLoading] = useState(false);
   const [decimals, setDecimals] = useState(6);
   const [maxSupply, setMaxSupply] = useState(1_000_000_000n);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleNavigate = (path: string) => {
-    setDropdownOpen(false);
     navigate(path);
   };
 

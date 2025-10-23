@@ -316,32 +316,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-8 flex-wrap">
           <Button
             onClick={onSend}
             variant="outline"
-            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+            aria-label="Send"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2 px-3"
           >
-            <ArrowUpRight className="h-4 w-4" />
-            <span>SEND</span>
+            <ArrowUpRight className="h-5 w-5" />
+            <span className="text-[10px] leading-none">SEND</span>
           </Button>
 
           <Button
             onClick={onReceive}
             variant="outline"
-            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+            aria-label="Receive"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2 px-3"
           >
-            <ArrowDownLeft className="h-4 w-4" />
-            <span>RECEIVE</span>
+            <ArrowDownLeft className="h-5 w-5" />
+            <span className="text-[10px] leading-none">RECEIVE</span>
           </Button>
 
           <Button
             onClick={onSwap}
             variant="outline"
-            className="flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2"
+            aria-label="Swap"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg bg-transparent border border-gray-600 text-white font-semibold hover:bg-gray-800/50 flex items-center justify-center gap-2 px-3"
           >
-            <RefreshCw className="h-4 w-4" />
-            <span>SWAP</span>
+            <RefreshCw className="h-5 w-5" />
+            <span className="text-[10px] leading-none">SWAP</span>
           </Button>
         </div>
 

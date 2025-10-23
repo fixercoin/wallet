@@ -705,6 +705,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
 
+      // Check for FXM<->SOL swap
+      if (fixoriumSwapAPI.isFxmSolPair(sellToken.mint, solToken.mint)) {
+        setUseFxmSwap(true);
+        await executeFxmSellSwap(sellToken, solToken, tokenAmount);
+        return;
+      }
+
       // Fall back to Jupiter
       const amountInt = parseInt(
         jupiterAPI.formatSwapAmount(tokenAmount, sellToken.decimals),
@@ -724,106 +731,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       setUseLocalPool(false);
 
-      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
-        const swapRequest = {
-          quoteResponse: q,
-          userPublicKey: wallet.publicKey,
-          wrapAndUnwrapSol: true,
-        } as any;
-        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
-        if (!swapResponse || !swapResponse.swapTransaction)
-          throw new Error("Failed to get swap transaction");
-        const kp = getKeypair();
-        if (!kp) throw new Error("Missing wallet key to sign transaction");
-        const swapTransactionBuf = Buffer.from(
-          swapResponse.swapTransaction,
-          "base64",
-        );
-        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
-        tx.sign([kp]);
-        const serialized = Buffer.from(tx.serialize());
-
-        if (connection && typeof connection.sendRawTransaction === "function") {
-          const sig = await connection.sendRawTransaction(serialized, {
-            skipPreflight: false,
-          });
-          return sig;
-        }
-
-        const signedBase64 = (() => {
-          let bin = "";
-          const arr = serialized;
-          for (let i = 0; i < arr.length; i++)
-            bin += String.fromCharCode(arr[i]);
-          try {
-            return btoa(bin);
-          } catch (e) {
-            return Buffer.from(arr).toString("base64");
-          }
-        })();
-
-        const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signedBase64 }),
-        });
-        if (!simResp.ok) {
-          const txt = await simResp.text().catch(() => "");
-          throw new Error(txt || simResp.statusText || "Simulation failed");
-        }
-        const simJson = await simResp.json();
-        if (simJson?.insufficientLamports) {
-          const d = simJson.insufficientLamports;
-          const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
-          throw new Error(
-            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
-          );
-        }
-
-        const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signedBase64 }),
-        });
-        if (!sendResp.ok) {
-          const txt = await sendResp.text().catch(() => "");
-          throw new Error(txt || sendResp.statusText || "Send failed");
-        }
-        const jb = await sendResp.json();
-        if (jb.error) {
-          throw new Error(jb.error?.message || "RPC send error");
-        }
-        return jb.result as string;
-      };
-
       const solReceived = jupiterAPI.parseSwapAmount(
         quote.outAmount,
         solToken.decimals,
       );
-      const sig = await submitQuote(quote);
-      setTxSignature(sig);
-      setLastSwapFromToken(sellToken);
-      setLastSwapToToken(solToken);
-      setStep("success");
-      setTimeout(() => refreshBalance?.(), 2000);
-      toast({
-        title: "Sell Order Submitted",
-        description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-      });
-      if (connection && typeof connection.getLatestBlockhash === "function") {
-        try {
-          const latest = await connection.getLatestBlockhash();
-          await connection.confirmTransaction({
-            blockhash: latest.blockhash,
-            lastValidBlockHeight: latest.lastValidBlockHeight,
-            signature: sig,
-          });
-          toast({
-            title: "Sell Order Confirmed",
-            description: `Sold ${sellTokenAmount} ${sellToken?.symbol} for ${solReceived.toFixed(4)} SOL`,
-          });
-        } catch {}
-      }
+      await submitJupiterQuoteSell(quote, sellToken, solToken, solReceived);
     } catch (err: any) {
       console.error("Sell execution error:", err);
       toast({

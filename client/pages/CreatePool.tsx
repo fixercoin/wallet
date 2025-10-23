@@ -417,13 +417,6 @@ export default function CreatePool() {
             )}
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => navigate("/fixorium/add")}
-            className="w-full"
-          >
-            Back
-          </Button>
         </div>
 
         {/* Created Pools Display */}

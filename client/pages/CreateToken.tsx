@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowLeft } from "lucide-react";
 import {
   Keypair,
   SystemProgram,
@@ -283,19 +283,7 @@ export default function CreateToken() {
           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 backdrop-blur-sm"
           aria-label="Go back"
         >
-          <svg
-            className="w-5 h-5 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <ArrowLeft className="w-5 h-5 text-white" />
         </button>
       </div>
 
@@ -308,20 +296,27 @@ export default function CreateToken() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-gray-300 hover:text-white"
+                  className="h-8 px-3 text-gray-300 hover:text-white flex items-center gap-2"
                 >
+                  <span className="text-xs font-semibold">CREATE POOL</span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/create-pool")}>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/create-pool")}
+                >
                   Create Pool
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/my-tokens")}>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/my-tokens")}
+                >
                   My Tokens
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleNavigate("/fixorium/token-listing")}>
+                <DropdownMenuItem
+                  onClick={() => handleNavigate("/fixorium/token-listing")}
+                >
                   Listed
                 </DropdownMenuItem>
               </DropdownMenuContent>

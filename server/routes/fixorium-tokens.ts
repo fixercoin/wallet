@@ -4,15 +4,15 @@ import { TokenInfo } from "@/lib/wallet";
 // In a real implementation, this would fetch from a database or blockchain
 const FIXORIUM_TOKENS: TokenInfo[] = [
   {
-    mint: "So11111111111111111111111111111111111111112",
-    symbol: "SOL",
-    name: "Solana",
-    decimals: 9,
+    mint: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+    symbol: "FXM",
+    name: "FIXORIUM",
+    decimals: 6,
     logoURI:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      "https://cdn.builder.io/api/v1/image/assets%2F2d0b2b3809b6429b9e89e004f5d46d31%2F4014ec1ff0b64b6491c04ad7c29f00c8?format=webp&width=800",
     balance: 0,
-    price: 190,
-    priceChange24h: 5.2,
+    price: 0,
+    priceChange24h: 0,
   },
 ];
 

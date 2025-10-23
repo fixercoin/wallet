@@ -275,6 +275,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [refreshBalance, refreshTokens]);
 
+  // Open rewards quest modal when requested from other components (TopBar)
+  useEffect(() => {
+    const handler = () => setShowQuestModal(true);
+    window.addEventListener("openRewardsQuest", handler as EventListener);
+    return () => {
+      window.removeEventListener("openRewardsQuest", handler as EventListener);
+    };
+  }, []);
+
   // Check for pending payment verifications if admin
   useEffect(() => {
     if (
@@ -418,9 +427,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatBalance = (amount: number | undefined): string => {
-    if (!amount || isNaN(amount)) return "0.00";
-    return amount.toLocaleString(undefined, {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
+    const amt = typeof amount === "number" && isFinite(amount) ? amount : 0;
+    const sym = String(symbol || "").toUpperCase();
+    if (sym === "FIXERCOIN" || sym === "LOCKER") {
+      const fixed = amt.toFixed(2);
+      const [intPart, fracPart = "00"] = fixed.split(".");
+      const sign = amt < 0 ? "-" : "";
+      const digits = intPart.replace(/^-/, "");
+      const padded = digits.padStart(4, "0");
+      return `${sign}${padded}.${fracPart}`;
+    }
+    return amt.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     });
@@ -865,47 +886,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
             : "Connect wallet to see balance"}
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: equal-width square buttons */}
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold border border-[#D8B4FE] bg-[#E9D5FF] hover:bg-[#D8B4FE] text-black shadow-lg"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
+            aria-label="Send"
           >
-            <ArrowUpRight className="h-4 w-4 mr-2" />
-            SEND
+            <ArrowUpRight className="h-4 w-4" />
+            <span>SEND</span>
           </Button>
 
           <Button
             onClick={onReceive}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Receive"
           >
             <ArrowDownLeft className="h-4 w-4" />
+            <span>RECEIVE</span>
           </Button>
 
           <Button
             onClick={onSwap}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="Swap"
           >
             <ArrowRightLeft className="h-4 w-4" />
-          </Button>
-
-          <Button
-            onClick={() => setShowQuestModal(true)}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
-            aria-label="Quest Rewards"
-          >
-            <FlyingPrizeBox
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
+            <span>SWAP</span>
           </Button>
 
           <Button
             onClick={() => navigate("/express")}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
             aria-label="P2P"
           >
             <span className="text-[12px] font-bold tracking-wide">P2P</span>
@@ -914,10 +926,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
-          <div className="flex-1 h-12 rounded-xl bg-[#C4B5FD]/30 border border-[#C4B5FD]/40 shadow-lg flex items-center p-1 gap-1">
+          <div className="flex-1 h-12 rounded-xl bg-[#E9D5FF]/20 border border-[#E9D5FF]/30 shadow-lg flex items-center p-1 gap-1">
             <Button
               onClick={() => setTokenCategory("main")}
-              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#C4B5FD]/40"}`}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "main" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
               aria-label="MAIN TOKENS"
             >
               <span>MAIN TOKENS</span>
@@ -925,7 +937,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <Button
               onClick={() => setTokenCategory("fixorium")}
-              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#C4B5FD]/40"}`}
+              className={`flex-1 h-full rounded-lg font-semibold transition-all ${tokenCategory === "fixorium" ? "bg-[#E9D5FF] text-black border border-[#D8B4FE]" : "bg-transparent text-white border border-transparent hover:bg-[#E9D5FF]/30"}`}
               aria-label="FIXORIUM TOKENS"
             >
               <span>FIXORIUM TOKENS</span>
@@ -1009,6 +1021,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-sm font-semibold text-white">
                         {formatBalance(
                           token.symbol === "SOL" ? balance : token.balance || 0,
+                          token.symbol,
                         )}
                       </p>
                       <p className="text-xs text-gray-300">

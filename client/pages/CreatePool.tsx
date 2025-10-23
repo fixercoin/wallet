@@ -235,16 +235,17 @@ export default function CreatePool() {
       <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="relative z-20 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#0f1520]/30 border border-white/10">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold">Create Pool</h1>
+        <div className="flex items-center gap-3 mb-6">
           <Button
             variant="ghost"
-            size="sm"
-            onClick={() => navigate("/fixorium/add")}
-            className="text-gray-400 hover:text-white"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="text-white hover:bg-white/5"
+            aria-label="Go back"
           >
-            ✕
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <h1 className="text-xl sm:text-2xl font-bold">Create Pool</h1>
         </div>
 
         <div className="space-y-6">

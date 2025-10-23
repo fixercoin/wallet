@@ -915,14 +915,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span className="text-[10px] leading-none">SWAP</span>
           </Button>
 
-          <Button
-            onClick={() => navigate("/express")}
-            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
-            aria-label="P2P"
-          >
-            <Coins className="h-5 w-5" />
-            <span className="text-[10px] leading-none">P2P</span>
-          </Button>
         </div>
 
         {/* Tokens List */}

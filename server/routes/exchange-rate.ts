@@ -97,6 +97,8 @@ export const handleExchangeRate: RequestHandler = async (req, res) => {
       priceUsd = 1.0;
     } else if (token === "LOCKER") {
       priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.LOCKER);
+    } else if (token === "FXM") {
+      priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.FXM);
     }
 
     // Fall back to hardcoded rates if DexScreener fetch fails or price is invalid

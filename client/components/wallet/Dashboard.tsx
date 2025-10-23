@@ -887,37 +887,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Action Buttons: equal-width square buttons */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Send"
           >
             <ArrowUpRight className="h-5 w-5" />
+            <span className="text-[10px] leading-none">SEND</span>
           </Button>
 
           <Button
             onClick={onReceive}
-            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Receive"
           >
             <ArrowDownLeft className="h-5 w-5" />
+            <span className="text-[10px] leading-none">RECEIVE</span>
           </Button>
 
           <Button
             onClick={onSwap}
-            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Swap"
           >
             <ArrowRightLeft className="h-5 w-5" />
+            <span className="text-[10px] leading-none">SWAP</span>
           </Button>
 
           <Button
             onClick={() => navigate("/express")}
-            className="flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2"
+            className="min-w-[72px] sm:flex-1 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="P2P"
           >
             <Coins className="h-5 w-5" />
+            <span className="text-[10px] leading-none">P2P</span>
           </Button>
         </div>
 

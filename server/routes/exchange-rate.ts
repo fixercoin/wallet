@@ -7,6 +7,7 @@ const TOKEN_MINTS = {
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
   FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
   LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+  FXM: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
 } as const;
 
 const FALLBACK_RATES: Record<string, number> = {
@@ -15,6 +16,7 @@ const FALLBACK_RATES: Record<string, number> = {
   USDC: 1.0, // $1 USDC
   USDT: 1.0, // $1 USDT
   LOCKER: 0.1, // $0.1 per LOCKER
+  FXM: 0.01, // $0.01 per FXM (fallback rate)
 };
 
 const PKR_PER_USD = 280; // Approximate conversion rate

@@ -43,6 +43,8 @@ interface SwapExecuteRequest {
 interface SwapExecuteResponse {
   transaction: string;
   swapId: string;
+  transactionType: "user_transfer" | "liquidity_transfer";
+  description: string;
 }
 
 // Helper to get or create ATA

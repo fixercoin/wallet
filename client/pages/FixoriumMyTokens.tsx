@@ -51,9 +51,6 @@ export default function FixoriumMyTokens() {
         </div>
 
         <Card className="mb-4 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-sm">Tokens created by Fixorium</CardTitle>
-          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-sm text-gray-300">Loading...</div>

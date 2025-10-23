@@ -464,7 +464,8 @@ class JupiterAPI {
         decimals: 6,
         name: "Fixorium Market Token",
         symbol: "FXM",
-        logoURI: "",
+        logoURI:
+          "https://cdn.builder.io/api/v1/image/assets%2F2d0b2b3809b6429b9e89e004f5d46d31%2F4014ec1ff0b64b6491c04ad7c29f00c8?format=webp&width=800",
       },
       {
         address: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",

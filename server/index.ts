@@ -40,6 +40,10 @@ import {
   handleDeleteOrder,
 } from "./routes/orders";
 import { handleFixoriumTokens } from "./routes/fixorium-tokens";
+import {
+  handleFixoriumSwapRate,
+  handleFixoriumSwap,
+} from "./routes/fixorium-swap";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

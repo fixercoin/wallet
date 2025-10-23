@@ -365,8 +365,47 @@ export default function CreateToken() {
                 />
               </div>
 
-              <div className="text-xs text-gray-400">
-                Decimals: 6 • Max supply: 1,000,000,000
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="decimals">Decimals</Label>
+                  <Select
+                    value={decimals.toString()}
+                    onValueChange={(value) => setDecimals(parseInt(value))}
+                  >
+                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DECIMAL_OPTIONS.map((decimal) => (
+                        <SelectItem key={decimal} value={decimal.toString()}>
+                          {decimal}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxSupply">Max Supply</Label>
+                  <Select
+                    value={maxSupply.toString()}
+                    onValueChange={(value) => setMaxSupply(BigInt(value))}
+                  >
+                    <SelectTrigger className="bg-[#1a1a1a] text-white border-white/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAX_SUPPLY_OPTIONS.map((option) => (
+                        <SelectItem
+                          key={option.value.toString()}
+                          value={option.value.toString()}
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

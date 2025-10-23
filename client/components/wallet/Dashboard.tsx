@@ -26,6 +26,7 @@ import {
   Coins,
   Bell,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -893,8 +894,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Send"
           >
-            <ArrowUpRight className="h-5 w-5" />
             <span className="text-[10px] leading-none">SEND</span>
+            <ArrowUpRight className="h-5 w-5" />
           </Button>
 
           <Button
@@ -902,8 +903,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Receive"
           >
-            <ArrowDownLeft className="h-5 w-5" />
             <span className="text-[10px] leading-none">RECEIVE</span>
+            <ArrowDownLeft className="h-5 w-5" />
           </Button>
 
           <Button
@@ -911,63 +912,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Swap"
           >
-            <ArrowRightLeft className="h-5 w-5" />
             <span className="text-[10px] leading-none">SWAP</span>
+            <ArrowRightLeft className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Tokens List */}
-        <div className="mb-4 flex flex-col sm:flex-row gap-2">
-          <div className="flex-1 h-12 rounded-xl flex items-center p-0 gap-1 flex-row">
+        <div className="mb-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
             <Button
-              onClick={() => setTokenCategory("main")}
-              style={
-                tokenCategory === "main"
-                  ? { backgroundColor: "#87CEEB", color: "#000" }
-                  : {
-                      backgroundColor: "rgba(135,206,235,0.2)",
-                      color: "#87CEEB",
-                    }
+              onClick={() =>
+                setTokenCategory(tokenCategory === "main" ? "fixorium" : "main")
               }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all text-xs ${tokenCategory === "main" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-[#87CEEB]/20 text-[#87CEEB] border border-transparent hover:bg-[#87CEEB]/30"}`}
-              aria-label="MAIN"
+              className="flex-1 h-12 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#FF8A8A] to-[#FF6B6B] hover:from-[#FF7575] hover:to-[#FF5555] text-black border border-[#FF6B6B] shadow-lg flex items-center justify-between px-4"
+              aria-label="Toggle Token Category"
             >
-              <span>MAIN</span>
-            </Button>
-
-            <Button
-              onClick={() => setTokenCategory("fixorium")}
-              style={
-                tokenCategory === "fixorium"
-                  ? { backgroundColor: "#87CEEB", color: "#000" }
-                  : {
-                      backgroundColor: "rgba(135,206,235,0.2)",
-                      color: "#87CEEB",
-                    }
-              }
-              className={`flex-1 h-full rounded-lg font-semibold transition-all text-xs ${tokenCategory === "fixorium" ? "bg-[#87CEEB] text-black border border-[#63B8FF]" : "bg-transparent text-white border border-transparent hover:bg-[#87CEEB]/30"}`}
-              aria-label="FIXORIUM TOKENS"
-            >
-              <span>FIXORIUM TOKENS</span>
-            </Button>
-          </div>
-
-          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
-            <Button
-              onClick={() => navigate("/verify-sell")}
-              className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
-              aria-label={`${pendingOrdersCount} pending orders`}
-            >
-              <span className="relative">
-                {pendingOrdersCount}
-                {pendingOrdersCount > 0 && (
-                  <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
-                    !
-                  </span>
-                )}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`${tokenCategory === "main" ? "font-bold" : "font-semibold opacity-70"}`}
+                >
+                  MAIN
+                </span>
+                <ChevronDown className="h-4 w-4" />
+              </div>
+              <span
+                className={`${tokenCategory === "fixorium" ? "font-bold" : "font-semibold opacity-70"}`}
+              >
+                FIXORIUM TOKENS
               </span>
             </Button>
-          )}
+
+            {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+              <Button
+                onClick={() => navigate("/verify-sell")}
+                className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative flex-shrink-0"
+                aria-label={`${pendingOrdersCount} pending orders`}
+              >
+                <span className="relative">
+                  {pendingOrdersCount}
+                  {pendingOrdersCount > 0 && (
+                    <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+                      !
+                    </span>
+                  )}
+                </span>
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">

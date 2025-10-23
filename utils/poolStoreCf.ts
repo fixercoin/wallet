@@ -11,6 +11,8 @@ export interface Pool {
   totalLiquidity: string;
 }
 
+type D1 = any; // Cloudflare D1 Database type
+
 const POOLS_FILE = "data/pools.json";
 
 let poolCache: Pool[] = [];
@@ -143,5 +145,134 @@ export function calculateSwapQuote(
     outputAmount: outputAmount.toFixed(8),
     priceImpact: (Math.abs(priceImpact) * 100).toFixed(2),
     fee: feeAmount.toFixed(8),
+  };
+}
+
+// Cloudflare D1 Database Functions
+
+export async function ensurePoolSchema(db: D1) {
+  const stmts = [
+    `CREATE TABLE IF NOT EXISTS pools (
+      pool_id TEXT PRIMARY KEY,
+      token_a TEXT NOT NULL,
+      token_b TEXT NOT NULL,
+      amount_a TEXT NOT NULL,
+      amount_b TEXT NOT NULL,
+      fee REAL NOT NULL,
+      wallet_address TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      status TEXT NOT NULL,
+      total_liquidity TEXT NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_pools_wallet_address ON pools(wallet_address)`,
+    `CREATE INDEX IF NOT EXISTS idx_pools_created_at ON pools(created_at DESC)`,
+  ];
+  for (const sql of stmts) {
+    await db.prepare(sql).run();
+  }
+}
+
+export async function createPoolCF(db: D1, pool: Pool) {
+  await ensurePoolSchema(db);
+  await db
+    .prepare(
+      `INSERT INTO pools (pool_id, token_a, token_b, amount_a, amount_b, fee, wallet_address, created_at, status, total_liquidity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      pool.poolId,
+      pool.tokenA,
+      pool.tokenB,
+      pool.amountA,
+      pool.amountB,
+      pool.fee,
+      pool.walletAddress,
+      pool.createdAt,
+      pool.status,
+      pool.totalLiquidity,
+    )
+    .run();
+  return pool;
+}
+
+export async function listPoolsCF(db: D1) {
+  await ensurePoolSchema(db);
+  const { results } = await db
+    .prepare(
+      `SELECT pool_id as poolId, token_a as tokenA, token_b as tokenB,
+              amount_a as amountA, amount_b as amountB, fee, wallet_address as walletAddress,
+              created_at as createdAt, status, total_liquidity as totalLiquidity
+       FROM pools
+       ORDER BY created_at DESC`,
+    )
+    .all();
+  return {
+    pools: (results || []).map((r: any) => ({
+      poolId: r.poolId,
+      tokenA: r.tokenA,
+      tokenB: r.tokenB,
+      amountA: r.amountA,
+      amountB: r.amountB,
+      fee: Number(r.fee),
+      walletAddress: r.walletAddress,
+      createdAt: r.createdAt,
+      status: r.status,
+      totalLiquidity: r.totalLiquidity,
+    })) as Pool[],
+  };
+}
+
+export async function getPoolCF(db: D1, poolId: string) {
+  await ensurePoolSchema(db);
+  const r = await db
+    .prepare(
+      `SELECT pool_id as poolId, token_a as tokenA, token_b as tokenB,
+              amount_a as amountA, amount_b as amountB, fee, wallet_address as walletAddress,
+              created_at as createdAt, status, total_liquidity as totalLiquidity
+       FROM pools WHERE pool_id = ?`,
+    )
+    .bind(poolId)
+    .first();
+  if (!r) return null;
+  return {
+    poolId: r.poolId,
+    tokenA: r.tokenA,
+    tokenB: r.tokenB,
+    amountA: r.amountA,
+    amountB: r.amountB,
+    fee: Number(r.fee),
+    walletAddress: r.walletAddress,
+    createdAt: r.createdAt,
+    status: r.status,
+    totalLiquidity: r.totalLiquidity,
+  } as Pool;
+}
+
+export async function listPoolsForWalletCF(db: D1, walletAddress: string) {
+  await ensurePoolSchema(db);
+  const { results } = await db
+    .prepare(
+      `SELECT pool_id as poolId, token_a as tokenA, token_b as tokenB,
+              amount_a as amountA, amount_b as amountB, fee, wallet_address as walletAddress,
+              created_at as createdAt, status, total_liquidity as totalLiquidity
+       FROM pools
+       WHERE wallet_address = ?
+       ORDER BY created_at DESC`,
+    )
+    .bind(walletAddress)
+    .all();
+  return {
+    pools: (results || []).map((r: any) => ({
+      poolId: r.poolId,
+      tokenA: r.tokenA,
+      tokenB: r.tokenB,
+      amountA: r.amountA,
+      amountB: r.amountB,
+      fee: Number(r.fee),
+      walletAddress: r.walletAddress,
+      createdAt: r.createdAt,
+      status: r.status,
+      totalLiquidity: r.totalLiquidity,
+    })) as Pool[],
   };
 }

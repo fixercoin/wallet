@@ -918,7 +918,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onSelect={() => setShowQuestModal(true)}>
-                <span>Quest Rewards</span>
+                <span>REWARDS</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => navigate("/verify-sell")}>

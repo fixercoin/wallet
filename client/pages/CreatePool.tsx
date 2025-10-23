@@ -229,6 +229,18 @@ export default function CreatePool() {
 
       setPools([poolData, ...pools]);
 
+      // Also persist to localStorage for client-side access
+      try {
+        const stored = localStorage.getItem("fixorium_pools");
+        const allPools = stored ? JSON.parse(stored) : [];
+        localStorage.setItem(
+          "fixorium_pools",
+          JSON.stringify([poolData, ...allPools]),
+        );
+      } catch (err) {
+        console.error("Error saving pool to localStorage:", err);
+      }
+
       toast({
         title: "Pool created successfully!",
         description: `Pool ID: ${poolData.poolId}`,

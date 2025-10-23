@@ -717,7 +717,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   🎁 Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>�� {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
                   <p>⚡ Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
@@ -922,7 +922,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setTokenCategory(tokenCategory === "main" ? "fixorium" : "main")}
-              className="flex-1 h-12 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#87CEEB] to-[#63B8FF] hover:from-[#6BBBDB] hover:to-[#4FA8E8] text-black border border-[#63B8FF] shadow-lg flex items-center justify-between px-4"
+              className="flex-1 h-12 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#FF8A8A] to-[#FF6B6B] hover:from-[#FF7575] hover:to-[#FF5555] text-black border border-[#FF6B6B] shadow-lg flex items-center justify-between px-4"
               aria-label="Toggle Token Category"
             >
               <div className="flex items-center gap-2">

@@ -127,6 +127,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [tokenCategory, setTokenCategory] = useState<"main" | "fixorium">("main");
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -564,6 +565,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return arr;
   }, [tokens]);
 
+  const MAIN_TOKEN_SYMBOLS = new Set(["SOL", "USDC", "USDT"]);
+  const FIXORIUM_TOKEN_SYMBOLS = new Set(["FIXERCOIN", "LOCKER"]);
+
+  const filteredTokens = useMemo(() => {
+    const set = tokenCategory === "main" ? MAIN_TOKEN_SYMBOLS : FIXORIUM_TOKEN_SYMBOLS;
+    return sortedTokens.filter((t) => set.has(String(t.symbol || "").toUpperCase()));
+  }, [sortedTokens, tokenCategory]);
+
   if (!wallet) return null;
 
   return (
@@ -894,16 +903,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Tokens List */}
         <div className="mb-4 flex gap-2">
           <Button
-            onClick={() => navigate("/express?category=main")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
+            onClick={() => setTokenCategory("main")}
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#C4B5FD] to-[#A78BFA] hover:from-[#C4B5FD] hover:to-[#A78BFA] text-black shadow-lg flex items-center justify-center"
             aria-label="MAIN TOKENS"
           >
             <span className="mr-0">MAIN TOKENS</span>
           </Button>
 
           <Button
-            onClick={() => navigate("/express?category=fixorium")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#6D28D9] to-[#EC4899] hover:from-[#5B21B6] hover:to-[#DB2777] text-white shadow-lg flex items-center justify-center"
+            onClick={() => setTokenCategory("fixorium")}
+            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#C4B5FD] to-[#A78BFA] hover:from-[#C4B5FD] hover:to-[#A78BFA] text-black shadow-lg flex items-center justify-center"
             aria-label="FIXORIUM TOKENS"
           >
             <span className="mr-0">FIXORIUM TOKENS</span>
@@ -928,7 +937,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="space-y-3">
-          {sortedTokens.map((token) => {
+          {filteredTokens.map((token) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&
               isFinite(token.priceChange24h)

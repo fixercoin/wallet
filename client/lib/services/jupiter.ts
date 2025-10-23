@@ -305,25 +305,117 @@ class JupiterAPI {
   async getStrictTokenList(): Promise<JupiterToken[]> {
     // Try strict, then fallback to all; use small timeout wrapper to avoid hanging
     const fetchWithTimeout = async (url: string, ms = 10000) => {
-      const timeout = new Promise<Response>((resolve) =>
-        setTimeout(() => resolve(new Response("", { status: 504 })), ms),
-      );
-      return (await Promise.race([fetch(url), timeout])) as Response;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), ms);
+
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+        clearTimeout(timeout);
+        return response;
+      } catch (error) {
+        clearTimeout(timeout);
+        throw error;
+      }
     };
-    try {
-      let response = await fetchWithTimeout("/api/jupiter/tokens?type=strict");
-      if (!response.ok) {
-        response = await fetchWithTimeout("/api/jupiter/tokens?type=all");
+
+    const typesToTry = ["strict", "all"];
+
+    for (const type of typesToTry) {
+      try {
+        const response = await fetchWithTimeout(`/api/jupiter/tokens?type=${type}`, 10000);
+
+        if (!response.ok) {
+          console.warn(`Token list fetch returned ${response.status} for type=${type}`);
+          continue;
+        }
+
+        // Validate response is actually JSON and contains data
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          console.warn(`Invalid content-type for token list: ${contentType}`);
+          continue;
+        }
+
+        // Read and validate response body before parsing
+        const responseText = await response.text();
+        if (!responseText || responseText.trim().length === 0) {
+          console.warn(`Empty response body from token list fetch (type=${type})`);
+          continue;
+        }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.warn(`Failed to parse token list JSON (type=${type}):`, parseError);
+          continue;
+        }
+
+        // Validate it's an array and has tokens
+        if (!Array.isArray(data)) {
+          console.warn(`Token list response is not an array (type=${type}), got:`, typeof data);
+          continue;
+        }
+
+        if (data.length === 0) {
+          console.warn(`Token list is empty (type=${type}), trying fallback...`);
+          continue;
+        }
+
+        // Validate first item has required fields
+        const firstToken = data[0];
+        if (!firstToken.address || !firstToken.symbol) {
+          console.warn(`Token list has invalid format (type=${type}), missing address or symbol`);
+          continue;
+        }
+
+        console.log(`Successfully loaded ${data.length} tokens (type=${type})`);
+        return data;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.warn(`Error fetching token list (type=${type}):`, errorMsg);
+        // Continue to next type
       }
-      if (!response.ok) {
-        return [];
-      }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.debug("Error fetching strict token list from Jupiter:", error);
-      return [];
     }
+
+    console.error("Failed to fetch token list from all endpoints, using fallback");
+    return this.getFallbackTokenList();
+  }
+
+  private getFallbackTokenList(): JupiterToken[] {
+    // Fallback list with essential tokens including FXM
+    return [
+      {
+        address: "So11111111111111111111111111111111111111112",
+        chainId: 101,
+        decimals: 9,
+        name: "Solana",
+        symbol: "SOL",
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      },
+      {
+        address: "EPjFWaJY5uyKcKEKVpyeX7NqCKkZK87MwKucL2X63g9",
+        chainId: 101,
+        decimals: 6,
+        name: "USDC",
+        symbol: "USDC",
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWaJY5uyKcKEKVpyeX7NqCKkZK87MwKucL2X63g9/logo.png",
+      },
+      {
+        address: "Es9vMFrzaCERmJfqV1G2tC64eedQy4d4FwLvgcrkt7S",
+        chainId: 101,
+        decimals: 6,
+        name: "USDT",
+        symbol: "USDT",
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfqV1G2tC64eedQy4d4FwLvgcrkt7S/logo.png",
+      },
+    ];
   }
 
   formatSwapAmount(amount: number, decimals: number): string {

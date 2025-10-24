@@ -569,6 +569,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           const tokenMints = allTokens.map((token) => token.mint);
           prices = await jupiterAPI.getTokenPrices(tokenMints);
+
+          // Always ensure FIXERCOIN has a price from Jupiter or fallback
+          const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+          if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+            try {
+              const fixercoinPrice = await fixercoinPriceService.getPrice();
+              if (fixercoinPrice && fixercoinPrice > 0) {
+                prices[fixercoinMint] = fixercoinPrice;
+              }
+            } catch (e) {
+              prices[fixercoinMint] = 0.000023; // fallback
+            }
+          }
+
           if (Object.keys(prices).length > 0) {
             priceSource = "jupiter";
           } else {

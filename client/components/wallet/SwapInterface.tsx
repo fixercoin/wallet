@@ -137,7 +137,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         const customTokenMints = [
           "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
           "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
-          "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
         ];
         customTokenMints.forEach((mint) => fallbackMints.add(mint));
         setSupportedMints(fallbackMints);

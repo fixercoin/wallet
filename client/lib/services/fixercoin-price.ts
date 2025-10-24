@@ -22,12 +22,16 @@ class FixercoinPriceService {
       if (this.cachedData && this.lastFetchTime) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
-          console.log(`[FIXERCOIN] Returning cached price: $${this.cachedData.price.toFixed(8)}`);
+          console.log(
+            `[FIXERCOIN] Returning cached price: $${this.cachedData.price.toFixed(8)}`,
+          );
           return this.cachedData;
         }
       }
 
-      console.log(`[FIXERCOIN] Fetching fresh price from DexScreener for mint: ${FIXERCOIN_TOKEN_INFO.mintAddress}`);
+      console.log(
+        `[FIXERCOIN] Fetching fresh price from DexScreener for mint: ${FIXERCOIN_TOKEN_INFO.mintAddress}`,
+      );
 
       // Fetch FIXERCOIN data from DexScreener
       const dexData = await dexscreenerAPI.getTokenByMint(
@@ -60,10 +64,14 @@ class FixercoinPriceService {
       if (priceData.price > 0) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
-        console.log(`[FIXERCOIN] Price updated: $${priceData.price.toFixed(8)} (24h: ${priceData.priceChange24h.toFixed(2)}%)`);
+        console.log(
+          `[FIXERCOIN] Price updated: $${priceData.price.toFixed(8)} (24h: ${priceData.priceChange24h.toFixed(2)}%)`,
+        );
         return priceData;
       } else {
-        console.warn(`[FIXERCOIN] Invalid price (${priceData.price}), using fallback`);
+        console.warn(
+          `[FIXERCOIN] Invalid price (${priceData.price}), using fallback`,
+        );
         return this.getFallbackPrice();
       }
     } catch (error) {

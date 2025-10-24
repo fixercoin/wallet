@@ -234,7 +234,8 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
         const chainId = (pair.chainId || "").toLowerCase();
         const mintMatches = uniqueMints.some(
           (mint) =>
-            mint === pair.baseToken?.address || mint === pair.quoteToken?.address,
+            mint === pair.baseToken?.address ||
+            mint === pair.quoteToken?.address,
         );
         return chainId === "solana" || mintMatches;
       })

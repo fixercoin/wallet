@@ -224,26 +224,31 @@ export const getTokenAccounts = async (publicKey: string) => {
       },
     ]);
 
-    return response.value.map((account: any) => {
-      const parsedInfo = account.account.data.parsed.info;
-      const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
-      const decimals = parsedInfo.tokenAmount.decimals;
+    return response.value
+      .filter((account: any) => {
+        const mint = account.account.data.parsed.info.mint;
+        return !REMOVED_MINTS.has(mint);
+      })
+      .map((account: any) => {
+        const parsedInfo = account.account.data.parsed.info;
+        const mint = parsedInfo.mint;
+        const balance = parsedInfo.tokenAmount.uiAmount || 0;
+        const decimals = parsedInfo.tokenAmount.decimals;
 
-      // Get token metadata from known tokens or use defaults
-      const metadata = KNOWN_TOKENS[mint] || {
-        mint,
-        symbol: "UNKNOWN",
-        name: "Unknown Token",
-        decimals,
-      };
+        // Get token metadata from known tokens or use defaults
+        const metadata = KNOWN_TOKENS[mint] || {
+          mint,
+          symbol: "UNKNOWN",
+          name: "Unknown Token",
+          decimals,
+        };
 
-      return {
-        ...metadata,
-        balance,
-        decimals: decimals || metadata.decimals,
-      };
-    });
+        return {
+          ...metadata,
+          balance,
+          decimals: decimals || metadata.decimals,
+        };
+      });
   } catch (error) {
     console.error("Error fetching token accounts:", error);
     return [];

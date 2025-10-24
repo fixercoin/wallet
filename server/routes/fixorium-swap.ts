@@ -149,29 +149,11 @@ const FIXED_FXM_SOL_RATE = 0.000005; // 1 FXM = 0.000005 SOL
 // Get the swap rate for FXM<->SOL
 export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
   try {
-    const { inputMint, outputMint, amount } = req.query;
-
-    if (!inputMint || !outputMint || !amount) {
-      return res.status(400).json({
-        error: "Missing required parameters: inputMint, outputMint, amount",
-      });
-    }
-
-    const inputAmount = String(amount);
-    const isInputFXM = inputMint === FXM_MINT;
-    const isOutputFXM = outputMint === FXM_MINT;
-
-    // Validate it's FXM<->SOL pair
-    if (
-      !(
-        (isInputFXM && outputMint === SOL_MINT) ||
-        (isOutputFXM && inputMint === SOL_MINT)
-      )
-    ) {
-      return res.status(400).json({
-        error: "Fixorium swap only supports FXM<->SOL pairs",
-      });
-    }
+    // FXM token has been removed and is no longer supported
+    return res.status(400).json({
+      error: "FXM token is no longer supported",
+      message: "FXM swaps are not available",
+    });
 
     // Calculate output amount based on fixed rate
     const inputAmountNum = parseFloat(inputAmount);
@@ -209,23 +191,11 @@ export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
 // Execute FXM<->SOL swap
 export const handleFixoriumSwap: RequestHandler = async (req, res) => {
   try {
-    const { userPublicKey, inputMint, outputMint, inputAmount, outputAmount } =
-      req.body;
-
-    if (
-      !userPublicKey ||
-      !inputMint ||
-      !outputMint ||
-      !inputAmount ||
-      !outputAmount
-    ) {
-      return res.status(400).json({
-        error: "Missing required parameters",
-      });
-    }
-
-    const isInputFXM = inputMint === FXM_MINT;
-    const isOutputFXM = outputMint === FXM_MINT;
+    // FXM token has been removed and is no longer supported
+    return res.status(400).json({
+      error: "FXM token is no longer supported",
+      message: "FXM swaps are not available",
+    });
 
     // Validate it's FXM<->SOL pair
     if (

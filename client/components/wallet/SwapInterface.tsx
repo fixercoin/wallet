@@ -53,7 +53,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     tokens || [],
   );
   const allTokens = availableTokens;
-  const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
+
+  // Initialize supportedMints with custom tokens immediately
+  const initialSupportedMints = new Set([
+    ...(tokens || []).map((t: TokenInfo) => t.mint),
+    "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+    "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+    "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
+  ]);
+  const [supportedMints, setSupportedMints] = useState<Set<string>>(initialSupportedMints);
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
   const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(

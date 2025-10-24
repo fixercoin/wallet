@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { TOKEN_MINTS, REMOVED_MINTS } from "@/lib/constants/token-mints";
 
 interface TokenInfo {
   mint: string;

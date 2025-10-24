@@ -58,13 +58,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   );
   const allTokens = availableTokens;
 
-  // Initialize supportedMints with custom tokens that should always be supported
+  // Initialize supportedMints - will be populated from Jupiter and available tokens
   const [supportedMints, setSupportedMints] = useState<Set<string>>(
-    () =>
-      new Set([
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
-      ]),
+    new Set(),
   );
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);

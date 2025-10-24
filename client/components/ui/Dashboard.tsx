@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { REMOVED_MINTS, REMOVED_SYMBOLS } from "@/lib/constants/token-mints";
 
 interface DashboardProps {
   onSend: () => void;
@@ -183,6 +184,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     // Add all token values including SOL
     tokens.forEach((token) => {
+      const sym = String(token.symbol || "").toUpperCase();
+      if (REMOVED_MINTS.has(token.mint) || REMOVED_SYMBOLS.has(sym)) return;
       if (
         typeof token.balance === "number" &&
         typeof token.price === "number" &&
@@ -219,6 +222,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     let tokensValue = 0;
     tokens.forEach((token) => {
+      const sym = String(token.symbol || "").toUpperCase();
+      if (REMOVED_MINTS.has(token.mint) || REMOVED_SYMBOLS.has(sym)) return;
       if (
         token.balance &&
         token.price &&

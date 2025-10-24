@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { TOKEN_MINTS, REMOVED_MINTS } from "@/lib/constants/token-mints";
 
 interface TokenInfo {
   mint: string;
@@ -41,14 +42,14 @@ export default function FixoriumMyTokens() {
   // Get user-created tokens from wallet context
   const userTokens = useMemo(() => {
     if (!walletTokens || !Array.isArray(walletTokens)) return [];
-    // Filter out built-in tokens (SOL, USDC, USDT, FIXERCOIN, LOCKER, FXM)
+    // Filter out built-in and removed tokens (SOL, USDC, USDT, FIXERCOIN, LOCKER, FXM)
     const builtInMints = new Set([
-      "So11111111111111111111111111111111111111112",
-      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-      "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
-      "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-      "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
-      "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+      TOKEN_MINTS.SOL,
+      TOKEN_MINTS.USDC,
+      TOKEN_MINTS.USDT,
+      TOKEN_MINTS.FIXERCOIN,
+      TOKEN_MINTS.LOCKER,
+      ...Array.from(REMOVED_MINTS),
     ]);
     return walletTokens.filter((t: any) => !builtInMints.has(t.mint));
   }, [walletTokens]);

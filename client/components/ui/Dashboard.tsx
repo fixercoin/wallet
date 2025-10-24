@@ -222,6 +222,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     let tokensValue = 0;
     tokens.forEach((token) => {
+      const sym = String(token.symbol || "").toUpperCase();
+      if (REMOVED_MINTS.has(token.mint) || REMOVED_SYMBOLS.has(sym)) return;
       if (
         token.balance &&
         token.price &&

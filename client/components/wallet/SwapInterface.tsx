@@ -97,6 +97,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
           ];
           customTokenMints.forEach((mint) => fallbackMints.add(mint));
+          // Add SOL token if not already included
+          fallbackMints.add("So11111111111111111111111111111111111111112");
           setSupportedMints(fallbackMints);
           return;
         }

@@ -77,7 +77,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!jupiterTokens || jupiterTokens.length === 0) {
           console.warn("No Jupiter tokens loaded, using user tokens only");
           setAvailableTokens(tokens || []);
-          const fallbackMints = new Set((tokens || []).map((t: TokenInfo) => t.mint));
+          const fallbackMints = new Set(
+            (tokens || []).map((t: TokenInfo) => t.mint),
+          );
           // Always add custom token mints to supported list
           const customTokenMints = [
             "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
@@ -130,7 +132,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         console.error("Error loading tokens:", err);
         // Fallback to user tokens
         setAvailableTokens(tokens || []);
-        const fallbackMints = new Set((tokens || []).map((t: TokenInfo) => t.mint));
+        const fallbackMints = new Set(
+          (tokens || []).map((t: TokenInfo) => t.mint),
+        );
         // Always add custom token mints to supported list
         const customTokenMints = [
           "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN

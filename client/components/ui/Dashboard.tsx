@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { REMOVED_MINTS, REMOVED_SYMBOLS } from "@/lib/constants/token-mints";
 
 interface DashboardProps {
   onSend: () => void;

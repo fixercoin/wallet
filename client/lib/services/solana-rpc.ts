@@ -1,3 +1,5 @@
+import { REMOVED_MINTS, REMOVED_SYMBOLS } from "@/lib/constants/token-mints";
+
 // Token metadata interface for simplified token info
 export interface TokenMetadata {
   mint: string;
@@ -46,6 +48,12 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     name: "LOCKER",
     decimals: 6,
     logoURI: "https://via.placeholder.com/64x64/8b5cf6/ffffff?text=LO",
+  },
+  Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63: {
+    mint: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+    symbol: "FXM",
+    name: "FXM (Deprecated)",
+    decimals: 6,
   },
 };
 
@@ -216,26 +224,31 @@ export const getTokenAccounts = async (publicKey: string) => {
       },
     ]);
 
-    return response.value.map((account: any) => {
-      const parsedInfo = account.account.data.parsed.info;
-      const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
-      const decimals = parsedInfo.tokenAmount.decimals;
+    return response.value
+      .filter((account: any) => {
+        const mint = account.account.data.parsed.info.mint;
+        return !REMOVED_MINTS.has(mint);
+      })
+      .map((account: any) => {
+        const parsedInfo = account.account.data.parsed.info;
+        const mint = parsedInfo.mint;
+        const balance = parsedInfo.tokenAmount.uiAmount || 0;
+        const decimals = parsedInfo.tokenAmount.decimals;
 
-      // Get token metadata from known tokens or use defaults
-      const metadata = KNOWN_TOKENS[mint] || {
-        mint,
-        symbol: "UNKNOWN",
-        name: "Unknown Token",
-        decimals,
-      };
+        // Get token metadata from known tokens or use defaults
+        const metadata = KNOWN_TOKENS[mint] || {
+          mint,
+          symbol: "UNKNOWN",
+          name: "Unknown Token",
+          decimals,
+        };
 
-      return {
-        ...metadata,
-        balance,
-        decimals: decimals || metadata.decimals,
-      };
-    });
+        return {
+          ...metadata,
+          balance,
+          decimals: decimals || metadata.decimals,
+        };
+      });
   } catch (error) {
     console.error("Error fetching token accounts:", error);
     return [];

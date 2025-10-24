@@ -68,6 +68,7 @@ import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
+import { REMOVED_MINTS, REMOVED_SYMBOLS } from "@/lib/constants/token-mints";
 
 const QUEST_TASKS = [
   {

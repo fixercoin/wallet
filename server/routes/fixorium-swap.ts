@@ -14,10 +14,6 @@ import {
 } from "@solana/spl-token";
 import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
 
-const FXM_MINT = "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63";
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const LIQUIDITY_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
-
 const connection = new Connection(ALCHEMY_RPC_URL, "confirmed");
 
 interface SwapRateRequest {
@@ -142,62 +138,14 @@ const transferTokensInstruction = (
   });
 };
 
-// Fixed exchange rate: 1000 FXM = 0.005 SOL
-// This means: 1 FXM = 0.000005 SOL, or 1 SOL = 200,000 FXM
-const FIXED_FXM_SOL_RATE = 0.000005; // 1 FXM = 0.000005 SOL
-
 // Get the swap rate for FXM<->SOL
 export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
   try {
-    const { inputMint, outputMint, amount } = req.query;
-
-    if (!inputMint || !outputMint || !amount) {
-      return res.status(400).json({
-        error: "Missing required parameters: inputMint, outputMint, amount",
-      });
-    }
-
-    const inputAmount = String(amount);
-    const isInputFXM = inputMint === FXM_MINT;
-    const isOutputFXM = outputMint === FXM_MINT;
-
-    // Validate it's FXM<->SOL pair
-    if (
-      !(
-        (isInputFXM && outputMint === SOL_MINT) ||
-        (isOutputFXM && inputMint === SOL_MINT)
-      )
-    ) {
-      return res.status(400).json({
-        error: "Fixorium swap only supports FXM<->SOL pairs",
-      });
-    }
-
-    // Calculate output amount based on fixed rate
-    const inputAmountNum = parseFloat(inputAmount);
-    let outputAmount: number;
-    let rate: number;
-
-    if (isInputFXM) {
-      // FXM -> SOL: 1000 FXM = 0.005 SOL
-      outputAmount = inputAmountNum * FIXED_FXM_SOL_RATE;
-      rate = FIXED_FXM_SOL_RATE;
-    } else {
-      // SOL -> FXM: 1 SOL = 200,000 FXM
-      outputAmount = inputAmountNum / FIXED_FXM_SOL_RATE;
-      rate = 1 / FIXED_FXM_SOL_RATE;
-    }
-
-    const response: SwapRateResponse = {
-      inputMint: String(inputMint),
-      outputMint: String(outputMint),
-      inputAmount,
-      outputAmount: outputAmount.toString(),
-      rate,
-      priceImpact: "0.0",
-    };
-
-    res.json(response);
+    // FXM token has been removed and is no longer supported
+    return res.status(400).json({
+      error: "FXM token is no longer supported",
+      message: "FXM swaps are not available",
+    });
   } catch (error) {
     console.error("Fixorium swap rate error:", error);
     res.status(500).json({
@@ -209,157 +157,11 @@ export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
 // Execute FXM<->SOL swap
 export const handleFixoriumSwap: RequestHandler = async (req, res) => {
   try {
-    const { userPublicKey, inputMint, outputMint, inputAmount, outputAmount } =
-      req.body;
-
-    if (
-      !userPublicKey ||
-      !inputMint ||
-      !outputMint ||
-      !inputAmount ||
-      !outputAmount
-    ) {
-      return res.status(400).json({
-        error: "Missing required parameters",
-      });
-    }
-
-    const isInputFXM = inputMint === FXM_MINT;
-    const isOutputFXM = outputMint === FXM_MINT;
-
-    // Validate it's FXM<->SOL pair
-    if (
-      !(
-        (isInputFXM && outputMint === SOL_MINT) ||
-        (isOutputFXM && inputMint === SOL_MINT)
-      )
-    ) {
-      return res.status(400).json({
-        error: "Fixorium swap only supports FXM<->SOL pairs",
-      });
-    }
-
-    const userPubkey = new PublicKey(userPublicKey);
-    const liquidityPubkey = new PublicKey(LIQUIDITY_WALLET);
-    const fxmMintPubkey = new PublicKey(FXM_MINT);
-
-    // Generate swap ID
-    const swapId = `FXM-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-
-    // Build transaction
-    const { blockhash } = await connection.getLatestBlockhash("confirmed");
-
-    const tx = new Transaction({
-      recentBlockhash: blockhash,
-      feePayer: userPubkey,
+    // FXM token has been removed and is no longer supported
+    return res.status(400).json({
+      error: "FXM token is no longer supported",
+      message: "FXM swaps are not available",
     });
-
-    const instructions: TransactionInstruction[] = [];
-
-    if (isInputFXM) {
-      // FXM -> SOL: Transfer FXM from user to liquidity wallet
-      const userFxmAta = await getAssociatedTokenAddress(
-        userPubkey,
-        fxmMintPubkey,
-      );
-      const liquidityFxmAta = await getAssociatedTokenAddress(
-        liquidityPubkey,
-        fxmMintPubkey,
-      );
-
-      // Create liquidity FXM ATA if needed
-      try {
-        await connection.getAccountInfo(liquidityFxmAta);
-      } catch {
-        instructions.push(
-          createAssociatedTokenAccountInstruction(
-            userPubkey,
-            liquidityFxmAta,
-            liquidityPubkey,
-            fxmMintPubkey,
-          ),
-        );
-      }
-
-      // Transfer FXM from user to liquidity
-      const inputAmountBigInt = BigInt(
-        Math.floor(parseFloat(inputAmount) * 1e6),
-      );
-      instructions.push(
-        transferTokensInstruction(
-          userFxmAta,
-          liquidityFxmAta,
-          userPubkey,
-          inputAmountBigInt,
-          6,
-        ),
-      );
-
-      // Note: SOL transfer from liquidity to user is handled off-chain
-      // after this transaction is confirmed. The user will receive SOL
-      // through a separate transaction signed by the liquidity wallet holder.
-    } else {
-      // SOL -> FXM: Transfer SOL from user to liquidity wallet
-      const userFxmAta = await getAssociatedTokenAddress(
-        userPubkey,
-        fxmMintPubkey,
-      );
-
-      // Create user FXM ATA if needed
-      try {
-        await connection.getAccountInfo(userFxmAta);
-      } catch {
-        instructions.push(
-          createAssociatedTokenAccountInstruction(
-            userPubkey,
-            userFxmAta,
-            userPubkey,
-            fxmMintPubkey,
-          ),
-        );
-      }
-
-      // SOL transfer from user to liquidity
-      const solAmountLamports = Math.floor(parseFloat(inputAmount) * 1e9);
-      instructions.push(
-        SystemProgram.transfer({
-          fromPubkey: userPubkey,
-          toPubkey: liquidityPubkey,
-          lamports: solAmountLamports,
-        }),
-      );
-
-      // Note: FXM transfer from liquidity to user is handled off-chain
-      // after this transaction is confirmed. The user will receive FXM
-      // through a separate transaction signed by the liquidity wallet holder.
-    }
-
-    // Add memo instruction
-    const memoIx = new TransactionInstruction({
-      programId: new PublicKey("MemoSq4gDiRvZoYoYo69YxuooQuvKaBLw1SMuV3xs"),
-      keys: [],
-      data: Buffer.from(`Fixorium Swap FXM↔SOL | SwapID: ${swapId}`, "utf-8"),
-    });
-    instructions.push(memoIx);
-
-    tx.add(...instructions);
-
-    const serialized = tx.serialize({ requireAllSignatures: false });
-    const base64 = serialized.toString("base64");
-
-    const transactionType = isInputFXM ? "user_transfer" : "user_transfer";
-    const description = isInputFXM
-      ? `Transfer ${inputAmount} FXM to Fixorium liquidity wallet`
-      : `Transfer ${inputAmount} SOL to Fixorium liquidity wallet`;
-
-    const response: SwapExecuteResponse = {
-      transaction: base64,
-      swapId,
-      transactionType,
-      description,
-    };
-
-    res.json(response);
   } catch (error) {
     console.error("Fixorium swap execute error:", error);
     res.status(500).json({
@@ -369,38 +171,6 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
 };
 
 // Helper functions to get token prices
-async function getFXMPrice(): Promise<number | null> {
-  try {
-    const response = await fetch(
-      "/api/dexscreener/tokens?mint=Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
-    );
-    if (response.ok) {
-      const data = await response.json();
-      return data.priceUsd ? parseFloat(data.priceUsd) : null;
-    }
-  } catch (err) {
-    console.warn("Error fetching FXM price from DexScreener:", err);
-  }
-
-  // Fallback to Jupiter
-  try {
-    const response = await fetch(
-      `https://price.jup.ag/v4/price?ids=Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63`,
-    );
-    if (response.ok) {
-      const data = await response.json();
-      return (
-        data.data?.["Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63"]?.price ||
-        null
-      );
-    }
-  } catch (err) {
-    console.warn("Error fetching FXM price from Jupiter:", err);
-  }
-
-  return null;
-}
-
 async function getSOLPrice(): Promise<number | null> {
   try {
     const response = await fetch(

@@ -628,6 +628,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
+      // Ensure FIXERCOIN always has a valid price before rendering
+      const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+      if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+        prices[fixercoinMint] = 0.000023;
+      }
+
       const enhancedTokens = allTokens.map((token) => {
         const price = prices[token.mint];
         let finalPrice = price;

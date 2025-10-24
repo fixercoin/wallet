@@ -77,9 +77,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!jupiterTokens || jupiterTokens.length === 0) {
           console.warn("No Jupiter tokens loaded, using user tokens only");
           setAvailableTokens(tokens || []);
-          setSupportedMints(
-            new Set((tokens || []).map((t: TokenInfo) => t.mint)),
+          const fallbackMints = new Set(
+            (tokens || []).map((t: TokenInfo) => t.mint),
           );
+          // Always add custom token mints to supported list
+          const customTokenMints = [
+            "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+            "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+            "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
+          ];
+          customTokenMints.forEach((mint) => fallbackMints.add(mint));
+          setSupportedMints(fallbackMints);
           return;
         }
 
@@ -91,21 +99,26 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           logoURI: jt.logoURI,
         }));
 
-        // Set supported mints from Jupiter (including any fallback tokens)
+        // Set supported mints from Jupiter
         const supportedMintSet = new Set(
           jupiterTokens.map((t: any) => t.address),
         );
+
+        // Add custom tokens that should be supported even if not in Jupiter's list
+        const customTokenMints = [
+          "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+          "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+          "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
+        ];
+        customTokenMints.forEach((mint) => supportedMintSet.add(mint));
+
         setSupportedMints(supportedMintSet);
 
-        // Log FXM token status for debugging
-        const fxmMint = "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63";
-        if (supportedMintSet.has(fxmMint)) {
-          console.log("FXM token is in supported list");
-        } else {
-          console.warn(
-            "FXM token NOT in supported list - this may cause swap issues",
-          );
-        }
+        // Log custom token status for debugging
+        console.log(
+          "Custom tokens added to supported mints:",
+          customTokenMints.filter((mint) => supportedMintSet.has(mint)),
+        );
 
         const userTokens = tokens || [];
         const combined = [
@@ -119,9 +132,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         console.error("Error loading tokens:", err);
         // Fallback to user tokens
         setAvailableTokens(tokens || []);
-        setSupportedMints(
-          new Set((tokens || []).map((t: TokenInfo) => t.mint)),
+        const fallbackMints = new Set(
+          (tokens || []).map((t: TokenInfo) => t.mint),
         );
+        // Always add custom token mints to supported list
+        const customTokenMints = [
+          "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+          "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+          "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
+        ];
+        customTokenMints.forEach((mint) => fallbackMints.add(mint));
+        setSupportedMints(fallbackMints);
       }
     };
 

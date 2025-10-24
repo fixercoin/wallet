@@ -429,7 +429,7 @@ class JupiterAPI {
   }
 
   private getFallbackTokenList(): JupiterToken[] {
-    // Fallback list with essential tokens including FXM
+    // Fallback list with essential tokens
     return [
       {
         address: "So11111111111111111111111111111111111111112",
@@ -457,15 +457,6 @@ class JupiterAPI {
         symbol: "USDT",
         logoURI:
           "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
-      },
-      {
-        address: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
-        chainId: 101,
-        decimals: 6,
-        name: "Fixorium Market Token",
-        symbol: "FXM",
-        logoURI:
-          "https://cdn.builder.io/api/v1/image/assets%2F2d0b2b3809b6429b9e89e004f5d46d31%2F4014ec1ff0b64b6491c04ad7c29f00c8?format=webp&width=800",
       },
       {
         address: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",

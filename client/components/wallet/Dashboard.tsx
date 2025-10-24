@@ -597,15 +597,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
     "FIXERCOIN",
     "LOCKER",
   ]);
-  const FIXORIUM_TOKEN_SYMBOLS = new Set(["FXM"]);
 
   const filteredTokens = useMemo(() => {
-    const set =
-      tokenCategory === "main" ? MAIN_TOKEN_SYMBOLS : FIXORIUM_TOKEN_SYMBOLS;
     return sortedTokens.filter((t) =>
-      set.has(String(t.symbol || "").toUpperCase()),
+      MAIN_TOKEN_SYMBOLS.has(String(t.symbol || "").toUpperCase()),
     );
-  }, [sortedTokens, tokenCategory]);
+  }, [sortedTokens]);
 
   if (!wallet) return null;
 

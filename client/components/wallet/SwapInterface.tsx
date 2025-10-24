@@ -77,9 +77,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!jupiterTokens || jupiterTokens.length === 0) {
           console.warn("No Jupiter tokens loaded, using user tokens only");
           setAvailableTokens(tokens || []);
-          setSupportedMints(
-            new Set((tokens || []).map((t: TokenInfo) => t.mint)),
-          );
+          const fallbackMints = new Set((tokens || []).map((t: TokenInfo) => t.mint));
+          // Always add custom token mints to supported list
+          const customTokenMints = [
+            "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+            "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+            "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
+          ];
+          customTokenMints.forEach((mint) => fallbackMints.add(mint));
+          setSupportedMints(fallbackMints);
           return;
         }
 

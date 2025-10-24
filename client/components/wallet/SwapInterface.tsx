@@ -49,11 +49,23 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
+  // Filter out FXM token and initialize with remaining tokens
+  const filteredInitialTokens = (tokens || []).filter(
+    (t) => t.symbol !== "FXM",
+  );
   const [availableTokens, setAvailableTokens] = useState<TokenInfo[]>(
-    tokens || [],
+    filteredInitialTokens,
   );
   const allTokens = availableTokens;
-  const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
+
+  // Initialize supportedMints with custom tokens that should always be supported
+  const [supportedMints, setSupportedMints] = useState<Set<string>>(
+    () =>
+      new Set([
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+      ]),
+  );
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
   const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(
@@ -76,15 +88,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         // Ensure we have tokens (including fallback)
         if (!jupiterTokens || jupiterTokens.length === 0) {
           console.warn("No Jupiter tokens loaded, using user tokens only");
-          setAvailableTokens(tokens || []);
+          const filteredTokens = (tokens || []).filter(
+            (t) => t.symbol !== "FXM",
+          );
+          setAvailableTokens(filteredTokens);
           const fallbackMints = new Set(
-            (tokens || []).map((t: TokenInfo) => t.mint),
+            filteredTokens.map((t: TokenInfo) => t.mint),
           );
           // Always add custom token mints to supported list
           const customTokenMints = [
             "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
             "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
-            "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
           ];
           customTokenMints.forEach((mint) => fallbackMints.add(mint));
           setSupportedMints(fallbackMints);
@@ -108,7 +122,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         const customTokenMints = [
           "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
           "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
-          "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
         ];
         customTokenMints.forEach((mint) => supportedMintSet.add(mint));
 
@@ -120,26 +133,28 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           customTokenMints.filter((mint) => supportedMintSet.has(mint)),
         );
 
-        const userTokens = tokens || [];
+        const userTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
         const combined = [
           ...userTokens,
           ...popularTokens.filter(
-            (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint),
+            (pt) =>
+              !userTokens.some((t: TokenInfo) => t.mint === pt.mint) &&
+              pt.symbol !== "FXM",
           ),
         ];
         setAvailableTokens(combined);
       } catch (err) {
         console.error("Error loading tokens:", err);
         // Fallback to user tokens
-        setAvailableTokens(tokens || []);
+        const filteredTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
+        setAvailableTokens(filteredTokens);
         const fallbackMints = new Set(
-          (tokens || []).map((t: TokenInfo) => t.mint),
+          filteredTokens.map((t: TokenInfo) => t.mint),
         );
         // Always add custom token mints to supported list
         const customTokenMints = [
           "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
           "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
-          "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63", // FXM
         ];
         customTokenMints.forEach((mint) => fallbackMints.add(mint));
         setSupportedMints(fallbackMints);

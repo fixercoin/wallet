@@ -94,13 +94,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>LOCK-SPL</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => navigate("/fixorium/create-token")}
-                className="flex items-center gap-2 text-xs"
-              >
-                <FileText className="h-4 w-4" />
-                <span>MINT-SPL</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onSelect={() => navigate("/express")}
                 className="flex items-center gap-2 text-xs"
               >

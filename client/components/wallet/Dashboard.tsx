@@ -914,28 +914,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Tokens List */}
         <div className="mb-4 flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() =>
-                setTokenCategory(tokenCategory === "main" ? "fixorium" : "main")
-              }
-              className="flex-1 h-12 rounded-xl font-semibold transition-all text-xs bg-gradient-to-r from-[#FF8A8A] to-[#FF6B6B] hover:from-[#FF7575] hover:to-[#FF5555] text-black border border-[#FF6B6B] shadow-lg flex items-center justify-between px-4"
-              aria-label="Toggle Token Category"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`${tokenCategory === "main" ? "font-bold" : "font-semibold opacity-70"}`}
-                >
-                  MAIN
-                </span>
-                <ChevronDown className="h-4 w-4" />
-              </div>
-              <span
-                className={`${tokenCategory === "fixorium" ? "font-bold" : "font-semibold opacity-70"}`}
-              >
-                FIXORIUM TOKENS
-              </span>
-            </Button>
-
             {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
               <Button
                 onClick={() => navigate("/verify-sell")}

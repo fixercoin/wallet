@@ -22,12 +22,12 @@ class FixercoinPriceService {
       if (this.cachedData && this.lastFetchTime) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
-          console.log("Returning cached FIXERCOIN price data");
+          console.log(`[FIXERCOIN] Returning cached price: $${this.cachedData.price.toFixed(8)}`);
           return this.cachedData;
         }
       }
 
-      console.log("Fetching fresh FIXERCOIN price from DexScreener...");
+      console.log(`[FIXERCOIN] Fetching fresh price from DexScreener for mint: ${FIXERCOIN_TOKEN_INFO.mintAddress}`);
 
       // Fetch FIXERCOIN data from DexScreener
       const dexData = await dexscreenerAPI.getTokenByMint(
@@ -35,9 +35,16 @@ class FixercoinPriceService {
       );
 
       if (!dexData) {
-        console.warn("No DexScreener data found for FIXERCOIN");
+        console.warn(`[FIXERCOIN] No DexScreener data found, using fallback`);
         return this.getFallbackPrice();
       }
+
+      console.log(`[FIXERCOIN] DexScreener response:`, {
+        priceUsd: dexData.priceUsd,
+        volume24h: dexData.volume?.h24,
+        liquidity: dexData.liquidity?.usd,
+        priceChange24h: dexData.priceChange?.h24,
+      });
 
       // Extract price data
       const priceData: FixercoinPriceData = {
@@ -53,14 +60,14 @@ class FixercoinPriceService {
       if (priceData.price > 0) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
-        console.log(`FIXERCOIN price updated: $${priceData.price.toFixed(8)}`);
+        console.log(`[FIXERCOIN] Price updated: $${priceData.price.toFixed(8)} (24h: ${priceData.priceChange24h.toFixed(2)}%)`);
         return priceData;
       } else {
-        console.warn("Invalid price data from DexScreener, using fallback");
+        console.warn(`[FIXERCOIN] Invalid price (${priceData.price}), using fallback`);
         return this.getFallbackPrice();
       }
     } catch (error) {
-      console.error("Error fetching FIXERCOIN price from DexScreener:", error);
+      console.error("[FIXERCOIN] Error fetching price:", error);
       return this.getFallbackPrice();
     }
   }

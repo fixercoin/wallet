@@ -331,6 +331,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
+      // Ensure known default tokens are present even with zero balance
+      DEFAULT_TOKENS.forEach((def) => {
+        if (!allTokens.some((t) => t.mint === def.mint)) {
+          allTokens.push({ ...def, balance: 0 });
+        }
+      });
+
       // Price fetching logic (same as before) - trimmed for brevity but preserved
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
@@ -545,6 +552,22 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 solPriceData?.price || 100,
             };
             priceSource = solPriceData ? "coingecko" : "static";
+
+            // Try to fetch individual token prices for any that still don't have prices
+            for (const token of allTokens) {
+              if (!prices[token.mint] && token.symbol !== "SOL") {
+                try {
+                  const tokenData = await dexscreenerAPI.getTokenByMint(
+                    token.mint,
+                  );
+                  if (tokenData?.priceUsd) {
+                    prices[token.mint] = parseFloat(tokenData.priceUsd);
+                  }
+                } catch (e) {
+                  // Silently skip tokens we can't get prices for
+                }
+              }
+            }
           } catch {
             prices = { So11111111111111111111111111111111111111112: 100 };
             priceSource = "static";

@@ -19,14 +19,24 @@ import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
 import MobileShell from "@/components/ui/MobileShell";
+import {
+  ConnectionAcceptanceDialog,
+  requestWalletConnection,
+} from "@/components/wallet/ConnectionAcceptanceDialog";
+import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
+import FixoriumMyTokens from "./pages/FixoriumMyTokens";
 import CreateToken from "./pages/CreateToken";
+import CreatePool from "./pages/CreatePool";
 import TokenListing from "./pages/TokenListing";
+import TokenDetailsPage from "./pages/TokenDetailsPage";
+import AllTokensPage from "./pages/AllTokensPage";
 import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
 import ExpressPay from "./pages/ExpressPay";
+import Express from "./pages/Express";
 import ExpressAddPost from "./pages/ExpressAddPost";
 import ExpressOrderComplete from "./pages/ExpressOrderComplete";
 import ExpressPendingOrders from "./pages/ExpressPendingOrders";
@@ -43,8 +53,22 @@ import Select from "./pages/select";
 import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
+import SplMeta from "./pages/SplMeta";
 
 const queryClient = new QueryClient();
+
+function WalletConnectionSetup() {
+  useEffect(() => {
+    const provider = ensureFixoriumProvider();
+    if (!provider) return;
+
+    provider.setConnectionApprovalHandler(async (origin: string) => {
+      return requestWalletConnection(origin);
+    });
+  }, []);
+
+  return null;
+}
 
 function AppRoutes() {
   return (
@@ -61,7 +85,13 @@ function AppRoutes() {
       <Route path="/order/:orderId" element={<OrderDetail />} />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
+      <Route path="/fixorium/create-pool" element={<CreatePool />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
+      <Route path="/fixorium/spl-meta" element={<SplMeta />} />
+      <Route path="/fixorium/my-tokens" element={<FixoriumMyTokens />} />
+      <Route path="/token/:mint" element={<TokenDetailsPage />} />
+      <Route path="/all-tokens" element={<AllTokensPage />} />
+      <Route path="/express" element={<Express />} />
       <Route path="/express/orderbook" element={<OrderBook />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/express/pay" element={<ExpressPay />} />
@@ -119,10 +149,12 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
+          <WalletConnectionSetup />
           <ExpressP2PProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <ConnectionAcceptanceDialog />
               <CurrencyProvider>
                 <BrowserRouter>
                   {isMobileMatch ? (

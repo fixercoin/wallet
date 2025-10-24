@@ -14,10 +14,6 @@ import {
 } from "@solana/spl-token";
 import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
 
-const FXM_MINT = "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63";
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const LIQUIDITY_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
-
 const connection = new Connection(ALCHEMY_RPC_URL, "confirmed");
 
 interface SwapRateRequest {

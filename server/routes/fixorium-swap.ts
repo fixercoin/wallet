@@ -138,10 +138,6 @@ const transferTokensInstruction = (
   });
 };
 
-// Fixed exchange rate: 1000 FXM = 0.005 SOL
-// This means: 1 FXM = 0.000005 SOL, or 1 SOL = 200,000 FXM
-const FIXED_FXM_SOL_RATE = 0.000005; // 1 FXM = 0.000005 SOL
-
 // Get the swap rate for FXM<->SOL
 export const handleFixoriumSwapRate: RequestHandler = async (req, res) => {
   try {
@@ -175,38 +171,6 @@ export const handleFixoriumSwap: RequestHandler = async (req, res) => {
 };
 
 // Helper functions to get token prices
-async function getFXMPrice(): Promise<number | null> {
-  try {
-    const response = await fetch(
-      "/api/dexscreener/tokens?mint=Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
-    );
-    if (response.ok) {
-      const data = await response.json();
-      return data.priceUsd ? parseFloat(data.priceUsd) : null;
-    }
-  } catch (err) {
-    console.warn("Error fetching FXM price from DexScreener:", err);
-  }
-
-  // Fallback to Jupiter
-  try {
-    const response = await fetch(
-      `https://price.jup.ag/v4/price?ids=Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63`,
-    );
-    if (response.ok) {
-      const data = await response.json();
-      return (
-        data.data?.["Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63"]?.price ||
-        null
-      );
-    }
-  } catch (err) {
-    console.warn("Error fetching FXM price from Jupiter:", err);
-  }
-
-  return null;
-}
-
 async function getSOLPrice(): Promise<number | null> {
   try {
     const response = await fetch(

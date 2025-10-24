@@ -430,16 +430,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         10,
       );
 
-      // Check if the selected token is supported
-      if (!supportedMints.has(buyToken.mint)) {
-        console.warn(
-          `Token ${buyToken.symbol} (${buyToken.mint}) is not in supported mints list`,
-        );
-        throw new Error(
-          `Token ${buyToken.symbol} is not supported for swaps. Please try a different token.`,
-        );
-      }
-
       const quote = await jupiterAPI.getQuote(
         solToken.mint,
         buyToken.mint,

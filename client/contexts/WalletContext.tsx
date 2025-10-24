@@ -406,7 +406,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             prices[fixercoinMint] = fixerData.price;
             if (typeof fixerData.priceChange24h === "number") {
               changeMap[fixercoinMint] = fixerData.priceChange24h;
+              console.log(
+                `[Price Refresh] FIXERCOIN: price=$${fixerData.price.toFixed(8)}, change=${fixerData.priceChange24h.toFixed(2)}%`,
+              );
+            } else {
+              console.warn(
+                "[Price Refresh] FIXERCOIN price fetched but price change unavailable",
+              );
             }
+          } else {
+            console.warn("[Price Refresh] FIXERCOIN price is 0 or invalid");
           }
         } catch (err) {
           console.warn("Failed to fetch FIXERCOIN price:", err);

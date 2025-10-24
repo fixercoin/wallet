@@ -802,7 +802,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 let hasValidPriceChange = false;
                 tokens.forEach((token) => {
                   const sym = String(token.symbol || "").toUpperCase();
-                  if (REMOVED_MINTS.has(token.mint) || REMOVED_SYMBOLS.has(sym)) return;
+                  if (REMOVED_MINTS.has(token.mint) || REMOVED_SYMBOLS.has(sym))
+                    return;
                   if (
                     typeof token.balance === "number" &&
                     typeof token.price === "number" &&

@@ -88,7 +88,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         // Ensure we have tokens (including fallback)
         if (!jupiterTokens || jupiterTokens.length === 0) {
           console.warn("No Jupiter tokens loaded, using user tokens only");
-          const filteredTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
+          const filteredTokens = (tokens || []).filter(
+            (t) => t.symbol !== "FXM",
+          );
           setAvailableTokens(filteredTokens);
           const fallbackMints = new Set(
             filteredTokens.map((t: TokenInfo) => t.mint),
@@ -135,7 +137,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         const combined = [
           ...userTokens,
           ...popularTokens.filter(
-            (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint) && pt.symbol !== "FXM",
+            (pt) =>
+              !userTokens.some((t: TokenInfo) => t.mint === pt.mint) &&
+              pt.symbol !== "FXM",
           ),
         ];
         setAvailableTokens(combined);

@@ -61,7 +61,7 @@ export interface TokenInfo {
   liquidity?: number;
 }
 
-// Default tokens including SOL, USDC, and FIXERCOIN
+// Default tokens including SOL, USDC, USDT, and FIXERCOIN
 export const DEFAULT_TOKENS: TokenInfo[] = [
   {
     mint: "So11111111111111111111111111111111111111112", // SOL wrapped
@@ -81,6 +81,15 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
   {
+    // USDT (Tether USD on Solana)
+    mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+    symbol: "USDT",
+    name: "Tether USD",
+    decimals: 6,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
+  },
+  {
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
     symbol: "FIXERCOIN",
     name: "FIXERCOIN",
@@ -94,6 +103,14 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 6,
     logoURI:
       "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+  },
+  {
+    mint: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+    symbol: "FXM",
+    name: "FIXORIUM",
+    decimals: 6,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F2d0b2b3809b6429b9e89e004f5d46d31%2F4014ec1ff0b64b6491c04ad7c29f00c8?format=webp&width=800",
   },
 ];
 
@@ -139,9 +156,12 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     const url = `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`;
     const { ok, json } = await fetchJsonWithTimeout(url, 10000);
     if (ok && json && typeof json.balance === "number") {
+      console.log(`✅ Wallet balance endpoint successful: ${json.balance} SOL`);
       return json.balance;
     }
-  } catch {}
+  } catch (err) {
+    // Silently fail and try fallback
+  }
   // Fallback to RPC service
   try {
     console.log(`Fetching balance via Solana RPC for: ${publicKey}`);

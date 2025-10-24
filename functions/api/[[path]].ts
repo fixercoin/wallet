@@ -115,7 +115,20 @@ async function fetchDexscreenerData(path: string) {
   const now = Date.now();
   const cached = DEX_CACHE.get(path);
   if (cached && cached.expiresAt > now) {
-    return cached.data;
+    // Only return cache if it contains meaningful data with priceChange fields
+    const hasPriceChangeData =
+      Array.isArray(cached.data?.pairs) &&
+      cached.data.pairs.some(
+        (p: any) =>
+          p?.priceChange &&
+          (typeof p.priceChange.h24 === "number" ||
+            typeof p.priceChange.h6 === "number" ||
+            typeof p.priceChange.h1 === "number" ||
+            typeof p.priceChange.m5 === "number"),
+      );
+    if (hasPriceChangeData) {
+      return cached.data;
+    }
   }
   const existing = DEX_INFLIGHT.get(path);
   if (existing) return existing;
@@ -199,11 +212,19 @@ import {
   addEasypaisaPayment,
   listEasypaisaPayments,
 } from "../../utils/p2pStore";
+import {
+  addEasypaisaPaymentCF,
+  listEasypaisaPaymentsCF,
+} from "../../utils/p2pStoreCf";
+import { handleSolanaSimulate } from "../../server/routes/solana-simulate";
+import { handleSolanaSend } from "../../server/routes/solana-send";
 
 export const onRequest = async ({ request, env }) => {
   const url = new URL(request.url);
   const rawPath = url.pathname.replace(/^\/api/, "") || "/";
   const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  const db: any = (env as any)?.FIXORIUM_WALLET_DB;
+  const hasDb = !!db && typeof db.prepare === "function";
 
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -264,28 +285,83 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(400, { error: "invalid payload" });
       }
 
-      const result = addEasypaisaPayment({
-        msisdn,
-        amount,
-        currency,
-        reference,
-        sender,
-        ts: isFinite(ts) ? ts : Date.now(),
+      const result = hasDb
+        ? await addEasypaisaPaymentCF(db, {
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          })
+        : addEasypaisaPayment({
+            msisdn,
+            amount,
+            currency,
+            reference,
+            sender,
+            ts: isFinite(ts) ? ts : Date.now(),
+          });
+      return jsonCors((result as any).status, {
+        payment: (result as any).payment,
       });
-      return jsonCors(result.status, { payment: result.payment });
     }
 
     if (normalizedPath === "/easypaisa/payments" && request.method === "GET") {
       const msisdn =
         url.searchParams.get("msisdn") || (env as any)?.EASYPAY_MSISDN || "";
       const since = Number(url.searchParams.get("since") || 0);
-      const data = listEasypaisaPayments({ msisdn, since });
+      const data = hasDb
+        ? await listEasypaisaPaymentsCF(db, { msisdn, since })
+        : listEasypaisaPayments({ msisdn, since });
       return jsonCors(200, data);
     }
 
     // Solana RPC proxy
     if (normalizedPath === "/solana-rpc") {
       return await proxyToSolanaRPC(request, env);
+    }
+
+    // Solana simulate transaction
+    if (normalizedPath === "/solana-simulate" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSimulate(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
+    }
+
+    // Solana send transaction
+    if (normalizedPath === "/solana-send" && request.method === "POST") {
+      let body: any = {};
+      try {
+        const text = await request.text();
+        body = text ? JSON.parse(text) : {};
+      } catch {}
+      const { signedBase64 } = body || {};
+      if (!signedBase64) {
+        return jsonCors(400, { error: "Missing signedBase64 in request body" });
+      }
+      try {
+        const result = await handleSolanaSend(signedBase64);
+        return jsonCors(200, result);
+      } catch (e: any) {
+        return jsonCors(500, {
+          error: e?.message || String(e),
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
@@ -415,6 +491,149 @@ export const onRequest = async ({ request, env }) => {
           error: "Failed to fetch forex rate",
           details,
         });
+      }
+    }
+
+    // Token exchange rate to PKR with markup: /api/exchange-rate?token=FIXERCOIN
+    if (normalizedPath === "/exchange-rate") {
+      const token = (
+        url.searchParams.get("token") || "FIXERCOIN"
+      ).toUpperCase();
+
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
+      };
+
+      const PKR_PER_USD = 280; // base FX
+      const MARKUP = 1.0425; // 4.25%
+
+      let priceUsd: number | null = null;
+      try {
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else if (TOKEN_MINTS[token]) {
+          const data = await fetchDexscreenerData(
+            `/tokens/${TOKEN_MINTS[token]}`,
+          );
+          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          const price =
+            pairs.length > 0 && pairs[0]?.priceUsd
+              ? Number(pairs[0].priceUsd)
+              : null;
+          if (typeof price === "number" && isFinite(price) && price > 0) {
+            priceUsd = price;
+          }
+        }
+      } catch {}
+
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return jsonCors(200, {
+        token,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+      });
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (normalizedPath === "/stable-24h") {
+      const symbolsParam = (
+        url.searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
+      };
+
+      const ids = symbols
+        .map((s) => COINGECKO_IDS[s]?.id)
+        .filter(Boolean)
+        .join(",");
+      if (!ids) {
+        return jsonCors(400, { error: "No supported symbols provided" });
+      }
+
+      const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd&include_24hr_change=true`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      try {
+        const resp = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        clearTimeout(timeoutId);
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
+        if (resp.ok) {
+          const json = await resp.json();
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            const d = json?.[meta.id];
+            const price = typeof d?.usd === "number" ? d.usd : 1;
+            const change =
+              typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = {
+              priceUsd: price,
+              change24h: change,
+              mint: meta.mint,
+            };
+          });
+        } else {
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+          });
+        }
+        return jsonCors(200, { data: result });
+      } catch (e) {
+        clearTimeout(timeoutId);
+        const result: Record<
+          string,
+          { priceUsd: number; change24h: number; mint: string }
+        > = {};
+        symbols.forEach((sym) => {
+          const meta = COINGECKO_IDS[sym];
+          if (!meta) return;
+          result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+        });
+        return jsonCors(200, { data: result });
       }
     }
 
@@ -802,33 +1021,70 @@ export const onRequest = async ({ request, env }) => {
         asLegacyTransaction,
       });
       const urlStr = `https://lite-api.jup.ag/swap/v1/quote?${params.toString()}`;
+      console.log(
+        `Jupiter quote request: ${inputMint} -> ${outputMint}, amount: ${amount}`,
+      );
 
       let lastStatus = 0;
       let lastText = "";
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        const resp = await fetch(urlStr, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-          },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        lastStatus = resp.status;
-        if (resp.ok) {
-          const data = await resp.json();
-          return jsonCors(200, data);
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const resp = await fetch(urlStr, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+            },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          lastStatus = resp.status;
+          if (resp.ok) {
+            const data = await resp.json();
+            console.log(`Jupiter quote successful (${resp.status})`);
+            return jsonCors(200, data);
+          }
+          lastText = await resp.text().catch(() => "(unable to read response)");
+
+          // If 404 or 400, likely means no route exists for this pair
+          if (resp.status === 404 || resp.status === 400) {
+            console.warn(
+              `Jupiter quote returned ${resp.status} - likely no route for this pair: ${inputMint} -> ${outputMint}`,
+            );
+            return jsonCors(resp.status, {
+              error: `No swap route found for this pair`,
+              details: lastText,
+              code: resp.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            });
+          }
+
+          if (resp.status === 429 || resp.status >= 500) {
+            console.warn(
+              `Jupiter API returned ${resp.status}, retrying... (attempt ${attempt}/2)`,
+            );
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+          break;
+        } catch (fetchError) {
+          const errorMsg =
+            fetchError instanceof Error
+              ? fetchError.message
+              : String(fetchError);
+          console.warn(`Fetch error on attempt ${attempt}/2:`, errorMsg);
+
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+
+          lastText = errorMsg;
+          lastStatus = 500;
+          break;
         }
-        lastText = await resp.text().catch(() => "");
-        if (resp.status === 429 || resp.status >= 500) {
-          await new Promise((r) => setTimeout(r, attempt * 500));
-          continue;
-        }
-        break;
       }
       return jsonCors(lastStatus || 500, {
         error: "Quote failed",
@@ -873,6 +1129,393 @@ export const onRequest = async ({ request, env }) => {
       }
       const data = await resp.json();
       return jsonCors(200, data);
+    }
+
+    // SPL-META submit (POST)
+    if (normalizedPath === "/spl-meta/submit") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+      const {
+        name,
+        symbol,
+        description = "",
+        logoURI = "",
+        website = "",
+        twitter = "",
+        telegram = "",
+        dexpair = "",
+        lastUpdated,
+      } = body || {};
+
+      if (!name || !symbol) {
+        return jsonCors(400, {
+          error: "Missing required fields: name, symbol",
+        });
+      }
+
+      const payload = {
+        name: String(name),
+        symbol: String(symbol),
+        description: String(description),
+        logoURI: String(logoURI),
+        website: String(website),
+        twitter: String(twitter),
+        telegram: String(telegram),
+        dexpair: String(dexpair),
+        lastUpdated: lastUpdated
+          ? new Date(lastUpdated).toISOString()
+          : new Date().toISOString(),
+        receivedAt: new Date().toISOString(),
+        source: "spl-meta-form",
+      };
+
+      console.log("[SPL-META] Submission received:", payload);
+      return jsonCors(202, { status: "queued", payload });
+    }
+
+    // Token Price: /api/token-price?mint=<mint>
+    if (normalizedPath === "/token-price") {
+      const mint = url.searchParams.get("mint");
+      if (!mint) {
+        return jsonCors(400, { error: "Missing mint parameter" });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const resp = await fetch(`https://api.jup.ag/price?ids=${mint}`, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return jsonCors(resp.status, {
+            error: "Failed to fetch token price",
+            mint,
+            price: 0,
+          });
+        }
+
+        const data = await resp.json();
+        const priceData = data.data?.[mint];
+
+        if (priceData && priceData.price) {
+          return jsonCors(200, {
+            mint,
+            price: priceData.price,
+            lastUpdateUnixTime: data.timeTaken,
+          });
+        }
+
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Token not found or price unavailable",
+        });
+      } catch (error) {
+        return jsonCors(200, {
+          mint,
+          price: 0,
+          error: "Error fetching token price",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Create Pool: /api/create-pool (POST)
+    if (normalizedPath === "/create-pool") {
+      if (request.method !== "POST") {
+        return jsonCors(405, { error: "Method Not Allowed" });
+      }
+
+      let body: any = {};
+      try {
+        body = await request.json();
+      } catch {}
+
+      const {
+        tokenA,
+        tokenB,
+        amountA,
+        amountB,
+        fee = 0.01,
+        walletAddress,
+      } = body || {};
+
+      if (!tokenA || !tokenB || !amountA || !amountB || !walletAddress) {
+        return jsonCors(400, {
+          error:
+            "Missing required fields: tokenA, tokenB, amountA, amountB, walletAddress",
+        });
+      }
+
+      if (tokenA === tokenB) {
+        return jsonCors(400, {
+          error: "Token A and Token B must be different",
+        });
+      }
+
+      try {
+        const poolData = {
+          poolId: `pool_${Math.random().toString(36).substr(2, 9)}`,
+          tokenA,
+          tokenB,
+          amountA: String(amountA),
+          amountB: String(amountB),
+          fee: Number(fee),
+          walletAddress,
+          createdAt: new Date().toISOString(),
+          status: "active",
+          totalLiquidity: `${amountA}-${amountB}`,
+        };
+
+        // Save to database if available
+        if (hasDb) {
+          try {
+            const { createPoolCF } = await import("../../utils/poolStoreCf");
+            await createPoolCF(db, poolData);
+            console.log(
+              "[CREATE-POOL] Pool saved to database:",
+              poolData.poolId,
+            );
+          } catch (dbError) {
+            console.warn("[CREATE-POOL] Database save failed:", dbError);
+          }
+        }
+
+        console.log("[CREATE-POOL] Pool created:", poolData);
+        return jsonCors(201, poolData);
+      } catch (error) {
+        return jsonCors(502, {
+          error: "Failed to create pool",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Get Pools: /api/pools (GET)
+    if (normalizedPath === "/pools" && request.method === "GET") {
+      try {
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+        return jsonCors(200, { pools: allPools });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to fetch pools",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Get Pools for Token Pair: /api/pools?tokenA=...&tokenB=... (GET)
+    if (normalizedPath === "/pools" && request.method === "GET") {
+      try {
+        const tokenA = url.searchParams.get("tokenA");
+        const tokenB = url.searchParams.get("tokenB");
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        let filtered = allPools;
+        if (tokenA && tokenB) {
+          filtered = allPools.filter(
+            (pool: any) =>
+              (pool.tokenA === tokenA && pool.tokenB === tokenB) ||
+              (pool.tokenA === tokenB && pool.tokenB === tokenA),
+          );
+        }
+
+        return jsonCors(200, { pools: filtered });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to fetch pools",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Quote Swap: /api/swap/quote (POST)
+    if (normalizedPath === "/swap/quote" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {}
+
+        const { inputMint, outputMint, inputAmount } = body || {};
+
+        if (!inputMint || !outputMint || !inputAmount) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: inputMint, outputMint, inputAmount",
+          });
+        }
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        const pool = allPools.find(
+          (p: any) =>
+            (p.tokenA === inputMint && p.tokenB === outputMint) ||
+            (p.tokenA === outputMint && p.tokenB === inputMint),
+        );
+
+        if (!pool) {
+          return jsonCors(404, {
+            error: "No pool found for this token pair",
+          });
+        }
+
+        const isTokenA = inputMint === pool.tokenA;
+        const reserveIn = parseFloat(isTokenA ? pool.amountA : pool.amountB);
+        const reserveOut = parseFloat(isTokenA ? pool.amountB : pool.amountA);
+
+        if (reserveIn <= 0 || reserveOut <= 0) {
+          return jsonCors(400, {
+            error: "Pool has insufficient liquidity",
+          });
+        }
+
+        const input = parseFloat(inputAmount);
+        const feeMultiplier = 1 - pool.fee / 100;
+        const amountInWithFee = input * feeMultiplier;
+        const numerator = amountInWithFee * reserveOut;
+        const denominator = reserveIn + amountInWithFee;
+        const outputAmount = numerator / denominator;
+
+        const priceImpact =
+          ((input * reserveOut) / (reserveIn * (reserveIn + input)) -
+            outputAmount) /
+          ((input * reserveOut) / (reserveIn * (reserveIn + input)));
+
+        const feeAmount = input - amountInWithFee;
+
+        return jsonCors(200, {
+          inputAmount: inputAmount,
+          outputAmount: outputAmount.toFixed(8),
+          priceImpact: (Math.abs(priceImpact) * 100).toFixed(2),
+          fee: feeAmount.toFixed(8),
+          poolId: pool.poolId,
+          pool: pool,
+        });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to calculate quote",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Execute Swap: /api/swap/execute (POST)
+    if (normalizedPath === "/swap/execute" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {}
+
+        const { poolId, inputMint, inputAmount, outputAmount } = body || {};
+
+        if (!poolId || !inputMint || !inputAmount || !outputAmount) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: poolId, inputMint, inputAmount, outputAmount",
+          });
+        }
+
+        const allPools = [];
+        const stored =
+          (env as any)?.POOLS_DATA ||
+          (typeof globalThis !== "undefined"
+            ? (globalThis as any).POOLS_DATA
+            : null);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            allPools.push(...parsed);
+          } catch {}
+        }
+
+        const poolIndex = allPools.findIndex((p: any) => p.poolId === poolId);
+        if (poolIndex === -1) {
+          return jsonCors(404, { error: "Pool not found" });
+        }
+
+        const pool = allPools[poolIndex];
+        const isTokenA = inputMint === pool.tokenA;
+
+        const newAmountA = isTokenA
+          ? (parseFloat(pool.amountA) + parseFloat(inputAmount)).toFixed(8)
+          : (parseFloat(pool.amountA) - parseFloat(outputAmount)).toFixed(8);
+
+        const newAmountB = isTokenA
+          ? (parseFloat(pool.amountB) - parseFloat(outputAmount)).toFixed(8)
+          : (parseFloat(pool.amountB) + parseFloat(inputAmount)).toFixed(8);
+
+        const updatedPool = {
+          ...pool,
+          amountA: newAmountA,
+          amountB: newAmountB,
+          totalLiquidity: `${newAmountA}-${newAmountB}`,
+        };
+
+        allPools[poolIndex] = updatedPool;
+
+        if ((env as any)?.POOLS_DATA !== undefined) {
+          (env as any).POOLS_DATA = JSON.stringify(allPools);
+        }
+
+        return jsonCors(200, {
+          success: true,
+          pool: updatedPool,
+          message: "Swap executed successfully",
+        });
+      } catch (error) {
+        return jsonCors(500, {
+          error: "Failed to execute swap",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });

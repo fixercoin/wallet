@@ -14,3 +14,13 @@ class_name = "DurableRoom"
 [vars]
 ALLOWED_PAYMENT = "easypaisa"
 # ADMIN_TOKEN should be set as a secret: `wrangler secret put ADMIN_TOKEN`
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fixorium_wallet_db"
+database_id = "71fb347a-12c4-4306-b4ca-acf6beb67e0a"
+
+[[kv_namespaces]]
+binding = "WALLET_KV"
+id = "your_kv_namespace_id"
+preview_id = "your_kv_preview_namespace_id"

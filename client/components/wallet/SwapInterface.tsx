@@ -49,11 +49,23 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
+  // Filter out FXM token and initialize with remaining tokens
+  const filteredInitialTokens = (tokens || []).filter(
+    (t) => t.symbol !== "FXM",
+  );
   const [availableTokens, setAvailableTokens] = useState<TokenInfo[]>(
-    tokens || [],
+    filteredInitialTokens,
   );
   const allTokens = availableTokens;
-  const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
+
+  // Initialize supportedMints with custom tokens that should always be supported
+  const [supportedMints, setSupportedMints] = useState<Set<string>>(
+    () =>
+      new Set([
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+      ]),
+  );
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
   const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(

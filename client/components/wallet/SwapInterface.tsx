@@ -58,14 +58,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   );
   const allTokens = availableTokens;
 
-  // Initialize supportedMints with custom tokens that should always be supported
-  const [supportedMints, setSupportedMints] = useState<Set<string>>(
-    () =>
-      new Set([
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
-      ]),
-  );
+  // Initialize supportedMints - will be populated from Jupiter and available tokens
+  const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
   const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(
@@ -101,6 +95,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
           ];
           customTokenMints.forEach((mint) => fallbackMints.add(mint));
+          // Add SOL token if not already included
+          fallbackMints.add("So11111111111111111111111111111111111111112");
           setSupportedMints(fallbackMints);
           return;
         }
@@ -118,7 +114,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           jupiterTokens.map((t: any) => t.address),
         );
 
-        // Add custom tokens that should be supported even if not in Jupiter's list
+        // Add all user tokens to supported mints
+        const userTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
+        userTokens.forEach((t) => supportedMintSet.add(t.mint));
+
+        // Add custom tokens that should be supported
         const customTokenMints = [
           "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
           "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
@@ -133,7 +133,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           customTokenMints.filter((mint) => supportedMintSet.has(mint)),
         );
 
-        const userTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
         const combined = [
           ...userTokens,
           ...popularTokens.filter(
@@ -157,6 +156,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
         ];
         customTokenMints.forEach((mint) => fallbackMints.add(mint));
+        // Add SOL token if not already included
+        fallbackMints.add("So11111111111111111111111111111111111111112");
         setSupportedMints(fallbackMints);
       }
     };
@@ -426,16 +427,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         10,
       );
 
-      // Check if the selected token is supported
-      if (!supportedMints.has(buyToken.mint)) {
-        console.warn(
-          `Token ${buyToken.symbol} (${buyToken.mint}) is not in supported mints list`,
-        );
-        throw new Error(
-          `Token ${buyToken.symbol} is not supported for swaps. Please try a different token.`,
-        );
-      }
-
       const quote = await jupiterAPI.getQuote(
         solToken.mint,
         buyToken.mint,
@@ -615,16 +606,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         jupiterAPI.formatSwapAmount(tokenAmount, sellToken.decimals),
         10,
       );
-
-      // Check if the selected token is supported
-      if (!supportedMints.has(sellToken.mint)) {
-        console.warn(
-          `Token ${sellToken.symbol} (${sellToken.mint}) is not in supported mints list`,
-        );
-        throw new Error(
-          `Token ${sellToken.symbol} is not supported for swaps. Please try a different token.`,
-        );
-      }
 
       const quote = await jupiterAPI.getQuote(
         sellToken.mint,

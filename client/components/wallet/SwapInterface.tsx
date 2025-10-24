@@ -135,7 +135,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           customTokenMints.filter((mint) => supportedMintSet.has(mint)),
         );
 
-        const userTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
         const combined = [
           ...userTokens,
           ...popularTokens.filter(

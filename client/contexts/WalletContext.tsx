@@ -552,6 +552,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           changeMap[fixercoinMint] = 0;
         }
 
+        // Ensure FIXERCOIN has a valid price (minimum fallback)
+        if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+          prices[fixercoinMint] = 0.000023; // conservative fallback
+        }
+
         const solMint = "So11111111111111111111111111111111111111112";
         if (Object.keys(prices).length > 0 && prices[solMint]) {
           priceSource = "dexscreener";

@@ -417,7 +417,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         const mintsToFetch = [
-          ...new Set([...stableMints, fixercoinMint, lockerMint].filter(Boolean)),
+          ...new Set(
+            [...stableMints, fixercoinMint, lockerMint].filter(Boolean),
+          ),
         ];
 
         if (mintsToFetch.length > 0) {

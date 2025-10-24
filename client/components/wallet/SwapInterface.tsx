@@ -114,7 +114,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           jupiterTokens.map((t: any) => t.address),
         );
 
-        // Add custom tokens that should be supported even if not in Jupiter's list
+        // Add all user tokens to supported mints
+        const userTokens = (tokens || []).filter((t) => t.symbol !== "FXM");
+        userTokens.forEach((t) => supportedMintSet.add(t.mint));
+
+        // Add custom tokens that should be supported
         const customTokenMints = [
           "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
           "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER

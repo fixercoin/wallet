@@ -230,7 +230,15 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
     }
 
     const solanaPairs = mergePairsByToken(results)
-      .filter((pair: DexscreenerToken) => pair.chainId === "solana")
+      .filter((pair: DexscreenerToken) => {
+        const chainId = (pair.chainId || "").toLowerCase();
+        const mintMatches = uniqueMints.some(
+          (mint) =>
+            mint === pair.baseToken?.address ||
+            mint === pair.quoteToken?.address,
+        );
+        return chainId === "solana" || mintMatches;
+      })
       .sort((a: DexscreenerToken, b: DexscreenerToken) => {
         const aLiquidity = a.liquidity?.usd || 0;
         const bLiquidity = b.liquidity?.usd || 0;
@@ -242,7 +250,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       });
 
     console.log(
-      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)`,
+      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es) (requested ${uniqueMints.length} mints)`,
     );
     res.json({ schemaVersion, pairs: solanaPairs });
   } catch (error) {

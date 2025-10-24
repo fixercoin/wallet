@@ -552,6 +552,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           changeMap[fixercoinMint] = 0;
         }
 
+        // Ensure FIXERCOIN has a valid price (minimum fallback)
+        if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+          prices[fixercoinMint] = 0.000023; // conservative fallback
+        }
+
         const solMint = "So11111111111111111111111111111111111111112";
         if (Object.keys(prices).length > 0 && prices[solMint]) {
           priceSource = "dexscreener";
@@ -564,6 +569,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           const tokenMints = allTokens.map((token) => token.mint);
           prices = await jupiterAPI.getTokenPrices(tokenMints);
+
+          // Always ensure FIXERCOIN has a price from Jupiter or fallback
+          const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+          if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+            try {
+              const fixercoinPrice = await fixercoinPriceService.getPrice();
+              if (fixercoinPrice && fixercoinPrice > 0) {
+                prices[fixercoinMint] = fixercoinPrice;
+              }
+            } catch (e) {
+              prices[fixercoinMint] = 0.000023; // fallback
+            }
+          }
+
           if (Object.keys(prices).length > 0) {
             priceSource = "jupiter";
           } else {
@@ -609,6 +628,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
+      // Ensure FIXERCOIN always has a valid price before rendering
+      const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+      if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+        prices[fixercoinMint] = 0.000023;
+      }
+
       const enhancedTokens = allTokens.map((token) => {
         const price = prices[token.mint];
         let finalPrice = price;
@@ -638,7 +663,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
 
       console.log(
-        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
+        `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"} | FIXERCOIN price: $${prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] || "FALLBACK"}`,
       );
       setTokens(enhancedTokens);
     } catch (error) {

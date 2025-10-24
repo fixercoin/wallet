@@ -557,7 +557,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             for (const token of allTokens) {
               if (!prices[token.mint] && token.symbol !== "SOL") {
                 try {
-                  const tokenData = await dexscreenerAPI.getTokenByMint(token.mint);
+                  const tokenData = await dexscreenerAPI.getTokenByMint(
+                    token.mint,
+                  );
                   if (tokenData?.priceUsd) {
                     prices[token.mint] = parseFloat(tokenData.priceUsd);
                   }

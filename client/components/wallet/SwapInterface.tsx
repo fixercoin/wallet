@@ -59,9 +59,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const allTokens = availableTokens;
 
   // Initialize supportedMints - will be populated from Jupiter and available tokens
-  const [supportedMints, setSupportedMints] = useState<Set<string>>(
-    new Set(),
-  );
+  const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
   const [quoteError, setQuoteError] = useState<string>("");
   const [buyTokenUsdPrice, setBuyTokenUsdPrice] = useState<number | null>(null);
   const [sellTokenUsdPrice, setSellTokenUsdPrice] = useState<number | null>(

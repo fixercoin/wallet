@@ -1,3 +1,5 @@
+import { REMOVED_MINTS, REMOVED_SYMBOLS } from "@/lib/constants/token-mints";
+
 // Token metadata interface for simplified token info
 export interface TokenMetadata {
   mint: string;
@@ -46,6 +48,12 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     name: "LOCKER",
     decimals: 6,
     logoURI: "https://via.placeholder.com/64x64/8b5cf6/ffffff?text=LO",
+  },
+  Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63: {
+    mint: "Ghj3B53xFd3qUw3nywhRFbqAnoTEmLbLPaToM7gABm63",
+    symbol: "FXM",
+    name: "FXM (Deprecated)",
+    decimals: 6,
   },
 };
 

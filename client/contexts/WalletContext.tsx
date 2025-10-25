@@ -299,58 +299,45 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
 
-      const allTokens: TokenInfo[] = [
-        {
-          mint: "So11111111111111111111111111111111111111112",
-          symbol: "SOL",
-          name: "Solana",
-          decimals: 9,
-          logoURI:
-            "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balanceRef.current || balance || 0,
-        },
-      ];
+      // Use a Map to prevent duplicates - mint address is the unique key
+      const tokenMap = new Map<string, TokenInfo>();
 
-      // Merge on-chain token accounts with balances (skip SOL, already added)
+      // First, add SOL with current balance
+      const solMint = "So11111111111111111111111111111111111111112";
+      tokenMap.set(solMint, {
+        mint: solMint,
+        symbol: "SOL",
+        name: "Solana",
+        decimals: 9,
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+        balance: balanceRef.current || balance || 0,
+      });
+
+      // Add on-chain token accounts (these have actual balances from blockchain)
       tokenAccounts.forEach((tokenAccount) => {
         if (tokenAccount.symbol !== "SOL") {
-          const existingIndex = allTokens.findIndex(
-            (t) => t.mint === tokenAccount.mint,
-          );
-          if (existingIndex >= 0) {
-            // Update existing token with on-chain balance
-            allTokens[existingIndex] = {
-              ...allTokens[existingIndex],
-              balance: tokenAccount.balance,
-            };
-          } else {
-            // Add new token not in defaults
-            allTokens.push(tokenAccount);
-          }
+          tokenMap.set(tokenAccount.mint, tokenAccount);
         }
       });
 
-      // Merge custom tokens
+      // Add custom tokens (user-added tokens)
       customTokens.forEach((customToken) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === customToken.mint,
-        );
-        if (existingTokenIndex >= 0) {
-          allTokens[existingTokenIndex] = {
-            ...customToken,
-            balance: allTokens[existingTokenIndex].balance,
-          };
-        } else {
-          allTokens.push({ ...customToken, balance: 0 });
+        const existing = tokenMap.get(customToken.mint);
+        tokenMap.set(customToken.mint, {
+          ...customToken,
+          balance: existing?.balance ?? 0,
+        });
+      });
+
+      // Add default tokens only if they're not already present (prevents duplicates)
+      DEFAULT_TOKENS.forEach((def) => {
+        if (!tokenMap.has(def.mint)) {
+          tokenMap.set(def.mint, { ...def, balance: 0 });
         }
       });
 
-      // Ensure known default tokens are present even with zero balance
-      DEFAULT_TOKENS.forEach((def) => {
-        if (!allTokens.some((t) => t.mint === def.mint)) {
-          allTokens.push({ ...def, balance: 0 });
-        }
-      });
+      const allTokens = Array.from(tokenMap.values());
 
       // Price fetching logic (same as before) - trimmed for brevity but preserved
       let prices: Record<string, number> = {};

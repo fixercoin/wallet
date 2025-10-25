@@ -954,11 +954,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Burn Tokens Button */}
-        <div className="mb-3 relative">
-          <div className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-orange-600/40 to-transparent animate-burning-flame blur-lg"></div>
+        <div className="mb-3">
           <Button
             onClick={onBurn}
-            className="relative w-full h-12 rounded-md font-normal border-2 border-orange-500/70 bg-gradient-to-r from-[#1a2540]/80 via-red-600/30 to-[#1a2540]/80 hover:from-[#1a2540]/60 hover:via-red-500/50 hover:to-[#1a2540]/60 text-white flex items-center justify-center gap-3 px-4 shadow-lg shadow-orange-600/50 transition-all duration-300"
+            className="w-full h-12 rounded-md font-normal border-2 border-orange-500/70 bg-[#1a2540]/80 hover:bg-[#1a2540]/60 text-white flex items-center justify-center gap-3 px-4 transition-all duration-300"
             style={{ fontFamily: "Arial, sans-serif" }}
             aria-label="Burn Tokens"
           >

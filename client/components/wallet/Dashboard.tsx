@@ -957,7 +957,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mb-3">
           <Button
             onClick={onBurn}
-            className="w-full h-12 rounded-md font-normal border-2 border-orange-500/70 bg-[#1a2540]/80 hover:bg-[#1a2540]/60 text-white flex items-center justify-center gap-3 px-4 transition-all duration-300"
+            className="w-full h-12 rounded-md font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/80 hover:bg-[#1a2540]/60 text-white flex items-center justify-center gap-3 px-4 transition-all duration-300"
             style={{ fontFamily: "Arial, sans-serif" }}
             aria-label="Burn Tokens"
           >

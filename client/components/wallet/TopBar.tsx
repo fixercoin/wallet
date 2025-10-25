@@ -13,17 +13,14 @@ import {
   Settings,
   Wallet,
   Gift,
-  Flame as BurnIcon,
   Lock,
   FileText,
-  Coins,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
   onAccounts?: () => void;
   onAirdrop: () => void;
-  onBurn: () => void;
   onLock: () => void;
   onSettings: () => void;
 }
@@ -31,7 +28,6 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   onAccounts,
   onAirdrop,
-  onBurn,
   onLock,
   onSettings,
 }) => {
@@ -80,25 +76,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>C-BUILDER</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={onBurn}
-                className="flex items-center gap-2 text-xs"
-              >
-                <BurnIcon className="h-4 w-4" />
-                <span>SPL-BURN</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onSelect={onLock}
                 className="flex items-center gap-2 text-xs"
               >
                 <Lock className="h-4 w-4" />
                 <span>LOCK-SPL</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => navigate("/express")}
-                className="flex items-center gap-2 text-xs"
-              >
-                <Coins className="h-4 w-4" />
-                <span>P2P</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

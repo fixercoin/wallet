@@ -629,7 +629,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <TopBar
         onAccounts={onAccounts}
         onAirdrop={onAirdrop}
-        onBurn={onBurn}
         onLock={onLock}
         onSettings={onSettings}
       />
@@ -902,13 +901,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Action Buttons: equal-width square buttons */}
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-3 mb-1 flex-wrap">
           <Button
             onClick={onSend}
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Send"
           >
-            <span className="text-[10px] leading-none">SEND</span>
+            <span className="text-sm leading-none">SEND</span>
             <ArrowUpRight className="h-5 w-5" />
           </Button>
 
@@ -917,7 +916,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Receive"
           >
-            <span className="text-[10px] leading-none">RECEIVE</span>
+            <span className="text-sm leading-none">RECEIVE</span>
             <ArrowDownLeft className="h-5 w-5" />
           </Button>
 
@@ -926,7 +925,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
             aria-label="Swap"
           >
-            <span className="text-[10px] leading-none">SWAP</span>
+            <span className="text-sm leading-none">SWAP</span>
             <ArrowRightLeft className="h-5 w-5" />
           </Button>
         </div>
@@ -951,6 +950,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Burn Tokens Button */}
+        <div className="mb-3">
+          <Button
+            onClick={onBurn}
+            className="w-full h-12 rounded-md font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/80 hover:bg-[#1a2540]/60 text-white flex items-center justify-center gap-3 px-4 transition-all duration-300"
+            style={{ fontFamily: "Arial, sans-serif" }}
+            aria-label="Burn Tokens"
+          >
+            <span className="text-sm font-normal min-w-fit">BURN</span>
+            <div className="flex-shrink-0 relative w-8 h-8">
+              <div className="absolute inset-0 rounded-full bg-orange-600/40 animate-burning-flame blur-sm"></div>
+              <Flame className="absolute inset-0 h-7 w-7 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-burning-flame drop-shadow-lg" />
+
+              {/* Flame burst particles */}
+              <div className="absolute inset-0">
+                <div
+                  className="absolute left-0 top-0 w-1.5 h-1.5 bg-orange-500 rounded-full animate-flame-burst"
+                  style={{ animation: "flame-burst 0.8s ease-out infinite" }}
+                ></div>
+                <div
+                  className="absolute right-0 top-0 w-1.5 h-1.5 bg-red-500 rounded-full animate-flame-burst"
+                  style={{
+                    animation: "flame-burst 0.8s ease-out 0.15s infinite",
+                  }}
+                ></div>
+                <div
+                  className="absolute left-1/2 top-0 w-1.5 h-1.5 bg-orange-400 rounded-full animate-flame-burst"
+                  style={{
+                    animation: "flame-burst 0.8s ease-out 0.3s infinite",
+                  }}
+                ></div>
+              </div>
+            </div>
+            <span className="text-sm font-normal min-w-fit">TOKENS</span>
+          </Button>
         </div>
 
         <div className="space-y-3">

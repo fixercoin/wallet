@@ -314,12 +314,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         },
       ];
 
+      // Merge on-chain token accounts with balances (skip SOL, already added)
       tokenAccounts.forEach((tokenAccount) => {
         if (tokenAccount.symbol !== "SOL") {
-          allTokens.push(tokenAccount);
+          const existingIndex = allTokens.findIndex(
+            (t) => t.mint === tokenAccount.mint,
+          );
+          if (existingIndex >= 0) {
+            // Update existing token with on-chain balance
+            allTokens[existingIndex] = {
+              ...allTokens[existingIndex],
+              balance: tokenAccount.balance,
+            };
+          } else {
+            // Add new token not in defaults
+            allTokens.push(tokenAccount);
+          }
         }
       });
 
+      // Merge custom tokens
       customTokens.forEach((customToken) => {
         const existingTokenIndex = allTokens.findIndex(
           (t) => t.mint === customToken.mint,

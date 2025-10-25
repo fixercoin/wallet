@@ -351,19 +351,29 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           let dexTokens: any[] = [];
           try {
-            const dexPromise = dexscreenerAPI.getTokensByMints(tokenMints);
-            const timeout = new Promise<any[]>((resolve) =>
-              setTimeout(() => resolve([]), 4500),
+            console.log(
+              `[Price Refresh] Requesting DexScreener for ${tokenMints.length} tokens`,
             );
-            dexTokens = await Promise.race([dexPromise, timeout]);
+            dexTokens = await dexscreenerAPI.getTokensByMints(tokenMints);
+            console.log(
+              `[Price Refresh] DexScreener initial fetch returned ${dexTokens.length} tokens`,
+            );
           } catch (fetchErr) {
+            console.warn(
+              "[Price Refresh] DexScreener initial fetch failed:",
+              fetchErr,
+            );
             dexTokens = [];
           }
 
           if (Array.isArray(dexTokens) && dexTokens.length > 0) {
             try {
               prices = dexscreenerAPI.getTokenPrices(dexTokens);
+              console.log(
+                `[Price Refresh] Extracted ${Object.keys(prices).length} prices from DexScreener`,
+              );
             } catch (parseErr) {
+              console.warn("[Price Refresh] Failed to parse DexScreener prices:", parseErr);
               prices = {};
             }
 
@@ -380,23 +390,30 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 }
               });
             } catch (inner) {
-              // noop
+              console.warn("[Price Refresh] Failed to extract price changes:", inner);
             }
           } else {
+            console.warn("[Price Refresh] No tokens returned from DexScreener");
             prices = {};
           }
 
-          // If SOL price is missing from DexScreener, don't throw immediately
-          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          // If we got significant price data from DexScreener, use it
+          // Otherwise fall back to Jupiter/CoinGecko
           const solMint = "So11111111111111111111111111111111111111112";
           const hasSufficientData =
             Object.keys(prices).length > 0 && prices[solMint];
 
           if (!hasSufficientData) {
+            console.warn(
+              `[Price Refresh] DexScreener insufficient: got ${Object.keys(prices).length} prices, SOL present: ${!!prices[solMint]}. Falling back to Jupiter.`,
+            );
             throw new Error(
-              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
+              `DexScreener insufficient: ${Object.keys(prices).length} prices`,
             );
           }
+          console.log(
+            `[Price Refresh] DexScreener successful with ${Object.keys(prices).length} prices`,
+          );
         } catch (dexErr) {
           console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};

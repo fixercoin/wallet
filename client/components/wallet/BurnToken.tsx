@@ -513,67 +513,69 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             <div className="text-xs uppercase tracking-wide text-orange-500">
               Burn SPL Tokens
             </div>
-            <h1 className="text-xl font-semibold text-white">
-              Destroy tokens securely
-            </h1>
-            <p className="text-xs text-gray-300">
-              Permanently remove SPL tokens from your wallet balance.
-            </p>
           </div>
         </div>
 
-        <div className="bg-transparent p-6 space-y-5">
-          <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-orange-500" />
-            <span className="text-sm font-semibold text-white">
-              Burn tokens you control
-            </span>
-          </div>
+        <div className="space-y-4">
+          <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Flame className="h-5 w-5 text-orange-500" />
+                <span className="text-sm font-semibold text-white">
+                  Select token
+                </span>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-300">Choose token to burn</Label>
+                <Select
+                  value={selectedMint}
+                  onValueChange={setSelectedMint}
+                  disabled={!splTokens.length || isLoading}
+                >
+                  <SelectTrigger className="mt-1 bg-[#1a2540]/50 text-white">
+                    <SelectValue placeholder="Choose token" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a2540]/95 text-white">
+                    {splTokens.map((token) => (
+                      <SelectItem key={token.mint} value={token.mint}>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {token.symbol || token.mint.slice(0, 6)}
+                          </span>
+                          <span className="text-[10px] text-gray-300 uppercase">
+                            Balance:{" "}
+                            {formatNumber(token.balance, token.decimals ?? 0)}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {splTokens.length === 0 ? (
+                  <p className="mt-2 text-[11px] text-gray-300">
+                    Add or receive SPL tokens with a positive balance to burn them
+                    from this wallet.
+                  </p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs text-gray-300">Select token</Label>
-              <Select
-                value={selectedMint}
-                onValueChange={setSelectedMint}
-                disabled={!splTokens.length || isLoading}
-              >
-                <SelectTrigger className="mt-1 bg-[#1a2540]/50 text-white">
-                  <SelectValue placeholder="Choose token" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a2540]/95 text-white">
-                  {splTokens.map((token) => (
-                    <SelectItem key={token.mint} value={token.mint}>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {token.symbol || token.mint.slice(0, 6)}
-                        </span>
-                        <span className="text-[10px] text-gray-300 uppercase">
-                          Balance:{" "}
-                          {formatNumber(token.balance, token.decimals ?? 0)}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {splTokens.length === 0 ? (
-                <p className="mt-2 text-[11px] text-gray-300">
-                  Add or receive SPL tokens with a positive balance to burn them
-                  from this wallet.
-                </p>
-              ) : null}
-            </div>
-
-            {selectedToken ? (
-              <div className="rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 p-4 space-y-3">
+          {selectedToken ? (
+            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                  <span className="text-sm font-semibold text-white">
+                    Selected token
+                  </span>
+                </div>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-300">
-                      Selected token
+                      {selectedToken.symbol || selectedToken.mint.slice(0, 6)}
                     </p>
                     <p className="text-lg font-semibold text-white">
-                      {selectedToken.symbol || selectedToken.mint.slice(0, 6)} ·{" "}
                       {formatNumber(
                         selectedToken.balance,
                         selectedToken.decimals ?? 0,
@@ -592,75 +594,80 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     </a>
                   </div>
                 </div>
-              </div>
-            ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
-            <div>
-              <Label htmlFor="burn-amount" className="text-xs text-gray-300">
-                Amount to burn
-              </Label>
-              <div className="mt-1 flex items-center gap-3">
-                <Input
-                  id="burn-amount"
-                  value={amount}
-                  onChange={(event) => handleAmountChange(event.target.value)}
-                  onBlur={handleAmountBlur}
-                  disabled={isLoading || !selectedToken}
-                  placeholder="0.0"
-                  inputMode="decimal"
-                  className="h-11 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleUseMax}
-                  disabled={isLoading || !selectedToken}
-                  className="h-11 rounded-full px-4 text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/20"
-                >
-                  Max
-                </Button>
+          <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Flame className="h-5 w-5 text-orange-500" />
+                <span className="text-sm font-semibold text-white">
+                  Amount to burn
+                </span>
               </div>
-              {selectedToken ? (
-                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-300">
-                  <span>
-                    Available:{" "}
-                    {formatNumber(
-                      selectedToken.balance,
-                      selectedToken.decimals ?? 0,
-                    )}{" "}
-                    {selectedToken.symbol || selectedToken.mint.slice(0, 6)}
-                  </span>
-                  <span>Decimals: {selectedToken.decimals ?? 0}</span>
+              <div>
+                <Label htmlFor="burn-amount" className="text-xs text-gray-300">
+                  Enter amount
+                </Label>
+                <div className="mt-1 flex items-center gap-3">
+                  <Input
+                    id="burn-amount"
+                    value={amount}
+                    onChange={(event) => handleAmountChange(event.target.value)}
+                    onBlur={handleAmountBlur}
+                    disabled={isLoading || !selectedToken}
+                    placeholder="0.0"
+                    inputMode="decimal"
+                    className="h-11 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleUseMax}
+                    disabled={isLoading || !selectedToken}
+                    className="h-11 rounded-full px-4 text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/20"
+                  >
+                    Max
+                  </Button>
                 </div>
-              ) : null}
-              {amountError ? (
-                <p className="mt-2 text-sm text-red-500">{amountError}</p>
-              ) : null}
-            </div>
+                {selectedToken ? (
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-gray-300">
+                    <span>
+                      Available:{" "}
+                      {formatNumber(
+                        selectedToken.balance,
+                        selectedToken.decimals ?? 0,
+                      )}{" "}
+                      {selectedToken.symbol || selectedToken.mint.slice(0, 6)}
+                    </span>
+                    <span>Decimals: {selectedToken.decimals ?? 0}</span>
+                  </div>
+                ) : null}
+                {amountError ? (
+                  <p className="mt-2 text-sm text-red-500">{amountError}</p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
 
-            <Button
-              className="h-11 w-full border-0 font-semibold rounded-xl bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-              onClick={handleBurn}
-              disabled={isConfirmDisabled}
-            >
-              {isLoading ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Processing burn...
-                </>
-              ) : (
-                <>
-                  <Flame className="mr-2 h-4 w-4" />
-                  Confirm burn
-                </>
-              )}
-            </Button>
-
-            <p className="text-center text-[11px] text-gray-300">
-              Burning permanently removes the selected tokens from circulation
-              and cannot be reversed.
-            </p>
-          </div>
+          <Button
+            className="h-11 w-full border-0 font-semibold rounded-xl bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+            onClick={handleBurn}
+            disabled={isConfirmDisabled}
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Processing burn...
+              </>
+            ) : (
+              <>
+                <Flame className="mr-2 h-4 w-4" />
+                Confirm burn
+              </>
+            )}
+          </Button>
         </div>
 
         {txSig || rewardSig ? (

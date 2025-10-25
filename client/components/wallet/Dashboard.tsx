@@ -359,34 +359,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, []);
 
-  // Refresh quietly when user scrolls down significantly
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let lastRefresh = 0;
-    const THRESHOLD = 50; // pixels scrolled down
-    const COOLDOWN = 1000; // ms between auto refreshes
-
-    const doScrollRefresh = async () => {
-      try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
-      } catch {}
-    };
-
-    const onScroll = () => {
-      const y = window.scrollY;
-      const now = Date.now();
-      if (y - lastY > THRESHOLD && now - lastRefresh > COOLDOWN) {
-        lastRefresh = now;
-        void doScrollRefresh();
-      }
-      lastY = y;
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [refreshBalance, refreshTokens]);
+  // Scroll-based refresh removed - prevents excessive API calls and blinking
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

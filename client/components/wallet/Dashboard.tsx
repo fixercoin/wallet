@@ -953,6 +953,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
+        {/* Burn Tokens Button */}
+        <div className="mb-3">
+          <Button
+            onClick={() => navigate("/fixorium/spl-meta")}
+            className="w-full h-12 rounded-md font-semibold border border-[#FF7A5C]/50 bg-gradient-to-r from-[#1a2540]/60 to-[#1f2d48]/60 hover:from-[#FF7A5C]/20 hover:to-[#FF7A5C]/10 text-white flex items-center justify-between px-4"
+            aria-label="Burn Tokens"
+          >
+            <span className="text-sm font-bold">BURN</span>
+            <Flame className="h-5 w-5 text-orange-400" />
+            <span className="text-sm font-bold">TOKENS</span>
+          </Button>
+        </div>
+
         <div className="space-y-3">
           {filteredTokens.map((token) => {
             const percentChange =

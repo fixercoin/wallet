@@ -153,7 +153,7 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(`[DexScreener] Requesting: ${url}`);

@@ -955,15 +955,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Burn Tokens Button */}
         <div className="mb-3 relative">
-          <div className="absolute inset-0 rounded-md bg-gradient-to-r from-orange-600/30 via-red-600/30 to-orange-600/30 animate-burning-flame blur-lg"></div>
+          <div className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-orange-600/40 to-transparent animate-burning-flame blur-lg"></div>
           <Button
             onClick={() => navigate("/fixorium/spl-meta")}
-            className="relative w-full h-12 rounded-md font-semibold border-2 border-orange-500/70 bg-gradient-to-r from-orange-600/40 via-red-600/40 to-orange-600/40 hover:from-orange-500/60 hover:via-red-500/60 hover:to-orange-500/60 text-white flex items-center justify-between px-4 shadow-lg shadow-orange-600/50 transition-all duration-300"
+            className="relative w-full h-12 rounded-md font-semibold border-2 border-orange-500/70 bg-gradient-to-r from-[#1a2540]/80 via-red-600/30 to-[#1a2540]/80 hover:from-[#1a2540]/60 hover:via-red-500/50 hover:to-[#1a2540]/60 text-white flex items-center justify-center gap-3 px-4 shadow-lg shadow-orange-600/50 transition-all duration-300"
             aria-label="Burn Tokens"
           >
-            <span className="text-sm font-bold">BURN</span>
-            <Flame className="h-6 w-6 animate-burning-flame drop-shadow-lg" />
-            <span className="text-sm font-bold">TOKENS</span>
+            <span className="text-sm font-bold min-w-fit">BURN</span>
+            <div className="flex-shrink-0 relative">
+              <div className="absolute inset-0 rounded-full bg-orange-600/40 animate-burning-flame blur-sm"></div>
+              <Flame className="relative h-7 w-7 animate-burning-flame drop-shadow-lg" />
+            </div>
+            <span className="text-sm font-bold min-w-fit">TOKENS</span>
           </Button>
         </div>
 

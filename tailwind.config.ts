@@ -129,11 +129,25 @@ export default {
             filter: "drop-shadow(0 0 4px rgba(255, 107, 53, 0.8))",
           },
         },
+        "flame-burst": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(0) scale(0)",
+          },
+          "50%": {
+            opacity: "1",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(-20px) scale(0.3)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "burning-flame": "burning-flame 0.8s ease-in-out infinite",
+        "flame-burst": "flame-burst 0.8s ease-out infinite",
       },
     },
   },

@@ -250,39 +250,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   useEffect(() => {
     let cancelled = false;
-    let running = false;
-    let lastRefreshTime = 0;
 
-    const tick = async () => {
-      if (cancelled) return;
-      if (running) return;
-
-      // Ensure minimum interval between refreshes
-      const now = Date.now();
-      if (now - lastRefreshTime < 2000) return;
-
-      running = true;
-      try {
+    // Only initial refresh - WalletContext handles periodic refreshes
+    (async () => {
+      if (!cancelled) {
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 300));
         await refreshTokens();
-        lastRefreshTime = Date.now();
-      } catch (err) {
-        console.warn("[Dashboard] Refresh tick error:", err);
-      } finally {
-        running = false;
       }
-    };
-
-    // Initial refresh immediately
-    void tick();
-
-    // Then refresh every 5 seconds
-    const id = window.setInterval(tick, 5000);
+    })();
 
     return () => {
       cancelled = true;
-      clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
 
@@ -380,34 +359,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, []);
 
-  // Refresh quietly when user scrolls down significantly
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let lastRefresh = 0;
-    const THRESHOLD = 50; // pixels scrolled down
-    const COOLDOWN = 1000; // ms between auto refreshes
-
-    const doScrollRefresh = async () => {
-      try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
-      } catch {}
-    };
-
-    const onScroll = () => {
-      const y = window.scrollY;
-      const now = Date.now();
-      if (y - lastY > THRESHOLD && now - lastRefresh > COOLDOWN) {
-        lastRefresh = now;
-        void doScrollRefresh();
-      }
-      lastY = y;
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [refreshBalance, refreshTokens]);
+  // Scroll-based refresh removed - prevents excessive API calls and blinking
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

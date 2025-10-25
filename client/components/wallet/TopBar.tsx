@@ -21,7 +21,6 @@ import { useNavigate } from "react-router-dom";
 interface TopBarProps {
   onAccounts?: () => void;
   onAirdrop: () => void;
-  onBurn: () => void;
   onLock: () => void;
   onSettings: () => void;
 }

@@ -195,7 +195,7 @@ class DexscreenerAPI {
         // network/timeout -> swallow; fallback to stale cache
         fetchFailed = true;
         const errorMsg = err instanceof Error ? err.message : String(err);
-        if (errorMsg.includes('aborted') || errorMsg.includes('signal')) {
+        if (errorMsg.includes("aborted") || errorMsg.includes("signal")) {
           console.warn(
             `[DexScreener] ⏱️ Request timeout after 15s for ${toFetch.length} tokens`,
           );

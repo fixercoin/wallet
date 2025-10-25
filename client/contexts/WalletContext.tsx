@@ -428,7 +428,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (mintsToFetch.length > 0) {
           try {
             console.log(
-              `[Price Refresh] Fetching DexScreener data for ${mintsToFetch.length} tokens (stables + LOCKER)`,
+              `[Price Refresh] Fetching DexScreener data for ${mintsToFetch.length} tokens (stables + FIXERCOIN + LOCKER)`,
             );
             const dexTokens =
               await dexscreenerAPI.getTokensByMints(mintsToFetch);

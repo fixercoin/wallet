@@ -915,6 +915,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Button
             onClick={onReceive}
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            style={{ fontFamily: "Georgia, serif" }}
             aria-label="Receive"
           >
             <span className="text-sm leading-none">RECEIVE</span>

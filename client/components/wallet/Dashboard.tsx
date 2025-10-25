@@ -961,7 +961,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             aria-label="Burn Tokens"
           >
             <span className="text-sm font-bold">BURN</span>
-            <Flame className="h-5 w-5 text-orange-400" />
+            <Flame className="h-5 w-5 animate-burning-flame" />
             <span className="text-sm font-bold">TOKENS</span>
           </Button>
         </div>

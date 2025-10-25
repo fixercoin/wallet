@@ -23,6 +23,7 @@ interface TopBarProps {
   onAirdrop: () => void;
   onLock: () => void;
   onSettings: () => void;
+  onBurn?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -30,6 +31,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onAirdrop,
   onLock,
   onSettings,
+  onBurn,
 }) => {
   const navigate = useNavigate();
 
@@ -81,6 +83,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 <Lock className="h-4 w-4" />
                 <span>LOCK-SPL</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={onBurn}
+                className="flex items-center gap-2 text-xs"
+              >
+                <Flame className="h-4 w-4" />
+                <span>FIXERCOIN BURNING</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

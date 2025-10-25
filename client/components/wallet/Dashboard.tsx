@@ -631,6 +631,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onAirdrop={onAirdrop}
         onLock={onLock}
         onSettings={onSettings}
+        onBurn={onBurn}
       />
 
       {/* Quest Modal */}
@@ -953,43 +954,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             )}
           </div>
-        </div>
-
-        {/* Burn Tokens Button */}
-        <div className="mb-3">
-          <Button
-            onClick={onBurn}
-            className="w-full h-12 rounded-md font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/80 hover:bg-[#1a2540]/60 text-white flex items-center justify-between gap-3 px-4 transition-all duration-300"
-            style={{ fontFamily: "Arial, sans-serif" }}
-            aria-label="Burn Tokens"
-          >
-            <span className="text-sm font-normal">BURN TOKEN</span>
-            <div className="flex-shrink-0 relative w-8 h-8">
-              <div className="absolute inset-0 rounded-full bg-orange-600/40 animate-burning-flame blur-sm"></div>
-              <Flame className="absolute inset-0 h-7 w-7 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-burning-flame drop-shadow-lg" />
-
-              {/* Flame burst particles */}
-              <div className="absolute inset-0">
-                <div
-                  className="absolute left-0 top-0 w-1.5 h-1.5 bg-orange-500 rounded-full animate-flame-burst"
-                  style={{ animation: "flame-burst 0.8s ease-out infinite" }}
-                ></div>
-                <div
-                  className="absolute right-0 top-0 w-1.5 h-1.5 bg-red-500 rounded-full animate-flame-burst"
-                  style={{
-                    animation: "flame-burst 0.8s ease-out 0.15s infinite",
-                  }}
-                ></div>
-                <div
-                  className="absolute left-1/2 top-0 w-1.5 h-1.5 bg-orange-400 rounded-full animate-flame-burst"
-                  style={{
-                    animation: "flame-burst 0.8s ease-out 0.3s infinite",
-                  }}
-                ></div>
-              </div>
-            </div>
-            <span className="text-sm font-normal">BOOST IT NOW</span>
-          </Button>
         </div>
 
         <div className="space-y-3">

@@ -367,6 +367,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
 
         // Extract prices and price changes from DexScreener results
+        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+
+        // Identify stablecoins for later fallback handling
+        const stableMints = allTokens
+          .filter((t) => {
+            const sym = (t.symbol || "").toUpperCase();
+            const name = t.name || "";
+            return (
+              sym === "USDC" ||
+              sym === "USDT" ||
+              /USD\s*COIN/i.test(name) ||
+              /TETHER/i.test(name)
+            );
+          })
+          .map((t) => t.mint);
+
         if (Array.isArray(dexTokens) && dexTokens.length > 0) {
           dexTokens.forEach((dt: any) => {
             const mint = dt?.baseToken?.address;

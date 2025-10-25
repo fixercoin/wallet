@@ -965,28 +965,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           >
             <span className="text-sm font-normal">BURN TOKEN</span>
             <div className="flex-shrink-0 relative w-8 h-8">
-              <div className="absolute inset-0 rounded-full bg-orange-600/40 animate-burning-flame blur-sm"></div>
-              <Flame className="absolute inset-0 h-7 w-7 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-burning-flame drop-shadow-lg" />
-
-              {/* Flame burst particles */}
-              <div className="absolute inset-0">
-                <div
-                  className="absolute left-0 top-0 w-1.5 h-1.5 bg-orange-500 rounded-full animate-flame-burst"
-                  style={{ animation: "flame-burst 0.8s ease-out infinite" }}
-                ></div>
-                <div
-                  className="absolute right-0 top-0 w-1.5 h-1.5 bg-red-500 rounded-full animate-flame-burst"
-                  style={{
-                    animation: "flame-burst 0.8s ease-out 0.15s infinite",
-                  }}
-                ></div>
-                <div
-                  className="absolute left-1/2 top-0 w-1.5 h-1.5 bg-orange-400 rounded-full animate-flame-burst"
-                  style={{
-                    animation: "flame-burst 0.8s ease-out 0.3s infinite",
-                  }}
-                ></div>
-              </div>
+              <Flame className="absolute inset-0 h-7 w-7 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-orange-500 drop-shadow-lg" />
             </div>
             <span className="text-sm font-normal">BOOST IT NOW</span>
           </Button>

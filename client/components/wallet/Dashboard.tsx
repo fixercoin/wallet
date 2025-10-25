@@ -902,7 +902,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Action Buttons: equal-width square buttons */}
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-3 mb-1 flex-wrap">
           <Button
             onClick={onSend}
             className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#ffffff66] bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"

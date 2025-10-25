@@ -631,6 +631,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onAirdrop={onAirdrop}
         onLock={onLock}
         onSettings={onSettings}
+        onBurn={onBurn}
       />
 
       {/* Quest Modal */}

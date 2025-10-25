@@ -954,14 +954,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Burn Tokens Button */}
-        <div className="mb-3">
+        <div className="mb-3 relative">
+          <div className="absolute inset-0 rounded-md bg-gradient-to-r from-orange-600/30 via-red-600/30 to-orange-600/30 animate-burning-flame blur-lg"></div>
           <Button
             onClick={() => navigate("/fixorium/spl-meta")}
-            className="w-full h-12 rounded-md font-semibold border border-[#FF7A5C]/50 bg-gradient-to-r from-[#1a2540]/60 to-[#1f2d48]/60 hover:from-[#FF7A5C]/20 hover:to-[#FF7A5C]/10 text-white flex items-center justify-between px-4"
+            className="relative w-full h-12 rounded-md font-semibold border-2 border-orange-500/70 bg-gradient-to-r from-orange-600/40 via-red-600/40 to-orange-600/40 hover:from-orange-500/60 hover:via-red-500/60 hover:to-orange-500/60 text-white flex items-center justify-between px-4 shadow-lg shadow-orange-600/50 transition-all duration-300"
             aria-label="Burn Tokens"
           >
             <span className="text-sm font-bold">BURN</span>
-            <Flame className="h-5 w-5 animate-burning-flame" />
+            <Flame className="h-6 w-6 animate-burning-flame drop-shadow-lg" />
             <span className="text-sm font-bold">TOKENS</span>
           </Button>
         </div>

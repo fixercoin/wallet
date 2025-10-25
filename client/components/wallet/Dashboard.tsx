@@ -956,22 +956,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* Burn Tokens Button */}
-        <div className="mb-3">
-          <Button
-            onClick={onBurn}
-            className="w-full h-12 rounded-md font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/80 hover:bg-[#1a2540]/60 text-white flex items-center justify-between gap-3 px-4 transition-all duration-300"
-            style={{ fontFamily: "Arial, sans-serif" }}
-            aria-label="Burn Tokens"
-          >
-            <span className="text-sm font-normal">BURN TOKEN</span>
-            <div className="flex-shrink-0 relative w-8 h-8">
-              <Flame className="absolute inset-0 h-7 w-7 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-orange-500 drop-shadow-lg" />
-            </div>
-            <span className="text-sm font-normal">BOOST IT NOW</span>
-          </Button>
-        </div>
-
         <div className="space-y-3">
           {filteredTokens.map((token) => {
             const percentChange =

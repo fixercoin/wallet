@@ -107,10 +107,33 @@ export default {
             height: "0",
           },
         },
+        "burning-flame": {
+          "0%, 100%": {
+            transform: "scale(1) rotate(0deg)",
+            color: "#fb923c",
+            filter: "drop-shadow(0 0 2px rgba(251, 146, 60, 0.6))",
+          },
+          "25%": {
+            transform: "scale(1.1) rotate(2deg)",
+            color: "#ff6b35",
+            filter: "drop-shadow(0 0 4px rgba(255, 107, 53, 0.8))",
+          },
+          "50%": {
+            transform: "scale(0.95) rotate(-1deg)",
+            color: "#ff4500",
+            filter: "drop-shadow(0 0 6px rgba(255, 69, 0, 1))",
+          },
+          "75%": {
+            transform: "scale(1.05) rotate(1deg)",
+            color: "#ff6b35",
+            filter: "drop-shadow(0 0 4px rgba(255, 107, 53, 0.8))",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "burning-flame": "burning-flame 0.8s ease-in-out infinite",
       },
     },
   },

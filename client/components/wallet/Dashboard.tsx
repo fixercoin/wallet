@@ -904,31 +904,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-1 flex-wrap">
           <Button
             onClick={onSend}
-            className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#FF7A5C]/30 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
-            style={{ fontFamily: "Georgia, serif" }}
+            className="flex-1 min-w-0 h-12 rounded-lg font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            style={{ fontFamily: "Arial, sans-serif" }}
             aria-label="Send"
           >
-            <span className="text-xs leading-none">SEND</span>
+            <span className="text-sm leading-none">SEND</span>
             <ArrowUpRight className="h-5 w-5" />
           </Button>
 
           <Button
             onClick={onReceive}
-            className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#FF7A5C]/30 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
-            style={{ fontFamily: "Georgia, serif" }}
+            className="flex-1 min-w-0 h-12 rounded-lg font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            style={{ fontFamily: "Arial, sans-serif" }}
             aria-label="Receive"
           >
-            <span className="text-xs leading-none">RECEIVE</span>
+            <span className="text-sm leading-none">RECEIVE</span>
             <ArrowDownLeft className="h-5 w-5" />
           </Button>
 
           <Button
             onClick={onSwap}
-            className="flex-1 min-w-0 h-12 rounded-lg font-semibold border border-[#FF7A5C]/30 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
-            style={{ fontFamily: "Georgia, serif" }}
+            className="flex-1 min-w-0 h-12 rounded-lg font-normal border border-[#FF7A5C]/30 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white flex items-center justify-center gap-2 px-3"
+            style={{ fontFamily: "Arial, sans-serif" }}
             aria-label="Swap"
           >
-            <span className="text-xs leading-none">SWAP</span>
+            <span className="text-sm leading-none">SWAP</span>
             <ArrowRightLeft className="h-5 w-5" />
           </Button>
         </div>
@@ -988,7 +988,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 ></div>
               </div>
             </div>
-            <span className="text-sm font-normal">BOOST TOKENS</span>
+            <span className="text-sm font-normal">BOOST IT NOW</span>
           </Button>
         </div>
 

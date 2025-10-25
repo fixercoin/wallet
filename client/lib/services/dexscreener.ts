@@ -153,7 +153,7 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(`[DexScreener] Requesting: ${url}`);
@@ -166,18 +166,6 @@ class DexscreenerAPI {
             console.log(
               `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
             );
-            // Validate that we got meaningful data (especially priceChange)
-            const withPriceChange = fetchedTokens.filter(
-              (t) =>
-                t.priceChange &&
-                (typeof t.priceChange.h24 === "number" ||
-                  typeof t.priceChange.h6 === "number" ||
-                  typeof t.priceChange.h1 === "number" ||
-                  typeof t.priceChange.m5 === "number"),
-            );
-            console.log(
-              `[DexScreener] Tokens with price change data: ${withPriceChange.length}/${fetchedTokens.length}`,
-            );
           } catch (parseErr) {
             console.error(
               `[DexScreener] ❌ Failed to parse response:`,
@@ -185,6 +173,11 @@ class DexscreenerAPI {
             );
             fetchFailed = true;
           }
+        } else if (response.status >= 500) {
+          console.warn(
+            `[DexScreener] ⚠️ Upstream server error ${response.status} for ${toFetch.length} tokens - using stale cache`,
+          );
+          fetchFailed = true;
         } else {
           console.error(
             `[DexScreener] ❌ Server returned ${response.status}: ${response.statusText}`,
@@ -197,7 +190,7 @@ class DexscreenerAPI {
         const errorMsg = err instanceof Error ? err.message : String(err);
         if (errorMsg.includes("aborted") || errorMsg.includes("signal")) {
           console.warn(
-            `[DexScreener] ⏱️ Request timeout after 15s for ${toFetch.length} tokens`,
+            `[DexScreener] ⏱️ Request timeout after 12s for ${toFetch.length} tokens`,
           );
         } else {
           console.warn(
@@ -212,15 +205,21 @@ class DexscreenerAPI {
 
     // If fetch failed, try to serve stale cached data instead of failing completely
     if (fetchFailed && toFetch.length > 0) {
-      console.log(
-        `[DexScreener] ⚠️ Serving stale cache for ${toFetch.length} tokens`,
-      );
-      toFetch.forEach((mint) => {
+      const staleMints = toFetch.filter((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
-        if (stale) {
-          fetchedTokens.push(stale.token);
-        }
+        return stale !== undefined;
       });
+      if (staleMints.length > 0) {
+        console.log(
+          `[DexScreener] ⚠️ Serving stale cache for ${staleMints.length}/${toFetch.length} tokens`,
+        );
+        staleMints.forEach((mint) => {
+          const stale = DexscreenerAPI.tokenCache.get(mint);
+          if (stale) {
+            fetchedTokens.push(stale.token);
+          }
+        });
+      }
     }
 
     // Update cache with fetched results (only if we got meaningful data)

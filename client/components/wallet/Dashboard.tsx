@@ -252,11 +252,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
 
     // Only initial refresh - WalletContext handles periodic refreshes
+    // Run balance and token refresh in parallel instead of sequential
     (async () => {
       if (!cancelled) {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
+        await Promise.all([refreshBalance(), refreshTokens()]);
       }
     })();
 
@@ -360,6 +359,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, []);
 
   // Scroll-based refresh removed - prevents excessive API calls and blinking
+  // Sequential refresh removed from initial load - balance and tokens now fetch in parallel
 
   const handleCopyAddress = async () => {
     if (!wallet) return;

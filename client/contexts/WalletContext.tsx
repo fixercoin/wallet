@@ -347,160 +347,58 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       try {
         const tokenMints = allTokens.map((token) => token.mint);
+        let dexTokens: any[] = [];
+
+        // Single DexScreener call for all tokens (no duplicate requests)
         try {
-          let dexTokens: any[] = [];
-          try {
-            console.log(
-              `[Price Refresh] Requesting DexScreener for ${tokenMints.length} tokens`,
-            );
-            dexTokens = await dexscreenerAPI.getTokensByMints(tokenMints);
-            console.log(
-              `[Price Refresh] DexScreener initial fetch returned ${dexTokens.length} tokens`,
-            );
-          } catch (fetchErr) {
-            console.warn(
-              "[Price Refresh] DexScreener initial fetch failed:",
-              fetchErr,
-            );
-            dexTokens = [];
-          }
-
-          if (Array.isArray(dexTokens) && dexTokens.length > 0) {
-            try {
-              prices = dexscreenerAPI.getTokenPrices(dexTokens);
-              console.log(
-                `[Price Refresh] Extracted ${Object.keys(prices).length} prices from DexScreener`,
-              );
-            } catch (parseErr) {
-              console.warn(
-                "[Price Refresh] Failed to parse DexScreener prices:",
-                parseErr,
-              );
-              prices = {};
-            }
-
-            try {
-              dexTokens.forEach((dt: any) => {
-                const mint = dt?.baseToken?.address;
-                const pc = dt?.priceChange;
-                const candidates = [pc?.h24, pc?.h6, pc?.h1, pc?.m5];
-                const ch = candidates.find(
-                  (v: any) => typeof v === "number" && isFinite(v),
-                );
-                if (mint && typeof ch === "number") {
-                  changeMap[mint] = ch;
-                }
-              });
-            } catch (inner) {
-              console.warn(
-                "[Price Refresh] Failed to extract price changes:",
-                inner,
-              );
-            }
-          } else {
-            console.warn("[Price Refresh] No tokens returned from DexScreener");
-            prices = {};
-          }
-
-          // If we got significant price data from DexScreener, use it
-          // Otherwise fall back to Jupiter/CoinGecko
-          const solMint = "So11111111111111111111111111111111111111112";
-          const hasSufficientData =
-            Object.keys(prices).length > 0 && prices[solMint];
-
-          if (!hasSufficientData) {
-            console.warn(
-              `[Price Refresh] DexScreener insufficient: got ${Object.keys(prices).length} prices, SOL present: ${!!prices[solMint]}. Falling back to Jupiter.`,
-            );
-            throw new Error(
-              `DexScreener insufficient: ${Object.keys(prices).length} prices`,
-            );
-          }
           console.log(
-            `[Price Refresh] DexScreener successful with ${Object.keys(prices).length} prices`,
+            `[Price Refresh] Requesting DexScreener for ${tokenMints.length} tokens`,
           );
-        } catch (dexErr) {
-          console.warn("DexScreener error, continuing to Jupiter:", dexErr);
-          prices = {};
+          dexTokens = await dexscreenerAPI.getTokensByMints(tokenMints);
+          console.log(
+            `[Price Refresh] DexScreener returned ${dexTokens.length} tokens`,
+          );
+        } catch (fetchErr) {
+          console.warn(
+            "[Price Refresh] DexScreener fetch failed, will use fallback:",
+            fetchErr,
+          );
+          dexTokens = [];
         }
 
-        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        // Extract prices and price changes from DexScreener results
+        if (Array.isArray(dexTokens) && dexTokens.length > 0) {
+          dexTokens.forEach((dt: any) => {
+            const mint = dt?.baseToken?.address;
+            if (!mint) return;
 
-        // Fetch DexScreener data for stablecoins (USDC, USDT), FIXERCOIN, and LOCKER to get accurate price changes
-        const stableMints = allTokens
-          .filter((t) => {
-            const sym = (t.symbol || "").toUpperCase();
-            const name = t.name || "";
-            return (
-              sym === "USDC" ||
-              sym === "USDT" ||
-              /USD\s*COIN/i.test(name) ||
-              /TETHER/i.test(name)
+            // Extract price
+            if (dt.priceUsd) {
+              const price = parseFloat(dt.priceUsd);
+              if (price > 0) prices[mint] = price;
+            }
+
+            // Extract price change (h24 preferred, fallback to h6, h1, m5)
+            const pc = dt?.priceChange || {};
+            const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+            const priceChange = candidates.find(
+              (v: any) => typeof v === "number" && isFinite(v),
             );
-          })
-          .map((t) => t.mint);
+            if (typeof priceChange === "number") {
+              changeMap[mint] = priceChange;
+            }
+          });
 
-        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
-        const mintsToFetch = [
-          ...new Set(
-            [...stableMints, fixercoinMint, lockerMint].filter(Boolean),
-          ),
-        ];
-
-        // Fetch all tokens for comprehensive price data (not just stables)
-        const allMints = allTokens.map((t) => t.mint);
-        const mintsForFullFetch = [...new Set([...mintsToFetch, ...allMints])];
-
-        if (mintsForFullFetch.length > 0) {
-          try {
-            console.log(
-              `[Price Refresh] Fetching DexScreener data for ${mintsForFullFetch.length} tokens`,
-            );
-            const dexTokens =
-              await dexscreenerAPI.getTokensByMints(mintsForFullFetch);
-            console.log(
-              `[Price Refresh] DexScreener returned ${dexTokens.length} tokens`,
-            );
-
-            const dexMap = new Map<string, any>();
-            dexTokens.forEach((t) => {
-              const matchMint = mintsForFullFetch.find(
-                (m) =>
-                  m === t.baseToken?.address || m === t.quoteToken?.address,
-              );
-              if (matchMint) dexMap.set(matchMint, t);
-            });
-
-            mintsForFullFetch.forEach((mint) => {
-              const dexToken = dexMap.get(mint);
-              if (dexToken) {
-                // Update price if available
-                if (dexToken.priceUsd) {
-                  const price = parseFloat(dexToken.priceUsd);
-                  if (price > 0) prices[mint] = price;
-                }
-                // Extract price change (h24 is preferred, fallback to h6, h1, m5)
-                const pc = dexToken.priceChange || {};
-                const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-                const priceChange = candidates.find(
-                  (v: any) => typeof v === "number" && isFinite(v),
-                );
-                if (typeof priceChange === "number") {
-                  changeMap[mint] = priceChange;
-                  const tokenName =
-                    allTokens.find((t) => t.mint === mint)?.symbol || "UNKNOWN";
-                  console.log(
-                    `[Price Refresh] ${tokenName}: 24h change = ${priceChange.toFixed(2)}%`,
-                  );
-                }
-              }
-            });
-          } catch (e) {
-            console.warn("Failed to fetch price data from DexScreener:", e);
-          }
+          console.log(
+            `[Price Refresh] Extracted ${Object.keys(prices).length} prices from DexScreener`,
+          );
+        } else {
+          console.warn(
+            "[Price Refresh] No price data from DexScreener, will use fallback",
+          );
         }
 
-        // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
+        // Try alternate source (CoinGecko via /api/stable-24h) for additional price change data
         try {
           const stableSymbols = allTokens
             .filter((t) => stableMints.includes(t.mint))

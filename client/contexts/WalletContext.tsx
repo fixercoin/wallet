@@ -182,11 +182,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         clearInterval(refreshIntervalRef.current);
       }
 
+      // Refresh every 2 minutes (120 seconds) instead of 60 to reduce API spam
       refreshIntervalRef.current = setInterval(async () => {
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 500));
         await refreshTokens();
-      }, 60000);
+      }, 120000);
     } else {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);

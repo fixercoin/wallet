@@ -294,6 +294,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setIsLoading(true);
 
     try {
+      // Clear FIXERCOIN price cache for fresh fetches on every refresh
+      fixercoinPriceService.clearCache();
+
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
       const customTokens = JSON.parse(
         localStorage.getItem("custom_tokens") || "[]",
@@ -425,7 +428,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (mintsToFetch.length > 0) {
           try {
             console.log(
-              `[Price Refresh] Fetching DexScreener data for ${mintsToFetch.length} tokens (stables + LOCKER)`,
+              `[Price Refresh] Fetching DexScreener data for ${mintsToFetch.length} tokens (stables + FIXERCOIN + LOCKER)`,
             );
             const dexTokens =
               await dexscreenerAPI.getTokensByMints(mintsToFetch);
@@ -489,7 +492,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             });
           } catch (e) {
             console.warn(
-              "Failed to fetch USDC/LOCKER price data from DexScreener:",
+              "Failed to fetch stablecoins/FIXERCOIN/LOCKER price data from DexScreener:",
               e,
             );
           }

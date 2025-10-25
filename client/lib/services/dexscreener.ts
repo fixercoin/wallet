@@ -153,7 +153,7 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(`[DexScreener] Requesting: ${url}`);
@@ -194,10 +194,17 @@ class DexscreenerAPI {
       } catch (err) {
         // network/timeout -> swallow; fallback to stale cache
         fetchFailed = true;
-        console.warn(
-          `[DexScreener] ❌ Network error fetching tokens:`,
-          err instanceof Error ? err.message : String(err),
-        );
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        if (errorMsg.includes("aborted") || errorMsg.includes("signal")) {
+          console.warn(
+            `[DexScreener] ⏱️ Request timeout after 15s for ${toFetch.length} tokens`,
+          );
+        } else {
+          console.warn(
+            `[DexScreener] ❌ Network error fetching tokens:`,
+            errorMsg,
+          );
+        }
       } finally {
         clearTimeout(timeoutId);
       }

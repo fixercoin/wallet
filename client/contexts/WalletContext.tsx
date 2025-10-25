@@ -570,9 +570,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
         }
       } catch (dexError) {
+        console.warn("[Price Refresh] DexScreener failed, trying Jupiter...");
         try {
           const tokenMints = allTokens.map((token) => token.mint);
+          console.log(
+            `[Price Refresh] Requesting Jupiter for ${tokenMints.length} tokens`,
+          );
           prices = await jupiterAPI.getTokenPrices(tokenMints);
+          console.log(
+            `[Price Refresh] Jupiter returned prices for ${Object.keys(prices).length} tokens`,
+          );
 
           // Always ensure FIXERCOIN has a price from Jupiter or fallback
           const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
@@ -581,18 +588,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               const fixercoinPrice = await fixercoinPriceService.getPrice();
               if (fixercoinPrice && fixercoinPrice > 0) {
                 prices[fixercoinMint] = fixercoinPrice;
+                console.log(
+                  `[Price Refresh] Got FIXERCOIN price from service: ${fixercoinPrice}`,
+                );
               }
             } catch (e) {
+              console.warn("[Price Refresh] Failed to get FIXERCOIN price:", e);
               prices[fixercoinMint] = 0.000023; // fallback
             }
           }
 
           if (Object.keys(prices).length > 0) {
             priceSource = "jupiter";
+            console.log(
+              `[Price Refresh] Jupiter successful with ${Object.keys(prices).length} prices`,
+            );
           } else {
             throw new Error("Jupiter also returned no prices");
           }
         } catch (jupiterError) {
+          console.warn("[Price Refresh] Jupiter failed, trying CoinGecko...");
           try {
             const solPricePromise = solPriceService.getSolPrice();
             const timeout = new Promise<null>((resolve) =>

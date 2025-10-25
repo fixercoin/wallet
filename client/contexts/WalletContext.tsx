@@ -373,7 +373,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 `[Price Refresh] Extracted ${Object.keys(prices).length} prices from DexScreener`,
               );
             } catch (parseErr) {
-              console.warn("[Price Refresh] Failed to parse DexScreener prices:", parseErr);
+              console.warn(
+                "[Price Refresh] Failed to parse DexScreener prices:",
+                parseErr,
+              );
               prices = {};
             }
 
@@ -390,7 +393,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 }
               });
             } catch (inner) {
-              console.warn("[Price Refresh] Failed to extract price changes:", inner);
+              console.warn(
+                "[Price Refresh] Failed to extract price changes:",
+                inner,
+              );
             }
           } else {
             console.warn("[Price Refresh] No tokens returned from DexScreener");
@@ -483,8 +489,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 if (typeof priceChange === "number") {
                   changeMap[mint] = priceChange;
                   const tokenName =
-                    allTokens.find((t) => t.mint === mint)?.symbol ||
-                    "UNKNOWN";
+                    allTokens.find((t) => t.mint === mint)?.symbol || "UNKNOWN";
                   console.log(
                     `[Price Refresh] ${tokenName}: 24h change = ${priceChange.toFixed(2)}%`,
                   );
@@ -492,10 +497,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               }
             });
           } catch (e) {
-            console.warn(
-              "Failed to fetch price data from DexScreener:",
-              e,
-            );
+            console.warn("Failed to fetch price data from DexScreener:", e);
           }
         }
 
@@ -616,8 +618,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             const solPriceData = await Promise.race([solPricePromise, timeout]);
             if (solPriceData?.price) {
               prices = {
-                So11111111111111111111111111111111111111112:
-                  solPriceData.price,
+                So11111111111111111111111111111111111111112: solPriceData.price,
               };
               priceSource = "coingecko";
               console.log(

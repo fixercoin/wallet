@@ -425,27 +425,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           ),
         ];
 
-        if (mintsToFetch.length > 0) {
+        // Fetch all tokens for comprehensive price data (not just stables)
+        const allMints = allTokens.map((t) => t.mint);
+        const mintsForFullFetch = [...new Set([...mintsToFetch, ...allMints])];
+
+        if (mintsForFullFetch.length > 0) {
           try {
             console.log(
-              `[Price Refresh] Fetching DexScreener data for ${mintsToFetch.length} tokens (stables + FIXERCOIN + LOCKER)`,
+              `[Price Refresh] Fetching DexScreener data for ${mintsForFullFetch.length} tokens`,
             );
             const dexTokens =
-              await dexscreenerAPI.getTokensByMints(mintsToFetch);
+              await dexscreenerAPI.getTokensByMints(mintsForFullFetch);
             console.log(
               `[Price Refresh] DexScreener returned ${dexTokens.length} tokens`,
             );
 
             const dexMap = new Map<string, any>();
             dexTokens.forEach((t) => {
-              const matchMint = mintsToFetch.find(
+              const matchMint = mintsForFullFetch.find(
                 (m) =>
                   m === t.baseToken?.address || m === t.quoteToken?.address,
               );
               if (matchMint) dexMap.set(matchMint, t);
             });
 
-            mintsToFetch.forEach((mint) => {
+            mintsForFullFetch.forEach((mint) => {
               const dexToken = dexMap.get(mint);
               if (dexToken) {
                 // Update price if available
@@ -462,37 +466,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 if (typeof priceChange === "number") {
                   changeMap[mint] = priceChange;
                   const tokenName =
-                    mint === lockerMint
-                      ? "LOCKER"
-                      : allTokens.find((t) => t.mint === mint)?.symbol ||
-                        "UNKNOWN";
+                    allTokens.find((t) => t.mint === mint)?.symbol ||
+                    "UNKNOWN";
                   console.log(
                     `[Price Refresh] ${tokenName}: 24h change = ${priceChange.toFixed(2)}%`,
                   );
-                } else {
-                  const tokenName =
-                    mint === lockerMint
-                      ? "LOCKER"
-                      : allTokens.find((t) => t.mint === mint)?.symbol ||
-                        "UNKNOWN";
-                  console.warn(
-                    `[Price Refresh] ${tokenName}: No price change data available`,
-                  );
                 }
-              } else {
-                const tokenName =
-                  mint === lockerMint
-                    ? "LOCKER"
-                    : allTokens.find((t) => t.mint === mint)?.symbol ||
-                      "UNKNOWN";
-                console.warn(
-                  `[Price Refresh] ${tokenName}: No DexScreener data found`,
-                );
               }
             });
           } catch (e) {
             console.warn(
-              "Failed to fetch stablecoins/FIXERCOIN/LOCKER price data from DexScreener:",
+              "Failed to fetch price data from DexScreener:",
               e,
             );
           }

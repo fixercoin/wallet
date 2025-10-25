@@ -23,6 +23,7 @@ interface TopBarProps {
   onAirdrop: () => void;
   onLock: () => void;
   onSettings: () => void;
+  onBurn?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({

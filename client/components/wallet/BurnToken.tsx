@@ -526,7 +526,9 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 </span>
               </div>
               <div>
-                <Label className="text-xs text-gray-300">Choose token to burn</Label>
+                <Label className="text-xs text-gray-300">
+                  Choose token to burn
+                </Label>
                 <Select
                   value={selectedMint}
                   onValueChange={setSelectedMint}
@@ -553,8 +555,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                 </Select>
                 {splTokens.length === 0 ? (
                   <p className="mt-2 text-[11px] text-gray-300">
-                    Add or receive SPL tokens with a positive balance to burn them
-                    from this wallet.
+                    Add or receive SPL tokens with a positive balance to burn
+                    them from this wallet.
                   </p>
                 ) : null}
               </div>

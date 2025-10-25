@@ -967,9 +967,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Flame burst particles */}
               <div className="absolute inset-0">
-                <div className="absolute left-0 top-0 w-1.5 h-1.5 bg-orange-500 rounded-full animate-flame-burst" style={{ animation: "flame-burst 0.8s ease-out infinite" }}></div>
-                <div className="absolute right-0 top-0 w-1.5 h-1.5 bg-red-500 rounded-full animate-flame-burst" style={{ animation: "flame-burst 0.8s ease-out 0.15s infinite" }}></div>
-                <div className="absolute left-1/2 top-0 w-1.5 h-1.5 bg-orange-400 rounded-full animate-flame-burst" style={{ animation: "flame-burst 0.8s ease-out 0.3s infinite" }}></div>
+                <div
+                  className="absolute left-0 top-0 w-1.5 h-1.5 bg-orange-500 rounded-full animate-flame-burst"
+                  style={{ animation: "flame-burst 0.8s ease-out infinite" }}
+                ></div>
+                <div
+                  className="absolute right-0 top-0 w-1.5 h-1.5 bg-red-500 rounded-full animate-flame-burst"
+                  style={{
+                    animation: "flame-burst 0.8s ease-out 0.15s infinite",
+                  }}
+                ></div>
+                <div
+                  className="absolute left-1/2 top-0 w-1.5 h-1.5 bg-orange-400 rounded-full animate-flame-burst"
+                  style={{
+                    animation: "flame-burst 0.8s ease-out 0.3s infinite",
+                  }}
+                ></div>
               </div>
             </div>
             <span className="text-sm font-normal min-w-fit">TOKENS</span>

@@ -82,7 +82,7 @@ export default {
             100: "#fee2e2",
             500: "#ef4444",
             600: "#dc2626",
-          }
+          },
         },
       },
       borderRadius: {

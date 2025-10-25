@@ -266,7 +266,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 2000);
+    const id = window.setInterval(tick, 3000);
 
     return () => {
       cancelled = true;

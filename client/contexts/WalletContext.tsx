@@ -294,6 +294,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setIsLoading(true);
 
     try {
+      // Clear FIXERCOIN price cache for fresh fetches on every refresh
+      fixercoinPriceService.clearCache();
+
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
       const customTokens = JSON.parse(
         localStorage.getItem("custom_tokens") || "[]",

@@ -28,7 +28,6 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   onAccounts,
   onAirdrop,
-  onBurn,
   onLock,
   onSettings,
 }) => {

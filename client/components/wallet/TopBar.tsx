@@ -79,13 +79,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span>C-BUILDER</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={onBurn}
-                className="flex items-center gap-2 text-xs"
-              >
-                <BurnIcon className="h-4 w-4" />
-                <span>SPL-BURN</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onSelect={onLock}
                 className="flex items-center gap-2 text-xs"
               >

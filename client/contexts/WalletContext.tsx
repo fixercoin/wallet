@@ -611,14 +611,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           try {
             const solPricePromise = solPriceService.getSolPrice();
             const timeout = new Promise<null>((resolve) =>
-              setTimeout(() => resolve(null), 3000),
+              setTimeout(() => resolve(null), 5000),
             );
             const solPriceData = await Promise.race([solPricePromise, timeout]);
-            prices = {
-              So11111111111111111111111111111111111111112:
-                solPriceData?.price || 100,
-            };
-            priceSource = solPriceData ? "coingecko" : "static";
+            if (solPriceData?.price) {
+              prices = {
+                So11111111111111111111111111111111111111112:
+                  solPriceData.price,
+              };
+              priceSource = "coingecko";
+              console.log(
+                `[Price Refresh] Got SOL price from CoinGecko: $${solPriceData.price}`,
+              );
+            } else {
+              prices = {
+                So11111111111111111111111111111111111111112: 100,
+              };
+              priceSource = "static";
+              console.warn(
+                "[Price Refresh] CoinGecko timeout or error, using static SOL price",
+              );
+            }
 
             // Try to fetch individual token prices for any that still don't have prices
             for (const token of allTokens) {
@@ -628,22 +641,40 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                     token.mint,
                   );
                   if (tokenData?.priceUsd) {
-                    prices[token.mint] = parseFloat(tokenData.priceUsd);
+                    const price = parseFloat(tokenData.priceUsd);
+                    if (price > 0) {
+                      prices[token.mint] = price;
+                    }
                   }
                 } catch (e) {
-                  // Silently skip tokens we can't get prices for
+                  console.debug(
+                    `[Price Refresh] Could not fetch price for ${token.symbol}`,
+                  );
                 }
               }
             }
-          } catch {
+          } catch (error) {
+            console.warn("[Price Refresh] All price sources failed:", error);
             prices = { So11111111111111111111111111111111111111112: 100 };
             priceSource = "static";
           }
+
+          // Ensure FIXERCOIN price as final fallback
           try {
             const fixercoinPrice = await fixercoinPriceService.getPrice();
-            prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
-              fixercoinPrice;
-          } catch {}
+            if (fixercoinPrice && fixercoinPrice > 0) {
+              prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
+                fixercoinPrice;
+              console.log(
+                `[Price Refresh] Got FIXERCOIN price from service: ${fixercoinPrice}`,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              "[Price Refresh] Failed to get FIXERCOIN price in fallback:",
+              e,
+            );
+          }
         }
       }
 

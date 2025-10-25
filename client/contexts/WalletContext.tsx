@@ -351,19 +351,32 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           let dexTokens: any[] = [];
           try {
-            const dexPromise = dexscreenerAPI.getTokensByMints(tokenMints);
-            const timeout = new Promise<any[]>((resolve) =>
-              setTimeout(() => resolve([]), 4500),
+            console.log(
+              `[Price Refresh] Requesting DexScreener for ${tokenMints.length} tokens`,
             );
-            dexTokens = await Promise.race([dexPromise, timeout]);
+            dexTokens = await dexscreenerAPI.getTokensByMints(tokenMints);
+            console.log(
+              `[Price Refresh] DexScreener initial fetch returned ${dexTokens.length} tokens`,
+            );
           } catch (fetchErr) {
+            console.warn(
+              "[Price Refresh] DexScreener initial fetch failed:",
+              fetchErr,
+            );
             dexTokens = [];
           }
 
           if (Array.isArray(dexTokens) && dexTokens.length > 0) {
             try {
               prices = dexscreenerAPI.getTokenPrices(dexTokens);
+              console.log(
+                `[Price Refresh] Extracted ${Object.keys(prices).length} prices from DexScreener`,
+              );
             } catch (parseErr) {
+              console.warn(
+                "[Price Refresh] Failed to parse DexScreener prices:",
+                parseErr,
+              );
               prices = {};
             }
 
@@ -380,23 +393,33 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 }
               });
             } catch (inner) {
-              // noop
+              console.warn(
+                "[Price Refresh] Failed to extract price changes:",
+                inner,
+              );
             }
           } else {
+            console.warn("[Price Refresh] No tokens returned from DexScreener");
             prices = {};
           }
 
-          // If SOL price is missing from DexScreener, don't throw immediately
-          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          // If we got significant price data from DexScreener, use it
+          // Otherwise fall back to Jupiter/CoinGecko
           const solMint = "So11111111111111111111111111111111111111112";
           const hasSufficientData =
             Object.keys(prices).length > 0 && prices[solMint];
 
           if (!hasSufficientData) {
+            console.warn(
+              `[Price Refresh] DexScreener insufficient: got ${Object.keys(prices).length} prices, SOL present: ${!!prices[solMint]}. Falling back to Jupiter.`,
+            );
             throw new Error(
-              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
+              `DexScreener insufficient: ${Object.keys(prices).length} prices`,
             );
           }
+          console.log(
+            `[Price Refresh] DexScreener successful with ${Object.keys(prices).length} prices`,
+          );
         } catch (dexErr) {
           console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};
@@ -425,27 +448,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           ),
         ];
 
-        if (mintsToFetch.length > 0) {
+        // Fetch all tokens for comprehensive price data (not just stables)
+        const allMints = allTokens.map((t) => t.mint);
+        const mintsForFullFetch = [...new Set([...mintsToFetch, ...allMints])];
+
+        if (mintsForFullFetch.length > 0) {
           try {
             console.log(
-              `[Price Refresh] Fetching DexScreener data for ${mintsToFetch.length} tokens (stables + FIXERCOIN + LOCKER)`,
+              `[Price Refresh] Fetching DexScreener data for ${mintsForFullFetch.length} tokens`,
             );
             const dexTokens =
-              await dexscreenerAPI.getTokensByMints(mintsToFetch);
+              await dexscreenerAPI.getTokensByMints(mintsForFullFetch);
             console.log(
               `[Price Refresh] DexScreener returned ${dexTokens.length} tokens`,
             );
 
             const dexMap = new Map<string, any>();
             dexTokens.forEach((t) => {
-              const matchMint = mintsToFetch.find(
+              const matchMint = mintsForFullFetch.find(
                 (m) =>
                   m === t.baseToken?.address || m === t.quoteToken?.address,
               );
               if (matchMint) dexMap.set(matchMint, t);
             });
 
-            mintsToFetch.forEach((mint) => {
+            mintsForFullFetch.forEach((mint) => {
               const dexToken = dexMap.get(mint);
               if (dexToken) {
                 // Update price if available
@@ -462,39 +489,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 if (typeof priceChange === "number") {
                   changeMap[mint] = priceChange;
                   const tokenName =
-                    mint === lockerMint
-                      ? "LOCKER"
-                      : allTokens.find((t) => t.mint === mint)?.symbol ||
-                        "UNKNOWN";
+                    allTokens.find((t) => t.mint === mint)?.symbol || "UNKNOWN";
                   console.log(
                     `[Price Refresh] ${tokenName}: 24h change = ${priceChange.toFixed(2)}%`,
                   );
-                } else {
-                  const tokenName =
-                    mint === lockerMint
-                      ? "LOCKER"
-                      : allTokens.find((t) => t.mint === mint)?.symbol ||
-                        "UNKNOWN";
-                  console.warn(
-                    `[Price Refresh] ${tokenName}: No price change data available`,
-                  );
                 }
-              } else {
-                const tokenName =
-                  mint === lockerMint
-                    ? "LOCKER"
-                    : allTokens.find((t) => t.mint === mint)?.symbol ||
-                      "UNKNOWN";
-                console.warn(
-                  `[Price Refresh] ${tokenName}: No DexScreener data found`,
-                );
               }
             });
           } catch (e) {
-            console.warn(
-              "Failed to fetch stablecoins/FIXERCOIN/LOCKER price data from DexScreener:",
-              e,
-            );
+            console.warn("Failed to fetch price data from DexScreener:", e);
           }
         }
 
@@ -569,9 +572,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
         }
       } catch (dexError) {
+        console.warn("[Price Refresh] DexScreener failed, trying Jupiter...");
         try {
           const tokenMints = allTokens.map((token) => token.mint);
+          console.log(
+            `[Price Refresh] Requesting Jupiter for ${tokenMints.length} tokens`,
+          );
           prices = await jupiterAPI.getTokenPrices(tokenMints);
+          console.log(
+            `[Price Refresh] Jupiter returned prices for ${Object.keys(prices).length} tokens`,
+          );
 
           // Always ensure FIXERCOIN has a price from Jupiter or fallback
           const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
@@ -580,29 +590,49 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               const fixercoinPrice = await fixercoinPriceService.getPrice();
               if (fixercoinPrice && fixercoinPrice > 0) {
                 prices[fixercoinMint] = fixercoinPrice;
+                console.log(
+                  `[Price Refresh] Got FIXERCOIN price from service: ${fixercoinPrice}`,
+                );
               }
             } catch (e) {
+              console.warn("[Price Refresh] Failed to get FIXERCOIN price:", e);
               prices[fixercoinMint] = 0.000023; // fallback
             }
           }
 
           if (Object.keys(prices).length > 0) {
             priceSource = "jupiter";
+            console.log(
+              `[Price Refresh] Jupiter successful with ${Object.keys(prices).length} prices`,
+            );
           } else {
             throw new Error("Jupiter also returned no prices");
           }
         } catch (jupiterError) {
+          console.warn("[Price Refresh] Jupiter failed, trying CoinGecko...");
           try {
             const solPricePromise = solPriceService.getSolPrice();
             const timeout = new Promise<null>((resolve) =>
-              setTimeout(() => resolve(null), 3000),
+              setTimeout(() => resolve(null), 5000),
             );
             const solPriceData = await Promise.race([solPricePromise, timeout]);
-            prices = {
-              So11111111111111111111111111111111111111112:
-                solPriceData?.price || 100,
-            };
-            priceSource = solPriceData ? "coingecko" : "static";
+            if (solPriceData?.price) {
+              prices = {
+                So11111111111111111111111111111111111111112: solPriceData.price,
+              };
+              priceSource = "coingecko";
+              console.log(
+                `[Price Refresh] Got SOL price from CoinGecko: $${solPriceData.price}`,
+              );
+            } else {
+              prices = {
+                So11111111111111111111111111111111111111112: 100,
+              };
+              priceSource = "static";
+              console.warn(
+                "[Price Refresh] CoinGecko timeout or error, using static SOL price",
+              );
+            }
 
             // Try to fetch individual token prices for any that still don't have prices
             for (const token of allTokens) {
@@ -612,22 +642,40 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                     token.mint,
                   );
                   if (tokenData?.priceUsd) {
-                    prices[token.mint] = parseFloat(tokenData.priceUsd);
+                    const price = parseFloat(tokenData.priceUsd);
+                    if (price > 0) {
+                      prices[token.mint] = price;
+                    }
                   }
                 } catch (e) {
-                  // Silently skip tokens we can't get prices for
+                  console.debug(
+                    `[Price Refresh] Could not fetch price for ${token.symbol}`,
+                  );
                 }
               }
             }
-          } catch {
+          } catch (error) {
+            console.warn("[Price Refresh] All price sources failed:", error);
             prices = { So11111111111111111111111111111111111111112: 100 };
             priceSource = "static";
           }
+
+          // Ensure FIXERCOIN price as final fallback
           try {
             const fixercoinPrice = await fixercoinPriceService.getPrice();
-            prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
-              fixercoinPrice;
-          } catch {}
+            if (fixercoinPrice && fixercoinPrice > 0) {
+              prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
+                fixercoinPrice;
+              console.log(
+                `[Price Refresh] Got FIXERCOIN price from service: ${fixercoinPrice}`,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              "[Price Refresh] Failed to get FIXERCOIN price in fallback:",
+              e,
+            );
+          }
         }
       }
 

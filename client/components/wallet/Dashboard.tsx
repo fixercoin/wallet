@@ -629,7 +629,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <TopBar
         onAccounts={onAccounts}
         onAirdrop={onAirdrop}
-        onBurn={onBurn}
         onLock={onLock}
         onSettings={onSettings}
       />

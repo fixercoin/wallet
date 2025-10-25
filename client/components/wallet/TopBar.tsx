@@ -13,7 +13,6 @@ import {
   Settings,
   Wallet,
   Gift,
-  Flame as BurnIcon,
   Lock,
   FileText,
 } from "lucide-react";

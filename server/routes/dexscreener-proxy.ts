@@ -292,9 +292,13 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
               // If the requested mint is the quoteToken, we need to swap the tokens
               // and invert the price to get the correct representation
-              if (pair.quoteToken?.address === mint && pair.baseToken?.address !== mint) {
+              if (
+                pair.quoteToken?.address === mint &&
+                pair.baseToken?.address !== mint
+              ) {
                 const basePrice = pair.priceUsd ? parseFloat(pair.priceUsd) : 0;
-                const invertedPrice = basePrice > 0 ? (1 / basePrice).toFixed(20) : "0";
+                const invertedPrice =
+                  basePrice > 0 ? (1 / basePrice).toFixed(20) : "0";
 
                 console.log(
                   `[DexScreener] Swapping tokens: ${mint} was quoteToken, inverting price ${pair.priceUsd} -> ${invertedPrice}`,
@@ -305,7 +309,9 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
                   baseToken: pair.quoteToken,
                   quoteToken: pair.baseToken,
                   priceUsd: invertedPrice,
-                  priceNative: pair.priceNative ? (1 / parseFloat(pair.priceNative)).toString() : "0",
+                  priceNative: pair.priceNative
+                    ? (1 / parseFloat(pair.priceNative)).toString()
+                    : "0",
                 };
               }
 

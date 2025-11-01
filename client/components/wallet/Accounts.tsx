@@ -34,7 +34,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+            <h1 className="text-lg font-semibold text-gray-900">
               Accounts
             </h1>
           </div>

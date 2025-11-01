@@ -824,25 +824,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
           >
-            <ArrowUpRight className="h-4 w-4 mr-2" />
             SEND
           </Button>
 
           <Button
             onClick={onReceive}
-            className="flex-1 h-12 rounded-xl font-semibold bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
           >
-            <ArrowDownLeft className="h-4 w-4 mr-2" />
             RECEIVE
           </Button>
 
           <Button
             onClick={onSwap}
-            className="flex-1 h-12 rounded-xl font-semibold bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
             SWAP
           </Button>
         </div>

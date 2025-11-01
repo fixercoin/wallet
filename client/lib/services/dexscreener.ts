@@ -188,6 +188,25 @@ class DexscreenerAPI {
               console.log(
                 `[DexScreener] Tokens with valid prices: ${withPrice.length}/${fetchedTokens.length}`,
               );
+
+              // Log pump fun tokens specifically
+              const pumpFunTokens = fetchedTokens.filter(
+                (t) =>
+                  t.baseToken?.address ===
+                    "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump" ||
+                  t.baseToken?.address ===
+                    "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+              );
+              if (pumpFunTokens.length > 0) {
+                pumpFunTokens.forEach((pt) => {
+                  const isFixercoin =
+                    pt.baseToken?.address ===
+                    "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+                  console.log(
+                    `[DexScreener] ${isFixercoin ? "FIXERCOIN" : "LOCKER"}: price=${pt.priceUsd}, change24h=${pt.priceChange?.h24}%`,
+                  );
+                });
+              }
             }
           } catch (parseErr) {
             lastError = `Parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;

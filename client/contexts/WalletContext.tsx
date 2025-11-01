@@ -498,6 +498,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
+        // Ensure FIXERCOIN always has a valid price and change value (fallback to 0 if unavailable)
+        if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
+          prices[fixercoinMint] = 0.000023; // Conservative fallback price
+        }
+        if (
+          typeof changeMap[fixercoinMint] !== "number" ||
+          !isFinite(changeMap[fixercoinMint]!)
+        ) {
+          changeMap[fixercoinMint] = 0;
+        }
+
         // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
         if (
           typeof changeMap[lockerMint] !== "number" ||

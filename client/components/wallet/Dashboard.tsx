@@ -722,7 +722,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
         {/* Balance Section */}
         <div className="mb-3 rounded-lg p-6 border border-[#a855f7]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
-          <div className="flex items-center justify-between mb-4">
+          <TopBar
+            onAccounts={onAccounts}
+            onAirdrop={onAirdrop}
+            onBurn={onBurn}
+            onLock={onLock}
+            onSettings={onSettings}
+            onQuestOpen={() => setShowQuestModal(true)}
+          />
+          <div className="flex items-center justify-between mb-4 mt-4">
             <div className="flex-1"></div>
             <button
               onClick={() => setShowBalance(!showBalance)}

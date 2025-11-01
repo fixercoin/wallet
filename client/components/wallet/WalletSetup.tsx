@@ -76,6 +76,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       const walletData = recoverWallet(normalizedMnemonic);
       setWallet(walletData);
 
+      // Prefetch address data via RPC providers (Helius, Moralis, etc.)
+      void prefetchWalletAddressData(walletData.publicKey).catch(() => undefined);
+
       await refreshBalance().catch(() => {});
       await refreshTokens().catch(() => {});
 

@@ -808,7 +808,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <>
                           {hasValidPriceChange && (
                             <div className="flex items-center justify-center gap-2 mt-1">
-                              <span className="text-xs text-gray-400">24h:</span>
+                              <span className="text-xs text-gray-400">
+                                24h:
+                              </span>
                               {isPositive ? (
                                 <>
                                   <ArrowUpRight className="h-3 w-3 text-green-400" />

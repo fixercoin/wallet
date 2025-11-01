@@ -498,30 +498,29 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#a855f7]/10"
-            onClick={onBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-orange-500">
-              Burn SPL Tokens
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        <div className="rounded-2xl border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              onClick={onBack}
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-orange-500">
+                Burn SPL Tokens
+              </div>
+              <h1 className="text-lg font-semibold text-white">
+                Destroy tokens securely
+              </h1>
             </div>
-            <h1 className="text-xl font-semibold text-white">
-              Destroy tokens securely
-            </h1>
-            <p className="text-xs text-gray-300">
-              Permanently remove SPL tokens from your wallet balance.
-            </p>
           </div>
-        </div>
 
-        <div className="bg-transparent p-6 space-y-5">
+          <div className="px-4 pb-6 space-y-5">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
             <span className="text-sm font-semibold text-white">
@@ -661,8 +660,9 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </p>
           </div>
         </div>
+      </div>
 
-        {txSig || rewardSig ? (
+      {txSig || rewardSig ? (
           <div className="transparent-cardboard border-0 rounded-none sm:rounded-2xl p-6 space-y-3">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />

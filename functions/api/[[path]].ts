@@ -31,37 +31,59 @@ async function proxyToSolanaRPC(
   request: Request,
   env: Record<string, string | undefined>,
 ) {
-  let rpcUrl = "";
-  if (env.HELIUS_API_KEY) {
-    rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
-  } else if (env.HELIUS_RPC_URL) {
-    rpcUrl = env.HELIUS_RPC_URL;
-  } else if (env.MORALIS_RPC_URL) {
-    rpcUrl = env.MORALIS_RPC_URL;
-  } else if (env.ALCHEMY_RPC_URL) {
-    rpcUrl = env.ALCHEMY_RPC_URL;
-  } else if (
-    DEFAULT_RPC_URL &&
-    DEFAULT_RPC_URL !== "https://api.mainnet-beta.solana.com"
-  ) {
-    rpcUrl = DEFAULT_RPC_URL;
-  } else {
+  // Build prioritized list of RPC endpoints: env-provided first, then public fallbacks
+  const endpoints = [
+    env.HELIUS_API_KEY
+      ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
+      : "",
+    env.HELIUS_RPC_URL || "",
+    env.MORALIS_RPC_URL || "",
+    env.ALCHEMY_RPC_URL || "",
+    DEFAULT_RPC_URL || "",
+    "https://api.mainnet-beta.solana.com",
+    "https://rpc.ankr.com/solana",
+    "https://solana.publicnode.com",
+  ].filter(Boolean);
+
+  if (endpoints.length === 0) {
     const headers = applyCors(
       new Headers({ "Content-Type": "application/json" }),
     );
     return new Response(
-      JSON.stringify({ error: "No Solana RPC endpoint configured." }),
+      JSON.stringify({ error: "No Solana RPC endpoints available" }),
       { status: 500, headers },
     );
   }
 
-  const response = await fetch(createForwardRequest(request, rpcUrl));
-  const headers = applyCors(new Headers(response.headers));
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+  let lastError: string = "";
+  for (const rpcUrl of endpoints) {
+    try {
+      const response = await fetch(createForwardRequest(request, rpcUrl));
+      // Forward successful response immediately
+      if (response.ok) {
+        const headers = applyCors(new Headers(response.headers));
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+        });
+      }
+      // If non-OK, read text for diagnostics and try next endpoint
+      const txt = await response.text().catch(() => "");
+      lastError = `${response.status} ${response.statusText} ${txt}`.trim();
+    } catch (e: any) {
+      lastError = e?.message || String(e);
+    }
+  }
+
+  const headers = applyCors(new Headers({ "Content-Type": "application/json" }));
+  return new Response(
+    JSON.stringify({
+      error: "All Solana RPC endpoints failed",
+      details: lastError || "Unknown error",
+    }),
+    { status: 502, headers },
+  );
 }
 
 // DexScreener endpoints for failover

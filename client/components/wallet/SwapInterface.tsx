@@ -912,7 +912,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   <span className="text-white">Rate includes</span>
                   <span className="text-white">{slippage}% slippage</span>
                 </div>
-                <div className="text-right text-sm text-[#FF7A5C]">
+                <div className="text-right text-sm text-[#a855f7]">
                   More quotes
                 </div>
               </div>

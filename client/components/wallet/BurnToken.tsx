@@ -503,7 +503,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#FF7A5C]/10"
+            className="h-10 w-10 rounded-full text-white hover:bg-[#a855f7]/10"
             onClick={onBack}
           >
             <ArrowLeft className="h-5 w-5" />

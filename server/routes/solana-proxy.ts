@@ -1,19 +1,15 @@
 import { RequestHandler } from "express";
 
 const RPC_ENDPOINTS = [
-  // Prefer Fixorium public RPC gateway (Cloudflare Worker)
-  // Prefer using the public app proxy host for JSON-RPC
-  "https://app.fixorium.com.pk/api/solana-rpc",
-  // Fallback to rpc.fixorium host if app path unavailable
-  "https://rpc.fixorium.com.pk",
-  // Priority: Premium endpoints with better support for getTokenAccountsByOwner
+  // Prefer environment-configured RPC first
+  process.env.SOLANA_RPC_URL || "",
+  // Provider-specific overrides
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.SOLANA_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
   // Fallback public endpoints (best ones first)
   "https://api.mainnet-beta.solana.com",
   "https://solana.publicnode.com",

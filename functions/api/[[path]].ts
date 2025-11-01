@@ -1336,6 +1336,100 @@ export const onRequest = async ({ request, env }) => {
       });
     }
 
+    // DexTools price proxy: /api/dextools/price?tokenAddress=...&chainId=solana
+    if (normalizedPath === "/dextools/price" && request.method === "GET") {
+      const tokenAddress = url.searchParams.get("tokenAddress") || "";
+      const chainId = url.searchParams.get("chainId") || "solana";
+
+      if (!tokenAddress) {
+        return jsonCors(400, { error: "Missing 'tokenAddress' parameter" });
+      }
+
+      try {
+        const dexUrl = `https://api.dextools.io/v1/token/${chainId}/${tokenAddress}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(dexUrl, {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return jsonCors(resp.status, {
+            error: `DexTools API returned ${resp.status}`,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonCors(200, data.data || data);
+      } catch (e: any) {
+        return jsonCors(502, {
+          error: "Failed to fetch DexTools price",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // CoinMarketCap price proxy: /api/coinmarketcap/quotes?symbols=...
+    if (
+      normalizedPath === "/coinmarketcap/quotes" &&
+      request.method === "GET"
+    ) {
+      const symbols = url.searchParams.get("symbols") || "";
+
+      if (!symbols) {
+        return jsonCors(400, { error: "Missing 'symbols' parameter" });
+      }
+
+      try {
+        const cmcApiKey = env.COINMARKETCAP_API_KEY || "";
+        if (!cmcApiKey) {
+          return jsonCors(500, {
+            error: "CoinMarketCap API key not configured",
+          });
+        }
+
+        const cmcUrl = new URL(
+          "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+        );
+        cmcUrl.searchParams.set("symbol", symbols);
+        cmcUrl.searchParams.set("convert", "USD");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(cmcUrl.toString(), {
+          headers: {
+            Accept: "application/json",
+            "X-CMC_PRO_API_KEY": cmcApiKey,
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return jsonCors(resp.status, {
+            error: `CoinMarketCap API returned ${resp.status}`,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonCors(200, data);
+      } catch (e: any) {
+        return jsonCors(502, {
+          error: "Failed to fetch CoinMarketCap prices",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -4,13 +4,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   ArrowLeft,
   Copy,
   LogOut,
@@ -19,10 +12,8 @@ import {
   Key,
   Eye,
   EyeOff,
-  DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import bs58 from "bs58";
@@ -45,7 +36,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
-  const { currency, setCurrency } = useCurrency();
 
   if (wallets.length === 0) {
     return (
@@ -227,48 +217,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           ))}
                         </select>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-transparent rounded-md border-0">
-                <CardContent className="p-0">
-                  <div className="flex items-center justify-between p-4 rounded-md transition-colors">
-                    <div className="min-w-0 w-full">
-                      <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
-                        <DollarSign className="h-5 w-5" />
-                        <span className="font-medium">CURRENCY PREFERENCE</span>
-                      </div>
-                      <Select
-                        value={currency}
-                        onValueChange={(value) => {
-                          const selectedCurrency = value as "USD" | "PKR";
-                          setCurrency(selectedCurrency);
-                          try {
-                            localStorage.setItem(
-                              "preferred_currency",
-                              selectedCurrency,
-                            );
-                          } catch {}
-                          toast({
-                            title: "Currency Changed",
-                            description: `Currency preference set to ${selectedCurrency}`,
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="w-full bg-white border border-gray-200 text-gray-900">
-                          <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border border-gray-100 text-gray-900">
-                          <SelectItem value="USD" className="text-gray-900">
-                            USD (United States Dollar)
-                          </SelectItem>
-                          <SelectItem value="PKR" className="text-gray-900">
-                            PKR (Pakistani Rupee)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </CardContent>

@@ -25,6 +25,7 @@ interface TopBarProps {
   onBurn: () => void;
   onLock: () => void;
   onSettings: () => void;
+  onQuestOpen?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({

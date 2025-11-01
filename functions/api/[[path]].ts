@@ -696,58 +696,82 @@ export const onRequest = async ({ request, env }) => {
         if (p?.baseToken?.address) foundMints.add(p.baseToken.address);
       });
 
-      // For missing mints, try search-based lookup
+      // For missing mints, try pair address lookup first, then search-based lookup
       const missingMints = uniqSorted.filter((m) => !foundMints.has(m));
       if (missingMints.length > 0) {
         for (const mint of missingMints) {
-          const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
-          if (searchSymbol) {
+          let found = false;
+
+          // First, try pair address lookup if available
+          const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
+          if (pairAddress) {
             try {
-              const searchData = await fetchDexscreenerData(
-                `/search/?q=${encodeURIComponent(searchSymbol)}`,
+              const pairData = await fetchDexscreenerData(
+                `/pairs/solana/${pairAddress}`,
               );
-              if (Array.isArray(searchData?.pairs)) {
-                // Look for pairs where this token is the base on Solana
-                let matchingPair = searchData.pairs.find(
-                  (p: any) =>
-                    p?.baseToken?.address === mint &&
-                    p?.chainId === "solana",
-                );
-
-                // If not found as base on Solana, try as quote token on Solana
-                if (!matchingPair) {
-                  matchingPair = searchData.pairs.find(
-                    (p: any) =>
-                      p?.quoteToken?.address === mint &&
-                      p?.chainId === "solana",
-                  );
-                }
-
-                // If still not found on Solana, try any chain as base
-                if (!matchingPair) {
-                  matchingPair = searchData.pairs.find(
-                    (p: any) => p?.baseToken?.address === mint,
-                  );
-                }
-
-                // If still not found, try as quote on any chain
-                if (!matchingPair) {
-                  matchingPair = searchData.pairs.find(
-                    (p: any) => p?.quoteToken?.address === mint,
-                  );
-                }
-
-                // Last resort: just take the first result
-                if (!matchingPair && searchData.pairs.length > 0) {
-                  matchingPair = searchData.pairs[0];
-                }
-
-                if (matchingPair) {
-                  pairs.push(matchingPair);
-                }
+              if (
+                Array.isArray(pairData?.pairs) &&
+                pairData.pairs.length > 0
+              ) {
+                pairs.push(pairData.pairs[0]);
+                found = true;
               }
             } catch (e) {
-              // Silently continue if search fails
+              // Silently continue if pair lookup fails
+            }
+          }
+
+          // If pair lookup failed or unavailable, try search-based lookup
+          if (!found) {
+            const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+            if (searchSymbol) {
+              try {
+                const searchData = await fetchDexscreenerData(
+                  `/search/?q=${encodeURIComponent(searchSymbol)}`,
+                );
+                if (Array.isArray(searchData?.pairs)) {
+                  // Look for pairs where this token is the base on Solana
+                  let matchingPair = searchData.pairs.find(
+                    (p: any) =>
+                      p?.baseToken?.address === mint &&
+                      p?.chainId === "solana",
+                  );
+
+                  // If not found as base on Solana, try as quote token on Solana
+                  if (!matchingPair) {
+                    matchingPair = searchData.pairs.find(
+                      (p: any) =>
+                        p?.quoteToken?.address === mint &&
+                        p?.chainId === "solana",
+                    );
+                  }
+
+                  // If still not found on Solana, try any chain as base
+                  if (!matchingPair) {
+                    matchingPair = searchData.pairs.find(
+                      (p: any) => p?.baseToken?.address === mint,
+                    );
+                  }
+
+                  // If still not found, try as quote on any chain
+                  if (!matchingPair) {
+                    matchingPair = searchData.pairs.find(
+                      (p: any) => p?.quoteToken?.address === mint,
+                    );
+                  }
+
+                  // Last resort: just take the first result
+                  if (!matchingPair && searchData.pairs.length > 0) {
+                    matchingPair = searchData.pairs[0];
+                  }
+
+                  if (matchingPair) {
+                    pairs.push(matchingPair);
+                  }
+                }
+              } catch (e) {
+                // Silently continue if search fails
+              }
             }
           }
         }

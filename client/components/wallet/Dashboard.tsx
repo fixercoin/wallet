@@ -709,14 +709,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#C084FC] to-[#4ADE80] hover:from-[#B06FF5] hover:to-[#34D399] text-white shadow-lg"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#a855f7] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
                   onClick={() => completeNextTask()}
                 >
                   Complete Task
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#C084FC]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#2d1b47]/50 text-white hover:bg-[#a855f7]/10"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >

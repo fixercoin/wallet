@@ -625,7 +625,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               {/* Complete Tasks */}
-              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+              <div className="bg-white/5 rounded-lg p-3 border border-[#a855f7]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
                   Complete Tasks
                 </h3>
@@ -638,7 +638,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <label className="flex items-start gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          className="mt-0.5 accent-[#C084FC]"
+                          className="mt-0.5 accent-[#a855f7]"
                           checked={completedTasks.has(t.id)}
                           onChange={() => toggleTask(t.id)}
                         />
@@ -652,14 +652,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
+                          className="text-[#a855f7] hover:underline text-[11px] font-semibold"
                         >
                           Open
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
+                          className="text-[#a855f7] hover:underline text-[11px] font-semibold"
                         >
                           Share
                         </button>

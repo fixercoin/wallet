@@ -218,7 +218,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowPrivateKeyInput((s) => !s)}
-                      className="text-white hover:bg-[#FF7A5C]/10"
+                      className="text-white hover:bg-[#a855f7]/10"
                     >
                       {showPrivateKeyInput ? (
                         <EyeOff className="h-4 w-4" />

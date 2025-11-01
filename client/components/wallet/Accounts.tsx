@@ -49,7 +49,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                   <div className="min-w-0">
                     <div className="text-xs text-gray-300 mb-1">Address</div>
                     <div className="font-mono text-sm break-all text-white">
-                      {wallet ? shortenAddress(wallet.publicKey, 8) : "No wallet"}
+                      {wallet
+                        ? shortenAddress(wallet.publicKey, 8)
+                        : "No wallet"}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

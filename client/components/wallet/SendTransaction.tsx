@@ -760,230 +760,233 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                 </Button>
                 <div className="font-medium text-sm">SEND {selectedSymbol}</div>
               </div>
-            {step === "form" ? (
-              <>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="token"
-                    className="text-[hsl(var(--foreground))]"
-                  >
-                    Token
-                  </Label>
-                  <Select value={selectedMint} onValueChange={setSelectedMint}>
-                    <SelectTrigger className="w-full bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white placeholder:text-gray-300">
-                      <SelectValue placeholder="Select token" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#2d1b47] border border-[#a855f7]/20 text-white">
-                      {availableTokens.map((t) => (
-                        <SelectItem
-                          key={t.mint}
-                          value={t.mint}
-                          className="text-white"
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <span className="font-medium text-white">
-                              {t.symbol} ~{" "}
-                              {(t.symbol === "SOL"
-                                ? balance
-                                : t.balance || 0
-                              ).toLocaleString(undefined, {
-                                maximumFractionDigits: 8,
-                              })}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="recipient"
-                    className="text-[hsl(var(--foreground))]"
-                  >
-                    Recipient Address
-                  </Label>
-                  <Input
-                    id="recipient"
-                    placeholder="Enter Solana address"
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    className="font-mono text-sm bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
+              {step === "form" ? (
+                <>
+                  <div className="space-y-2">
                     <Label
-                      htmlFor="amount"
+                      htmlFor="token"
                       className="text-[hsl(var(--foreground))]"
                     >
-                      Amount ({selectedSymbol})
+                      Token
                     </Label>
-                    <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                      Balance:{" "}
-                      {selectedBalance.toLocaleString(undefined, {
-                        maximumFractionDigits: 8,
-                      })}{" "}
-                      {selectedSymbol}
-                    </span>
+                    <Select
+                      value={selectedMint}
+                      onValueChange={setSelectedMint}
+                    >
+                      <SelectTrigger className="w-full bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white placeholder:text-gray-300">
+                        <SelectValue placeholder="Select token" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#2d1b47] border border-[#a855f7]/20 text-white">
+                        {availableTokens.map((t) => (
+                          <SelectItem
+                            key={t.mint}
+                            value={t.mint}
+                            className="text-white"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-medium text-white">
+                                {t.symbol} ~{" "}
+                                {(t.symbol === "SOL"
+                                  ? balance
+                                  : t.balance || 0
+                                ).toLocaleString(undefined, {
+                                  maximumFractionDigits: 8,
+                                })}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step={selectedSymbol === "SOL" ? "0.000001" : "0.000001"}
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setAmount((selectedBalance * 0.25).toString())
-                      }
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
-                    >
-                      25%
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setAmount((selectedBalance * 0.5).toString())
-                      }
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
-                    >
-                      50%
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setAmount((selectedBalance * 0.75).toString())
-                      }
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
-                    >
-                      75%
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setAmount((selectedBalance * 0.99).toString())
-                      }
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
-                    >
-                      Max
-                    </Button>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="memo"
-                    className="text-[hsl(var(--foreground))]"
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="recipient"
+                      className="text-[hsl(var(--foreground))]"
+                    >
+                      Recipient Address
+                    </Label>
+                    <Input
+                      id="recipient"
+                      placeholder="Enter Solana address"
+                      value={recipient}
+                      onChange={(e) => setRecipient(e.target.value)}
+                      className="font-mono text-sm bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label
+                        htmlFor="amount"
+                        className="text-[hsl(var(--foreground))]"
+                      >
+                        Amount ({selectedSymbol})
+                      </Label>
+                      <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                        Balance:{" "}
+                        {selectedBalance.toLocaleString(undefined, {
+                          maximumFractionDigits: 8,
+                        })}{" "}
+                        {selectedSymbol}
+                      </span>
+                    </div>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step={selectedSymbol === "SOL" ? "0.000001" : "0.000001"}
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setAmount((selectedBalance * 0.25).toString())
+                        }
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      >
+                        25%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setAmount((selectedBalance * 0.5).toString())
+                        }
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      >
+                        50%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setAmount((selectedBalance * 0.75).toString())
+                        }
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      >
+                        75%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setAmount((selectedBalance * 0.99).toString())
+                        }
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      >
+                        Max
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="memo"
+                      className="text-[hsl(var(--foreground))]"
+                    >
+                      Memo (Optional)
+                    </Label>
+                    <Input
+                      id="memo"
+                      placeholder="Add a note"
+                      value={memo}
+                      onChange={(e) => setMemo(e.target.value)}
+                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleContinue}
+                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                    disabled={!recipient || !amount}
                   >
-                    Memo (Optional)
-                  </Label>
-                  <Input
-                    id="memo"
-                    placeholder="Add a note"
-                    value={memo}
-                    onChange={(e) => setMemo(e.target.value)}
-                    className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
-                  />
-                </div>
+                    Continue
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Alert className="bg-orange-500/20 border-orange-400/30 text-orange-200">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Please review the transaction details carefully. This
+                      action cannot be undone.
+                    </AlertDescription>
+                  </Alert>
 
-                <Button
-                  onClick={handleContinue}
-                  className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-                  disabled={!recipient || !amount}
-                >
-                  Continue
-                </Button>
-              </>
-            ) : (
-              <>
-                <Alert className="bg-orange-500/20 border-orange-400/30 text-orange-200">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Please review the transaction details carefully. This action
-                    cannot be undone.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        From:
-                      </span>
-                      <span className="font-mono text-sm text-[hsl(var(--foreground))]">
-                        {wallet?.publicKey.slice(0, 8)}...
-                        {wallet?.publicKey.slice(-8)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        To:
-                      </span>
-                      <span className="font-mono text-sm text-[hsl(var(--foreground))]">
-                        {recipient.slice(0, 8)}...{recipient.slice(-8)}
-                      </span>
-                    </div>
-                    <Separator className="border-[hsl(var(--border))]" />
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span className="text-[hsl(var(--foreground))]">
-                        Amount:
-                      </span>
-                      <span className="text-[hsl(var(--foreground))]">
-                        {formatAmount(amount)} {selectedSymbol}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        Network Fee:
-                      </span>
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        ~0.000005 SOL
-                      </span>
-                    </div>
-                    {memo && (
+                  <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-[hsl(var(--muted-foreground))]">
-                          Memo:
+                          From:
                         </span>
-                        <span className="text-sm text-[hsl(var(--foreground))]">
-                          {memo}
+                        <span className="font-mono text-sm text-[hsl(var(--foreground))]">
+                          {wallet?.publicKey.slice(0, 8)}...
+                          {wallet?.publicKey.slice(-8)}
                         </span>
                       </div>
-                    )}
+                      <div className="flex justify-between">
+                        <span className="text-[hsl(var(--muted-foreground))]">
+                          To:
+                        </span>
+                        <span className="font-mono text-sm text-[hsl(var(--foreground))]">
+                          {recipient.slice(0, 8)}...{recipient.slice(-8)}
+                        </span>
+                      </div>
+                      <Separator className="border-[hsl(var(--border))]" />
+                      <div className="flex justify-between text-lg font-semibold">
+                        <span className="text-[hsl(var(--foreground))]">
+                          Amount:
+                        </span>
+                        <span className="text-[hsl(var(--foreground))]">
+                          {formatAmount(amount)} {selectedSymbol}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-[hsl(var(--muted-foreground))]">
+                          Network Fee:
+                        </span>
+                        <span className="text-[hsl(var(--muted-foreground))]">
+                          ~0.000005 SOL
+                        </span>
+                      </div>
+                      {memo && (
+                        <div className="flex justify-between">
+                          <span className="text-[hsl(var(--muted-foreground))]">
+                            Memo:
+                          </span>
+                          <span className="text-sm text-[hsl(var(--foreground))]">
+                            {memo}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setStep("form")}
-                    className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
-                    disabled={isLoading}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    onClick={handleSend}
-                    className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Sending..." : "Send Transaction"}
-                  </Button>
-                </div>
-              </>
-            )}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setStep("form")}
+                      className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      disabled={isLoading}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      onClick={handleSend}
+                      className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Sending..." : "Send Transaction"}
+                    </Button>
+                  </div>
+                </>
+              )}
 
               {error && (
                 <Alert

@@ -349,8 +349,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           let dexTokens: any[] = [];
           try {
-            const dexPromise =
-              dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPromise = dexscreenerAPI.getTokensByMints(allMintsToFetch);
             const timeout = new Promise<any[]>((resolve) =>
               setTimeout(() => resolve([]), 5000),
             );
@@ -401,10 +400,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 if (mint && typeof ch === "number") {
                   changeMap[mint] = ch;
                   // Log pump fun token changes
-                  if (
-                    mint === fixercoinMint ||
-                    mint === lockerMint
-                  ) {
+                  if (mint === fixercoinMint || mint === lockerMint) {
                     console.log(
                       `[DexScreener] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: 24h change = ${ch.toFixed(2)}%`,
                     );
@@ -422,9 +418,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           // Check if we got any meaningful data (not just pump fun tokens)
           const solMint = "So11111111111111111111111111111111111111112";
           const hasMajorTokenPrice = Object.keys(prices).some(
-            (m) =>
-              m === solMint ||
-              prices[m] > 0.01, // At least one non-pump-fun token with decent price
+            (m) => m === solMint || prices[m] > 0.01, // At least one non-pump-fun token with decent price
           );
 
           if (!hasMajorTokenPrice) {
@@ -434,7 +428,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             // Don't throw - let Jupiter/CoinGecko fill in gaps
           }
         } catch (dexErr) {
-          console.warn("DexScreener primary fetch error, will try fallbacks:", dexErr);
+          console.warn(
+            "DexScreener primary fetch error, will try fallbacks:",
+            dexErr,
+          );
           prices = {};
         }
 

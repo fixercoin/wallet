@@ -1,0 +1,770 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+  */
+  :root {
+    /* White background, purple accents; global text in black */
+    --background: 0 0% 100%; /* white */
+    --foreground: 0 0% 0%; /* black text */
+
+    --card: 260 10% 98%; /* subtle off-white for card area */
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 270 65% 54%; /* purple */
+    --primary-foreground: 260 10% 98%;
+
+    --secondary: 270 50% 96%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 270 50% 96%;
+    --muted-foreground: 0 0% 0%;
+
+    --accent: 270 65% 54%;
+    --accent-foreground: 260 10% 98%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 260 20% 90%;
+    --input: 260 20% 96%;
+    --ring: 270 65% 54%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 260 8% 98%;
+
+    --sidebar-foreground: 0 0% 0%;
+
+    --sidebar-primary: 270 60% 20%;
+
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 270 60% 95%;
+
+    --sidebar-accent-foreground: 0 0% 0%;
+
+    --sidebar-border: 260 10% 92%;
+
+    --sidebar-ring: 270 70% 60%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 267 69% 59%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 267 69% 59%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 267 69% 59%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 100svh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: auto;
+    background: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Force written text elements to use the global foreground (black) */
+  p,
+  span,
+  a,
+  li,
+  label,
+  small,
+  strong,
+  em,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* P2P page white text override and mobile fullscreen */
+  .express-p2p-page {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .express-p2p-page p,
+  .express-p2p-page span,
+  .express-p2p-page a,
+  .express-p2p-page li,
+  .express-p2p-page label,
+  .express-p2p-page small,
+  .express-p2p-page strong,
+  .express-p2p-page em,
+  .express-p2p-page h1,
+  .express-p2p-page h2,
+  .express-p2p-page h3,
+  .express-p2p-page h4,
+  .express-p2p-page h5,
+  .express-p2p-page h6,
+  .express-p2p-page input,
+  .express-p2p-page textarea,
+  .express-p2p-page select,
+  .express-p2p-page div {
+    color: white !important;
+  }
+
+  /* Dropdown menu text override */
+  [role="menu"] p,
+  [role="menu"] span,
+  [role="menu"] a,
+  [role="menu"] li,
+  [role="menu"] label,
+  [role="menu"] small,
+  [role="menu"] strong,
+  [role="menu"] em,
+  [role="menu"] h1,
+  [role="menu"] h2,
+  [role="menu"] h3,
+  [role="menu"] h4,
+  [role="menu"] h5,
+  [role="menu"] h6 {
+    color: white !important;
+  }
+
+  /* Select listbox text override */
+  [role="listbox"] p,
+  [role="listbox"] span,
+  [role="listbox"] a,
+  [role="listbox"] li,
+  [role="listbox"] label,
+  [role="listbox"] small,
+  [role="listbox"] strong,
+  [role="listbox"] em,
+  [role="listbox"] h1,
+  [role="listbox"] h2,
+  [role="listbox"] h3,
+  [role="listbox"] h4,
+  [role="listbox"] h5,
+  [role="listbox"] h6,
+  [role="option"] p,
+  [role="option"] span,
+  [role="option"] a,
+  [role="option"] li,
+  [role="option"] label,
+  [role="option"] small,
+  [role="option"] strong,
+  [role="option"] em {
+    color: white !important;
+  }
+
+  /* Remove white borders and lines from express-p2p-page */
+  .express-p2p-page .border-white,
+  .express-p2p-page [class*="border-white"] {
+    border-color: transparent !important;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+@layer components {
+  /* Wallet-specific styles */
+  .wallet-gradient {
+    @apply bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100;
+  }
+
+  .wallet-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;
+  }
+
+  .wallet-button-primary {
+    @apply bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl;
+  }
+
+  .wallet-button-secondary {
+    @apply bg-white/90 backdrop-blur-sm border border-white/30 hover:bg-white text-gray-900 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+
+  .token-icon {
+    @apply w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm;
+  }
+
+  .balance-card {
+    @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 shadow-2xl border-0;
+  }
+
+  .transaction-item {
+    @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-4;
+    }
+
+    .wallet-card {
+      @apply rounded-lg;
+    }
+
+    .balance-card {
+      @apply p-4;
+    }
+  }
+
+  /* Smooth animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 2px;
+  }
+
+  .dashboard-loader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.65),
+      rgba(248, 250, 252, 0.4)
+    );
+    backdrop-filter: blur(8px);
+  }
+
+  .dashboard-loader {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: conic-gradient(#0000 10%, #eb40f4);
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      #0000 calc(100% - 8px),
+      #000 0
+    );
+    animation: dashboard-loader-spin 1s linear infinite;
+  }
+
+  @keyframes dashboard-loader-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  /* From Uiverse.io by Li-Deheng — multi-circle loader */
+  .loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    --color: hsl(var(--primary));
+    --animation: 1.6s ease-in-out infinite;
+    background-color: white;
+    padding: 2px;
+    border-radius: 9999px;
+  }
+
+  .loader .circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 14px;
+    height: 14px;
+    border: solid 1.5px var(--color);
+    border-radius: 50%;
+    margin: 0 4px;
+    background-color: transparent;
+    animation: circle-keys var(--animation);
+  }
+
+  .loader .circle .dot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color);
+    animation: dot-keys var(--animation);
+  }
+
+  .loader .circle .outline {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    animation: outline-keys var(--animation);
+  }
+
+  .circle:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+
+  .circle:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+
+  .circle:nth-child(2) .dot {
+    animation-delay: 0.3s;
+  }
+
+  .circle:nth-child(3) .dot {
+    animation-delay: 0.6s;
+  }
+
+  .circle:nth-child(1) .outline {
+    animation-delay: 0.6s;
+  }
+
+  .circle:nth-child(2) .outline {
+    animation-delay: 0.9s;
+  }
+
+  .circle:nth-child(3) .outline {
+    animation-delay: 1.2s;
+  }
+
+  @keyframes circle-keys {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    50% {
+      transform: scale(1.5);
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes dot-keys {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(0);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes outline-keys {
+    0% {
+      transform: scale(0);
+      outline: solid 20px var(--color);
+      outline-offset: 0;
+      opacity: 1;
+    }
+
+    100% {
+      transform: scale(1);
+      outline: solid 0 transparent;
+      outline-offset: 20px;
+      opacity: 0;
+    }
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/20 backdrop-blur-md border border-white/30;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/20 backdrop-blur-md border border-gray-700/30;
+  }
+
+  .transparent-cardboard {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl;
+  }
+
+  /* Dashboard button - shining light blue styling */
+  .dash-btn {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    transition:
+      background-color 0.15s ease,
+      transform 0.08s ease;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.12);
+  }
+
+  .dash-btn:hover {
+    filter: brightness(0.95);
+  }
+
+  .dash-btn:active {
+    transform: translateY(1px);
+  }
+
+  .dash-btn-circle {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: 9999px;
+    transition:
+      background-color 0.15s ease,
+      transform 0.08s ease;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.1);
+  }
+
+  .dash-btn-circle:hover {
+    filter: brightness(0.95);
+  }
+
+  /* Cream text utility for branding */
+  .text-cream {
+    color: hsl(var(--primary)) !important;
+  }
+
+  /* Mobile optimizations for dashboard buttons */
+  @media (max-width: 640px) {
+    .dash-btn {
+      box-shadow: 0 4px 12px rgba(3, 105, 161, 0.12);
+    }
+  }
+
+  /* Smooth animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Branded Express P2P badge */
+  .express-p2p-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .express-p2p-badge {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(
+        circle at 30% 20%,
+        rgba(139, 92, 246, 0.18),
+        transparent 30%
+      ),
+      linear-gradient(135deg, #8b5cf6, #3b82f6);
+    box-shadow:
+      0 12px 30px rgba(59, 130, 246, 0.12),
+      inset 0 2px 8px rgba(255, 255, 255, 0.06);
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+  }
+
+  .express-p2p-official {
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+  }
+
+  .express-p2p-title {
+    font-size: 12px;
+    margin-top: 6px;
+    text-transform: uppercase;
+    opacity: 0.95;
+    font-weight: 600;
+  }
+
+  .express-p2p-currencies {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .p2p-currency {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #111827;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.06);
+  }
+
+  .p2p-token {
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .p2p-token img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .p2p-token.pkr,
+  .p2p-token.sol,
+  .p2p-token.usdc,
+  .p2p-token.fixer {
+    background: transparent;
+  }
+
+  /* Subtle reveal animation */
+  .express-p2p-brand {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .express-detecting-text {
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    animation: express-detecting-wave 1.25s ease-in-out infinite alternate;
+  }
+
+  @keyframes express-detecting-wave {
+    from {
+      transform: translateX(-8px);
+      opacity: 0.75;
+    }
+    to {
+      transform: translateX(8px);
+      opacity: 1;
+    }
+  }
+
+  /* From Uiverse.io by mrhyddenn */
+  .cardbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card_box {
+    width: 400px;
+    height: 400px;
+    border-radius: 20px;
+    background: linear-gradient(
+      170deg,
+      rgba(58, 56, 56, 0.623) 0%,
+      rgb(31, 31, 31) 100%
+    );
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 20px;
+  }
+  .card_box:hover {
+    transform: scale(0.9);
+  }
+  .card_box span {
+    position: absolute;
+    overflow: hidden;
+    width: 150px;
+    height: 150px;
+    top: -10px;
+    left: -10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card_box span::before {
+    content: "Premium";
+    position: absolute;
+    width: 150%;
+    height: 40px;
+    background-image: linear-gradient(
+      45deg,
+      #ff6547 0%,
+      #ffb144 51%,
+      #ff7053 100%
+    );
+    transform: rotate(-45deg) translateY(-20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.23);
+  }
+  .card_box span::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    bottom: 0;
+    left: 0;
+    height: 10px;
+    z-index: -1;
+    box-shadow: 140px -140px #cc3f47;
+    background-image: linear-gradient(
+      45deg,
+      #ff512f 0%,
+      #f09819 51%,
+      #ff512f 100%
+    );
+  }
+
+  /* Status indicator dot with circular waves */
+  .status-dot {
+    position: absolute;
+    height: 8px;
+    width: 8px;
+    border-radius: 9999px;
+    background-color: var(--status-color, #22c55e);
+  }
+  .status-dot::before,
+  .status-dot::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 9999px;
+    border: 2px solid var(--status-color, #22c55e);
+    opacity: 0.6;
+    animation: status-ripple 1.5s ease-out infinite;
+  }
+  .status-dot::after {
+    animation-delay: 0.75s;
+  }
+  .status-red {
+    --status-color: #ef4444 !important;
+  }
+  .status-yellow {
+    --status-color: #f59e0b !important;
+  }
+  .status-green {
+    --status-color: #22c55e !important;
+  }
+
+  @keyframes status-ripple {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+}

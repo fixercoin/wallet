@@ -800,7 +800,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {showBalance ? (
                 <Eye className="h-5 w-5 text-white/80" />
               ) : (
-                <EyeOff className="h-5 w-5 text-gray-600" />
+                <EyeOff className="h-5 w-5 text-white/80" />
               )}
             </button>
             <div className="flex-1"></div>

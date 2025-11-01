@@ -1266,6 +1266,74 @@ export const onRequest = async ({ request, env }) => {
       return jsonCors(200, data);
     }
 
+    // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
+    if (normalizedPath === "/wallet/balance" && request.method === "GET") {
+      const pk =
+        url.searchParams.get("publicKey") ||
+        url.searchParams.get("wallet") ||
+        url.searchParams.get("address") ||
+        "";
+      if (!pk) {
+        return jsonCors(400, { error: "Missing 'publicKey' parameter" });
+      }
+
+      const endpoints = [
+        env.HELIUS_API_KEY
+          ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
+          : "",
+        env.HELIUS_RPC_URL || "",
+        env.MORALIS_RPC_URL || "",
+        env.ALCHEMY_RPC_URL || "",
+        DEFAULT_RPC_URL || "",
+        "https://api.mainnet-beta.solana.com",
+        "https://rpc.ankr.com/solana",
+        "https://solana.publicnode.com",
+      ].filter(Boolean);
+
+      const rpcBody = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [pk],
+      };
+
+      let lastErr = "";
+      for (const rpcUrl of endpoints) {
+        try {
+          const resp = await fetch(rpcUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rpcBody),
+          });
+          const data = await resp.json().catch(() => null);
+          if (!data) continue;
+          if (data.error) {
+            lastErr = data.error?.message || "RPC error";
+            continue;
+          }
+          const lamports =
+            typeof data.result === "number"
+              ? data.result
+              : (data.result?.value ?? null);
+          if (typeof lamports === "number" && isFinite(lamports)) {
+            const balance = lamports / 1_000_000_000;
+            return jsonCors(200, {
+              publicKey: pk,
+              balance,
+              balanceLamports: lamports,
+            });
+          }
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+          continue;
+        }
+      }
+      return jsonCors(502, {
+        error: "Failed to fetch balance",
+        details: lastErr || "All RPC endpoints failed",
+      });
+    }
+
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

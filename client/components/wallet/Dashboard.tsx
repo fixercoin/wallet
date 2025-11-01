@@ -730,104 +730,134 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         {/* Balance Section */}
-        <div className="text-center space-y-2 mb-8 rounded-lg p-6 border border-[#FF7A5C]/30 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60">
-          {wallet
-            ? (() => {
-                const total = getTotalPortfolioValue();
-                const hasAnyBalance =
-                  tokens.some(
-                    (t) => typeof t.balance === "number" && t.balance > 0,
-                  ) ||
-                  (typeof balance === "number" && balance > 0);
-                if (!hasAnyBalance) {
+        <div className="mb-8 rounded-lg p-6 border border-[#FF7A5C]/30 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1"></div>
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {showBalance ? (
+                <Eye className="h-5 w-5 text-white/80" />
+              ) : (
+                <EyeOff className="h-5 w-5 text-white/80" />
+              )}
+            </button>
+          </div>
+          <div className="text-center space-y-2">
+            {wallet
+              ? (() => {
+                  const total = getTotalPortfolioValue();
+                  const hasAnyBalance =
+                    tokens.some(
+                      (t) => typeof t.balance === "number" && t.balance > 0,
+                    ) ||
+                    (typeof balance === "number" && balance > 0);
+                  if (!hasAnyBalance) {
+                    return (
+                      <>
+                        <div className="text-2xl font-bold text-white leading-tight">
+                          {showBalance ? "0.00 USD" : "****"}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {showBalance ? "24h: +0.00 USD (0.00%)" : "24h: ****"}
+                        </div>
+                      </>
+                    );
+                  }
+
+                  let totalChange24h = 0;
+                  let hasValidPriceChange = false;
+                  tokens.forEach((token) => {
+                    if (
+                      typeof token.balance === "number" &&
+                      typeof token.price === "number" &&
+                      typeof token.priceChange24h === "number" &&
+                      isFinite(token.balance) &&
+                      isFinite(token.price) &&
+                      isFinite(token.priceChange24h) &&
+                      token.balance > 0 &&
+                      token.price > 0
+                    ) {
+                      const currentValue = token.balance * token.price;
+                      const previousPrice =
+                        token.price / (1 + token.priceChange24h / 100);
+                      const previousValue = token.balance * previousPrice;
+                      const change = currentValue - previousValue;
+                      totalChange24h += change;
+                      hasValidPriceChange = true;
+                    }
+                  });
+
+                  const change24hPercent = hasValidPriceChange
+                    ? (totalChange24h / (total - totalChange24h)) * 100
+                    : 0;
+                  const isPositive = totalChange24h >= 0;
+
                   return (
                     <>
                       <div className="text-2xl font-bold text-white leading-tight">
-                        0.00 USD
+                        {showBalance
+                          ? `${total.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })} USD`
+                          : "****"}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        24h: +0.00 USD (0.00%)
-                      </div>
+                      {showBalance ? (
+                        <>
+                          {hasValidPriceChange && (
+                            <div className="flex items-center justify-center gap-2 mt-1">
+                              <span className="text-xs text-gray-400">24h:</span>
+                              {isPositive ? (
+                                <>
+                                  <ArrowUpRight className="h-3 w-3 text-green-400" />
+                                  <span className="text-xs font-medium text-green-400">
+                                    +
+                                    {Math.abs(totalChange24h).toLocaleString(
+                                      undefined,
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      },
+                                    )}{" "}
+                                    (+{change24hPercent.toFixed(2)}%)
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <ArrowDownLeft className="h-3 w-3 text-red-400" />
+                                  <span className="text-xs font-medium text-red-400">
+                                    -
+                                    {Math.abs(totalChange24h).toLocaleString(
+                                      undefined,
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      },
+                                    )}{" "}
+                                    ({change24hPercent.toFixed(2)}%)
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          {!hasValidPriceChange && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              24h: No data available
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-gray-400 mt-1">
+                          24h: ****
+                        </div>
+                      )}
                     </>
                   );
-                }
-
-                let totalChange24h = 0;
-                let hasValidPriceChange = false;
-                tokens.forEach((token) => {
-                  if (
-                    typeof token.balance === "number" &&
-                    typeof token.price === "number" &&
-                    typeof token.priceChange24h === "number" &&
-                    isFinite(token.balance) &&
-                    isFinite(token.price) &&
-                    isFinite(token.priceChange24h) &&
-                    token.balance > 0 &&
-                    token.price > 0
-                  ) {
-                    const currentValue = token.balance * token.price;
-                    const previousPrice =
-                      token.price / (1 + token.priceChange24h / 100);
-                    const previousValue = token.balance * previousPrice;
-                    const change = currentValue - previousValue;
-                    totalChange24h += change;
-                    hasValidPriceChange = true;
-                  }
-                });
-
-                const change24hPercent = hasValidPriceChange
-                  ? (totalChange24h / (total - totalChange24h)) * 100
-                  : 0;
-                const isPositive = totalChange24h >= 0;
-
-                return (
-                  <>
-                    <div className="text-2xl font-bold text-white leading-tight">
-                      {total.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      USD
-                    </div>
-                    {hasValidPriceChange && (
-                      <div className="flex items-center justify-center gap-2 mt-1">
-                        <span className="text-xs text-gray-400">24h:</span>
-                        {isPositive ? (
-                          <>
-                            <ArrowUpRight className="h-3 w-3 text-green-400" />
-                            <span className="text-xs font-medium text-green-400">
-                              +
-                              {Math.abs(totalChange24h).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}{" "}
-                              (+{change24hPercent.toFixed(2)}%)
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <ArrowDownLeft className="h-3 w-3 text-red-400" />
-                            <span className="text-xs font-medium text-red-400">
-                              -
-                              {Math.abs(totalChange24h).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}{" "}
-                              ({change24hPercent.toFixed(2)}%)
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    {!hasValidPriceChange && (
-                      <div className="text-xs text-gray-400 mt-1">
-                        24h: No data available
-                      </div>
-                    )}
-                  </>
-                );
-              })()
-            : "Connect wallet to see balance"}
+                })()
+              : "Connect wallet to see balance"}
+          </div>
           {/* Action Buttons */}
           <div className="flex items-center gap-3 mt-6">
             <Button

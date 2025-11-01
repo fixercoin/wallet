@@ -189,7 +189,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="font-medium text-sm">ACCOUNTS</div>
+              <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-6">
               <Card className="bg-transparent rounded-md border-0">

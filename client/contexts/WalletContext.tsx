@@ -314,7 +314,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       // Add default tokens (USDC, USDT, FIXERCOIN, LOCKER) if not already present
       const defaultTokensToAdd = DEFAULT_TOKENS.filter(
-        (dt) => dt.symbol !== "SOL" && !allTokens.some((at) => at.mint === dt.mint)
+        (dt) =>
+          dt.symbol !== "SOL" && !allTokens.some((at) => at.mint === dt.mint),
       );
       defaultTokensToAdd.forEach((dt) => {
         allTokens.push({ ...dt, balance: 0 });
@@ -323,7 +324,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Override with actual balances from token accounts
       tokenAccounts.forEach((tokenAccount) => {
         if (tokenAccount.symbol !== "SOL") {
-          const existingIndex = allTokens.findIndex((t) => t.mint === tokenAccount.mint);
+          const existingIndex = allTokens.findIndex(
+            (t) => t.mint === tokenAccount.mint,
+          );
           if (existingIndex >= 0) {
             allTokens[existingIndex] = {
               ...allTokens[existingIndex],
@@ -402,12 +405,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           const pricesCount = Object.keys(prices).length;
 
           if (pricesCount === 0) {
-            throw new Error(
-              `DexScreener returned no prices for any tokens`,
-            );
+            throw new Error(`DexScreener returned no prices for any tokens`);
           }
 
-          console.log(`[DexScreener] Got ${pricesCount} prices, SOL available: ${!!prices[solMint]}`);
+          console.log(
+            `[DexScreener] Got ${pricesCount} prices, SOL available: ${!!prices[solMint]}`,
+          );
         } catch (dexErr) {
           console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};

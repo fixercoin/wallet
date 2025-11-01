@@ -245,9 +245,17 @@ class DexscreenerAPI {
       const baseMint = t.baseToken?.address;
       const quoteMint = t.quoteToken?.address;
 
-      if (baseMint && normalizedMints.includes(baseMint) && !allTokensMap.has(baseMint)) {
+      if (
+        baseMint &&
+        normalizedMints.includes(baseMint) &&
+        !allTokensMap.has(baseMint)
+      ) {
         allTokensMap.set(baseMint, t);
-      } else if (quoteMint && normalizedMints.includes(quoteMint) && !allTokensMap.has(quoteMint)) {
+      } else if (
+        quoteMint &&
+        normalizedMints.includes(quoteMint) &&
+        !allTokensMap.has(quoteMint)
+      ) {
         allTokensMap.set(quoteMint, t);
       }
     });

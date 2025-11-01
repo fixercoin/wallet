@@ -791,18 +791,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Balance Section */}
-        <div className="mb-1 rounded-lg p-6 border border-[#e6f6ec]/30 bg-white relative overflow-hidden">
-          {/* Small wavy green accent inside balance card */}
-          <svg className="absolute left-0 right-0 bottom-0 h-28 w-full z-0" viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden>
-            <defs>
-              <linearGradient id="cardWave" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="45%" stopColor="#f0fff4" />
-                <stop offset="100%" stopColor="#a7f3d0" />
-              </linearGradient>
-            </defs>
-            <path d="M0,40 C200,100 400,0 720,40 C1040,80 1200,10 1440,50 L1440,120 L0,120 Z" fill="url(#cardWave)" opacity="0.9" />
-          </svg>
+        <div className="mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setShowBalance(!showBalance)}

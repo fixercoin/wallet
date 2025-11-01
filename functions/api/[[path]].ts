@@ -509,14 +509,14 @@ export const onRequest = async ({ request, env }) => {
                   ? searchData.pairs
                   : [];
 
-                // Look for pairs where this token is the base
+                // Look for pairs where this token is the base on Solana
                 let matchingPair = searchPairs.find(
                   (p: any) =>
                     p?.baseToken?.address === mint &&
                     p?.chainId === "solana",
                 );
 
-                // If not found as base, try as quote token
+                // If not found as base on Solana, try as quote token on Solana
                 if (!matchingPair) {
                   matchingPair = searchPairs.find(
                     (p: any) =>
@@ -525,11 +525,23 @@ export const onRequest = async ({ request, env }) => {
                   );
                 }
 
-                // If still not found, just take the first Solana pair
+                // If still not found on Solana, try any chain as base
                 if (!matchingPair) {
                   matchingPair = searchPairs.find(
-                    (p: any) => p?.chainId === "solana",
+                    (p: any) => p?.baseToken?.address === mint,
                   );
+                }
+
+                // If still not found, try as quote on any chain
+                if (!matchingPair) {
+                  matchingPair = searchPairs.find(
+                    (p: any) => p?.quoteToken?.address === mint,
+                  );
+                }
+
+                // Last resort: just take the first result
+                if (!matchingPair && searchPairs.length > 0) {
+                  matchingPair = searchPairs[0];
                 }
 
                 if (matchingPair && matchingPair.priceUsd) {

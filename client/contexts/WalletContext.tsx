@@ -752,6 +752,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     refreshBalance,
     refreshTokens,
     addCustomToken,
+    removeToken,
     logout,
     updateWalletLabel,
     connection: globalConnection,

@@ -535,7 +535,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         src={selectedToken.logoURI}
                         alt={selectedToken.symbol}
                       />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                         {selectedToken.symbol.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
@@ -562,7 +562,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   <div className="flex items-center gap-2 w-full">
                     <Avatar className="h-5 w-5 ring-1 ring-white/20">
                       <AvatarImage src={token.logoURI} alt={token.symbol} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                         {token.symbol.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
@@ -582,50 +582,47 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   if (step === "success") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
-
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
         <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 pt-8 px-0 sm:px-4">
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl">
+          <div className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-2xl">
             <div className="p-8 text-center">
               <div className="mb-6">
-                <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
-                  <Check className="h-8 w-8 text-emerald-300" />
+                <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">
+                  <Check className="h-8 w-8 text-emerald-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   Swap Completed!
                 </h3>
-                <p className="text-white/80">
+                <p className="text-gray-600">
                   Your transaction has been successfully executed
                 </p>
               </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-white/70">Swapped:</span>
-                  <span className="font-medium text-white">
+                  <span className="text-gray-600">Swapped:</span>
+                  <span className="font-medium text-gray-900">
                     {fromAmount} {fromToken?.symbol}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Received:</span>
-                  <span className="font-medium text-white">
+                  <span className="text-gray-600">Received:</span>
+                  <span className="font-medium text-gray-900">
                     {toAmount} {toToken?.symbol}
                   </span>
                 </div>
                 {txSignature && (
                   <div className="flex justify-between items-center">
-                    <span className="text-white/70">Transaction:</span>
+                    <span className="text-gray-600">Transaction:</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-emerald-400">
+                      <span className="font-mono text-xs text-emerald-500">
                         {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
                       </span>
                       <a
                         href={`https://solscan.io/tx/${txSignature}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-blue-600 hover:text-blue-500"
                       >
                         <ExternalLink className="h-3 w-3" />
                       </a>
@@ -638,13 +635,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={resetSwap}
-                  className="flex-1 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
+                  className="flex-1 bg-white/50 hover:bg-gray-50 border border-transparent text-gray-900"
                 >
                   Swap Again
                 </Button>
                 <Button
                   onClick={onBack}
-                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
+                  className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900"
                 >
                   Back to Wallet
                 </Button>
@@ -657,14 +654,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
-
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         {/* Card */}
-        <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#555555]/30 overflow-hidden text-white bg-transparent sm:bg-gradient-to-br sm:from-[#2d1b47]/60 sm:to-[#1f0f3d]/60">
+        <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#e6f6ec]/20 overflow-hidden text-gray-900 bg-transparent sm:bg-gradient-to-br sm:from-[#ffffff] sm:via-[#f0fff4] sm:to-[#a7f3d0]">
           <div className="p-5 space-y-4">
             {/* Header with back button */}
             <div className="flex items-center gap-3 -mt-3 -mx-5 px-5 pt-3 pb-2">
@@ -672,22 +665,24 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-lg font-semibold text-white flex-1">Swap</h1>
+              <h1 className="text-lg font-semibold text-gray-900 flex-1">
+                Swap
+              </h1>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0 text-white hover:text-white hover:bg-[#a855f7]/10 transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 text-gray-900 hover:text-gray-900 hover:bg-gray-100 transition-colors flex-shrink-0"
               >
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
             {/* FROM row */}
-            <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
+            <Card className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
@@ -696,9 +691,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       placeholder="0.000"
                       value={fromAmount}
                       onChange={(e) => setFromAmount(e.target.value)}
-                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
+                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-gray-900 placeholder:text-gray-400 focus-visible:ring-0"
                     />
-                    <div className="mt-2 text-xl text-white">
+                    <div className="mt-2 text-xl text-gray-900">
                       {(() => {
                         const amt = parseFloat(fromAmount || "0");
                         const price = fromUsdPrice ?? 0;
@@ -717,9 +712,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#a855f7]/20 to-[#22c55e]/20 border-[#a855f7]/30 text-white hover:bg-gradient-to-r hover:from-[#a855f7]/30 hover:to-[#22c55e]/30 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
                         <SelectValue>
-                          <div className="flex items-center gap-2 text-white">
+                          <div className="flex items-center gap-2 text-gray-900">
                             {fromToken ? (
                               <>
                                 <Avatar className="h-6 w-6">
@@ -731,22 +726,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                     {fromToken.symbol.slice(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium text-white">
+                                <span className="font-medium text-gray-900">
                                   {fromToken.symbol}
                                 </span>
                               </>
                             ) : (
-                              <span className="text-white">Select</span>
+                              <span className="text-gray-900">Select</span>
                             )}
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-[#2d1b47]/95 border border-[#a855f7]/30 text-white">
+                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
                             value={token.mint}
-                            className="text-white hover:bg-[#a855f7]/20 focus:bg-[#a855f7]/20 transition-colors"
+                            className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <Avatar className="h-5 w-5 ring-1 ring-white/20">
@@ -754,7 +749,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   src={token.logoURI}
                                   alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
@@ -771,7 +766,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       </SelectContent>
                     </Select>
                     {fromToken ? (
-                      <div className="mt-2 text-xs text-white">
+                      <div className="mt-2 text-xs text-gray-900">
                         {formatAmount(
                           getTokenBalance(fromToken),
                           fromToken.symbol,
@@ -789,23 +784,23 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               <Button
                 size="icon"
                 onClick={handleSwapTokens}
-                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white transition-colors"
+                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-gray-900 transition-colors"
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
             </div>
 
             {/* TO row */}
-            <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
+            <Card className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
-                    <div className="text-xl leading-none tracking-tight text-white">
+                    <div className="text-xl leading-none tracking-tight text-gray-900">
                       {toAmount
                         ? formatAmount(toAmount, toToken?.symbol)
                         : "0.000"}
                     </div>
-                    <div className="mt-2 text-xl text-white">
+                    <div className="mt-2 text-xl text-gray-900">
                       {(() => {
                         const amt = parseFloat(toAmount || "0");
                         const price = toUsdPrice ?? 0;
@@ -824,9 +819,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setToToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#a855f7]/20 to-[#22c55e]/20 border-[#a855f7]/30 text-white hover:bg-gradient-to-r hover:from-[#a855f7]/30 hover:to-[#22c55e]/30 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
                         <SelectValue>
-                          <div className="flex items-center gap-2 text-white">
+                          <div className="flex items-center gap-2 text-gray-900">
                             {toToken ? (
                               <>
                                 <Avatar className="h-6 w-6">
@@ -838,22 +833,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                     {toToken.symbol.slice(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium text-white">
+                                <span className="font-medium text-gray-900">
                                   {toToken.symbol}
                                 </span>
                               </>
                             ) : (
-                              <span className="text-white">Select</span>
+                              <span className="text-gray-900">Select</span>
                             )}
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-[#2d1b47]/95 border border-[#a855f7]/30 text-white">
+                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
                             value={token.mint}
-                            className="text-white hover:bg-[#a855f7]/20 focus:bg-[#a855f7]/20 transition-colors"
+                            className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <Avatar className="h-5 w-5 ring-1 ring-white/20">
@@ -861,7 +856,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   src={token.logoURI}
                                   alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
@@ -878,7 +873,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       </SelectContent>
                     </Select>
                     {toToken ? (
-                      <div className="mt-2 text-xs text-white font-mono">
+                      <div className="mt-2 text-xs text-gray-900 font-mono">
                         {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
                       </div>
                     ) : null}
@@ -889,10 +884,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
             {/* Quote details */}
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
-              <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-white">
+              <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-gray-900">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white">Quote</span>
-                  <span className="text-sm text-white">
+                  <span className="text-sm text-gray-900">Quote</span>
+                  <span className="text-sm text-gray-900">
                     1 {fromToken.symbol} ={" "}
                     {(
                       parseFloat(toAmount) / parseFloat(fromAmount || "1")
@@ -901,16 +896,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">Network fee</span>
-                  <span className="text-white">Included</span>
+                  <span className="text-gray-900">Network fee</span>
+                  <span className="text-gray-900">Included</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">Time</span>
-                  <span className="text-white">&lt; 1 min</span>
+                  <span className="text-gray-900">Time</span>
+                  <span className="text-gray-900">&lt; 1 min</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">Rate includes</span>
-                  <span className="text-white">{slippage}% slippage</span>
+                  <span className="text-gray-900">Rate includes</span>
+                  <span className="text-gray-900">{slippage}% slippage</span>
                 </div>
                 <div className="text-right text-sm text-[#a855f7]">
                   More quotes
@@ -956,7 +951,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     );
                     setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
                   }}
-                  className="text-xs px-2 py-2 rounded-lg bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white border border-[#FF7A5C]/30 transition-colors"
+                  className="text-xs px-2 py-2 rounded-lg bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-gray-900 border border-[#FF7A5C]/30 transition-colors"
                 >
                   {pct}%
                 </button>
@@ -966,7 +961,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {/* Submit */}
             <Button
               onClick={handleSwap}
-              className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
+              className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-gray-900 shadow-lg hover:shadow-2xl transition-all"
               disabled={
                 (!quote && !indicative) ||
                 !!quoteError ||

@@ -34,6 +34,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onBurn,
   onLock,
   onSettings,
+  onQuestOpen,
 }) => {
   const navigate = useNavigate();
 

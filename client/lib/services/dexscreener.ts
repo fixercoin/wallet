@@ -149,6 +149,7 @@ class DexscreenerAPI {
 
     let fetchedTokens: DexscreenerToken[] = [];
     let fetchFailed = false;
+    let lastError: string = "";
 
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
@@ -156,7 +157,9 @@ class DexscreenerAPI {
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
-        console.log(`[DexScreener] Requesting: ${url}`);
+        console.log(
+          `[DexScreener] Requesting: ${url} (${toFetch.length} mints)`,
+        );
         const response = await fetch(url, { signal: controller.signal });
 
         if (response.ok) {
@@ -164,39 +167,48 @@ class DexscreenerAPI {
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
             console.log(
-              `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
+              `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens from DexScreener`,
             );
-            // Validate that we got meaningful data (especially priceChange)
-            const withPriceChange = fetchedTokens.filter(
-              (t) =>
-                t.priceChange &&
-                (typeof t.priceChange.h24 === "number" ||
-                  typeof t.priceChange.h6 === "number" ||
-                  typeof t.priceChange.h1 === "number" ||
-                  typeof t.priceChange.m5 === "number"),
-            );
-            console.log(
-              `[DexScreener] Tokens with price change data: ${withPriceChange.length}/${fetchedTokens.length}`,
-            );
+
+            // Log which tokens we got
+            if (fetchedTokens.length > 0) {
+              const gotMints = fetchedTokens
+                .map((t) => t.baseToken?.address)
+                .filter(Boolean);
+              const missingMints = toFetch.filter(
+                (m) => !gotMints.includes(m),
+              );
+              console.log(
+                `[DexScreener] Got ${fetchedTokens.length} tokens, missing ${missingMints.length}:`,
+                missingMints,
+              );
+
+              // Log price data for debugging
+              const withPrice = fetchedTokens.filter(
+                (t) => t.priceUsd && parseFloat(t.priceUsd) > 0,
+              );
+              console.log(
+                `[DexScreener] Tokens with valid prices: ${withPrice.length}/${fetchedTokens.length}`,
+              );
+            }
           } catch (parseErr) {
-            console.error(
-              `[DexScreener] ❌ Failed to parse response:`,
-              parseErr,
-            );
+            lastError = `Parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
+            console.error(`[DexScreener] ��� Failed to parse response:`, lastError);
             fetchFailed = true;
           }
         } else {
+          lastError = `HTTP ${response.status}: ${response.statusText}`;
           console.error(
             `[DexScreener] ❌ Server returned ${response.status}: ${response.statusText}`,
           );
           fetchFailed = true;
         }
       } catch (err) {
-        // network/timeout -> swallow; fallback to stale cache
+        lastError = err instanceof Error ? err.message : String(err);
         fetchFailed = true;
         console.warn(
-          `[DexScreener] ❌ Network error fetching tokens:`,
-          err instanceof Error ? err.message : String(err),
+          `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
+          lastError,
         );
       } finally {
         clearTimeout(timeoutId);
@@ -206,11 +218,12 @@ class DexscreenerAPI {
     // If fetch failed, try to serve stale cached data instead of failing completely
     if (fetchFailed && toFetch.length > 0) {
       console.log(
-        `[DexScreener] ⚠️ Serving stale cache for ${toFetch.length} tokens`,
+        `[DexScreener] ⚠️ Fetch failed (${lastError}), trying stale cache for ${toFetch.length} tokens`,
       );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
         if (stale) {
+          console.log(`[DexScreener] ℹ️ Using stale cache for ${mint}`);
           fetchedTokens.push(stale.token);
         }
       });
@@ -247,7 +260,7 @@ class DexscreenerAPI {
       .filter((t): t is DexscreenerToken => Boolean(t));
 
     console.log(
-      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"})`,
+      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"}). Missing: ${normalizedMints.filter((m) => !result.find((t) => t.baseToken?.address === m)).join(", ")}`,
     );
 
     return result;

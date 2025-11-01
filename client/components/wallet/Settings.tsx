@@ -192,39 +192,43 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm">ACCOUNTS</div>
             </div>
             <div className="space-y-6">
-              <section>
-                <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
-                  SELECT ACCOUNT
-                </div>
-                <div className="flex items-center">
-                  <select
-                    value={wallet?.publicKey || ""}
-                    onChange={(e) => {
-                      const pk = e.target.value;
-                      selectWallet(pk);
-                      const sel = wallets.find((x) => x.publicKey === pk);
-                      setRecoveryPhrase(sel?.mnemonic || "");
-                      setShowRecoveryPhrase(!!sel?.mnemonic);
-                      setShowPrivateKey(!!sel?.secretKey);
-                      toast({
-                        title: "Account Selected",
-                        description: "Switched to selected account",
-                      });
-                    }}
-                    className="flex-1 bg-[#2d1b47]/50 text-white p-2 rounded-md border border-[#a855f7]/30 font-mono"
-                  >
-                    {wallets.map((w) => (
-                      <option
-                        key={w.publicKey}
-                        value={w.publicKey}
-                        className="text-black"
-                      >
-                        {shortenAddress(w.publicKey, 6)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </section>
+              <Card className="bg-transparent rounded-md border-0">
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between p-4 rounded-md transition-colors">
+                    <div className="min-w-0 w-full">
+                      <div className="mb-2 text-[hsl(var(--foreground))] font-medium">SELECT ACCOUNT</div>
+                      <div className="flex items-center">
+                        <select
+                          value={wallet?.publicKey || ""}
+                          onChange={(e) => {
+                            const pk = e.target.value;
+                            selectWallet(pk);
+                            const sel = wallets.find((x) => x.publicKey === pk);
+                            setRecoveryPhrase(sel?.mnemonic || "");
+                            setShowRecoveryPhrase(!!sel?.mnemonic);
+                            setShowPrivateKey(!!sel?.secretKey);
+                            toast({
+                              title: "Account Selected",
+                              description: "Switched to selected account",
+                            });
+                          }}
+                          className="flex-1 bg-[#2d1b47]/50 text-white p-2 rounded-md border border-[#a855f7]/30 font-mono"
+                        >
+                          {wallets.map((w) => (
+                            <option
+                              key={w.publicKey}
+                              value={w.publicKey}
+                              className="text-black"
+                            >
+                              {shortenAddress(w.publicKey, 6)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">

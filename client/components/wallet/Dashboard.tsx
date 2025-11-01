@@ -720,8 +720,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
-        {/* Balance Section */}
-        <div className="mb-3 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
+        {/* Top Bar - Outside Balance Card */}
+        <div className="mb-0">
           <TopBar
             onAccounts={onAccounts}
             onAirdrop={onAirdrop}
@@ -730,8 +730,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onSettings={onSettings}
             onQuestOpen={() => setShowQuestModal(true)}
           />
-          <div className="flex items-center justify-between mb-4 mt-4">
-            <div className="flex-1"></div>
+        </div>
+
+        {/* Balance Section */}
+        <div className="mb-3 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
+          <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setShowBalance(!showBalance)}
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -742,6 +745,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <EyeOff className="h-5 w-5 text-white/80" />
               )}
             </button>
+            <div className="flex-1"></div>
           </div>
           <div className="text-center space-y-2">
             {wallet
@@ -904,7 +908,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {sortedTokens.map((token) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&

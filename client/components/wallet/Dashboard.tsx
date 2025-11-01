@@ -598,7 +598,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {/* Tagline */}
               <div className="text-center">
-                <p className="text-sm font-semibold text-[#FF7A5C] uppercase tracking-wider">
+                <p className="text-sm font-semibold text-[#C084FC] uppercase tracking-wider">
                   🚀 Grow. Earn. Win.
                 </p>
               </div>

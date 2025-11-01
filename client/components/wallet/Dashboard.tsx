@@ -809,9 +809,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
               {showBalance ? (
-                <Eye className="h-5 w-5 text-white/80" />
+                <Eye className="h-5 w-5 text-gray-600" />
               ) : (
-                <EyeOff className="h-5 w-5 text-white/80" />
+                <EyeOff className="h-5 w-5 text-gray-600" />
               )}
             </button>
             <div className="flex-1"></div>
@@ -828,7 +828,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   if (!hasAnyBalance) {
                     return (
                       <>
-                        <div className="text-2xl font-bold text-white leading-tight">
+                        <div className="text-2xl font-bold text-gray-900 leading-tight">
                           {showBalance ? "0.00 USD" : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
@@ -868,7 +868,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   return (
                     <>
-                      <div className="text-2xl font-bold text-white leading-tight">
+                      <div className="text-2xl font-bold text-gray-900 leading-tight">
                         {showBalance
                           ? `${total.toLocaleString(undefined, {
                               minimumFractionDigits: 2,

@@ -506,7 +506,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 Select Token (only available here)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-[#1a2540]/50 text-white placeholder:text-gray-300 mt-2">
+                <SelectTrigger className="w-full bg-[#2d1b47]/50 text-white placeholder:text-gray-300 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
                 <SelectContent className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">

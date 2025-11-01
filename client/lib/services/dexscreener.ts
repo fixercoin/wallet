@@ -243,7 +243,9 @@ class DexscreenerAPI {
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
         if (stale) {
-          console.log(`[DexScreener] ℹ️ Using stale cache for ${mint}`);
+          console.log(
+            `[DexScreener] ℹ️ Using stale cache for ${mint} (${stale.token.baseToken?.symbol || "UNKNOWN"})`,
+          );
           fetchedTokens.push(stale.token);
         }
       });

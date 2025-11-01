@@ -250,6 +250,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const selectWallet = (publicKey: string) => {
     const found = wallets.find((w) => w.publicKey === publicKey);
     if (found) {
+      console.log(`[WalletContext] Selecting wallet: ${publicKey}`);
+
       // Reset displayed balances immediately before switching
       setBalance(0);
       balanceRef.current = 0;
@@ -258,6 +260,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Set as active - the useEffect hook will automatically trigger and fetch data
       // This is safe because wallet is computed from activePublicKey
       setActivePublicKey(publicKey);
+    } else {
+      console.warn(`[WalletContext] Wallet not found: ${publicKey}. Available wallets:`, wallets.map(w => w.publicKey));
     }
   };
 

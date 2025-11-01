@@ -176,6 +176,8 @@ class JupiterAPI {
       const data = await response.json();
       return data.data?.[tokenMint]?.price || null;
     } catch (error) {
+      // Return null to let higher-level code handle fallbacks to other price providers
+      // Do NOT retry Jupiter API as that would create cascading failures
       console.error("Error fetching token price from Jupiter:", error);
       return null;
     }

@@ -275,6 +275,10 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
               `/pairs/solana/${pairAddress}`,
             );
 
+            console.log(
+              `[DexScreener] Pair lookup response: ${pairData ? "received" : "null"}, pairs: ${pairData?.pairs?.length || 0}`,
+            );
+
             if (
               pairData?.pairs &&
               Array.isArray(pairData.pairs) &&
@@ -311,6 +315,10 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
               results.push(pair);
               foundMintsSet.add(mint);
               found = true;
+            } else {
+              console.warn(
+                `[DexScreener] Pair lookup returned no pairs for ${mint}`,
+              );
             }
           } catch (pairErr) {
             console.warn(

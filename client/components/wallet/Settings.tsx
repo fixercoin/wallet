@@ -230,41 +230,47 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </CardContent>
               </Card>
 
-              <section>
-                <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
-                  <DollarSign className="h-5 w-5" />
-                  <span className="font-medium">CURRENCY PREFERENCE</span>
-                </div>
-                <Select
-                  value={currency}
-                  onValueChange={(value) => {
-                    const selectedCurrency = value as "USD" | "PKR";
-                    setCurrency(selectedCurrency);
-                    try {
-                      localStorage.setItem(
-                        "preferred_currency",
-                        selectedCurrency,
-                      );
-                    } catch {}
-                    toast({
-                      title: "Currency Changed",
-                      description: `Currency preference set to ${selectedCurrency}`,
-                    });
-                  }}
-                >
-                  <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#2d1b47]/95 border border-[#a855f7]/30">
-                    <SelectItem value="USD" className="text-white">
-                      USD (United States Dollar)
-                    </SelectItem>
-                    <SelectItem value="PKR" className="text-white">
-                      PKR (Pakistani Rupee)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </section>
+              <Card className="bg-transparent rounded-md border-0">
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between p-4 rounded-md transition-colors">
+                    <div className="min-w-0 w-full">
+                      <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
+                        <DollarSign className="h-5 w-5" />
+                        <span className="font-medium">CURRENCY PREFERENCE</span>
+                      </div>
+                      <Select
+                        value={currency}
+                        onValueChange={(value) => {
+                          const selectedCurrency = value as "USD" | "PKR";
+                          setCurrency(selectedCurrency);
+                          try {
+                            localStorage.setItem(
+                              "preferred_currency",
+                              selectedCurrency,
+                            );
+                          } catch {}
+                          toast({
+                            title: "Currency Changed",
+                            description: `Currency preference set to ${selectedCurrency}`,
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#2d1b47]/95 border border-[#a855f7]/30">
+                          <SelectItem value="USD" className="text-white">
+                            USD (United States Dollar)
+                          </SelectItem>
+                          <SelectItem value="PKR" className="text-white">
+                            PKR (Pakistani Rupee)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               <section>
                 <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">

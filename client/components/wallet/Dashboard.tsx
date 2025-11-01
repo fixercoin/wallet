@@ -779,7 +779,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
 
         {/* Balance Section */}
-        <div className="mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <button

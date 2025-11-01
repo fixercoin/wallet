@@ -62,7 +62,6 @@ interface DashboardProps {
 }
 
 import { useNavigate } from "react-router-dom";
-import { TopBar } from "./TopBar";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl } from "@/lib/api-client";
 import bs58 from "bs58";

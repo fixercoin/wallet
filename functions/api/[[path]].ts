@@ -1314,7 +1314,7 @@ export const onRequest = async ({ request, env }) => {
           const lamports =
             typeof data.result === "number"
               ? data.result
-              : data.result?.value ?? null;
+              : (data.result?.value ?? null);
           if (typeof lamports === "number" && isFinite(lamports)) {
             const balance = lamports / 1_000_000_000;
             return jsonCors(200, {

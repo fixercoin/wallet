@@ -1013,13 +1013,14 @@ export const handler = async (event: any) => {
         event.queryStringParameters?.address ||
         ""
       ).trim();
-      if (!pk) return jsonResponse(400, { error: "Missing 'publicKey' parameter" });
+      if (!pk)
+        return jsonResponse(400, { error: "Missing 'publicKey' parameter" });
 
       try {
         const rpc = await callRpc("getBalance", [pk], Date.now());
         const j = JSON.parse(String(rpc?.body || "{}"));
         const lamports =
-          typeof j.result === "number" ? j.result : j?.result?.value ?? null;
+          typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
         if (typeof lamports === "number" && isFinite(lamports)) {
           const balance = lamports / 1_000_000_000;
           return jsonResponse(200, {

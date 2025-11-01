@@ -50,6 +50,7 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
+const HIDDEN_TOKENS_KEY = "hidden_tokens";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [wallets, setWallets] = useState<WalletData[]>([]);
@@ -632,7 +633,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       } catch {}
 
-      const enhancedTokens = allTokens.map((token) => {
+      // Load hidden tokens list
+      const hiddenTokens = JSON.parse(
+        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+      ) as string[];
+
+      // Filter out hidden tokens from allTokens
+      const visibleTokens = allTokens.filter(
+        (token) => !hiddenTokens.includes(token.mint),
+      );
+
+      const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];
         let finalPrice = price;
 
@@ -717,19 +728,28 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const removeToken = (tokenMint: string) => {
-    setTokens((currentTokens) =>
-      currentTokens.filter((t) => t.mint !== tokenMint),
-    );
-
+    // Remove from custom tokens if it exists there
     const customTokens = JSON.parse(
       localStorage.getItem("custom_tokens") || "[]",
-    );
+    ) as TokenInfo[];
     const newCustomTokens = customTokens.filter(
       (t: TokenInfo) => t.mint !== tokenMint,
     );
     localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
 
-    if (wallet) refreshTokens();
+    // Add to hidden tokens list to permanently hide it
+    const hiddenTokens = JSON.parse(
+      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+    ) as string[];
+    if (!hiddenTokens.includes(tokenMint)) {
+      hiddenTokens.push(tokenMint);
+      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
+    }
+
+    // Update state immediately
+    setTokens((currentTokens) =>
+      currentTokens.filter((t) => t.mint !== tokenMint),
+    );
   };
 
   const logout = () => {

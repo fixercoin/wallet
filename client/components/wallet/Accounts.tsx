@@ -23,7 +23,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 p-4 relative overflow-hidden">
       <div className="w-full max-w-md mx-auto py-6">
-        <div className="rounded-lg border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"

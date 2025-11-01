@@ -338,22 +338,54 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       try {
         const tokenMints = allTokens.map((token) => token.mint);
+        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+
+        // Ensure pump fun tokens are included in the fetch
+        const allMintsToFetch = Array.from(
+          new Set([...tokenMints, fixercoinMint, lockerMint].filter(Boolean)),
+        );
+
         try {
           let dexTokens: any[] = [];
           try {
-            const dexPromise = dexscreenerAPI.getTokensByMints(tokenMints);
+            const dexPromise = dexscreenerAPI.getTokensByMints(allMintsToFetch);
             const timeout = new Promise<any[]>((resolve) =>
-              setTimeout(() => resolve([]), 4500),
+              setTimeout(() => resolve([]), 5000),
             );
             dexTokens = await Promise.race([dexPromise, timeout]);
           } catch (fetchErr) {
+            console.warn("DexScreener fetch error:", fetchErr);
             dexTokens = [];
           }
 
           if (Array.isArray(dexTokens) && dexTokens.length > 0) {
             try {
-              prices = dexscreenerAPI.getTokenPrices(dexTokens);
+              const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+              prices = { ...prices, ...dexPrices };
+
+              // Log pump fun token prices
+              if (prices[fixercoinMint]) {
+                console.log(
+                  `[DexScreener] FIXERCOIN price: $${prices[fixercoinMint].toFixed(8)}`,
+                );
+              } else {
+                console.warn(
+                  `[DexScreener] FIXERCOIN price not found in DexScreener response`,
+                );
+              }
+
+              if (prices[lockerMint]) {
+                console.log(
+                  `[DexScreener] LOCKER price: $${prices[lockerMint].toFixed(8)}`,
+                );
+              } else {
+                console.warn(
+                  `[DexScreener] LOCKER price not found in DexScreener response`,
+                );
+              }
             } catch (parseErr) {
+              console.error("Error parsing DexScreener prices:", parseErr);
               prices = {};
             }
 
@@ -367,103 +399,68 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 );
                 if (mint && typeof ch === "number") {
                   changeMap[mint] = ch;
+                  // Log pump fun token changes
+                  if (mint === fixercoinMint || mint === lockerMint) {
+                    console.log(
+                      `[DexScreener] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: 24h change = ${ch.toFixed(2)}%`,
+                    );
+                  }
                 }
               });
             } catch (inner) {
-              // noop
+              console.error("Error extracting price changes:", inner);
             }
           } else {
+            console.warn("DexScreener returned no token data");
             prices = {};
           }
 
-          // If SOL price is missing from DexScreener, don't throw immediately
-          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          // Check if we got any meaningful data (not just pump fun tokens)
           const solMint = "So11111111111111111111111111111111111111112";
-          const hasSufficientData =
-            Object.keys(prices).length > 0 && prices[solMint];
+          const hasMajorTokenPrice = Object.keys(prices).some(
+            (m) => m === solMint || prices[m] > 0.01, // At least one non-pump-fun token with decent price
+          );
 
-          if (!hasSufficientData) {
-            throw new Error(
-              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
+          if (!hasMajorTokenPrice) {
+            console.warn(
+              `DexScreener returned limited data: ${Object.keys(prices).length} prices`,
             );
+            // Don't throw - let Jupiter/CoinGecko fill in gaps
           }
         } catch (dexErr) {
-          console.warn("DexScreener error, continuing to Jupiter:", dexErr);
+          console.warn(
+            "DexScreener primary fetch error, will try fallbacks:",
+            dexErr,
+          );
           prices = {};
         }
 
-        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-        try {
-          const fixerData = await fixercoinPriceService.getFixercoinPrice();
-          if (fixerData && fixerData.price > 0) {
-            prices[fixercoinMint] = fixerData.price;
-            if (typeof fixerData.priceChange24h === "number") {
-              changeMap[fixercoinMint] = fixerData.priceChange24h;
-            }
-          }
-        } catch (err) {
-          console.warn("Failed to fetch FIXERCOIN price:", err);
-        }
+        // If pump fun prices still missing from initial fetch, try dedicated fetch
+        const pumpFunMintsNeeded = [];
+        if (!prices[fixercoinMint]) pumpFunMintsNeeded.push(fixercoinMint);
+        if (!prices[lockerMint]) pumpFunMintsNeeded.push(lockerMint);
 
-        // Fetch DexScreener data for stablecoins (USDC, USDT) and LOCKER to get accurate price changes
-        const stableMints = allTokens
-          .filter((t) => {
-            const sym = (t.symbol || "").toUpperCase();
-            const name = t.name || "";
-            return (
-              sym === "USDC" ||
-              sym === "USDT" ||
-              /USD\s*COIN/i.test(name) ||
-              /TETHER/i.test(name)
-            );
-          })
-          .map((t) => t.mint);
-
-        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
-        const mintsToFetch = [
-          ...new Set([...stableMints, lockerMint].filter(Boolean)),
-        ];
-
-        if (mintsToFetch.length > 0) {
+        if (pumpFunMintsNeeded.length > 0) {
           try {
-            const dexTokens =
-              await dexscreenerAPI.getTokensByMints(mintsToFetch);
-            const dexMap = new Map<string, any>();
-            dexTokens.forEach((t) => {
-              const matchMint = mintsToFetch.find(
-                (m) =>
-                  m === t.baseToken?.address || m === t.quoteToken?.address,
-              );
-              if (matchMint) dexMap.set(matchMint, t);
-            });
-
-            mintsToFetch.forEach((mint) => {
-              const dexToken = dexMap.get(mint);
-              if (dexToken) {
-                // Update price if available
-                if (dexToken.priceUsd) {
-                  const price = parseFloat(dexToken.priceUsd);
-                  if (price > 0) prices[mint] = price;
-                }
-                // Extract price change (h24 is preferred, fallback to h6, h1, m5)
-                const pc = dexToken.priceChange || {};
-                const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-                const priceChange = candidates.find(
-                  (v: any) => typeof v === "number" && isFinite(v),
-                );
-                if (typeof priceChange === "number") {
-                  changeMap[mint] = priceChange;
+            console.log(
+              `[DexScreener] Retrying pump fun tokens: ${pumpFunMintsNeeded.join(", ")}`,
+            );
+            const pumpTokens =
+              await dexscreenerAPI.getTokensByMints(pumpFunMintsNeeded);
+            pumpTokens.forEach((pt: any) => {
+              const mint = pt?.baseToken?.address;
+              if (mint && pt.priceUsd) {
+                const price = parseFloat(pt.priceUsd);
+                if (price > 0) {
+                  prices[mint] = price;
                   console.log(
-                    `[Price Refresh] ${mint}: 24h change = ${priceChange.toFixed(2)}%`,
+                    `[DexScreener] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"} (retry): $${price.toFixed(8)}`,
                   );
                 }
               }
             });
           } catch (e) {
-            console.warn(
-              "Failed to fetch USDC/LOCKER price data from DexScreener:",
-              e,
-            );
+            console.warn("Failed to fetch pump fun tokens in retry:", e);
           }
         }
 
@@ -528,11 +525,28 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
 
         const solMint = "So11111111111111111111111111111111111111112";
-        if (Object.keys(prices).length > 0 && prices[solMint]) {
+        const hasSolPrice = prices[solMint];
+        const hasPumpFunPrices =
+          (prices[fixercoinMint] && prices[fixercoinMint] > 0) ||
+          (prices[lockerMint] && prices[lockerMint] > 0);
+
+        if (
+          (Object.keys(prices).length > 0 && hasSolPrice) ||
+          hasPumpFunPrices
+        ) {
           priceSource = "dexscreener";
+          if (!hasSolPrice) {
+            console.warn(
+              "[DexScreener] SOL price missing but got pump fun tokens, continuing to Jupiter for SOL",
+            );
+          }
+        } else if (Object.keys(prices).length > 0) {
+          console.warn(
+            `[DexScreener] Got ${Object.keys(prices).length} prices but no SOL, trying Jupiter as fallback`,
+          );
         } else {
           throw new Error(
-            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`,
+            "DexScreener returned no prices, falling back to Jupiter",
           );
         }
       } catch (dexError) {

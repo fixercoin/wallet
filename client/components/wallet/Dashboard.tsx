@@ -967,7 +967,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <CardContent className="p-0">
                     <div
                       className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
-                      onClick={() => onTokenClick(token.mint)}
+                      onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 flex-shrink-0">

@@ -158,15 +158,20 @@ export const getBalance = async (publicKey: string): Promise<number> => {
       // Compatible shapes:
       // 1) { balance: number }
       if (typeof json.balance === "number") {
-        console.log(`✅ Wallet balance endpoint successful (${url}): ${json.balance} SOL`);
+        console.log(
+          `✅ Wallet balance endpoint successful (${url}): ${json.balance} SOL`,
+        );
         return json.balance;
       }
 
       // 2) Cloudflare worker shape: { walletAddress, balances: { SOL: number, ... } }
       if (json.balances && typeof json.balances === "object") {
-        const sol = json.balances.SOL ?? json.balances.sol ?? json.balances.SOLANA;
+        const sol =
+          json.balances.SOL ?? json.balances.sol ?? json.balances.SOLANA;
         if (typeof sol === "number") {
-          console.log(`✅ Wallet balance endpoint (balances) successful (${url}): ${sol} SOL`);
+          console.log(
+            `✅ Wallet balance endpoint (balances) successful (${url}): ${sol} SOL`,
+          );
           return sol;
         }
       }
@@ -181,10 +186,15 @@ export const getBalance = async (publicKey: string): Promise<number> => {
           console.log(`✅ Wallet proxy returned lamports (${url}): ${sol} SOL`);
           return sol;
         }
-        if (json.result?.value !== undefined && typeof json.result.value === "number") {
+        if (
+          json.result?.value !== undefined &&
+          typeof json.result.value === "number"
+        ) {
           const lamports = json.result.value as number;
           const sol = lamports / 1_000_000_000;
-          console.log(`✅ Wallet proxy returned result.value (${url}): ${sol} SOL`);
+          console.log(
+            `✅ Wallet proxy returned result.value (${url}): ${sol} SOL`,
+          );
           return sol;
         }
       }

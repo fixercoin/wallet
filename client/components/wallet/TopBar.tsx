@@ -52,6 +52,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             aria-label="Prize"
             className="p-1.5 rounded-lg hover:bg-white/5"
+            onClick={onQuestOpen}
           >
             <Gift className="h-4 w-4 text-white/80" />
           </button>

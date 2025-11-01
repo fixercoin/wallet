@@ -1,4 +1,7 @@
 // Token metadata interface for simplified token info
+import { Connection, PublicKey } from "@solana/web3.js";
+import { SOLANA_RPC_URL } from "../../../utils/solanaConfig";
+
 export interface TokenMetadata {
   mint: string;
   symbol: string;
@@ -184,6 +187,7 @@ export const makeRpcCall = async (
  * Get SOL balance for a wallet
  */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
+  // First try via our API proxy (with retries/failover)
   try {
     const res = await makeRpcCall("getBalance", [publicKey]);
     const lamports =
@@ -193,9 +197,22 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
           ? (res as any).value
           : 0;
     const sol = lamports / 1_000_000_000;
+    if (Number.isFinite(sol)) return sol;
+  } catch (error) {
+    console.warn(
+      "Proxy RPC getBalance failed, attempting direct web3 fallback:",
+      error,
+    );
+  }
+
+  // Fallback: call Solana directly via web3.js (avoids proxy issues/rate limits)
+  try {
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const lamports = await conn.getBalance(new PublicKey(publicKey));
+    const sol = lamports / 1_000_000_000;
     return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
-    console.error("Error fetching wallet balance:", error);
+    console.error("Direct web3 getBalance failed:", error);
     return 0;
   }
 };
@@ -204,25 +221,58 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
  * Get all token accounts for a wallet
  */
 export const getTokenAccounts = async (publicKey: string) => {
+  const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+  // Try via API proxy first
   try {
     const response = await makeRpcCall("getTokenAccountsByOwner", [
       publicKey,
-      {
-        programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-      },
-      {
-        encoding: "jsonParsed",
-        commitment: "confirmed",
-      },
+      { programId: TOKEN_PROGRAM_ID },
+      { encoding: "jsonParsed", commitment: "confirmed" },
     ]);
 
-    return response.value.map((account: any) => {
-      const parsedInfo = account.account.data.parsed.info;
-      const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
-      const decimals = parsedInfo.tokenAmount.decimals;
+    const value = (response as any)?.value || [];
+    if (Array.isArray(value) && value.length >= 0) {
+      return value.map((account: any) => {
+        const parsedInfo = account.account.data.parsed.info;
+        const mint = parsedInfo.mint;
+        const balance = parsedInfo.tokenAmount.uiAmount || 0;
+        const decimals = parsedInfo.tokenAmount.decimals;
 
-      // Get token metadata from known tokens or use defaults
+        const metadata = KNOWN_TOKENS[mint] || {
+          mint,
+          symbol: "UNKNOWN",
+          name: "Unknown Token",
+          decimals,
+        };
+
+        return {
+          ...metadata,
+          balance,
+          decimals: decimals || metadata.decimals,
+        };
+      });
+    }
+  } catch (error) {
+    console.warn(
+      "Proxy RPC getTokenAccountsByOwner failed, attempting direct web3 fallback:",
+      error,
+    );
+  }
+
+  // Fallback: direct web3.js call to Solana
+  try {
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const owner = new PublicKey(publicKey);
+    const programId = new PublicKey(TOKEN_PROGRAM_ID);
+    const resp = await conn.getParsedTokenAccountsByOwner(owner, { programId });
+
+    return resp.value.map((account) => {
+      const parsedInfo: any = (account.account.data as any).parsed.info;
+      const mint: string = parsedInfo.mint;
+      const balance: number = parsedInfo.tokenAmount.uiAmount || 0;
+      const decimals: number = parsedInfo.tokenAmount.decimals;
+
       const metadata = KNOWN_TOKENS[mint] || {
         mint,
         symbol: "UNKNOWN",
@@ -237,7 +287,7 @@ export const getTokenAccounts = async (publicKey: string) => {
       };
     });
   } catch (error) {
-    console.error("Error fetching token accounts:", error);
+    console.error("Direct web3 getParsedTokenAccountsByOwner failed:", error);
     return [];
   }
 };

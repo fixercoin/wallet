@@ -700,46 +700,46 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const isFormDisabled = isSubmitting || !wallet || !selectedToken;
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#2d1b47]/95 to-[#1f0f3d]/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="bg-transparent sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1 text-center font-medium text-sm">
+          <div className="flex-1 text-center font-medium text-sm text-gray-900">
             SPL TOKEN LOCK
           </div>
         </div>
       </div>
 
       <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
-        <div className="bg-transparent rounded-2xl p-6 space-y-5 text-white">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <LockIcon className="h-5 w-5 text-purple-500" />
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+            <span className="text-sm font-semibold text-gray-900">
               Create new lock
             </span>
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-white">Select token</Label>
+              <Label className="text-xs text-gray-700">Select token</Label>
               <Select
                 value={selectedMint}
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 bg-transparent">
+                <SelectTrigger className="mt-1 bg-white/50 text-gray-900">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent>
@@ -766,7 +766,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-transparent border-[#a855f7]/30 text-white"
+                className="mt-1 bg-white/50 border border-gray-100 text-gray-900"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
@@ -783,7 +783,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 bg-transparent">
+                <SelectTrigger className="mt-1 bg-white/50 text-gray-900">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent>
@@ -847,7 +847,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 space-y-3 text-white"
+                    className="p-4 rounded-xl border border-[#e6f6ec]/20 bg-white/80 space-y-3 text-gray-900"
                   >
                     <div className="flex items-center justify-between">
                       <div>

@@ -267,10 +267,15 @@ export const getTokenAccounts = async (publicKey: string) => {
   // Fallback RPC endpoints with better support for token queries
   // Ordered by reliability and feature support
   const fallbackRPCs = [
-    "https://api.mainnet-beta.solana.com", // Official Solana endpoint - most reliable
-    "https://solana.publicnode.com", // Public Node - good uptime
+    // Prefer environment-configured RPC first
     SOLANA_RPC_URL,
+    // Reliable public endpoints
+    "https://api.mainnet-beta.solana.com",
+    "https://solana.publicnode.com",
     "https://rpc.ankr.com/solana",
+    // Keep app-specific hosts as last resort (if ever reachable)
+    "https://app.fixorium.com.pk/api/solana-rpc",
+    "https://rpc.fixorium.com.pk",
   ].filter((url, idx, arr) => arr.indexOf(url) === idx && url); // Remove duplicates and empties
 
   for (let i = 0; i < fallbackRPCs.length; i++) {

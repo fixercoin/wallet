@@ -798,7 +798,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
               {showBalance ? (
-                <Eye className="h-5 w-5 text-gray-600" />
+                <Eye className="h-5 w-5 text-white/80" />
               ) : (
                 <EyeOff className="h-5 w-5 text-gray-600" />
               )}

@@ -256,6 +256,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setTokens(DEFAULT_TOKENS);
 
       setActivePublicKey(publicKey);
+
+      // Immediately trigger data fetch for the new wallet
+      // This ensures data loads right away without waiting for dependency checks
+      (async () => {
+        try {
+          const newBalance = await getBalance(publicKey);
+          if (typeof newBalance === "number" && !isNaN(newBalance)) {
+            setBalance(newBalance);
+            balanceRef.current = newBalance;
+          }
+        } catch (err) {
+          console.error("Error fetching balance for selected wallet:", err);
+        }
+      })();
     }
   };
 

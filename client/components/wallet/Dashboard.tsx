@@ -818,7 +818,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onSelect={() => onOpenSetup?.()}
+                    onSelect={() => onAccounts?.()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Wallet className="h-4 w-4" />

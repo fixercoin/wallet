@@ -919,9 +919,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint}>
-                <Card
-                  className="bg-transparent rounded-md border-0"
-                >
+                <Card className="bg-transparent rounded-md border-0">
                   <CardContent className="p-0">
                     <div
                       className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
@@ -948,13 +946,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               <span className="flex items-center gap-1">
                                 <span
                                   className={`text-xs font-medium ${
-                                    isPositive ? "text-green-400" : "text-red-400"
+                                    isPositive
+                                      ? "text-green-400"
+                                      : "text-red-400"
                                   }`}
                                 >
                                   {isPositive ? "+" : ""}
                                   {percentChange.toFixed(2)}%
                                 </span>
-                                <span className="text-xs text-gray-400">24h</span>
+                                <span className="text-xs text-gray-400">
+                                  24h
+                                </span>
                               </span>
                             ) : (
                               <span className="text-xs text-gray-400">—</span>
@@ -966,7 +968,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="text-right">
                         <p className="text-sm font-semibold text-white">
                           {formatBalance(
-                            token.symbol === "SOL" ? balance : token.balance || 0,
+                            token.symbol === "SOL"
+                              ? balance
+                              : token.balance || 0,
                           )}
                         </p>
                         <p className="text-xs text-gray-300">

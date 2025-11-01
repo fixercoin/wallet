@@ -835,7 +835,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onSelect={onBurn}
                     className="flex items-center gap-2 text-xs"
                   >
-                    <BurnIcon className="h-4 w-4" />
+                    <Flame className="h-4 w-4" />
                     <span>SPL-BURN</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem

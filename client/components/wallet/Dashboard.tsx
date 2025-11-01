@@ -828,30 +828,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 );
               })()
             : "Connect wallet to see balance"}
-        </div>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mt-6">
+            <Button
+              onClick={onSend}
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            >
+              SEND
+            </Button>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3 mb-4">
-          <Button
-            onClick={onSend}
-            className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
-          >
-            SEND
-          </Button>
+            <Button
+              onClick={onReceive}
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            >
+              RECEIVE
+            </Button>
 
-          <Button
-            onClick={onReceive}
-            className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
-          >
-            RECEIVE
-          </Button>
-
-          <Button
-            onClick={onSwap}
-            className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
-          >
-            SWAP
-          </Button>
+            <Button
+              onClick={onSwap}
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            >
+              SWAP
+            </Button>
+          </div>
         </div>
 
         {/* Tokens List */}

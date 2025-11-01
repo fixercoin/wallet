@@ -797,11 +797,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <defs>
               <linearGradient id="cardWave" x1="0" x2="1" y1="0" y2="0">
                 <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="50%" stopColor="#e6ffed" />
-                <stop offset="100%" stopColor="#22c55e" />
+                <stop offset="45%" stopColor="#f0fff4" />
+                <stop offset="100%" stopColor="#a7f3d0" />
               </linearGradient>
             </defs>
-            <path d="M0,40 C200,100 400,0 720,40 C1040,80 1200,10 1440,50 L1440,120 L0,120 Z" fill="url(#cardWave)" opacity="0.95" />
+            <path d="M0,40 C200,100 400,0 720,40 C1040,80 1200,10 1440,50 L1440,120 L0,120 Z" fill="url(#cardWave)" opacity="0.9" />
           </svg>
           <div className="flex items-center justify-between mb-4">
             <button

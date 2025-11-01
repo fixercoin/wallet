@@ -643,7 +643,15 @@ export default {
     // Get Wallet Balance
     if (pathname === "/api/wallet/balance" && req.method === "GET") {
       try {
-        const walletAddress = searchParams.get("wallet");
+        // Accept multiple query parameter names for compatibility with different frontends
+        const walletAddress =
+          searchParams.get("wallet") ||
+          searchParams.get("publicKey") ||
+          searchParams.get("public_key") ||
+          searchParams.get("address") ||
+          searchParams.get("walletAddress") ||
+          undefined;
+
         if (!walletAddress) {
           return json(
             { error: "Wallet address required" },

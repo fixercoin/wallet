@@ -611,11 +611,53 @@ export const onRequest = async ({ request, env }) => {
       if (uniqSorted.length === 0) {
         return jsonCors(400, { error: "No valid token mints provided" });
       }
+
+      // Mint to search symbol mapping for tokens not found via mint lookup
+      const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+      };
+
       const pathForFetch = `/tokens/${uniqSorted.join(",")}`;
       const data = await fetchDexscreenerData(pathForFetch);
-      const pairs = Array.isArray(data?.pairs)
+      let pairs = Array.isArray(data?.pairs)
         ? data.pairs.filter((p: any) => p?.chainId === "solana")
         : [];
+
+      // Find which mints were found
+      const foundMints = new Set<string>();
+      pairs.forEach((p: any) => {
+        if (p?.baseToken?.address) foundMints.add(p.baseToken.address);
+      });
+
+      // For missing mints, try search-based lookup
+      const missingMints = uniqSorted.filter((m) => !foundMints.has(m));
+      if (missingMints.length > 0) {
+        for (const mint of missingMints) {
+          const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+          if (searchSymbol) {
+            try {
+              const searchData = await fetchDexscreenerData(
+                `/search/?q=${encodeURIComponent(searchSymbol)}`,
+              );
+              if (Array.isArray(searchData?.pairs)) {
+                const matchingPair = searchData.pairs.find(
+                  (p: any) =>
+                    (p?.baseToken?.address === mint ||
+                      p?.quoteToken?.address === mint) &&
+                    p?.chainId === "solana",
+                );
+                if (matchingPair) {
+                  pairs.push(matchingPair);
+                }
+              }
+            } catch (e) {
+              // Silently continue if search fails
+            }
+          }
+        }
+      }
+
       return jsonCors(200, {
         schemaVersion: data?.schemaVersion || "1.0.0",
         pairs,

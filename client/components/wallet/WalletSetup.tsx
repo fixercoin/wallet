@@ -12,6 +12,7 @@ import {
   importWalletFromPrivateKey,
 } from "@/lib/wallet";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
+import { prefetchWalletAddressData } from "@/lib/services/address-setup";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -75,6 +76,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       const walletData = recoverWallet(normalizedMnemonic);
       setWallet(walletData);
 
+      // Prefetch address data via RPC providers (Helius, Moralis, etc.)
+      void prefetchWalletAddressData(walletData.publicKey).catch(
+        () => undefined,
+      );
+
       await refreshBalance().catch(() => {});
       await refreshTokens().catch(() => {});
 
@@ -98,6 +104,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
     setIsLoading(true);
     try {
       setWallet(generatedWallet);
+      // Prefetch address data via RPC providers (Helius, Moralis, etc.)
+      void prefetchWalletAddressData(generatedWallet.publicKey).catch(
+        () => undefined,
+      );
+
       await refreshBalance().catch(() => {});
       await refreshTokens().catch(() => {});
 
@@ -287,6 +298,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         const walletData =
                           importWalletFromPrivateKey(privateKeyInput);
                         setWallet(walletData);
+                        // Prefetch address data via RPC providers (Helius, Moralis, etc.)
+                        void prefetchWalletAddressData(
+                          walletData.publicKey,
+                        ).catch(() => undefined);
                         await refreshBalance().catch(() => {});
                         await refreshTokens().catch(() => {});
                         toast({

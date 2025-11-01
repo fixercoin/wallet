@@ -582,50 +582,47 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   if (step === "success") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
-
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
         <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 pt-8 px-0 sm:px-4">
-          <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-2xl">
+          <div className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-2xl">
             <div className="p-8 text-center">
               <div className="mb-6">
-                <div className="mx-auto w-16 h-16 bg-emerald-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-400/30">
-                  <Check className="h-8 w-8 text-emerald-300" />
+                <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">
+                  <Check className="h-8 w-8 text-emerald-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   Swap Completed!
                 </h3>
-                <p className="text-white/80">
+                <p className="text-gray-600">
                   Your transaction has been successfully executed
                 </p>
               </div>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-white/70">Swapped:</span>
-                  <span className="font-medium text-white">
+                  <span className="text-gray-600">Swapped:</span>
+                  <span className="font-medium text-gray-900">
                     {fromAmount} {fromToken?.symbol}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Received:</span>
-                  <span className="font-medium text-white">
+                  <span className="text-gray-600">Received:</span>
+                  <span className="font-medium text-gray-900">
                     {toAmount} {toToken?.symbol}
                   </span>
                 </div>
                 {txSignature && (
                   <div className="flex justify-between items-center">
-                    <span className="text-white/70">Transaction:</span>
+                    <span className="text-gray-600">Transaction:</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-emerald-400">
+                      <span className="font-mono text-xs text-emerald-500">
                         {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
                       </span>
                       <a
                         href={`https://solscan.io/tx/${txSignature}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-blue-600 hover:text-blue-500"
                       >
                         <ExternalLink className="h-3 w-3" />
                       </a>
@@ -638,13 +635,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={resetSwap}
-                  className="flex-1 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white"
+                  className="flex-1 bg-white/50 hover:bg-gray-50 border border-transparent text-gray-900"
                 >
                   Swap Again
                 </Button>
                 <Button
                   onClick={onBack}
-                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
+                  className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900"
                 >
                   Back to Wallet
                 </Button>
@@ -657,14 +654,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white px-0 py-4 sm:px-4 relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
-
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
         {/* Card */}
-        <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#555555]/30 overflow-hidden text-white bg-transparent sm:bg-gradient-to-br sm:from-[#2d1b47]/60 sm:to-[#1f0f3d]/60">
+        <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#e6f6ec]/20 overflow-hidden text-gray-900 bg-transparent sm:bg-gradient-to-br sm:from-[#ffffff] sm:via-[#f0fff4] sm:to-[#a7f3d0]">
           <div className="p-5 space-y-4">
             {/* Header with back button */}
             <div className="flex items-center gap-3 -mt-3 -mx-5 px-5 pt-3 pb-2">
@@ -672,16 +665,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-lg font-semibold text-white flex-1">Swap</h1>
+              <h1 className="text-lg font-semibold text-gray-900 flex-1">Swap</h1>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0 text-white hover:text-white hover:bg-[#a855f7]/10 transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 text-gray-900 hover:text-gray-900 hover:bg-gray-100 transition-colors flex-shrink-0"
               >
                 <Settings className="h-4 w-4" />
               </Button>

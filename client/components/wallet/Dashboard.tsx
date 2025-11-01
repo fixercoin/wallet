@@ -849,18 +849,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
-
-          <Button
-            onClick={() => setShowQuestModal(true)}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
-            aria-label="Quest Rewards"
-          >
-            <FlyingPrizeBox
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
-          </Button>
         </div>
 
         {/* Tokens List */}

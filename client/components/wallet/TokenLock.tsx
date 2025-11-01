@@ -707,12 +707,12 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
       {/* Header */}
       <div className="bg-transparent sticky top-0 z-10">
-    <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-      <div className="flex-1 text-center font-medium text-sm text-gray-900">
-        SPL TOKEN LOCK
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="flex-1 text-center font-medium text-sm text-gray-900">
+            SPL TOKEN LOCK
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
       <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
@@ -727,7 +727,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <LockIcon className="h-5 w-5 text-purple-500" />
-            <span className="text-sm font-semibold text-gray-900">Create new lock</span>
+            <span className="text-sm font-semibold text-gray-900">
+              Create new lock
+            </span>
           </div>
           <div className="space-y-4">
             <div>

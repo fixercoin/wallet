@@ -492,7 +492,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-medium text-sm text-gray-900">AIRDROP DISTRIBUTION</div>
+            <div className="font-medium text-sm text-gray-900">
+              AIRDROP DISTRIBUTION
+            </div>
           </div>
           <div className="space-y-4">
             <div>

@@ -196,7 +196,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-md transition-colors">
                     <div className="min-w-0 w-full">
-                      <div className="mb-2 text-[hsl(var(--foreground))] font-medium">SELECT ACCOUNT</div>
+                      <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
+                        SELECT ACCOUNT
+                      </div>
                       <div className="flex items-center">
                         <select
                           value={wallet?.publicKey || ""}
@@ -328,7 +330,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                     } else {
                                       toast({
                                         title: "Unavailable",
-                                        description: "Private key not available",
+                                        description:
+                                          "Private key not available",
                                         variant: "destructive",
                                       });
                                       setSecretAction("hidden");
@@ -355,7 +358,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                     } else {
                                       toast({
                                         title: "Unavailable",
-                                        description: "Recovery phrase not available",
+                                        description:
+                                          "Recovery phrase not available",
                                         variant: "destructive",
                                       });
                                     }
@@ -371,13 +375,15 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                       else
                                         toast({
                                           title: "Copy Failed",
-                                          description: "Could not copy private key",
+                                          description:
+                                            "Could not copy private key",
                                           variant: "destructive",
                                         });
                                     } else {
                                       toast({
                                         title: "Unavailable",
-                                        description: "Private key not available",
+                                        description:
+                                          "Private key not available",
                                         variant: "destructive",
                                       });
                                     }
@@ -409,16 +415,19 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             readOnly
                             className="bg-gray-50 border border-gray-200 text-gray-900 font-mono text-sm resize-none min-h-[140px]"
                             placeholder={
-                              showRecoveryPhrase || showPrivateKey ? "" : "Hidden"
+                              showRecoveryPhrase || showPrivateKey
+                                ? ""
+                                : "Hidden"
                             }
                           />
-                          {selectedSecret === "recovery" && !wallet?.mnemonic && (
-                            <p className="mt-2 text-xs text-red-300">
-                              This account was imported with a private key; no
-                              recovery phrase exists. Create/recover a wallet with a
-                              phrase to view it.
-                            </p>
-                          )}
+                          {selectedSecret === "recovery" &&
+                            !wallet?.mnemonic && (
+                              <p className="mt-2 text-xs text-red-300">
+                                This account was imported with a private key; no
+                                recovery phrase exists. Create/recover a wallet
+                                with a phrase to view it.
+                              </p>
+                            )}
                         </div>
                       </div>
                     </div>

@@ -680,7 +680,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Button>
             </div>
             {/* FROM row */}
-            <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
+            <Card className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
@@ -789,11 +789,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* TO row */}
-            <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
+            <Card className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
-                    <div className="text-xl leading-none tracking-tight text-white">
+                    <div className="text-xl leading-none tracking-tight text-gray-900">
                       {toAmount
                         ? formatAmount(toAmount, toToken?.symbol)
                         : "0.000"}

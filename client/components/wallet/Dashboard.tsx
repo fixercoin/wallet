@@ -733,7 +733,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Balance Section */}
-        <div className="mb-3 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
+        <div className="mb-1 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setShowBalance(!showBalance)}

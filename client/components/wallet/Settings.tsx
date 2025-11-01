@@ -258,7 +258,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         <SelectTrigger className="w-full bg-white border border-gray-200 text-gray-900">
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#2d1b47]/95 border border-[#a855f7]/30">
+                        <SelectContent className="bg-white border border-gray-100 text-gray-900">
                           <SelectItem value="USD" className="text-white">
                             USD (United States Dollar)
                           </SelectItem>

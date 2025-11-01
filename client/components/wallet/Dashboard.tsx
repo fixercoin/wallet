@@ -861,13 +861,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     ) ||
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
+                    const zero = formatCurrency(0, { from: "USD", minimumFractionDigits: 2 });
                     return (
                       <>
                         <div className="text-2xl font-bold text-gray-900 leading-tight">
-                          {showBalance ? "0.00 USD" : "****"}
+                          {showBalance ? zero : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? "+ 0.00 USD (0.00%)" : "24h: ****"}
+                          {showBalance ? `+ ${zero} (0.00%)` : "24h: ****"}
                         </div>
                       </>
                     );

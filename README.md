@@ -12,10 +12,16 @@ Functions are under `functions/api/*` and the frontend builds to `dist/spa`.
 
 ## Deploy
 
-1. Add ONE of these environment variables in Cloudflare Pages settings:
+1. Add environment variables in Cloudflare Pages settings:
+
+   **Solana RPC (Required)** - Choose ONE:
    - **Helius (Recommended)**: `HELIUS_API_KEY` - Get from https://www.helius.dev/
    - **Alchemy**: `ALCHEMY_RPC_URL` - Get from https://www.alchemy.com/
    - **Moralis**: `MORALIS_RPC_URL` - Get from https://moralis.io/
+
+   **Token Prices (Optional)** - For better price data:
+   - **CoinMarketCap**: `COINMARKETCAP_API_KEY` - Get from https://coinmarketcap.com/api/ (Free tier available)
+
 2. `git add . && git commit -m "Add CF functions" && git push`
 3. Cloudflare Pages will auto-build (ensure Build command: `npm run build`, Output dir: `dist/spa`)
 

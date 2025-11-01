@@ -735,36 +735,31 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      {/* Header - Fixed at top with transparent background */}
-      <div className="sticky top-0 z-10 bg-transparent">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex-1 text-center font-medium text-sm">
-            SEND {selectedSymbol}
-          </div>
-        </div>
-      </div>
-
       {/* Form Container - Centered */}
       <div className="flex-1 flex items-center justify-center relative z-20">
         <div className="w-full max-w-md px-4 py-6">
-          {isLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
-              <div className="text-[hsl(var(--foreground))]">
-                Processing transaction...
+          <div className="rounded-2xl border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
+            {isLoading && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 rounded-2xl">
+                <div className="text-[hsl(var(--foreground))]">
+                  Processing transaction...
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="space-y-6 p-6">
+            <div className="space-y-6 p-6">
+              <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onBack}
+                  className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="font-medium text-sm">SEND {selectedSymbol}</div>
+              </div>
             {step === "form" ? (
               <>
                 <div className="space-y-2">
@@ -990,14 +985,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
               </>
             )}
 
-            {error && (
-              <Alert
-                variant="destructive"
-                className="bg-red-500/20 border-red-400/30 text-red-200"
-              >
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              {error && (
+                <Alert
+                  variant="destructive"
+                  className="bg-red-500/20 border-red-400/30 text-red-200"
+                >
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+            </div>
           </div>
         </div>
       </div>

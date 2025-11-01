@@ -10,7 +10,6 @@ import {
 import {
   Flame,
   Menu,
-  Search,
   Wallet,
   Gift,
   Flame as BurnIcon,

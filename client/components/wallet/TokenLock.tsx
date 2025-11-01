@@ -717,10 +717,17 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <LockIcon className="h-5 w-5 text-purple-500" />
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              Create new lock
-            </span>
+            <span className="text-sm font-semibold text-gray-900">Create new lock</span>
           </div>
           <div className="space-y-4">
             <div>

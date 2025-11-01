@@ -599,7 +599,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Tagline */}
               <div className="text-center">
                 <p className="text-sm font-semibold text-[#FF7A5C] uppercase tracking-wider">
-                  🚀 Grow. Earn. Win.
+                  �� Grow. Earn. Win.
                 </p>
               </div>
 
@@ -824,7 +824,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
             SEND
@@ -832,16 +832,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Button
             onClick={onReceive}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
           >
-            <ArrowDownLeft className="h-4 w-4" />
+            <ArrowDownLeft className="h-4 w-4 mr-2" />
+            RECEIVE
           </Button>
 
           <Button
             onClick={onSwap}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
+            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white flex items-center justify-center"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4 mr-2" />
+            SWAP
           </Button>
         </div>
 

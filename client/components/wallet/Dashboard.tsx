@@ -638,7 +638,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <label className="flex items-start gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          className="mt-0.5 accent-[#FF7A5C]"
+                          className="mt-0.5 accent-[#C084FC]"
                           checked={completedTasks.has(t.id)}
                           onChange={() => toggleTask(t.id)}
                         />

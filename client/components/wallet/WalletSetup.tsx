@@ -134,9 +134,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Main welcome screen
   if (activeTab === "create" && !generatedWallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
           <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
@@ -162,7 +162,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   onClick={() => setActiveTab("recover")}
                   variant="ghost"
-                  className="w-full h-12 rounded-xl text-white hover:bg-[#FF7A5C]/10"
+                  className="w-full h-12 rounded-xl text-white hover:bg-[#a855f7]/10"
                 >
                   <Import className="h-5 w-5 mr-2" />
                   IMPORT WALLET
@@ -184,9 +184,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Recovery screen
   if (activeTab === "recover") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
           <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
@@ -218,7 +218,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowPrivateKeyInput((s) => !s)}
-                      className="text-white hover:bg-[#FF7A5C]/10"
+                      className="text-white hover:bg-[#a855f7]/10"
                     >
                       {showPrivateKeyInput ? (
                         <EyeOff className="h-4 w-4" />
@@ -327,9 +327,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Mnemonic display screen
   if (activeTab === "mnemonic" && generatedWallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
           <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
@@ -379,11 +379,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <div className="bg-[#1a2540]/50 rounded-xl p-6">
+                <div className="bg-[#2d1b47]/50 rounded-xl p-6">
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>
@@ -394,7 +394,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   id="confirm-backup"
                   checked={confirmedMnemonic}
                   onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                  className="rounded bg-[#1a2540]/50"
+                  className="rounded bg-[#2d1b47]/50"
                 />
                 <Label htmlFor="confirm-backup" className="text-sm opacity-80">
                   I have safely backed up my recovery phrase

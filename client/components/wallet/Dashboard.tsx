@@ -567,24 +567,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
       {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#C084FC] to-[#4ADE80] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#4ADE80] pointer-events-none" />
-
-      <TopBar
-        onAccounts={onAccounts}
-        onAirdrop={onAirdrop}
-        onBurn={onBurn}
-        onLock={onLock}
-        onSettings={onSettings}
-        onQuestOpen={() => setShowQuestModal(true)}
-      />
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
       {/* Quest Modal */}
       {showQuestModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
-          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-[#ffffff66]/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
+          <div className="bg-gradient-to-br from-[#2d1b47] to-[#1f0f3d] rounded-2xl border border-[#a855f7]/40 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
               <button
@@ -598,7 +589,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {/* Tagline */}
               <div className="text-center">
-                <p className="text-sm font-semibold text-[#C084FC] uppercase tracking-wider">
+                <p className="text-sm font-semibold text-[#a855f7] uppercase tracking-wider">
                   🚀 Grow. Earn. Win.
                 </p>
               </div>
@@ -625,7 +616,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               {/* Complete Tasks */}
-              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+              <div className="bg-white/5 rounded-lg p-3 border border-[#a855f7]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
                   Complete Tasks
                 </h3>
@@ -638,7 +629,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <label className="flex items-start gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          className="mt-0.5 accent-[#C084FC]"
+                          className="mt-0.5 accent-[#a855f7]"
                           checked={completedTasks.has(t.id)}
                           onChange={() => toggleTask(t.id)}
                         />
@@ -652,14 +643,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
+                          className="text-[#a855f7] hover:underline text-[11px] font-semibold"
                         >
                           Open
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
+                          className="text-[#a855f7] hover:underline text-[11px] font-semibold"
                         >
                           Share
                         </button>
@@ -694,7 +685,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
                   <div
-                    className="bg-gradient-to-r from-[#C084FC] to-[#4ADE80] h-2 rounded-full"
+                    className="bg-gradient-to-r from-[#a855f7] to-[#22c55e] h-2 rounded-full"
                     style={{ width: `${progressPct}%` }}
                   ></div>
                 </div>
@@ -709,14 +700,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#C084FC] to-[#4ADE80] hover:from-[#B06FF5] hover:to-[#34D399] text-white shadow-lg"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#a855f7] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
                   onClick={() => completeNextTask()}
                 >
                   Complete Task
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#C084FC]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#2d1b47]/50 text-white hover:bg-[#a855f7]/10"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >
@@ -730,8 +721,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
         {/* Balance Section */}
-        <div className="mb-3 rounded-lg p-6 border border-[#C084FC]/30 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-3 rounded-lg p-6 border border-[#a855f7]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
+          <TopBar
+            onAccounts={onAccounts}
+            onAirdrop={onAirdrop}
+            onBurn={onBurn}
+            onLock={onLock}
+            onSettings={onSettings}
+            onQuestOpen={() => setShowQuestModal(true)}
+          />
+          <div className="flex items-center justify-between mb-4 mt-4">
             <div className="flex-1"></div>
             <button
               onClick={() => setShowBalance(!showBalance)}
@@ -864,21 +863,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-3 mt-6">
             <Button
               onClick={onSend}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#C084FC]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#4ADE80]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/40 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#C084FC]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
             >
               SWAP
             </Button>
@@ -917,7 +916,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             return (
               <Card
                 key={token.mint}
-                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#C084FC]/30 rounded-md"
+                className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-md"
               >
                 <CardContent className="p-0">
                   <div

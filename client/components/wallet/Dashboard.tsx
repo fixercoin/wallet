@@ -652,14 +652,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
                         >
                           Open
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
                         >
                           Share
                         </button>

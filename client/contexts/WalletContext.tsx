@@ -176,6 +176,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {
     if (wallet) {
+      console.log(`[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`);
       (async () => {
         await refreshBalance();
         await refreshTokens();

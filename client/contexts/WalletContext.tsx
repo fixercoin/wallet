@@ -504,6 +504,37 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
+        // If pump fun or other tokens still missing, try Jupiter as final fallback
+        const tokensWithoutPrice = allTokens.filter((t) => !prices[t.mint]);
+        if (tokensWithoutPrice.length > 0) {
+          try {
+            const missingMints = tokensWithoutPrice.map((t) => t.mint);
+            console.log(
+              `[Jupiter] Fetching ${missingMints.length} missing token prices from Jupiter`,
+            );
+            const jupiterPrices = await jupiterAPI.getTokenPrices(missingMints);
+            let addedCount = 0;
+            Object.entries(jupiterPrices).forEach(([mint, price]) => {
+              if (price && price > 0 && !prices[mint]) {
+                prices[mint] = price;
+                addedCount++;
+                if (mint === fixercoinMint || mint === lockerMint) {
+                  console.log(
+                    `[Jupiter] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: $${price.toFixed(8)}`,
+                  );
+                }
+              }
+            });
+            if (addedCount > 0) {
+              console.log(
+                `[Jupiter] Added ${addedCount} prices from Jupiter API`,
+              );
+            }
+          } catch (e) {
+            console.warn("Failed to fetch missing prices from Jupiter:", e);
+          }
+        }
+
         // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
         try {
           const stableSymbols = allTokens

@@ -28,12 +28,13 @@ interface DexscreenerResponse {
 }
 
 const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
-  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
 };
 
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
-  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
-  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
 };
 
 async function fetchTokenPriceFromDexScreener(
@@ -44,7 +45,9 @@ async function fetchTokenPriceFromDexScreener(
   if (pairAddress) {
     try {
       const pairUrl = `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`;
-      console.log(`[DexScreener] Trying pair address lookup for ${mint}: ${pairUrl}`);
+      console.log(
+        `[DexScreener] Trying pair address lookup for ${mint}: ${pairUrl}`,
+      );
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -64,7 +67,9 @@ async function fetchTokenPriceFromDexScreener(
           const priceUsd = data.pairs[0].priceUsd;
           if (priceUsd) {
             const price = parseFloat(priceUsd);
-            console.log(`[DexScreener] ✅ Got price for ${mint} via pair address: $${price}`);
+            console.log(
+              `[DexScreener] ✅ Got price for ${mint} via pair address: $${price}`,
+            );
             return price;
           }
         }
@@ -125,7 +130,10 @@ async function fetchTokenPriceFromDexScreener(
       try {
         const searchUrl = `https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(searchSymbol)}`;
         const searchController = new AbortController();
-        const searchTimeoutId = setTimeout(() => searchController.abort(), 8000);
+        const searchTimeoutId = setTimeout(
+          () => searchController.abort(),
+          8000,
+        );
 
         const searchResponse = await fetch(searchUrl, {
           signal: searchController.signal,
@@ -137,7 +145,8 @@ async function fetchTokenPriceFromDexScreener(
         clearTimeout(searchTimeoutId);
 
         if (searchResponse.ok) {
-          const searchData = (await searchResponse.json()) as DexscreenerResponse;
+          const searchData =
+            (await searchResponse.json()) as DexscreenerResponse;
           if (searchData.pairs && searchData.pairs.length > 0) {
             // Look for pairs where this token is the base on Solana
             let matchingPair = searchData.pairs.find(

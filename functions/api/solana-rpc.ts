@@ -4,7 +4,7 @@ const RPC_ENDPOINTS = [
     : "",
   process.env.HELIUS_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
-  process.env.ALCHEMY_RPC_URL || ""
+  process.env.ALCHEMY_RPC_URL || "",
 ].filter(Boolean);
 
 async function callRpc(payload: any) {
@@ -13,7 +13,7 @@ async function callRpc(payload: any) {
       const resp = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
       if (resp.ok) return await resp.json();
       // If you get a 403, skip to next endpoint

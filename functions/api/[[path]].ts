@@ -40,7 +40,10 @@ async function proxyToSolanaRPC(
     rpcUrl = env.MORALIS_RPC_URL;
   } else if (env.ALCHEMY_RPC_URL) {
     rpcUrl = env.ALCHEMY_RPC_URL;
-  } else if (DEFAULT_RPC_URL && DEFAULT_RPC_URL !== "https://api.mainnet-beta.solana.com") {
+  } else if (
+    DEFAULT_RPC_URL &&
+    DEFAULT_RPC_URL !== "https://api.mainnet-beta.solana.com"
+  ) {
     rpcUrl = DEFAULT_RPC_URL;
   } else {
     const headers = applyCors(
@@ -469,12 +472,13 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const MINT_TO_PAIR_ADDRESS_EX: Record<string, string> = {
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+          "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
       };
 
       const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+        EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
       };
 
       const FALLBACK_USD: Record<string, number> = {
@@ -538,8 +542,7 @@ export const onRequest = async ({ request, env }) => {
                   // Look for pairs where this token is the base on Solana
                   let matchingPair = searchPairs.find(
                     (p: any) =>
-                      p?.baseToken?.address === mint &&
-                      p?.chainId === "solana",
+                      p?.baseToken?.address === mint && p?.chainId === "solana",
                   );
 
                   // If not found as base on Solana, try as quote token on Solana
@@ -702,13 +705,14 @@ export const onRequest = async ({ request, env }) => {
 
       // Mint to pair address mapping for pump.fun tokens
       const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+          "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
       };
 
       // Mint to search symbol mapping for tokens not found via mint lookup
       const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+        EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
       };
 
       const pathForFetch = `/tokens/${uniqSorted.join(",")}`;
@@ -736,10 +740,7 @@ export const onRequest = async ({ request, env }) => {
               const pairData = await fetchDexscreenerData(
                 `/pairs/solana/${pairAddress}`,
               );
-              if (
-                Array.isArray(pairData?.pairs) &&
-                pairData.pairs.length > 0
-              ) {
+              if (Array.isArray(pairData?.pairs) && pairData.pairs.length > 0) {
                 pairs.push(pairData.pairs[0]);
                 found = true;
               }
@@ -760,8 +761,7 @@ export const onRequest = async ({ request, env }) => {
                   // Look for pairs where this token is the base on Solana
                   let matchingPair = searchData.pairs.find(
                     (p: any) =>
-                      p?.baseToken?.address === mint &&
-                      p?.chainId === "solana",
+                      p?.baseToken?.address === mint && p?.chainId === "solana",
                   );
 
                   // If not found as base on Solana, try as quote token on Solana

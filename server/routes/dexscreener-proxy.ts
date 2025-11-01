@@ -181,13 +181,14 @@ const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
 
 // Mint to pair address mapping for pump.fun tokens
 const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
-  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
 };
 
 // Mint to search symbol mapping for tokens not found via mint lookup
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
-  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
-  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
 };
 
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
@@ -274,7 +275,11 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
               `/pairs/solana/${pairAddress}`,
             );
 
-            if (pairData?.pairs && Array.isArray(pairData.pairs) && pairData.pairs.length > 0) {
+            if (
+              pairData?.pairs &&
+              Array.isArray(pairData.pairs) &&
+              pairData.pairs.length > 0
+            ) {
               const pair = pairData.pairs[0];
               console.log(
                 `[DexScreener] ✅ Found ${mint} via pair address, priceUsd: ${pair.priceUsd || "N/A"}`,
@@ -308,16 +313,14 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
                 // Look for pairs where this token is the base on Solana
                 let matchingPair = searchData.pairs.find(
                   (p) =>
-                    p.baseToken?.address === mint &&
-                    p.chainId === "solana",
+                    p.baseToken?.address === mint && p.chainId === "solana",
                 );
 
                 // If not found as base on Solana, try as quote token on Solana
                 if (!matchingPair) {
                   matchingPair = searchData.pairs.find(
                     (p) =>
-                      p.quoteToken?.address === mint &&
-                      p.chainId === "solana",
+                      p.quoteToken?.address === mint && p.chainId === "solana",
                   );
                 }
 
@@ -355,7 +358,9 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
             } catch (searchErr) {
               console.warn(
                 `[DexScreener] ⚠️ Search fallback failed for ${mint}:`,
-                searchErr instanceof Error ? searchErr.message : String(searchErr),
+                searchErr instanceof Error
+                  ? searchErr.message
+                  : String(searchErr),
               );
             }
           }

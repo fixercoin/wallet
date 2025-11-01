@@ -623,13 +623,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       } catch (dexError) {
         try {
           const tokenMints = allTokens.map((token) => token.mint);
-          prices = await jupiterAPI.getTokenPrices(tokenMints);
+          console.log(
+            `[CoinMarketCap] DexScreener failed, trying CoinMarketCap for ${tokenMints.length} tokens`,
+          );
+          prices = await coinmarketcapAPI.getTokenPrices(tokenMints);
           if (Object.keys(prices).length > 0) {
-            priceSource = "jupiter";
+            priceSource = "coinmarketcap";
+            console.log(
+              `[CoinMarketCap] ✅ Successfully fetched ${Object.keys(prices).length} prices`,
+            );
           } else {
-            throw new Error("Jupiter also returned no prices");
+            throw new Error("CoinMarketCap also returned no prices");
           }
-        } catch (jupiterError) {
+        } catch (cmcError) {
           try {
             const solPricePromise = solPriceService.getSolPrice();
             const timeout = new Promise<null>((resolve) =>

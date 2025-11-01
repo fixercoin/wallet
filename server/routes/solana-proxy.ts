@@ -1,6 +1,8 @@
 import { RequestHandler } from "express";
 
 const RPC_ENDPOINTS = [
+  // Prefer Fixorium public RPC gateway (Cloudflare Worker)
+  "https://rpc.fixorium.com.pk",
   // Priority: Premium endpoints with better support for getTokenAccountsByOwner
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`

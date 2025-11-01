@@ -783,38 +783,45 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <>
                     <div className="text-2xl font-bold text-white leading-tight">
-                      {formatCurrency(total, {
-                        from: "USD",
+                      {total.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
-                      })}
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      USD
                     </div>
                     {hasValidPriceChange && (
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2 mt-1">
+                        <span className="text-xs text-gray-400">24h:</span>
                         {isPositive ? (
                           <>
-                            <ArrowUpRight className="h-4 w-4 text-green-400" />
-                            <span className="text-sm font-medium text-green-400">
+                            <ArrowUpRight className="h-3 w-3 text-green-400" />
+                            <span className="text-xs font-medium text-green-400">
                               +
-                              {formatCurrency(Math.abs(totalChange24h), {
-                                from: "USD",
+                              {Math.abs(totalChange24h).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}{" "}
                               (+{change24hPercent.toFixed(2)}%)
                             </span>
                           </>
                         ) : (
                           <>
-                            <ArrowDownLeft className="h-4 w-4 text-red-400" />
-                            <span className="text-sm font-medium text-red-400">
+                            <ArrowDownLeft className="h-3 w-3 text-red-400" />
+                            <span className="text-xs font-medium text-red-400">
                               -
-                              {formatCurrency(Math.abs(totalChange24h), {
-                                from: "USD",
+                              {Math.abs(totalChange24h).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}{" "}
                               ({change24hPercent.toFixed(2)}%)
                             </span>
                           </>
                         )}
+                      </div>
+                    )}
+                    {!hasValidPriceChange && (
+                      <div className="text-xs text-gray-400 mt-1">
+                        24h: No data available
                       </div>
                     )}
                   </>

@@ -746,7 +746,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           <SelectItem
                             key={token.mint}
                             value={token.mint}
-                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
+                            className="text-white hover:bg-[#a855f7]/20 focus:bg-[#a855f7]/20 transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <Avatar className="h-5 w-5 ring-1 ring-white/20">
@@ -853,7 +853,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           <SelectItem
                             key={token.mint}
                             value={token.mint}
-                            className="text-white hover:bg-[#FF7A5C]/20 focus:bg-[#FF7A5C]/20 transition-colors"
+                            className="text-white hover:bg-[#a855f7]/20 focus:bg-[#a855f7]/20 transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <Avatar className="h-5 w-5 ring-1 ring-white/20">

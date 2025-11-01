@@ -777,17 +777,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
-        {/* Top Bar - Outside Balance Card */}
-        <div className="mb-0">
-          <TopBar
-            onAccounts={onAccounts}
-            onAirdrop={onAirdrop}
-            onBurn={onBurn}
-            onLock={onLock}
-            onSettings={onSettings}
-            onQuestOpen={() => setShowQuestModal(true)}
-          />
-        </div>
 
         {/* Balance Section */}
         <div className="mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">

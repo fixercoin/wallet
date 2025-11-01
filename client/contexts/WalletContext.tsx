@@ -36,6 +36,7 @@ interface WalletContextType {
   refreshBalance: () => Promise<void>;
   refreshTokens: () => Promise<void>;
   addCustomToken: (token: TokenInfo) => void;
+  removeToken: (tokenMint: string) => void;
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;

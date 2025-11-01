@@ -39,6 +39,45 @@ const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
 async function fetchTokenPriceFromDexScreener(
   mint: string,
 ): Promise<number | null> {
+  // First, try pair address lookup if available
+  const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
+  if (pairAddress) {
+    try {
+      const pairUrl = `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`;
+      console.log(`[DexScreener] Trying pair address lookup for ${mint}: ${pairUrl}`);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(pairUrl, {
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = (await response.json()) as DexscreenerResponse;
+        if (data.pairs && data.pairs.length > 0) {
+          const priceUsd = data.pairs[0].priceUsd;
+          if (priceUsd) {
+            const price = parseFloat(priceUsd);
+            console.log(`[DexScreener] ✅ Got price for ${mint} via pair address: $${price}`);
+            return price;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `[DexScreener] ⚠️ Pair address lookup failed:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  // Fallback: try mint-based lookup
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${mint}`;
     console.log(`[DexScreener] Fetching price for ${mint} from: ${url}`);

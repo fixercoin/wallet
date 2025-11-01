@@ -43,7 +43,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
     "hidden",
   );
-  const { currency, setCurrency } = useCurrency();
 
   if (wallets.length === 0) {
     return (

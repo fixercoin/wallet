@@ -735,7 +735,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="mb-3 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex-1"></div>
             <button
               onClick={() => setShowBalance(!showBalance)}
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -746,6 +745,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <EyeOff className="h-5 w-5 text-white/80" />
               )}
             </button>
+            <div className="flex-1"></div>
           </div>
           <div className="text-center space-y-2">
             {wallet

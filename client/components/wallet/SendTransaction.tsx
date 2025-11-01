@@ -775,10 +775,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     Token
                   </Label>
                   <Select value={selectedMint} onValueChange={setSelectedMint}>
-                    <SelectTrigger className="w-full bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300">
+                    <SelectTrigger className="w-full bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white placeholder:text-gray-300">
                       <SelectValue placeholder="Select token" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0f1520] border border-white/10 text-white">
+                    <SelectContent className="bg-[#2d1b47] border border-[#a855f7]/20 text-white">
                       {availableTokens.map((t) => (
                         <SelectItem
                           key={t.mint}

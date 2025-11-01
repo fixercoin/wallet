@@ -672,12 +672,29 @@ export const onRequest = async ({ request, env }) => {
                 `/search/?q=${encodeURIComponent(searchSymbol)}`,
               );
               if (Array.isArray(searchData?.pairs)) {
-                const matchingPair = searchData.pairs.find(
+                // Look for pairs where this token is the base
+                let matchingPair = searchData.pairs.find(
                   (p: any) =>
-                    (p?.baseToken?.address === mint ||
-                      p?.quoteToken?.address === mint) &&
+                    p?.baseToken?.address === mint &&
                     p?.chainId === "solana",
                 );
+
+                // If not found as base, try as quote token
+                if (!matchingPair) {
+                  matchingPair = searchData.pairs.find(
+                    (p: any) =>
+                      p?.quoteToken?.address === mint &&
+                      p?.chainId === "solana",
+                  );
+                }
+
+                // If still not found, just take the first Solana pair
+                if (!matchingPair) {
+                  matchingPair = searchData.pairs.find(
+                    (p: any) => p?.chainId === "solana",
+                  );
+                }
+
                 if (matchingPair) {
                   pairs.push(matchingPair);
                 }

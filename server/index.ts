@@ -50,6 +50,9 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/dexscreener/search", handleDexscreenerSearch);
   app.get("/api/dexscreener/trending", handleDexscreenerTrending);
 
+  // DexTools routes
+  app.get("/api/dextools/price", handleDexToolsPrice);
+
   // Jupiter routes
   app.get("/api/jupiter/price", handleJupiterPrice);
   app.get("/api/jupiter/quote", handleJupiterQuote);

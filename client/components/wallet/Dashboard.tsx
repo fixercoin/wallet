@@ -789,7 +789,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {showBalance ? (
                   <Eye className="h-5 w-5 text-black" />
                 ) : (
-                  <EyeOff className="h-5 w-5" />
+                  <EyeOff className="h-5 w-5 text-black" />
                 )}
               </button>
             </div>

@@ -436,7 +436,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           prices = {};
         }
 
-        // If pump fun prices still missing from initial fetch, try dedicated fetch
+        // If FIXERCOIN price missing, try DexTools (recommended for pump fun tokens)
+        if (!prices[fixercoinMint]) {
+          try {
+            console.log(
+              `[DexTools] Fetching FIXERCOIN price from DexTools API`,
+            );
+            const fixercoinPrice = await dextoolsAPI.getTokenPrice(fixercoinMint);
+            if (fixercoinPrice && fixercoinPrice > 0) {
+              prices[fixercoinMint] = fixercoinPrice;
+              console.log(
+                `[DexTools] FIXERCOIN price: $${fixercoinPrice.toFixed(8)}`,
+              );
+            }
+          } catch (e) {
+            console.warn("Failed to fetch FIXERCOIN from DexTools:", e);
+          }
+        }
+
+        // If pump fun prices still missing from initial fetch, try dedicated fetch from DexScreener
         const pumpFunMintsNeeded = [];
         if (!prices[fixercoinMint]) pumpFunMintsNeeded.push(fixercoinMint);
         if (!prices[lockerMint]) pumpFunMintsNeeded.push(lockerMint);

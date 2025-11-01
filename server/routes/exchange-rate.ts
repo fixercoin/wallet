@@ -27,6 +27,10 @@ interface DexscreenerResponse {
   }>;
 }
 
+const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
+  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+};
+
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
   "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
   "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",

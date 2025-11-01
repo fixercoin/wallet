@@ -743,7 +743,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   return (
                     <>
                       <div className="text-2xl font-bold text-white leading-tight">
-                        $ 0.000
+                        0.00 USD
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        24h: +0.00 USD (0.00%)
                       </div>
                     </>
                   );

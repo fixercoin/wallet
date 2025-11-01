@@ -451,7 +451,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             });
           } catch (e) {
             console.warn(
-              "Failed to fetch USDC/LOCKER price data from DexScreener:",
+              "Failed to fetch FIXERCOIN/LOCKER/stablecoin price data from DexScreener:",
               e,
             );
           }

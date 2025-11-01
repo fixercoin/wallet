@@ -16,6 +16,7 @@ import {
 } from "./routes/jupiter-proxy";
 import { handleForexRate } from "./routes/forex-rate";
 import { handleStable24h } from "./routes/stable-24h";
+import { handleDexToolsPrice } from "./routes/dextools-proxy";
 import {
   handleListP2POrders,
   handleCreateP2POrder,

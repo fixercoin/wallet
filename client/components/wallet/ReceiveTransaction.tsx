@@ -85,13 +85,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
               <Input
                 value={wallet.publicKey}
                 readOnly
-                className="font-mono text-sm bg-[#1a2540]/50 text-white placeholder:text-gray-300"
+                className="font-mono text-sm bg-[#2d1b47]/50 text-white placeholder:text-gray-300"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyAddress}
-                className="shrink-0 bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                className="shrink-0 bg-[#2d1b47]/50 text-white hover:bg-[#a855f7]/10"
               >
                 {copied ? (
                   <Check className="h-4 w-4" />

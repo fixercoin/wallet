@@ -793,17 +793,78 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => setShowBalance(!showBalance)}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              {showBalance ? (
-                <Eye className="h-5 w-5 text-white/80" />
-              ) : (
-                <EyeOff className="h-5 w-5 text-white/80" />
-              )}
-            </button>
-            <div className="flex-1"></div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-20"
+              >
+                {showBalance ? (
+                  <Eye className="h-5 w-5 text-white/80" />
+                ) : (
+                  <EyeOff className="h-5 w-5 text-white/80" />
+                )}
+              </button>
+
+              {/* Moved dropdown menu from TopBar: action menu for wallet */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                    aria-label="Wallet menu"
+                  >
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onSelect={() => onOpenSetup?.()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    <span>MY-WALLET</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={onAirdrop}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Gift className="h-4 w-4" />
+                    <span>C-BUILDER</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={onBurn}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <BurnIcon className="h-4 w-4" />
+                    <span>SPL-BURN</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={onLock}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Lock className="h-4 w-4" />
+                    <span>LOCK-SPL</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/fixorium/token-listing")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Coins className="h-4 w-4" />
+                    <span>LISTING</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={onSettings}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>SETTINGS</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex-1"></div>
+            </div>
           </div>
           <div className="text-center space-y-2">
             {wallet

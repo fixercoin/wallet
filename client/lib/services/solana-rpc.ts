@@ -199,7 +199,10 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
     const sol = lamports / 1_000_000_000;
     if (Number.isFinite(sol)) return sol;
   } catch (error) {
-    console.warn("Proxy RPC getBalance failed, attempting direct web3 fallback:", error);
+    console.warn(
+      "Proxy RPC getBalance failed, attempting direct web3 fallback:",
+      error,
+    );
   }
 
   // Fallback: call Solana directly via web3.js (avoids proxy issues/rate limits)
@@ -251,7 +254,10 @@ export const getTokenAccounts = async (publicKey: string) => {
       });
     }
   } catch (error) {
-    console.warn("Proxy RPC getTokenAccountsByOwner failed, attempting direct web3 fallback:", error);
+    console.warn(
+      "Proxy RPC getTokenAccountsByOwner failed, attempting direct web3 fallback:",
+      error,
+    );
   }
 
   // Fallback: direct web3.js call to Solana

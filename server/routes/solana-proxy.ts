@@ -1,16 +1,18 @@
 import { RequestHandler } from "express";
 
 const RPC_ENDPOINTS = [
+  // Priority: Premium endpoints with better support for getTokenAccountsByOwner
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
+  process.env.ALCHEMY_RPC_URL || "",
   process.env.SOLANA_RPC_URL || "",
   process.env.HELIUS_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
-  process.env.ALCHEMY_RPC_URL || "",
+  // Fallback public endpoints (best ones first)
   "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
   "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
 ].filter(Boolean);
 
 export const handleSolanaRpc: RequestHandler = async (req, res) => {

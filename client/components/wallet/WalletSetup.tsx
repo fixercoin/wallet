@@ -145,9 +145,24 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Main welcome screen
   if (activeTab === "create" && !generatedWallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#052e16] via-[#064e3b] to-[#052e16] text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#86efac] to-[#22c55e] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        {/* Decorative bottom green wave (SVG) */}
+        <svg
+          className="bottom-wave z-0"
+          viewBox="0 0 1440 220"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="60%" stopColor="#e6ffed" />
+              <stop offset="100%" stopColor="#22c55e" />
+            </linearGradient>
+          </defs>
+          <path d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z" fill="url(#g1)" opacity="0.95" />
+        </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
           <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
@@ -195,9 +210,24 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Recovery screen
   if (activeTab === "recover") {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#052e16] via-[#064e3b] to-[#052e16] text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#86efac] to-[#22c55e] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        {/* Decorative bottom green wave (SVG) */}
+        <svg
+          className="bottom-wave z-0"
+          viewBox="0 0 1440 220"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="60%" stopColor="#e6ffed" />
+              <stop offset="100%" stopColor="#22c55e" />
+            </linearGradient>
+          </defs>
+          <path d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z" fill="url(#g1)" opacity="0.95" />
+        </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
           <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
@@ -342,9 +372,24 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Mnemonic display screen
   if (activeTab === "mnemonic" && generatedWallet) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#052e16] via-[#064e3b] to-[#052e16] text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#86efac] to-[#22c55e] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        {/* Decorative bottom green wave (SVG) */}
+        <svg
+          className="bottom-wave z-0"
+          viewBox="0 0 1440 220"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="60%" stopColor="#e6ffed" />
+              <stop offset="100%" stopColor="#22c55e" />
+            </linearGradient>
+          </defs>
+          <path d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z" fill="url(#g1)" opacity="0.95" />
+        </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
           <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">

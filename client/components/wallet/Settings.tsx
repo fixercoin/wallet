@@ -171,7 +171,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />

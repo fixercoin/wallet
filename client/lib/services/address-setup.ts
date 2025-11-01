@@ -24,7 +24,9 @@ const rpcPost = async (method: string, params: any[]): Promise<any> => {
     }
     if (!resp.ok || (data && data.error)) {
       throw new Error(
-        (data && data.error && data.error.message) || resp.statusText || "RPC error",
+        (data && data.error && data.error.message) ||
+          resp.statusText ||
+          "RPC error",
       );
     }
     return data?.result ?? data;

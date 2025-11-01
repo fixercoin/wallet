@@ -77,7 +77,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setWallet(walletData);
 
       // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-      void prefetchWalletAddressData(walletData.publicKey).catch(() => undefined);
+      void prefetchWalletAddressData(walletData.publicKey).catch(
+        () => undefined,
+      );
 
       await refreshBalance().catch(() => {});
       await refreshTokens().catch(() => {});
@@ -297,7 +299,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                           importWalletFromPrivateKey(privateKeyInput);
                         setWallet(walletData);
                         // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-                        void prefetchWalletAddressData(walletData.publicKey).catch(() => undefined);
+                        void prefetchWalletAddressData(
+                          walletData.publicKey,
+                        ).catch(() => undefined);
                         await refreshBalance().catch(() => {});
                         await refreshTokens().catch(() => {});
                         toast({

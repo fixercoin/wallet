@@ -577,12 +577,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             const mint = dt?.baseToken?.address as string | undefined;
             const pStr = dt?.priceUsd as string | undefined;
             const price = pStr ? parseFloat(pStr) : NaN;
-            if (mint && typeof price === "number" && isFinite(price) && price > 0) {
+            if (
+              mint &&
+              typeof price === "number" &&
+              isFinite(price) &&
+              price > 0
+            ) {
               prices[mint] = price;
             }
             const pc = dt?.priceChange || {};
             const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-            const ch = candidates.find((v: any) => typeof v === "number" && isFinite(v));
+            const ch = candidates.find(
+              (v: any) => typeof v === "number" && isFinite(v),
+            );
             if (mint && typeof ch === "number") {
               changeMap[mint] = ch;
             }

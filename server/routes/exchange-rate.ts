@@ -96,13 +96,28 @@ async function fetchTokenPriceFromDexScreener(
         if (searchResponse.ok) {
           const searchData = (await searchResponse.json()) as DexscreenerResponse;
           if (searchData.pairs && searchData.pairs.length > 0) {
-            // Find pair that matches our mint
-            const matchingPair = searchData.pairs.find(
+            // Look for pairs where this token is the base
+            let matchingPair = searchData.pairs.find(
               (p) =>
-                (p.baseToken?.address === mint ||
-                  (p as any).quoteToken?.address === mint) &&
+                p.baseToken?.address === mint &&
                 (p as any).chainId === "solana",
             );
+
+            // If not found as base, try as quote token
+            if (!matchingPair) {
+              matchingPair = searchData.pairs.find(
+                (p) =>
+                  (p as any).quoteToken?.address === mint &&
+                  (p as any).chainId === "solana",
+              );
+            }
+
+            // If still not found, just take the first Solana pair
+            if (!matchingPair) {
+              matchingPair = searchData.pairs.find(
+                (p) => (p as any).chainId === "solana",
+              );
+            }
 
             if (matchingPair && matchingPair.priceUsd) {
               const price = parseFloat(matchingPair.priceUsd);

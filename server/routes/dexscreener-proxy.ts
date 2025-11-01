@@ -275,18 +275,56 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
               `/pairs/solana/${pairAddress}`,
             );
 
+            console.log(
+              `[DexScreener] Pair lookup response: ${pairData ? "received" : "null"}, pairs: ${pairData?.pairs?.length || 0}`,
+            );
+
             if (
               pairData?.pairs &&
               Array.isArray(pairData.pairs) &&
               pairData.pairs.length > 0
             ) {
-              const pair = pairData.pairs[0];
+              let pair = pairData.pairs[0];
+
               console.log(
-                `[DexScreener] ✅ Found ${mint} via pair address, priceUsd: ${pair.priceUsd || "N/A"}`,
+                `[DexScreener] Pair address lookup raw data: baseToken=${pair.baseToken?.address}, quoteToken=${pair.quoteToken?.address}, priceUsd=${pair.priceUsd}`,
+              );
+
+              // If the requested mint is the quoteToken, we need to swap the tokens
+              // and invert the price to get the correct representation
+              if (
+                pair.quoteToken?.address === mint &&
+                pair.baseToken?.address !== mint
+              ) {
+                const basePrice = pair.priceUsd ? parseFloat(pair.priceUsd) : 0;
+                const invertedPrice =
+                  basePrice > 0 ? (1 / basePrice).toFixed(20) : "0";
+
+                console.log(
+                  `[DexScreener] Swapping tokens: ${mint} was quoteToken, inverting price ${pair.priceUsd} -> ${invertedPrice}`,
+                );
+
+                pair = {
+                  ...pair,
+                  baseToken: pair.quoteToken,
+                  quoteToken: pair.baseToken,
+                  priceUsd: invertedPrice,
+                  priceNative: pair.priceNative
+                    ? (1 / parseFloat(pair.priceNative)).toString()
+                    : "0",
+                };
+              }
+
+              console.log(
+                `[DexScreener] ✅ Found ${mint} via pair address, baseToken=${pair.baseToken?.symbol || "UNKNOWN"}, priceUsd: ${pair.priceUsd || "N/A"}`,
               );
               results.push(pair);
               foundMintsSet.add(mint);
               found = true;
+            } else {
+              console.warn(
+                `[DexScreener] Pair lookup returned no pairs for ${mint}`,
+              );
             }
           } catch (pairErr) {
             console.warn(

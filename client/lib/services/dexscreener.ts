@@ -154,7 +154,12 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => {
+        console.warn(
+          `[DexScreener] Request timeout after 15s for ${toFetch.length} mints`,
+        );
+        controller.abort();
+      }, 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(
@@ -224,12 +229,20 @@ class DexscreenerAPI {
           fetchFailed = true;
         }
       } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
+        // Handle AbortError specially - it's often a timeout
+        if (err instanceof Error && err.name === "AbortError") {
+          lastError = "Request timeout (15s) - network might be slow";
+          console.warn(
+            `[DexScreener] ⏱️ Request timeout fetching ${toFetch.length} mints`,
+          );
+        } else {
+          lastError = err instanceof Error ? err.message : String(err);
+          console.warn(
+            `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
+            lastError,
+          );
+        }
         fetchFailed = true;
-        console.warn(
-          `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
-          lastError,
-        );
       } finally {
         clearTimeout(timeoutId);
       }

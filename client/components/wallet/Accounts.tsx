@@ -88,6 +88,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                   >
                     <button
                       onClick={() => {
+                        console.log(
+                          `[Accounts] Selected wallet: ${w.publicKey}`,
+                        );
                         selectWallet(w.publicKey);
                         onBack();
                       }}

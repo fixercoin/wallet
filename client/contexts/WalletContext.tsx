@@ -50,6 +50,7 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
+const HIDDEN_TOKENS_KEY = "hidden_tokens";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [wallets, setWallets] = useState<WalletData[]>([]);
@@ -175,6 +176,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {
     if (wallet) {
+      console.log(
+        `[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`,
+      );
       (async () => {
         await refreshBalance();
         await refreshTokens();
@@ -188,7 +192,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 500));
         await refreshTokens();
-      }, 60000);
+      }, 10000);
     } else {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
@@ -249,12 +253,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const selectWallet = (publicKey: string) => {
     const found = wallets.find((w) => w.publicKey === publicKey);
     if (found) {
+      console.log(`[WalletContext] Selecting wallet: ${publicKey}`);
+
       // Reset displayed balances immediately before switching
       setBalance(0);
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
 
+      // Set as active - the useEffect hook will automatically trigger and fetch data
+      // This is safe because wallet is computed from activePublicKey
       setActivePublicKey(publicKey);
+    } else {
+      console.warn(
+        `[WalletContext] Wallet not found: ${publicKey}. Available wallets:`,
+        wallets.map((w) => w.publicKey),
+      );
     }
   };
 
@@ -290,8 +303,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const refreshTokens = async () => {
-    if (!wallet) return;
+    if (!wallet) {
+      console.warn("[WalletContext] refreshTokens called but wallet is null");
+      return;
+    }
 
+    console.log(
+      `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
+    );
     setError(null);
     setIsLoading(true);
 
@@ -632,7 +651,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       } catch {}
 
-      const enhancedTokens = allTokens.map((token) => {
+      // Load hidden tokens list
+      const hiddenTokens = JSON.parse(
+        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+      ) as string[];
+
+      // Filter out hidden tokens from allTokens
+      const visibleTokens = allTokens.filter(
+        (token) => !hiddenTokens.includes(token.mint),
+      );
+
+      const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];
         let finalPrice = price;
 
@@ -717,19 +746,28 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const removeToken = (tokenMint: string) => {
-    setTokens((currentTokens) =>
-      currentTokens.filter((t) => t.mint !== tokenMint),
-    );
-
+    // Remove from custom tokens if it exists there
     const customTokens = JSON.parse(
       localStorage.getItem("custom_tokens") || "[]",
-    );
+    ) as TokenInfo[];
     const newCustomTokens = customTokens.filter(
       (t: TokenInfo) => t.mint !== tokenMint,
     );
     localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
 
-    if (wallet) refreshTokens();
+    // Add to hidden tokens list to permanently hide it
+    const hiddenTokens = JSON.parse(
+      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+    ) as string[];
+    if (!hiddenTokens.includes(tokenMint)) {
+      hiddenTokens.push(tokenMint);
+      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
+    }
+
+    // Update state immediately
+    setTokens((currentTokens) =>
+      currentTokens.filter((t) => t.mint !== tokenMint),
+    );
   };
 
   const logout = () => {

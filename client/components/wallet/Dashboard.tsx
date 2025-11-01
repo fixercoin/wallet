@@ -855,9 +855,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <>
                           {hasValidPriceChange && (
                             <div className="flex items-center justify-center gap-2 mt-1">
-                              <span className="text-xs text-gray-400">
-                                24h:
-                              </span>
                               {isPositive ? (
                                 <>
                                   <ArrowUpRight className="h-3 w-3 text-green-400" />
@@ -893,14 +890,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                           {!hasValidPriceChange && (
                             <div className="text-xs text-gray-400 mt-1">
-                              24h: No data available
+                              No data available
                             </div>
                           )}
                         </>
                       ) : (
-                        <div className="text-xs text-gray-400 mt-1">
-                          24h: ****
-                        </div>
+                        <div className="text-xs text-gray-400 mt-1">****</div>
                       )}
                     </>
                   );
@@ -997,9 +992,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 >
                                   {isPositive ? "+" : ""}
                                   {percentChange.toFixed(2)}%
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  24h
                                 </span>
                               </span>
                             ) : (

@@ -1,5 +1,8 @@
 import { RequestHandler } from "express";
 
+// Helius, Moralis, and Alchemy are RPC providers for Solana blockchain calls
+// They fetch wallet balance and token account data - NOT for token price fetching
+// Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
 const RPC_ENDPOINTS = [
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`

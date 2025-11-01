@@ -176,6 +176,8 @@ class JupiterAPI {
       const data = await response.json();
       return data.data?.[tokenMint]?.price || null;
     } catch (error) {
+      // Return null to let higher-level code handle fallbacks to other price providers
+      // Do NOT retry Jupiter API as that would create cascading failures
       console.error("Error fetching token price from Jupiter:", error);
       return null;
     }
@@ -185,7 +187,9 @@ class JupiterAPI {
     try {
       const ids = tokenMints.join(",");
 
-      console.log(`Fetching prices for ${tokenMints.length} tokens via proxy`);
+      console.log(
+        `Fetching prices for ${tokenMints.length} tokens via Jupiter`,
+      );
 
       const response = await fetch(`/api/jupiter/price?ids=${ids}`, {
         method: "GET",
@@ -215,14 +219,13 @@ class JupiterAPI {
       }
 
       console.log(
-        `Successfully fetched ${Object.keys(prices).length} prices via proxy`,
+        `Successfully fetched ${Object.keys(prices).length} prices from Jupiter`,
       );
       return prices;
     } catch (error) {
-      console.error("Error fetching token prices from Jupiter proxy:", error);
-
-      // Try fallback approach - fetch prices individually
-      return this.getTokenPricesIndividually(tokenMints);
+      console.error("Error fetching token prices from Jupiter:", error);
+      // Return empty object - let callers handle fallback to other providers
+      return {};
     }
   }
 
@@ -247,44 +250,6 @@ class JupiterAPI {
       clearTimeout(timeoutId);
       throw error;
     }
-  }
-
-  private async getTokenPricesIndividually(
-    tokenMints: string[],
-  ): Promise<Record<string, number>> {
-    const prices: Record<string, number> = {};
-
-    console.log(
-      `Falling back to individual price fetching for ${tokenMints.length} tokens`,
-    );
-
-    // Limit concurrent requests to avoid rate limiting
-    const maxConcurrent = 2; // Reduced concurrency for proxy
-    for (let i = 0; i < tokenMints.length; i += maxConcurrent) {
-      const batch = tokenMints.slice(i, i + maxConcurrent);
-      const batchPromises = batch.map(async (mint) => {
-        try {
-          const price = await this.getTokenPrice(mint);
-          if (price !== null) {
-            prices[mint] = price;
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch price for ${mint}:`, error);
-        }
-      });
-
-      await Promise.allSettled(batchPromises);
-
-      // Small delay between batches to avoid rate limiting
-      if (i + maxConcurrent < tokenMints.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Increased delay
-      }
-    }
-
-    console.log(
-      `Individual fetching completed: ${Object.keys(prices).length} prices obtained`,
-    );
-    return prices;
   }
 
   async getAllTokens(): Promise<JupiterToken[]> {

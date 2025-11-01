@@ -299,6 +299,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
 
+      // Start with SOL at the top with current balance
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -311,12 +312,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         },
       ];
 
+      // Add default tokens (USDC, USDT, FIXERCOIN, LOCKER) if not already present
+      const defaultTokensToAdd = DEFAULT_TOKENS.filter(
+        (dt) => dt.symbol !== "SOL" && !allTokens.some((at) => at.mint === dt.mint)
+      );
+      defaultTokensToAdd.forEach((dt) => {
+        allTokens.push({ ...dt, balance: 0 });
+      });
+
+      // Override with actual balances from token accounts
       tokenAccounts.forEach((tokenAccount) => {
         if (tokenAccount.symbol !== "SOL") {
-          allTokens.push(tokenAccount);
+          const existingIndex = allTokens.findIndex((t) => t.mint === tokenAccount.mint);
+          if (existingIndex >= 0) {
+            allTokens[existingIndex] = {
+              ...allTokens[existingIndex],
+              ...tokenAccount,
+              balance: tokenAccount.balance || 0,
+            };
+          } else {
+            allTokens.push(tokenAccount);
+          }
         }
       });
 
+      // Add/override with custom tokens
       customTokens.forEach((customToken) => {
         const existingTokenIndex = allTokens.findIndex(
           (t) => t.mint === customToken.mint,

@@ -317,14 +317,22 @@ export const getTokenAccounts = async (publicKey: string) => {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.warn(
-        `[Token Accounts] Failed with ${rpcUrl}: ${errorMsg}. Trying next endpoint...`,
+        `[Token Accounts] Fallback ${i + 1} failed: ${errorMsg}`,
       );
+      if (i < fallbackRPCs.length - 1) {
+        // Brief delay before trying next endpoint
+        await new Promise((r) => setTimeout(r, 300));
+      }
       continue;
     }
   }
 
   console.error(
-    "[Token Accounts] All RPC endpoints failed to fetch token accounts, returning empty list",
+    `[Token Accounts] ❌ All ${fallbackRPCs.length} RPC endpoints failed. This usually means:
+    1. No RPC endpoint is properly configured (check SOLANA_RPC_URL or HELIUS_API_KEY environment variables)
+    2. All public RPC endpoints are temporarily down or overloaded
+    3. The wallet address might be invalid
+    Returning empty list - token balances will not be visible`,
   );
   return [];
 };

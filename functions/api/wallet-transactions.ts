@@ -24,10 +24,13 @@ export async function onRequestPost(context: any) {
     const limit = Number(body?.limit ?? 10);
 
     if (!walletAddress) {
-      return new Response(JSON.stringify({ error: "Missing walletAddress in POST body" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Missing walletAddress in POST body" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     const rpcBody = {
@@ -75,15 +78,18 @@ export async function onRequestPost(context: any) {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (err: any) {
     return new Response(
-      JSON.stringify({ error: "Failed to fetch transactions", details: err?.message }),
+      JSON.stringify({
+        error: "Failed to fetch transactions",
+        details: err?.message,
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }

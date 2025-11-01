@@ -36,6 +36,6 @@ export async function handleSolanaRpc(req: Request): Promise<Response> {
         lastError?.message ||
         "All RPC endpoints failed - no Solana RPC available",
     }),
-    { status: 500 }
+    { status: 500 },
   );
 }

@@ -51,8 +51,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           balanceLamports,
         });
       } catch (error) {
-        lastError =
-          error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error));
         console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
         continue;
       }

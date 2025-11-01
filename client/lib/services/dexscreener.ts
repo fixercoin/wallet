@@ -175,9 +175,7 @@ class DexscreenerAPI {
               const gotMints = fetchedTokens
                 .map((t) => t.baseToken?.address)
                 .filter(Boolean);
-              const missingMints = toFetch.filter(
-                (m) => !gotMints.includes(m),
-              );
+              const missingMints = toFetch.filter((m) => !gotMints.includes(m));
               console.log(
                 `[DexScreener] Got ${fetchedTokens.length} tokens, missing ${missingMints.length}:`,
                 missingMints,
@@ -193,7 +191,10 @@ class DexscreenerAPI {
             }
           } catch (parseErr) {
             lastError = `Parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
-            console.error(`[DexScreener] ��� Failed to parse response:`, lastError);
+            console.error(
+              `[DexScreener] ��� Failed to parse response:`,
+              lastError,
+            );
             fetchFailed = true;
           }
         } else {

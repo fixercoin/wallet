@@ -10,7 +10,10 @@ Functions are under `functions/api/*` and the frontend builds to `dist/spa`.
 - POST /api/wallet-transactions -> { walletAddress, limit }
 
 ## Deploy
-1. Add environment variable `ALCHEMY_RPC_URL` in Cloudflare Pages settings
+1. Add ONE of these environment variables in Cloudflare Pages settings:
+   - **Helius (Recommended)**: `HELIUS_API_KEY` - Get from https://www.helius.dev/
+   - **Alchemy**: `ALCHEMY_RPC_URL` - Get from https://www.alchemy.com/
+   - **Moralis**: `MORALIS_RPC_URL` - Get from https://moralis.io/
 2. `git add . && git commit -m "Add CF functions" && git push`
 3. Cloudflare Pages will auto-build (ensure Build command: `npm run build`, Output dir: `dist/spa`)
 

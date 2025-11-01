@@ -392,20 +392,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           prices = {};
         }
 
-        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-        try {
-          const fixerData = await fixercoinPriceService.getFixercoinPrice();
-          if (fixerData && fixerData.price > 0) {
-            prices[fixercoinMint] = fixerData.price;
-            if (typeof fixerData.priceChange24h === "number") {
-              changeMap[fixercoinMint] = fixerData.priceChange24h;
-            }
-          }
-        } catch (err) {
-          console.warn("Failed to fetch FIXERCOIN price:", err);
-        }
-
-        // Fetch DexScreener data for stablecoins (USDC, USDT) and LOCKER to get accurate price changes
+        // Fetch DexScreener data for stablecoins (USDC, USDT), FIXERCOIN, and LOCKER to get accurate prices and price changes
         const stableMints = allTokens
           .filter((t) => {
             const sym = (t.symbol || "").toUpperCase();
@@ -419,9 +406,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           })
           .map((t) => t.mint);
 
+        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         const mintsToFetch = [
-          ...new Set([...stableMints, lockerMint].filter(Boolean)),
+          ...new Set(
+            [...stableMints, fixercoinMint, lockerMint].filter(Boolean),
+          ),
         ];
 
         if (mintsToFetch.length > 0) {

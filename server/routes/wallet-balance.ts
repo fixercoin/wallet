@@ -1,5 +1,12 @@
 import { RequestHandler } from "express";
 
+const RPC_ENDPOINTS = [
+  process.env.ALCHEMY_RPC_URL || "",
+  "https://api.mainnet-beta.solana.com",
+  "https://rpc.ankr.com/solana",
+  "https://solana.publicnode.com",
+].filter(Boolean);
+
 export const handleWalletBalance: RequestHandler = async (req, res) => {
   try {
     const { publicKey } = req.query;
@@ -17,31 +24,44 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       params: [publicKey],
     };
 
-    const response = await fetch(
-      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
+    let lastError: Error | null = null;
 
-    const data = await response.json();
+    for (const endpoint of RPC_ENDPOINTS) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
-    if (data.error) {
-      console.error("Solana RPC error:", data.error);
-      return res.status(500).json({
-        error: data.error.message || "Failed to fetch balance",
-      });
+        const data = await response.json();
+
+        if (data.error) {
+          console.warn(`RPC ${endpoint} returned error:`, data.error);
+          lastError = new Error(data.error.message || "RPC error");
+          continue;
+        }
+
+        const balanceLamports = data.result;
+        const balanceSOL = balanceLamports / 1_000_000_000;
+
+        return res.json({
+          publicKey,
+          balance: balanceSOL,
+          balanceLamports,
+        });
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
+        continue;
+      }
     }
 
-    const balanceLamports = data.result;
-    const balanceSOL = balanceLamports / 1_000_000_000;
-
-    res.json({
-      publicKey,
-      balance: balanceSOL,
-      balanceLamports,
+    console.error("All RPC endpoints failed for wallet balance");
+    return res.status(500).json({
+      error:
+        lastError?.message ||
+        "Failed to fetch balance - all RPC endpoints failed",
     });
   } catch (error) {
     console.error("Wallet balance error:", error);

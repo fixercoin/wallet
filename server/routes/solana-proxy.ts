@@ -1,23 +1,41 @@
+const RPC_ENDPOINTS = [
+  process.env.ALCHEMY_RPC_URL || "",
+  "https://api.mainnet-beta.solana.com",
+  "https://rpc.ankr.com/solana",
+  "https://solana.publicnode.com",
+].filter(Boolean);
+
 export async function handleSolanaRpc(req: Request): Promise<Response> {
-  try {
-    const body = await req.json();
-    const response = await fetch(
-      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX",
-      {
+  let lastError: Error | null = null;
+
+  for (const endpoint of RPC_ENDPOINTS) {
+    try {
+      const body = await req.json();
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      }
-    );
-    const data = await response.text();
-    return new Response(data, {
-      headers: { "Content-Type": "application/json" },
-      status: response.status,
-    });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: e.message || "RPC Proxy failed" }),
-      { status: 500 }
-    );
+      });
+
+      const data = await response.text();
+      return new Response(data, {
+        headers: { "Content-Type": "application/json" },
+        status: response.status,
+      });
+    } catch (e: any) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
+      // Try next endpoint
+      continue;
+    }
   }
+
+  return new Response(
+    JSON.stringify({
+      error:
+        lastError?.message ||
+        "All RPC endpoints failed - no Solana RPC available",
+    }),
+    { status: 500 },
+  );
 }

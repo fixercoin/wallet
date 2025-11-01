@@ -560,7 +560,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <div className="rounded-xl border border-[#FF7A5C]/30 bg-[#1a2540]/50 p-4 space-y-3">
+                <div className="rounded-xl border border-[#e6f6ec]/20 bg-white p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-300">

@@ -504,34 +504,34 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
-        // If pump fun or other tokens still missing, try Jupiter as final fallback
+        // If pump fun or other tokens still missing, try CoinMarketCap as final fallback
         const tokensWithoutPrice = allTokens.filter((t) => !prices[t.mint]);
         if (tokensWithoutPrice.length > 0) {
           try {
             const missingMints = tokensWithoutPrice.map((t) => t.mint);
             console.log(
-              `[Jupiter] Fetching ${missingMints.length} missing token prices from Jupiter`,
+              `[CoinMarketCap] Fetching ${missingMints.length} missing token prices from CoinMarketCap`,
             );
-            const jupiterPrices = await jupiterAPI.getTokenPrices(missingMints);
+            const cmcPrices = await coinmarketcapAPI.getTokenPrices(missingMints);
             let addedCount = 0;
-            Object.entries(jupiterPrices).forEach(([mint, price]) => {
+            Object.entries(cmcPrices).forEach(([mint, price]) => {
               if (price && price > 0 && !prices[mint]) {
                 prices[mint] = price;
                 addedCount++;
                 if (mint === fixercoinMint || mint === lockerMint) {
                   console.log(
-                    `[Jupiter] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: $${price.toFixed(8)}`,
+                    `[CoinMarketCap] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: $${price.toFixed(8)}`,
                   );
                 }
               }
             });
             if (addedCount > 0) {
               console.log(
-                `[Jupiter] Added ${addedCount} prices from Jupiter API`,
+                `[CoinMarketCap] Added ${addedCount} prices from CoinMarketCap API`,
               );
             }
           } catch (e) {
-            console.warn("Failed to fetch missing prices from Jupiter:", e);
+            console.warn("Failed to fetch missing prices from CoinMarketCap:", e);
           }
         }
 

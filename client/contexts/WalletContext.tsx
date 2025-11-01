@@ -568,6 +568,28 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
+      // Ensure DexScreener prices for FIXERCOIN and LOCKER regardless of earlier fallbacks
+      try {
+        const specialMints = [fixercoinMint, lockerMint].filter(Boolean);
+        if (specialMints.length > 0) {
+          const dexTokens = await dexscreenerAPI.getTokensByMints(specialMints);
+          dexTokens.forEach((dt: any) => {
+            const mint = dt?.baseToken?.address as string | undefined;
+            const pStr = dt?.priceUsd as string | undefined;
+            const price = pStr ? parseFloat(pStr) : NaN;
+            if (mint && typeof price === "number" && isFinite(price) && price > 0) {
+              prices[mint] = price;
+            }
+            const pc = dt?.priceChange || {};
+            const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
+            const ch = candidates.find((v: any) => typeof v === "number" && isFinite(v));
+            if (mint && typeof ch === "number") {
+              changeMap[mint] = ch;
+            }
+          });
+        }
+      } catch {}
+
       const enhancedTokens = allTokens.map((token) => {
         const price = prices[token.mint];
         let finalPrice = price;

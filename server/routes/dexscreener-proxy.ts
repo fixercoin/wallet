@@ -179,6 +179,18 @@ const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
   return Array.from(byMint.values());
 };
 
+// Mint to pair address mapping for pump.fun tokens
+const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+};
+
+// Mint to search symbol mapping for tokens not found via mint lookup
+const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+};
+
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
   try {
     const { mints } = req.query;
@@ -212,6 +224,8 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
     }
 
     const results: DexscreenerToken[] = [];
+    const requestedMintsSet = new Set(uniqueMints);
+    const foundMintsSet = new Set<string>();
     let schemaVersion = "1.0.0";
 
     for (const batch of batches) {
@@ -227,6 +241,131 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       }
 
       results.push(...data.pairs);
+
+      // Track which mints we found
+      data.pairs.forEach((pair) => {
+        if (pair.baseToken?.address) {
+          foundMintsSet.add(pair.baseToken.address);
+        }
+      });
+    }
+
+    // Find mints that weren't found in the initial batch request
+    const missingMints = Array.from(requestedMintsSet).filter(
+      (m) => !foundMintsSet.has(m),
+    );
+
+    // For missing mints, try pair address lookup first, then search fallback
+    if (missingMints.length > 0) {
+      console.log(
+        `[DexScreener] ${missingMints.length} mints not found via batch, trying pair/search fallback`,
+      );
+
+      for (const mint of missingMints) {
+        let found = false;
+
+        // First, try pair address lookup if available
+        const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
+        if (pairAddress) {
+          try {
+            console.log(
+              `[DexScreener] Trying pair address lookup for ${mint}: ${pairAddress}`,
+            );
+            const pairData = await fetchDexscreenerData(
+              `/pairs/solana/${pairAddress}`,
+            );
+
+            if (
+              pairData?.pairs &&
+              Array.isArray(pairData.pairs) &&
+              pairData.pairs.length > 0
+            ) {
+              const pair = pairData.pairs[0];
+              console.log(
+                `[DexScreener] ✅ Found ${mint} via pair address, priceUsd: ${pair.priceUsd || "N/A"}`,
+              );
+              results.push(pair);
+              foundMintsSet.add(mint);
+              found = true;
+            }
+          } catch (pairErr) {
+            console.warn(
+              `[DexScreener] ⚠️ Pair address lookup failed for ${mint}:`,
+              pairErr instanceof Error ? pairErr.message : String(pairErr),
+            );
+          }
+        }
+
+        // If pair lookup failed or unavailable, try search-based lookup
+        if (!found) {
+          const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+          if (searchSymbol) {
+            try {
+              console.log(
+                `[DexScreener] Searching for ${mint} using symbol: ${searchSymbol}`,
+              );
+              const searchData = await fetchDexscreenerData(
+                `/search/?q=${encodeURIComponent(searchSymbol)}`,
+              );
+
+              if (searchData?.pairs && Array.isArray(searchData.pairs)) {
+                // Find the pair that matches our mint
+                // Look for pairs where this token is the base on Solana
+                let matchingPair = searchData.pairs.find(
+                  (p) =>
+                    p.baseToken?.address === mint && p.chainId === "solana",
+                );
+
+                // If not found as base on Solana, try as quote token on Solana
+                if (!matchingPair) {
+                  matchingPair = searchData.pairs.find(
+                    (p) =>
+                      p.quoteToken?.address === mint && p.chainId === "solana",
+                  );
+                }
+
+                // If still not found on Solana, try any chain as base
+                if (!matchingPair) {
+                  matchingPair = searchData.pairs.find(
+                    (p) => p.baseToken?.address === mint,
+                  );
+                }
+
+                // If still not found, try as quote on any chain
+                if (!matchingPair) {
+                  matchingPair = searchData.pairs.find(
+                    (p) => p.quoteToken?.address === mint,
+                  );
+                }
+
+                // Last resort: just take the first result
+                if (!matchingPair && searchData.pairs.length > 0) {
+                  matchingPair = searchData.pairs[0];
+                }
+
+                if (matchingPair) {
+                  console.log(
+                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
+                  );
+                  results.push(matchingPair);
+                  foundMintsSet.add(mint);
+                } else {
+                  console.warn(
+                    `[DexScreener] ⚠️ Search returned 0 results for ${mint}`,
+                  );
+                }
+              }
+            } catch (searchErr) {
+              console.warn(
+                `[DexScreener] ⚠️ Search fallback failed for ${mint}:`,
+                searchErr instanceof Error
+                  ? searchErr.message
+                  : String(searchErr),
+              );
+            }
+          }
+        }
+      }
     }
 
     const solanaPairs = mergePairsByToken(results)
@@ -242,7 +381,10 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       });
 
     console.log(
-      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)`,
+      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)` +
+        (missingMints.length > 0
+          ? ` (${missingMints.length} required search fallback)`
+          : ""),
     );
     res.json({ schemaVersion, pairs: solanaPairs });
   } catch (error) {

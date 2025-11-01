@@ -1,10 +1,22 @@
 // functions/api/wallet-transactions.ts
 // POST JSON: { "walletAddress": "<Pubkey>", "limit": 10 }
-// Returns getSignaturesForAddress proxied via Alchemy.
+// Returns getSignaturesForAddress proxied via Alchemy or fallback RPC providers.
+
+const RPC_ENDPOINTS = [
+  "",
+  "https://api.mainnet-beta.solana.com",
+  "https://rpc.ankr.com/solana",
+  "https://solana.publicnode.com",
+];
 
 export async function onRequestPost(context: any) {
   const { request, env } = context;
-  const ALCHEMY = env?.ALCHEMY_RPC_URL ?? "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX";
+
+  // Build RPC endpoint list with env var first, then fallbacks
+  const rpcEndpoints = [
+    env?.ALCHEMY_RPC_URL || env?.HELIUS_RPC_URL,
+    ...RPC_ENDPOINTS,
+  ].filter(Boolean);
 
   try {
     const body = await request.json();
@@ -25,21 +37,53 @@ export async function onRequestPost(context: any) {
       params: [walletAddress, { limit }],
     };
 
-    const resp = await fetch(ALCHEMY, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rpcBody),
-    });
+    // Try each RPC endpoint
+    for (const endpoint of rpcEndpoints) {
+      if (!endpoint) continue;
 
-    const data = await resp.json();
-    return new Response(JSON.stringify(data), {
-      status: resp.status,
-      headers: { "Content-Type": "application/json" },
-    });
+      try {
+        const resp = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rpcBody),
+        });
+
+        const data = await resp.json();
+
+        // Check if RPC returned an error
+        if (data.error) {
+          console.warn(`RPC ${endpoint} returned error: ${data.error.message}`);
+          continue; // Try next endpoint
+        }
+
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (err: any) {
+        console.warn(`RPC endpoint ${endpoint} failed: ${err?.message}`);
+        continue; // Try next endpoint
+      }
+    }
+
+    // All endpoints failed
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch transactions - all RPC endpoints failed",
+        details: "No available Solana RPC providers",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: "Failed to fetch transactions", details: err?.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch transactions", details: err?.message }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }

@@ -1377,7 +1377,10 @@ export const onRequest = async ({ request, env }) => {
     }
 
     // CoinMarketCap price proxy: /api/coinmarketcap/quotes?symbols=...
-    if (normalizedPath === "/coinmarketcap/quotes" && request.method === "GET") {
+    if (
+      normalizedPath === "/coinmarketcap/quotes" &&
+      request.method === "GET"
+    ) {
       const symbols = url.searchParams.get("symbols") || "";
 
       if (!symbols) {

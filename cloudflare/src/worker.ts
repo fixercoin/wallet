@@ -821,7 +821,10 @@ export default {
         return json(data, { headers: corsHeaders });
       } catch (e: any) {
         return json(
-          { error: "Failed to fetch CoinMarketCap prices", details: e?.message },
+          {
+            error: "Failed to fetch CoinMarketCap prices",
+            details: e?.message,
+          },
           { status: 502, headers: corsHeaders },
         );
       }

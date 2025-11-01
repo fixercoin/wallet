@@ -779,7 +779,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                           <SelectItem
                             key={t.mint}
                             value={t.mint}
-                            className="text-white"
+                            className="text-gray-900"
                           >
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">

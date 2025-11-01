@@ -804,8 +804,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <EyeOff className="h-5 w-5 text-white/80" />
                 )}
               </button>
+            </div>
 
-              {/* Moved dropdown menu from TopBar: action menu for wallet */}
+            <div className="flex items-center gap-2">
+              {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -862,8 +864,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              <div className="flex-1"></div>
             </div>
           </div>
           <div className="text-center space-y-2">

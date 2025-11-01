@@ -73,22 +73,19 @@ interface CoinMarketCapResponse {
 // Map Solana token mints to CoinMarketCap symbols or IDs
 const MINT_TO_CMC_SYMBOL: Record<string, string> = {
   // Major tokens
-  "So11111111111111111111111111111111111111112": "SOL", // Solana
+  So11111111111111111111111111111111111111112: "SOL", // Solana
   EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6: "USDC", // USDC
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: "USDT", // USDT
   // Pump.fun tokens - use contract addresses for lookup
-  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
-  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
 };
 
 class CoinMarketCapAPI {
   private apiKey: string = "";
   private readonly baseUrl = "https://pro-api.coinmarketcap.com/v1";
   private readonly proxyUrl = "/api/coinmarketcap"; // Proxy endpoint for client
-  private tokenCache = new Map<
-    string,
-    { price: number; timestamp: number }
-  >();
+  private tokenCache = new Map<string, { price: number; timestamp: number }>();
   private cacheTTL = 60000; // 60 seconds cache
 
   constructor(apiKey?: string) {
@@ -118,9 +115,7 @@ class CoinMarketCapAPI {
   /**
    * Get prices for multiple tokens
    */
-  async getTokenPrices(
-    tokenMints: string[],
-  ): Promise<Record<string, number>> {
+  async getTokenPrices(tokenMints: string[]): Promise<Record<string, number>> {
     try {
       const uniqueMints = Array.from(new Set(tokenMints));
       const prices: Record<string, number> = {};
@@ -141,9 +136,7 @@ class CoinMarketCapAPI {
       }
 
       if (cachedMints.length > 0) {
-        console.log(
-          `[CoinMarketCap] ${cachedMints.length} prices from cache`,
-        );
+        console.log(`[CoinMarketCap] ${cachedMints.length} prices from cache`);
       }
 
       if (uncachedMints.length === 0) {
@@ -216,17 +209,22 @@ class CoinMarketCapAPI {
   /**
    * Fetch via proxy endpoint
    */
-  private async fetchViaProxy(symbols: string[]): Promise<CoinMarketCapResponse["data"] | null> {
+  private async fetchViaProxy(
+    symbols: string[],
+  ): Promise<CoinMarketCapResponse["data"] | null> {
     try {
       const params = new URLSearchParams({
         symbols: symbols.join(","),
       });
 
-      const response = await fetch(`${this.proxyUrl}/quotes?${params.toString()}`, {
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${this.proxyUrl}/quotes?${params.toString()}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -249,7 +247,9 @@ class CoinMarketCapAPI {
   /**
    * Fetch directly from CoinMarketCap API (limited without auth)
    */
-  private async fetchDirect(symbols: string[]): Promise<CoinMarketCapResponse["data"] | null> {
+  private async fetchDirect(
+    symbols: string[],
+  ): Promise<CoinMarketCapResponse["data"] | null> {
     try {
       const params = new URLSearchParams({
         symbol: symbols.join(","),
@@ -274,9 +274,7 @@ class CoinMarketCapAPI {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(
-          `API error: ${response.status} ${response.statusText}`,
-        );
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
 
       const data: CoinMarketCapResponse = await response.json();

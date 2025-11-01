@@ -19,7 +19,8 @@ export const handleHeliusTest: RequestHandler = async (req, res) => {
 
     if (!HELIUS_API_KEY) {
       return res.status(400).json({
-        error: "HELIUS_API_KEY is not configured. Please set it in environment variables.",
+        error:
+          "HELIUS_API_KEY is not configured. Please set it in environment variables.",
         tested: false,
       });
     }

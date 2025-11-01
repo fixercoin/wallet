@@ -512,7 +512,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             console.log(
               `[CoinMarketCap] Fetching ${missingMints.length} missing token prices from CoinMarketCap`,
             );
-            const cmcPrices = await coinmarketcapAPI.getTokenPrices(missingMints);
+            const cmcPrices =
+              await coinmarketcapAPI.getTokenPrices(missingMints);
             let addedCount = 0;
             Object.entries(cmcPrices).forEach(([mint, price]) => {
               if (price && price > 0 && !prices[mint]) {
@@ -531,7 +532,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               );
             }
           } catch (e) {
-            console.warn("Failed to fetch missing prices from CoinMarketCap:", e);
+            console.warn(
+              "Failed to fetch missing prices from CoinMarketCap:",
+              e,
+            );
           }
         }
 

@@ -26,7 +26,9 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
     }
 
     const method = body.method || "unknown";
-    console.log(`[RPC Proxy] ${method} request to ${RPC_ENDPOINTS.length} endpoints`);
+    console.log(
+      `[RPC Proxy] ${method} request to ${RPC_ENDPOINTS.length} endpoints`,
+    );
 
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;
@@ -35,7 +37,9 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
     for (let i = 0; i < RPC_ENDPOINTS.length; i++) {
       const endpoint = RPC_ENDPOINTS[i];
       try {
-        console.log(`[RPC Proxy] ${method} - Attempting endpoint ${i + 1}/${RPC_ENDPOINTS.length}: ${endpoint.substring(0, 50)}...`);
+        console.log(
+          `[RPC Proxy] ${method} - Attempting endpoint ${i + 1}/${RPC_ENDPOINTS.length}: ${endpoint.substring(0, 50)}...`,
+        );
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
@@ -121,7 +125,9 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
       }
     }
 
-    console.error(`[RPC Proxy] ${method} - All ${RPC_ENDPOINTS.length} RPC endpoints failed`);
+    console.error(
+      `[RPC Proxy] ${method} - All ${RPC_ENDPOINTS.length} RPC endpoints failed`,
+    );
     return res.status(lastErrorStatus || 503).json({
       error:
         lastError?.message ||

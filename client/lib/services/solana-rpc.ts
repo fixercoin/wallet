@@ -234,7 +234,9 @@ export const getTokenAccounts = async (publicKey: string) => {
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value) && value.length >= 0) {
-      console.log(`[Token Accounts] Got ${value.length} token accounts from proxy RPC`);
+      console.log(
+        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+      );
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;
@@ -316,9 +318,7 @@ export const getTokenAccounts = async (publicKey: string) => {
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Token Accounts] Fallback ${i + 1} failed: ${errorMsg}`,
-      );
+      console.warn(`[Token Accounts] Fallback ${i + 1} failed: ${errorMsg}`);
       if (i < fallbackRPCs.length - 1) {
         // Brief delay before trying next endpoint
         await new Promise((r) => setTimeout(r, 300));

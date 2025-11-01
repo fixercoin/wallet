@@ -12,9 +12,14 @@ const RPC_ENDPOINTS = [
 export async function onRequestPost(context: any) {
   const { request, env } = context;
 
-  // Build RPC endpoint list with env var first, then fallbacks
+  // Build RPC endpoint list with env vars first, then fallbacks
   const rpcEndpoints = [
-    env?.ALCHEMY_RPC_URL || env?.HELIUS_RPC_URL,
+    env?.HELIUS_API_KEY
+      ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
+      : "",
+    env?.HELIUS_RPC_URL || "",
+    env?.MORALIS_RPC_URL || "",
+    env?.ALCHEMY_RPC_URL || "",
     ...RPC_ENDPOINTS,
   ].filter(Boolean);
 

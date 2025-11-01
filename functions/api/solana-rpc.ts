@@ -2,6 +2,8 @@ const RPC_ENDPOINTS = [
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
   process.env.ALCHEMY_RPC_URL || ""
 ].filter(Boolean);
 

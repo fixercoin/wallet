@@ -528,11 +528,28 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
 
         const solMint = "So11111111111111111111111111111111111111112";
-        if (Object.keys(prices).length > 0 && prices[solMint]) {
+        const hasSolPrice = prices[solMint];
+        const hasPumpFunPrices =
+          (prices[fixercoinMint] && prices[fixercoinMint] > 0) ||
+          (prices[lockerMint] && prices[lockerMint] > 0);
+
+        if (
+          (Object.keys(prices).length > 0 && hasSolPrice) ||
+          hasPumpFunPrices
+        ) {
           priceSource = "dexscreener";
+          if (!hasSolPrice) {
+            console.warn(
+              "[DexScreener] SOL price missing but got pump fun tokens, continuing to Jupiter for SOL",
+            );
+          }
+        } else if (Object.keys(prices).length > 0) {
+          console.warn(
+            `[DexScreener] Got ${Object.keys(prices).length} prices but no SOL, trying Jupiter as fallback`,
+          );
         } else {
           throw new Error(
-            `DexScreener insufficient data: ${Object.keys(prices).length} prices, SOL missing: ${!prices[solMint]}`,
+            "DexScreener returned no prices, falling back to Jupiter",
           );
         }
       } catch (dexError) {

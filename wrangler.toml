@@ -1,0 +1,4 @@
+name = "wallet-c36"
+pages_build_output_dir = "dist/spa" # <-- This must match your build output folder!
+compatibility_date = "2024-10-01"
+compatibility_flags = ["nodejs_compat"]

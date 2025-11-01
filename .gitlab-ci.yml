@@ -1,0 +1,47 @@
+stages:
+  - install
+  - build
+  - deploy
+
+variables:
+  NODE_VERSION: "22.16.0"
+  PNPM_VERSION: "10.14.0"
+  CF_ACCOUNT_ID: "4fd71260eb5743229e2c6e9690b963f3"
+  CF_API_TOKEN: "WHRQF8sfTy8WscLdlvhDrR6l5GzBoVhnBCNzGYsz"
+
+# Cache pnpm modules between builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - ~/.pnpm-store/
+
+install_dependencies:
+  stage: install
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm install -g pnpm@${PNPM_VERSION}
+    - pnpm install --no-frozen-lockfile
+  artifacts:
+    paths:
+      - node_modules/
+      - pnpm-lock.yaml
+
+build_wallet:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm install -g pnpm@${PNPM_VERSION}
+    - pnpm run build
+  artifacts:
+    paths:
+      - dist/
+
+deploy_wallet:
+  stage: deploy
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm install -g pnpm@${PNPM_VERSION} wrangler
+    - wrangler publish --env production
+  only:
+    - main

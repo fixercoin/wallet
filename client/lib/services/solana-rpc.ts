@@ -267,6 +267,8 @@ export const getTokenAccounts = async (publicKey: string) => {
   // Fallback RPC endpoints with better support for token queries
   // Ordered by reliability and feature support
   const fallbackRPCs = [
+    // Prefer app proxy endpoint that exposes the same JSON-RPC over HTTPS
+    "https://app.fixorium.com.pk/api/solana-rpc",
     "https://rpc.fixorium.com.pk",
     "https://api.mainnet-beta.solana.com", // Official Solana endpoint - most reliable
     "https://solana.publicnode.com", // Public Node - good uptime

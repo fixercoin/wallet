@@ -59,7 +59,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mt-4">
                 <Button
                   onClick={onBack}
-                  className="w-full bg-[#1a2540]/50 text-white"
+                  className="w-full bg-[#2d1b47]/50 text-white"
                 >
                   Back to Dashboard
                 </Button>

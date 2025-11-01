@@ -39,7 +39,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="bg-transparent border-b border-[#a855f7]/20 -mx-6 px-6 -mt-6 pt-3 pb-3 mb-2">
+    <div className="bg-transparent border-b border-[#a855f7]/20 px-0 py-3 mb-2">
       {/* Pill bar replicating the provided design */}
       <div className="flex items-center gap-2 rounded-xl bg-transparent text-white h-10 px-0 shadow-none ring-0">
         <div className="flex items-center gap-2 flex-1 overflow-hidden">

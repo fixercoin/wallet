@@ -111,22 +111,11 @@ class DexscreenerAPI {
     const prices: Record<string, number> = {};
 
     tokens.forEach((token) => {
+      const mint = token.baseToken?.address;
       const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
 
-      if (!price || price <= 0) return;
-
-      const baseMint = token.baseToken?.address;
-      const quoteMint = token.quoteToken?.address;
-
-      if (baseMint) {
-        prices[baseMint] = price;
-      }
-
-      if (quoteMint && quoteMint !== baseMint) {
-        const invertedPrice = 1 / price;
-        if (invertedPrice > 0) {
-          prices[quoteMint] = invertedPrice;
-        }
+      if (mint && price && price > 0) {
+        prices[mint] = price;
       }
     });
 

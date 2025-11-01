@@ -219,6 +219,7 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
 
 /**
  * Get all token accounts for a wallet
+ * Includes multiple fallback RPC endpoints for reliability
  */
 export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -255,41 +256,69 @@ export const getTokenAccounts = async (publicKey: string) => {
     }
   } catch (error) {
     console.warn(
-      "Proxy RPC getTokenAccountsByOwner failed, attempting direct web3 fallback:",
+      "Proxy RPC getTokenAccountsByOwner failed, attempting fallback RPC endpoints:",
       error,
     );
   }
 
-  // Fallback: direct web3.js call to Solana
-  try {
-    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
-    const owner = new PublicKey(publicKey);
-    const programId = new PublicKey(TOKEN_PROGRAM_ID);
-    const resp = await conn.getParsedTokenAccountsByOwner(owner, { programId });
+  // Fallback RPC endpoints with better support for token queries
+  const fallbackRPCs = [
+    SOLANA_RPC_URL,
+    "https://rpc.ankr.com/solana",
+    "https://solana.publicnode.com",
+    "https://api.mainnet-beta.solana.com",
+  ].filter((url, idx, arr) => arr.indexOf(url) === idx); // Remove duplicates
 
-    return resp.value.map((account) => {
-      const parsedInfo: any = (account.account.data as any).parsed.info;
-      const mint: string = parsedInfo.mint;
-      const balance: number = parsedInfo.tokenAmount.uiAmount || 0;
-      const decimals: number = parsedInfo.tokenAmount.decimals;
+  for (const rpcUrl of fallbackRPCs) {
+    try {
+      console.log(`[Token Accounts] Trying RPC endpoint: ${rpcUrl}`);
+      const conn = new Connection(rpcUrl, { commitment: "confirmed" });
+      const owner = new PublicKey(publicKey);
+      const programId = new PublicKey(TOKEN_PROGRAM_ID);
 
-      const metadata = KNOWN_TOKENS[mint] || {
-        mint,
-        symbol: "UNKNOWN",
-        name: "Unknown Token",
-        decimals,
-      };
+      const resp = await Promise.race([
+        conn.getParsedTokenAccountsByOwner(owner, { programId }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("RPC timeout")), 10000),
+        ),
+      ]);
 
-      return {
-        ...metadata,
-        balance,
-        decimals: decimals || metadata.decimals,
-      };
-    });
-  } catch (error) {
-    console.error("Direct web3 getParsedTokenAccountsByOwner failed:", error);
-    return [];
+      console.log(
+        `[Token Accounts] Successfully fetched from ${rpcUrl}: ${resp.value.length} token accounts`,
+      );
+
+      return resp.value.map((account) => {
+        const parsedInfo: any = (account.account.data as any).parsed.info;
+        const mint: string = parsedInfo.mint;
+        const balance: number = parsedInfo.tokenAmount.uiAmount || 0;
+        const decimals: number = parsedInfo.tokenAmount.decimals;
+
+        const metadata = KNOWN_TOKENS[mint] || {
+          mint,
+          symbol: "UNKNOWN",
+          name: "Unknown Token",
+          decimals,
+        };
+
+        return {
+          ...metadata,
+          balance,
+          decimals: decimals || metadata.decimals,
+        };
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[Token Accounts] Failed with ${rpcUrl}: ${errorMsg}. Trying next endpoint...`,
+      );
+      continue;
+    }
   }
+
+  console.error(
+    "[Token Accounts] All RPC endpoints failed to fetch token accounts, returning empty list",
+  );
+  return [];
 };
 
 /**

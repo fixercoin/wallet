@@ -17,6 +17,7 @@ import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { dextoolsAPI } from "@/lib/services/dextools";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
@@ -35,6 +36,7 @@ interface WalletContextType {
   refreshBalance: () => Promise<void>;
   refreshTokens: () => Promise<void>;
   addCustomToken: (token: TokenInfo) => void;
+  removeToken: (tokenMint: string) => void;
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
@@ -435,7 +437,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           prices = {};
         }
 
-        // If pump fun prices still missing from initial fetch, try dedicated fetch
+        // If FIXERCOIN price missing, try DexTools (recommended for pump fun tokens)
+        if (!prices[fixercoinMint]) {
+          try {
+            console.log(
+              `[DexTools] Fetching FIXERCOIN price from DexTools API`,
+            );
+            const fixercoinPrice =
+              await dextoolsAPI.getTokenPrice(fixercoinMint);
+            if (fixercoinPrice && fixercoinPrice > 0) {
+              prices[fixercoinMint] = fixercoinPrice;
+              console.log(
+                `[DexTools] FIXERCOIN price: $${fixercoinPrice.toFixed(8)}`,
+              );
+            }
+          } catch (e) {
+            console.warn("Failed to fetch FIXERCOIN from DexTools:", e);
+          }
+        }
+
+        // If pump fun prices still missing from initial fetch, try dedicated fetch from DexScreener
         const pumpFunMintsNeeded = [];
         if (!prices[fixercoinMint]) pumpFunMintsNeeded.push(fixercoinMint);
         if (!prices[lockerMint]) pumpFunMintsNeeded.push(lockerMint);
@@ -695,6 +716,22 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (wallet) refreshTokens();
   };
 
+  const removeToken = (tokenMint: string) => {
+    setTokens((currentTokens) =>
+      currentTokens.filter((t) => t.mint !== tokenMint),
+    );
+
+    const customTokens = JSON.parse(
+      localStorage.getItem("custom_tokens") || "[]",
+    );
+    const newCustomTokens = customTokens.filter(
+      (t: TokenInfo) => t.mint !== tokenMint,
+    );
+    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
+
+    if (wallet) refreshTokens();
+  };
+
   const logout = () => {
     // Clear active selection
     setActivePublicKey(null);
@@ -716,6 +753,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     refreshBalance,
     refreshTokens,
     addCustomToken,
+    removeToken,
     logout,
     updateWalletLabel,
     connection: globalConnection,

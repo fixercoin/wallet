@@ -38,6 +38,7 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { TokenSelectionDialog } from "./TokenSelectionDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,12 +119,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
     refreshBalance,
     refreshTokens,
     addCustomToken,
+    removeToken,
   } = useWallet();
   const { toast } = useToast();
   const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
+  const [showTokenDialog, setShowTokenDialog] = useState(false);
+  const [isDeletingToken, setIsDeletingToken] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -412,6 +417,45 @@ export const Dashboard: React.FC<DashboardProps> = ({
       title: "Refreshed",
       description: "Balance and tokens updated",
     });
+  };
+
+  const handleTokenCardClick = (token: TokenInfo) => {
+    setSelectedToken(token);
+    setShowTokenDialog(true);
+  };
+
+  const handleDeleteToken = async () => {
+    if (!selectedToken) return;
+
+    try {
+      setIsDeletingToken(true);
+      removeToken(selectedToken.mint);
+
+      toast({
+        title: "Token Removed",
+        description: `${selectedToken.symbol} has been removed from your wallet`,
+      });
+
+      setShowTokenDialog(false);
+      setSelectedToken(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to remove token",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingToken(false);
+    }
+  };
+
+  const handleTokenContinue = () => {
+    if (selectedToken) {
+      setShowTokenDialog(false);
+      setSelectedToken(null);
+      onTokenClick(selectedToken.mint);
+    }
   };
 
   const formatBalance = (amount: number | undefined): string => {
@@ -923,7 +967,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <CardContent className="p-0">
                     <div
                       className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
-                      onClick={() => onTokenClick(token.mint)}
+                      onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 flex-shrink-0">
@@ -998,6 +1042,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         open={showAddTokenDialog}
         onOpenChange={setShowAddTokenDialog}
         onTokenAdd={addCustomToken}
+      />
+
+      {/* Token Selection Dialog */}
+      <TokenSelectionDialog
+        token={selectedToken}
+        open={showTokenDialog}
+        onOpenChange={setShowTokenDialog}
+        onDelete={handleDeleteToken}
+        onContinue={handleTokenContinue}
+        isDeleting={isDeletingToken}
       />
     </div>
   );

@@ -255,21 +255,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
 
+      // Set as active immediately, then fetch data
       setActivePublicKey(publicKey);
 
-      // Immediately trigger data fetch for the new wallet
-      // This ensures data loads right away without waiting for dependency checks
-      (async () => {
-        try {
-          const newBalance = await getBalance(publicKey);
-          if (typeof newBalance === "number" && !isNaN(newBalance)) {
-            setBalance(newBalance);
-            balanceRef.current = newBalance;
+      // Trigger data fetch for the new wallet after a micro delay to ensure state is updated
+      // This ensures the refresh functions can use the updated wallet context
+      setTimeout(() => {
+        // Now the wallet should be updated, so refresh will work correctly
+        (async () => {
+          try {
+            await refreshBalance();
+            await new Promise((r) => setTimeout(r, 300));
+            await refreshTokens();
+          } catch (err) {
+            console.error("Error refreshing data after wallet selection:", err);
           }
-        } catch (err) {
-          console.error("Error fetching balance for selected wallet:", err);
-        }
-      })();
+        })();
+      }, 0);
     }
   };
 

@@ -710,9 +710,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#a855f7]/20 to-[#22c55e]/20 border-[#a855f7]/30 text-white hover:bg-gradient-to-r hover:from-[#a855f7]/30 hover:to-[#22c55e]/30 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
                         <SelectValue>
-                          <div className="flex items-center gap-2 text-white">
+                          <div className="flex items-center gap-2 text-gray-900">
                             {fromToken ? (
                               <>
                                 <Avatar className="h-6 w-6">
@@ -734,12 +734,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-[#2d1b47]/95 border border-[#a855f7]/30 text-white">
+                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
                             value={token.mint}
-                            className="text-white hover:bg-[#a855f7]/20 focus:bg-[#a855f7]/20 transition-colors"
+                            className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <Avatar className="h-5 w-5 ring-1 ring-white/20">
@@ -817,9 +817,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setToToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#a855f7]/20 to-[#22c55e]/20 border-[#a855f7]/30 text-white hover:bg-gradient-to-r hover:from-[#a855f7]/30 hover:to-[#22c55e]/30 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
                         <SelectValue>
-                          <div className="flex items-center gap-2 text-white">
+                          <div className="flex items-center gap-2 text-gray-900">
                             {toToken ? (
                               <>
                                 <Avatar className="h-6 w-6">
@@ -841,12 +841,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-[#2d1b47]/95 border border-[#a855f7]/30 text-white">
+                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
                             value={token.mint}
-                            className="text-white hover:bg-[#a855f7]/20 focus:bg-[#a855f7]/20 transition-colors"
+                            className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <Avatar className="h-5 w-5 ring-1 ring-white/20">

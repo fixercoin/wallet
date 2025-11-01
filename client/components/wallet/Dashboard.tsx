@@ -578,6 +578,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onBurn={onBurn}
         onLock={onLock}
         onSettings={onSettings}
+        onQuestOpen={() => setShowQuestModal(true)}
       />
 
       {/* Quest Modal */}

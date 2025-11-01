@@ -863,16 +863,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Tokens List */}
-        <div className="mb-4 flex gap-2">
-          <Button
-            onClick={() => navigate("/select")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
-            aria-label="EXPRESS P2P SERVICE"
-          >
-            <span className="mr-0">EXPRESS P2P SERVICE</span>
-          </Button>
-
-          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+        {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+          <div className="mb-4 flex gap-2">
             <Button
               onClick={() => navigate("/verify-sell")}
               className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
@@ -887,8 +879,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 )}
               </span>
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           {sortedTokens.map((token) => {

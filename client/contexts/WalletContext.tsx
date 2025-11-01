@@ -715,6 +715,22 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (wallet) refreshTokens();
   };
 
+  const removeToken = (tokenMint: string) => {
+    setTokens((currentTokens) =>
+      currentTokens.filter((t) => t.mint !== tokenMint),
+    );
+
+    const customTokens = JSON.parse(
+      localStorage.getItem("custom_tokens") || "[]",
+    );
+    const newCustomTokens = customTokens.filter(
+      (t: TokenInfo) => t.mint !== tokenMint,
+    );
+    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
+
+    if (wallet) refreshTokens();
+  };
+
   const logout = () => {
     // Clear active selection
     setActivePublicKey(null);

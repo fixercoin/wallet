@@ -917,6 +917,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             })} USD`
                           : "****"}
                       </div>
+                      <div className="text-sm text-gray-700 mt-1">
+                        {showBalance ? `PKR ${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "****"}
+                      </div>
                       {showBalance ? (
                         <>
                           {hasValidPriceChange && (

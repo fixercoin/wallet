@@ -444,7 +444,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     className={`w-full flex items-center gap-2 ${
                       confirmDelete
                         ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                        : "bg-white border border-gray-200 text-gray-900 hover:bg-gray-50"
                     }`}
                   >
                     <Trash2 className="h-4 w-4" />

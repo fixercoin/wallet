@@ -814,7 +814,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     placeholder="Enter Solana address"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    className="font-mono text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                    className="font-mono text-sm bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                   />
                 </div>
 

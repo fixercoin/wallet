@@ -186,7 +186,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 500));
         await refreshTokens();
-      }, 60000);
+      }, 20000);
     } else {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);

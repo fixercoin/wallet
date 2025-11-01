@@ -282,11 +282,19 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
             ) {
               let pair = pairData.pairs[0];
 
+              console.log(
+                `[DexScreener] Pair address lookup raw data: baseToken=${pair.baseToken?.address}, quoteToken=${pair.quoteToken?.address}, priceUsd=${pair.priceUsd}`,
+              );
+
               // If the requested mint is the quoteToken, we need to swap the tokens
               // and invert the price to get the correct representation
               if (pair.quoteToken?.address === mint && pair.baseToken?.address !== mint) {
                 const basePrice = pair.priceUsd ? parseFloat(pair.priceUsd) : 0;
                 const invertedPrice = basePrice > 0 ? (1 / basePrice).toFixed(20) : "0";
+
+                console.log(
+                  `[DexScreener] Swapping tokens: ${mint} was quoteToken, inverting price ${pair.priceUsd} -> ${invertedPrice}`,
+                );
 
                 pair = {
                   ...pair,
@@ -298,7 +306,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
               }
 
               console.log(
-                `[DexScreener] ✅ Found ${mint} via pair address, priceUsd: ${pair.priceUsd || "N/A"}`,
+                `[DexScreener] ✅ Found ${mint} via pair address, baseToken=${pair.baseToken?.symbol || "UNKNOWN"}, priceUsd: ${pair.priceUsd || "N/A"}`,
               );
               results.push(pair);
               foundMintsSet.add(mint);

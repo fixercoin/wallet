@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { getDerivedPrice, type SupportedToken } from "@/lib/services/derived-price";
+import {
+  getDerivedPrice,
+  type SupportedToken,
+} from "@/lib/services/derived-price";
 
 type Props = { token: SupportedToken; className?: string };
 
@@ -39,8 +42,12 @@ export const TokenDerivedPrice: React.FC<Props> = ({ token, className }) => {
 
   return (
     <div className={className || "text-sm text-gray-300"}>
-      <div>1 SOL = {fmt(tokensPerSol)} {token}</div>
-      <div>1 {token} = ${fmt(tokenUsd, 6, 8)} USDT</div>
+      <div>
+        1 SOL = {fmt(tokensPerSol)} {token}
+      </div>
+      <div>
+        1 {token} = ${fmt(tokenUsd, 6, 8)} USDT
+      </div>
     </div>
   );
 };

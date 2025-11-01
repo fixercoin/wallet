@@ -49,7 +49,9 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
   return Number.isFinite(out) && out > 0 ? out : null;
 }
 
-async function getUsdFromDexscreener(token: SupportedToken): Promise<number | null> {
+async function getUsdFromDexscreener(
+  token: SupportedToken,
+): Promise<number | null> {
   try {
     const data = await dexscreenerAPI.getTokenByMint(TOKEN_MINTS[token]);
     const p = data?.priceUsd ? parseFloat(data.priceUsd) : NaN;
@@ -59,12 +61,17 @@ async function getUsdFromDexscreener(token: SupportedToken): Promise<number | nu
   }
 }
 
-export async function getDerivedPrice(token: SupportedToken): Promise<DerivedPrice> {
+export async function getDerivedPrice(
+  token: SupportedToken,
+): Promise<DerivedPrice> {
   const now = Date.now();
   const cached = cache.get(token);
   if (cached && now - cached.updatedAt < CACHE_TTL_MS) return cached;
 
-  const [solUsd, tps] = await Promise.all([getSolUsd(), getTokensPerSol(token)]);
+  const [solUsd, tps] = await Promise.all([
+    getSolUsd(),
+    getTokensPerSol(token),
+  ]);
 
   let tokensPerSol = tps ?? 0;
   let tokenUsd = 0;

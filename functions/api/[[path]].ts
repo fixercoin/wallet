@@ -76,7 +76,9 @@ async function proxyToSolanaRPC(
     }
   }
 
-  const headers = applyCors(new Headers({ "Content-Type": "application/json" }));
+  const headers = applyCors(
+    new Headers({ "Content-Type": "application/json" }),
+  );
   return new Response(
     JSON.stringify({
       error: "All Solana RPC endpoints failed",

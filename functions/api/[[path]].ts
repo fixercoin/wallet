@@ -25,7 +25,7 @@ function createForwardRequest(request: Request, targetUrl: string) {
 }
 
 // Choose which provider to use based on env vars
-import { ALCHEMY_RPC_URL as DEFAULT_RPC_URL } from "../../utils/solanaConfig";
+import { SOLANA_RPC_URL as DEFAULT_RPC_URL } from "../../utils/solanaConfig";
 
 async function proxyToSolanaRPC(
   request: Request,
@@ -34,9 +34,13 @@ async function proxyToSolanaRPC(
   let rpcUrl = "";
   if (env.HELIUS_API_KEY) {
     rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  } else if (env.HELIUS_RPC_URL) {
+    rpcUrl = env.HELIUS_RPC_URL;
+  } else if (env.MORALIS_RPC_URL) {
+    rpcUrl = env.MORALIS_RPC_URL;
   } else if (env.ALCHEMY_RPC_URL) {
     rpcUrl = env.ALCHEMY_RPC_URL;
-  } else if (DEFAULT_RPC_URL) {
+  } else if (DEFAULT_RPC_URL && DEFAULT_RPC_URL !== "https://api.mainnet-beta.solana.com") {
     rpcUrl = DEFAULT_RPC_URL;
   } else {
     const headers = applyCors(

@@ -19,7 +19,6 @@ import {
   Key,
   Eye,
   EyeOff,
-  DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";

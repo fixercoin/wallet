@@ -572,15 +572,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <TopBar
-        onAccounts={onAccounts}
-        onAirdrop={onAirdrop}
-        onBurn={onBurn}
-        onLock={onLock}
-        onSettings={onSettings}
-        onQuestOpen={() => setShowQuestModal(true)}
-      />
-
       {/* Quest Modal */}
       {showQuestModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">

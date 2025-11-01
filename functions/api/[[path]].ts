@@ -673,6 +673,11 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(400, { error: "No valid token mints provided" });
       }
 
+      // Mint to pair address mapping for pump.fun tokens
+      const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+      };
+
       // Mint to search symbol mapping for tokens not found via mint lookup
       const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
         "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",

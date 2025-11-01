@@ -716,7 +716,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#C084FC]/10"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >

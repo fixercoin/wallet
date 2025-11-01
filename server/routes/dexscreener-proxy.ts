@@ -268,22 +268,38 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
             if (searchData?.pairs && Array.isArray(searchData.pairs)) {
               // Find the pair that matches our mint
-              const matchingPair = searchData.pairs.find(
+              // Look for pairs where this token is the base, prefer USDC/USDT/SOL pairs
+              let matchingPair = searchData.pairs.find(
                 (p) =>
-                  (p.baseToken?.address === mint ||
-                    p.quoteToken?.address === mint) &&
+                  p.baseToken?.address === mint &&
                   p.chainId === "solana",
               );
 
+              // If not found as base, try as quote token
+              if (!matchingPair) {
+                matchingPair = searchData.pairs.find(
+                  (p) =>
+                    p.quoteToken?.address === mint &&
+                    p.chainId === "solana",
+                );
+              }
+
+              // If still not found, just take the first Solana pair
+              if (!matchingPair) {
+                matchingPair = searchData.pairs.find(
+                  (p) => p.chainId === "solana",
+                );
+              }
+
               if (matchingPair) {
                 console.log(
-                  `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search`,
+                  `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                 );
                 results.push(matchingPair);
                 foundMintsSet.add(mint);
               } else {
                 console.warn(
-                  `[DexScreener] ⚠️ Search returned results but none matched ${mint}`,
+                  `[DexScreener] ⚠️ Search returned results but none were Solana pairs for ${mint}`,
                 );
               }
             }

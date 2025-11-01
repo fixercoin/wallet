@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, Import, Plus } from "lucide-react";
+import { Eye, EyeOff, Copy, Plus } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -192,9 +192,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   onClick={() => setActiveTab("recover")}
                   variant="ghost"
-                  className="w-full h-12 rounded-xl text-white hover:bg-[#16a34a]/10"
+                  className="w-full h-12 rounded-xl text-black hover:bg-[#16a34a]/10"
                 >
-                  <Import className="h-5 w-5 mr-2" />
+                  <span className="mr-2">*</span>
                   IMPORT WALLET
                 </Button>
 
@@ -269,11 +269,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       onClick={() => setShowPrivateKeyInput((s) => !s)}
                       className="text-white hover:bg-[#16a34a]/10"
                     >
-                      {showPrivateKeyInput ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      <span className="text-lg leading-none">*</span>
                     </Button>
                   )}
                 </div>

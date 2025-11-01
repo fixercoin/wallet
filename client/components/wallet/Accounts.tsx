@@ -66,7 +66,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                     </Button>
                     <Button
                       onClick={() => onOpenSetup && onOpenSetup()}
-                      className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#a855f7] to-[#22c55e] text-white shadow-sm"
+                      className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm"
                       aria-label="Add wallet"
                     >
                       <Plus className="h-4 w-4" />

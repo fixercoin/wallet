@@ -36,6 +36,7 @@ async function proxyToSolanaRPC(
     env.HELIUS_API_KEY
       ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
       : "",
+    env.SOLANA_RPC_URL || "",
     env.HELIUS_RPC_URL || "",
     env.MORALIS_RPC_URL || "",
     env.ALCHEMY_RPC_URL || "",
@@ -1281,6 +1282,7 @@ export const onRequest = async ({ request, env }) => {
         env.HELIUS_API_KEY
           ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
           : "",
+        env.SOLANA_RPC_URL || "",
         env.HELIUS_RPC_URL || "",
         env.MORALIS_RPC_URL || "",
         env.ALCHEMY_RPC_URL || "",

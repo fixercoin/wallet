@@ -162,7 +162,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 <Button
                   onClick={() => setActiveTab("recover")}
                   variant="ghost"
-                  className="w-full h-12 rounded-xl text-white hover:bg-[#FF7A5C]/10"
+                  className="w-full h-12 rounded-xl text-white hover:bg-[#a855f7]/10"
                 >
                   <Import className="h-5 w-5 mr-2" />
                   IMPORT WALLET

@@ -508,12 +508,30 @@ export const onRequest = async ({ request, env }) => {
                 const searchPairs = Array.isArray(searchData?.pairs)
                   ? searchData.pairs
                   : [];
-                const matchingPair = searchPairs.find(
+
+                // Look for pairs where this token is the base
+                let matchingPair = searchPairs.find(
                   (p: any) =>
-                    (p?.baseToken?.address === mint ||
-                      p?.quoteToken?.address === mint) &&
+                    p?.baseToken?.address === mint &&
                     p?.chainId === "solana",
                 );
+
+                // If not found as base, try as quote token
+                if (!matchingPair) {
+                  matchingPair = searchPairs.find(
+                    (p: any) =>
+                      p?.quoteToken?.address === mint &&
+                      p?.chainId === "solana",
+                  );
+                }
+
+                // If still not found, just take the first Solana pair
+                if (!matchingPair) {
+                  matchingPair = searchPairs.find(
+                    (p: any) => p?.chainId === "solana",
+                  );
+                }
+
                 if (matchingPair && matchingPair.priceUsd) {
                   price = Number(matchingPair.priceUsd);
                 }

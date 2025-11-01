@@ -255,23 +255,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
 
-      // Set as active immediately, then fetch data
+      // Set as active - the useEffect hook will automatically trigger and fetch data
+      // This is safe because wallet is computed from activePublicKey
       setActivePublicKey(publicKey);
-
-      // Trigger data fetch for the new wallet after a micro delay to ensure state is updated
-      // This ensures the refresh functions can use the updated wallet context
-      setTimeout(() => {
-        // Now the wallet should be updated, so refresh will work correctly
-        (async () => {
-          try {
-            await refreshBalance();
-            await new Promise((r) => setTimeout(r, 300));
-            await refreshTokens();
-          } catch (err) {
-            console.error("Error refreshing data after wallet selection:", err);
-          }
-        })();
-      }, 0);
     }
   };
 

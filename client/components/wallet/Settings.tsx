@@ -461,7 +461,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setConfirmDelete(false)}
-                        className="mt-2 text-red-300 hover:text-red-200 hover:bg-red-400/20"
+                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         Cancel
                       </Button>

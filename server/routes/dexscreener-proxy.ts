@@ -268,14 +268,14 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
             if (searchData?.pairs && Array.isArray(searchData.pairs)) {
               // Find the pair that matches our mint
-              // Look for pairs where this token is the base, prefer USDC/USDT/SOL pairs
+              // Look for pairs where this token is the base on Solana
               let matchingPair = searchData.pairs.find(
                 (p) =>
                   p.baseToken?.address === mint &&
                   p.chainId === "solana",
               );
 
-              // If not found as base, try as quote token
+              // If not found as base on Solana, try as quote token on Solana
               if (!matchingPair) {
                 matchingPair = searchData.pairs.find(
                   (p) =>
@@ -284,22 +284,34 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
                 );
               }
 
-              // If still not found, just take the first Solana pair
+              // If still not found on Solana, try any chain as base
               if (!matchingPair) {
                 matchingPair = searchData.pairs.find(
-                  (p) => p.chainId === "solana",
+                  (p) => p.baseToken?.address === mint,
                 );
+              }
+
+              // If still not found, try as quote on any chain
+              if (!matchingPair) {
+                matchingPair = searchData.pairs.find(
+                  (p) => p.quoteToken?.address === mint,
+                );
+              }
+
+              // Last resort: just take the first result
+              if (!matchingPair && searchData.pairs.length > 0) {
+                matchingPair = searchData.pairs[0];
               }
 
               if (matchingPair) {
                 console.log(
-                  `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
+                  `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                 );
                 results.push(matchingPair);
                 foundMintsSet.add(mint);
               } else {
                 console.warn(
-                  `[DexScreener] ⚠️ Search returned results but none were Solana pairs for ${mint}`,
+                  `[DexScreener] ⚠️ Search returned 0 results for ${mint}`,
                 );
               }
             }

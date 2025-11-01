@@ -60,7 +60,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-white/10"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-[#a855f7]/10 text-white ring-0 focus-visible:ring-0 border border-[#a855f7]/20"
               >
                 <Menu className="h-4 w-4" />
               </Button>

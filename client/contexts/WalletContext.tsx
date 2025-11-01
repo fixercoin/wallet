@@ -186,7 +186,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 500));
         await refreshTokens();
-      }, 60000);
+      }, 20000);
     } else {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
@@ -299,6 +299,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
 
+      // Start with SOL at the top with current balance
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -311,12 +312,34 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         },
       ];
 
+      // Add default tokens (USDC, USDT, FIXERCOIN, LOCKER) if not already present
+      const defaultTokensToAdd = DEFAULT_TOKENS.filter(
+        (dt) =>
+          dt.symbol !== "SOL" && !allTokens.some((at) => at.mint === dt.mint),
+      );
+      defaultTokensToAdd.forEach((dt) => {
+        allTokens.push({ ...dt, balance: 0 });
+      });
+
+      // Override with actual balances from token accounts
       tokenAccounts.forEach((tokenAccount) => {
         if (tokenAccount.symbol !== "SOL") {
-          allTokens.push(tokenAccount);
+          const existingIndex = allTokens.findIndex(
+            (t) => t.mint === tokenAccount.mint,
+          );
+          if (existingIndex >= 0) {
+            allTokens[existingIndex] = {
+              ...allTokens[existingIndex],
+              ...tokenAccount,
+              balance: tokenAccount.balance || 0,
+            };
+          } else {
+            allTokens.push(tokenAccount);
+          }
         }
       });
 
+      // Add/override with custom tokens
       customTokens.forEach((customToken) => {
         const existingTokenIndex = allTokens.findIndex(
           (t) => t.mint === customToken.mint,
@@ -376,17 +399,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             prices = {};
           }
 
-          // If SOL price is missing from DexScreener, don't throw immediately
-          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          // Accept any prices from DexScreener - even partial results are valuable
+          // Let other sources (Jupiter, CoinGecko) fill in any gaps
           const solMint = "So11111111111111111111111111111111111111112";
-          const hasSufficientData =
-            Object.keys(prices).length > 0 && prices[solMint];
+          const pricesCount = Object.keys(prices).length;
 
-          if (!hasSufficientData) {
-            throw new Error(
-              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
-            );
+          if (pricesCount === 0) {
+            throw new Error(`DexScreener returned no prices for any tokens`);
           }
+
+          console.log(
+            `[DexScreener] Got ${pricesCount} prices, SOL available: ${!!prices[solMint]}`,
+          );
         } catch (dexErr) {
           console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};

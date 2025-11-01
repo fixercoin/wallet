@@ -111,11 +111,14 @@ class DexscreenerAPI {
     const prices: Record<string, number> = {};
 
     tokens.forEach((token) => {
-      const mint = token.baseToken.address;
       const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
 
-      if (mint && price && price > 0) {
-        prices[mint] = price;
+      if (price && price > 0) {
+        // Always use baseToken address as the primary key
+        const baseMint = token.baseToken?.address;
+        if (baseMint) {
+          prices[baseMint] = price;
+        }
       }
     });
 
@@ -219,11 +222,15 @@ class DexscreenerAPI {
     // Update cache with fetched results (only if we got meaningful data)
     const ttl = now + DexscreenerAPI.TOKEN_CACHE_TTL_MS;
     fetchedTokens.forEach((t) => {
-      const matchMint = normalizedMints.find(
-        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
-      );
-      if (matchMint) {
-        DexscreenerAPI.tokenCache.set(matchMint, { token: t, expiresAt: ttl });
+      // Cache by baseToken (preferred)
+      const baseMint = t.baseToken?.address;
+      if (baseMint && normalizedMints.includes(baseMint)) {
+        DexscreenerAPI.tokenCache.set(baseMint, { token: t, expiresAt: ttl });
+      }
+      // Also cache by quoteToken if it's in our request list
+      const quoteMint = t.quoteToken?.address;
+      if (quoteMint && normalizedMints.includes(quoteMint) && !baseMint) {
+        DexscreenerAPI.tokenCache.set(quoteMint, { token: t, expiresAt: ttl });
       }
     });
 
@@ -234,11 +241,22 @@ class DexscreenerAPI {
 
     const allTokensMap = new Map<string, DexscreenerToken>();
     [...cachedResults, ...fetchedTokens].forEach((t) => {
-      const matchMint = normalizedMints.find(
-        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
-      );
-      if (matchMint && !allTokensMap.has(matchMint)) {
-        allTokensMap.set(matchMint, t);
+      // Try to match with baseToken first (preferred), then quoteToken
+      const baseMint = t.baseToken?.address;
+      const quoteMint = t.quoteToken?.address;
+
+      if (
+        baseMint &&
+        normalizedMints.includes(baseMint) &&
+        !allTokensMap.has(baseMint)
+      ) {
+        allTokensMap.set(baseMint, t);
+      } else if (
+        quoteMint &&
+        normalizedMints.includes(quoteMint) &&
+        !allTokensMap.has(quoteMint)
+      ) {
+        allTokensMap.set(quoteMint, t);
       }
     });
 

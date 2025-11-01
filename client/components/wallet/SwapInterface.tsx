@@ -717,7 +717,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#a855f7]/20 to-[#22c55e]/20 border-[#a855f7]/30 text-white hover:bg-gradient-to-r hover:from-[#a855f7]/30 hover:to-[#22c55e]/30 w-auto px-3 transition-colors">
                         <SelectValue>
                           <div className="flex items-center gap-2 text-white">
                             {fromToken ? (
@@ -824,7 +824,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setToToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border-[#FF7A5C]/30 text-white hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-gradient-to-r from-[#a855f7]/20 to-[#22c55e]/20 border-[#a855f7]/30 text-white hover:bg-gradient-to-r hover:from-[#a855f7]/30 hover:to-[#22c55e]/30 w-auto px-3 transition-colors">
                         <SelectValue>
                           <div className="flex items-center gap-2 text-white">
                             {toToken ? (

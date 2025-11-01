@@ -259,10 +259,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border border-gray-100 text-gray-900">
-                          <SelectItem value="USD" className="text-white">
+                          <SelectItem value="USD" className="text-gray-900">
                             USD (United States Dollar)
                           </SelectItem>
-                          <SelectItem value="PKR" className="text-white">
+                          <SelectItem value="PKR" className="text-gray-900">
                             PKR (Pakistani Rupee)
                           </SelectItem>
                         </SelectContent>

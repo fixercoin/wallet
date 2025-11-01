@@ -584,7 +584,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Quest Modal */}
       {showQuestModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
-          <div className="bg-gradient-to-br from-[#1a2847] to-[#0f1520] rounded-2xl border border-[#ffffff66]/20 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
+          <div className="bg-gradient-to-br from-[#2d1b47] to-[#1f0f3d] rounded-2xl border border-[#a855f7]/40 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
               <button

@@ -468,6 +468,11 @@ export const onRequest = async ({ request, env }) => {
         LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
       };
 
+      const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+      };
+
       const FALLBACK_USD: Record<string, number> = {
         FIXERCOIN: 0.005,
         SOL: 180,
@@ -484,14 +489,40 @@ export const onRequest = async ({ request, env }) => {
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
         } else if (TOKEN_MINTS[token]) {
-          const data = await fetchDexscreenerData(
-            `/tokens/${TOKEN_MINTS[token]}`,
-          );
-          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-          const price =
+          const mint = TOKEN_MINTS[token];
+          const data = await fetchDexscreenerData(`/tokens/${mint}`);
+          let pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          let price =
             pairs.length > 0 && pairs[0]?.priceUsd
               ? Number(pairs[0].priceUsd)
               : null;
+
+          // Fallback to search if no pairs found
+          if (!price || price <= 0) {
+            const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+            if (searchSymbol) {
+              try {
+                const searchData = await fetchDexscreenerData(
+                  `/search/?q=${encodeURIComponent(searchSymbol)}`,
+                );
+                const searchPairs = Array.isArray(searchData?.pairs)
+                  ? searchData.pairs
+                  : [];
+                const matchingPair = searchPairs.find(
+                  (p: any) =>
+                    (p?.baseToken?.address === mint ||
+                      p?.quoteToken?.address === mint) &&
+                    p?.chainId === "solana",
+                );
+                if (matchingPair && matchingPair.priceUsd) {
+                  price = Number(matchingPair.priceUsd);
+                }
+              } catch (e) {
+                // Silently continue
+              }
+            }
+          }
+
           if (typeof price === "number" && isFinite(price) && price > 0) {
             priceUsd = price;
           }

@@ -535,7 +535,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         src={selectedToken.logoURI}
                         alt={selectedToken.symbol}
                       />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                         {selectedToken.symbol.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
@@ -562,7 +562,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   <div className="flex items-center gap-2 w-full">
                     <Avatar className="h-5 w-5 ring-1 ring-white/20">
                       <AvatarImage src={token.logoURI} alt={token.symbol} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                         {token.symbol.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
@@ -689,9 +689,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       placeholder="0.000"
                       value={fromAmount}
                       onChange={(e) => setFromAmount(e.target.value)}
-                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-white placeholder:text-gray-400 focus-visible:ring-0"
+                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-gray-900 placeholder:text-gray-400 focus-visible:ring-0"
                     />
-                    <div className="mt-2 text-xl text-white">
+                    <div className="mt-2 text-xl text-gray-900">
                       {(() => {
                         const amt = parseFloat(fromAmount || "0");
                         const price = fromUsdPrice ?? 0;
@@ -724,12 +724,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                     {fromToken.symbol.slice(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium text-white">
+                                <span className="font-medium text-gray-900">
                                   {fromToken.symbol}
                                 </span>
                               </>
                             ) : (
-                              <span className="text-white">Select</span>
+                              <span className="text-gray-900">Select</span>
                             )}
                           </div>
                         </SelectValue>
@@ -747,7 +747,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   src={token.logoURI}
                                   alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
@@ -764,7 +764,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       </SelectContent>
                     </Select>
                     {fromToken ? (
-                      <div className="mt-2 text-xs text-white">
+                      <div className="mt-2 text-xs text-gray-900">
                         {formatAmount(
                           getTokenBalance(fromToken),
                           fromToken.symbol,
@@ -782,7 +782,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               <Button
                 size="icon"
                 onClick={handleSwapTokens}
-                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-white transition-colors"
+                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-gray-900 transition-colors"
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
@@ -798,7 +798,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         ? formatAmount(toAmount, toToken?.symbol)
                         : "0.000"}
                     </div>
-                    <div className="mt-2 text-xl text-white">
+                    <div className="mt-2 text-xl text-gray-900">
                       {(() => {
                         const amt = parseFloat(toAmount || "0");
                         const price = toUsdPrice ?? 0;
@@ -831,12 +831,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                     {toToken.symbol.slice(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium text-white">
+                                <span className="font-medium text-gray-900">
                                   {toToken.symbol}
                                 </span>
                               </>
                             ) : (
-                              <span className="text-white">Select</span>
+                              <span className="text-gray-900">Select</span>
                             )}
                           </div>
                         </SelectValue>
@@ -854,7 +854,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   src={token.logoURI}
                                   alt={token.symbol}
                                 />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
@@ -871,7 +871,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       </SelectContent>
                     </Select>
                     {toToken ? (
-                      <div className="mt-2 text-xs text-white font-mono">
+                      <div className="mt-2 text-xs text-gray-900 font-mono">
                         {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
                       </div>
                     ) : null}
@@ -882,10 +882,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
             {/* Quote details */}
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
-              <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-white">
+              <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-gray-900">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white">Quote</span>
-                  <span className="text-sm text-white">
+                  <span className="text-sm text-gray-900">Quote</span>
+                  <span className="text-sm text-gray-900">
                     1 {fromToken.symbol} ={" "}
                     {(
                       parseFloat(toAmount) / parseFloat(fromAmount || "1")
@@ -894,16 +894,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">Network fee</span>
-                  <span className="text-white">Included</span>
+                  <span className="text-gray-900">Network fee</span>
+                  <span className="text-gray-900">Included</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">Time</span>
-                  <span className="text-white">&lt; 1 min</span>
+                  <span className="text-gray-900">Time</span>
+                  <span className="text-gray-900">&lt; 1 min</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-white">Rate includes</span>
-                  <span className="text-white">{slippage}% slippage</span>
+                  <span className="text-gray-900">Rate includes</span>
+                  <span className="text-gray-900">{slippage}% slippage</span>
                 </div>
                 <div className="text-right text-sm text-[#a855f7]">
                   More quotes
@@ -949,7 +949,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     );
                     setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
                   }}
-                  className="text-xs px-2 py-2 rounded-lg bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-white border border-[#FF7A5C]/30 transition-colors"
+                  className="text-xs px-2 py-2 rounded-lg bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-gray-900 border border-[#FF7A5C]/30 transition-colors"
                 >
                   {pct}%
                 </button>
@@ -959,7 +959,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {/* Submit */}
             <Button
               onClick={handleSwap}
-              className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-2xl transition-all"
+              className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-gray-900 shadow-lg hover:shadow-2xl transition-all"
               disabled={
                 (!quote && !indicative) ||
                 !!quoteError ||

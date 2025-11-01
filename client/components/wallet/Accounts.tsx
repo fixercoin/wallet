@@ -21,7 +21,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white p-4">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 p-4 relative overflow-hidden">
       <div className="w-full max-w-md mx-auto py-6">
         <div className="rounded-lg border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">

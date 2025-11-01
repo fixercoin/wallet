@@ -754,10 +754,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                 </AvatarFallback>
                               </Avatar>
                               <span className="font-medium">
-                                {token.symbol} ~ <span className="text-black">{formatAmount(
-                                  getTokenBalance(token),
-                                  token.symbol,
-                                )}</span>
+                                {token.symbol} ~{" "}
+                                <span className="text-black">
+                                  {formatAmount(
+                                    getTokenBalance(token),
+                                    token.symbol,
+                                  )}
+                                </span>
                               </span>
                             </div>
                           </SelectItem>
@@ -860,10 +863,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                 </AvatarFallback>
                               </Avatar>
                               <span className="font-medium">
-                                {token.symbol} ~ <span className="text-black">{formatAmount(
-                                  getTokenBalance(token),
-                                  token.symbol,
-                                )}</span>
+                                {token.symbol} ~{" "}
+                                <span className="text-black">
+                                  {formatAmount(
+                                    getTokenBalance(token),
+                                    token.symbol,
+                                  )}
+                                </span>
                               </span>
                             </div>
                           </SelectItem>

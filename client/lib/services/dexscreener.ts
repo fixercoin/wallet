@@ -222,11 +222,15 @@ class DexscreenerAPI {
     // Update cache with fetched results (only if we got meaningful data)
     const ttl = now + DexscreenerAPI.TOKEN_CACHE_TTL_MS;
     fetchedTokens.forEach((t) => {
-      const matchMint = normalizedMints.find(
-        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
-      );
-      if (matchMint) {
-        DexscreenerAPI.tokenCache.set(matchMint, { token: t, expiresAt: ttl });
+      // Cache by baseToken (preferred)
+      const baseMint = t.baseToken?.address;
+      if (baseMint && normalizedMints.includes(baseMint)) {
+        DexscreenerAPI.tokenCache.set(baseMint, { token: t, expiresAt: ttl });
+      }
+      // Also cache by quoteToken if it's in our request list
+      const quoteMint = t.quoteToken?.address;
+      if (quoteMint && normalizedMints.includes(quoteMint) && !baseMint) {
+        DexscreenerAPI.tokenCache.set(quoteMint, { token: t, expiresAt: ttl });
       }
     });
 

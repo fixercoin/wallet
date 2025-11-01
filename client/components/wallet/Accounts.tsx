@@ -28,7 +28,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="text-white hover:bg-[#FF7A5C]/10"
+            className="text-white hover:bg-[#a855f7]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -56,7 +56,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                     size="sm"
                     onClick={handleCopy}
                     aria-label="Copy address"
-                    className="text-white hover:bg-[#FF7A5C]/10"
+                    className="text-white hover:bg-[#a855f7]/10"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

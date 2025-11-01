@@ -104,7 +104,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             size="sm"
             onClick={onBack}
             aria-label="Back"
-            className="text-white hover:bg-[#FF7A5C]/10"
+            className="text-white hover:bg-[#a855f7]/10"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>

@@ -663,29 +663,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
-        {/* Top bar */}
-        <div className="flex items-center justify-between mb-4 pt-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="text-white hover:bg-[#a855f7]/10 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold text-white">Swap</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:text-white hover:bg-[#a855f7]/10 transition-colors"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
-
         {/* Card */}
-        <div className="bg-transparent border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
+        <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#555555]/30 overflow-hidden text-white bg-transparent sm:bg-gradient-to-br sm:from-[#2d1b47]/60 sm:to-[#1f0f3d]/60">
           <div className="p-5 space-y-4">
+            {/* Header with back button */}
+            <div className="flex items-center gap-3 -mt-3 -mx-5 px-5 pt-3 pb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onBack}
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-lg font-semibold text-white flex-1">Swap</h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 p-0 text-white hover:text-white hover:bg-[#a855f7]/10 transition-colors flex-shrink-0"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
             {/* FROM row */}
             <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
               <CardContent className="p-4">

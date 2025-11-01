@@ -21,10 +21,7 @@ interface DexToolsResponse {
 class DexToolsAPI {
   private readonly baseUrl = "https://api.dextools.io/v1";
   private readonly cacheTimeout = 60000; // 1 minute
-  private priceCache = new Map<
-    string,
-    { price: number; timestamp: number }
-  >();
+  private priceCache = new Map<string, { price: number; timestamp: number }>();
 
   /**
    * Fetch token price from DexTools API
@@ -62,7 +59,10 @@ class DexToolsAPI {
           }
         }
       } catch (proxyErr) {
-        console.warn("[DexTools] Proxy request failed, trying direct API:", proxyErr);
+        console.warn(
+          "[DexTools] Proxy request failed, trying direct API:",
+          proxyErr,
+        );
       }
 
       // Fallback to direct API call
@@ -71,7 +71,7 @@ class DexToolsAPI {
 
       const response = await fetch(directUrl, {
         headers: {
-          "Accept": "application/json",
+          Accept: "application/json",
         },
       });
 

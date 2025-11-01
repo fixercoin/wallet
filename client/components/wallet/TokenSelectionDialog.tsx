@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TokenInfo } from "@/lib/wallet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -65,7 +70,8 @@ export const TokenSelectionDialog: React.FC<TokenSelectionDialogProps> = ({
         </div>
 
         <p className="text-xs text-gray-400 text-center mt-2">
-          Removing a token will hide it from your wallet, but you can always add it back.
+          Removing a token will hide it from your wallet, but you can always add
+          it back.
         </p>
       </DialogContent>
     </Dialog>

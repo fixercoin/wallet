@@ -443,7 +443,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             console.log(
               `[DexTools] Fetching FIXERCOIN price from DexTools API`,
             );
-            const fixercoinPrice = await dextoolsAPI.getTokenPrice(fixercoinMint);
+            const fixercoinPrice =
+              await dextoolsAPI.getTokenPrice(fixercoinMint);
             if (fixercoinPrice && fixercoinPrice > 0) {
               prices[fixercoinMint] = fixercoinPrice;
               console.log(

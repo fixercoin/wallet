@@ -307,8 +307,7 @@ export const getTokenAccounts = async (publicKey: string) => {
         };
       });
     } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : String(error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.warn(
         `[Token Accounts] Failed with ${rpcUrl}: ${errorMsg}. Trying next endpoint...`,
       );

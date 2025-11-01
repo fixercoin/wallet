@@ -234,6 +234,7 @@ export const getTokenAccounts = async (publicKey: string) => {
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value) && value.length >= 0) {
+      console.log(`[Token Accounts] Got ${value.length} token accounts from proxy RPC`);
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;

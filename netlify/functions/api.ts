@@ -1005,6 +1005,38 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
+    if (path === "/wallet/balance" && method === "GET") {
+      const pk = (
+        event.queryStringParameters?.publicKey ||
+        event.queryStringParameters?.wallet ||
+        event.queryStringParameters?.address ||
+        ""
+      ).trim();
+      if (!pk) return jsonResponse(400, { error: "Missing 'publicKey' parameter" });
+
+      try {
+        const rpc = await callRpc("getBalance", [pk], Date.now());
+        const j = JSON.parse(String(rpc?.body || "{}"));
+        const lamports =
+          typeof j.result === "number" ? j.result : j?.result?.value ?? null;
+        if (typeof lamports === "number" && isFinite(lamports)) {
+          const balance = lamports / 1_000_000_000;
+          return jsonResponse(200, {
+            publicKey: pk,
+            balance,
+            balanceLamports: lamports,
+          });
+        }
+        return jsonResponse(502, { error: "Invalid RPC response" });
+      } catch (e) {
+        return jsonResponse(502, {
+          error: "Failed to fetch balance",
+          details: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

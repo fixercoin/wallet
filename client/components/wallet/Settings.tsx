@@ -272,153 +272,159 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </CardContent>
               </Card>
 
-              <section>
-                <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
-                  <Key className="h-5 w-5" />
-                  <span className="font-medium">SECRETS</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="bg-transparent border-0 rounded-lg">
-                    <div className="flex gap-3 mb-3">
-                      <select
-                        aria-label="Select secret"
-                        value={selectedSecret}
-                        onChange={(e) =>
-                          setSelectedSecret(
-                            e.target.value as "recovery" | "private",
-                          )
-                        }
-                        className="flex-1 bg-[#2d1b47]/50 text-white p-2 rounded-md border border-[#a855f7]/30 font-mono"
-                      >
-                        <option value="recovery">RECOVERY PHRASE</option>
-                        <option value="private">PRIVATE KEY</option>
-                      </select>
+              <Card className="bg-transparent rounded-md border-0">
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between p-4 rounded-md transition-colors">
+                    <div className="min-w-0 w-full">
+                      <div className="mb-3 flex items-center gap-2 text-[hsl(var(--foreground))]">
+                        <Key className="h-5 w-5" />
+                        <span className="font-medium">SECRETS</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="bg-transparent border-0 rounded-lg">
+                          <div className="flex gap-3 mb-3">
+                            <select
+                              aria-label="Select secret"
+                              value={selectedSecret}
+                              onChange={(e) =>
+                                setSelectedSecret(
+                                  e.target.value as "recovery" | "private",
+                                )
+                              }
+                              className="flex-1 bg-[#2d1b47]/50 text-white p-2 rounded-md border border-[#a855f7]/30 font-mono"
+                            >
+                              <option value="recovery">RECOVERY PHRASE</option>
+                              <option value="private">PRIVATE KEY</option>
+                            </select>
 
-                      <select
-                        aria-label="Secret action"
-                        value={secretAction}
-                        onChange={async (e) => {
-                          const v = e.target.value as
-                            | "hidden"
-                            | "show"
-                            | "copy";
-                          setSecretAction(v);
-                          if (v === "show") {
-                            if (selectedSecret === "recovery") {
-                              if (wallet?.mnemonic) {
-                                setRecoveryPhrase(wallet.mnemonic);
-                                setShowRecoveryPhrase(true);
-                                setShowPrivateKey(false);
-                              } else {
-                                toast({
-                                  title: "Unavailable",
-                                  description:
-                                    "Recovery phrase not available for this account",
-                                  variant: "destructive",
-                                });
-                                setSecretAction("hidden");
-                              }
-                            } else {
-                              if (privateKeyBase58) {
-                                setShowPrivateKey(true);
-                                setShowRecoveryPhrase(false);
-                              } else {
-                                toast({
-                                  title: "Unavailable",
-                                  description: "Private key not available",
-                                  variant: "destructive",
-                                });
-                                setSecretAction("hidden");
-                              }
+                            <select
+                              aria-label="Secret action"
+                              value={secretAction}
+                              onChange={async (e) => {
+                                const v = e.target.value as
+                                  | "hidden"
+                                  | "show"
+                                  | "copy";
+                                setSecretAction(v);
+                                if (v === "show") {
+                                  if (selectedSecret === "recovery") {
+                                    if (wallet?.mnemonic) {
+                                      setRecoveryPhrase(wallet.mnemonic);
+                                      setShowRecoveryPhrase(true);
+                                      setShowPrivateKey(false);
+                                    } else {
+                                      toast({
+                                        title: "Unavailable",
+                                        description:
+                                          "Recovery phrase not available for this account",
+                                        variant: "destructive",
+                                      });
+                                      setSecretAction("hidden");
+                                    }
+                                  } else {
+                                    if (privateKeyBase58) {
+                                      setShowPrivateKey(true);
+                                      setShowRecoveryPhrase(false);
+                                    } else {
+                                      toast({
+                                        title: "Unavailable",
+                                        description: "Private key not available",
+                                        variant: "destructive",
+                                      });
+                                      setSecretAction("hidden");
+                                    }
+                                  }
+                                } else if (v === "copy") {
+                                  if (selectedSecret === "recovery") {
+                                    if (wallet?.mnemonic) {
+                                      const ok = await copyToClipboard(
+                                        wallet.mnemonic,
+                                      );
+                                      if (ok)
+                                        toast({
+                                          title: "Copied",
+                                          description: "Recovery phrase copied",
+                                        });
+                                      else
+                                        toast({
+                                          title: "Copy Failed",
+                                          description:
+                                            "Could not copy recovery phrase",
+                                          variant: "destructive",
+                                        });
+                                    } else {
+                                      toast({
+                                        title: "Unavailable",
+                                        description: "Recovery phrase not available",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  } else {
+                                    if (privateKeyBase58) {
+                                      const ok =
+                                        await copyToClipboard(privateKeyBase58);
+                                      if (ok)
+                                        toast({
+                                          title: "Copied",
+                                          description: "Private key copied",
+                                        });
+                                      else
+                                        toast({
+                                          title: "Copy Failed",
+                                          description: "Could not copy private key",
+                                          variant: "destructive",
+                                        });
+                                    } else {
+                                      toast({
+                                        title: "Unavailable",
+                                        description: "Private key not available",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }
+                                  setSecretAction("hidden");
+                                  setShowPrivateKey(false);
+                                  setShowRecoveryPhrase(false);
+                                } else {
+                                  setShowPrivateKey(false);
+                                  setShowRecoveryPhrase(false);
+                                }
+                              }}
+                              className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
+                            >
+                              <option value="hidden">Hidden</option>
+                              <option value="show">Show</option>
+                              <option value="copy">Copy</option>
+                            </select>
+                          </div>
+
+                          <Textarea
+                            value={
+                              showRecoveryPhrase
+                                ? recoveryPhrase
+                                : showPrivateKey
+                                  ? privateKeyBase58
+                                  : ""
                             }
-                          } else if (v === "copy") {
-                            if (selectedSecret === "recovery") {
-                              if (wallet?.mnemonic) {
-                                const ok = await copyToClipboard(
-                                  wallet.mnemonic,
-                                );
-                                if (ok)
-                                  toast({
-                                    title: "Copied",
-                                    description: "Recovery phrase copied",
-                                  });
-                                else
-                                  toast({
-                                    title: "Copy Failed",
-                                    description:
-                                      "Could not copy recovery phrase",
-                                    variant: "destructive",
-                                  });
-                              } else {
-                                toast({
-                                  title: "Unavailable",
-                                  description: "Recovery phrase not available",
-                                  variant: "destructive",
-                                });
-                              }
-                            } else {
-                              if (privateKeyBase58) {
-                                const ok =
-                                  await copyToClipboard(privateKeyBase58);
-                                if (ok)
-                                  toast({
-                                    title: "Copied",
-                                    description: "Private key copied",
-                                  });
-                                else
-                                  toast({
-                                    title: "Copy Failed",
-                                    description: "Could not copy private key",
-                                    variant: "destructive",
-                                  });
-                              } else {
-                                toast({
-                                  title: "Unavailable",
-                                  description: "Private key not available",
-                                  variant: "destructive",
-                                });
-                              }
+                            readOnly
+                            className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white font-mono text-sm resize-none min-h-[140px]"
+                            placeholder={
+                              showRecoveryPhrase || showPrivateKey ? "" : "Hidden"
                             }
-                            setSecretAction("hidden");
-                            setShowPrivateKey(false);
-                            setShowRecoveryPhrase(false);
-                          } else {
-                            setShowPrivateKey(false);
-                            setShowRecoveryPhrase(false);
-                          }
-                        }}
-                        className="bg-transparent text-white p-1 rounded-md border border-[#FF7A5C]/30"
-                      >
-                        <option value="hidden">Hidden</option>
-                        <option value="show">Show</option>
-                        <option value="copy">Copy</option>
-                      </select>
+                          />
+                          {selectedSecret === "recovery" && !wallet?.mnemonic && (
+                            <p className="mt-2 text-xs text-red-300">
+                              This account was imported with a private key; no
+                              recovery phrase exists. Create/recover a wallet with a
+                              phrase to view it.
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-
-                    <Textarea
-                      value={
-                        showRecoveryPhrase
-                          ? recoveryPhrase
-                          : showPrivateKey
-                            ? privateKeyBase58
-                            : ""
-                      }
-                      readOnly
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white font-mono text-sm resize-none min-h-[140px]"
-                      placeholder={
-                        showRecoveryPhrase || showPrivateKey ? "" : "Hidden"
-                      }
-                    />
-                    {selectedSecret === "recovery" && !wallet?.mnemonic && (
-                      <p className="mt-2 text-xs text-red-300">
-                        This account was imported with a private key; no
-                        recovery phrase exists. Create/recover a wallet with a
-                        phrase to view it.
-                      </p>
-                    )}
                   </div>
-                </div>
-              </section>
+                </CardContent>
+              </Card>
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>

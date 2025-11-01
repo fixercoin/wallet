@@ -920,7 +920,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             return (
               <div key={token.mint}>
                 <Card
-                  className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl rounded-md border-0"
+                  className="bg-gradient-to-br from-[#d4f5d4]/40 to-[#b8e6b8]/40 backdrop-blur-xl rounded-md border-0"
                 >
                   <CardContent className="p-0">
                     <div

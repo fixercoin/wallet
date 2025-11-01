@@ -419,6 +419,45 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
+  const handleTokenCardClick = (token: TokenInfo) => {
+    setSelectedToken(token);
+    setShowTokenDialog(true);
+  };
+
+  const handleDeleteToken = async () => {
+    if (!selectedToken) return;
+
+    try {
+      setIsDeletingToken(true);
+      removeToken(selectedToken.mint);
+
+      toast({
+        title: "Token Removed",
+        description: `${selectedToken.symbol} has been removed from your wallet`,
+      });
+
+      setShowTokenDialog(false);
+      setSelectedToken(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to remove token",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingToken(false);
+    }
+  };
+
+  const handleTokenContinue = () => {
+    if (selectedToken) {
+      setShowTokenDialog(false);
+      setSelectedToken(null);
+      onTokenClick(selectedToken.mint);
+    }
+  };
+
   const formatBalance = (amount: number | undefined): string => {
     if (!amount || isNaN(amount)) return "0.00";
     return amount.toLocaleString(undefined, {

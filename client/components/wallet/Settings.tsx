@@ -178,13 +178,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
       <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
         <div>
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden p-6">
+          <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-700 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />

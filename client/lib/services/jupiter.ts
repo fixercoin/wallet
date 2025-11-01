@@ -185,7 +185,7 @@ class JupiterAPI {
     try {
       const ids = tokenMints.join(",");
 
-      console.log(`Fetching prices for ${tokenMints.length} tokens via proxy`);
+      console.log(`Fetching prices for ${tokenMints.length} tokens via Jupiter`);
 
       const response = await fetch(`/api/jupiter/price?ids=${ids}`, {
         method: "GET",
@@ -215,14 +215,13 @@ class JupiterAPI {
       }
 
       console.log(
-        `Successfully fetched ${Object.keys(prices).length} prices via proxy`,
+        `Successfully fetched ${Object.keys(prices).length} prices from Jupiter`,
       );
       return prices;
     } catch (error) {
-      console.error("Error fetching token prices from Jupiter proxy:", error);
-
-      // Try fallback approach - fetch prices individually
-      return this.getTokenPricesIndividually(tokenMints);
+      console.error("Error fetching token prices from Jupiter:", error);
+      // Return empty object - let callers handle fallback to other providers
+      return {};
     }
   }
 

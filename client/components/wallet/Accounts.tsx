@@ -21,7 +21,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
+    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white p-4">
       <div className="w-full max-w-md mx-auto">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button
@@ -43,7 +43,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               Active Wallet
             </div>
             <div className="w-full">
-              <div className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl rounded-md p-4 flex items-center justify-between">
+              <div className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl rounded-md p-4 flex items-center justify-between">
                 <div className="min-w-0">
                   <div className="text-xs text-gray-300 mb-1">Address</div>
                   <div className="font-mono text-sm break-all text-white">
@@ -62,7 +62,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                   </Button>
                   <Button
                     onClick={() => onOpenSetup && onOpenSetup()}
-                    className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white shadow-sm"
+                    className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#a855f7] to-[#22c55e] text-white shadow-sm"
                     aria-label="Add wallet"
                   >
                     <Plus className="h-4 w-4" />
@@ -80,7 +80,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               {wallets.map((w) => (
                 <div
                   key={w.publicKey}
-                  className="w-full p-3 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-md flex items-center gap-2"
+                  className="w-full p-3 bg-[#2d1b47]/50 border border-[#a855f7]/30 rounded-md flex items-center gap-2"
                 >
                   <button
                     onClick={() => {

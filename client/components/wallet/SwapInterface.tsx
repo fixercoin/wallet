@@ -26,6 +26,7 @@ import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { coinmarketcapAPI } from "@/lib/services/coinmarketcap";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
 
 interface SwapInterfaceProps {
@@ -227,16 +228,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
       try {
-        // Prefer Jupiter price API for reliable USD prices
-        const jupMap = await jupiterAPI.getTokenPrices(mints);
+        // Prefer CoinMarketCap price API for reliable USD prices
+        const cmcMap = await coinmarketcapAPI.getTokenPrices(mints);
         let fromPrice: number | null = fromToken?.mint
-          ? (jupMap[fromToken.mint] ?? null)
+          ? (cmcMap[fromToken.mint] ?? null)
           : null;
         let toPrice: number | null = toToken?.mint
-          ? (jupMap[toToken.mint] ?? null)
+          ? (cmcMap[toToken.mint] ?? null)
           : null;
 
-        // Fallback to DexScreener if Jupiter didn't return prices
+        // Fallback to DexScreener if CoinMarketCap didn't return prices
         if (
           fromPrice == null ||
           !(fromPrice > 0) ||

@@ -234,6 +234,9 @@ export const getTokenAccounts = async (publicKey: string) => {
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value) && value.length >= 0) {
+      console.log(
+        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+      );
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;
@@ -262,16 +265,20 @@ export const getTokenAccounts = async (publicKey: string) => {
   }
 
   // Fallback RPC endpoints with better support for token queries
+  // Ordered by reliability and feature support
   const fallbackRPCs = [
+    "https://api.mainnet-beta.solana.com", // Official Solana endpoint - most reliable
+    "https://solana.publicnode.com", // Public Node - good uptime
     SOLANA_RPC_URL,
     "https://rpc.ankr.com/solana",
-    "https://solana.publicnode.com",
-    "https://api.mainnet-beta.solana.com",
-  ].filter((url, idx, arr) => arr.indexOf(url) === idx); // Remove duplicates
+  ].filter((url, idx, arr) => arr.indexOf(url) === idx && url); // Remove duplicates and empties
 
-  for (const rpcUrl of fallbackRPCs) {
+  for (let i = 0; i < fallbackRPCs.length; i++) {
+    const rpcUrl = fallbackRPCs[i];
     try {
-      console.log(`[Token Accounts] Trying RPC endpoint: ${rpcUrl}`);
+      console.log(
+        `[Token Accounts] Fallback ${i + 1}/${fallbackRPCs.length}: ${rpcUrl.substring(0, 60)}...`,
+      );
       const conn = new Connection(rpcUrl, { commitment: "confirmed" });
       const owner = new PublicKey(publicKey);
       const programId = new PublicKey(TOKEN_PROGRAM_ID);
@@ -279,12 +286,15 @@ export const getTokenAccounts = async (publicKey: string) => {
       const resp = await Promise.race([
         conn.getParsedTokenAccountsByOwner(owner, { programId }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("RPC timeout")), 10000),
+          setTimeout(
+            () => reject(new Error("RPC timeout after 15 seconds")),
+            15000,
+          ),
         ),
       ]);
 
       console.log(
-        `[Token Accounts] Successfully fetched from ${rpcUrl}: ${resp.value.length} token accounts`,
+        `[Token Accounts] ✅ SUCCESS from fallback ${i + 1}: ${resp.value.length} token accounts`,
       );
 
       return resp.value.map((account) => {
@@ -308,15 +318,21 @@ export const getTokenAccounts = async (publicKey: string) => {
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Token Accounts] Failed with ${rpcUrl}: ${errorMsg}. Trying next endpoint...`,
-      );
+      console.warn(`[Token Accounts] Fallback ${i + 1} failed: ${errorMsg}`);
+      if (i < fallbackRPCs.length - 1) {
+        // Brief delay before trying next endpoint
+        await new Promise((r) => setTimeout(r, 300));
+      }
       continue;
     }
   }
 
   console.error(
-    "[Token Accounts] All RPC endpoints failed to fetch token accounts, returning empty list",
+    `[Token Accounts] ❌ All ${fallbackRPCs.length} RPC endpoints failed. This usually means:
+    1. No RPC endpoint is properly configured (check SOLANA_RPC_URL or HELIUS_API_KEY environment variables)
+    2. All public RPC endpoints are temporarily down or overloaded
+    3. The wallet address might be invalid
+    Returning empty list - token balances will not be visible`,
   );
   return [];
 };

@@ -787,7 +787,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => setShowBalance(!showBalance)}
                 className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-20"
               >
-                <span className="text-black">*</span>
+                <span className="text-black text-2xl leading-none">*</span>
               </button>
             </div>
 

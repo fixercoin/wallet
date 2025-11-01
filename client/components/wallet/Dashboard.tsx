@@ -119,6 +119,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     refreshBalance,
     refreshTokens,
     addCustomToken,
+    removeToken,
   } = useWallet();
   const { toast } = useToast();
   const { events } = useDurableRoom("global", API_BASE);

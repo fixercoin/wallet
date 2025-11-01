@@ -179,6 +179,12 @@ const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
   return Array.from(byMint.values());
 };
 
+// Mint to search symbol mapping for tokens not found via mint lookup
+const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
+  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+};
+
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
   try {
     const { mints } = req.query;
@@ -212,6 +218,8 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
     }
 
     const results: DexscreenerToken[] = [];
+    const requestedMintsSet = new Set(uniqueMints);
+    const foundMintsSet = new Set<string>();
     let schemaVersion = "1.0.0";
 
     for (const batch of batches) {
@@ -227,6 +235,66 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       }
 
       results.push(...data.pairs);
+
+      // Track which mints we found
+      data.pairs.forEach((pair) => {
+        if (pair.baseToken?.address) {
+          foundMintsSet.add(pair.baseToken.address);
+        }
+      });
+    }
+
+    // Find mints that weren't found in the initial batch request
+    const missingMints = Array.from(requestedMintsSet).filter(
+      (m) => !foundMintsSet.has(m),
+    );
+
+    // For missing mints, try search-based lookup
+    if (missingMints.length > 0) {
+      console.log(
+        `[DexScreener] ${missingMints.length} mints not found via batch, trying search fallback`,
+      );
+
+      for (const mint of missingMints) {
+        const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+        if (searchSymbol) {
+          try {
+            console.log(
+              `[DexScreener] Searching for ${mint} using symbol: ${searchSymbol}`,
+            );
+            const searchData = await fetchDexscreenerData(
+              `/search/?q=${encodeURIComponent(searchSymbol)}`,
+            );
+
+            if (searchData?.pairs && Array.isArray(searchData.pairs)) {
+              // Find the pair that matches our mint
+              const matchingPair = searchData.pairs.find(
+                (p) =>
+                  (p.baseToken?.address === mint ||
+                    p.quoteToken?.address === mint) &&
+                  p.chainId === "solana",
+              );
+
+              if (matchingPair) {
+                console.log(
+                  `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search`,
+                );
+                results.push(matchingPair);
+                foundMintsSet.add(mint);
+              } else {
+                console.warn(
+                  `[DexScreener] ⚠️ Search returned results but none matched ${mint}`,
+                );
+              }
+            }
+          } catch (searchErr) {
+            console.warn(
+              `[DexScreener] ⚠️ Search fallback failed for ${mint}:`,
+              searchErr instanceof Error ? searchErr.message : String(searchErr),
+            );
+          }
+        }
+      }
     }
 
     const solanaPairs = mergePairsByToken(results)
@@ -242,7 +310,10 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       });
 
     console.log(
-      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)`,
+      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)` +
+        (missingMints.length > 0
+          ? ` (${missingMints.length} required search fallback)`
+          : ""),
     );
     res.json({ schemaVersion, pairs: solanaPairs });
   } catch (error) {

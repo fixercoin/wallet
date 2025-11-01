@@ -298,8 +298,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const refreshTokens = async () => {
-    if (!wallet) return;
+    if (!wallet) {
+      console.warn("[WalletContext] refreshTokens called but wallet is null");
+      return;
+    }
 
+    console.log(`[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`);
     setError(null);
     setIsLoading(true);
 

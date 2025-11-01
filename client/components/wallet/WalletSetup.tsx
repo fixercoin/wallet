@@ -12,6 +12,7 @@ import {
   importWalletFromPrivateKey,
 } from "@/lib/wallet";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
+import { prefetchWalletAddressData } from "@/lib/services/address-setup";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 

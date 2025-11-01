@@ -895,9 +895,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                         </>
                       ) : (
-                        <div className="text-xs text-gray-400 mt-1">
-                          ****
-                        </div>
+                        <div className="text-xs text-gray-400 mt-1">****</div>
                       )}
                     </>
                   );

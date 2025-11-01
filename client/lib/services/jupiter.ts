@@ -187,7 +187,9 @@ class JupiterAPI {
     try {
       const ids = tokenMints.join(",");
 
-      console.log(`Fetching prices for ${tokenMints.length} tokens via Jupiter`);
+      console.log(
+        `Fetching prices for ${tokenMints.length} tokens via Jupiter`,
+      );
 
       const response = await fetch(`/api/jupiter/price?ids=${ids}`, {
         method: "GET",
@@ -249,7 +251,6 @@ class JupiterAPI {
       throw error;
     }
   }
-
 
   async getAllTokens(): Promise<JupiterToken[]> {
     try {

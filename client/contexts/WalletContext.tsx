@@ -176,7 +176,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {
     if (wallet) {
-      console.log(`[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`);
+      console.log(
+        `[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`,
+      );
       (async () => {
         await refreshBalance();
         await refreshTokens();
@@ -262,7 +264,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // This is safe because wallet is computed from activePublicKey
       setActivePublicKey(publicKey);
     } else {
-      console.warn(`[WalletContext] Wallet not found: ${publicKey}. Available wallets:`, wallets.map(w => w.publicKey));
+      console.warn(
+        `[WalletContext] Wallet not found: ${publicKey}. Available wallets:`,
+        wallets.map((w) => w.publicKey),
+      );
     }
   };
 
@@ -303,7 +308,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return;
     }
 
-    console.log(`[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`);
+    console.log(
+      `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
+    );
     setError(null);
     setIsLoading(true);
 

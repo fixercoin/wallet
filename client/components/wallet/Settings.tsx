@@ -432,7 +432,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className="w-full flex items-center gap-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                    className="w-full flex items-center gap-2 bg-white border border-gray-200 text-gray-900 hover:bg-gray-50"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout

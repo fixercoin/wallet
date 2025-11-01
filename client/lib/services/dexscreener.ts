@@ -281,8 +281,11 @@ class DexscreenerAPI {
       .map((m) => allTokensMap.get(m))
       .filter((t): t is DexscreenerToken => Boolean(t));
 
+    const missing = normalizedMints.filter(
+      (m) => !result.find((t) => t.baseToken?.address === m),
+    );
     console.log(
-      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"}). Missing: ${normalizedMints.filter((m) => !result.find((t) => t.baseToken?.address === m)).join(", ")}`,
+      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"}). Missing: ${missing.join(", ")}`,
     );
 
     return result;

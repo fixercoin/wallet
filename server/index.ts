@@ -9,6 +9,10 @@ import {
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
 import {
+  handleCoinMarketCapQuotes,
+  handleCoinMarketCapSearch,
+} from "./routes/coinmarketcap-proxy";
+import {
   handleJupiterPrice,
   handleJupiterQuote,
   handleJupiterSwap,

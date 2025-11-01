@@ -229,12 +229,20 @@ class DexscreenerAPI {
           fetchFailed = true;
         }
       } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
+        // Handle AbortError specially - it's often a timeout
+        if (err instanceof Error && err.name === "AbortError") {
+          lastError = "Request timeout (15s) - network might be slow";
+          console.warn(
+            `[DexScreener] ⏱️ Request timeout fetching ${toFetch.length} mints`,
+          );
+        } else {
+          lastError = err instanceof Error ? err.message : String(err);
+          console.warn(
+            `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
+            lastError,
+          );
+        }
         fetchFailed = true;
-        console.warn(
-          `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
-          lastError,
-        );
       } finally {
         clearTimeout(timeoutId);
       }

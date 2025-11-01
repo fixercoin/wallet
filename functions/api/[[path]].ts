@@ -468,6 +468,10 @@ export const onRequest = async ({ request, env }) => {
         LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
       };
 
+      const MINT_TO_PAIR_ADDRESS_EX: Record<string, string> = {
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+      };
+
       const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
         "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
         "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
@@ -490,71 +494,94 @@ export const onRequest = async ({ request, env }) => {
           priceUsd = 1.0;
         } else if (TOKEN_MINTS[token]) {
           const mint = TOKEN_MINTS[token];
-          const data = await fetchDexscreenerData(`/tokens/${mint}`);
-          let pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-          let price =
-            pairs.length > 0 && pairs[0]?.priceUsd
-              ? Number(pairs[0].priceUsd)
-              : null;
 
-          // Fallback to search if no pairs found
-          if (!price || price <= 0) {
-            const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
-            if (searchSymbol) {
-              try {
-                const searchData = await fetchDexscreenerData(
-                  `/search/?q=${encodeURIComponent(searchSymbol)}`,
-                );
-                const searchPairs = Array.isArray(searchData?.pairs)
-                  ? searchData.pairs
-                  : [];
-
-                // Look for pairs where this token is the base on Solana
-                let matchingPair = searchPairs.find(
-                  (p: any) =>
-                    p?.baseToken?.address === mint &&
-                    p?.chainId === "solana",
-                );
-
-                // If not found as base on Solana, try as quote token on Solana
-                if (!matchingPair) {
-                  matchingPair = searchPairs.find(
-                    (p: any) =>
-                      p?.quoteToken?.address === mint &&
-                      p?.chainId === "solana",
-                  );
-                }
-
-                // If still not found on Solana, try any chain as base
-                if (!matchingPair) {
-                  matchingPair = searchPairs.find(
-                    (p: any) => p?.baseToken?.address === mint,
-                  );
-                }
-
-                // If still not found, try as quote on any chain
-                if (!matchingPair) {
-                  matchingPair = searchPairs.find(
-                    (p: any) => p?.quoteToken?.address === mint,
-                  );
-                }
-
-                // Last resort: just take the first result
-                if (!matchingPair && searchPairs.length > 0) {
-                  matchingPair = searchPairs[0];
-                }
-
-                if (matchingPair && matchingPair.priceUsd) {
-                  price = Number(matchingPair.priceUsd);
-                }
-              } catch (e) {
-                // Silently continue
+          // First, try pair address lookup if available
+          const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
+          if (pairAddress) {
+            try {
+              const pairData = await fetchDexscreenerData(
+                `/pairs/solana/${pairAddress}`,
+              );
+              if (
+                Array.isArray(pairData?.pairs) &&
+                pairData.pairs.length > 0 &&
+                pairData.pairs[0]?.priceUsd
+              ) {
+                priceUsd = Number(pairData.pairs[0].priceUsd);
               }
+            } catch (e) {
+              // Silently continue if pair lookup fails
             }
           }
 
-          if (typeof price === "number" && isFinite(price) && price > 0) {
-            priceUsd = price;
+          // If pair lookup didn't work, try mint-based lookup
+          if (!priceUsd || priceUsd <= 0) {
+            const data = await fetchDexscreenerData(`/tokens/${mint}`);
+            let pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+            let price =
+              pairs.length > 0 && pairs[0]?.priceUsd
+                ? Number(pairs[0].priceUsd)
+                : null;
+
+            // Fallback to search if no pairs found
+            if (!price || price <= 0) {
+              const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+              if (searchSymbol) {
+                try {
+                  const searchData = await fetchDexscreenerData(
+                    `/search/?q=${encodeURIComponent(searchSymbol)}`,
+                  );
+                  const searchPairs = Array.isArray(searchData?.pairs)
+                    ? searchData.pairs
+                    : [];
+
+                  // Look for pairs where this token is the base on Solana
+                  let matchingPair = searchPairs.find(
+                    (p: any) =>
+                      p?.baseToken?.address === mint &&
+                      p?.chainId === "solana",
+                  );
+
+                  // If not found as base on Solana, try as quote token on Solana
+                  if (!matchingPair) {
+                    matchingPair = searchPairs.find(
+                      (p: any) =>
+                        p?.quoteToken?.address === mint &&
+                        p?.chainId === "solana",
+                    );
+                  }
+
+                  // If still not found on Solana, try any chain as base
+                  if (!matchingPair) {
+                    matchingPair = searchPairs.find(
+                      (p: any) => p?.baseToken?.address === mint,
+                    );
+                  }
+
+                  // If still not found, try as quote on any chain
+                  if (!matchingPair) {
+                    matchingPair = searchPairs.find(
+                      (p: any) => p?.quoteToken?.address === mint,
+                    );
+                  }
+
+                  // Last resort: just take the first result
+                  if (!matchingPair && searchPairs.length > 0) {
+                    matchingPair = searchPairs[0];
+                  }
+
+                  if (matchingPair && matchingPair.priceUsd) {
+                    price = Number(matchingPair.priceUsd);
+                  }
+                } catch (e) {
+                  // Silently continue
+                }
+              }
+            }
+
+            if (typeof price === "number" && isFinite(price) && price > 0) {
+              priceUsd = price;
+            }
           }
         }
       } catch {}

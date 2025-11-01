@@ -39,10 +39,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="sticky top-0 z-10 bg-transparent border-b border-white/5">
+    <div className="sticky top-0 z-10 bg-transparent border-b border-[#a855f7]/20">
       <div className="max-w-md mx-auto px-3 py-3">
         {/* Pill bar replicating the provided design */}
-        <div className="flex items-center gap-2 rounded-xl bg-[#141c2b] text-white h-10 px-3 shadow-sm ring-1 ring-white/10">
+        <div className="flex items-center gap-2 rounded-xl bg-[#2d1b47]/40 text-white h-10 px-3 shadow-sm ring-1 ring-[#a855f7]/20">
           <div className="flex items-center gap-2 flex-1 overflow-hidden">
             <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500">
               <Flame className="h-4 w-4 text-white" />

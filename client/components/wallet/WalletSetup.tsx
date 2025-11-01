@@ -379,7 +379,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <div className="bg-[#1a2540]/50 rounded-xl p-6">
+                <div className="bg-[#2d1b47]/50 rounded-xl p-6">
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic

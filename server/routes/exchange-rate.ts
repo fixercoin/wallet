@@ -27,6 +27,11 @@ interface DexscreenerResponse {
   }>;
 }
 
+const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": "FIXERCOIN",
+  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": "LOCKER",
+};
+
 async function fetchTokenPriceFromDexScreener(
   mint: string,
 ): Promise<number | null> {
@@ -65,6 +70,54 @@ async function fetchTokenPriceFromDexScreener(
         const price = parseFloat(priceUsd);
         console.log(`[DexScreener] ✅ Got price for ${mint}: $${price}`);
         return price;
+      }
+    }
+
+    // Fallback: try search-based lookup for specific tokens
+    const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+    if (searchSymbol) {
+      console.log(
+        `[DexScreener] No pairs found, trying search fallback for ${searchSymbol}`,
+      );
+      try {
+        const searchUrl = `https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(searchSymbol)}`;
+        const searchController = new AbortController();
+        const searchTimeoutId = setTimeout(() => searchController.abort(), 8000);
+
+        const searchResponse = await fetch(searchUrl, {
+          signal: searchController.signal,
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+        });
+        clearTimeout(searchTimeoutId);
+
+        if (searchResponse.ok) {
+          const searchData = (await searchResponse.json()) as DexscreenerResponse;
+          if (searchData.pairs && searchData.pairs.length > 0) {
+            // Find pair that matches our mint
+            const matchingPair = searchData.pairs.find(
+              (p) =>
+                (p.baseToken?.address === mint ||
+                  (p as any).quoteToken?.address === mint) &&
+                (p as any).chainId === "solana",
+            );
+
+            if (matchingPair && matchingPair.priceUsd) {
+              const price = parseFloat(matchingPair.priceUsd);
+              console.log(
+                `[DexScreener] ✅ Got price for ${mint} via search: $${price}`,
+              );
+              return price;
+            }
+          }
+        }
+      } catch (searchErr) {
+        console.warn(
+          `[DexScreener] Search fallback failed:`,
+          searchErr instanceof Error ? searchErr.message : String(searchErr),
+        );
       }
     }
 

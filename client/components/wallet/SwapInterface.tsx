@@ -669,7 +669,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="text-white hover:bg-[#FF7A5C]/10 transition-colors"
+            className="text-white hover:bg-[#a855f7]/10 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -677,7 +677,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:text-white hover:bg-[#FF7A5C]/10 transition-colors"
+            className="text-white hover:text-white hover:bg-[#a855f7]/10 transition-colors"
           >
             <Settings className="h-5 w-5" />
           </Button>

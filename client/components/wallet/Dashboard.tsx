@@ -694,7 +694,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
                   <div
-                    className="bg-gradient-to-r from-[#C084FC] to-[#4ADE80] h-2 rounded-full"
+                    className="bg-gradient-to-r from-[#a855f7] to-[#22c55e] h-2 rounded-full"
                     style={{ width: `${progressPct}%` }}
                   ></div>
                 </div>

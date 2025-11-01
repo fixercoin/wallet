@@ -733,7 +733,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Balance Section */}
-        <div className="mb-3 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
+        <div className="mb-1 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setShowBalance(!showBalance)}
@@ -867,21 +867,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-3 mt-6">
             <Button
               onClick={onSend}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#555555]/60 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/40 text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#22c55e]/20 border border-[#555555]/60 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#555555]/60 text-white flex items-center justify-center"
             >
               SWAP
             </Button>
@@ -908,8 +908,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="space-y-2">
-          {sortedTokens.map((token) => {
+        <div className="space-y-0">
+          {sortedTokens.map((token, index) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&
               isFinite(token.priceChange24h)
@@ -918,66 +918,74 @@ export const Dashboard: React.FC<DashboardProps> = ({
             const isPositive = (percentChange ?? 0) >= 0;
 
             return (
-              <Card
-                key={token.mint}
-                className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#555555]/30 rounded-md"
-              >
-                <CardContent className="p-0">
-                  <div
-                    className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
-                    onClick={() => onTokenClick(token.mint)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={token.logoURI} alt={token.symbol} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
-                          {token.symbol.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-semibold text-white text-sm">
-                            {token.symbol}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-xs text-gray-300">
-                            ${formatTokenPriceDisplay(token.price)}
-                          </span>
-                          {percentChange !== null ? (
-                            <span className="flex items-center gap-1">
-                              <span
-                                className={`text-xs font-medium ${
-                                  isPositive ? "text-green-400" : "text-red-400"
-                                }`}
-                              >
-                                {isPositive ? "+" : ""}
-                                {percentChange.toFixed(2)}%
-                              </span>
-                              <span className="text-xs text-gray-400">24h</span>
+              <div key={token.mint}>
+                <Card className="bg-transparent rounded-md border-0">
+                  <CardContent className="p-0">
+                    <div
+                      className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
+                      onClick={() => onTokenClick(token.mint)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={token.logoURI} alt={token.symbol} />
+                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
+                            {token.symbol.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="font-semibold text-white text-sm">
+                              {token.symbol}
                             </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">—</span>
-                          )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-xs text-gray-300">
+                              ${formatTokenPriceDisplay(token.price)}
+                            </span>
+                            {percentChange !== null ? (
+                              <span className="flex items-center gap-1">
+                                <span
+                                  className={`text-xs font-medium ${
+                                    isPositive
+                                      ? "text-green-400"
+                                      : "text-red-400"
+                                  }`}
+                                >
+                                  {isPositive ? "+" : ""}
+                                  {percentChange.toFixed(2)}%
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  24h
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-white">
-                        {formatBalance(
-                          token.symbol === "SOL" ? balance : token.balance || 0,
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-300">
-                        {typeof token.price === "number" && token.price > 0
-                          ? `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
-                          : "$0.00"}
-                      </p>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-white">
+                          {formatBalance(
+                            token.symbol === "SOL"
+                              ? balance
+                              : token.balance || 0,
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-300">
+                          {typeof token.price === "number" && token.price > 0
+                            ? `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
+                            : "$0.00"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+                {index < sortedTokens.length - 1 && (
+                  <Separator className="bg-[#555555]/30" />
+                )}
+              </div>
             );
           })}
 

@@ -96,38 +96,35 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-transparent sticky top-0 z-20">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            aria-label="Back"
-            className="text-white hover:bg-[#a855f7]/10"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-              {displayToken.symbol}
-            </h1>
-            <TokenBadge token={displayToken} />
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="text-white hover:bg-[#a855f7]/10"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="bg-transparent overflow-hidden">
+        <div className="rounded-2xl border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              aria-label="Back"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-2 flex-1">
+              <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                {displayToken.symbol}
+              </h1>
+              <TokenBadge token={displayToken} />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+
           {/* Price Section (inside single card) */}
           <PriceCard
             token={displayToken}

@@ -22,7 +22,6 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import bs58 from "bs58";

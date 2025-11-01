@@ -263,16 +263,20 @@ export const getTokenAccounts = async (publicKey: string) => {
   }
 
   // Fallback RPC endpoints with better support for token queries
+  // Ordered by reliability and feature support
   const fallbackRPCs = [
+    "https://api.mainnet-beta.solana.com", // Official Solana endpoint - most reliable
+    "https://solana.publicnode.com", // Public Node - good uptime
     SOLANA_RPC_URL,
     "https://rpc.ankr.com/solana",
-    "https://solana.publicnode.com",
-    "https://api.mainnet-beta.solana.com",
-  ].filter((url, idx, arr) => arr.indexOf(url) === idx); // Remove duplicates
+  ].filter((url, idx, arr) => arr.indexOf(url) === idx && url); // Remove duplicates and empties
 
-  for (const rpcUrl of fallbackRPCs) {
+  for (let i = 0; i < fallbackRPCs.length; i++) {
+    const rpcUrl = fallbackRPCs[i];
     try {
-      console.log(`[Token Accounts] Trying RPC endpoint: ${rpcUrl}`);
+      console.log(
+        `[Token Accounts] Fallback ${i + 1}/${fallbackRPCs.length}: ${rpcUrl.substring(0, 60)}...`,
+      );
       const conn = new Connection(rpcUrl, { commitment: "confirmed" });
       const owner = new PublicKey(publicKey);
       const programId = new PublicKey(TOKEN_PROGRAM_ID);
@@ -280,12 +284,15 @@ export const getTokenAccounts = async (publicKey: string) => {
       const resp = await Promise.race([
         conn.getParsedTokenAccountsByOwner(owner, { programId }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("RPC timeout")), 10000),
+          setTimeout(
+            () => reject(new Error("RPC timeout after 15 seconds")),
+            15000,
+          ),
         ),
       ]);
 
       console.log(
-        `[Token Accounts] Successfully fetched from ${rpcUrl}: ${resp.value.length} token accounts`,
+        `[Token Accounts] ✅ SUCCESS from fallback ${i + 1}: ${resp.value.length} token accounts`,
       );
 
       return resp.value.map((account) => {

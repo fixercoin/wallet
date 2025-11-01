@@ -376,17 +376,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             prices = {};
           }
 
-          // If SOL price is missing from DexScreener, don't throw immediately
-          // Accept partial data and let Jupiter/CoinGecko fill in gaps
+          // Accept any prices from DexScreener - even partial results are valuable
+          // Let other sources (Jupiter, CoinGecko) fill in any gaps
           const solMint = "So11111111111111111111111111111111111111112";
-          const hasSufficientData =
-            Object.keys(prices).length > 0 && prices[solMint];
+          const pricesCount = Object.keys(prices).length;
 
-          if (!hasSufficientData) {
+          if (pricesCount === 0) {
             throw new Error(
-              `DexScreener incomplete: got ${Object.keys(prices).length} prices`,
+              `DexScreener returned no prices for any tokens`,
             );
           }
+
+          console.log(`[DexScreener] Got ${pricesCount} prices, SOL available: ${!!prices[solMint]}`);
         } catch (dexErr) {
           console.warn("DexScreener error, continuing to Jupiter:", dexErr);
           prices = {};

@@ -15,9 +15,9 @@ import {
 } from "@/lib/wallet-proxy";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
-import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { dextoolsAPI } from "@/lib/services/dextools";
+import { coinmarketcapAPI } from "@/lib/services/coinmarketcap";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";

@@ -190,8 +190,10 @@
   .express-p2p-page.light-theme input,
   .express-p2p-page.light-theme textarea,
   .express-p2p-page.light-theme select,
-  .express-p2p-page.light-theme div {
+  .express-p2p-page.light-theme div,
+  .express-p2p-page.light-theme svg {
     color: hsl(var(--foreground)) !important;
+    fill: currentColor !important;
   }
 
   /* Decorative bottom wave for light theme (SVG is added in markup) */

@@ -687,7 +687,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         <div className="bg-transparent border-0 rounded-none sm:rounded-2xl overflow-hidden text-white">
           <div className="p-5 space-y-4">
             {/* FROM row */}
-            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+            <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
@@ -796,7 +796,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* TO row */}
-            <Card className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-xl">
+            <Card className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#a855f7]/30 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">

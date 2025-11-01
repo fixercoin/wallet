@@ -512,7 +512,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 <SelectContent className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
-                      {t.symbol} {t.balance ? ` — ${t.balance}` : ""}
+                      {t.symbol} {t.balance ? ` �� ${t.balance}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -572,7 +572,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 variant="outline"
                 onClick={handleDownloadList}
-                className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white"
+                className="bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white"
               >
                 LIST
               </Button>

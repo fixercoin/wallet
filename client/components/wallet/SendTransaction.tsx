@@ -678,9 +678,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">
-                  Amount:
-                </span>
+                <span className="text-gray-600">Amount:</span>
                 <span className="font-medium text-gray-900">
                   {amount} {selectedSymbol}
                 </span>
@@ -693,9 +691,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
               </div>
               {txSignature && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    Signature:
-                  </span>
+                  <span className="text-gray-600">Signature:</span>
                   <a
                     href={`https://explorer.solana.com/tx/${txSignature}`}
                     target="_blank"
@@ -739,9 +735,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
           <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
-                <div className="text-gray-900">
-                  Processing transaction...
-                </div>
+                <div className="text-gray-900">Processing transaction...</div>
               </div>
             )}
 

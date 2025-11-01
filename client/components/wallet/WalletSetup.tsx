@@ -161,7 +161,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               <stop offset="100%" stopColor="#22c55e" />
             </linearGradient>
           </defs>
-          <path d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z" fill="url(#g1)" opacity="0.95" />
+          <path
+            d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+            fill="url(#g1)"
+            opacity="0.95"
+          />
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
@@ -226,7 +230,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               <stop offset="100%" stopColor="#22c55e" />
             </linearGradient>
           </defs>
-          <path d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z" fill="url(#g1)" opacity="0.95" />
+          <path
+            d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+            fill="url(#g1)"
+            opacity="0.95"
+          />
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
@@ -388,7 +396,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               <stop offset="100%" stopColor="#22c55e" />
             </linearGradient>
           </defs>
-          <path d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z" fill="url(#g1)" opacity="0.95" />
+          <path
+            d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+            fill="url(#g1)"
+            opacity="0.95"
+          />
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">

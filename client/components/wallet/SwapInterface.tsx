@@ -670,7 +670,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-lg font-semibold text-gray-900 flex-1">Swap</h1>
+              <h1 className="text-lg font-semibold text-gray-900 flex-1">
+                Swap
+              </h1>
               <Button
                 variant="ghost"
                 size="icon"

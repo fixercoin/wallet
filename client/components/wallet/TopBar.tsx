@@ -10,7 +10,6 @@ import {
 import {
   Flame,
   Menu,
-  Search,
   Wallet,
   Gift,
   Flame as BurnIcon,
@@ -26,6 +25,7 @@ interface TopBarProps {
   onBurn: () => void;
   onLock: () => void;
   onSettings: () => void;
+  onQuestOpen?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -34,6 +34,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onBurn,
   onLock,
   onSettings,
+  onQuestOpen,
 }) => {
   const navigate = useNavigate();
 
@@ -49,10 +50,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="truncate text-xs opacity-90">fixorium</span>
           </div>
           <button
-            aria-label="Search"
+            aria-label="Prize"
             className="p-1.5 rounded-lg hover:bg-white/5"
+            onClick={onQuestOpen}
           >
-            <Search className="h-4 w-4 text-white/80" />
+            <Gift className="h-4 w-4 text-white/80" />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

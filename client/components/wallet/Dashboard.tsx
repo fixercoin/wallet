@@ -569,8 +569,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
       {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#C084FC] to-[#4ADE80] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#4ADE80] pointer-events-none" />
 
       <TopBar
         onAccounts={onAccounts}
@@ -578,6 +578,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onBurn={onBurn}
         onLock={onLock}
         onSettings={onSettings}
+        onQuestOpen={() => setShowQuestModal(true)}
       />
 
       {/* Quest Modal */}
@@ -597,7 +598,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {/* Tagline */}
               <div className="text-center">
-                <p className="text-sm font-semibold text-[#FF7A5C] uppercase tracking-wider">
+                <p className="text-sm font-semibold text-[#C084FC] uppercase tracking-wider">
                   🚀 Grow. Earn. Win.
                 </p>
               </div>
@@ -637,7 +638,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <label className="flex items-start gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          className="mt-0.5 accent-[#FF7A5C]"
+                          className="mt-0.5 accent-[#C084FC]"
                           checked={completedTasks.has(t.id)}
                           onChange={() => toggleTask(t.id)}
                         />
@@ -651,14 +652,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
                         >
                           Open
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#FF7A5C] hover:underline text-[11px] font-semibold"
+                          className="text-[#C084FC] hover:underline text-[11px] font-semibold"
                         >
                           Share
                         </button>
@@ -693,7 +694,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
                   <div
-                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] h-2 rounded-full"
+                    className="bg-gradient-to-r from-[#C084FC] to-[#4ADE80] h-2 rounded-full"
                     style={{ width: `${progressPct}%` }}
                   ></div>
                 </div>
@@ -708,14 +709,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#C084FC] to-[#4ADE80] hover:from-[#B06FF5] hover:to-[#34D399] text-white shadow-lg"
                   onClick={() => completeNextTask()}
                 >
                   Complete Task
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#FF7A5C]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#1a2540]/50 text-white hover:bg-[#C084FC]/10"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >
@@ -727,152 +728,166 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+      <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
         {/* Balance Section */}
-        <div className="text-center space-y-2 mb-8">
-          {wallet
-            ? (() => {
-                const total = getTotalPortfolioValue();
-                const hasAnyBalance =
-                  tokens.some(
-                    (t) => typeof t.balance === "number" && t.balance > 0,
-                  ) ||
-                  (typeof balance === "number" && balance > 0);
-                if (!hasAnyBalance) {
+        <div className="mb-3 rounded-lg p-6 border border-[#C084FC]/30 bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1"></div>
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {showBalance ? (
+                <Eye className="h-5 w-5 text-white/80" />
+              ) : (
+                <EyeOff className="h-5 w-5 text-white/80" />
+              )}
+            </button>
+          </div>
+          <div className="text-center space-y-2">
+            {wallet
+              ? (() => {
+                  const total = getTotalPortfolioValue();
+                  const hasAnyBalance =
+                    tokens.some(
+                      (t) => typeof t.balance === "number" && t.balance > 0,
+                    ) ||
+                    (typeof balance === "number" && balance > 0);
+                  if (!hasAnyBalance) {
+                    return (
+                      <>
+                        <div className="text-2xl font-bold text-white leading-tight">
+                          {showBalance ? "0.00 USD" : "****"}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {showBalance ? "24h: +0.00 USD (0.00%)" : "24h: ****"}
+                        </div>
+                      </>
+                    );
+                  }
+
+                  let totalChange24h = 0;
+                  let hasValidPriceChange = false;
+                  tokens.forEach((token) => {
+                    if (
+                      typeof token.balance === "number" &&
+                      typeof token.price === "number" &&
+                      typeof token.priceChange24h === "number" &&
+                      isFinite(token.balance) &&
+                      isFinite(token.price) &&
+                      isFinite(token.priceChange24h) &&
+                      token.balance > 0 &&
+                      token.price > 0
+                    ) {
+                      const currentValue = token.balance * token.price;
+                      const previousPrice =
+                        token.price / (1 + token.priceChange24h / 100);
+                      const previousValue = token.balance * previousPrice;
+                      const change = currentValue - previousValue;
+                      totalChange24h += change;
+                      hasValidPriceChange = true;
+                    }
+                  });
+
+                  const change24hPercent = hasValidPriceChange
+                    ? (totalChange24h / (total - totalChange24h)) * 100
+                    : 0;
+                  const isPositive = totalChange24h >= 0;
+
                   return (
                     <>
-                      <div className="text-xs text-gray-300 uppercase tracking-wider">
-                        TOTAL BALANCE
-                      </div>
                       <div className="text-2xl font-bold text-white leading-tight">
-                        $ 0.000
+                        {showBalance
+                          ? `${total.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })} USD`
+                          : "****"}
                       </div>
+                      {showBalance ? (
+                        <>
+                          {hasValidPriceChange && (
+                            <div className="flex items-center justify-center gap-2 mt-1">
+                              <span className="text-xs text-gray-400">
+                                24h:
+                              </span>
+                              {isPositive ? (
+                                <>
+                                  <ArrowUpRight className="h-3 w-3 text-green-400" />
+                                  <span className="text-xs font-medium text-green-400">
+                                    +
+                                    {Math.abs(totalChange24h).toLocaleString(
+                                      undefined,
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      },
+                                    )}{" "}
+                                    (+{change24hPercent.toFixed(2)}%)
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <ArrowDownLeft className="h-3 w-3 text-red-400" />
+                                  <span className="text-xs font-medium text-red-400">
+                                    -
+                                    {Math.abs(totalChange24h).toLocaleString(
+                                      undefined,
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      },
+                                    )}{" "}
+                                    ({change24hPercent.toFixed(2)}%)
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          {!hasValidPriceChange && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              24h: No data available
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-gray-400 mt-1">
+                          24h: ****
+                        </div>
+                      )}
                     </>
                   );
-                }
+                })()
+              : "Connect wallet to see balance"}
+          </div>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mt-6">
+            <Button
+              onClick={onSend}
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#C084FC]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            >
+              SEND
+            </Button>
 
-                let totalChange24h = 0;
-                let hasValidPriceChange = false;
-                tokens.forEach((token) => {
-                  if (
-                    typeof token.balance === "number" &&
-                    typeof token.price === "number" &&
-                    typeof token.priceChange24h === "number" &&
-                    isFinite(token.balance) &&
-                    isFinite(token.price) &&
-                    isFinite(token.priceChange24h) &&
-                    token.balance > 0 &&
-                    token.price > 0
-                  ) {
-                    const currentValue = token.balance * token.price;
-                    const previousPrice =
-                      token.price / (1 + token.priceChange24h / 100);
-                    const previousValue = token.balance * previousPrice;
-                    const change = currentValue - previousValue;
-                    totalChange24h += change;
-                    hasValidPriceChange = true;
-                  }
-                });
+            <Button
+              onClick={onReceive}
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#4ADE80]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            >
+              RECEIVE
+            </Button>
 
-                const change24hPercent = hasValidPriceChange
-                  ? (totalChange24h / (total - totalChange24h)) * 100
-                  : 0;
-                const isPositive = totalChange24h >= 0;
-
-                return (
-                  <>
-                    <div className="text-xs text-gray-300 uppercase tracking-wider">
-                      TOTAL BALANCE
-                    </div>
-                    <div className="text-2xl font-bold text-white leading-tight">
-                      {formatCurrency(total, {
-                        from: "USD",
-                        minimumFractionDigits: 2,
-                      })}
-                    </div>
-                    {hasValidPriceChange && (
-                      <div className="flex items-center justify-center gap-2">
-                        {isPositive ? (
-                          <>
-                            <ArrowUpRight className="h-4 w-4 text-green-400" />
-                            <span className="text-sm font-medium text-green-400">
-                              +
-                              {formatCurrency(Math.abs(totalChange24h), {
-                                from: "USD",
-                                minimumFractionDigits: 2,
-                              })}{" "}
-                              (+{change24hPercent.toFixed(2)}%)
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <ArrowDownLeft className="h-4 w-4 text-red-400" />
-                            <span className="text-sm font-medium text-red-400">
-                              -
-                              {formatCurrency(Math.abs(totalChange24h), {
-                                from: "USD",
-                                minimumFractionDigits: 2,
-                              })}{" "}
-                              ({change24hPercent.toFixed(2)}%)
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </>
-                );
-              })()
-            : "Connect wallet to see balance"}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3 mb-4">
-          <Button
-            onClick={onSend}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-          >
-            <ArrowUpRight className="h-4 w-4 mr-2" />
-            SEND
-          </Button>
-
-          <Button
-            onClick={onReceive}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
-          >
-            <ArrowDownLeft className="h-4 w-4" />
-          </Button>
-
-          <Button
-            onClick={onSwap}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-
-          <Button
-            onClick={() => setShowQuestModal(true)}
-            className="h-12 w-12 rounded-full p-0 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#ffffff66] text-white"
-            aria-label="Quest Rewards"
-          >
-            <FlyingPrizeBox
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
-          </Button>
+            <Button
+              onClick={onSwap}
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#1a2540]/50 hover:bg-[#C084FC]/20 border border-[#ffffff66] text-white flex items-center justify-center"
+            >
+              SWAP
+            </Button>
+          </div>
         </div>
 
         {/* Tokens List */}
-        <div className="mb-4 flex gap-2">
-          <Button
-            onClick={() => navigate("/select")}
-            className="flex-1 h-12 rounded-xl font-semibold border-0 relative bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg flex items-center justify-center"
-            aria-label="EXPRESS P2P SERVICE"
-          >
-            <span className="mr-0">EXPRESS P2P SERVICE</span>
-          </Button>
-
-          {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+        {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
+          <div className="mb-4 flex gap-2">
             <Button
               onClick={() => navigate("/verify-sell")}
               className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
@@ -887,8 +902,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 )}
               </span>
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           {sortedTokens.map((token) => {
@@ -902,7 +917,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             return (
               <Card
                 key={token.mint}
-                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#FF7A5C]/30 rounded-md"
+                className="bg-gradient-to-br from-[#1f2d48]/60 to-[#1a2540]/60 backdrop-blur-xl border border-[#C084FC]/30 rounded-md"
               >
                 <CardContent className="p-0">
                   <div

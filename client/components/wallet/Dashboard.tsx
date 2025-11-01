@@ -13,8 +13,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   TrendingUp,
-  Eye,
-  EyeOff,
   Settings,
   Bot,
   Plus,
@@ -789,11 +787,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => setShowBalance(!showBalance)}
                 className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-20"
               >
-                {showBalance ? (
-                  <Eye className="h-5 w-5 text-black" />
-                ) : (
-                  <EyeOff className="h-5 w-5 text-black" />
-                )}
+                <span className="text-black">*</span>
               </button>
             </div>
 

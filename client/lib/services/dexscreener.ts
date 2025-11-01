@@ -237,11 +237,14 @@ class DexscreenerAPI {
 
     const allTokensMap = new Map<string, DexscreenerToken>();
     [...cachedResults, ...fetchedTokens].forEach((t) => {
-      const matchMint = normalizedMints.find(
-        (m) => m === t.baseToken?.address || m === t.quoteToken?.address,
-      );
-      if (matchMint && !allTokensMap.has(matchMint)) {
-        allTokensMap.set(matchMint, t);
+      // Try to match with baseToken first (preferred), then quoteToken
+      const baseMint = t.baseToken?.address;
+      const quoteMint = t.quoteToken?.address;
+
+      if (baseMint && normalizedMints.includes(baseMint) && !allTokensMap.has(baseMint)) {
+        allTokensMap.set(baseMint, t);
+      } else if (quoteMint && normalizedMints.includes(quoteMint) && !allTokensMap.has(quoteMint)) {
+        allTokensMap.set(quoteMint, t);
       }
     });
 

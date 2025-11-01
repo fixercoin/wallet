@@ -383,7 +383,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••••••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>
@@ -394,7 +394,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   id="confirm-backup"
                   checked={confirmedMnemonic}
                   onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                  className="rounded bg-[#1a2540]/50"
+                  className="rounded bg-[#2d1b47]/50"
                 />
                 <Label htmlFor="confirm-backup" className="text-sm opacity-80">
                   I have safely backed up my recovery phrase

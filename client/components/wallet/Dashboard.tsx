@@ -867,21 +867,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-3 mt-6">
             <Button
               onClick={onSend}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#555555]/60 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/40 text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#22c55e]/20 border border-[#555555]/60 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
+              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#555555]/60 text-white flex items-center justify-center"
             >
               SWAP
             </Button>

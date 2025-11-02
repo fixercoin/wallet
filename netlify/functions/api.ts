@@ -1,19 +1,8 @@
 // Netlify Functions entry to handle /api/* routes
 
 import {
-  listPosts,
-  getPost,
-  createOrUpdatePost,
-  listTradeMessages,
-  listRecentTradeMessages,
-  addTradeMessage,
-  uploadProof,
   addEasypaisaPayment,
   listEasypaisaPayments,
-  listTradeRooms,
-  getTradeRoom,
-  createTradeRoom,
-  updateTradeRoom,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
@@ -178,221 +167,6 @@ export const handler = async (event: any) => {
   const method = event.httpMethod;
 
   try {
-    // P2P endpoints
-    if (path === "/p2p" || path === "/p2p/" || path === "/p2p/list") {
-      if (method === "GET") {
-        return jsonResponse(200, listPosts());
-      }
-      return jsonResponse(405, { error: "Method Not Allowed" });
-    }
-
-    if (path.startsWith("/p2p/post/") && method === "GET") {
-      const id = path.replace("/p2p/post/", "");
-      const post = getPost(id);
-      if (!post) return jsonResponse(404, { error: "not found" });
-      return jsonResponse(200, { post });
-    }
-
-    if (path === "/p2p/post" && (method === "POST" || method === "PUT")) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const adminHeader =
-        (event.headers?.["x-admin-wallet"] as string) ||
-        body?.adminWallet ||
-        "";
-      const result = createOrUpdatePost(body || {}, adminHeader || "");
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { post: result.post });
-    }
-
-    // P2P Trade Rooms endpoints
-    if (path === "/p2p/rooms" && method === "GET") {
-      const wallet = event.queryStringParameters?.wallet;
-      const result = listTradeRooms(wallet);
-      return jsonResponse(200, result);
-    }
-
-    if (path === "/p2p/rooms" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const result = createTradeRoom({
-        buyer_wallet: body?.buyer_wallet || "",
-        seller_wallet: body?.seller_wallet || "",
-        order_id: body?.order_id || "",
-      });
-      if ("error" in result) {
-        return jsonResponse(result.status, { error: result.error });
-      }
-      return jsonResponse(result.status, { room: result.room });
-    }
-
-    if (path.startsWith("/p2p/rooms/") && method === "GET") {
-      const roomId = path.replace("/p2p/rooms/", "");
-      if (!roomId) {
-        return jsonResponse(400, { error: "Room ID required" });
-      }
-      const room = getTradeRoom(roomId);
-      if (!room) {
-        return jsonResponse(404, { error: "Room not found" });
-      }
-      return jsonResponse(200, { room });
-    }
-
-    if (path.startsWith("/p2p/rooms/") && method === "PUT") {
-      const roomId = path.replace("/p2p/rooms/", "");
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      if (!roomId) {
-        return jsonResponse(400, { error: "Room ID required" });
-      }
-      const result = updateTradeRoom(roomId, body || {});
-      if ("error" in result) {
-        return jsonResponse(result.status, { error: result.error });
-      }
-      return jsonResponse(result.status, { room: result.room });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/messages") &&
-      method === "GET"
-    ) {
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/messages$/, "");
-      return jsonResponse(200, listTradeMessages(tradeId));
-    }
-
-    if (
-      path.startsWith("/p2p/rooms/") &&
-      path.endsWith("/messages") &&
-      method === "GET"
-    ) {
-      const roomId = path
-        .replace(/^\/p2p\/rooms\//, "")
-        .replace(/\/messages$/, "");
-      return jsonResponse(200, { messages: listTradeMessages(roomId) });
-    }
-
-    if (
-      path.startsWith("/p2p/rooms/") &&
-      path.endsWith("/messages") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const roomId = path
-        .replace(/^\/p2p\/rooms\//, "")
-        .replace(/\/messages$/, "");
-      const { sender_wallet, message, attachment_url } = body;
-      if (!sender_wallet || !message) {
-        return jsonResponse(400, {
-          error: "Missing required fields: sender_wallet, message",
-        });
-      }
-      const msg = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        room_id: roomId,
-        sender_wallet,
-        message,
-        attachment_url,
-        created_at: Date.now(),
-      };
-      return jsonResponse(201, { message: msg });
-    }
-
-    if (path === "/p2p/trades/recent" && method === "GET") {
-      const since = Number(event.queryStringParameters?.since || 0);
-      const limit = Number(event.queryStringParameters?.limit || 100);
-      const data = (listRecentTradeMessages({ since, limit }) as any) || {
-        messages: [],
-      };
-      return jsonResponse(200, { messages: data.messages || [] });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/message") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/message$/, "");
-      const result = addTradeMessage(
-        tradeId,
-        body?.message || "",
-        body?.from || "unknown",
-      );
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { message: result.message });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/proof") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/proof$/, "");
-      const result = uploadProof(tradeId, body?.proof);
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-
-      // Optional Supabase storage upload if configured
-      const SUPABASE_URL = process.env.SUPABASE_URL;
-      const SUPABASE_KEY =
-        process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
-      let supabaseUrl: string | undefined = undefined;
-      if (
-        SUPABASE_URL &&
-        SUPABASE_KEY &&
-        body?.proof?.data &&
-        body?.proof?.filename
-      ) {
-        try {
-          const base64 = body.proof.data.includes(",")
-            ? body.proof.data.split(",").pop()!
-            : body.proof.data;
-          const binary = Buffer.from(base64, "base64");
-          const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${body.proof.filename}`;
-          const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
-          const resp = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${SUPABASE_KEY}`,
-              "Content-Type": "application/octet-stream",
-              "x-upsert": "true",
-            },
-            body: binary,
-          });
-          if (resp.ok) {
-            supabaseUrl = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;
-          }
-        } catch {}
-      }
-
-      return jsonResponse(result.status, { ok: true, url: supabaseUrl });
-    }
-
     // Easypaisa webhook ingestion (best-effort schema)
     if (path === "/easypaisa/webhook" && method === "POST") {
       let body: any = {};
@@ -574,6 +348,7 @@ export const handler = async (event: any) => {
 
       const PKR_PER_USD = 280; // base FX
       const MARKUP = 1.0425; // 4.25%
+      const MIN_REALISTIC_PRICE = 0.00001; // minimum realistic price threshold
 
       let priceUsd: number | null = null;
       try {
@@ -586,13 +361,23 @@ export const handler = async (event: any) => {
             pairs.length > 0 && pairs[0]?.priceUsd
               ? Number(pairs[0].priceUsd)
               : null;
-          if (typeof price === "number" && isFinite(price) && price > 0) {
+          // Only use price if it's a realistic value (above minimum threshold)
+          if (
+            typeof price === "number" &&
+            isFinite(price) &&
+            price >= MIN_REALISTIC_PRICE
+          ) {
             priceUsd = price;
           }
         }
       } catch {}
 
-      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+      // Fall back to hardcoded prices if DexScreener data is invalid, zero, or too small
+      if (
+        priceUsd === null ||
+        !isFinite(priceUsd) ||
+        priceUsd < MIN_REALISTIC_PRICE
+      ) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
       }
 

@@ -302,20 +302,6 @@ export default {
       }
     }
 
-    // Exchange Rate API
-    if (pathname === "/api/exchange-rate" && req.method === "GET") {
-      const token = searchParams.get("token") || "USDC";
-      const rates: Record<string, number> = {
-        FIXERCOIN: 0.0003,
-        SOL: 6000,
-        USDC: 280,
-        USDT: 280,
-        LOCKER: 0.5,
-      };
-      const rate = rates[token] || rates["USDC"];
-      return json({ token, rate }, { headers: corsHeaders });
-    }
-
     // DexScreener token price proxy: /api/dexscreener/price?token=...
     if (pathname === "/api/dexscreener/price" && req.method === "GET") {
       const token = url.searchParams.get("token") || "";

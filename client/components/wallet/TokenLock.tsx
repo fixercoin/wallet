@@ -705,14 +705,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-transparent sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex-1 text-center font-medium text-sm text-gray-900">
-            SPL TOKEN LOCK
-          </div>
-        </div>
-      </div>
 
       <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">

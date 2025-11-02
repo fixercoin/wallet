@@ -332,12 +332,31 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   const storageKey = wallet ? storageKeyForWallet(wallet.publicKey) : null;
 
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  const refreshLocksFromStorage = useCallback(() => {
+    if (!wallet) return;
+    try {
+      setIsRefreshing(true);
+      const stored = localStorage.getItem(storageKeyForWallet(wallet.publicKey));
+      if (stored) {
+        const parsed = JSON.parse(stored) as TokenLockRecord[];
+        setLocks(parsed);
+      } else {
+        setLocks([]);
+      }
+    } catch (error) {
+      console.error("Failed to refresh token locks", error);
+    } finally {
+      // keep the spinner visible briefly so users see activity
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  }, [wallet]);
+
   useEffect(() => {
     if (!wallet) return;
     try {
-      const stored = localStorage.getItem(
-        storageKeyForWallet(wallet.publicKey),
-      );
+      const stored = localStorage.getItem(storageKeyForWallet(wallet.publicKey));
       if (stored) {
         const parsed = JSON.parse(stored) as TokenLockRecord[];
         setLocks(parsed);
@@ -349,6 +368,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       setLocks([]);
     }
   }, [wallet]);
+
+  // Auto-refresh locks from localStorage every 20 seconds
+  useEffect(() => {
+    if (!wallet) return;
+    const interval = setInterval(() => {
+      refreshLocksFromStorage();
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [wallet, refreshLocksFromStorage]);
 
   useEffect(() => {
     if (!storageKey) return;

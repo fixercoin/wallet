@@ -224,7 +224,6 @@ All endpoints are available through both deployment methods:
 
 - Free RPC endpoints: ~100 req/min
 - For production: Use paid RPC (Helius, Alchemy)
-- CoinMarketCap: Set API key for higher limits
 
 ### Timeout Protection
 

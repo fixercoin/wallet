@@ -575,7 +575,9 @@ export const onRequest = async ({ request, env }) => {
 
     // Dedicated token price endpoint: /api/token/price?token=FIXERCOIN or ?token=USDC or ?token=H4qKn... (mint)
     if (normalizedPath === "/token/price") {
-      const tokenParam = (url.searchParams.get("token") || "FIXERCOIN").toUpperCase();
+      const tokenParam = (
+        url.searchParams.get("token") || "FIXERCOIN"
+      ).toUpperCase();
       // Support providing a mint address via 'mint' query param as well
       const mintParam = url.searchParams.get("mint") || "";
       const TOKEN_MINTS: Record<string, string> = {
@@ -653,7 +655,10 @@ export const onRequest = async ({ request, env }) => {
               try {
                 const data = await fetchDexscreenerData(`/tokens/${mint}`);
                 const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-                const p = pairs.length > 0 && pairs[0]?.priceUsd ? Number(pairs[0].priceUsd) : null;
+                const p =
+                  pairs.length > 0 && pairs[0]?.priceUsd
+                    ? Number(pairs[0].priceUsd)
+                    : null;
                 if (typeof p === "number" && isFinite(p) && p > 0) priceUsd = p;
               } catch (e) {
                 // continue
@@ -668,17 +673,23 @@ export const onRequest = async ({ request, env }) => {
                   const searchData = await fetchDexscreenerData(
                     `/search/?q=${encodeURIComponent(searchSymbol)}`,
                   );
-                  const searchPairs = Array.isArray(searchData?.pairs) ? searchData.pairs : [];
+                  const searchPairs = Array.isArray(searchData?.pairs)
+                    ? searchData.pairs
+                    : [];
                   let matchingPair = searchPairs.find(
-                    (p: any) => p?.baseToken?.address === mint && p?.chainId === "solana",
+                    (p: any) =>
+                      p?.baseToken?.address === mint && p?.chainId === "solana",
                   );
                   if (!matchingPair) {
                     matchingPair = searchPairs.find(
-                      (p: any) => p?.quoteToken?.address === mint && p?.chainId === "solana",
+                      (p: any) =>
+                        p?.quoteToken?.address === mint &&
+                        p?.chainId === "solana",
                     );
                   }
                   if (!matchingPair) matchingPair = searchPairs[0];
-                  if (matchingPair && matchingPair.priceUsd) priceUsd = Number(matchingPair.priceUsd);
+                  if (matchingPair && matchingPair.priceUsd)
+                    priceUsd = Number(matchingPair.priceUsd);
                 } catch (e) {
                   // continue
                 }

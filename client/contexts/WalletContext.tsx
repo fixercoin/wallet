@@ -447,7 +447,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             results.forEach((res, idx) => {
               const mint = missingMints[idx];
               if (!mint) return;
-              if (res && typeof res.priceUsd === "number" && isFinite(res.priceUsd) && res.priceUsd > 0) {
+              if (
+                res &&
+                typeof res.priceUsd === "number" &&
+                isFinite(res.priceUsd) &&
+                res.priceUsd > 0
+              ) {
                 prices[mint] = Number(res.priceUsd);
               }
             });

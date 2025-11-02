@@ -114,19 +114,6 @@ GET /api/dexscreener/trending
 
 ---
 
-### CoinMarketCap Endpoints
-
-```
-GET /api/coinmarketcap/quotes?symbols={symbol1},{symbol2}...
-```
-
-**Used by**:
-
-- `client/lib/services/coinmarketcap.ts`
-
-**Note**: API key is passed via environment variable on the server, not exposed to frontend.
-
----
 
 ### Price & Exchange Rate Endpoints
 

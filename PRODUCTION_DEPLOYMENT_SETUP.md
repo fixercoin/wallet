@@ -90,7 +90,6 @@ Set on Cloudflare Worker (not in code):
 
 ```bash
 wrangler secret put SOLANA_RPC --config ./cloudflare/wrangler.toml
-wrangler secret put COINMARKETCAP_API_KEY --config ./cloudflare/wrangler.toml
 ```
 
 ### Testing After Deployment

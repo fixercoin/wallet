@@ -39,6 +39,9 @@ interface SwapInterfaceProps {
   onBack: () => void;
 }
 
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const SWAP_FEE_SOL = 0.001;
+
 export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, connection } =
     useWallet() as any;

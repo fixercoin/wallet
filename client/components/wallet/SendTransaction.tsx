@@ -765,18 +765,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       value={selectedMint}
                       onValueChange={setSelectedMint}
                     >
-                      <SelectTrigger className="w-full bg-transparent border border-white/20 text-white placeholder:text-gray-300">
+                      <SelectTrigger className="w-full bg-transparent border border-gray-200 text-gray-900 placeholder:text-gray-500">
                         <SelectValue placeholder="Select token" />
                       </SelectTrigger>
-                      <SelectContent className="bg-transparent border border-white/10 text-white">
+                      <SelectContent className="bg-gray-100 border border-gray-200 text-gray-900">
                         {availableTokens.map((t) => (
                           <SelectItem
-                          key={t.mint}
-                          value={t.mint}
-                          className="text-white"
+                            key={t.mint}
+                            value={t.mint}
+                            className="text-gray-900"
                           >
                             <div className="flex items-center justify-between w-full">
-                              <span className="font-medium text-white">
+                              <span className="font-medium text-gray-900">
                                 {t.symbol} ~{" "}
                                 {(t.symbol === "SOL"
                                   ? balance

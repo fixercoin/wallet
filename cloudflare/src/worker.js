@@ -17,13 +17,23 @@ async function parseJSON(req) {
 }
 
 // Constants
-const RPC_ENDPOINTS = [
+const DEFAULT_RPCS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
   "https://solana-mainnet.rpc.extrnode.com",
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
 ];
+function getRpcEndpoints(env) {
+  const list = [
+    env?.SOLANA_RPC || "",
+    env?.HELIUS_RPC_URL || "",
+    env?.ALCHEMY_RPC_URL || "",
+    env?.MORALIS_RPC_URL || "",
+    ...DEFAULT_RPCS,
+  ];
+  return list.filter(Boolean);
+}
 
 const DEXSCREENER_ENDPOINTS = [
   "https://api.dexscreener.com/latest/dex",
@@ -36,7 +46,7 @@ const DEX_CACHE = new Map();
 const DEX_INFLIGHT = new Map();
 
 // Helper functions
-async function callRpc(method, params = [], id = Date.now()) {
+async function callRpc(env, method, params = [], id = Date.now()) {
   let lastError = null;
   const payload = {
     jsonrpc: "2.0",
@@ -45,7 +55,8 @@ async function callRpc(method, params = [], id = Date.now()) {
     params,
   };
 
-  for (const endpoint of RPC_ENDPOINTS) {
+  const endpoints = getRpcEndpoints(env);
+  for (const endpoint of endpoints) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
@@ -188,7 +199,7 @@ export default {
       }
 
       try {
-        const rpc = await callRpc("getBalance", [pk], Date.now());
+        const rpc = await callRpc(env, "getBalance", [pk], Date.now());
         const j = JSON.parse(String(rpc?.body || "{}"));
         const lamports =
           typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
@@ -250,7 +261,8 @@ export default {
 
         let lastError = null;
 
-        for (const endpoint of RPC_ENDPOINTS) {
+        const endpoints = getRpcEndpoints(env);
+        for (const endpoint of endpoints) {
           try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);

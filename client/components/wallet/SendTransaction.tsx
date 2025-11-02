@@ -547,24 +547,26 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       } catch {}
 
-      // Estimate fee and ensure sufficient SOL for fees + potential rent
+      // Estimate fee and ensure sufficient SOL for fees + potential rent + platform fee
       try {
         const msg = tx.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
+        const platformFeeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]);
-        if (currentLamports < feeLamports + rentLamports) {
+        if (currentLamports < networkFeeLamports + rentLamports + platformFeeLamports) {
           throw new Error("Insufficient SOL to cover network fees and rent");
         }
       } catch (e) {
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]).catch(() => 0);
-        if (currentLamports <= 0) {
+        const platformFeeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+        if (currentLamports <= platformFeeLamports) {
           throw new Error("Insufficient SOL for network fees");
         }
       }

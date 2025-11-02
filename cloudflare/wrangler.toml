@@ -13,7 +13,12 @@ class_name = "DurableRoom"
 
 [vars]
 ALLOWED_PAYMENT = "easypaisa"
-# ADMIN_TOKEN should be set as a secret: `wrangler secret put ADMIN_TOKEN`
+
+# Secrets that need to be set:
+# - ADMIN_TOKEN: `wrangler secret put ADMIN_TOKEN --config ./cloudflare/wrangler.toml`
+# - COINMARKETCAP_API_KEY: `wrangler secret put COINMARKETCAP_API_KEY --config ./cloudflare/wrangler.toml`
+# - RAZORPAY_KEY_ID: `wrangler secret put RAZORPAY_KEY_ID --config ./cloudflare/wrangler.toml`
+# - RAZORPAY_KEY_SECRET: `wrangler secret put RAZORPAY_KEY_SECRET --config ./cloudflare/wrangler.toml`
 
 [[d1_databases]]
 binding = "DB"

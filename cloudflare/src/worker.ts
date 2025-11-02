@@ -727,6 +727,212 @@ export default {
       }
     }
 
+    // SOL price proxy: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      try {
+        const coinGeckoUrl =
+          "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true";
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(coinGeckoUrl, {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `CoinGecko API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+
+        // Transform CoinGecko response to expected format
+        const solanaData = data.solana || {};
+        const priceData = {
+          price: solanaData.usd || 0,
+          price_change_24h: solanaData.usd_24h_change || 0,
+          market_cap: solanaData.usd_market_cap || 0,
+          volume_24h: solanaData.usd_24h_vol || 0,
+        };
+
+        return json(priceData, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch SOL price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun quote proxy: /api/pumpfun/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/pumpfun/quote" && req.method === "GET") {
+      const inputMint = url.searchParams.get("inputMint") || "";
+      const outputMint = url.searchParams.get("outputMint") || "";
+      const amount = url.searchParams.get("amount") || "";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        // Use Pump.fun API for quotes
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(
+          `https://pumpportal.fun/api/quote?mint=${encodeURIComponent(inputMint)}&amount=${encodeURIComponent(amount)}`,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Pump.fun API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch Pump.fun quote",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun quote POST handler for health checks
+    if (pathname === "/api/pumpfun/quote" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { inputMint, outputMint, amount } = body as any;
+
+        if (!inputMint || !outputMint || !amount) {
+          return json(
+            {
+              error: "Missing required fields: inputMint, outputMint, amount",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        // Use Pump.fun API for quotes
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(
+          `https://pumpportal.fun/api/quote?mint=${encodeURIComponent(inputMint)}&amount=${encodeURIComponent(amount)}`,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Pump.fun API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch Pump.fun quote",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun pool proxy: /api/pumpfun/pool?base=...&quote=...
+    if (pathname === "/api/pumpfun/pool" && req.method === "GET") {
+      const baseMint = url.searchParams.get("base") || "";
+      const quoteMint = url.searchParams.get("quote") || "";
+
+      if (!baseMint || !quoteMint) {
+        return json(
+          { error: "Missing required parameters: base, quote" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        // Use Shyft API to discover pools
+        const shyftApiKey = "3hAwrhOAmJG82eC7";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(
+          `https://rpc.shyft.to/pumpfun/pools?base_mint=${encodeURIComponent(baseMint)}&quote_mint=${encodeURIComponent(quoteMint)}&api_key=${shyftApiKey}`,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Pool lookup failed with status ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch pool info",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // DexTools price proxy: /api/dextools/price?tokenAddress=...&chainId=solana
     if (pathname === "/api/dextools/price" && req.method === "GET") {
       const tokenAddress = url.searchParams.get("tokenAddress") || "";

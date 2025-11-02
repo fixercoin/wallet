@@ -804,12 +804,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>LOCK-SPL</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={() => navigate("/fixorium/token-listing")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Coins className="h-4 w-4" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={() => navigate("/wallet/history")}
                     className="flex items-center gap-2 text-xs"
                   >

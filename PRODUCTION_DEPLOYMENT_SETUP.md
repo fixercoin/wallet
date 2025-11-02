@@ -7,6 +7,7 @@ This guide covers both deployment options for your full-stack app (frontend + ba
 Netlify automatically handles both frontend and serverless functions with zero extra configuration.
 
 ### Prerequisites
+
 - Connect Netlify MCP integration
 
 ### Deployment Steps
@@ -120,18 +121,21 @@ Vercel supports both frontend and serverless functions similar to Netlify.
 ### Development (Local)
 
 File: `.env.local`
+
 ```
 VITE_API_BASE_URL=
 NODE_ENV=development
 ```
 
 API Client behavior:
+
 - Detects `localhost`
 - Uses local Express server at `/api/*`
 
 ### Production (Netlify)
 
 File: `netlify.toml` (already configured)
+
 ```toml
 [[redirects]]
 from = "/api/*"
@@ -141,6 +145,7 @@ force = true
 ```
 
 API Client behavior:
+
 - Detects `.netlify.app` domain
 - Uses local paths `/api/*` (proxied to functions)
 
@@ -149,6 +154,7 @@ API Client behavior:
 No special config needed.
 
 API Client behavior:
+
 - Detects `.pages.dev` domain
 - Uses `https://fixorium-proxy.khanbabusargodha.workers.dev`
 
@@ -159,25 +165,30 @@ API Client behavior:
 All endpoints are available through both deployment methods:
 
 ### Wallet & Balance
+
 - `GET /api/wallet/balance?publicKey=...` - Get SOL balance
 - `GET /api/wallet/tokens?publicKey=...` - Get token accounts
 
 ### Token Prices
+
 - `GET /api/dexscreener/tokens?mints=...` - DexScreener prices
 - `GET /api/dexscreener/search?q=...` - Search tokens
 - `GET /api/jupiter/price?ids=...` - Jupiter prices
 
 ### Swaps
+
 - `GET /api/swap/quote?inputMint=...&outputMint=...&amount=...` - Quote
 - `POST /api/swap/execute` - Execute swap
 
 ### P2P Orders
+
 - `GET /api/p2p/orders` - List orders
 - `POST /api/p2p/orders` - Create order
 - `GET /api/p2p/rooms` - List trade rooms
 - `GET /api/p2p/rooms/:id/messages` - Chat messages
 
 ### Other
+
 - `GET /api/forex/rate?base=USD&symbols=PKR` - Exchange rates
 - `GET /api/stable-24h?symbols=USDC,USDT` - Stablecoin prices
 - `POST /api/solana-rpc` - JSON-RPC proxy
@@ -187,16 +198,19 @@ All endpoints are available through both deployment methods:
 ## Troubleshooting
 
 ### API returns 404
+
 - ✅ Netlify: Check `netlify.toml` is deployed correctly
 - ✅ Cloudflare Pages: Verify Worker is deployed separately
 - ✅ Local: Check Express server is running (`npm run dev`)
 
 ### API returns 500 or timeout
+
 - Check Solana RPC endpoint is working
 - Verify CoinMarketCap API key (if set)
 - Check Cloudflare/Netlify logs
 
 ### CORS errors
+
 - All endpoints have CORS headers enabled
 - Ensure requests go through `/api/` proxy, not direct URLs
 

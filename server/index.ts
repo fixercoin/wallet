@@ -85,12 +85,24 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/orders/:orderId", handleUpdateOrder);
   app.delete("/api/orders/:orderId", handleDeleteOrder);
 
-  // P2P Orders routes (legacy API)
-  app.get("/api/p2p/orders", handleListP2POrders);
-  app.post("/api/p2p/orders", handleCreateP2POrder);
-  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
-  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
-  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+  // P2P Orders routes (legacy API) - DISABLED
+  // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
+  // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.
+  app.get("/api/p2p/orders", (req, res) =>
+    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+  );
+  app.post("/api/p2p/orders", (req, res) =>
+    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+  );
+  app.get("/api/p2p/orders/:orderId", (req, res) =>
+    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+  );
+  app.put("/api/p2p/orders/:orderId", (req, res) =>
+    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+  );
+  app.delete("/api/p2p/orders/:orderId", (req, res) =>
+    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+  );
 
   // Trade Rooms routes
   app.get("/api/p2p/rooms", handleListTradeRooms);

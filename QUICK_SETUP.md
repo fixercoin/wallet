@@ -45,7 +45,6 @@ GET  /api/transaction?signature={sig}
 GET  /api/account?publicKey={address}
 ```
 
-
 ## Environment Setup
 
 ### Production (Cloudflare Worker)

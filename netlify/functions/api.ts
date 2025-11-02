@@ -168,7 +168,6 @@ async function fetchDexData(path: string) {
   return request;
 }
 
-
 export const handler = async (event: any) => {
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");
@@ -744,8 +743,6 @@ export const handler = async (event: any) => {
         pairs,
       });
     }
-
-
 
     // Debug: count tokens missing 24h change on dashboard logic
     if (path === "/debug/24h-missing" && method === "GET") {

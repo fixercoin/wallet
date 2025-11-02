@@ -189,7 +189,6 @@ function jsonCors(status: number, body: any) {
   });
 }
 
-
 import p2pHandler from "./p2p";
 import {
   addEasypaisaPayment,
@@ -827,8 +826,6 @@ export const onRequest = async ({ request, env }) => {
       });
     }
 
-    
-    
     // Jupiter: /api/jupiter/price?ids=... (comma-separated mints)
     if (normalizedPath === "/jupiter/price") {
       const ids = url.searchParams.get("ids");

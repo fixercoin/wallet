@@ -127,7 +127,6 @@ export const walletApi = {
     return response.json();
   },
 
-
   // Health check
   async health() {
     const response = await fetch(`${API_BASE}/health`);

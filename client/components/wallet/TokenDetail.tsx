@@ -28,7 +28,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 }) => {
   const { tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
-  const [priceData, setPriceData] = useState<{ time: string; price: number; volume: number }[]>([]);
+  const [priceData, setPriceData] = useState<
+    { time: string; price: number; volume: number }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
@@ -49,11 +51,20 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
       try {
         const ds = await dexscreenerAPI.getTokenByMint(tokenMint);
         const price = ds?.priceUsd ? parseFloat(ds.priceUsd) : null;
-        const change = ds?.priceChange?.h24 ?? ds?.priceChange?.h6 ?? ds?.priceChange?.h1 ?? ds?.priceChange?.m5 ?? 0;
+        const change =
+          ds?.priceChange?.h24 ??
+          ds?.priceChange?.h6 ??
+          ds?.priceChange?.h1 ??
+          ds?.priceChange?.m5 ??
+          0;
         const base = price || 0;
         const data = Array.from({ length: 24 }, (_, i) => {
           // create simple intraday points around the base price using change to simulate trend
-          const factor = 1 + ((Math.sin((i / 24) * Math.PI * 2) * 0.5 + 0.5) * (change / 100 || 0)) / 2;
+          const factor =
+            1 +
+            ((Math.sin((i / 24) * Math.PI * 2) * 0.5 + 0.5) *
+              (change / 100 || 0)) /
+              2;
           return {
             time: `${i}:00`,
             price: parseFloat((base * factor).toFixed(8)),
@@ -76,7 +87,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     try {
       await refreshTokens();
       // reload prices
-      const ds = await dexscreenerAPI.getTokenByMint(tokenMint).catch(() => null);
+      const ds = await dexscreenerAPI
+        .getTokenByMint(tokenMint)
+        .catch(() => null);
       if (ds?.priceUsd) {
         const base = parseFloat(ds.priceUsd);
         const data = Array.from({ length: 24 }, (_, i) => ({

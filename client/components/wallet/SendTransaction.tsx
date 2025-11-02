@@ -706,16 +706,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
             <div className="flex gap-3 mt-6">
               <Button
-              variant="outline"
-              onClick={handleNewTransaction}
-              className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50 uppercase"
-            >
+                variant="outline"
+                onClick={handleNewTransaction}
+                className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50 uppercase"
+              >
                 Send Another
               </Button>
               <Button
-              onClick={onBack}
-              className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900 uppercase"
-            >
+                onClick={onBack}
+                className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900 uppercase"
+              >
                 Back to Wallet
               </Button>
             </div>
@@ -771,9 +771,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       <SelectContent className="bg-gray-800 border border-gray-700 text-white">
                         {availableTokens.map((t) => (
                           <SelectItem
-                          key={t.mint}
-                          value={t.mint}
-                          className="text-white"
+                            key={t.mint}
+                            value={t.mint}
+                            className="text-white"
                           >
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">

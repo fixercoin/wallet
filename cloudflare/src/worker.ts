@@ -33,7 +33,6 @@ const DEXSCREENER_ENDPOINTS = [
 ];
 let currentDexIdx = 0;
 
-
 async function callRpc(
   env: Partial<Env> | undefined,
   method: string,

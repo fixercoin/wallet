@@ -767,7 +767,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {availableTokens.map((token) => (
-                    <SelectItem key={token.mint} value={token.mint} className="text-white">
+                    <SelectItem
+                      key={token.mint}
+                      value={token.mint}
+                      className="text-white"
+                    >
                       <div className="flex flex-col">
                         <span className="font-medium text-sm text-white">
                           {token.symbol || token.name || token.mint.slice(0, 6)}
@@ -811,7 +815,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {LOCK_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.id} value={opt.id} className="text-white">
+                    <SelectItem
+                      key={opt.id}
+                      value={opt.id}
+                      className="text-white"
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}

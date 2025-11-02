@@ -182,7 +182,6 @@ GET /api/account?publicKey={walletAddress}
 
 ---
 
-
 ---
 
 ## Utility Endpoints

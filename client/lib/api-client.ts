@@ -21,7 +21,7 @@ const determineBase = (): string => {
     return "";
   }
 
-  // Production on Netlify: use local /api (proxied to functions)
+  // Production on Netlify: use local /api (proxied to netlify functions)
   if (
     typeof window !== "undefined" &&
     window.location.hostname.includes("netlify.app")
@@ -29,7 +29,15 @@ const determineBase = (): string => {
     return "";
   }
 
-  // Fallback: try Cloudflare Worker
+  // Production on Cloudflare Pages: use Cloudflare Worker
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname.includes("pages.dev")
+  ) {
+    return CLOUDFLARE_WORKER_BASE;
+  }
+
+  // Fallback to Cloudflare Worker
   return CLOUDFLARE_WORKER_BASE;
 };
 

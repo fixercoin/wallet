@@ -16,7 +16,6 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
-import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
@@ -405,13 +404,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       try {
         const tokenMints = allTokens.map((token) => token.mint);
-        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
         // Fetch prices exclusively from DexScreener via client service (proxy)
         try {
           const allMintsToFetch = Array.from(
-            new Set([...tokenMints.filter(Boolean), fixercoinMint, lockerMint]),
+            new Set(tokenMints.filter(Boolean)),
           );
 
           const dexTokens =
@@ -448,45 +445,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
-        // Ensure FIXERCOIN always has a valid price and change value (fallback to 0 if unavailable)
-        if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
-          prices[fixercoinMint] = 0.000023; // Conservative fallback price
-        }
-        if (
-          typeof changeMap[fixercoinMint] !== "number" ||
-          !isFinite(changeMap[fixercoinMint]!)
-        ) {
-          changeMap[fixercoinMint] = 0;
-        }
-
-        // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
-        if (
-          typeof changeMap[lockerMint] !== "number" ||
-          !isFinite(changeMap[lockerMint]!)
-        ) {
-          changeMap[lockerMint] = 0;
-        }
-
         const solMint = "So11111111111111111111111111111111111111112";
         const hasSolPrice = prices[solMint];
-        const hasPumpFunPrices =
-          (prices[fixercoinMint] && prices[fixercoinMint] > 0) ||
-          (prices[lockerMint] && prices[lockerMint] > 0);
 
-        if (
-          (Object.keys(prices).length > 0 && hasSolPrice) ||
-          hasPumpFunPrices
-        ) {
+        if (Object.keys(prices).length > 0) {
           priceSource = "dexscreener";
-          if (!hasSolPrice) {
-            console.warn(
-              "[DexScreener] SOL price missing but got pump fun tokens, continuing to Jupiter for SOL",
-            );
-          }
-        } else if (Object.keys(prices).length > 0) {
-          console.warn(
-            `[DexScreener] Got ${Object.keys(prices).length} prices but no SOL, trying Jupiter as fallback`,
-          );
         } else {
           throw new Error(
             "DexScreener returned no prices, falling back to Jupiter",
@@ -508,41 +471,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           prices = { So11111111111111111111111111111111111111112: 100 };
           priceSource = "static";
         }
-        try {
-          const fixercoinPrice = await fixercoinPriceService.getPrice();
-          prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
-            fixercoinPrice;
-        } catch {}
       }
-
-      // Ensure DexScreener prices for FIXERCOIN and LOCKER regardless of earlier fallbacks
-      try {
-        const specialMints = [fixercoinMint, lockerMint].filter(Boolean);
-        if (specialMints.length > 0) {
-          const dexTokens = await dexscreenerAPI.getTokensByMints(specialMints);
-          dexTokens.forEach((dt: any) => {
-            const mint = dt?.baseToken?.address as string | undefined;
-            const pStr = dt?.priceUsd as string | undefined;
-            const price = pStr ? parseFloat(pStr) : NaN;
-            if (
-              mint &&
-              typeof price === "number" &&
-              isFinite(price) &&
-              price > 0
-            ) {
-              prices[mint] = price;
-            }
-            const pc = dt?.priceChange || {};
-            const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-            const ch = candidates.find(
-              (v: any) => typeof v === "number" && isFinite(v),
-            );
-            if (mint && typeof ch === "number") {
-              changeMap[mint] = ch;
-            }
-          });
-        }
-      } catch {}
 
       // Load hidden tokens list
       const hiddenTokens = JSON.parse(
@@ -561,10 +490,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (!finalPrice || finalPrice <= 0) {
           if (token.symbol === "SOL") {
             finalPrice = 100;
-          } else if (
-            token.mint === "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"
-          ) {
-            finalPrice = 0.000023;
           } else {
             finalPrice = 0;
           }

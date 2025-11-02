@@ -189,17 +189,12 @@ The following service files have been updated to use proxy endpoints:
 4. **client/lib/services/sol-price.ts**
    - Replaced direct CoinGecko API call with `/api/sol/price` proxy
 
-5. **client/lib/services/dextools.ts**
-   - Removed fallback to direct DexTools API
-   - Only uses proxy endpoint (`/api/dextools/price`)
-
-6. **client/components/wallet/Dashboard.tsx**
+5. **client/components/wallet/Dashboard.tsx**
    - Updated health check from `/health` to `/api/pumpfun/quote` (POST with body)
 
 ### ✅ No Changes Needed
 
 - `client/lib/services/dexscreener.ts` - Already using proxy
-- `client/lib/services/coinmarketcap.ts` - Already using proxy
 - All other component fetch calls - Already routing through `/api/*`
 
 ---

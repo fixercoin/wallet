@@ -227,34 +227,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
       try {
-        // Prefer CoinMarketCap price API for reliable USD prices
-        const cmcMap = await coinmarketcapAPI.getTokenPrices(mints);
-        let fromPrice: number | null = fromToken?.mint
-          ? (cmcMap[fromToken.mint] ?? null)
-          : null;
-        let toPrice: number | null = toToken?.mint
-          ? (cmcMap[toToken.mint] ?? null)
-          : null;
-
-        // Fallback to DexScreener if CoinMarketCap didn't return prices
-        if (
-          fromPrice == null ||
-          !(fromPrice > 0) ||
-          toPrice == null ||
-          !(toPrice > 0)
-        ) {
-          const tokens = await dexscreenerAPI.getTokensByMints(mints);
-          const dsMap = dexscreenerAPI.getTokenPrices(tokens);
-          if (fromPrice == null || !(fromPrice > 0)) {
-            fromPrice = fromToken?.mint
-              ? (dsMap[fromToken.mint] ?? null)
-              : null;
-          }
-          if (toPrice == null || !(toPrice > 0)) {
-            toPrice = toToken?.mint ? (dsMap[toToken.mint] ?? null) : null;
-          }
-        }
-
+        const tokens = await dexscreenerAPI.getTokensByMints(mints);
+        const dsMap = dexscreenerAPI.getTokenPrices(tokens);
+        const fromPrice: number | null = fromToken?.mint ? (dsMap[fromToken.mint] ?? null) : null;
+        const toPrice: number | null = toToken?.mint ? (dsMap[toToken.mint] ?? null) : null;
         setFromUsdPrice(fromPrice ?? null);
         setToUsdPrice(toPrice ?? null);
       } catch (e) {

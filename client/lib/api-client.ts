@@ -1,4 +1,6 @@
-const DEFAULT_WORKER_BASE = "https://api.fixorium.com";
+// Production Cloudflare Worker deployment
+const DEFAULT_WORKER_BASE =
+  "https://fixorium-proxy.khanbabusargodha.workers.dev";
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";
@@ -11,9 +13,17 @@ const determineBase = (): string => {
   const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
   if (envBase) return envBase;
 
-  // Default to same-origin both locally and in production
-  // so that Cloudflare Pages Functions at /api/* are used.
-  return "";
+  // Check if running on localhost (development)
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
+    // Use local dev server
+    return "";
+  }
+
+  // Production: use Cloudflare Worker
+  return DEFAULT_WORKER_BASE;
 };
 
 let cachedBase: string | null = null;

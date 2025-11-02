@@ -238,7 +238,6 @@ For best reliability and ease of maintenance:
 
 1. **Use Netlify** - Handles both frontend and backend automatically
 2. **Set SOLANA_RPC** to a paid provider (Helius/Alchemy) for better rate limits
-3. **Set COINMARKETCAP_API_KEY** for accurate token prices
-4. **Monitor Netlify logs** for API errors
+3. **Monitor Netlify logs** for API errors
 
 This ensures your app remains stable even under high traffic.

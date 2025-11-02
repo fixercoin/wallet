@@ -20,7 +20,6 @@ import {
   Gift,
   Flame,
   Lock,
-  Coins,
   Bell,
   X,
   Clock,

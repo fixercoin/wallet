@@ -182,6 +182,14 @@ export default {
       );
     }
 
+    // Disable P2P orders endpoints handled elsewhere
+    if (pathname.startsWith("/api/p2p/orders")) {
+      return json(
+        { error: "P2P orders API is disabled on this server" },
+        { status: 410, headers: corsHeaders },
+      );
+    }
+
     // Wallet balance: /api/wallet/balance?publicKey=...
     if (pathname === "/api/wallet/balance" && req.method === "GET") {
       const pk =

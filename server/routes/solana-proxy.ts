@@ -10,10 +10,10 @@ const RPC_ENDPOINTS = [
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  // Fallback public endpoints (best ones first)
-  "https://api.mainnet-beta.solana.com",
+  // Fallback public endpoints (prefer more reliable public node providers first)
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
 ].filter(Boolean);
 
 export const handleSolanaRpc: RequestHandler = async (req, res) => {

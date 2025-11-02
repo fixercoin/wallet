@@ -280,9 +280,37 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setError(null);
       setIsLoading(true);
 
-      // Set as active - the useEffect hook will automatically trigger and fetch data
-      // This is safe because wallet is computed from activePublicKey
+      // Set as active so other parts of the app update
       setActivePublicKey(publicKey);
+
+      // Also proactively fetch balance & tokens for the selected publicKey
+      (async () => {
+        try {
+          console.log(
+            `[WalletContext] Proactively fetching balance for ${publicKey}`,
+          );
+          const newBalance = await getBalance(publicKey);
+          if (typeof newBalance === "number" && !isNaN(newBalance)) {
+            setBalance(newBalance);
+            balanceRef.current = newBalance;
+          } else {
+            setBalance(0);
+            balanceRef.current = 0;
+          }
+          // Refresh tokens based on the newly selected publicKey
+          await refreshTokens();
+        } catch (err) {
+          console.error(
+            "[WalletContext] Error selecting wallet and refreshing:",
+            err,
+          );
+          setError("Failed to refresh selected wallet");
+          setBalance(0);
+          balanceRef.current = 0;
+        } finally {
+          setIsLoading(false);
+        }
+      })();
     } else {
       console.warn(
         `[WalletContext] Wallet not found: ${publicKey}. Available wallets:`,

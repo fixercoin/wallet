@@ -8,14 +8,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { useExpressP2P } from "@/contexts/ExpressP2PContext";
-import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function ExpressAddPost() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
   const { exchangeRate, setExchangeRate } = useExpressP2P();
-  const isAdmin = (wallet?.publicKey || wallet?.address || "") === ADMIN_WALLET;
   const [newRate, setNewRate] = useState<string>("");
   useEffect(() => setNewRate(String(exchangeRate || "")), [exchangeRate]);
 
@@ -40,10 +38,6 @@ export default function ExpressAddPost() {
   // Seller details (optional)
   const [sellerAccountName, setSellerAccountName] = useState<string>("");
   const [sellerAccountNumber, setSellerAccountNumber] = useState<string>("");
-
-  // Fixercoin specific pricing
-  const [pricePerUSDC, setPricePerUSDC] = useState<string>("");
-  const [pricePerSOL, setPricePerSOL] = useState<string>("");
 
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
@@ -191,14 +185,6 @@ export default function ExpressAddPost() {
           type,
           token,
           pricePkr,
-          pricePerUSDC:
-            token === "FIXERCOIN" && pricePerUSDC !== ""
-              ? Number(pricePerUSDC)
-              : undefined,
-          pricePerSOL:
-            token === "FIXERCOIN" && pricePerSOL !== ""
-              ? Number(pricePerSOL)
-              : undefined,
           minToken,
           maxToken,
           paymentMethod: selectedPaymentMethod?.id ?? "bank",
@@ -305,39 +291,37 @@ export default function ExpressAddPost() {
           </div>
         </div>
 
-        {/* Adjust global rate (admin only) */}
-        {isAdmin && (
-          <div className="p-3 rounded-xl border border-[hsl(var(--input))] bg-white">
-            <div className="text-xs text-muted-foreground mb-2 font-medium">
-              Adjusted Exchange Rate
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">1 USDC =</span>
-              <input
-                type="number"
-                value={newRate}
-                onChange={(e) => setNewRate(e.target.value)}
-                className="flex-1 border border-[hsl(var(--border))] rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
-              />
-              <span className="text-xs text-muted-foreground">PKR</span>
-              <Button
-                variant="default"
-                className="h-8"
-                onClick={() => {
-                  const val = Number(newRate);
-                  if (!isFinite(val) || val <= 0) return;
-                  setExchangeRate(val);
-                  toast({
-                    title: "Rate saved",
-                    description: `1 USDC = ${val} PKR`,
-                  });
-                }}
-              >
-                Save
-              </Button>
-            </div>
+        {/* Adjust global rate */}
+        <div className="p-3 rounded-xl border border-[hsl(var(--input))] bg-white">
+          <div className="text-xs text-muted-foreground mb-2 font-medium">
+            Adjusted Exchange Rate
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">1 USDC =</span>
+            <input
+              type="number"
+              value={newRate}
+              onChange={(e) => setNewRate(e.target.value)}
+              className="flex-1 border border-[hsl(var(--border))] rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+            />
+            <span className="text-xs text-muted-foreground">PKR</span>
+            <Button
+              variant="default"
+              className="h-8"
+              onClick={() => {
+                const val = Number(newRate);
+                if (!isFinite(val) || val <= 0) return;
+                setExchangeRate(val);
+                toast({
+                  title: "Rate saved",
+                  description: `1 USDC = ${val} PKR`,
+                });
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
 
         {/* Price */}
         <div>
@@ -440,36 +424,6 @@ export default function ExpressAddPost() {
             </button>
           </div>
         </div>
-
-        {/* Fixercoin optional fields */}
-        {token === "FIXERCOIN" && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <div className="mb-1 text-xs font-medium text-muted-foreground">
-                Price per USDC (Fixercoin)
-              </div>
-              <input
-                value={pricePerUSDC}
-                onChange={(e) => setPricePerUSDC(e.target.value)}
-                inputMode="decimal"
-                placeholder="optional"
-                className="w-full rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2 text-sm outline-none"
-              />
-            </div>
-            <div>
-              <div className="mb-1 text-xs font-medium text-muted-foreground">
-                Price per SOL (Fixercoin)
-              </div>
-              <input
-                value={pricePerSOL}
-                onChange={(e) => setPricePerSOL(e.target.value)}
-                inputMode="decimal"
-                placeholder="optional"
-                className="w-full rounded-xl border border-[hsl(var(--input))] bg-wallet-purple-50 px-3 py-2 text-sm outline-none"
-              />
-            </div>
-          </div>
-        )}
 
         {/* Wallet address for BUY */}
         {type === "buy" && (

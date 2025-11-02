@@ -181,10 +181,7 @@ export async function deletePostCF(
   id: string,
   adminWalletHeader?: string,
 ) {
-  const admin = adminWalletHeader || "";
-  if (admin !== ADMIN_WALLET) {
-    return { error: "unauthorized", status: 401 } as const;
-  }
+
   await ensureSchema(db);
   const existing = await getPostCF(db, id);
   if (!existing) return { error: "not_found", status: 404 } as const;
@@ -197,10 +194,6 @@ export async function createOrUpdatePostCF(
   payload: any,
   adminWalletHeader?: string,
 ) {
-  const admin = adminWalletHeader || payload?.adminWallet || "";
-  if (admin !== ADMIN_WALLET) {
-    return { error: "unauthorized", status: 401 } as const;
-  }
   await ensureSchema(db);
   const now = Date.now();
   const pricePerUSDC =

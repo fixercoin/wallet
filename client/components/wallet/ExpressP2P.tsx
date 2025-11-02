@@ -60,7 +60,6 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
   );
 
   const navigate = useNavigate();
-  const adminAddress = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
   const [checkingOrders, setCheckingOrders] = useState(true);
   const [detectedOrder, setDetectedOrder] = useState<any | null>(null);
@@ -275,17 +274,15 @@ export function ExpressP2P({ onBack }: ExpressP2PProps) {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            {wallet?.publicKey === adminAddress ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/")}
-                className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
-                aria-label="Add post"
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-            ) : null}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-transparent text-black focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent"
+              aria-label="Add post"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
           </div>
 
           <div className="flex-1" />

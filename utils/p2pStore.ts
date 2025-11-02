@@ -179,10 +179,6 @@ export function listPosts() {
 }
 
 export function deletePost(id: string, adminWalletHeader?: string) {
-  const admin = adminWalletHeader || "";
-  if (admin !== ADMIN_WALLET) {
-    return { error: "unauthorized", status: 401 } as const;
-  }
   const idx = store.posts.findIndex((p) => p.id === id);
   if (idx === -1) return { error: "not_found", status: 404 } as const;
   const removed = store.posts.splice(idx, 1)[0];
@@ -195,10 +191,6 @@ export function getPost(id: string) {
 }
 
 export function createOrUpdatePost(payload: any, adminWalletHeader?: string) {
-  const admin = adminWalletHeader || payload?.adminWallet || "";
-  if (admin !== ADMIN_WALLET) {
-    return { error: "unauthorized", status: 401 } as const;
-  }
   const now = Date.now();
 
   const normPricePerUSDC =

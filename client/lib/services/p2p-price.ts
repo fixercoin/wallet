@@ -8,7 +8,7 @@ const TOKEN_MINTS = {
   FIXERCOIN: SOLANA_TOKEN_MINTS.FIXERCOIN,
 };
 
-const MARKUP_PERCENTAGE = 4.25; // 4.25% markup
+const MARKUP_PERCENTAGE = 0;
 
 interface PriceData {
   USDC: number;
@@ -97,7 +97,7 @@ class P2PPriceService {
           // USDC price is typically 280-300 PKR
           prices.USDC = Math.max(280, priceUsd * 280);
           this.cache.set("USDC", {
-            price: this.applyMarkup(prices.USDC),
+            price: prices.USDC,
             fetchedAt: now,
           });
           console.log(
@@ -108,7 +108,7 @@ class P2PPriceService {
           const solPriceInPKR = priceUsd * 280; // Assuming 1 USD ≈ 280 PKR
           prices.SOL = solPriceInPKR;
           this.cache.set("SOL", {
-            price: this.applyMarkup(prices.SOL),
+            price: prices.SOL,
             fetchedAt: now,
           });
           console.log(
@@ -119,7 +119,7 @@ class P2PPriceService {
           const fixercoinPriceInPKR = priceUsd * 280; // Assuming 1 USD ≈ 280 PKR
           prices.FIXERCOIN = fixercoinPriceInPKR;
           this.cache.set("FIXERCOIN", {
-            price: this.applyMarkup(prices.FIXERCOIN),
+            price: prices.FIXERCOIN,
             fetchedAt: now,
           });
           console.log(
@@ -128,19 +128,16 @@ class P2PPriceService {
         }
       });
 
-      // Apply markup to fallback prices if they weren't updated from DexScreener
+      // Cache any tokens that were not updated
       if (!this.cache.has("USDC")) {
-        const markedupUSDC = this.applyMarkup(prices.USDC);
-        this.cache.set("USDC", { price: markedupUSDC, fetchedAt: now });
+        this.cache.set("USDC", { price: prices.USDC, fetchedAt: now });
       }
       if (!this.cache.has("SOL")) {
-        const markedupSOL = this.applyMarkup(prices.SOL);
-        this.cache.set("SOL", { price: markedupSOL, fetchedAt: now });
+        this.cache.set("SOL", { price: prices.SOL, fetchedAt: now });
       }
       if (!this.cache.has("FIXERCOIN")) {
-        const markedupFIXERCOIN = this.applyMarkup(prices.FIXERCOIN);
         this.cache.set("FIXERCOIN", {
-          price: markedupFIXERCOIN,
+          price: prices.FIXERCOIN,
           fetchedAt: now,
         });
       }
@@ -153,18 +150,14 @@ class P2PPriceService {
     } catch (error) {
       console.error("[P2PPrice] Error fetching prices:", error);
 
-      // Return fallback prices with markup
+      // Return fallback prices without markup
       const fallbackPrices = {
         USDC: 280,
         SOL: 180,
         FIXERCOIN: 0.005,
       };
 
-      return {
-        USDC: this.applyMarkup(fallbackPrices.USDC),
-        SOL: this.applyMarkup(fallbackPrices.SOL),
-        FIXERCOIN: this.applyMarkup(fallbackPrices.FIXERCOIN),
-      };
+      return fallbackPrices;
     }
   }
 

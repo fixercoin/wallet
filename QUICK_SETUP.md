@@ -27,8 +27,7 @@ GET  /api/health
 
 ```
 GET  /api/dexscreener/price?token={address}
-GET  /api/dextools/price?tokenAddress={address}
-GET  /api/coinmarketcap/quotes?symbols=SOL,USDC
+GET  /api/jupiter/price?ids={mint1},{mint2}
 ```
 
 ### Swap Operations

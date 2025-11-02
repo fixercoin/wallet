@@ -54,17 +54,17 @@ let path: any = null;
 let DATA_DIR: string = "";
 let DATA_FILE: string = "";
 
-// Try to load Node.js modules only if available
-try {
-  if (typeof window === "undefined") {
-    fs = require("fs");
-    fsPromises = require("fs/promises");
-    path = require("path");
-    DATA_DIR = path.resolve(process.cwd(), "data");
-    DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
+// Check if we're in a Node.js environment and can access file system
+const isNodeEnvironment = typeof window === "undefined" && typeof process !== "undefined" && process.versions && process.versions.node;
+
+if (isNodeEnvironment) {
+  try {
+    fs = await import("fs");
+    fsPromises = await import("fs/promises");
+    path = await import("path");
+  } catch {
+    // File system modules not available
   }
-} catch {
-  // Running in browser/Worker environment, skip file system
 }
 
 type EasypaisaPayment = {

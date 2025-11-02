@@ -29,7 +29,9 @@ interface DexscreenerResponse {
 
 const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
-    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
+    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
 };
 
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {

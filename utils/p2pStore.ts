@@ -101,14 +101,18 @@ const store: {
 (globalThis as any).__P2P_STORE = store;
 
 async function saveStoreToFile() {
-  if (!fs || !fsPromises || !DATA_FILE) {
-    // File system not available (browser/Worker environment)
-    return;
-  }
   try {
-    await fsPromises.mkdir(DATA_DIR, { recursive: true });
-    await fsPromises.writeFile(
-      DATA_FILE,
+    const { fsPromises: fsp, DATA_FILE: dataFile } = await getFileSystemModules();
+    if (!fsp || !dataFile) {
+      // File system not available (browser/Worker environment)
+      return;
+    }
+
+    const path = await import("path");
+    const dataDir = path.dirname(dataFile);
+    await fsp.mkdir(dataDir, { recursive: true });
+    await fsp.writeFile(
+      dataFile,
       JSON.stringify(
         {
           posts: store.posts,
@@ -131,10 +135,16 @@ async function saveStoreToFile() {
 }
 
 // Load persisted data on startup (best-effort)
-if (fs && DATA_FILE) {
+async function loadPersistedData() {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, "utf-8");
+    const { fsPromises: fsp, DATA_FILE: dataFile } = await getFileSystemModules();
+    if (!fsp || !dataFile) {
+      return;
+    }
+
+    const fs = await import("fs");
+    if (fs.existsSync(dataFile)) {
+      const raw = fs.readFileSync(dataFile, "utf-8");
       const parsed = JSON.parse(raw || "{}");
       if (parsed && typeof parsed === "object") {
         if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
@@ -151,6 +161,11 @@ if (fs && DATA_FILE) {
   } catch (e) {
     // ignore
   }
+}
+
+// Load data on module initialization (in Node.js only)
+if (typeof window === "undefined" && typeof process !== "undefined") {
+  loadPersistedData().catch(() => {});
 }
 
 export function listPosts() {

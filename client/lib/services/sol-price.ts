@@ -14,7 +14,7 @@ class SolPriceService {
   private readonly CACHE_DURATION = 60000; // 1 minute cache
 
   /**
-   * Fetch SOL price from CoinGecko API
+   * Fetch SOL price via proxy endpoint (routed through Cloudflare Worker)
    */
   async getSolPrice(): Promise<SolPriceData | null> {
     // Check cache first
@@ -26,9 +26,7 @@ class SolPriceService {
     }
 
     try {
-      const response = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true",
-      );
+      const response = await fetch("/api/sol/price");
 
       if (!response.ok) {
         throw new Error(`Failed to fetch SOL price: ${response.status}`);
@@ -36,24 +34,36 @@ class SolPriceService {
 
       const data = await response.json();
 
-      if (data.solana) {
-        const priceData: SolPriceData = {
+      // Handle both direct price response and nested structure
+      let priceData: SolPriceData;
+
+      if (data.price !== undefined) {
+        // Direct response format from proxy
+        priceData = {
+          price: data.price || 0,
+          price_change_24h: data.price_change_24h || 0,
+          market_cap: data.market_cap || 0,
+          volume_24h: data.volume_24h || 0,
+        };
+      } else if (data.solana) {
+        // CoinGecko response format
+        priceData = {
           price: data.solana.usd || 0,
           price_change_24h: data.solana.usd_24h_change || 0,
           market_cap: data.solana.usd_market_cap || 0,
           volume_24h: data.solana.usd_24h_vol || 0,
         };
-
-        // Update cache
-        this.cache = {
-          data: priceData,
-          timestamp: Date.now(),
-        };
-
-        return priceData;
+      } else {
+        return null;
       }
 
-      return null;
+      // Update cache
+      this.cache = {
+        data: priceData,
+        timestamp: Date.now(),
+      };
+
+      return priceData;
     } catch (error) {
       console.error("Error fetching SOL price:", error);
 

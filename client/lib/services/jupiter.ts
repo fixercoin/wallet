@@ -108,18 +108,8 @@ class JupiterAPI {
           console.debug("Could not parse error response:", parseErr);
         }
 
-        // Fallback: try direct Jupiter API (CORS-enabled) for retries
-        const directUrl = `${this.baseUrl}/quote?${params.toString()}`;
-        const directResp = await this.fetchWithTimeout(directUrl, 12000).catch(
-          () => new Response("", { status: 0 } as any),
-        );
-        if (directResp.ok) {
-          try {
-            return await directResp.json();
-          } catch {}
-        }
         console.warn(
-          "Jupiter quote unavailable (proxy & direct):",
+          "Jupiter quote unavailable (proxy):",
           response.status,
           txt,
         );

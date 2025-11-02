@@ -784,8 +784,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowBalance(!showBalance)}
+                onClick={() => navigate('/wallet/history')}
                 className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-20"
+                title="History"
+                aria-label="Open history"
               >
                 <span className="text-black text-2xl leading-none">*</span>
               </button>

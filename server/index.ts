@@ -87,12 +87,19 @@ export async function createServer(): Promise<express.Application> {
           amount = body.amount || "";
         } else {
           inputMint = String(req.query.inputMint || req.query.input_mint || "");
-          outputMint = String(req.query.outputMint || req.query.output_mint || "");
+          outputMint = String(
+            req.query.outputMint || req.query.output_mint || "",
+          );
           amount = String(req.query.amount || "");
         }
 
         if (!inputMint || !outputMint || !amount) {
-          return res.status(400).json({ error: "Missing required parameters: inputMint, outputMint, amount" });
+          return res
+            .status(400)
+            .json({
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
+            });
         }
 
         const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
@@ -101,36 +108,49 @@ export async function createServer(): Promise<express.Application> {
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
         clearTimeout(timeout);
-        if (!resp.ok) return res.status(resp.status).json({ error: "Pumpfun API error" });
+        if (!resp.ok)
+          return res.status(resp.status).json({ error: "Pumpfun API error" });
         const data = await resp.json();
         return res.json(data);
       }
 
       if (path === "//swap" || path === "/swap") {
-        if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+        if (req.method !== "POST")
+          return res.status(405).json({ error: "Method not allowed" });
         const body = req.body || {};
         const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        if (!resp.ok) return res.status(resp.status).json({ error: "Pumpfun swap failed" });
+        if (!resp.ok)
+          return res.status(resp.status).json({ error: "Pumpfun swap failed" });
         const data = await resp.json();
         return res.json(data);
       }
 
       return res.status(404).json({ error: "Pumpfun proxy path not found" });
     } catch (e: any) {
-      return res.status(502).json({ error: "Failed to proxy Pumpfun request", details: e?.message || String(e) });
+      return res
+        .status(502)
+        .json({
+          error: "Failed to proxy Pumpfun request",
+          details: e?.message || String(e),
+        });
     }
   });
 
   // Token price endpoint (simple, robust fallback + stablecoins)
   app.get("/api/token/price", async (req, res) => {
     try {
-      const tokenParam = String((req.query.token || req.query.symbol || "FIXERCOIN")).toUpperCase();
+      const tokenParam = String(
+        req.query.token || req.query.symbol || "FIXERCOIN",
+      ).toUpperCase();
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
@@ -146,9 +166,15 @@ export async function createServer(): Promise<express.Application> {
         return res.json({ token: tokenParam, priceUsd: 1.0 });
       }
 
-      if (tokenParam === "SOL") return res.json({ token: "SOL", priceUsd: FALLBACK_USD.SOL });
-      if (tokenParam === "FIXERCOIN") return res.json({ token: "FIXERCOIN", priceUsd: FALLBACK_USD.FIXERCOIN });
-      if (tokenParam === "LOCKER") return res.json({ token: "LOCKER", priceUsd: FALLBACK_USD.LOCKER });
+      if (tokenParam === "SOL")
+        return res.json({ token: "SOL", priceUsd: FALLBACK_USD.SOL });
+      if (tokenParam === "FIXERCOIN")
+        return res.json({
+          token: "FIXERCOIN",
+          priceUsd: FALLBACK_USD.FIXERCOIN,
+        });
+      if (tokenParam === "LOCKER")
+        return res.json({ token: "LOCKER", priceUsd: FALLBACK_USD.LOCKER });
 
       // If mint provided that matches known mints, map to fallback
       const TOKEN_MINTS: Record<string, string> = {
@@ -175,7 +201,12 @@ export async function createServer(): Promise<express.Application> {
       // Last resort
       return res.status(404).json({ error: "Token price not available" });
     } catch (e: any) {
-      return res.status(502).json({ error: "Failed to fetch token price", details: e?.message || String(e) });
+      return res
+        .status(502)
+        .json({
+          error: "Failed to fetch token price",
+          details: e?.message || String(e),
+        });
     }
   });
 
@@ -195,19 +226,29 @@ export async function createServer(): Promise<express.Application> {
   // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
   // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.
   app.get("/api/p2p/orders", (req, res) =>
-    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+    res
+      .status(410)
+      .json({ error: "P2P orders API is disabled on this server" }),
   );
   app.post("/api/p2p/orders", (req, res) =>
-    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+    res
+      .status(410)
+      .json({ error: "P2P orders API is disabled on this server" }),
   );
   app.get("/api/p2p/orders/:orderId", (req, res) =>
-    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+    res
+      .status(410)
+      .json({ error: "P2P orders API is disabled on this server" }),
   );
   app.put("/api/p2p/orders/:orderId", (req, res) =>
-    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+    res
+      .status(410)
+      .json({ error: "P2P orders API is disabled on this server" }),
   );
   app.delete("/api/p2p/orders/:orderId", (req, res) =>
-    res.status(410).json({ error: "P2P orders API is disabled on this server" }),
+    res
+      .status(410)
+      .json({ error: "P2P orders API is disabled on this server" }),
   );
 
   // Trade Rooms routes

@@ -332,6 +332,29 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   const storageKey = wallet ? storageKeyForWallet(wallet.publicKey) : null;
 
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  const refreshLocksFromStorage = useCallback(() => {
+    if (!wallet) return;
+    try {
+      setIsRefreshing(true);
+      const stored = localStorage.getItem(
+        storageKeyForWallet(wallet.publicKey),
+      );
+      if (stored) {
+        const parsed = JSON.parse(stored) as TokenLockRecord[];
+        setLocks(parsed);
+      } else {
+        setLocks([]);
+      }
+    } catch (error) {
+      console.error("Failed to refresh token locks", error);
+    } finally {
+      // keep the spinner visible briefly so users see activity
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  }, [wallet]);
+
   useEffect(() => {
     if (!wallet) return;
     try {
@@ -349,6 +372,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       setLocks([]);
     }
   }, [wallet]);
+
+  // Auto-refresh locks from localStorage every 20 seconds
+  useEffect(() => {
+    if (!wallet) return;
+    const interval = setInterval(() => {
+      refreshLocksFromStorage();
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [wallet, refreshLocksFromStorage]);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -705,15 +737,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-transparent sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex-1 text-center font-medium text-sm text-gray-900">
-            SPL TOKEN LOCK
-          </div>
-        </div>
-      </div>
-
       <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-2">
@@ -824,10 +847,24 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 Active locks
               </span>
             </div>
-            <Badge variant="secondary" className="text-[10px]">
-              {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
-              active
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-[10px]">
+                {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
+                active
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={refreshLocksFromStorage}
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+                aria-label="Refresh locks"
+                title="Refresh locks"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-4">

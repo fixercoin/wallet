@@ -304,16 +304,29 @@ export default {
 
     // Exchange Rate API
     if (pathname === "/api/exchange-rate" && req.method === "GET") {
-      const token = searchParams.get("token") || "USDC";
-      const rates: Record<string, number> = {
-        FIXERCOIN: 0.0003,
-        SOL: 6000,
-        USDC: 280,
-        USDT: 280,
-        LOCKER: 0.5,
+      const token = (searchParams.get("token") || "USDC").toUpperCase();
+      const PKR_PER_USD = 280;
+      const MARKUP = 1.0425;
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
       };
-      const rate = rates[token] || rates["USDC"];
-      return json({ token, rate }, { headers: corsHeaders });
+      const priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return json(
+        {
+          token,
+          priceUsd,
+          priceInPKR: rateInPKR,
+          rate: rateInPKR,
+          pkrPerUsd: PKR_PER_USD,
+          markup: MARKUP,
+        },
+        { headers: corsHeaders },
+      );
     }
 
     // DexScreener token price proxy: /api/dexscreener/price?token=...

@@ -118,7 +118,7 @@ export default function TokenListing() {
 
           <div className="grid gap-3">
             <div className="space-y-2">
-              <Label htmlFor="mint">Token Mint Address</Label>
+              <Label htmlFor="mint" className="sr-only">Token Mint Address</Label>
               <Input
                 id="mint"
                 value={mint}

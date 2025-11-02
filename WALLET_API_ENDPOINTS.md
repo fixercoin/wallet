@@ -182,33 +182,6 @@ GET /api/account?publicKey={walletAddress}
 
 ---
 
-## Payment Integration
-
-### Create Payment Intent (Razorpay)
-
-```
-POST /api/payments/create-intent
-```
-
-**Body:**
-
-```json
-{
-  "walletAddress": "...",
-  "amount": 50000,
-  "currency": "INR",
-  "tokenType": "USDC",
-  "email": "user@example.com",
-  "contact": "+92123456789"
-}
-```
-
-### Payment Webhook Handler
-
-```
-POST /api/webhooks/payment
-X-Razorpay-Signature: {signature}
-```
 
 ---
 

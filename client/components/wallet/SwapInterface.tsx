@@ -755,7 +755,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-gray-200 border border-gray-300 text-gray-900 hover:bg-gray-300 w-auto px-3 transition-colors">
                         <SelectValue>
                           <div className="flex items-center gap-2 text-gray-900">
                             {fromToken ? (

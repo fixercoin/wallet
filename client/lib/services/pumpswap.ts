@@ -17,17 +17,17 @@ export interface PumpPoolInfo {
   raw?: any;
 }
 
-const SHYFT_BASE = (typeof process !== 'undefined' && process.env && process.env.SHYFT_API_BASE) || import.meta.env.VITE_SHYFT_API_BASE || "https://api.shyft.to";
-const SHYFT_API_KEY = (typeof process !== 'undefined' && process.env && process.env.SHYFT_API_KEY) || import.meta.env.VITE_SHYFT_API_KEY || ""; // recommended to set in env
+// Use proxy endpoint instead of direct Shyft API
+// The Cloudflare Worker handles pool discovery and trading through the proxy
+const PUMP_SWAP_PROXY_BASE = "/api/pumpfun";
 
-async function shyftFetch(path: string, method = "GET", body?: any) {
+async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
   };
-  if (SHYFT_API_KEY) headers["x-api-key"] = SHYFT_API_KEY;
 
-  const res = await fetch(`${SHYFT_BASE}${path}`, {
+  const res = await fetch(`${PUMP_SWAP_PROXY_BASE}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
@@ -40,7 +40,7 @@ async function shyftFetch(path: string, method = "GET", body?: any) {
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`Shyft API error: ${res.status} ${txt}`);
+    throw new Error(`Pump.fun proxy error: ${res.status} ${txt}`);
   }
 
   return await res.json().catch(() => null);

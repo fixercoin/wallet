@@ -33,64 +33,6 @@ const DEXSCREENER_ENDPOINTS = [
 ];
 let currentDexIdx = 0;
 
-const BINANCE_P2P_ENDPOINTS = [
-  "https://p2p.binance.com",
-  "https://c2c.binance.com",
-  "https://www.binance.com",
-];
-
-const BINANCE_ENDPOINTS = [
-  "https://api.binance.com",
-  "https://api1.binance.com",
-  "https://api2.binance.com",
-  "https://api3.binance.com",
-];
-
-// In-memory cache
-const DEX_CACHE_TTL_MS = 30_000;
-const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
-const DEX_INFLIGHT = new Map<string, Promise<any>>();
-const BINANCE_P2P_CACHE = new Map<string, { data: any; expiresAt: number }>();
-const BINANCE_P2P_CACHE_TTL = 30000;
-
-function uniqueId() {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function encodeToBase64(value: string): string {
-  if (typeof btoa === "function") {
-    const bytes = new TextEncoder().encode(value);
-    let binary = "";
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
-    }
-    return btoa(binary);
-  }
-  throw new Error("Base64 encoding not supported in this environment");
-}
-
-function buildDeviceInfoPayload(userAgent: string): string {
-  const payload = {
-    deviceName: "Chrome",
-    deviceVersion: "124.0.0.0",
-    osName: "windows",
-    osVersion: "10",
-    platform: "web",
-    screenHeight: 1080,
-    screenWidth: 1920,
-    systemLang: "en-US",
-    timeZone: "UTC",
-    userAgent,
-  };
-  return encodeToBase64(JSON.stringify(payload));
-}
-
 async function callRpc(
   env: Partial<Env> | undefined,
   method: string,

@@ -762,17 +762,21 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 bg-white/50 text-gray-900">
+                <SelectTrigger className="mt-1 w-full bg-white/5 border-white/20 text-white">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {availableTokens.map((token) => (
-                    <SelectItem key={token.mint} value={token.mint}>
+                    <SelectItem
+                      key={token.mint}
+                      value={token.mint}
+                      className="text-white"
+                    >
                       <div className="flex flex-col">
-                        <span className="font-medium text-sm">
+                        <span className="font-medium text-sm text-white">
                           {token.symbol || token.name || token.mint.slice(0, 6)}
                         </span>
-                        <span className="text-[10px] text-gray-400 uppercase">
+                        <span className="text-[10px] text-gray-300 uppercase">
                           Balance: {(token.balance || 0).toLocaleString()}
                         </span>
                       </div>
@@ -806,12 +810,16 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 bg-white/50 text-gray-900">
+                <SelectTrigger className="mt-1 w-full bg-white/5 border-white/20 text-white">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {LOCK_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.id} value={opt.id}>
+                    <SelectItem
+                      key={opt.id}
+                      value={opt.id}
+                      className="text-white"
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}

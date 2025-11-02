@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
 import { BuySellLine } from "./token-detail/BuySellLine";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -16,16 +17,6 @@ interface TokenDetailProps {
   onSend: (tokenMint: string) => void;
   onReceive: (tokenMint: string) => void;
 }
-
-// Mock price data for demonstration
-const generateMockPriceData = () => {
-  const basePrice = Math.random() * 100;
-  return Array.from({ length: 24 }, (_, i) => ({
-    time: `${i}:00`,
-    price: basePrice + (Math.random() - 0.5) * 20,
-    volume: Math.random() * 1000000,
-  }));
-};
 
 export const TokenDetail: React.FC<TokenDetailProps> = ({
   tokenMint,
@@ -37,7 +28,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 }) => {
   const { tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
-  const [priceData, setPriceData] = useState(generateMockPriceData());
+  const [priceData, setPriceData] = useState<
+    { time: string; price: number; volume: number }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
@@ -51,11 +44,62 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     }
   }, [token]);
 
+  // Load live price data from DexScreener for this token
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const ds = await dexscreenerAPI.getTokenByMint(tokenMint);
+        const price = ds?.priceUsd ? parseFloat(ds.priceUsd) : null;
+        const change =
+          ds?.priceChange?.h24 ??
+          ds?.priceChange?.h6 ??
+          ds?.priceChange?.h1 ??
+          ds?.priceChange?.m5 ??
+          0;
+        const base = price || 0;
+        const data = Array.from({ length: 24 }, (_, i) => {
+          // create simple intraday points around the base price using change to simulate trend
+          const factor =
+            1 +
+            ((Math.sin((i / 24) * Math.PI * 2) * 0.5 + 0.5) *
+              (change / 100 || 0)) /
+              2;
+          return {
+            time: `${i}:00`,
+            price: parseFloat((base * factor).toFixed(8)),
+            volume: ds?.volume?.h24 || Math.random() * 100000,
+          };
+        });
+        if (mounted) setPriceData(data);
+      } catch (e) {
+        if (mounted) setPriceData([]);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [tokenMint]);
+
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
       await refreshTokens();
-      setPriceData(generateMockPriceData());
+      // reload prices
+      const ds = await dexscreenerAPI
+        .getTokenByMint(tokenMint)
+        .catch(() => null);
+      if (ds?.priceUsd) {
+        const base = parseFloat(ds.priceUsd);
+        const data = Array.from({ length: 24 }, (_, i) => ({
+          time: `${i}:00`,
+          price: base,
+          volume: ds.volume?.h24 || 0,
+        }));
+        setPriceData(data);
+      }
+
       toast({
         title: "Refreshed",
         description: "Token data updated",

@@ -21,6 +21,8 @@ jobs:
           npm ci
 
       - name: Build frontend
+        env:
+          VITE_API_BASE_URL: "https://wallet.fixorium.com.pk"
         run: |
           npm run build
 
@@ -36,6 +38,7 @@ jobs:
           # Pass through important API keys as secrets (the worker reads these via ENV)
           HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
           COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
+          VITE_API_BASE_URL: "https://wallet.fixorium.com.pk"
 
 # Notes:
 # - Create repository secrets: CF_API_TOKEN, CF_ACCOUNT_ID, HELIUS_API_KEY, COINMARKETCAP_API_KEY

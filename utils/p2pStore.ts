@@ -63,7 +63,10 @@ async function getFileSystemModules() {
       const fsp = await import("fs/promises");
       const path = await import("path");
       fsPromises = fsp;
-      DATA_FILE = path.join(path.resolve(process.cwd(), "data"), "p2p-store.json");
+      DATA_FILE = path.join(
+        path.resolve(process.cwd(), "data"),
+        "p2p-store.json",
+      );
     } catch {
       // File system not available (Worker environment)
     }
@@ -102,7 +105,8 @@ const store: {
 
 async function saveStoreToFile() {
   try {
-    const { fsPromises: fsp, DATA_FILE: dataFile } = await getFileSystemModules();
+    const { fsPromises: fsp, DATA_FILE: dataFile } =
+      await getFileSystemModules();
     if (!fsp || !dataFile) {
       // File system not available (browser/Worker environment)
       return;
@@ -137,7 +141,8 @@ async function saveStoreToFile() {
 // Load persisted data on startup (best-effort)
 async function loadPersistedData() {
   try {
-    const { fsPromises: fsp, DATA_FILE: dataFile } = await getFileSystemModules();
+    const { fsPromises: fsp, DATA_FILE: dataFile } =
+      await getFileSystemModules();
     if (!fsp || !dataFile) {
       return;
     }
@@ -147,7 +152,8 @@ async function loadPersistedData() {
       const raw = fs.readFileSync(dataFile, "utf-8");
       const parsed = JSON.parse(raw || "{}");
       if (parsed && typeof parsed === "object") {
-        if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
+        if (Array.isArray(parsed.posts))
+          store.posts = parsed.posts as P2PPost[];
         if (parsed.messages && typeof parsed.messages === "object")
           store.messages = parsed.messages;
         if (parsed.proofs && typeof parsed.proofs === "object")

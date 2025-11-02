@@ -622,41 +622,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       } catch (dexError) {
         try {
-          const tokenMints = allTokens.map((token) => token.mint);
-          console.log(
-            `[CoinMarketCap] DexScreener failed, trying CoinMarketCap for ${tokenMints.length} tokens`,
+          const solPricePromise = solPriceService.getSolPrice();
+          const timeout = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), 3000),
           );
-          prices = await coinmarketcapAPI.getTokenPrices(tokenMints);
-          if (Object.keys(prices).length > 0) {
-            priceSource = "coinmarketcap";
-            console.log(
-              `[CoinMarketCap] ✅ Successfully fetched ${Object.keys(prices).length} prices`,
-            );
-          } else {
-            throw new Error("CoinMarketCap also returned no prices");
-          }
-        } catch (cmcError) {
-          try {
-            const solPricePromise = solPriceService.getSolPrice();
-            const timeout = new Promise<null>((resolve) =>
-              setTimeout(() => resolve(null), 3000),
-            );
-            const solPriceData = await Promise.race([solPricePromise, timeout]);
-            prices = {
-              So11111111111111111111111111111111111111112:
-                solPriceData?.price || 100,
-            };
-            priceSource = solPriceData ? "coingecko" : "static";
-          } catch {
-            prices = { So11111111111111111111111111111111111111112: 100 };
-            priceSource = "static";
-          }
-          try {
-            const fixercoinPrice = await fixercoinPriceService.getPrice();
-            prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
-              fixercoinPrice;
-          } catch {}
+          const solPriceData = await Promise.race([solPricePromise, timeout]);
+          prices = {
+            So11111111111111111111111111111111111111112: solPriceData?.price || 100,
+          };
+          priceSource = solPriceData ? "coingecko" : "static";
+        } catch {
+          prices = { So11111111111111111111111111111111111111112: 100 };
+          priceSource = "static";
         }
+        try {
+          const fixercoinPrice = await fixercoinPriceService.getPrice();
+          prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] = fixercoinPrice;
+        } catch {}
       }
 
       // Ensure DexScreener prices for FIXERCOIN and LOCKER regardless of earlier fallbacks

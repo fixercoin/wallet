@@ -54,25 +54,6 @@ function AppRoutes() {
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
       <Route path="/wallet/history" element={<WalletHistory />} />
-      <Route path="/express/orderbook" element={<OrderBook />} />
-      <Route path="/express/buy-trade" element={<BuyTrade />} />
-      <Route path="/express/pay" element={<ExpressPay />} />
-      <Route path="/express/add-post" element={<ExpressAddPost />} />
-      <Route
-        path="/express/order-complete"
-        element={<ExpressOrderComplete />}
-      />
-      <Route
-        path="/express/pending-orders"
-        element={<ExpressPendingOrders />}
-      />
-      <Route
-        path="/express/post-order/:orderId"
-        element={<ExpressPostOrderDetail />}
-      />
-      <Route path="/express/post-order" element={<ExpressAddPost />} />
-      <Route path="/express/post/:orderId" element={<ExpressPostView />} />
-      <Route path="/express/start-trade" element={<ExpressStartTrade />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

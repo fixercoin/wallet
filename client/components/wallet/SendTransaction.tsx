@@ -350,7 +350,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]);
-        const platformFeeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         const lamportsToSend = lamports + platformFeeLamports;
         if (currentLamports < lamportsToSend + networkFeeLamports) {
           throw new Error("Insufficient SOL to cover amount and network fees");
@@ -360,7 +362,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]).catch(() => 0);
-        const platformFeeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         const lamportsToSend = lamports + platformFeeLamports;
         if (currentLamports <= lamportsToSend) {
           throw new Error("Insufficient SOL for amount (no room for fees)");
@@ -554,18 +558,25 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
           base64FromBytes(msg.serialize()),
         ]);
         const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
-        const platformFeeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]);
-        if (currentLamports < networkFeeLamports + rentLamports + platformFeeLamports) {
+        if (
+          currentLamports <
+          networkFeeLamports + rentLamports + platformFeeLamports
+        ) {
           throw new Error("Insufficient SOL to cover network fees and rent");
         }
       } catch (e) {
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]).catch(() => 0);
-        const platformFeeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         if (currentLamports <= platformFeeLamports) {
           throw new Error("Insufficient SOL for network fees");
         }

@@ -34,10 +34,7 @@ const DEXSCREENER_ENDPOINTS = [
 let currentDexIdx = 0;
 
 const DEX_CACHE_TTL_MS = 30_000;
-const DEX_CACHE = new Map<
-  string,
-  { data: any; expiresAt: number }
->();
+const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
 const DEX_INFLIGHT = new Map<string, Promise<any>>();
 
 async function callRpc(

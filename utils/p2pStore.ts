@@ -48,23 +48,32 @@ export type TradeRoom = {
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
 // In-memory store (per server instance) with optional on-disk persistence
-let fs: any = null;
-let fsPromises: any = null;
-let path: any = null;
+let fsModule: any = null;
+let fsPromisesModule: any = null;
+let pathModule: any = null;
 let DATA_DIR: string = "";
 let DATA_FILE: string = "";
 
-// Check if we're in a Node.js environment and can access file system
-const isNodeEnvironment = typeof window === "undefined" && typeof process !== "undefined" && process.versions && process.versions.node;
-
-if (isNodeEnvironment) {
-  try {
-    fs = await import("fs");
-    fsPromises = await import("fs/promises");
-    path = await import("path");
-  } catch {
-    // File system modules not available
+// Try to load Node.js modules only if available (dynamic import to avoid bundler issues)
+async function loadFileSystemModules() {
+  if (typeof window === "undefined" && typeof process !== "undefined") {
+    try {
+      fsModule = (await import("fs")).default || (await import("fs"));
+      fsPromisesModule = (await import("fs/promises")).default || (await import("fs/promises"));
+      pathModule = (await import("path")).default || (await import("path"));
+      if (pathModule && pathModule.resolve) {
+        DATA_DIR = pathModule.resolve(process.cwd(), "data");
+        DATA_FILE = pathModule.join(DATA_DIR, "p2p-store.json");
+      }
+    } catch {
+      // File system modules not available (browser/Worker environment)
+    }
   }
+}
+
+// Initialize if we're in Node.js
+if (typeof process !== "undefined" && !globalThis.requestIdleCallback) {
+  loadFileSystemModules().catch(() => {});
 }
 
 type EasypaisaPayment = {

@@ -891,59 +891,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="text-2xl font-bold text-gray-900 leading-tight">
                         {showBalance
                           ? `${total.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })} USD`
+                              minimumFractionDigits: 3,
+                              maximumFractionDigits: 3,
+                            })} -`
                           : "****"}
                       </div>
                       <div className="text-sm text-gray-700 mt-1">
                         {showBalance
-                          ? `PKR ${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          ? `${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} P`
                           : "****"}
                       </div>
                       {showBalance ? (
-                        <>
-                          {hasValidPriceChange && (
-                            <div className="flex items-center justify-center gap-2 mt-1">
-                              {isPositive ? (
-                                <>
-                                  <ArrowUpRight className="h-3 w-3 text-green-400" />
-                                  <span className="text-xs font-medium text-green-400">
-                                    +
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    (+{change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDownLeft className="h-3 w-3 text-red-400" />
-                                  <span className="text-xs font-medium text-red-400">
-                                    -
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    ({change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {!hasValidPriceChange && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data available
-                            </div>
-                          )}
-                        </>
+                        <div className="text-xs text-gray-400 mt-1">
+                          24h profit loss
+                        </div>
                       ) : (
                         <div className="text-xs text-gray-400 mt-1">****</div>
                       )}

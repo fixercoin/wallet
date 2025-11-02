@@ -127,23 +127,6 @@ export const walletApi = {
     return response.json();
   },
 
-  // Create payment intent
-  async createPaymentIntent(params: {
-    walletAddress: string;
-    amount: number;
-    currency: string;
-    tokenType: string;
-    email: string;
-    contact: string;
-  }) {
-    const response = await fetch(`${API_BASE}/payments/create-intent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
-    if (!response.ok) throw new Error("Failed to create payment intent");
-    return response.json();
-  },
 
   // Health check
   async health() {

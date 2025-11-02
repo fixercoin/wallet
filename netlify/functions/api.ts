@@ -373,7 +373,11 @@ export const handler = async (event: any) => {
       } catch {}
 
       // Fall back to hardcoded prices if DexScreener data is invalid, zero, or too small
-      if (priceUsd === null || !isFinite(priceUsd) || priceUsd < MIN_REALISTIC_PRICE) {
+      if (
+        priceUsd === null ||
+        !isFinite(priceUsd) ||
+        priceUsd < MIN_REALISTIC_PRICE
+      ) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
       }
 

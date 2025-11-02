@@ -4,12 +4,16 @@ import { RequestHandler } from "express";
 // They fetch wallet balance and token account data - NOT for token price fetching
 // Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
 const RPC_ENDPOINTS = [
+  // Prefer environment-configured RPC first
+  process.env.SOLANA_RPC_URL || "",
+  // Provider-specific overrides
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  process.env.ALCHEMY_RPC_URL || "",
+  // Fallback public endpoints
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
   "https://solana.publicnode.com",

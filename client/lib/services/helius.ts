@@ -92,7 +92,9 @@ class HeliusAPI {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    this.baseUrl = `https://mainnet.helius-rpc.com/?api-key=${this.apiKey}`;
+    // Use proxy endpoint instead of direct Helius API
+    // The Cloudflare Worker will handle the actual RPC call
+    this.baseUrl = "/api/rpc";
   }
 
   /**
@@ -366,8 +368,7 @@ class HeliusAPI {
 }
 
 // Create and export singleton instance
-const HELIUS_API_KEY =
-  import.meta.env.HELIUS_API_KEY || "4e94fa63-8229-4242-8398-b97c512b660a";
+const HELIUS_API_KEY = import.meta.env.HELIUS_API_KEY || "";
 export const heliusAPI = new HeliusAPI(HELIUS_API_KEY);
 
 // Export the class for potential future use

@@ -234,6 +234,9 @@ export const getTokenAccounts = async (publicKey: string) => {
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value) && value.length >= 0) {
+      console.log(
+        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+      );
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;
@@ -261,62 +264,8 @@ export const getTokenAccounts = async (publicKey: string) => {
     );
   }
 
-  // Fallback RPC endpoints with better support for token queries
-  const fallbackRPCs = [
-    SOLANA_RPC_URL,
-    "https://rpc.ankr.com/solana",
-    "https://solana.publicnode.com",
-    "https://api.mainnet-beta.solana.com",
-  ].filter((url, idx, arr) => arr.indexOf(url) === idx); // Remove duplicates
-
-  for (const rpcUrl of fallbackRPCs) {
-    try {
-      console.log(`[Token Accounts] Trying RPC endpoint: ${rpcUrl}`);
-      const conn = new Connection(rpcUrl, { commitment: "confirmed" });
-      const owner = new PublicKey(publicKey);
-      const programId = new PublicKey(TOKEN_PROGRAM_ID);
-
-      const resp = await Promise.race([
-        conn.getParsedTokenAccountsByOwner(owner, { programId }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("RPC timeout")), 10000),
-        ),
-      ]);
-
-      console.log(
-        `[Token Accounts] Successfully fetched from ${rpcUrl}: ${resp.value.length} token accounts`,
-      );
-
-      return resp.value.map((account) => {
-        const parsedInfo: any = (account.account.data as any).parsed.info;
-        const mint: string = parsedInfo.mint;
-        const balance: number = parsedInfo.tokenAmount.uiAmount || 0;
-        const decimals: number = parsedInfo.tokenAmount.decimals;
-
-        const metadata = KNOWN_TOKENS[mint] || {
-          mint,
-          symbol: "UNKNOWN",
-          name: "Unknown Token",
-          decimals,
-        };
-
-        return {
-          ...metadata,
-          balance,
-          decimals: decimals || metadata.decimals,
-        };
-      });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Token Accounts] Failed with ${rpcUrl}: ${errorMsg}. Trying next endpoint...`,
-      );
-      continue;
-    }
-  }
-
-  console.error(
-    "[Token Accounts] All RPC endpoints failed to fetch token accounts, returning empty list",
+  console.warn(
+    "[Token Accounts] ❌ Proxy RPC failed. Token accounts cannot be fetched directly from browser due to security restrictions. Returning empty list.",
   );
   return [];
 };

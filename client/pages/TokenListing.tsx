@@ -90,46 +90,42 @@ export default function TokenListing() {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="h-9 w-9 p-0 rounded-full bg-transparent hover:bg-[#FF7A5C]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex-1 text-center font-medium text-sm">
-            TOKEN LISTING
-          </div>
-        </div>
-      </div>
-
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="bg-transparent rounded-2xl p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              Token Listing
-            </span>
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+                aria-label="Back"
+                title="Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-semibold text-gray-900">
+                Token Listing
+              </span>
+            </div>
           </div>
 
           <div className="grid gap-3">
             <div className="space-y-2">
-              <Label htmlFor="mint">Token Mint Address</Label>
+              <Label htmlFor="mint" className="sr-only">
+                Token Mint Address
+              </Label>
               <Input
                 id="mint"
                 value={mint}
                 onChange={(e) => setMint(e.target.value)}
                 placeholder="Mint address"
-                className="font-mono bg-transparent text-white"
+                className="font-mono bg-white/50 text-gray-900"
               />
             </div>
             <div className="space-y-2">
@@ -139,7 +135,7 @@ export default function TokenListing() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Token"
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
+                className="bg-white/50 border-[#e6f6ec]/20 text-gray-900"
               />
             </div>
             <div className="space-y-2">
@@ -149,7 +145,7 @@ export default function TokenListing() {
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="MTK"
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
+                className="bg-white/50 border-[#e6f6ec]/20 text-gray-900"
               />
             </div>
             <div className="space-y-2">
@@ -160,7 +156,7 @@ export default function TokenListing() {
                 value={decimals}
                 onChange={(e) => setDecimals(Number(e.target.value) || 0)}
                 placeholder="6"
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
+                className="bg-white/50 border-[#e6f6ec]/20 text-gray-900"
               />
             </div>
             <div className="space-y-2">
@@ -170,7 +166,7 @@ export default function TokenListing() {
                 value={logoURI}
                 onChange={(e) => setLogoURI(e.target.value)}
                 placeholder="https://..."
-                className="bg-transparent border-[#FF7A5C]/30 text-white"
+                className="bg-white/50 border-[#e6f6ec]/20 text-gray-900"
               />
             </div>
           </div>
@@ -178,7 +174,7 @@ export default function TokenListing() {
           <Button
             disabled={isLoading}
             onClick={handleList}
-            className="h-11 w-full border-0 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
+            className="h-11 w-full border-0 font-semibold bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
           >
             {isLoading ? "Listing..." : "Confirm Listing"}
           </Button>

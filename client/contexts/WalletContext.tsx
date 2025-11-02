@@ -15,9 +15,9 @@ import {
 } from "@/lib/wallet-proxy";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
-import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { dextoolsAPI } from "@/lib/services/dextools";
+import { coinmarketcapAPI } from "@/lib/services/coinmarketcap";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
@@ -504,6 +504,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
 
+        // If pump fun or other tokens still missing, try CoinMarketCap as final fallback
+        const tokensWithoutPrice = allTokens.filter((t) => !prices[t.mint]);
+        if (tokensWithoutPrice.length > 0) {
+          try {
+            const missingMints = tokensWithoutPrice.map((t) => t.mint);
+            console.log(
+              `[CoinMarketCap] Fetching ${missingMints.length} missing token prices from CoinMarketCap`,
+            );
+            const cmcPrices =
+              await coinmarketcapAPI.getTokenPrices(missingMints);
+            let addedCount = 0;
+            Object.entries(cmcPrices).forEach(([mint, price]) => {
+              if (price && price > 0 && !prices[mint]) {
+                prices[mint] = price;
+                addedCount++;
+                if (mint === fixercoinMint || mint === lockerMint) {
+                  console.log(
+                    `[CoinMarketCap] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: $${price.toFixed(8)}`,
+                  );
+                }
+              }
+            });
+            if (addedCount > 0) {
+              console.log(
+                `[CoinMarketCap] Added ${addedCount} prices from CoinMarketCap API`,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              "Failed to fetch missing prices from CoinMarketCap:",
+              e,
+            );
+          }
+        }
+
         // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
         try {
           const stableSymbols = allTokens
@@ -592,13 +627,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       } catch (dexError) {
         try {
           const tokenMints = allTokens.map((token) => token.mint);
-          prices = await jupiterAPI.getTokenPrices(tokenMints);
+          console.log(
+            `[CoinMarketCap] DexScreener failed, trying CoinMarketCap for ${tokenMints.length} tokens`,
+          );
+          prices = await coinmarketcapAPI.getTokenPrices(tokenMints);
           if (Object.keys(prices).length > 0) {
-            priceSource = "jupiter";
+            priceSource = "coinmarketcap";
+            console.log(
+              `[CoinMarketCap] ✅ Successfully fetched ${Object.keys(prices).length} prices`,
+            );
           } else {
-            throw new Error("Jupiter also returned no prices");
+            throw new Error("CoinMarketCap also returned no prices");
           }
-        } catch (jupiterError) {
+        } catch (cmcError) {
           try {
             const solPricePromise = solPriceService.getSolPrice();
             const timeout = new Promise<null>((resolve) =>

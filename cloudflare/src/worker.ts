@@ -1,41 +1,191 @@
-import { DurableRoom } from "./durable_room";
-import { json, parseJSON, requireAdmin } from "./utils";
-import {
-  ensureSchema,
-  createLock,
-  listLocks,
-  getLock,
-  listEvents,
-  withdrawFromLock,
-} from "./locks";
-import {
-  ensureP2PSchema,
-  createP2POrder,
-  getP2POrder,
-  listP2POrders,
-  updateP2POrder,
-  deleteP2POrder,
-  createTradeRoom,
-  getTradeRoom,
-  listTradeRooms,
-  updateTradeRoom,
-  addTradeMessage,
-  listTradeMessages,
-} from "./p2p-orders";
+import { json, parseJSON } from "./utils";
 
 export interface Env {
-  ROOM: DurableObjectNamespace;
-  ADMIN_TOKEN: string; // set via wrangler secret put ADMIN_TOKEN
-  ALLOWED_PAYMENT: string; // e.g. "easypaisa"
-  DB: D1Database; // Cloudflare D1 binding for locks/events and P2P
-  RAZORPAY_KEY_ID: string; // Razorpay key ID
-  RAZORPAY_KEY_SECRET: string; // Razorpay key secret
-  WALLET_KV: KVNamespace; // KV store for wallet balances
+  ALLOWED_PAYMENT: string;
 }
 
-function getRoomStub(env: Env, roomId: string) {
-  const id = env.ROOM.idFromName(roomId);
-  return env.ROOM.get(id);
+const RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solana.com",
+  "https://rpc.ankr.com/solana",
+  "https://solana-mainnet.rpc.extrnode.com",
+  "https://solana.blockpi.network/v1/rpc/public",
+  "https://solana.publicnode.com",
+];
+
+const DEXSCREENER_ENDPOINTS = [
+  "https://api.dexscreener.com/latest/dex",
+  "https://api.dexscreener.io/latest/dex",
+];
+let currentDexIdx = 0;
+
+const BINANCE_P2P_ENDPOINTS = [
+  "https://p2p.binance.com",
+  "https://c2c.binance.com",
+  "https://www.binance.com",
+];
+
+const BINANCE_ENDPOINTS = [
+  "https://api.binance.com",
+  "https://api1.binance.com",
+  "https://api2.binance.com",
+  "https://api3.binance.com",
+];
+
+// In-memory cache
+const DEX_CACHE_TTL_MS = 30_000;
+const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const DEX_INFLIGHT = new Map<string, Promise<any>>();
+const BINANCE_P2P_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const BINANCE_P2P_CACHE_TTL = 30000;
+
+function uniqueId() {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function encodeToBase64(value: string): string {
+  if (typeof btoa === "function") {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
+  }
+  throw new Error("Base64 encoding not supported in this environment");
+}
+
+function buildDeviceInfoPayload(userAgent: string): string {
+  const payload = {
+    deviceName: "Chrome",
+    deviceVersion: "124.0.0.0",
+    osName: "windows",
+    osVersion: "10",
+    platform: "web",
+    screenHeight: 1080,
+    screenWidth: 1920,
+    systemLang: "en-US",
+    timeZone: "UTC",
+    userAgent,
+  };
+  return encodeToBase64(JSON.stringify(payload));
+}
+
+async function callRpc(
+  method: string,
+  params: any[] = [],
+  id: number | string = Date.now(),
+) {
+  let lastError: Error | null = null;
+  const payload = {
+    jsonrpc: "2.0",
+    id,
+    method,
+    params,
+  };
+
+  for (const endpoint of RPC_ENDPOINTS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!resp.ok) {
+        if ([429, 502, 503].includes(resp.status)) continue;
+        const t = await resp.text().catch(() => "");
+        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+      }
+
+      const data = await resp.text();
+      return { ok: true, body: data } as const;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+    }
+  }
+
+  throw new Error(lastError?.message || "All RPC endpoints failed");
+}
+
+async function tryDexEndpoints(path: string) {
+  let lastError: Error | null = null;
+  for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
+    const idx = (currentDexIdx + i) % DEXSCREENER_ENDPOINTS.length;
+    const endpoint = DEXSCREENER_ENDPOINTS[idx];
+    const url = `${endpoint}${path}`;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      const resp = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!resp.ok) {
+        if (resp.status === 429) continue;
+        const t = await resp.text().catch(() => "");
+        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+      }
+      const data = await resp.json();
+      currentDexIdx = idx;
+      return data;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      if (i < DEXSCREENER_ENDPOINTS.length - 1)
+        await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+  throw new Error(lastError?.message || "All DexScreener endpoints failed");
+}
+
+async function fetchDexData(path: string) {
+  const now = Date.now();
+  const cached = DEX_CACHE.get(path);
+  if (cached && cached.expiresAt > now) {
+    const hasPriceChangeData =
+      Array.isArray(cached.data?.pairs) &&
+      cached.data.pairs.some(
+        (p: any) =>
+          p?.priceChange &&
+          (typeof p.priceChange.h24 === "number" ||
+            typeof p.priceChange.h6 === "number" ||
+            typeof p.priceChange.h1 === "number" ||
+            typeof p.priceChange.m5 === "number"),
+      );
+    if (hasPriceChangeData) {
+      return cached.data;
+    }
+  }
+  const existing = DEX_INFLIGHT.get(path);
+  if (existing) return existing;
+  const request = (async () => {
+    try {
+      const data = await tryDexEndpoints(path);
+      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
+      return data;
+    } finally {
+      DEX_INFLIGHT.delete(path);
+    }
+  })();
+  DEX_INFLIGHT.set(path, request);
+  return request;
 }
 
 export default {
@@ -47,7 +197,6 @@ export default {
     const url = new URL(req.url);
     const { pathname, searchParams } = url;
 
-    // CORS for browser fetch; restrict to same origin by default
     const corsHeaders = {
       "Access-Control-Allow-Origin": req.headers.get("Origin") ?? "*",
       "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
@@ -58,418 +207,68 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Healthcheck
-    if (pathname === "/" || pathname === "/api/health") {
-      return json({ ok: true, ts: Date.now() }, { headers: corsHeaders });
-    }
-
-    // Locks API (Cloudflare D1)
-    if (pathname === "/api/locks") {
-      await ensureSchema(env.DB);
-      if (req.method === "GET") {
-        const wallet = searchParams.get("wallet") || undefined;
-        const token_mint = searchParams.get("token_mint") || undefined;
-        const status = (searchParams.get("status") as any) || undefined;
-        const locks = await listLocks(env.DB, { wallet, token_mint, status });
-        return json({ locks }, { headers: corsHeaders });
-      }
-      if (req.method === "POST") {
-        const body = await parseJSON(req);
-        if (!body || typeof body !== "object")
-          return json(
-            { error: "Invalid body" },
-            { status: 400, headers: corsHeaders },
-          );
-        try {
-          const lock = await createLock(env.DB, {
-            id: body.id,
-            wallet: String(body.wallet),
-            token_mint: String(body.tokenMint || body.token_mint),
-            amount_total: String(body.amount || body.amount_total),
-            decimals:
-              typeof body.decimals === "number" ? body.decimals : undefined,
-            tx_signature: body.txSignature || body.tx_signature,
-            network: body.network || "solana",
-            note: body.note,
-          });
-          return json(lock, { status: 201, headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to create lock" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
+    // Health check
+    if (
+      pathname === "/" ||
+      pathname === "/api/health" ||
+      pathname === "/api/ping"
+    ) {
       return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
+        { status: "ok", timestamp: new Date().toISOString() },
+        { headers: corsHeaders },
       );
     }
 
-    const lockMatch = pathname.match(
-      /^\/api\/locks\/([^\/]+)(?:\/(events|withdraw))?$/,
-    );
-    if (lockMatch) {
-      await ensureSchema(env.DB);
-      const lockId = decodeURIComponent(lockMatch[1]);
-      const action = lockMatch[2];
-      if (!action && req.method === "GET") {
-        try {
-          const lock = await getLock(env.DB, lockId);
-          return json(lock, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: "Not found" },
-            { status: 404, headers: corsHeaders },
-          );
-        }
-      }
-      if (action === "events" && req.method === "GET") {
-        const events = await listEvents(env.DB, lockId);
-        return json({ events }, { headers: corsHeaders });
-      }
-      if (action === "withdraw" && req.method === "POST") {
-        const body = await parseJSON(req);
-        if (!body || typeof body !== "object")
-          return json(
-            { error: "Invalid body" },
-            { status: 400, headers: corsHeaders },
-          );
-        try {
-          const updated = await withdrawFromLock(env.DB, lockId, {
-            amount: String(body.amount),
-            tx_signature: body.txSignature || body.tx_signature,
-            note: body.note,
-          });
-          return json(updated, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to withdraw" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-      return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
-      );
-    }
-
-    // WebSocket upgrade: /ws/:roomId
-    const wsMatch = pathname.match(/^\/ws\/(.+)$/);
-    if (req.method === "GET" && wsMatch) {
-      const roomId = decodeURIComponent(wsMatch[1]);
-      const stub = getRoomStub(env, roomId);
-      return stub.fetch(
-        new Request(`https://do/ws?${searchParams.toString()}`, req),
-      );
-    }
-
-    // P2P Orders API (using D1)
-    if (pathname === "/api/p2p/orders") {
-      await ensureP2PSchema(env.DB);
-      if (req.method === "GET") {
-        try {
-          const type = searchParams.get("type") as any;
-          const status = searchParams.get("status") as any;
-          const token = searchParams.get("token") as any;
-          const online =
-            searchParams.get("online") === "true" ? true : undefined;
-
-          const orders = await listP2POrders(env.DB, {
-            type,
-            status,
-            token,
-            online,
-          });
-          return json({ orders }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to list orders" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-      if (req.method === "POST") {
-        try {
-          const body = await parseJSON(req);
-          if (!body || typeof body !== "object")
-            return json(
-              { error: "Invalid body" },
-              { status: 400, headers: corsHeaders },
-            );
-
-          const order = await createP2POrder(env.DB, {
-            type: body.type,
-            creator_wallet: body.creator_wallet,
-            token: body.token,
-            token_amount: String(body.token_amount),
-            pkr_amount: Number(body.pkr_amount),
-            payment_method: body.payment_method,
-            status: "active",
-            online: Boolean(body.online),
-            account_name: body.account_name,
-            account_number: body.account_number,
-            wallet_address: body.wallet_address,
-          });
-          return json(order, { status: 201, headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to create order" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-      return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
-      );
-    }
-
-    // Single P2P Order routes
-    const p2pOrderMatch = pathname.match(/^\/api\/p2p\/orders\/([^/]+)$/);
-    if (p2pOrderMatch) {
-      await ensureP2PSchema(env.DB);
-      const orderId = decodeURIComponent(p2pOrderMatch[1]);
-
-      if (req.method === "GET") {
-        try {
-          const order = await getP2POrder(env.DB, orderId);
-          return json({ order }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: "Order not found" },
-            { status: 404, headers: corsHeaders },
-          );
-        }
-      }
-      if (req.method === "PUT") {
-        try {
-          const body = await parseJSON(req);
-          const order = await updateP2POrder(env.DB, orderId, body || {});
-          return json({ order }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to update order" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-      if (req.method === "DELETE") {
-        try {
-          await deleteP2POrder(env.DB, orderId);
-          return json({ ok: true }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: "Order not found" },
-            { status: 404, headers: corsHeaders },
-          );
-        }
-      }
-      return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
-      );
-    }
-
-    // Trade Rooms API
-    if (pathname === "/api/p2p/rooms") {
-      await ensureP2PSchema(env.DB);
-      if (req.method === "GET") {
-        try {
-          const wallet = searchParams.get("wallet");
-          const rooms = await listTradeRooms(env.DB, wallet || undefined);
-          return json({ rooms }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to list rooms" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-      if (req.method === "POST") {
-        try {
-          const body = await parseJSON(req);
-          const room = await createTradeRoom(env.DB, {
-            buyer_wallet: body.buyer_wallet,
-            seller_wallet: body.seller_wallet,
-            order_id: body.order_id,
-            status: "pending",
-          });
-          return json({ room }, { status: 201, headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to create room" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-      return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
-      );
-    }
-
-    // Single Trade Room routes
-    const roomMatch = pathname.match(
-      /^\/api\/p2p\/rooms\/([^/]+)(?:\/(messages|status))?$/,
-    );
-    if (roomMatch) {
-      await ensureP2PSchema(env.DB);
-      const roomId = decodeURIComponent(roomMatch[1]);
-      const action = roomMatch[2];
-
-      if (!action && req.method === "GET") {
-        try {
-          const room = await getTradeRoom(env.DB, roomId);
-          return json({ room }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: "Room not found" },
-            { status: 404, headers: corsHeaders },
-          );
-        }
-      }
-
-      if (!action && req.method === "PUT") {
-        try {
-          const body = await parseJSON(req);
-          const room = await updateTradeRoom(env.DB, roomId, body.status);
-          return json({ room }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to update room" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-
-      if (action === "messages" && req.method === "GET") {
-        try {
-          const messages = await listTradeMessages(env.DB, roomId);
-          return json({ messages }, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to list messages" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-
-      if (action === "messages" && req.method === "POST") {
-        try {
-          const body = await parseJSON(req);
-          const message = await addTradeMessage(env.DB, {
-            room_id: roomId,
-            sender_wallet: body.sender_wallet,
-            message: body.message,
-            attachment_url: body.attachment_url,
-          });
-          return json({ message }, { status: 201, headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            { error: e?.message || "Failed to add message" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-      }
-
-      return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
-      );
-    }
-
-    // Legacy Orders collection (Durable Objects - for backwards compatibility)
-    if (pathname === "/api/orders") {
-      if (req.method === "GET") {
-        const roomId = searchParams.get("roomId") ?? "global";
-        const stub = getRoomStub(env, roomId);
-        return stub.fetch(new Request("https://do/orders", req));
-      }
-      if (req.method === "POST") {
-        await requireAdmin(req, env);
-        const body = await parseJSON(req);
-        if (!body || typeof body !== "object")
-          return json({ error: "Invalid body" }, { status: 400 });
-        const roomId = String(body.roomId || "global");
-        const stub = getRoomStub(env, roomId);
-        return stub.fetch(
-          new Request("https://do/orders", {
-            method: "POST",
-            headers: req.headers,
-            body: JSON.stringify(body),
-          }),
+    // Wallet balance: /api/wallet/balance?publicKey=...
+    if (pathname === "/api/wallet/balance" && req.method === "GET") {
+      const pk =
+        searchParams.get("publicKey") ||
+        searchParams.get("wallet") ||
+        searchParams.get("address") ||
+        "";
+      if (!pk) {
+        return json(
+          { error: "Missing 'publicKey' parameter" },
+          { status: 400, headers: corsHeaders },
         );
       }
-      return json({ error: "Method not allowed" }, { status: 405 });
-    }
 
-    // Legacy Order item routes
-    const orderIdMatch = pathname.match(/^\/api\/orders\/([^/]+)$/);
-    if (orderIdMatch) {
-      const id = decodeURIComponent(orderIdMatch[1]);
-      if (req.method === "GET") {
-        const roomId = searchParams.get("roomId") ?? "global";
-        const stub = getRoomStub(env, roomId);
-        return stub.fetch(new Request(`https://do/orders/${id}`, req));
-      }
-      if (req.method === "PUT") {
-        await requireAdmin(req, env);
-        const roomId = searchParams.get("roomId") ?? "global";
-        const stub = getRoomStub(env, roomId);
-        const body = await parseJSON(req);
-        return stub.fetch(
-          new Request(`https://do/orders/${id}`, {
-            method: "PUT",
-            headers: req.headers,
-            body: JSON.stringify(body || {}),
-          }),
+      try {
+        const rpc = await callRpc("getBalance", [pk], Date.now());
+        const j = JSON.parse(String(rpc?.body || "{}"));
+        const lamports =
+          typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
+        if (typeof lamports === "number" && isFinite(lamports)) {
+          const balance = lamports / 1_000_000_000;
+          return json(
+            {
+              publicKey: pk,
+              balance,
+              balanceLamports: lamports,
+            },
+            { headers: corsHeaders },
+          );
+        }
+        return json(
+          { error: "Invalid RPC response" },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to fetch balance",
+            details: e instanceof Error ? e.message : String(e),
+          },
+          { status: 502, headers: corsHeaders },
         );
       }
-      if (req.method === "DELETE") {
-        await requireAdmin(req, env);
-        const roomId = searchParams.get("roomId") ?? "global";
-        const stub = getRoomStub(env, roomId);
-        return stub.fetch(
-          new Request(`https://do/orders/${id}`, {
-            method: "DELETE",
-            headers: req.headers,
-          }),
-        );
-      }
-      return json({ error: "Method not allowed" }, { status: 405 });
     }
 
-    // Room-scoped REST helpers proxied to DO
-    const roomMatch = pathname.match(/^\/api\/rooms\/(.+)/);
-    if (roomMatch) {
-      const roomId = decodeURIComponent(roomMatch[1]);
-      const stub = getRoomStub(env, roomId);
-      return stub.fetch(new Request("https://do" + pathname, req));
-    }
-
-    // Exchange Rate API
-    if (pathname === "/api/exchange-rate" && req.method === "GET") {
-      const token = searchParams.get("token") || "USDC";
-
-      // Mock exchange rates - replace with actual API calls
-      const rates: Record<string, number> = {
-        FIXERCOIN: 0.0003,
-        SOL: 6000,
-        USDC: 280,
-        USDT: 280,
-        LOCKER: 0.5,
-      };
-
-      const rate = rates[token] || rates["USDC"];
-      return json({ token, rate }, { headers: corsHeaders });
-    }
-
-    // Create Payment Intent (Razorpay)
-    if (pathname === "/api/payments/create-intent" && req.method === "POST") {
+    // Solana RPC
+    if (pathname === "/api/solana-rpc" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
+
         if (!body || typeof body !== "object") {
           return json(
             { error: "Invalid request body" },
@@ -477,258 +276,1025 @@ export default {
           );
         }
 
-        const { walletAddress, amount, currency, tokenType, email, contact } =
-          body as any;
+        const methodName = body?.method;
+        const params = body?.params ?? [];
+        const id = body?.id ?? Date.now();
 
-        if (!walletAddress || !amount || !currency || !tokenType) {
+        if (!methodName || typeof methodName !== "string") {
           return json(
-            { error: "Missing required fields" },
+            { error: "Missing RPC method" },
             { status: 400, headers: corsHeaders },
           );
         }
 
-        // Create Razorpay order
-        const auth = btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
-        const orderResponse = await fetch(
-          "https://api.razorpay.com/v1/orders",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Basic ${auth}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              amount: amount, // in paise
-              currency: currency,
-              receipt: `order_${walletAddress}_${Date.now()}`,
-              notes: {
-                walletAddress,
-                tokenType,
+        const payload = {
+          jsonrpc: "2.0",
+          id,
+          method: methodName,
+          params,
+        };
+
+        let lastError: Error | null = null;
+
+        for (const endpoint of RPC_ENDPOINTS) {
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
               },
-            }),
-          },
-        );
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
 
-        if (!orderResponse.ok) {
-          throw new Error(`Razorpay API error: ${orderResponse.statusText}`);
-        }
+            if (!resp.ok) {
+              if ([429, 502, 503].includes(resp.status)) continue;
+              const t = await resp.text().catch(() => "");
+              throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+            }
 
-        const orderData = (await orderResponse.json()) as any;
-
-        return json(
-          {
-            orderId: orderData.id,
-            key: env.RAZORPAY_KEY_ID,
-            amount: orderData.amount,
-            currency: orderData.currency,
-            notes: orderData.notes,
-          },
-          { status: 201, headers: corsHeaders },
-        );
-      } catch (error: any) {
-        console.error("Payment creation error:", error);
-        return json(
-          { error: error?.message || "Failed to create payment intent" },
-          { status: 500, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Razorpay Webhook Handler
-    if (pathname === "/api/webhooks/payment" && req.method === "POST") {
-      try {
-        const body = await req.text();
-        const signature = req.headers.get("x-razorpay-signature");
-
-        if (!signature) {
-          return json(
-            { error: "Missing signature" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        // Verify Razorpay signature using Web Crypto API
-        const encoder = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-          "raw",
-          encoder.encode(env.RAZORPAY_KEY_SECRET),
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["sign"],
-        );
-
-        const signatureBuffer = await crypto.subtle.sign(
-          "HMAC",
-          key,
-          encoder.encode(body),
-        );
-
-        const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-
-        if (signature !== expectedSignature) {
-          console.error("Signature mismatch");
-          return json(
-            { error: "Invalid signature" },
-            { status: 401, headers: corsHeaders },
-          );
-        }
-
-        const payload = JSON.parse(body) as any;
-        const event = payload.event;
-
-        if (event === "payment.authorized" || event === "payment.captured") {
-          const paymentData = payload.payload?.payment?.entity;
-          if (!paymentData) {
-            return json({ ok: true }, { headers: corsHeaders });
-          }
-
-          const walletAddress = paymentData.notes?.walletAddress;
-          const tokenType = paymentData.notes?.tokenType;
-          const amount = paymentData.amount / 100; // Convert from paise to rupees
-
-          if (walletAddress && tokenType) {
-            // Calculate token amount based on exchange rate
-            const rates: Record<string, number> = {
-              FIXERCOIN: 0.0003,
-              SOL: 6000,
-              USDC: 280,
-              USDT: 280,
-              LOCKER: 0.5,
-            };
-
-            const rate = rates[tokenType] || rates["USDC"];
-            const tokenAmount = amount / rate;
-
-            // Store payment record in KV
-            const paymentId = paymentData.id;
-            await env.WALLET_KV.put(
-              `payment_${paymentId}`,
-              JSON.stringify({
-                walletAddress,
-                tokenType,
-                amount,
-                tokenAmount,
-                status: "completed",
-                timestamp: Date.now(),
-              }),
-              { expirationTtl: 86400 * 30 }, // 30 days
-            );
-
-            // Credit wallet
-            const balanceKey = `wallet_${walletAddress}_${tokenType}`;
-            const oldBalanceStr = await env.WALLET_KV.get(balanceKey);
-            const oldBalance = parseFloat(oldBalanceStr || "0");
-            const newBalance = oldBalance + tokenAmount;
-
-            await env.WALLET_KV.put(
-              balanceKey,
-              newBalance.toString(),
-              { expirationTtl: 31536000 }, // 1 year
-            );
+            const data = await resp.text();
+            return new Response(data, {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+                ...corsHeaders,
+              },
+            });
+          } catch (e) {
+            lastError = e instanceof Error ? e : new Error(String(e));
           }
         }
 
-        return json({ ok: true }, { headers: corsHeaders });
-      } catch (error: any) {
-        console.error("Webhook error:", error);
         return json(
-          { error: error?.message || "Webhook processing failed" },
-          { status: 500, headers: corsHeaders },
+          { error: "All RPC endpoints failed", details: lastError?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to execute RPC call", details: e?.message },
+          { status: 502, headers: corsHeaders },
         );
       }
     }
 
-    // Get Wallet Balance
-    if (pathname === "/api/wallet/balance" && req.method === "GET") {
-      try {
-        // Accept multiple query parameter names for compatibility with different frontends
-        const walletAddress =
-          searchParams.get("wallet") ||
-          searchParams.get("publicKey") ||
-          searchParams.get("public_key") ||
-          searchParams.get("address") ||
-          searchParams.get("walletAddress") ||
-          undefined;
-
-        if (!walletAddress) {
-          return json(
-            { error: "Wallet address required" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const balances: Record<string, number> = {};
-        const tokens = ["FIXERCOIN", "SOL", "USDC", "USDT", "LOCKER"];
-
-        for (const token of tokens) {
-          const balanceStr = await env.WALLET_KV.get(
-            `wallet_${walletAddress}_${token}`,
-          );
-          balances[token] = parseFloat(balanceStr || "0");
-        }
-
-        return json({ walletAddress, balances }, { headers: corsHeaders });
-      } catch (error: any) {
-        return json(
-          { error: error?.message || "Failed to fetch balance" },
-          { status: 500, headers: corsHeaders },
-        );
-      }
+    // Exchange Rate API
+    if (pathname === "/api/exchange-rate" && req.method === "GET") {
+      const token = searchParams.get("token") || "USDC";
+      const rates: Record<string, number> = {
+        FIXERCOIN: 0.0003,
+        SOL: 6000,
+        USDC: 280,
+        USDT: 280,
+        LOCKER: 0.5,
+      };
+      const rate = rates[token] || rates["USDC"];
+      return json({ token, rate }, { headers: corsHeaders });
     }
 
-    // Manual Wallet Credit (admin only)
-    if (pathname === "/api/wallet/credit" && req.method === "POST") {
+    // DexScreener token price proxy: /api/dexscreener/price?token=...
+    if (pathname === "/api/dexscreener/price" && req.method === "GET") {
+      const token = url.searchParams.get("token") || "";
+
+      if (!token) {
+        return json(
+          { error: "Missing 'token' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
       try {
-        const authHeader = req.headers.get("authorization");
-        if (authHeader !== `Bearer ${env.ADMIN_TOKEN}`) {
-          return json(
-            { error: "Unauthorized" },
-            { status: 401, headers: corsHeaders },
-          );
-        }
+        const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${token}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        const body = await parseJSON(req);
-        const { walletAddress, tokenType, amount } = body as any;
-
-        if (!walletAddress || !tokenType || !amount) {
-          return json(
-            { error: "Missing required fields" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const balanceKey = `wallet_${walletAddress}_${tokenType}`;
-        const oldBalanceStr = await env.WALLET_KV.get(balanceKey);
-        const oldBalance = parseFloat(oldBalanceStr || "0");
-        const newBalance = oldBalance + parseFloat(amount);
-
-        await env.WALLET_KV.put(balanceKey, newBalance.toString(), {
-          expirationTtl: 31536000,
+        const resp = await fetch(dexUrl, {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
         });
 
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `DexScreener API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch DexScreener price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexScreener: tokens
+    if (pathname === "/api/dexscreener/tokens" && req.method === "GET") {
+      const mints = searchParams.get("mints");
+      if (!mints) {
+        return json(
+          { error: "Missing 'mints' query parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      const rawMints = String(mints)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const uniqSorted = Array.from(new Set(rawMints)).sort();
+      if (uniqSorted.length === 0) {
+        return json(
+          { error: "No valid token mints provided" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      try {
+        const data = await fetchDexData(`/tokens/${uniqSorted.join(",")}`);
+        const pairs = Array.isArray(data?.pairs)
+          ? data.pairs.filter((p: any) => p?.chainId === "solana")
+          : [];
         return json(
           {
-            status: "credited",
-            walletAddress,
-            tokenType,
-            oldBalance,
-            newBalance,
-            amount,
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs,
           },
           { headers: corsHeaders },
         );
-      } catch (error: any) {
+      } catch (e: any) {
         return json(
-          { error: error?.message || "Failed to credit wallet" },
-          { status: 500, headers: corsHeaders },
+          { error: "Failed to fetch DexScreener data", details: e?.message },
+          { status: 502, headers: corsHeaders },
         );
       }
     }
 
-    return json({ error: "Not found" }, { status: 404, headers: corsHeaders });
+    // DexScreener: search
+    if (pathname === "/api/dexscreener/search" && req.method === "GET") {
+      const q = searchParams.get("q");
+      if (!q) {
+        return json(
+          { error: "Missing 'q' query parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      try {
+        const data = await fetchDexData(`/search/?q=${encodeURIComponent(q)}`);
+        const pairs = Array.isArray(data?.pairs)
+          ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20)
+          : [];
+        return json(
+          {
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs,
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch DexScreener data", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexScreener: trending
+    if (pathname === "/api/dexscreener/trending" && req.method === "GET") {
+      try {
+        const data = await fetchDexData(`/pairs/solana`);
+        const pairs = Array.isArray(data?.pairs)
+          ? data.pairs
+              .filter(
+                (p: any) =>
+                  (p?.volume?.h24 || 0) > 1000 &&
+                  (p?.liquidity?.usd || 0) > 10000,
+              )
+              .sort(
+                (a: any, b: any) =>
+                  (b?.volume?.h24 || 0) - (a?.volume?.h24 || 0),
+              )
+              .slice(0, 50)
+          : [];
+        return json(
+          {
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs,
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch DexScreener data", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexTools price proxy (fallback): /api/dextools/price?tokenAddress=...&chainId=solana
+    if (pathname === "/api/dextools/price" && req.method === "GET") {
+      const tokenAddress = url.searchParams.get("tokenAddress") || "";
+      const chainId = url.searchParams.get("chainId") || "solana";
+
+      if (!tokenAddress) {
+        return json(
+          { error: "Missing 'tokenAddress' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const dexUrl = `https://api.dextools.io/v1/token/${chainId}/${tokenAddress}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(dexUrl, {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `DexTools API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data.data || data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch DexTools price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // SOL price proxy: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      try {
+        const SOL_MINT = "So11111111111111111111111111111111111111112";
+        const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${SOL_MINT}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(dexUrl, {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `DexScreener API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        const pair = data.pairs?.[0];
+        const priceData = {
+          price: parseFloat(pair?.priceUsd || "0"),
+          priceChange24h: parseFloat(pair?.priceChange?.h24 || "0"),
+          volume24h: parseFloat(pair?.volume?.h24 || "0"),
+          marketCap: pair?.marketCap || 0,
+        };
+
+        return json(priceData, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch SOL price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun swap quote: /api/swap/quote?mint=...
+    if (pathname === "/api/swap/quote" && req.method === "GET") {
+      const mint = url.searchParams.get("mint") || "";
+
+      if (!mint) {
+        return json(
+          { error: "Missing 'mint' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(
+          `https://pumpportal.fun/api/quote?mint=${encodeURIComponent(mint)}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Pump.fun API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch swap quote", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun swap execution: /api/swap/execute (POST)
+    if (pathname === "/api/swap/execute" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body as any;
+
+        if (!mint || !amount) {
+          return json(
+            { error: "Missing required fields: mint, amount" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const swapPayload = {
+          mint,
+          amount: String(amount),
+          decimals: decimals || 6,
+          slippage: slippage || 10,
+          txVersion: txVersion || "V0",
+          priorityFee: priorityFee || 0.0005,
+          wallet: wallet,
+        };
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          return json(
+            {
+              error: `Pump.fun API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to execute swap",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter swap quote: /api/swap/jupiter/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/swap/jupiter/quote" && req.method === "GET") {
+      const inputMint = url.searchParams.get("inputMint") || "";
+      const outputMint = url.searchParams.get("outputMint") || "";
+      const amount = url.searchParams.get("amount") || "";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const jupiterUrl = new URL("https://quote-api.jup.ag/v6/quote");
+        jupiterUrl.searchParams.set("inputMint", inputMint);
+        jupiterUrl.searchParams.set("outputMint", outputMint);
+        jupiterUrl.searchParams.set("amount", amount);
+        jupiterUrl.searchParams.set("slippageBps", "500");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(jupiterUrl.toString(), {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Jupiter API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch Jupiter swap quote",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter price: /api/jupiter/price?ids=...
+    if (pathname === "/api/jupiter/price" && req.method === "GET") {
+      const ids = searchParams.get("ids") || "";
+      if (!ids) {
+        return json(
+          { error: "Missing 'ids' query parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      try {
+        const url_str = `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url_str, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return json(
+            { error: "Jupiter API error" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch Jupiter prices",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter quote: /api/jupiter/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/jupiter/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+      const slippageBps = searchParams.get("slippageBps") || "50";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const url_str = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(url_str, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return json(
+            { error: "Jupiter API error" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch Jupiter quote",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter swap: /api/jupiter/swap (POST)
+    if (pathname === "/api/jupiter/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return json(
+            { error: "Jupiter swap failed" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to execute Jupiter swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter tokens: /api/jupiter/tokens?type=strict|all
+    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
+      const type = searchParams.get("type") || "strict";
+      try {
+        const url_str = `https://token.jup.ag/${type}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url_str, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return json(
+            { error: "Jupiter tokens API error" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch Jupiter tokens",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // CoinMarketCap quotes: /api/coinmarketcap/quotes?symbols=...
+    if (pathname === "/api/coinmarketcap/quotes" && req.method === "GET") {
+      const symbols = searchParams.get("symbols") || "";
+
+      if (!symbols) {
+        return json(
+          { error: "Missing 'symbols' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const url_str = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbols)}&convert=USD`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(url_str, {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          return json(
+            { error: "CoinMarketCap API error" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch CoinMarketCap prices",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pumpfun quote: /api/pumpfun/quote (POST or GET)
+    if (pathname === "/api/pumpfun/quote") {
+      if (req.method === "POST" || req.method === "GET") {
+        let inputMint = "";
+        let outputMint = "";
+        let amount = "";
+
+        if (req.method === "POST") {
+          const body = await parseJSON(req);
+          inputMint = body?.inputMint || "";
+          outputMint = body?.outputMint || "";
+          amount = body?.amount || "";
+        } else {
+          inputMint = searchParams.get("inputMint") || "";
+          outputMint = searchParams.get("outputMint") || "";
+          amount = searchParams.get("amount") || "";
+        }
+
+        if (!inputMint || !outputMint || !amount) {
+          return json(
+            {
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        try {
+          const url_str = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            return json(
+              { error: "Pumpfun API error" },
+              { status: resp.status, headers: corsHeaders },
+            );
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e: any) {
+          return json(
+            {
+              error: "Failed to fetch Pumpfun quote",
+              details: e?.message || String(e),
+            },
+            { status: 502, headers: corsHeaders },
+          );
+        }
+      }
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
+    }
+
+    // Pumpfun swap: /api/pumpfun/swap (POST)
+    if (pathname === "/api/pumpfun/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return json(
+            { error: "Pumpfun swap failed" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to execute Pumpfun swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (pathname === "/api/forex/rate" && req.method === "GET") {
+      const base = (searchParams.get("base") || "USD").toUpperCase();
+      const symbols = (searchParams.get("symbols") || "PKR").toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const providers: Array<{
+        url: string;
+        parse: (j: any) => number | null;
+      }> = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const apiJson = await resp.json();
+          const rate = p.parse(apiJson);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return json(
+              {
+                base,
+                symbols: [firstSymbol],
+                rates: { [firstSymbol]: rate },
+              },
+              { headers: corsHeaders },
+            );
+          }
+          lastErr = "invalid response";
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return json(
+        {
+          error: "Failed to fetch forex rate",
+          details: lastErr,
+        },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (pathname === "/api/stable-24h" && req.method === "GET") {
+      const symbolsParam = (
+        searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
+      };
+
+      const ids = symbols
+        .map((s) => COINGECKO_IDS[s]?.id)
+        .filter(Boolean)
+        .join(",");
+      if (!ids) {
+        return json(
+          { error: "No supported symbols provided" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      const url_str = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd&include_24hr_change=true`;
+      let result: Record<
+        string,
+        { priceUsd: number; change24h: number; mint: string }
+      > = {};
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        const resp = await fetch(url_str, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        clearTimeout(timeout);
+        if (resp.ok) {
+          const apiJson = await resp.json();
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            const d = apiJson?.[meta.id];
+            const price = typeof d?.usd === "number" ? d.usd : 1;
+            const change =
+              typeof d?.usd_24h_change === "number" ? d.usd_24h_change : 0;
+            result[sym] = {
+              priceUsd: price,
+              change24h: change,
+              mint: meta.mint,
+            };
+          });
+        } else {
+          symbols.forEach((sym) => {
+            const meta = COINGECKO_IDS[sym];
+            if (!meta) return;
+            result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+          });
+        }
+      } catch {
+        symbols.forEach((sym) => {
+          const meta = COINGECKO_IDS[sym];
+          if (!meta) return;
+          result[sym] = { priceUsd: 1, change24h: 0, mint: meta.mint };
+        });
+      }
+
+      return json({ data: result }, { headers: corsHeaders });
+    }
+
+    // Get transaction details: /api/transaction?signature=...
+    if (pathname === "/api/transaction" && req.method === "GET") {
+      const signature = searchParams.get("signature") || "";
+
+      if (!signature) {
+        return json(
+          { error: "Missing 'signature' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const rpcUrl = "https://api.mainnet-beta.solana.com";
+        const payload = {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getTransaction",
+          params: [
+            signature,
+            { encoding: "json", maxSupportedTransactionVersion: 0 },
+          ],
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(rpcUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await resp.json();
+        return json(data, { status: resp.status, headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch transaction", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Get account information: /api/account?publicKey=...
+    if (pathname === "/api/account" && req.method === "GET") {
+      const publicKey = searchParams.get("publicKey") || "";
+
+      if (!publicKey) {
+        return json(
+          { error: "Missing 'publicKey' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const rpcUrl = "https://api.mainnet-beta.solana.com";
+        const payload = {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getAccountInfo",
+          params: [publicKey, { encoding: "jsonParsed" }],
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(rpcUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await resp.json();
+        return json(data, { status: resp.status, headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch account", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // 404 for unknown routes
+    return json(
+      { error: "API endpoint not found", path: pathname },
+      { status: 404, headers: corsHeaders },
+    );
   },
 };
-
-export { DurableRoom };

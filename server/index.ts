@@ -9,6 +9,10 @@ import {
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
 import {
+  handleCoinMarketCapQuotes,
+  handleCoinMarketCapSearch,
+} from "./routes/coinmarketcap-proxy";
+import {
   handleJupiterPrice,
   handleJupiterQuote,
   handleJupiterSwap,
@@ -49,6 +53,10 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
   app.get("/api/dexscreener/search", handleDexscreenerSearch);
   app.get("/api/dexscreener/trending", handleDexscreenerTrending);
+
+  // CoinMarketCap routes
+  app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);
+  app.get("/api/coinmarketcap/search", handleCoinMarketCapSearch);
 
   // DexTools routes
   app.get("/api/dextools/price", handleDexToolsPrice);

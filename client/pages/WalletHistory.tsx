@@ -1,0 +1,216 @@
+import React, { useEffect, useState } from "react";
+import { useWallet } from "@/contexts/WalletContext";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+const BASE_SOLSCAN_TX = (sig: string) => `https://solscan.io/tx/${sig}`;
+
+function findSignaturesInObject(obj: any): string[] {
+  const results: string[] = [];
+  const base58Regex = /^[A-HJ-NP-Za-km-z1-9]{40,90}$/;
+
+  function recurse(value: any) {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach(recurse);
+      return;
+    }
+    if (typeof value === "object") {
+      Object.entries(value).forEach(([k, v]) => {
+        const key = k.toLowerCase();
+        if (typeof v === "string") {
+          const str = v.trim();
+          if (
+            key.includes("signature") ||
+            key.includes("tx") ||
+            key.includes("transaction") ||
+            key.includes("txid") ||
+            base58Regex.test(str)
+          ) {
+            if (!results.includes(str) && base58Regex.test(str))
+              results.push(str);
+            // also accept short-ish signatures if key signals transaction
+            else if (
+              !results.includes(str) &&
+              (key.includes("signature") ||
+                key.includes("tx") ||
+                key.includes("transaction") ||
+                key.includes("txid"))
+            )
+              results.push(str);
+          }
+        } else {
+          recurse(v);
+        }
+      });
+    }
+  }
+
+  recurse(obj);
+  return results;
+}
+
+export default function WalletHistory() {
+  const { wallet } = useWallet();
+  const navigate = useNavigate();
+  const [locks, setLocks] = useState<any[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<any[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    try {
+      const raw =
+        localStorage.getItem(`spl_token_locks_${wallet.publicKey}`) || "[]";
+      const parsed = JSON.parse(raw);
+      setLocks(Array.isArray(parsed) ? parsed : []);
+    } catch (e) {
+      setLocks([]);
+    }
+
+    try {
+      const rawC = localStorage.getItem("orders_completed") || "[]";
+      setCompletedOrders(JSON.parse(rawC));
+    } catch (e) {
+      setCompletedOrders([]);
+    }
+
+    try {
+      const rawP = localStorage.getItem("orders_pending") || "[]";
+      setPendingOrders(JSON.parse(rawP));
+    } catch (e) {
+      setPendingOrders([]);
+    }
+  }, [wallet?.publicKey]);
+
+  return (
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+          <div className="flex items-center gap-3 mb-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl font-semibold">History</h1>
+          </div>
+
+          <section className="mb-6">
+            <h2 className="text-lg font-medium mb-2">Transactions</h2>
+
+            {/* Combine completed + pending into a single list and filter for Buy/Sell/Send/Receive */}
+            {(() => {
+              const all = [
+                ...(completedOrders || []).map((o: any) => ({
+                  ...o,
+                  __status: "completed",
+                })),
+                ...(pendingOrders || []).map((o: any) => ({
+                  ...o,
+                  __status: "pending",
+                })),
+              ];
+
+              const txs = all.filter((item: any) => {
+                const s = JSON.stringify(item).toLowerCase();
+                return /\b(buy|sell|send|receive|received|sent)\b/.test(s);
+              });
+
+              if (txs.length === 0) {
+                return (
+                  <div className="text-sm text-gray-600">
+                    No transactions found.
+                  </div>
+                );
+              }
+
+              return (
+                <ul className="space-y-3">
+                  {txs.map((t: any, idx: number) => {
+                    const sigs = findSignaturesInObject(t);
+                    // infer type
+                    const text = (
+                      t.type ||
+                      t.description ||
+                      JSON.stringify(t) ||
+                      ""
+                    )
+                      .toString()
+                      .toLowerCase();
+                    let kind = "TX";
+                    if (/buy/.test(text)) kind = "BUY";
+                    else if (/sell/.test(text)) kind = "SELL";
+                    else if (/receive|received/.test(text)) kind = "RECEIVE";
+                    else if (/send|sent/.test(text)) kind = "SEND";
+
+                    const when =
+                      t.createdAt ||
+                      t.timestamp ||
+                      t.time ||
+                      t.date ||
+                      t.txTime;
+                    const whenStr = when ? new Date(when).toLocaleString() : "";
+
+                    return (
+                      <li
+                        key={t.id || t.txid || idx}
+                        className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-gray-900 uppercase">
+                                {kind}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {t.__status}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {t.description
+                                ? t.description
+                                : JSON.stringify(t)}
+                            </div>
+                            {whenStr ? (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {whenStr}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            {sigs.map((s: string) => (
+                              <a
+                                key={s}
+                                href={BASE_SOLSCAN_TX(s)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-600 hover:underline flex items-center gap-1 text-sm"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                <span className="sr-only">
+                                  Open transaction
+                                </span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              );
+            })()}
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

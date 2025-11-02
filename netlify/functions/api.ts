@@ -1005,6 +1005,14 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Health check: /api/ping
+    if (path === "/ping" && method === "GET") {
+      return jsonResponse(200, {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
     if (path === "/wallet/balance" && method === "GET") {
       const pk = (
@@ -1034,6 +1042,279 @@ export const handler = async (event: any) => {
         return jsonResponse(502, {
           error: "Failed to fetch balance",
           details: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
+    // Jupiter price: /api/jupiter/price?ids=...
+    if (path === "/jupiter/price" && method === "GET") {
+      const ids = event.queryStringParameters?.ids || "";
+      if (!ids) {
+        return jsonResponse(400, { error: "Missing 'ids' query parameter" });
+      }
+      try {
+        const url = `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Jupiter API error" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch Jupiter prices",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Jupiter quote: /api/jupiter/quote?inputMint=...&outputMint=...&amount=...
+    if (path === "/jupiter/quote" && method === "GET") {
+      const inputMint = event.queryStringParameters?.inputMint || "";
+      const outputMint = event.queryStringParameters?.outputMint || "";
+      const amount = event.queryStringParameters?.amount || "";
+      const slippageBps = event.queryStringParameters?.slippageBps || "50";
+
+      if (!inputMint || !outputMint || !amount) {
+        return jsonResponse(400, {
+          error: "Missing required parameters: inputMint, outputMint, amount",
+        });
+      }
+
+      try {
+        const url = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Jupiter API error" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch Jupiter quote",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Jupiter swap: /api/jupiter/swap (POST)
+    if (path === "/jupiter/swap" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      try {
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Jupiter swap failed" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to execute Jupiter swap",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Jupiter tokens: /api/jupiter/tokens?type=strict|all
+    if (path === "/jupiter/tokens" && method === "GET") {
+      const type = event.queryStringParameters?.type || "strict";
+      try {
+        const url = `https://token.jup.ag/all?type=${encodeURIComponent(type)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, {
+            error: "Jupiter tokens API error",
+          });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch Jupiter tokens",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // DexTools price: /api/dextools/price?tokenAddress=...&chainId=solana
+    if (path === "/dextools/price" && method === "GET") {
+      const tokenAddress = event.queryStringParameters?.tokenAddress || "";
+      const chainId = event.queryStringParameters?.chainId || "solana";
+
+      if (!tokenAddress) {
+        return jsonResponse(400, { error: "Missing 'tokenAddress' parameter" });
+      }
+
+      try {
+        const url = `https://api.dextools.io/v1/token/${encodeURIComponent(chainId)}/${encodeURIComponent(tokenAddress)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.abort(),
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "DexTools API error" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data.data || data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch DexTools price",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // CoinMarketCap quotes: /api/coinmarketcap/quotes?symbols=...
+    if (path === "/coinmarketcap/quotes" && method === "GET") {
+      const symbols = event.queryStringParameters?.symbols || "";
+
+      if (!symbols) {
+        return jsonResponse(400, { error: "Missing 'symbols' parameter" });
+      }
+
+      try {
+        const cmcApiKey = process.env.COINMARKETCAP_API_KEY || "";
+        if (!cmcApiKey) {
+          return jsonResponse(500, {
+            error: "CoinMarketCap API key not configured",
+          });
+        }
+
+        const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbols)}&convert=USD`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            "X-CMC_PRO_API_KEY": cmcApiKey,
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          return jsonResponse(resp.status, {
+            error: "CoinMarketCap API error",
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch CoinMarketCap prices",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun quote: /api/pumpfun/quote (POST or GET)
+    if (path === "/pumpfun/quote") {
+      if (method === "POST" || method === "GET") {
+        let inputMint = "";
+        let outputMint = "";
+        let amount = "";
+
+        if (method === "POST") {
+          let body: any = {};
+          try {
+            body = event.body ? JSON.parse(event.body) : {};
+          } catch {}
+          inputMint = body?.inputMint || "";
+          outputMint = body?.outputMint || "";
+          amount = body?.amount || "";
+        } else {
+          inputMint = event.queryStringParameters?.inputMint || "";
+          outputMint = event.queryStringParameters?.outputMint || "";
+          amount = event.queryStringParameters?.amount || "";
+        }
+
+        if (!inputMint || !outputMint || !amount) {
+          return jsonResponse(400, {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          });
+        }
+
+        try {
+          const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(url, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            return jsonResponse(resp.status, { error: "Pumpfun API error" });
+          }
+          const data = await resp.json();
+          return jsonResponse(200, data);
+        } catch (e: any) {
+          return jsonResponse(502, {
+            error: "Failed to fetch Pumpfun quote",
+            details: e?.message || String(e),
+          });
+        }
+      }
+      return jsonResponse(405, { error: "Method not allowed" });
+    }
+
+    // Pumpfun swap: /api/pumpfun/swap (POST)
+    if (path === "/pumpfun/swap" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      if (!body || typeof body !== "object") {
+        return jsonResponse(400, { error: "Invalid request body" });
+      }
+
+      try {
+        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Pumpfun swap failed" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to execute Pumpfun swap",
+          details: e?.message || String(e),
         });
       }
     }

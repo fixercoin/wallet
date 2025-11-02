@@ -237,7 +237,7 @@ export default {
         const rpc = await callRpc("getBalance", [pk], Date.now());
         const j = JSON.parse(String(rpc?.body || "{}"));
         const lamports =
-          typeof j.result === "number" ? j.result : j?.result?.value ?? null;
+          typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
         if (typeof lamports === "number" && isFinite(lamports)) {
           const balance = lamports / 1_000_000_000;
           return json(
@@ -967,7 +967,8 @@ export default {
         if (!inputMint || !outputMint || !amount) {
           return json(
             {
-              error: "Missing required parameters: inputMint, outputMint, amount",
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -1119,7 +1120,9 @@ export default {
 
     // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
     if (pathname === "/api/stable-24h" && req.method === "GET") {
-      const symbolsParam = (searchParams.get("symbols") || "USDC,USDT").toUpperCase();
+      const symbolsParam = (
+        searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
       const symbols = Array.from(
         new Set(
           String(symbolsParam)

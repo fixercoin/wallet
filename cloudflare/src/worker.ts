@@ -877,50 +877,7 @@ export default {
       }
     }
 
-    // CoinMarketCap quotes: /api/coinmarketcap/quotes?symbols=...
-    if (pathname === "/api/coinmarketcap/quotes" && req.method === "GET") {
-      const symbols = searchParams.get("symbols") || "";
-
-      if (!symbols) {
-        return json(
-          { error: "Missing 'symbols' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const url_str = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbols)}&convert=USD`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(url_str, {
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-
-        if (!resp.ok) {
-          return json(
-            { error: "CoinMarketCap API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e: any) {
-        return json(
-          {
-            error: "Failed to fetch CoinMarketCap prices",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
+    
     // Pumpfun quote: /api/pumpfun/quote (POST or GET)
     if (pathname === "/api/pumpfun/quote") {
       if (req.method === "POST" || req.method === "GET") {

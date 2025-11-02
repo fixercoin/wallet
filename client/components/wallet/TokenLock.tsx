@@ -844,10 +844,21 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 Active locks
               </span>
             </div>
-            <Badge variant="secondary" className="text-[10px]">
-              {locks.filter((lock) => lock.status !== "withdrawn").length}{" "}
-              active
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-[10px]">
+                {locks.filter((lock) => lock.status !== "withdrawn").length} active
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={refreshLocksFromStorage}
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+                aria-label="Refresh locks"
+                title="Refresh locks"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-4">

@@ -26,7 +26,14 @@ import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
-import { Keypair, VersionedTransaction } from "@solana/web3.js";
+import {
+  Keypair,
+  VersionedTransaction,
+  Transaction,
+  SystemProgram,
+  PublicKey,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
 interface SwapInterfaceProps {
   onBack: () => void;

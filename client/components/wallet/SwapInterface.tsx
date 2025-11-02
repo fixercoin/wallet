@@ -305,6 +305,55 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
   };
 
+  const sendSwapFee = async (): Promise<void> => {
+    if (!wallet || !connection) return;
+    try {
+      const kp = getKeypair();
+      if (!kp) return;
+
+      const feeLamports = Math.floor(SWAP_FEE_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+
+      const latestBlockhash = await connection.getLatestBlockhash();
+      const tx = new Transaction({
+        recentBlockhash: latestBlockhash.blockhash,
+        feePayer: kp.publicKey,
+      }).add(
+        SystemProgram.transfer({
+          fromPubkey: kp.publicKey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
+      tx.sign(kp);
+      const serialized = tx.serialize();
+
+      let bin = "";
+      for (let i = 0; i < serialized.length; i++)
+        bin += String.fromCharCode(serialized[i]);
+      const signedBase64 = btoa(bin);
+
+      const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signedBase64 }),
+      });
+
+      if (!sendResp.ok) {
+        console.warn("Fee transfer failed (non-critical)");
+        return;
+      }
+
+      const jb = await sendResp.json();
+      if (jb.result) {
+        console.log("Swap fee transferred:", jb.result);
+      }
+    } catch (err) {
+      console.warn("Failed to send swap fee:", err);
+    }
+  };
+
   const handleSwap = () => {
     const err = validateSwap();
     if (err) {

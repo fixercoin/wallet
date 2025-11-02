@@ -182,6 +182,14 @@ export default {
       );
     }
 
+    // Disable P2P orders endpoints handled elsewhere
+    if (pathname.startsWith("/api/p2p/orders")) {
+      return json(
+        { error: "P2P orders API is disabled on this server" },
+        { status: 410, headers: corsHeaders },
+      );
+    }
+
     // Wallet balance: /api/wallet/balance?publicKey=...
     if (pathname === "/api/wallet/balance" && req.method === "GET") {
       const pk =
@@ -491,7 +499,167 @@ export default {
       }
     }
 
-    // Pump.fun swap quote: /api/swap/quote?mint=...
+    // Dedicated token price endpoint: /api/token/price
+    if (pathname === "/api/token/price" && req.method === "GET") {
+      try {
+        const tokenParam = (
+          url.searchParams.get("token") ||
+          url.searchParams.get("symbol") ||
+          "FIXERCOIN"
+        ).toUpperCase();
+        const mintParam = url.searchParams.get("mint") || "";
+
+        const TOKEN_MINTS: Record<string, string> = {
+          SOL: "So11111111111111111111111111111111111111112",
+          USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+          FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+          LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+        };
+
+        const MINT_TO_PAIR_ADDRESS_EX: Record<string, string> = {
+          H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+            "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+        };
+
+        const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+          H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+          EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+        };
+
+        const FALLBACK_USD: Record<string, number> = {
+          FIXERCOIN: 0.005,
+          SOL: 180,
+          USDC: 1.0,
+          USDT: 1.0,
+          LOCKER: 0.1,
+        };
+
+        const PKR_PER_USD = 280; // base FX
+        const MARKUP = 1.0425; // 4.25%
+
+        // Determine token symbol and mint to query
+        let token = tokenParam;
+        let mint = mintParam || TOKEN_MINTS[token] || "";
+
+        // If tokenParam looks like a mint (long base58), use it as mint and try to resolve symbol
+        if (!mint && tokenParam && tokenParam.length > 40) {
+          mint = tokenParam;
+          const inv = Object.entries(TOKEN_MINTS).find(([, m]) => m === mint);
+          if (inv) token = inv[0];
+        }
+
+        let priceUsd: number | null = null;
+        try {
+          // Stablecoins -> 1
+          if (token === "USDC" || token === "USDT") {
+            priceUsd = 1.0;
+          } else {
+            // If we have a mint, try pair lookup and token lookup via DexScreener
+            if (!mint && TOKEN_MINTS[token]) mint = TOKEN_MINTS[token];
+
+            if (mint) {
+              // Pair address lookup
+              const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
+              if (pairAddress) {
+                try {
+                  const pairData = await fetchDexData(
+                    `/pairs/solana/${pairAddress}`,
+                  );
+                  // DexScreener pair format may vary; try common fields
+                  const maybePair =
+                    pairData?.pair || pairData?.pairs?.[0] || null;
+                  if (maybePair && maybePair.priceUsd) {
+                    priceUsd = Number(maybePair.priceUsd);
+                  }
+                } catch (e) {
+                  // continue
+                }
+              }
+
+              // If not found, try tokens lookup
+              if (priceUsd === null) {
+                try {
+                  const tokenData = await fetchDexData(`/tokens/${mint}`);
+                  const searchPairs = Array.isArray(tokenData?.pairs)
+                    ? tokenData.pairs
+                    : [];
+
+                  let matchingPair = null;
+
+                  if (searchPairs.length > 0) {
+                    // prefer SOL pair
+                    matchingPair = searchPairs.find(
+                      (p: any) =>
+                        p?.baseToken?.address === mint &&
+                        p?.chainId === "solana",
+                    );
+
+                    // try quote
+                    if (!matchingPair) {
+                      matchingPair = searchPairs.find(
+                        (p: any) =>
+                          p?.quoteToken?.address === mint &&
+                          p?.chainId === "solana",
+                      );
+                    }
+
+                    // fallback to any pair that includes the mint
+                    if (!matchingPair) {
+                      matchingPair = searchPairs.find(
+                        (p: any) =>
+                          p?.baseToken?.address === mint ||
+                          p?.quoteToken?.address === mint,
+                      );
+                    }
+
+                    if (matchingPair && matchingPair.priceUsd) {
+                      priceUsd = Number(matchingPair.priceUsd);
+                    }
+                  }
+                } catch (e) {
+                  // continue
+                }
+              }
+            }
+
+            // As a last resort, try searching by symbol mapping
+            if (
+              (priceUsd === null || !isFinite(priceUsd)) &&
+              MINT_TO_SEARCH_SYMBOL[mint]
+            ) {
+              // In practice this will be handled by FALLBACK_USD below
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+          priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+        }
+
+        const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+        return json(
+          {
+            token,
+            priceUsd,
+            priceInPKR: rateInPKR,
+            rate: rateInPKR,
+            pkrPerUsd: PKR_PER_USD,
+            markup: MARKUP,
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to get token price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun swap quote: /api/swap/quote: /api/swap/quote?mint=...
     if (pathname === "/api/swap/quote" && req.method === "GET") {
       const mint = url.searchParams.get("mint") || "";
 

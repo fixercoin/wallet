@@ -809,7 +809,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="flex items-center gap-2 text-xs"
                   >
                     <Coins className="h-4 w-4" />
-                    <span>LISTING</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => navigate("/wallet/history")}

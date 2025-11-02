@@ -167,17 +167,34 @@ export default function WalletHistory() {
             <div className="text-sm text-gray-600">No pending orders.</div>
           ) : (
             <ul className="space-y-3">
-              {pendingOrders.map((o: any, idx: number) => (
-                <li key={o.id || idx} className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium text-gray-900">Order {o.id || idx}</div>
-                      <div className="text-xs text-gray-600">{o.description || JSON.stringify(o)}</div>
+              {pendingOrders.map((o: any, idx: number) => {
+                const sigs = findSignaturesInObject(o);
+                return (
+                  <li key={o.id || idx} className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-gray-900">Order {o.id || idx}</div>
+                        <div className="text-xs text-gray-600">{o.description || JSON.stringify(o)}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-gray-600">Pending</div>
+                        {sigs.map((s) => (
+                          <a
+                            key={s}
+                            href={BASE_SOLSCAN_TX(s)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                            title="Open on Solscan"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        ))}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">Pending</div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

@@ -781,8 +781,7 @@ export default {
       if (!inputMint || !outputMint || !amount) {
         return json(
           {
-            error:
-              "Missing required parameters: inputMint, outputMint, amount",
+            error: "Missing required parameters: inputMint, outputMint, amount",
           },
           { status: 400, headers: corsHeaders },
         );
@@ -842,8 +841,7 @@ export default {
         if (!inputMint || !outputMint || !amount) {
           return json(
             {
-              error:
-                "Missing required fields: inputMint, outputMint, amount",
+              error: "Missing required fields: inputMint, outputMint, amount",
             },
             { status: 400, headers: corsHeaders },
           );

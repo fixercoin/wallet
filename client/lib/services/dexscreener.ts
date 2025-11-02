@@ -110,12 +110,31 @@ class DexscreenerAPI {
   getTokenPrices(tokens: DexscreenerToken[]): Record<string, number> {
     const prices: Record<string, number> = {};
 
-    tokens.forEach((token) => {
-      const mint = token.baseToken?.address;
-      const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+    tokens.forEach((t) => {
+      const baseMint = t.baseToken?.address;
+      const quoteMint = t.quoteToken?.address;
+      const baseUsd = t.priceUsd ? parseFloat(t.priceUsd) : NaN;
+      const priceNative = t.priceNative ? parseFloat(t.priceNative) : NaN;
 
-      if (mint && price && price > 0) {
-        prices[mint] = price;
+      // Base token USD price (as reported by DexScreener)
+      if (baseMint && isFinite(baseUsd) && baseUsd > 0) {
+        prices[baseMint] = baseUsd;
+      }
+
+      // If possible, derive quote token USD price from baseUsd and priceNative
+      // priceNative is typically the base price in quote units. Therefore:
+      // quoteUsd = baseUsd / priceNative
+      if (
+        quoteMint &&
+        isFinite(baseUsd) &&
+        baseUsd > 0 &&
+        isFinite(priceNative) &&
+        priceNative > 0
+      ) {
+        const quoteUsd = baseUsd / priceNative;
+        if (quoteUsd > 0 && !prices[quoteMint]) {
+          prices[quoteMint] = quoteUsd;
+        }
       }
     });
 
@@ -177,9 +196,16 @@ class DexscreenerAPI {
 
             // Log which tokens we got
             if (fetchedTokens.length > 0) {
-              const gotMints = fetchedTokens
-                .map((t) => t.baseToken?.address)
-                .filter(Boolean);
+              const gotMints = Array.from(
+                new Set(
+                  fetchedTokens
+                    .flatMap((t) => [
+                      t.baseToken?.address,
+                      t.quoteToken?.address,
+                    ])
+                    .filter(Boolean) as string[],
+                ),
+              );
               const missingMints = toFetch.filter((m) => !gotMints.includes(m));
               console.log(
                 `[DexScreener] Got ${fetchedTokens.length} tokens, missing ${missingMints.length}:`,
@@ -295,7 +321,10 @@ class DexscreenerAPI {
       .filter((t): t is DexscreenerToken => Boolean(t));
 
     const missing = normalizedMints.filter(
-      (m) => !result.find((t) => t.baseToken?.address === m),
+      (m) =>
+        !result.find(
+          (t) => t.baseToken?.address === m || t.quoteToken?.address === m,
+        ),
     );
     console.log(
       `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"}). Missing: ${missing.join(", ")}`,

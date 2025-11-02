@@ -5,7 +5,7 @@
 Your Cloudflare Worker has been updated with complete wallet and swap functionality:
 
 ✅ **Wallet Balance Management** - Fetch balances for FIXERCOIN, SOL, USDC, USDT, LOCKER
-✅ **Token Price Feeds** - DexTools, DexScreener, CoinMarketCap integration
+✅ **Token Price Feeds** - DexScreener integration
 ✅ **Pump.fun Swaps** - Get quotes and execute token swaps
 ✅ **Jupiter Integration** - Support for Jupiter DEX swap quotes
 ✅ **RPC Forwarding** - Direct Solana RPC calls via Shyft

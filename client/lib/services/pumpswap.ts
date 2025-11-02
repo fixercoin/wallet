@@ -46,12 +46,13 @@ async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
   return await res.json().catch(() => null);
 }
 
-// Discover a PumpSwap pool by token pair. This calls Shyft DeFi API (pumpFunAmm) if available.
+// Discover a PumpSwap pool by token pair via proxy endpoint
 export async function getPoolForPair(inputMint: string, outputMint: string): Promise<PumpPoolInfo | null> {
   try {
-    // Try Shyft DeFi API: /v1/defi/pair?dex=pumpFunAmm&base=&quote=
-    const path = `/v1/defi/pair?dex=pumpFunAmm&base=${encodeURIComponent(inputMint)}&quote=${encodeURIComponent(outputMint)}`;
-    const j = await shyftFetch(path, "GET");
+    // Call proxy endpoint to get pool info
+    // The Cloudflare Worker internally handles pool discovery through Shyft
+    const path = `/pool?base=${encodeURIComponent(inputMint)}&quote=${encodeURIComponent(outputMint)}`;
+    const j = await pumpFunProxyFetch(path, "GET");
     if (!j) return null;
 
     // Shyft response shapes vary: try common fields

@@ -25,10 +25,9 @@ Netlify automatically handles both frontend and serverless functions with zero e
 
 3. **Environment Variables** (if needed)
    - Add to Netlify dashboard:
-     ```
-     COINMARKETCAP_API_KEY=your_key  # Optional
-     SOLANA_RPC=https://...           # Optional, defaults to Shyft
-     ```
+    ```
+    SOLANA_RPC=https://...           # Optional, defaults to Shyft
+    ```
 
 ### How It Works
 

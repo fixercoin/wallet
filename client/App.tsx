@@ -92,25 +92,23 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <ExpressP2PProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <CurrencyProvider>
-                <BrowserRouter>
-                  {isMobileMatch ? (
-                    <MobileShell>
-                      <AppRoutes />
-                    </MobileShell>
-                  ) : (
-                    <div className="min-h-screen">
-                      <AppRoutes />
-                    </div>
-                  )}
-                </BrowserRouter>
-              </CurrencyProvider>
-            </TooltipProvider>
-          </ExpressP2PProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <CurrencyProvider>
+              <BrowserRouter>
+                {isMobileMatch ? (
+                  <MobileShell>
+                    <AppRoutes />
+                  </MobileShell>
+                ) : (
+                  <div className="min-h-screen">
+                    <AppRoutes />
+                  </div>
+                )}
+              </BrowserRouter>
+            </CurrencyProvider>
+          </TooltipProvider>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

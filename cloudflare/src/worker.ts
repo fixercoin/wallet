@@ -24,8 +24,15 @@ export default {
     }
 
     // Health check
-    if (pathname === "/" || pathname === "/api/health" || pathname === "/api/ping") {
-      return json({ status: "ok", timestamp: new Date().toISOString() }, { headers: corsHeaders });
+    if (
+      pathname === "/" ||
+      pathname === "/api/health" ||
+      pathname === "/api/ping"
+    ) {
+      return json(
+        { status: "ok", timestamp: new Date().toISOString() },
+        { headers: corsHeaders },
+      );
     }
 
     // Exchange Rate API
@@ -450,7 +457,10 @@ export default {
           jsonrpc: "2.0",
           id: 1,
           method: "getTransaction",
-          params: [signature, { encoding: "json", maxSupportedTransactionVersion: 0 }],
+          params: [
+            signature,
+            { encoding: "json", maxSupportedTransactionVersion: 0 },
+          ],
         };
 
         const controller = new AbortController();

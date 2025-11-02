@@ -90,117 +90,67 @@ export default function WalletHistory() {
         </div>
 
         <section className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Token Locks ({locks.length})</h2>
-          {locks.length === 0 ? (
-            <div className="text-sm text-gray-600">No token lock history found.</div>
-          ) : (
-            <ul className="space-y-3">
-              {locks.map((l: any) => {
-                const sigs = findSignaturesInObject(l);
-                return (
-                  <li key={l.id || Math.random()} className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-gray-900">{l.amount} {l.symbol}</div>
-                        <div className="text-xs text-gray-600">Locked on {new Date(l.createdAt).toLocaleString()}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-gray-600">{l.status}</div>
-                        {sigs.map((s) => (
-                          <a
-                            key={s}
-                            href={BASE_SOLSCAN_TX(s)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                            title="Open on Solscan"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+          <h2 className="text-lg font-medium mb-2">Transactions</h2>
 
-        <section className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Completed Orders ({(completedOrders && completedOrders.length) || 0})</h2>
-          {(!completedOrders || completedOrders.length === 0) ? (
-            <div className="text-sm text-gray-600">No completed orders in history.</div>
-          ) : (
-            <ul className="space-y-3">
-              {completedOrders.map((o: any, idx: number) => {
-                const sigs = findSignaturesInObject(o);
-                return (
-                  <li key={o.id || idx} className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-gray-900">Order {o.id || idx}</div>
-                        <div className="text-xs text-gray-600">{o.description || JSON.stringify(o)}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-gray-600">Completed</div>
-                        {sigs.map((s) => (
-                          <a
-                            key={s}
-                            href={BASE_SOLSCAN_TX(s)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                            title="Open on Solscan"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+          {/* Combine completed + pending into a single list and filter for Buy/Sell/Send/Receive */}
+          {(() => {
+            const all = [
+              ...(completedOrders || []).map((o: any) => ({ ...o, __status: "completed" })),
+              ...(pendingOrders || []).map((o: any) => ({ ...o, __status: "pending" })),
+            ];
 
-        <section className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Pending Orders ({(pendingOrders && pendingOrders.length) || 0})</h2>
-          {(!pendingOrders || pendingOrders.length === 0) ? (
-            <div className="text-sm text-gray-600">No pending orders.</div>
-          ) : (
-            <ul className="space-y-3">
-              {pendingOrders.map((o: any, idx: number) => {
-                const sigs = findSignaturesInObject(o);
-                return (
-                  <li key={o.id || idx} className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-gray-900">Order {o.id || idx}</div>
-                        <div className="text-xs text-gray-600">{o.description || JSON.stringify(o)}</div>
+            const txs = all.filter((item: any) => {
+              const s = JSON.stringify(item).toLowerCase();
+              return /\b(buy|sell|send|receive|received|sent)\b/.test(s);
+            });
+
+            if (txs.length === 0) {
+              return <div className="text-sm text-gray-600">No transactions found.</div>;
+            }
+
+            return (
+              <ul className="space-y-3">
+                {txs.map((t: any, idx: number) => {
+                  const sigs = findSignaturesInObject(t);
+                  // infer type
+                  const text = (t.type || t.description || JSON.stringify(t) || "").toString().toLowerCase();
+                  let kind = "TX";
+                  if (/buy/.test(text)) kind = "BUY";
+                  else if (/sell/.test(text)) kind = "SELL";
+                  else if (/receive|received/.test(text)) kind = "RECEIVE";
+                  else if (/send|sent/.test(text)) kind = "SEND";
+
+                  const when = t.createdAt || t.timestamp || t.time || t.date || t.txTime;
+                  const whenStr = when ? new Date(when).toLocaleString() : "";
+
+                  return (
+                    <li key={t.id || t.txid || idx} className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-900 uppercase">{kind}</span>
+                            <span className="text-xs text-gray-500">{t.__status}</span>
+                          </div>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {t.description ? t.description : JSON.stringify(t)}
+                          </div>
+                          {whenStr ? <div className="text-xs text-gray-500 mt-1">{whenStr}</div> : null}
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          {sigs.map((s: string) => (
+                            <a key={s} href={BASE_SOLSCAN_TX(s)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 text-sm">
+                              <ExternalLink className="h-4 w-4" />
+                              <span className="sr-only">Open transaction</span>
+                            </a>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-gray-600">Pending</div>
-                        {sigs.map((s) => (
-                          <a
-                            key={s}
-                            href={BASE_SOLSCAN_TX(s)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                            title="Open on Solscan"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                    </li>
+                  );
+                })}
+              </ul>
+            );
+          })()}
         </section>
         </div>
       </div>

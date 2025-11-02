@@ -1,8 +1,47 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const BASE_SOLSCAN_TX = (sig: string) => `https://solscan.io/tx/${sig}`;
+
+function findSignaturesInObject(obj: any): string[] {
+  const results: string[] = [];
+  const base58Regex = /^[A-HJ-NP-Za-km-z1-9]{40,90}$/;
+
+  function recurse(value: any) {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach(recurse);
+      return;
+    }
+    if (typeof value === "object") {
+      Object.entries(value).forEach(([k, v]) => {
+        const key = k.toLowerCase();
+        if (typeof v === "string") {
+          const str = v.trim();
+          if (
+            key.includes("signature") ||
+            key.includes("tx") ||
+            key.includes("transaction") ||
+            key.includes("txid") ||
+            base58Regex.test(str)
+          ) {
+            if (!results.includes(str) && base58Regex.test(str)) results.push(str);
+            // also accept short-ish signatures if key signals transaction
+            else if (!results.includes(str) && (key.includes("signature") || key.includes("tx") || key.includes("transaction") || key.includes("txid"))) results.push(str);
+          }
+        } else {
+          recurse(v);
+        }
+      });
+    }
+  }
+
+  recurse(obj);
+  return results;
+}
 
 export default function WalletHistory() {
   const { wallet } = useWallet();

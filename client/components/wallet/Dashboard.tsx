@@ -841,8 +841,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
                     // Show both USD and PKR even when zero
-                    const usdZero = `$${(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    const pkrZero = `PKR ${(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    const usdZero = `00.000 -`;
+                    const pkrZero = `0.00 P`;
                     return (
                       <>
                         <div className="text-2xl font-bold text-gray-900 leading-tight">
@@ -852,7 +852,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {showBalance ? `${pkrZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? `+ ${usdZero} (0.00%)` : "24h: ****"}
+                          {showBalance ? `24h profit loss` : "24h: ****"}
                         </div>
                       </>
                     );

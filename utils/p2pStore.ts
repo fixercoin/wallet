@@ -48,32 +48,28 @@ export type TradeRoom = {
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
 // In-memory store (per server instance) with optional on-disk persistence
-let fsModule: any = null;
-let fsPromisesModule: any = null;
-let pathModule: any = null;
-let DATA_DIR: string = "";
+// Note: File system operations are skipped in Cloudflare Workers environment
+// For persistent storage in Workers, use the p2pStoreCf.ts implementation with D1
+let fsPromises: any = null;
 let DATA_FILE: string = "";
 
-// Try to load Node.js modules only if available (dynamic import to avoid bundler issues)
-async function loadFileSystemModules() {
+// Lazy-load file system module only when needed in Node.js environment
+async function getFileSystemModules() {
+  if (fsPromises) return { fsPromises, DATA_FILE };
+
   if (typeof window === "undefined" && typeof process !== "undefined") {
     try {
-      fsModule = (await import("fs")).default || (await import("fs"));
-      fsPromisesModule = (await import("fs/promises")).default || (await import("fs/promises"));
-      pathModule = (await import("path")).default || (await import("path"));
-      if (pathModule && pathModule.resolve) {
-        DATA_DIR = pathModule.resolve(process.cwd(), "data");
-        DATA_FILE = pathModule.join(DATA_DIR, "p2p-store.json");
-      }
+      const fs = await import("fs");
+      const fsp = await import("fs/promises");
+      const path = await import("path");
+      fsPromises = fsp;
+      DATA_FILE = path.join(path.resolve(process.cwd(), "data"), "p2p-store.json");
     } catch {
-      // File system modules not available (browser/Worker environment)
+      // File system not available (Worker environment)
     }
   }
-}
 
-// Initialize if we're in Node.js
-if (typeof process !== "undefined" && !globalThis.requestIdleCallback) {
-  loadFileSystemModules().catch(() => {});
+  return { fsPromises, DATA_FILE };
 }
 
 type EasypaisaPayment = {

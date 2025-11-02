@@ -502,7 +502,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           prices = {};
         }
 
-
         // If pump fun prices still missing from initial fetch, try dedicated fetch from DexScreener
         const pumpFunMintsNeeded = [];
         if (!prices[fixercoinMint]) pumpFunMintsNeeded.push(fixercoinMint);
@@ -531,7 +530,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             console.warn("Failed to fetch pump fun tokens in retry:", e);
           }
         }
-
 
         // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
         try {
@@ -626,7 +624,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
           const solPriceData = await Promise.race([solPricePromise, timeout]);
           prices = {
-            So11111111111111111111111111111111111111112: solPriceData?.price || 100,
+            So11111111111111111111111111111111111111112:
+              solPriceData?.price || 100,
           };
           priceSource = solPriceData ? "coingecko" : "static";
         } catch {
@@ -635,7 +634,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
         try {
           const fixercoinPrice = await fixercoinPriceService.getPrice();
-          prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] = fixercoinPrice;
+          prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
+            fixercoinPrice;
         } catch {}
       }
 

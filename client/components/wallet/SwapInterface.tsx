@@ -229,8 +229,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       try {
         const tokens = await dexscreenerAPI.getTokensByMints(mints);
         const dsMap = dexscreenerAPI.getTokenPrices(tokens);
-        const fromPrice: number | null = fromToken?.mint ? (dsMap[fromToken.mint] ?? null) : null;
-        const toPrice: number | null = toToken?.mint ? (dsMap[toToken.mint] ?? null) : null;
+        const fromPrice: number | null = fromToken?.mint
+          ? (dsMap[fromToken.mint] ?? null)
+          : null;
+        const toPrice: number | null = toToken?.mint
+          ? (dsMap[toToken.mint] ?? null)
+          : null;
         setFromUsdPrice(fromPrice ?? null);
         setToUsdPrice(toPrice ?? null);
       } catch (e) {

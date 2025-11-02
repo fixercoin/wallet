@@ -114,7 +114,6 @@ GET /api/dexscreener/trending
 
 ---
 
-
 ### Price & Exchange Rate Endpoints
 
 ```

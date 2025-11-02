@@ -517,7 +517,6 @@ export default {
       }
     }
 
-    
     // SOL price proxy: /api/sol/price
     if (pathname === "/api/sol/price" && req.method === "GET") {
       try {
@@ -877,7 +876,6 @@ export default {
       }
     }
 
-    
     // Pumpfun quote: /api/pumpfun/quote (POST or GET)
     if (pathname === "/api/pumpfun/quote") {
       if (req.method === "POST" || req.method === "GET") {

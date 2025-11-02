@@ -56,7 +56,6 @@ Authorization: Bearer {ADMIN_TOKEN}
 
 ## Token Price Data
 
-
 ### DexScreener Price Lookup
 
 ```
@@ -66,7 +65,6 @@ GET /api/dexscreener/price?token={tokenAddress}
 **Parameters:**
 
 - `token` (required): Token contract address
-
 
 ---
 

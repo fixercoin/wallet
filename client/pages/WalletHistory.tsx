@@ -76,8 +76,12 @@ export default function WalletHistory() {
   }, [wallet?.publicKey]);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Back">
             <ArrowLeft className="h-4 w-4" />
@@ -198,6 +202,7 @@ export default function WalletHistory() {
             </ul>
           )}
         </section>
+        </div>
       </div>
     </div>
   );

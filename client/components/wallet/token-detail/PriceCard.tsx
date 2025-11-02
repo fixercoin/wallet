@@ -42,18 +42,22 @@ export const PriceCard: React.FC<PriceCardProps> = ({
             <img
               src={token.logoURI}
               alt={token.symbol}
-              className={`h-8 w-8 rounded-full border ${variant === 'light' ? 'border-[#e6f6ec]/20' : 'border-gray-700'}`}
+              className={`h-8 w-8 rounded-full border ${variant === "light" ? "border-[#e6f6ec]/20" : "border-gray-700"}`}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
           ) : (
-            <div className={`h-8 w-8 rounded-full ${variant === 'light' ? 'bg-white/80 text-gray-900' : 'bg-gray-700 text-white'} flex items-center justify-center text-xs`}>
+            <div
+              className={`h-8 w-8 rounded-full ${variant === "light" ? "bg-white/80 text-gray-900" : "bg-gray-700 text-white"} flex items-center justify-center text-xs`}
+            >
               {token.symbol?.slice(0, 1) || "?"}
             </div>
           )}
           <div>
-            <h2 className={`text-2xl font-bold ${variant === 'light' ? 'text-gray-900' : 'text-white'}`}>
+            <h2
+              className={`text-2xl font-bold ${variant === "light" ? "text-gray-900" : "text-white"}`}
+            >
               {formatCurrency(currentPrice, {
                 from: "USD",
                 minimumFractionDigits: 8,
@@ -77,10 +81,18 @@ export const PriceCard: React.FC<PriceCardProps> = ({
                     {priceChangePercent >= 0 ? "+" : ""}
                     {priceChangePercent.toFixed(2)}%
                   </span>
-                  <span className={`${variant === 'light' ? 'text-gray-500' : 'text-gray-400'} text-sm`}>24h</span>
+                  <span
+                    className={`${variant === "light" ? "text-gray-500" : "text-gray-400"} text-sm`}
+                  >
+                    24h
+                  </span>
                 </>
               ) : (
-                <span className={`text-sm font-medium ${variant === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>—</span>
+                <span
+                  className={`text-sm font-medium ${variant === "light" ? "text-gray-500" : "text-gray-400"}`}
+                >
+                  —
+                </span>
               )}
             </div>
           </div>
@@ -89,7 +101,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           variant="ghost"
           size="sm"
           onClick={onToggleBalance}
-          className={`${variant === 'light' ? 'text-gray-500 hover:text-gray-900 hover:bg-white/50' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+          className={`${variant === "light" ? "text-gray-500 hover:text-gray-900 hover:bg-white/50" : "text-gray-400 hover:text-white hover:bg-gray-700"}`}
         >
           {showBalance ? (
             <Eye className="h-4 w-4" />

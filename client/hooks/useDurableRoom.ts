@@ -10,7 +10,8 @@ export type EventMessage =
 export function useDurableRoom(roomId: string, httpBase: string = "") {
   const [events, setEvents] = useState<EventMessage[]>([]);
 
-  const base = httpBase || (typeof window !== "undefined" ? window.location.origin : "");
+  const base =
+    httpBase || (typeof window !== "undefined" ? window.location.origin : "");
   const ordersUrl = useMemo(() => `${base}/api/p2p/orders`, [base]);
 
   useEffect(() => {
@@ -23,7 +24,10 @@ export function useDurableRoom(roomId: string, httpBase: string = "") {
         if (!res.ok) return;
         const data = await res.json();
         // normalize into snapshot event
-        const snapshot: EventMessage = { kind: "snapshot", data: { orders: data.orders || [] } };
+        const snapshot: EventMessage = {
+          kind: "snapshot",
+          data: { orders: data.orders || [] },
+        };
         if (mounted) setEvents((prev) => [...prev, snapshot]);
       } catch (e) {
         // ignore

@@ -95,7 +95,6 @@ export default function TokenListing() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-  
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center justify-between gap-2">
@@ -118,7 +117,9 @@ export default function TokenListing() {
 
           <div className="grid gap-3">
             <div className="space-y-2">
-              <Label htmlFor="mint" className="sr-only">Token Mint Address</Label>
+              <Label htmlFor="mint" className="sr-only">
+                Token Mint Address
+              </Label>
               <Input
                 id="mint"
                 value={mint}

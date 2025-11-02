@@ -325,8 +325,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const check = async () => {
       try {
         const controller = new AbortController();
-        const to = setTimeout(() => controller.abort(), 4000); // slightly longer timeout
-        const res = await fetch("/health", { signal: controller.signal });
+        const to = setTimeout(() => controller.abort(), 4000);
+        // Health check via pumpfun/quote endpoint with minimal valid parameters
+        const res = await fetch("/api/pumpfun/quote", {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inputMint: "So11111111111111111111111111111111111111112",
+            outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            amount: 1000000,
+          }),
+        });
         clearTimeout(to);
 
         if (!res.ok) {
@@ -336,7 +348,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         }
 
         const data = await res.json().catch(() => null);
-        if (data && data.status === "ok") {
+        if (data) {
           healthFailureRef.current = 0;
           setIsServiceDown(false);
         } else {

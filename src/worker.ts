@@ -243,11 +243,17 @@ export default {
         return await handleHealth();
       }
 
-      if (pathname.startsWith("/api/wallet/balance") || pathname === "/wallet/balance") {
+      if (
+        pathname.startsWith("/api/wallet/balance") ||
+        pathname === "/wallet/balance"
+      ) {
         return await handleWalletBalance(url, env);
       }
 
-      if (pathname.startsWith("/api/wallet/tokens") || pathname === "/wallet/tokens") {
+      if (
+        pathname.startsWith("/api/wallet/tokens") ||
+        pathname === "/wallet/tokens"
+      ) {
         return await handleWalletTokens(url, env);
       }
 
@@ -261,10 +267,13 @@ export default {
         headers: CORS_HEADERS,
       });
     } catch (err: any) {
-      return new Response(JSON.stringify({ error: String(err?.message || err) }), {
-        status: 500,
-        headers: CORS_HEADERS,
-      });
+      return new Response(
+        JSON.stringify({ error: String(err?.message || err) }),
+        {
+          status: 500,
+          headers: CORS_HEADERS,
+        },
+      );
     }
   },
 };

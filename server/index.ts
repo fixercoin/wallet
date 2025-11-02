@@ -68,6 +68,117 @@ export async function createServer(): Promise<express.Application> {
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
 
+  // Pumpfun proxy (quote & swap)
+  app.all(["/api/pumpfun/quote", "/api/pumpfun/swap"], async (req, res) => {
+    try {
+      const path = req.path.replace("/api/pumpfun", "");
+      // /quote or /swap
+      if (path === "//quote" || path === "/quote") {
+        // Accept POST with JSON body or GET with query params
+        const method = req.method.toUpperCase();
+        let inputMint = "";
+        let outputMint = "";
+        let amount = "";
+
+        if (method === "POST") {
+          const body = req.body || {};
+          inputMint = body.inputMint || body.input_mint || "";
+          outputMint = body.outputMint || body.output_mint || "";
+          amount = body.amount || "";
+        } else {
+          inputMint = String(req.query.inputMint || req.query.input_mint || "");
+          outputMint = String(req.query.outputMint || req.query.output_mint || "");
+          amount = String(req.query.amount || "");
+        }
+
+        if (!inputMint || !outputMint || !amount) {
+          return res.status(400).json({ error: "Missing required parameters: inputMint, outputMint, amount" });
+        }
+
+        const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
+          inputMint,
+        )}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) return res.status(resp.status).json({ error: "Pumpfun API error" });
+        const data = await resp.json();
+        return res.json(data);
+      }
+
+      if (path === "//swap" || path === "/swap") {
+        if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+        const body = req.body || {};
+        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) return res.status(resp.status).json({ error: "Pumpfun swap failed" });
+        const data = await resp.json();
+        return res.json(data);
+      }
+
+      return res.status(404).json({ error: "Pumpfun proxy path not found" });
+    } catch (e: any) {
+      return res.status(502).json({ error: "Failed to proxy Pumpfun request", details: e?.message || String(e) });
+    }
+  });
+
+  // Token price endpoint (simple, robust fallback + stablecoins)
+  app.get("/api/token/price", async (req, res) => {
+    try {
+      const tokenParam = String((req.query.token || req.query.symbol || "FIXERCOIN")).toUpperCase();
+      const mintParam = String(req.query.mint || "");
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.005,
+        SOL: 180,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.1,
+      };
+
+      // If stablecoins or known symbols, return deterministic prices
+      if (tokenParam === "USDC" || tokenParam === "USDT") {
+        return res.json({ token: tokenParam, priceUsd: 1.0 });
+      }
+
+      if (tokenParam === "SOL") return res.json({ token: "SOL", priceUsd: FALLBACK_USD.SOL });
+      if (tokenParam === "FIXERCOIN") return res.json({ token: "FIXERCOIN", priceUsd: FALLBACK_USD.FIXERCOIN });
+      if (tokenParam === "LOCKER") return res.json({ token: "LOCKER", priceUsd: FALLBACK_USD.LOCKER });
+
+      // If mint provided that matches known mints, map to fallback
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      let token = tokenParam;
+      let mint = mintParam || TOKEN_MINTS[token] || "";
+
+      if (!mint && tokenParam && tokenParam.length > 40) {
+        mint = tokenParam;
+        const inv = Object.entries(TOKEN_MINTS).find(([, m]) => m === mint);
+        if (inv) token = inv[0];
+      }
+
+      // As a robust fallback, if we couldn't resolve, return fallback USD when available
+      const fallback = FALLBACK_USD[token] ?? null;
+      if (fallback !== null) return res.json({ token, priceUsd: fallback });
+
+      // Last resort
+      return res.status(404).json({ error: "Token price not available" });
+    } catch (e: any) {
+      return res.status(502).json({ error: "Failed to fetch token price", details: e?.message || String(e) });
+    }
+  });
+
   // Exchange rate routes
   app.get("/api/exchange-rate", handleExchangeRate);
   app.get("/api/forex/rate", handleForexRate);

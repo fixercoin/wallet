@@ -16,8 +16,6 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
-import { dextoolsAPI } from "@/lib/services/dextools";
-import { coinmarketcapAPI } from "@/lib/services/coinmarketcap";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { Connection } from "@solana/web3.js";
@@ -504,25 +502,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           prices = {};
         }
 
-        // If FIXERCOIN price missing, try DexTools (recommended for pump fun tokens)
-        if (!prices[fixercoinMint]) {
-          try {
-            console.log(
-              `[DexTools] Fetching FIXERCOIN price from DexTools API`,
-            );
-            const fixercoinPrice =
-              await dextoolsAPI.getTokenPrice(fixercoinMint);
-            if (fixercoinPrice && fixercoinPrice > 0) {
-              prices[fixercoinMint] = fixercoinPrice;
-              console.log(
-                `[DexTools] FIXERCOIN price: $${fixercoinPrice.toFixed(8)}`,
-              );
-            }
-          } catch (e) {
-            console.warn("Failed to fetch FIXERCOIN from DexTools:", e);
-          }
-        }
-
         // If pump fun prices still missing from initial fetch, try dedicated fetch from DexScreener
         const pumpFunMintsNeeded = [];
         if (!prices[fixercoinMint]) pumpFunMintsNeeded.push(fixercoinMint);
@@ -549,41 +528,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             });
           } catch (e) {
             console.warn("Failed to fetch pump fun tokens in retry:", e);
-          }
-        }
-
-        // If pump fun or other tokens still missing, try CoinMarketCap as final fallback
-        const tokensWithoutPrice = allTokens.filter((t) => !prices[t.mint]);
-        if (tokensWithoutPrice.length > 0) {
-          try {
-            const missingMints = tokensWithoutPrice.map((t) => t.mint);
-            console.log(
-              `[CoinMarketCap] Fetching ${missingMints.length} missing token prices from CoinMarketCap`,
-            );
-            const cmcPrices =
-              await coinmarketcapAPI.getTokenPrices(missingMints);
-            let addedCount = 0;
-            Object.entries(cmcPrices).forEach(([mint, price]) => {
-              if (price && price > 0 && !prices[mint]) {
-                prices[mint] = price;
-                addedCount++;
-                if (mint === fixercoinMint || mint === lockerMint) {
-                  console.log(
-                    `[CoinMarketCap] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: $${price.toFixed(8)}`,
-                  );
-                }
-              }
-            });
-            if (addedCount > 0) {
-              console.log(
-                `[CoinMarketCap] Added ${addedCount} prices from CoinMarketCap API`,
-              );
-            }
-          } catch (e) {
-            console.warn(
-              "Failed to fetch missing prices from CoinMarketCap:",
-              e,
-            );
           }
         }
 
@@ -674,41 +618,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       } catch (dexError) {
         try {
-          const tokenMints = allTokens.map((token) => token.mint);
-          console.log(
-            `[CoinMarketCap] DexScreener failed, trying CoinMarketCap for ${tokenMints.length} tokens`,
+          const solPricePromise = solPriceService.getSolPrice();
+          const timeout = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), 3000),
           );
-          prices = await coinmarketcapAPI.getTokenPrices(tokenMints);
-          if (Object.keys(prices).length > 0) {
-            priceSource = "coinmarketcap";
-            console.log(
-              `[CoinMarketCap] ✅ Successfully fetched ${Object.keys(prices).length} prices`,
-            );
-          } else {
-            throw new Error("CoinMarketCap also returned no prices");
-          }
-        } catch (cmcError) {
-          try {
-            const solPricePromise = solPriceService.getSolPrice();
-            const timeout = new Promise<null>((resolve) =>
-              setTimeout(() => resolve(null), 3000),
-            );
-            const solPriceData = await Promise.race([solPricePromise, timeout]);
-            prices = {
-              So11111111111111111111111111111111111111112:
-                solPriceData?.price || 100,
-            };
-            priceSource = solPriceData ? "coingecko" : "static";
-          } catch {
-            prices = { So11111111111111111111111111111111111111112: 100 };
-            priceSource = "static";
-          }
-          try {
-            const fixercoinPrice = await fixercoinPriceService.getPrice();
-            prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
-              fixercoinPrice;
-          } catch {}
+          const solPriceData = await Promise.race([solPricePromise, timeout]);
+          prices = {
+            So11111111111111111111111111111111111111112:
+              solPriceData?.price || 100,
+          };
+          priceSource = solPriceData ? "coingecko" : "static";
+        } catch {
+          prices = { So11111111111111111111111111111111111111112: 100 };
+          priceSource = "static";
         }
+        try {
+          const fixercoinPrice = await fixercoinPriceService.getPrice();
+          prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
+            fixercoinPrice;
+        } catch {}
       }
 
       // Ensure DexScreener prices for FIXERCOIN and LOCKER regardless of earlier fallbacks

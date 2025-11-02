@@ -56,17 +56,6 @@ Authorization: Bearer {ADMIN_TOKEN}
 
 ## Token Price Data
 
-### DexTools Price Lookup
-
-```
-GET /api/dextools/price?tokenAddress={address}&chainId=solana
-```
-
-**Parameters:**
-
-- `tokenAddress` (required): Token contract address
-- `chainId` (optional): Default is `solana`
-
 ### DexScreener Price Lookup
 
 ```
@@ -76,16 +65,6 @@ GET /api/dexscreener/price?token={tokenAddress}
 **Parameters:**
 
 - `token` (required): Token contract address
-
-### CoinMarketCap Price Quotes
-
-```
-GET /api/coinmarketcap/quotes?symbols=SOL,USDC,BTC
-```
-
-**Parameters:**
-
-- `symbols` (required): Comma-separated token symbols
 
 ---
 

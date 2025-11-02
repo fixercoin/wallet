@@ -29,7 +29,7 @@ const CACHE_TTL_MS = 30_000;
 
 async function getSolUsd(): Promise<number> {
   try {
-    const res = await fetch("/api/exchange-rate?token=SOL");
+    const res = await fetch("/api/token/price?token=SOL");
     if (!res.ok) throw new Error(String(res.status));
     const json = await res.json();
     const v = Number(json?.priceUsd);

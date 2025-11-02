@@ -114,7 +114,7 @@ export default function SellNow() {
     const fetchRate = async () => {
       setFetchingRate(true);
       try {
-        const url = `/api/exchange-rate?token=${selectedToken.id}`;
+        const url = `/api/token/price?token=${selectedToken.id}`;
         const response = await fetch(url);
         if (!response.ok)
           throw new Error(`Rate fetch failed ${response.status}`);

@@ -434,6 +434,33 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           changeMap = {};
         }
 
+        // Attempt to fill missing token prices via dedicated /api/token/price endpoint
+        try {
+          const missingMints = tokenMints.filter((m) => m && !prices[m]);
+          if (missingMints.length > 0) {
+            const fetches = missingMints.map((m) =>
+              fetch(`/api/token/price?mint=${encodeURIComponent(m)}`)
+                .then((r) => (r.ok ? r.json().catch(() => null) : null))
+                .catch(() => null),
+            );
+            const results = await Promise.all(fetches);
+            results.forEach((res, idx) => {
+              const mint = missingMints[idx];
+              if (!mint) return;
+              if (
+                res &&
+                typeof res.priceUsd === "number" &&
+                isFinite(res.priceUsd) &&
+                res.priceUsd > 0
+              ) {
+                prices[mint] = Number(res.priceUsd);
+              }
+            });
+          }
+        } catch (e) {
+          // ignore missing price fetch failures
+        }
+
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
         stableMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;

@@ -183,6 +183,8 @@ const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
 const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
+    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK", // LOCKER (if available)
 };
 
 // Mint to search symbol mapping for tokens not found via mint lookup

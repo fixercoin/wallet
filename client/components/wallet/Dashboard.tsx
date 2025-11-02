@@ -841,8 +841,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
                     // Show both USD and PKR even when zero
-                    const usdZero = `00.000 -`;
-                    const pkrZero = `0.00 P`;
+                    const usdZero = `0.00 $`;
+                    const pkrZero = `0.00 Pkr`;
                     return (
                       <>
                         <div className="text-2xl font-bold text-gray-900 leading-tight">
@@ -852,7 +852,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {showBalance ? `${pkrZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? `24h profit loss` : "24h: ****"}
+                          {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
                         </div>
                       </>
                     );
@@ -891,19 +891,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="text-2xl font-bold text-gray-900 leading-tight">
                         {showBalance
                           ? `${total.toLocaleString(undefined, {
-                              minimumFractionDigits: 3,
-                              maximumFractionDigits: 3,
-                            })} -`
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })} $`
                           : "****"}
                       </div>
                       <div className="text-sm text-gray-700 mt-1">
                         {showBalance
-                          ? `${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} P`
+                          ? `${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Pkr`
                           : "****"}
                       </div>
                       {showBalance ? (
                         <div className="text-xs text-gray-400 mt-1">
-                          24h profit loss
+                          {`${isPositive ? "+" : "-"} ${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${Math.abs(isFinite(change24hPercent) ? change24hPercent : 0).toFixed(2)}%)`}
                         </div>
                       ) : (
                         <div className="text-xs text-gray-400 mt-1">****</div>

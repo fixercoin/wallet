@@ -23,33 +23,33 @@ VITE_API_BASE_URL=/api
 Create `client/lib/wallet-api.ts`:
 
 ```typescript
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export const walletApi = {
   // Get wallet balance for all tokens
   async getBalance(walletAddress: string) {
     const response = await fetch(
-      `${API_BASE}/wallet/balance?wallet=${encodeURIComponent(walletAddress)}`
+      `${API_BASE}/wallet/balance?wallet=${encodeURIComponent(walletAddress)}`,
     );
-    if (!response.ok) throw new Error('Failed to fetch balance');
+    if (!response.ok) throw new Error("Failed to fetch balance");
     return response.json();
   },
 
   // Get token price from DexScreener
   async getTokenPrice(tokenAddress: string) {
     const response = await fetch(
-      `${API_BASE}/dexscreener/price?token=${encodeURIComponent(tokenAddress)}`
+      `${API_BASE}/dexscreener/price?token=${encodeURIComponent(tokenAddress)}`,
     );
-    if (!response.ok) throw new Error('Failed to fetch price');
+    if (!response.ok) throw new Error("Failed to fetch price");
     return response.json();
   },
 
   // Get Pump.fun swap quote
   async getSwapQuote(mint: string) {
     const response = await fetch(
-      `${API_BASE}/swap/quote?mint=${encodeURIComponent(mint)}`
+      `${API_BASE}/swap/quote?mint=${encodeURIComponent(mint)}`,
     );
-    if (!response.ok) throw new Error('Failed to fetch swap quote');
+    if (!response.ok) throw new Error("Failed to fetch swap quote");
     return response.json();
   },
 
@@ -64,17 +64,17 @@ export const walletApi = {
     wallet?: string;
   }) {
     const response = await fetch(`${API_BASE}/swap/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         decimals: 6,
         slippage: 10,
-        txVersion: 'V0',
+        txVersion: "V0",
         priorityFee: 0.0005,
         ...params,
       }),
     });
-    if (!response.ok) throw new Error('Failed to execute swap');
+    if (!response.ok) throw new Error("Failed to execute swap");
     return response.json();
   },
 
@@ -89,17 +89,17 @@ export const walletApi = {
       url.searchParams.set(key, String(value));
     });
     const response = await fetch(url.toString());
-    if (!response.ok) throw new Error('Failed to fetch Jupiter quote');
+    if (!response.ok) throw new Error("Failed to fetch Jupiter quote");
     return response.json();
   },
 
   // Execute RPC call
   async rpc(method: string, params: any[]) {
     const response = await fetch(`${API_BASE}/rpc`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        jsonrpc: '2.0',
+        jsonrpc: "2.0",
         id: 1,
         method,
         params,
@@ -112,18 +112,18 @@ export const walletApi = {
   // Get transaction details
   async getTransaction(signature: string) {
     const response = await fetch(
-      `${API_BASE}/transaction?signature=${encodeURIComponent(signature)}`
+      `${API_BASE}/transaction?signature=${encodeURIComponent(signature)}`,
     );
-    if (!response.ok) throw new Error('Failed to fetch transaction');
+    if (!response.ok) throw new Error("Failed to fetch transaction");
     return response.json();
   },
 
   // Get account info
   async getAccountInfo(publicKey: string) {
     const response = await fetch(
-      `${API_BASE}/account?publicKey=${encodeURIComponent(publicKey)}`
+      `${API_BASE}/account?publicKey=${encodeURIComponent(publicKey)}`,
     );
-    if (!response.ok) throw new Error('Failed to fetch account');
+    if (!response.ok) throw new Error("Failed to fetch account");
     return response.json();
   },
 
@@ -137,18 +137,18 @@ export const walletApi = {
     contact: string;
   }) {
     const response = await fetch(`${API_BASE}/payments/create-intent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
     });
-    if (!response.ok) throw new Error('Failed to create payment intent');
+    if (!response.ok) throw new Error("Failed to create payment intent");
     return response.json();
   },
 
   // Health check
   async health() {
     const response = await fetch(`${API_BASE}/health`);
-    if (!response.ok) throw new Error('Health check failed');
+    if (!response.ok) throw new Error("Health check failed");
     return response.json();
   },
 };
@@ -392,10 +392,10 @@ export function useExecuteSwap() {
 // Usage
 function MyComponent({ walletAddress }: { walletAddress: string }) {
   const { data, isLoading, error } = useWalletBalance(walletAddress);
-  
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error loading balance</div>;
-  
+
   return <div>Balances: {JSON.stringify(data?.balances)}</div>;
 }
 ```
@@ -403,39 +403,39 @@ function MyComponent({ walletAddress }: { walletAddress: string }) {
 ## Error Handling Best Practices
 
 ```typescript
-import { walletApi } from '@/lib/wallet-api';
+import { walletApi } from "@/lib/wallet-api";
 
 async function fetchWithErrorHandling(
   apiCall: () => Promise<any>,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ) {
   try {
     return await apiCall();
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('API Error:', message);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("API Error:", message);
     onError?.(error as Error);
-    
+
     // Show user-friendly error message
-    if (message.includes('Failed to fetch')) {
-      return { error: 'Network error. Please check your connection.' };
-    } else if (message.includes('429')) {
-      return { error: 'Too many requests. Please try again later.' };
-    } else if (message.includes('502')) {
-      return { error: 'Upstream service unavailable. Please try again.' };
+    if (message.includes("Failed to fetch")) {
+      return { error: "Network error. Please check your connection." };
+    } else if (message.includes("429")) {
+      return { error: "Too many requests. Please try again later." };
+    } else if (message.includes("502")) {
+      return { error: "Upstream service unavailable. Please try again." };
     }
-    
+
     return { error: message };
   }
 }
 
 // Usage
-const result = await fetchWithErrorHandling(() =>
-  walletApi.getBalance(walletAddress),
+const result = await fetchWithErrorHandling(
+  () => walletApi.getBalance(walletAddress),
   (error) => {
     // Handle error - show toast, etc.
-    console.log('Balance fetch failed:', error);
-  }
+    console.log("Balance fetch failed:", error);
+  },
 );
 ```
 

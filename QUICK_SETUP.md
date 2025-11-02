@@ -59,17 +59,20 @@ POST /api/webhooks/payment                        (Webhook receiver)
 ### Production (Cloudflare Worker)
 
 **Current Configuration:**
+
 - Worker Domain: `fixorium-proxy.khanbabusargodha.workers.dev`
 - Solana RPC: `https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7`
 - Pump.fun APIs: `https://pumpportal.fun/api/`
 - Jupiter: `https://quote-api.jup.ag/v6/`
 
 **Deployment Command:**
+
 ```bash
 npm run deploy:cloudflare
 ```
 
 This runs:
+
 ```bash
 HELIUS_API_KEY=xxx \
 COINMARKETCAP_API_KEY=yyy \
@@ -80,11 +83,13 @@ wrangler publish --config ./cloudflare/wrangler.toml --env production
 ### Local Development
 
 **Environment Variables (.env.local):**
+
 ```
 VITE_API_BASE_URL=/api
 ```
 
 The dev server at `npm run dev` will:
+
 - Run Express server on `/api` routes
 - Proxy Cloudflare Worker endpoints for testing
 - Support WebSocket at `/ws/:roomId`
@@ -94,11 +99,13 @@ The dev server at `npm run dev` will:
 ### 1. Environment Setup
 
 Create `.env.local`:
+
 ```
 VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
 ```
 
 Or for development:
+
 ```
 VITE_API_BASE_URL=/api
 ```
@@ -106,7 +113,7 @@ VITE_API_BASE_URL=/api
 ### 2. Import and Use
 
 ```typescript
-import { walletApi } from '@/lib/wallet-api';
+import { walletApi } from "@/lib/wallet-api";
 
 // Fetch wallet balance
 const { balances } = await walletApi.getBalance(walletAddress);
@@ -121,7 +128,7 @@ const quote = await walletApi.getSwapQuote(tokenMint);
 const result = await walletApi.executeSwap({
   mint: tokenMint,
   amount: 1000000,
-  slippage: 10
+  slippage: 10,
 });
 ```
 
@@ -140,16 +147,19 @@ const result = await walletApi.executeSwap({
 ### Production Deployment:
 
 1. **Build Frontend:**
+
    ```bash
    npm run build
    ```
 
 2. **Deploy Cloudflare Worker:**
+
    ```bash
    npm run deploy:cloudflare
    ```
 
 3. **Verify Health:**
+
    ```bash
    curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
    ```
@@ -161,21 +171,25 @@ const result = await walletApi.executeSwap({
 ## Common Issues & Solutions
 
 ### "Failed to fetch balance"
+
 - Check wallet address format (must be valid Solana address)
 - Verify Cloudflare Worker is deployed
 - Check CORS headers in browser console
 
 ### "Swap quote unavailable"
+
 - Verify token mint address exists
 - Check Pump.fun API status
 - Look for rate limiting (429 errors)
 
 ### "RPC call failed"
+
 - Check Shyft API key is still valid
 - Verify request body format (must be valid JSON-RPC)
 - Some RPC methods may not be supported by Shyft
 
 ### "Razorpay payment failed"
+
 - Ensure webhook secret is configured
 - Verify signature validation in handler
 - Check payment amount is in correct currency
@@ -185,16 +199,19 @@ const result = await walletApi.executeSwap({
 ### Caching Strategy
 
 **Wallet Balances:**
+
 - Cache in KV for 5-10 minutes
 - Refresh on user interaction
 - Store in browser localStorage
 
 **Token Prices:**
+
 - Cache for 1-5 minutes depending on frequency
 - Use React Query's `staleTime` and `cacheTime`
 - Consider batch price requests
 
 **Swap Quotes:**
+
 - Always fetch fresh (not cached)
 - Implement request debouncing
 - Show last known price while fetching
@@ -205,14 +222,18 @@ const result = await walletApi.executeSwap({
 // Implement client-side rate limiting
 const throttleMap = new Map<string, number>();
 
-async function throttledFetch(key: string, fn: () => Promise<any>, delayMs = 1000) {
+async function throttledFetch(
+  key: string,
+  fn: () => Promise<any>,
+  delayMs = 1000,
+) {
   const lastCall = throttleMap.get(key) || 0;
   const now = Date.now();
-  
+
   if (now - lastCall < delayMs) {
-    throw new Error('Rate limited');
+    throw new Error("Rate limited");
   }
-  
+
   throttleMap.set(key, now);
   return fn();
 }
@@ -238,6 +259,7 @@ console.error(`[ERROR] ${error.message}`);
 ```
 
 View logs:
+
 ```bash
 wrangler tail --config ./cloudflare/wrangler.toml
 ```
@@ -245,11 +267,13 @@ wrangler tail --config ./cloudflare/wrangler.toml
 ## Scaling Considerations
 
 ### Current Limits (Cloudflare Free Tier):
+
 - ✅ Unlimited requests
 - ✅ 100k KV reads/writes per day
 - ✅ Low latency globally distributed
 
 ### For High Traffic:
+
 - Increase KV storage limits
 - Use Durable Objects for real-time features
 - Implement aggressive caching
@@ -298,6 +322,7 @@ Created comprehensive guides:
 ## Contact & Support
 
 For issues or questions:
+
 - Check Cloudflare Worker logs: `wrangler tail`
 - Verify API endpoints: `curl https://your-worker-domain/api/health`
 - Review browser console for CORS issues

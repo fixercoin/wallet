@@ -1,6 +1,7 @@
 # Wallet API Endpoints - Cloudflare Worker
 
 ## Base URL
+
 - **Production:** `https://fixorium-proxy.khanbabusargodha.workers.dev`
 - **Frontend:** `https://wallet-c36.fixorium.com.pk/api`
 
@@ -9,14 +10,18 @@
 ## Wallet Management
 
 ### Get Wallet Balance
+
 ```
 GET /api/wallet/balance?wallet={walletAddress}
 ```
+
 **Parameters:**
+
 - `wallet` (required): Solana wallet address
 - Alternative param names: `publicKey`, `public_key`, `address`, `walletAddress`
 
 **Response:**
+
 ```json
 {
   "walletAddress": "...",
@@ -31,11 +36,14 @@ GET /api/wallet/balance?wallet={walletAddress}
 ```
 
 ### Credit Wallet (Admin Only)
+
 ```
 POST /api/wallet/credit
 Authorization: Bearer {ADMIN_TOKEN}
 ```
+
 **Body:**
+
 ```json
 {
   "walletAddress": "...",
@@ -49,25 +57,34 @@ Authorization: Bearer {ADMIN_TOKEN}
 ## Token Price Data
 
 ### DexTools Price Lookup
+
 ```
 GET /api/dextools/price?tokenAddress={address}&chainId=solana
 ```
+
 **Parameters:**
+
 - `tokenAddress` (required): Token contract address
 - `chainId` (optional): Default is `solana`
 
 ### DexScreener Price Lookup
+
 ```
 GET /api/dexscreener/price?token={tokenAddress}
 ```
+
 **Parameters:**
+
 - `token` (required): Token contract address
 
 ### CoinMarketCap Price Quotes
+
 ```
 GET /api/coinmarketcap/quotes?symbols=SOL,USDC,BTC
 ```
+
 **Parameters:**
+
 - `symbols` (required): Comma-separated token symbols
 
 ---
@@ -75,13 +92,17 @@ GET /api/coinmarketcap/quotes?symbols=SOL,USDC,BTC
 ## Swap Operations
 
 ### Get Pump.fun Swap Quote
+
 ```
 GET /api/swap/quote?mint={tokenMint}
 ```
+
 **Parameters:**
+
 - `mint` (required): Token mint address
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -91,10 +112,13 @@ GET /api/swap/quote?mint={tokenMint}
 ```
 
 ### Execute Pump.fun Swap
+
 ```
 POST /api/swap/execute
 ```
+
 **Body:**
+
 ```json
 {
   "mint": "token_mint_address",
@@ -108,15 +132,19 @@ POST /api/swap/execute
 ```
 
 ### Get Jupiter Swap Quote
+
 ```
 GET /api/swap/jupiter/quote?inputMint={mint}&outputMint={mint}&amount={amount}
 ```
+
 **Parameters:**
+
 - `inputMint` (required): Input token mint address
 - `outputMint` (required): Output token mint address
 - `amount` (required): Amount in smallest units
 
 **Response:**
+
 ```json
 {
   "inputMint": "...",
@@ -135,10 +163,13 @@ GET /api/swap/jupiter/quote?inputMint={mint}&outputMint={mint}&amount={amount}
 ## Solana RPC Operations
 
 ### Execute RPC Call
+
 ```
 POST /api/rpc
 ```
+
 **Body:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -151,17 +182,23 @@ POST /api/rpc
 **Note:** Uses Shyft RPC endpoint with API key: `3hAwrhOAmJG82eC7`
 
 ### Get Transaction Details
+
 ```
 GET /api/transaction?signature={txSignature}
 ```
+
 **Parameters:**
+
 - `signature` (required): Transaction signature
 
 ### Get Account Information
+
 ```
 GET /api/account?publicKey={walletAddress}
 ```
+
 **Parameters:**
+
 - `publicKey` (required): Wallet address to query
 
 ---
@@ -169,10 +206,13 @@ GET /api/account?publicKey={walletAddress}
 ## Payment Integration
 
 ### Create Payment Intent (Razorpay)
+
 ```
 POST /api/payments/create-intent
 ```
+
 **Body:**
+
 ```json
 {
   "walletAddress": "...",
@@ -185,6 +225,7 @@ POST /api/payments/create-intent
 ```
 
 ### Payment Webhook Handler
+
 ```
 POST /api/webhooks/payment
 X-Razorpay-Signature: {signature}
@@ -195,11 +236,13 @@ X-Razorpay-Signature: {signature}
 ## Utility Endpoints
 
 ### Health Check
+
 ```
 GET /api/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -217,6 +260,7 @@ GET /api/health
 ## Error Handling
 
 All endpoints return error responses in the format:
+
 ```json
 {
   "error": "Error message",
@@ -226,6 +270,7 @@ All endpoints return error responses in the format:
 ```
 
 **Common Status Codes:**
+
 - `200`: Success
 - `201`: Created
 - `400`: Bad Request (missing/invalid parameters)
@@ -238,7 +283,9 @@ All endpoints return error responses in the format:
 ---
 
 ## CORS Headers
+
 All endpoints include:
+
 ```
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, OPTIONS
@@ -250,6 +297,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ## Environment Setup
 
 The worker uses the following fixed configuration:
+
 - **Solana RPC:** `https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7`
 - **Pump.fun Quote API:** `https://pumpportal.fun/api/quote`
 - **Pump.fun Trade API:** `https://pumpportal.fun/api/trade`
@@ -261,38 +309,51 @@ The worker uses the following fixed configuration:
 ## Integration Examples
 
 ### Get Token Price
+
 ```javascript
-const response = await fetch('https://fixorium-proxy.khanbabusargodha.workers.dev/api/dexscreener/price?token=EPjFWaLb3odcccccccccccccccccccccccccccccc');
+const response = await fetch(
+  "https://fixorium-proxy.khanbabusargodha.workers.dev/api/dexscreener/price?token=EPjFWaLb3odcccccccccccccccccccccccccccccc",
+);
 const data = await response.json();
 console.log(data);
 ```
 
 ### Get Wallet Balance
+
 ```javascript
-const response = await fetch('https://fixorium-proxy.khanbabusargodha.workers.dev/api/wallet/balance?wallet=YourWalletAddress');
+const response = await fetch(
+  "https://fixorium-proxy.khanbabusargodha.workers.dev/api/wallet/balance?wallet=YourWalletAddress",
+);
 const data = await response.json();
 console.log(data.balances);
 ```
 
 ### Get Swap Quote
+
 ```javascript
-const response = await fetch('https://fixorium-proxy.khanbabusargodha.workers.dev/api/swap/quote?mint=TokenMintAddress');
+const response = await fetch(
+  "https://fixorium-proxy.khanbabusargodha.workers.dev/api/swap/quote?mint=TokenMintAddress",
+);
 const data = await response.json();
 console.log(data.quote);
 ```
 
 ### Execute Swap
+
 ```javascript
-const response = await fetch('https://fixorium-proxy.khanbabusargodha.workers.dev/api/swap/execute', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    mint: 'token_mint',
-    amount: 1000000,
-    decimals: 6,
-    slippage: 10
-  })
-});
+const response = await fetch(
+  "https://fixorium-proxy.khanbabusargodha.workers.dev/api/swap/execute",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mint: "token_mint",
+      amount: 1000000,
+      decimals: 6,
+      slippage: 10,
+    }),
+  },
+);
 const data = await response.json();
 console.log(data);
 ```

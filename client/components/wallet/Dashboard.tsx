@@ -783,16 +783,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => navigate('/wallet/history')}
-                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-20"
-                title="History"
-                aria-label="Open history"
-              >
-                <Clock className="h-5 w-5 text-gray-900" />
-              </button>
-            </div>
+            <div className="flex items-center gap-2" />
 
             <div className="flex items-center gap-2">
               {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}

@@ -199,7 +199,10 @@ class DexscreenerAPI {
               const gotMints = Array.from(
                 new Set(
                   fetchedTokens
-                    .flatMap((t) => [t.baseToken?.address, t.quoteToken?.address])
+                    .flatMap((t) => [
+                      t.baseToken?.address,
+                      t.quoteToken?.address,
+                    ])
                     .filter(Boolean) as string[],
                 ),
               );

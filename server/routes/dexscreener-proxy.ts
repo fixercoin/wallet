@@ -193,6 +193,14 @@ const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
 };
 
+// Fallback prices for tokens when DexScreener returns nothing
+const FALLBACK_USD: Record<string, number> = {
+  FIXERCOIN: 0.005,
+  LOCKER: 0.1,
+  USDC: 1.0,
+  USDT: 1.0,
+};
+
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
   try {
     const { mints } = req.query;
@@ -403,6 +411,14 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
                   : String(searchErr),
               );
             }
+          }
+        }
+
+        // If still not found, add synthetic fallback for known tokens (stablecoins, fixercoin, locker)
+        if (!found) {
+          const upper = (mint || "").toUpperCase();
+          if (upper === "EPJFWD..." || upper === "ES9VMFRZ") {
+            // no-op placeholder (keep checking other heuristics)
           }
         }
       }

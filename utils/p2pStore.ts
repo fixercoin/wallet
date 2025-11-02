@@ -47,13 +47,33 @@ export type TradeRoom = {
 
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
-// In-memory store (per server instance) with on-disk persistence to data/p2p-store.json
-import fs from "fs";
-import fsPromises from "fs/promises";
-import path from "path";
+// In-memory store (per server instance) with optional on-disk persistence
+// Note: File system operations are skipped in Cloudflare Workers environment
+// For persistent storage in Workers, use the p2pStoreCf.ts implementation with D1
+let fsPromises: any = null;
+let DATA_FILE: string = "";
 
-const DATA_DIR = path.resolve(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
+// Lazy-load file system module only when needed in Node.js environment
+async function getFileSystemModules() {
+  if (fsPromises) return { fsPromises, DATA_FILE };
+
+  if (typeof window === "undefined" && typeof process !== "undefined") {
+    try {
+      const fs = await import("fs");
+      const fsp = await import("fs/promises");
+      const path = await import("path");
+      fsPromises = fsp;
+      DATA_FILE = path.join(
+        path.resolve(process.cwd(), "data"),
+        "p2p-store.json",
+      );
+    } catch {
+      // File system not available (Worker environment)
+    }
+  }
+
+  return { fsPromises, DATA_FILE };
+}
 
 type EasypaisaPayment = {
   id: string;
@@ -85,9 +105,18 @@ const store: {
 
 async function saveStoreToFile() {
   try {
-    await fsPromises.mkdir(DATA_DIR, { recursive: true });
-    await fsPromises.writeFile(
-      DATA_FILE,
+    const { fsPromises: fsp, DATA_FILE: dataFile } =
+      await getFileSystemModules();
+    if (!fsp || !dataFile) {
+      // File system not available (browser/Worker environment)
+      return;
+    }
+
+    const path = await import("path");
+    const dataDir = path.dirname(dataFile);
+    await fsp.mkdir(dataDir, { recursive: true });
+    await fsp.writeFile(
+      dataFile,
       JSON.stringify(
         {
           posts: store.posts,
@@ -110,24 +139,39 @@ async function saveStoreToFile() {
 }
 
 // Load persisted data on startup (best-effort)
-try {
-  if (fs.existsSync(DATA_FILE)) {
-    const raw = fs.readFileSync(DATA_FILE, "utf-8");
-    const parsed = JSON.parse(raw || "{}");
-    if (parsed && typeof parsed === "object") {
-      if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
-      if (parsed.messages && typeof parsed.messages === "object")
-        store.messages = parsed.messages;
-      if (parsed.proofs && typeof parsed.proofs === "object")
-        store.proofs = parsed.proofs;
-      if (Array.isArray(parsed.easypaisa))
-        store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
-      if (Array.isArray(parsed.rooms))
-        store.rooms = parsed.rooms as TradeRoom[];
+async function loadPersistedData() {
+  try {
+    const { fsPromises: fsp, DATA_FILE: dataFile } =
+      await getFileSystemModules();
+    if (!fsp || !dataFile) {
+      return;
     }
+
+    const fs = await import("fs");
+    if (fs.existsSync(dataFile)) {
+      const raw = fs.readFileSync(dataFile, "utf-8");
+      const parsed = JSON.parse(raw || "{}");
+      if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.posts))
+          store.posts = parsed.posts as P2PPost[];
+        if (parsed.messages && typeof parsed.messages === "object")
+          store.messages = parsed.messages;
+        if (parsed.proofs && typeof parsed.proofs === "object")
+          store.proofs = parsed.proofs;
+        if (Array.isArray(parsed.easypaisa))
+          store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
+        if (Array.isArray(parsed.rooms))
+          store.rooms = parsed.rooms as TradeRoom[];
+      }
+    }
+  } catch (e) {
+    // ignore
   }
-} catch (e) {
-  // ignore
+}
+
+// Load data on module initialization (in Node.js only)
+if (typeof window === "undefined" && typeof process !== "undefined") {
+  loadPersistedData().catch(() => {});
 }
 
 export function listPosts() {

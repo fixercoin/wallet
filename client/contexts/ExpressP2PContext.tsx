@@ -5,7 +5,6 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { p2pPriceService } from "@/lib/services/p2p-price";
 
 interface ExpressP2PContextType {
   exchangeRate: number;

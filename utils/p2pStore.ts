@@ -96,6 +96,10 @@ const store: {
 (globalThis as any).__P2P_STORE = store;
 
 async function saveStoreToFile() {
+  if (!fs || !fsPromises || !DATA_FILE) {
+    // File system not available (browser/Worker environment)
+    return;
+  }
   try {
     await fsPromises.mkdir(DATA_DIR, { recursive: true });
     await fsPromises.writeFile(
@@ -122,24 +126,26 @@ async function saveStoreToFile() {
 }
 
 // Load persisted data on startup (best-effort)
-try {
-  if (fs.existsSync(DATA_FILE)) {
-    const raw = fs.readFileSync(DATA_FILE, "utf-8");
-    const parsed = JSON.parse(raw || "{}");
-    if (parsed && typeof parsed === "object") {
-      if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
-      if (parsed.messages && typeof parsed.messages === "object")
-        store.messages = parsed.messages;
-      if (parsed.proofs && typeof parsed.proofs === "object")
-        store.proofs = parsed.proofs;
-      if (Array.isArray(parsed.easypaisa))
-        store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
-      if (Array.isArray(parsed.rooms))
-        store.rooms = parsed.rooms as TradeRoom[];
+if (fs && DATA_FILE) {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, "utf-8");
+      const parsed = JSON.parse(raw || "{}");
+      if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.posts)) store.posts = parsed.posts as P2PPost[];
+        if (parsed.messages && typeof parsed.messages === "object")
+          store.messages = parsed.messages;
+        if (parsed.proofs && typeof parsed.proofs === "object")
+          store.proofs = parsed.proofs;
+        if (Array.isArray(parsed.easypaisa))
+          store.easypaisa = parsed.easypaisa as EasypaisaPayment[];
+        if (Array.isArray(parsed.rooms))
+          store.rooms = parsed.rooms as TradeRoom[];
+      }
     }
+  } catch (e) {
+    // ignore
   }
-} catch (e) {
-  // ignore
 }
 
 export function listPosts() {

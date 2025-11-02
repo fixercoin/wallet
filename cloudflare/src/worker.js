@@ -186,7 +186,10 @@ export default {
 
     // Disable P2P orders endpoints handled elsewhere
     if (pathname.startsWith("/api/p2p/orders")) {
-      return json({ error: "P2P orders API is disabled on this server" }, { status: 410, headers: corsHeaders });
+      return json(
+        { error: "P2P orders API is disabled on this server" },
+        { status: 410, headers: corsHeaders },
+      );
     }
 
     // Wallet balance
@@ -398,7 +401,11 @@ export default {
     // Dedicated token price endpoint: /api/token/price
     if (pathname === "/api/token/price" && req.method === "GET") {
       try {
-        const tokenParam = (url.searchParams.get("token") || url.searchParams.get("symbol") || "FIXERCOIN").toUpperCase();
+        const tokenParam = (
+          url.searchParams.get("token") ||
+          url.searchParams.get("symbol") ||
+          "FIXERCOIN"
+        ).toUpperCase();
         const mintParam = url.searchParams.get("mint") || "";
 
         const TOKEN_MINTS = {
@@ -450,36 +457,46 @@ export default {
               const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
               if (pairAddress) {
                 try {
-                  const pairData = await fetchDexData(`/pairs/solana/${pairAddress}`);
-                  const maybePair = pairData?.pair || (pairData?.pairs || [])[0] || null;
+                  const pairData = await fetchDexData(
+                    `/pairs/solana/${pairAddress}`,
+                  );
+                  const maybePair =
+                    pairData?.pair || (pairData?.pairs || [])[0] || null;
                   if (maybePair && maybePair.priceUsd) {
                     priceUsd = Number(maybePair.priceUsd);
                   }
-                } catch (e) {
-                }
+                } catch (e) {}
               }
 
               if (priceUsd === null) {
                 try {
                   const tokenData = await fetchDexData(`/tokens/${mint}`);
-                  const searchPairs = Array.isArray(tokenData?.pairs) ? tokenData.pairs : [];
+                  const searchPairs = Array.isArray(tokenData?.pairs)
+                    ? tokenData.pairs
+                    : [];
 
                   let matchingPair = null;
 
                   if (searchPairs.length > 0) {
                     matchingPair = searchPairs.find(
-                      (p) => p?.baseToken?.address === mint && p?.chainId === "solana",
+                      (p) =>
+                        p?.baseToken?.address === mint &&
+                        p?.chainId === "solana",
                     );
 
                     if (!matchingPair) {
                       matchingPair = searchPairs.find(
-                        (p) => p?.quoteToken?.address === mint && p?.chainId === "solana",
+                        (p) =>
+                          p?.quoteToken?.address === mint &&
+                          p?.chainId === "solana",
                       );
                     }
 
                     if (!matchingPair) {
                       matchingPair = searchPairs.find(
-                        (p) => p?.baseToken?.address === mint || p?.quoteToken?.address === mint,
+                        (p) =>
+                          p?.baseToken?.address === mint ||
+                          p?.quoteToken?.address === mint,
                       );
                     }
 
@@ -487,13 +504,11 @@ export default {
                       priceUsd = Number(matchingPair.priceUsd);
                     }
                   }
-                } catch (e) {
-                }
+                } catch (e) {}
               }
             }
           }
-        } catch (e) {
-        }
+        } catch (e) {}
 
         if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
@@ -512,7 +527,10 @@ export default {
           { headers: corsHeaders },
         );
       } catch (e) {
-        return json({ error: "Failed to get token price", details: e?.message }, { status: 502, headers: corsHeaders });
+        return json(
+          { error: "Failed to get token price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
       }
     }
 
@@ -563,19 +581,28 @@ export default {
           return json(data, { headers: corsHeaders });
         } catch (e) {
           return json(
-            { error: "Failed to fetch Pumpfun quote", details: e?.message || String(e) },
+            {
+              error: "Failed to fetch Pumpfun quote",
+              details: e?.message || String(e),
+            },
             { status: 502, headers: corsHeaders },
           );
         }
       }
-      return json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
     }
 
     if (pathname === "/api/pumpfun/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
         if (!body || typeof body !== "object") {
-          return json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
         }
         const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
           method: "POST",
@@ -583,12 +610,21 @@ export default {
           body: JSON.stringify(body),
         });
         if (!resp.ok) {
-          return json({ error: "Pumpfun swap failed" }, { status: resp.status, headers: corsHeaders });
+          return json(
+            { error: "Pumpfun swap failed" },
+            { status: resp.status, headers: corsHeaders },
+          );
         }
         const data = await resp.json();
         return json(data, { headers: corsHeaders });
       } catch (e) {
-        return json({ error: "Failed to execute Pumpfun swap", details: e?.message || String(e) }, { status: 502, headers: corsHeaders });
+        return json(
+          {
+            error: "Failed to execute Pumpfun swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
       }
     }
 

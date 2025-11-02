@@ -502,7 +502,11 @@ export default {
     // Dedicated token price endpoint: /api/token/price
     if (pathname === "/api/token/price" && req.method === "GET") {
       try {
-        const tokenParam = (url.searchParams.get("token") || url.searchParams.get("symbol") || "FIXERCOIN").toUpperCase();
+        const tokenParam = (
+          url.searchParams.get("token") ||
+          url.searchParams.get("symbol") ||
+          "FIXERCOIN"
+        ).toUpperCase();
         const mintParam = url.searchParams.get("mint") || "";
 
         const TOKEN_MINTS: Record<string, string> = {
@@ -559,9 +563,12 @@ export default {
               const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
               if (pairAddress) {
                 try {
-                  const pairData = await fetchDexData(`/pairs/solana/${pairAddress}`);
+                  const pairData = await fetchDexData(
+                    `/pairs/solana/${pairAddress}`,
+                  );
                   // DexScreener pair format may vary; try common fields
-                  const maybePair = pairData?.pair || pairData?.pairs?.[0] || null;
+                  const maybePair =
+                    pairData?.pair || pairData?.pairs?.[0] || null;
                   if (maybePair && maybePair.priceUsd) {
                     priceUsd = Number(maybePair.priceUsd);
                   }
@@ -584,13 +591,16 @@ export default {
                     // prefer SOL pair
                     matchingPair = searchPairs.find(
                       (p: any) =>
-                        p?.baseToken?.address === mint && p?.chainId === "solana",
+                        p?.baseToken?.address === mint &&
+                        p?.chainId === "solana",
                     );
 
                     // try quote
                     if (!matchingPair) {
                       matchingPair = searchPairs.find(
-                        (p: any) => p?.quoteToken?.address === mint && p?.chainId === "solana",
+                        (p: any) =>
+                          p?.quoteToken?.address === mint &&
+                          p?.chainId === "solana",
                       );
                     }
 
@@ -598,7 +608,8 @@ export default {
                     if (!matchingPair) {
                       matchingPair = searchPairs.find(
                         (p: any) =>
-                          p?.baseToken?.address === mint || p?.quoteToken?.address === mint,
+                          p?.baseToken?.address === mint ||
+                          p?.quoteToken?.address === mint,
                       );
                     }
 
@@ -613,7 +624,10 @@ export default {
             }
 
             // As a last resort, try searching by symbol mapping
-            if ((priceUsd === null || !isFinite(priceUsd)) && MINT_TO_SEARCH_SYMBOL[mint]) {
+            if (
+              (priceUsd === null || !isFinite(priceUsd)) &&
+              MINT_TO_SEARCH_SYMBOL[mint]
+            ) {
               // In practice this will be handled by FALLBACK_USD below
             }
           }
@@ -638,7 +652,10 @@ export default {
           { headers: corsHeaders },
         );
       } catch (e: any) {
-        return json({ error: "Failed to get token price", details: e?.message }, { status: 502, headers: corsHeaders });
+        return json(
+          { error: "Failed to get token price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
       }
     }
 

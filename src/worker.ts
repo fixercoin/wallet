@@ -231,4 +231,40 @@ async function handlePrice(url: URL): Promise<Response> {
   }
 }
 
-// ... rest of the worker unchanged (routes dispatching etc.)
+// Main fetch handler for worker
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      const url = new URL(request.url);
+      const pathname = url.pathname || "/";
+
+      // Basic routing
+      if (pathname === "/health" || pathname === "/api/health") {
+        return await handleHealth();
+      }
+
+      if (pathname.startsWith("/api/wallet/balance") || pathname === "/wallet/balance") {
+        return await handleWalletBalance(url, env);
+      }
+
+      if (pathname.startsWith("/api/wallet/tokens") || pathname === "/wallet/tokens") {
+        return await handleWalletTokens(url, env);
+      }
+
+      if (pathname.startsWith("/api/price") || pathname === "/price") {
+        return await handlePrice(url);
+      }
+
+      // Default 404
+      return new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: CORS_HEADERS,
+      });
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: String(err?.message || err) }), {
+        status: 500,
+        headers: CORS_HEADERS,
+      });
+    }
+  },
+};

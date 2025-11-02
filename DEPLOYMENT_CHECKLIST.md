@@ -3,6 +3,7 @@
 ## Summary of Changes Made
 
 ✅ **Complete Cloudflare Worker** - All API routes implemented:
+
 - Wallet balance (`/api/wallet/balance`)
 - Token accounts (`/api/wallet/tokens`)
 - DexScreener integration (`/api/dexscreener/*`)
@@ -13,6 +14,7 @@
 - And many more...
 
 ✅ **API Client Fixed** - Points to correct Cloudflare Worker URL:
+
 - Production: `https://fixorium-proxy.khanbabusargodha.workers.dev`
 - Development: Uses local Express backend
 
@@ -38,11 +40,13 @@ The worker will be deployed to: `https://fixorium-proxy.khanbabusargodha.workers
 ### Step 2: Verify Cloudflare Deployment
 
 Test the health endpoint:
+
 ```bash
 curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -58,21 +62,25 @@ Expected response:
 ### Step 3: Test Key Endpoints
 
 #### Test Wallet Balance (requires a valid wallet address):
+
 ```bash
 curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/wallet/balance?publicKey=YOUR_WALLET_ADDRESS"
 ```
 
 #### Test Token Price:
+
 ```bash
 curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/dexscreener/tokens?mints=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 ```
 
 #### Test Jupiter Price:
+
 ```bash
 curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/jupiter/price?ids=So11111111111111111111111111111111111111112"
 ```
 
 #### Test Swap Quote:
+
 ```bash
 curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/swap/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000"
 ```
@@ -86,6 +94,7 @@ wrangler secret put SOLANA_RPC --config ./cloudflare/wrangler.toml
 ```
 
 Available secrets:
+
 - `SOLANA_RPC` - Custom Solana RPC endpoint (Helius, Alchemy, Moralis, etc.)
 - `COINMARKETCAP_API_KEY` - CoinMarketCap API key
 - `HELIUS_API_KEY` - Helius RPC API key
@@ -93,11 +102,13 @@ Available secrets:
 ### Step 5: Verify Frontend Configuration
 
 The `.env` file already points to the correct Cloudflare Worker:
+
 ```
 VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
 ```
 
 For local development, use `.env.local`:
+
 ```
 VITE_API_BASE_URL=
 # (empty = use local Express backend at /api)
@@ -121,11 +132,13 @@ npm run preview
 ## Available API Endpoints
 
 ### Wallet API
+
 - `GET /api/health` - Health check
 - `GET /api/wallet/balance?publicKey={address}` - Get SOL balance
 - `GET /api/wallet/tokens?publicKey={address}` - Get SPL token accounts
 
 ### Price APIs
+
 - `GET /api/price?mint={mint}` - Get token price from DexScreener
 - `GET /api/dexscreener/tokens?mints={mint1},{mint2}` - Get multiple token prices
 - `GET /api/dexscreener/search?q={query}` - Search for tokens
@@ -134,6 +147,7 @@ npm run preview
 - `GET /api/dextools/price?tokenAddress={mint}&chainId=solana` - DexTools price
 
 ### Swap APIs
+
 - `GET /api/swap/quote?inputMint={mint}&outputMint={mint}&amount={amount}` - Get swap quote (Jupiter fallback to Pump.fun)
 - `POST /api/swap/execute` - Execute swap transaction
 - `POST /api/pumpfun/quote` - Get Pump.fun swap quote
@@ -142,10 +156,12 @@ npm run preview
 - `POST /api/jupiter/swap` - Execute Jupiter swap
 
 ### Solana RPC
+
 - `POST /api/solana-rpc` - JSON-RPC proxy
 - `POST /api/rpc` - Alternative RPC endpoint
 
 ### Other APIs
+
 - `GET /api/token?mint={mint}` - Get token metadata
 - `GET /api/transaction?signature={sig}` - Get transaction details
 - `GET /api/account?publicKey={address}` - Get account info
@@ -157,11 +173,13 @@ npm run preview
 ## Troubleshooting
 
 ### "Route not found" errors
+
 - Verify the endpoint URL is correct
 - Check that the Cloudflare Worker is deployed: `wrangler deployments list --config ./cloudflare/wrangler.toml`
 - Check Cloudflare Worker logs: `wrangler tail --config ./cloudflare/wrangler.toml`
 
 ### "Failed to fetch balance" or "Failed to fetch price"
+
 - Verify the Solana RPC endpoint is working:
   ```bash
   curl -X POST https://api.mainnet-beta.solana.com \
@@ -172,10 +190,12 @@ npm run preview
 - Verify the RPC endpoint has not hit rate limits
 
 ### CORS errors
+
 - CORS headers are already configured in the Cloudflare Worker
 - If still getting CORS errors, ensure requests are being made through the proxy URL, not directly
 
 ### High rate limiting
+
 - Upgrade from public RPC endpoints to a paid provider (Helius, Alchemy, Moralis)
 - Set `SOLANA_RPC` environment variable with your private endpoint
 
@@ -184,12 +204,15 @@ npm run preview
 ## Performance Optimization
 
 ### Enable Caching
+
 The Cloudflare Worker uses in-memory caching for DexScreener data (30-second TTL). This is automatically enabled.
 
 ### Rate Limiting Protection
+
 The worker has built-in timeout protection (10-20 seconds depending on endpoint) to prevent hanging requests.
 
 ### Recommended Settings
+
 - Set `SOLANA_RPC` to a paid provider for better rate limits
 - Monitor Cloudflare Analytics for traffic patterns
 - Consider using Cloudflare KV for persistent caching across requests
@@ -199,16 +222,19 @@ The worker has built-in timeout protection (10-20 seconds depending on endpoint)
 ## Monitoring
 
 ### Check Cloudflare Dashboard
+
 1. Go to https://dash.cloudflare.com/
 2. Select your account and worker
 3. View metrics: Requests, Errors, CPU Time
 
 ### View Worker Logs
+
 ```bash
 wrangler tail --config ./cloudflare/wrangler.toml
 ```
 
 ### Frontend Error Monitoring
+
 Check browser console for API errors. The app logs API errors to the console with the prefix `[API Error]`.
 
 ---
@@ -250,6 +276,7 @@ If you encounter issues:
 ---
 
 For more information, see:
+
 - `QUICK_SETUP.md` - Quick setup guide
 - `INTEGRATION_GUIDE.md` - Frontend integration examples
 - `API_PROXY_CONFIGURATION.md` - API proxy details

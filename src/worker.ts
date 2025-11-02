@@ -85,14 +85,21 @@ async function handleHealth(): Promise<Response> {
   const upstream: Record<string, string> = {};
   const tests = [
     ["dexscreener", `${DEXSCREENER_BASE}/pairs/solana`],
-    ["jupiter", `${JUPITER_PRICE_BASE}/price?ids=So11111111111111111111111111111111111111112`],
+    [
+      "jupiter",
+      `${JUPITER_PRICE_BASE}/price?ids=So11111111111111111111111111111111111111112`,
+    ],
     ["pumpfun", PUMPFUN_QUOTE],
   ];
 
   await Promise.allSettled(
     tests.map(async ([name, endpoint]) => {
       try {
-        const r = await timeoutFetch(endpoint, { method: "GET", headers: browserHeaders() }, 5000);
+        const r = await timeoutFetch(
+          endpoint,
+          { method: "GET", headers: browserHeaders() },
+          5000,
+        );
         upstream[name] = r.ok ? "ok" : `fail:${r.status}`;
       } catch (e: any) {
         upstream[name] = `fail:${String(e?.message || e).slice(0, 50)}`;
@@ -111,16 +118,13 @@ async function handleHealth(): Promise<Response> {
 }
 
 // Wallet balance - SOL
-async function handleWalletBalance(
-  url: URL,
-  env: Env,
-): Promise<Response> {
+async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
-    return new Response(
-      JSON.stringify({ error: "publicKey required" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
+    return new Response(JSON.stringify({ error: "publicKey required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
   }
 
   const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
@@ -155,16 +159,13 @@ async function handleWalletBalance(
 }
 
 // Wallet tokens - SPL accounts
-async function handleWalletTokens(
-  url: URL,
-  env: Env,
-): Promise<Response> {
+async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
-    return new Response(
-      JSON.stringify({ error: "publicKey required" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
+    return new Response(JSON.stringify({ error: "publicKey required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
   }
 
   const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
@@ -208,10 +209,10 @@ async function handleWalletTokens(
 async function handlePrice(url: URL): Promise<Response> {
   const mint = url.searchParams.get("mint");
   if (!mint) {
-    return new Response(
-      JSON.stringify({ error: "mint required" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
+    return new Response(JSON.stringify({ error: "mint required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
   }
 
   try {
@@ -242,10 +243,10 @@ async function handlePrice(url: URL): Promise<Response> {
 async function handleToken(url: URL): Promise<Response> {
   const mint = url.searchParams.get("mint");
   if (!mint) {
-    return new Response(
-      JSON.stringify({ error: "mint required" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
+    return new Response(JSON.stringify({ error: "mint required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
   }
 
   try {
@@ -273,7 +274,9 @@ async function handleToken(url: URL): Promise<Response> {
     });
     if (ds.ok) {
       const j = await safeJson(ds);
-      return new Response(JSON.stringify({ token: j }), { headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ token: j }), {
+        headers: CORS_HEADERS,
+      });
     }
 
     return new Response(
@@ -299,17 +302,21 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
   }
 
   try {
-    const mintList = mints.split(",").map((m) => m.trim()).slice(0, 20).join(",");
+    const mintList = mints
+      .split(",")
+      .map((m) => m.trim())
+      .slice(0, 20)
+      .join(",");
     const r = await timeoutFetch(
       `${DEXSCREENER_BASE}/tokens/${mintList}`,
       { method: "GET", headers: browserHeaders() },
       15000,
     );
     if (!r.ok) {
-      return new Response(
-        JSON.stringify({ error: `HTTP ${r.status}` }),
-        { status: 502, headers: CORS_HEADERS },
-      );
+      return new Response(JSON.stringify({ error: `HTTP ${r.status}` }), {
+        status: 502,
+        headers: CORS_HEADERS,
+      });
     }
     const j = await r.json();
     return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
@@ -325,10 +332,10 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
 async function handleDexscreenerSearch(url: URL): Promise<Response> {
   const q = url.searchParams.get("q");
   if (!q) {
-    return new Response(
-      JSON.stringify({ error: "q (query) required" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
+    return new Response(JSON.stringify({ error: "q (query) required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
   }
 
   try {
@@ -338,16 +345,18 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
       10000,
     );
     if (!r.ok) {
-      return new Response(
-        JSON.stringify({ pairs: [] }),
-        { headers: CORS_HEADERS },
-      );
+      return new Response(JSON.stringify({ pairs: [] }), {
+        headers: CORS_HEADERS,
+      });
     }
     const j = await r.json();
     return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
   } catch (e: any) {
     return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200), pairs: [] }),
+      JSON.stringify({
+        error: String(e?.message || e).slice(0, 200),
+        pairs: [],
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
@@ -362,24 +371,25 @@ async function handleDexscreenerTrending(): Promise<Response> {
       15000,
     );
     if (!r.ok) {
-      return new Response(
-        JSON.stringify({ pairs: [] }),
-        { status: 502, headers: CORS_HEADERS },
-      );
+      return new Response(JSON.stringify({ pairs: [] }), {
+        status: 502,
+        headers: CORS_HEADERS,
+      });
     }
     const j = await r.json();
     // Sort by volume and take top 50
     const trending = (j.pairs || [])
-      .sort(
-        (a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0),
-      )
+      .sort((a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
       .slice(0, 50);
     return new Response(JSON.stringify({ pairs: trending }), {
       headers: CORS_HEADERS,
     });
   } catch (e: any) {
     return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200), pairs: [] }),
+      JSON.stringify({
+        error: String(e?.message || e).slice(0, 200),
+        pairs: [],
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
@@ -402,16 +412,19 @@ async function handleJupiterPrice(url: URL): Promise<Response> {
       10000,
     );
     if (!r.ok) {
-      return new Response(
-        JSON.stringify({ data: {} }),
-        { status: 502, headers: CORS_HEADERS },
-      );
+      return new Response(JSON.stringify({ data: {} }), {
+        status: 502,
+        headers: CORS_HEADERS,
+      });
     }
     const j = await r.json();
     return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
   } catch (e: any) {
     return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200), data: {} }),
+      JSON.stringify({
+        error: String(e?.message || e).slice(0, 200),
+        data: {},
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
@@ -441,7 +454,10 @@ async function handleJupiterTokens(url: URL): Promise<Response> {
       } catch {}
     }
 
-    return new Response(JSON.stringify([]), { status: 502, headers: CORS_HEADERS });
+    return new Response(JSON.stringify([]), {
+      status: 502,
+      headers: CORS_HEADERS,
+    });
   } catch (e: any) {
     return new Response(
       JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
@@ -631,10 +647,10 @@ async function handleSwapQuote(url: URL): Promise<Response> {
     }
   } catch {}
 
-  return new Response(
-    JSON.stringify({ error: "no_quote_available" }),
-    { status: 502, headers: CORS_HEADERS },
-  );
+  return new Response(JSON.stringify({ error: "no_quote_available" }), {
+    status: 502,
+    headers: CORS_HEADERS,
+  });
 }
 
 // Swap execute (send tx)

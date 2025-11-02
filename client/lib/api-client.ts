@@ -1,5 +1,6 @@
 // Production Cloudflare Worker deployment
-const DEFAULT_WORKER_BASE = "https://fixorium-proxy.khanbabusargodha.workers.dev";
+const DEFAULT_WORKER_BASE =
+  "https://fixorium-proxy.khanbabusargodha.workers.dev";
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";
@@ -13,7 +14,10 @@ const determineBase = (): string => {
   if (envBase) return envBase;
 
   // Check if running on localhost (development)
-  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
     // Use local dev server
     return "";
   }

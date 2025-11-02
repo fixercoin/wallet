@@ -12,6 +12,7 @@ interface PriceCardProps {
   onToggleBalance: () => void;
   isLoading?: boolean;
   withinCard?: boolean;
+  variant?: "light" | "dark";
 }
 
 export const PriceCard: React.FC<PriceCardProps> = ({
@@ -21,6 +22,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
   onToggleBalance,
   isLoading = false,
   withinCard = false,
+  variant = "dark",
 }) => {
   const currentPrice = token.price || 0;
   const priceChangePercent =

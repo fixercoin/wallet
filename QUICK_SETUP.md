@@ -74,7 +74,6 @@ This runs:
 
 ```bash
 HELIUS_API_KEY=xxx \
-COINMARKETCAP_API_KEY=yyy \
 CF_ACCOUNT_ID=zzz \
 wrangler publish --config ./cloudflare/wrangler.toml --env production
 ```

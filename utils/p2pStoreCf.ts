@@ -181,7 +181,6 @@ export async function deletePostCF(
   id: string,
   adminWalletHeader?: string,
 ) {
-
   await ensureSchema(db);
   const existing = await getPostCF(db, id);
   if (!existing) return { error: "not_found", status: 404 } as const;

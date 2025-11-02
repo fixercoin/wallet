@@ -286,7 +286,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Also proactively fetch balance & tokens for the selected publicKey
       (async () => {
         try {
-          console.log(`[WalletContext] Proactively fetching balance for ${publicKey}`);
+          console.log(
+            `[WalletContext] Proactively fetching balance for ${publicKey}`,
+          );
           const newBalance = await getBalance(publicKey);
           if (typeof newBalance === "number" && !isNaN(newBalance)) {
             setBalance(newBalance);
@@ -298,7 +300,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           // Refresh tokens based on the newly selected publicKey
           await refreshTokens();
         } catch (err) {
-          console.error("[WalletContext] Error selecting wallet and refreshing:", err);
+          console.error(
+            "[WalletContext] Error selecting wallet and refreshing:",
+            err,
+          );
           setError("Failed to refresh selected wallet");
           setBalance(0);
           balanceRef.current = 0;

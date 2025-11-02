@@ -434,8 +434,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-
-
   const formatBalance = (amount: number | undefined): string => {
     if (!amount || isNaN(amount)) return "0.00";
     return amount.toLocaleString(undefined, {
@@ -1087,7 +1085,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onOpenChange={setShowAddTokenDialog}
         onTokenAdd={addCustomToken}
       />
-
     </div>
   );
 };

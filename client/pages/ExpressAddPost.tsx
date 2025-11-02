@@ -39,7 +39,6 @@ export default function ExpressAddPost() {
   const [sellerAccountName, setSellerAccountName] = useState<string>("");
   const [sellerAccountNumber, setSellerAccountNumber] = useState<string>("");
 
-
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState<string | null>(null);
 
@@ -425,7 +424,6 @@ export default function ExpressAddPost() {
             </button>
           </div>
         </div>
-
 
         {/* Wallet address for BUY */}
         {type === "buy" && (

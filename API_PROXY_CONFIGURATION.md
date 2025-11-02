@@ -5,6 +5,7 @@
 The Fixorium Wallet frontend has been configured to route **ALL** API calls through a single base URL (`https://wallet.fixorium.com.pk/api`). The Cloudflare Worker proxy internally handles connections to all external services including Solana RPC, Pump.fun, Dexscreener, Jupiter, and other blockchain data providers.
 
 This architecture ensures:
+
 - ✅ No direct external API calls from the frontend
 - ✅ Centralized request handling and authentication
 - ✅ Protection against regional blocking and CORS issues
@@ -37,7 +38,8 @@ POST /api/solana-rpc                           # JSON-RPC calls
 POST /api/rpc                                  # Alternative RPC endpoint
 ```
 
-**Used by**: 
+**Used by**:
+
 - `client/lib/wallet-proxy.ts`
 - `client/lib/services/solana-rpc.ts`
 - `client/components/wallet/Dashboard.tsx`
@@ -54,6 +56,7 @@ GET  /api/jupiter/tokens?type=strict|all       # Get token lists
 ```
 
 **Used by**:
+
 - `client/lib/services/jupiter.ts`
 - `client/components/ui/SwapInterface.tsx`
 - `client/components/wallet/SwapInterface.tsx`
@@ -72,10 +75,12 @@ GET  /api/pumpfun/pool?base={mint}&quote={mint}
 ```
 
 **Used by**:
+
 - `client/lib/services/pumpswap.ts`
 - `client/components/wallet/Dashboard.tsx` (health check)
 
 **Health Check Usage**:
+
 ```javascript
 // Instead of /api/ping (which doesn't exist), use:
 const res = await fetch("/api/pumpfun/quote", {
@@ -85,7 +90,7 @@ const res = await fetch("/api/pumpfun/quote", {
     inputMint: "So11111111111111111111111111111111111111112",
     outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     amount: 1000000,
-  })
+  }),
 });
 ```
 
@@ -100,6 +105,7 @@ GET /api/dexscreener/trending
 ```
 
 **Used by**:
+
 - `client/lib/services/dexscreener.ts`
 - `client/pages/buy-now.tsx`
 - `client/pages/BuyCrypto.tsx`
@@ -115,6 +121,7 @@ GET /api/coinmarketcap/quotes?symbols={symbol1},{symbol2}...
 ```
 
 **Used by**:
+
 - `client/lib/services/coinmarketcap.ts`
 
 **Note**: API key is passed via environment variable on the server, not exposed to frontend.
@@ -131,6 +138,7 @@ GET /api/dextools/price?tokenAddress={mint}&chainId=solana
 ```
 
 **Used by**:
+
 - `client/lib/services/sol-price.ts`
 - `client/pages/buy-now.tsx`
 - `client/pages/sell-now.tsx`
@@ -156,6 +164,7 @@ GET  /api/p2p/rooms/{roomId}/messages
 ```
 
 **Used by**:
+
 - `client/lib/p2p.ts`
 - `client/lib/p2p-api.ts`
 - `client/hooks/useDurableRoom.ts`
@@ -236,6 +245,7 @@ const fullUrl = resolveApiUrl("jupiter/quote?inputMint=...");
 ### ❌ Do NOT Call These External APIs Directly
 
 The frontend should **NEVER** make direct calls to:
+
 - `https://api.shyft.to` - Shyft API
 - `https://mainnet.helius-rpc.com` - Helius RPC
 - `https://lite-api.jup.ag` - Jupiter API
@@ -258,13 +268,19 @@ All these calls must go through the Cloudflare Worker proxy at `https://wallet.f
 ### Example: Correct vs Incorrect
 
 **❌ INCORRECT - Direct External Call**
+
 ```javascript
-const res = await fetch("https://api.dexscreener.com/latest/dex/tokens/EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6");
+const res = await fetch(
+  "https://api.dexscreener.com/latest/dex/tokens/EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6",
+);
 ```
 
 **✅ CORRECT - Through Proxy**
+
 ```javascript
-const res = await fetch("/api/dexscreener/tokens?mints=EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6");
+const res = await fetch(
+  "/api/dexscreener/tokens?mints=EPjFWaLb3iNxoeiKCBL7E3em9nYvRyBjBP9v4G29jkn6",
+);
 ```
 
 ---
@@ -286,7 +302,8 @@ const res = await fetch("/api/dexscreener/tokens?mints=EPjFWaLb3iNxoeiKCBL7E3em9
 
 **Cause**: Endpoint path is incorrect or not implemented on the Cloudflare Worker.
 
-**Solution**: 
+**Solution**:
+
 1. Verify the endpoint path matches the proxy route
 2. Check Cloudflare Worker logs
 3. Ensure POST requests use correct headers: `"Content-Type": "application/json"`

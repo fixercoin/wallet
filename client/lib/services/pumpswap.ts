@@ -47,7 +47,10 @@ async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
 }
 
 // Discover a PumpSwap pool by token pair via proxy endpoint
-export async function getPoolForPair(inputMint: string, outputMint: string): Promise<PumpPoolInfo | null> {
+export async function getPoolForPair(
+  inputMint: string,
+  outputMint: string,
+): Promise<PumpPoolInfo | null> {
   try {
     // Call proxy endpoint to get pool info
     // The Cloudflare Worker internally handles pool discovery through Shyft
@@ -70,12 +73,30 @@ export async function getPoolForPair(inputMint: string, outputMint: string): Pro
     const quoteDecimals = pool.quoteDecimals ?? pool.quoteMintDecimals ?? 9;
 
     // Reserves might be provided as raw amounts; attempt to parse
-    const baseReserveRaw = parseFloat(pool.baseReserve || pool.baseAmount || pool.reserveA || pool.reserve0 || 0);
-    const quoteReserveRaw = parseFloat(pool.quoteReserve || pool.quoteAmount || pool.reserveB || pool.reserve1 || 0);
+    const baseReserveRaw = parseFloat(
+      pool.baseReserve ||
+        pool.baseAmount ||
+        pool.reserveA ||
+        pool.reserve0 ||
+        0,
+    );
+    const quoteReserveRaw = parseFloat(
+      pool.quoteReserve ||
+        pool.quoteAmount ||
+        pool.reserveB ||
+        pool.reserve1 ||
+        0,
+    );
 
     // Convert to human-readable by dividing by 10^decimals if reserves appear large
-    const baseReserve = baseReserveRaw > 1e6 ? baseReserveRaw / Math.pow(10, baseDecimals) : baseReserveRaw;
-    const quoteReserve = quoteReserveRaw > 1e6 ? quoteReserveRaw / Math.pow(10, quoteDecimals) : quoteReserveRaw;
+    const baseReserve =
+      baseReserveRaw > 1e6
+        ? baseReserveRaw / Math.pow(10, baseDecimals)
+        : baseReserveRaw;
+    const quoteReserve =
+      quoteReserveRaw > 1e6
+        ? quoteReserveRaw / Math.pow(10, quoteDecimals)
+        : quoteReserveRaw;
 
     const info: PumpPoolInfo = {
       address: pool.poolAddress || pool.address || pool.id || "",
@@ -117,10 +138,14 @@ export function computeSwapOutput(
 
   // price impact approximated vs marginal price
   const midPrice = y / x; // output per input
-  const effectivePrice = outputAmount > 0 ? inputAmountHuman / outputAmount : midPrice;
+  const effectivePrice =
+    outputAmount > 0 ? inputAmountHuman / outputAmount : midPrice;
   const priceImpactPct = ((midPrice - effectivePrice) / midPrice) * 100;
 
-  return { outputAmount: Math.max(0, outputAmount), priceImpactPct: Math.abs(priceImpactPct) };
+  return {
+    outputAmount: Math.max(0, outputAmount),
+    priceImpactPct: Math.abs(priceImpactPct),
+  };
 }
 
 // Placeholder: building a PumpSwap program transaction typically requires program-specific
@@ -132,7 +157,9 @@ export async function buildSwapTransactionPlaceholder(
   inputIsBase: boolean,
   userPublicKey: string,
 ): Promise<null> {
-  console.warn("buildSwapTransactionPlaceholder called - PumpSwap program transaction building is not implemented client-side.");
+  console.warn(
+    "buildSwapTransactionPlaceholder called - PumpSwap program transaction building is not implemented client-side.",
+  );
   // Return null to indicate not available
   return null;
 }

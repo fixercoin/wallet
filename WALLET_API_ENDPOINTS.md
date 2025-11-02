@@ -67,15 +67,6 @@ GET /api/dexscreener/price?token={tokenAddress}
 
 - `token` (required): Token contract address
 
-### CoinMarketCap Price Quotes
-
-```
-GET /api/coinmarketcap/quotes?symbols=SOL,USDC,BTC
-```
-
-**Parameters:**
-
-- `symbols` (required): Comma-separated token symbols
 
 ---
 

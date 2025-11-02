@@ -121,7 +121,6 @@ GET /api/dexscreener/trending
 GET /api/sol/price                             # SOL price data
 GET /api/exchange-rate?token={symbol}          # Exchange rates
 GET /api/token/price?symbol={symbol}           # Token prices
-GET /api/dextools/price?tokenAddress={mint}&chainId=solana
 ```
 
 **Used by**:

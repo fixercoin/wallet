@@ -759,6 +759,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     ];
     localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
 
+    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
+    try {
+      const hiddenTokens = JSON.parse(
+        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+      ) as string[];
+      const filtered = hiddenTokens.filter((m) => m !== token.mint);
+      if (filtered.length !== hiddenTokens.length) {
+        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
+      }
+    } catch (e) {
+      // ignore
+    }
+
     if (wallet) refreshTokens();
   };
 

@@ -194,7 +194,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   variant="ghost"
                   className="w-full h-12 rounded-xl text-black hover:bg-[#16a34a]/10"
                 >
-                  <span className="mr-2">*</span>
                   IMPORT WALLET
                 </Button>
 

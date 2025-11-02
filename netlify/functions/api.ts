@@ -348,6 +348,7 @@ export const handler = async (event: any) => {
 
       const PKR_PER_USD = 280; // base FX
       const MARKUP = 1.0425; // 4.25%
+      const MIN_REALISTIC_PRICE = 0.00001; // minimum realistic price threshold
 
       let priceUsd: number | null = null;
       try {
@@ -360,13 +361,19 @@ export const handler = async (event: any) => {
             pairs.length > 0 && pairs[0]?.priceUsd
               ? Number(pairs[0].priceUsd)
               : null;
-          if (typeof price === "number" && isFinite(price) && price > 0) {
+          // Only use price if it's a realistic value (above minimum threshold)
+          if (
+            typeof price === "number" &&
+            isFinite(price) &&
+            price >= MIN_REALISTIC_PRICE
+          ) {
             priceUsd = price;
           }
         }
       } catch {}
 
-      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+      // Fall back to hardcoded prices if DexScreener data is invalid, zero, or too small
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd < MIN_REALISTIC_PRICE) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
       }
 

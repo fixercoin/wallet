@@ -1007,7 +1007,10 @@ export const handler = async (event: any) => {
 
     // Health check: /api/ping
     if (path === "/ping" && method === "GET") {
-      return jsonResponse(200, { status: "ok", timestamp: new Date().toISOString() });
+      return jsonResponse(200, {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
@@ -1079,7 +1082,9 @@ export const handler = async (event: any) => {
       const slippageBps = event.queryStringParameters?.slippageBps || "50";
 
       if (!inputMint || !outputMint || !amount) {
-        return jsonResponse(400, { error: "Missing required parameters: inputMint, outputMint, amount" });
+        return jsonResponse(400, {
+          error: "Missing required parameters: inputMint, outputMint, amount",
+        });
       }
 
       try {
@@ -1143,7 +1148,9 @@ export const handler = async (event: any) => {
         });
         clearTimeout(timeout);
         if (!resp.ok) {
-          return jsonResponse(resp.status, { error: "Jupiter tokens API error" });
+          return jsonResponse(resp.status, {
+            error: "Jupiter tokens API error",
+          });
         }
         const data = await resp.json();
         return jsonResponse(200, data);
@@ -1197,7 +1204,9 @@ export const handler = async (event: any) => {
       try {
         const cmcApiKey = process.env.COINMARKETCAP_API_KEY || "";
         if (!cmcApiKey) {
-          return jsonResponse(500, { error: "CoinMarketCap API key not configured" });
+          return jsonResponse(500, {
+            error: "CoinMarketCap API key not configured",
+          });
         }
 
         const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbols)}&convert=USD`;
@@ -1214,7 +1223,9 @@ export const handler = async (event: any) => {
         clearTimeout(timeout);
 
         if (!resp.ok) {
-          return jsonResponse(resp.status, { error: "CoinMarketCap API error" });
+          return jsonResponse(resp.status, {
+            error: "CoinMarketCap API error",
+          });
         }
 
         const data = await resp.json();
@@ -1249,7 +1260,9 @@ export const handler = async (event: any) => {
         }
 
         if (!inputMint || !outputMint || !amount) {
-          return jsonResponse(400, { error: "Missing required parameters: inputMint, outputMint, amount" });
+          return jsonResponse(400, {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          });
         }
 
         try {

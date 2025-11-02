@@ -23,6 +23,7 @@ import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
+import WalletHistory from "./pages/WalletHistory";
 import NotFound from "./pages/NotFound";
 import OrderBook from "./pages/OrderBook";
 import BuyTrade from "./pages/BuyTrade";
@@ -62,6 +63,7 @@ function AppRoutes() {
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
+      <Route path="/wallet/history" element={<WalletHistory />} />
       <Route path="/express/orderbook" element={<OrderBook />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/express/pay" element={<ExpressPay />} />

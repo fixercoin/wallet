@@ -1375,6 +1375,147 @@ export default {
       }
     }
 
+    // Health check: /api/ping
+    if (pathname === "/api/ping" && req.method === "GET") {
+      return json(
+        { status: "ok", timestamp: new Date().toISOString() },
+        { headers: corsHeaders },
+      );
+    }
+
+    // Pump.fun swap: /api/pumpfun/swap (POST)
+    if (pathname === "/api/pumpfun/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: "Pumpfun swap failed" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to execute Pumpfun swap",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Solana RPC proxy: /api/solana-rpc (POST)
+    if (pathname === "/api/solana-rpc" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const RPC_ENDPOINTS = [
+          "https://api.mainnet-beta.solana.com",
+          "https://rpc.ankr.com/solana",
+          "https://solana-mainnet.rpc.extrnode.com",
+          "https://solana.blockpi.network/v1/rpc/public",
+          "https://solana.publicnode.com",
+        ];
+
+        const methodName = body?.method;
+        const params = body?.params ?? [];
+        const id = body?.id ?? Date.now();
+
+        if (!methodName || typeof methodName !== "string") {
+          return json(
+            { error: "Missing RPC method" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const payload = {
+          jsonrpc: "2.0",
+          id,
+          method: methodName,
+          params,
+        };
+
+        let lastError: Error | null = null;
+
+        for (const endpoint of RPC_ENDPOINTS) {
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
+
+            if (!resp.ok) {
+              if ([429, 502, 503].includes(resp.status)) continue;
+              const t = await resp.text().catch(() => "");
+              throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+            }
+
+            const data = await resp.text();
+            return new Response(data, {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+                ...corsHeaders,
+              },
+            });
+          } catch (e) {
+            lastError = e instanceof Error ? e : new Error(String(e));
+          }
+        }
+
+        return json(
+          {
+            error: "All RPC endpoints failed",
+            details: lastError?.message || "Unknown error",
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: e?.message || "RPC call failed", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     return json({ error: "Not found" }, { status: 404, headers: corsHeaders });
   },
 };

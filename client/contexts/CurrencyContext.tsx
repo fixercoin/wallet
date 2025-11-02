@@ -31,7 +31,10 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({
   const DEFAULT_RATE = 292.59;
   const [exchangeRate, setExchangeRate] = useState<number>(() => {
     try {
-      const saved = typeof window !== "undefined" ? localStorage.getItem(EXCHANGE_RATE_KEY) : null;
+      const saved =
+        typeof window !== "undefined"
+          ? localStorage.getItem(EXCHANGE_RATE_KEY)
+          : null;
       const n = saved ? Number(saved) : NaN;
       return !isNaN(n) && n > 0 ? n : DEFAULT_RATE;
     } catch {
@@ -43,7 +46,8 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({
     if (rate > 0 && !isNaN(rate)) {
       setExchangeRate(rate);
       try {
-        if (typeof window !== "undefined") localStorage.setItem(EXCHANGE_RATE_KEY, String(rate));
+        if (typeof window !== "undefined")
+          localStorage.setItem(EXCHANGE_RATE_KEY, String(rate));
       } catch {}
     }
   };

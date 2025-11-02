@@ -407,7 +407,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
         // Fetch prices exclusively from DexScreener via client service (proxy)
         try {
-          const allMintsToFetch = Array.from(new Set(tokenMints.filter(Boolean)));
+          const allMintsToFetch = Array.from(
+            new Set(tokenMints.filter(Boolean)),
+          );
 
           const dexTokens =
             await dexscreenerAPI.getTokensByMints(allMintsToFetch);
@@ -443,14 +445,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
-        
         const solMint = "So11111111111111111111111111111111111111112";
         const hasSolPrice = prices[solMint];
 
         if (Object.keys(prices).length > 0) {
           priceSource = "dexscreener";
         } else {
-          throw new Error("DexScreener returned no prices, falling back to Jupiter");
+          throw new Error(
+            "DexScreener returned no prices, falling back to Jupiter",
+          );
         }
       } catch (dexError) {
         try {
@@ -470,7 +473,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
-      
       // Load hidden tokens list
       const hiddenTokens = JSON.parse(
         localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",

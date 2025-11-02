@@ -204,7 +204,6 @@ All endpoints are available through both deployment methods:
 ### API returns 500 or timeout
 
 - Check Solana RPC endpoint is working
-- Verify CoinMarketCap API key (if set)
 - Check Cloudflare/Netlify logs
 
 ### CORS errors

@@ -1,19 +1,8 @@
 // Netlify Functions entry to handle /api/* routes
 
 import {
-  listPosts,
-  getPost,
-  createOrUpdatePost,
-  listTradeMessages,
-  listRecentTradeMessages,
-  addTradeMessage,
-  uploadProof,
   addEasypaisaPayment,
   listEasypaisaPayments,
-  listTradeRooms,
-  getTradeRoom,
-  createTradeRoom,
-  updateTradeRoom,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [

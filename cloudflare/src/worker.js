@@ -124,7 +124,7 @@ async function fetchDexData(path) {
           (typeof p.priceChange.h24 === "number" ||
             typeof p.priceChange.h6 === "number" ||
             typeof p.priceChange.h1 === "number" ||
-            typeof p.priceChange.m5 === "number")
+            typeof p.priceChange.m5 === "number"),
       );
     if (hasPriceChangeData) {
       return cached.data;
@@ -169,7 +169,7 @@ export default {
     ) {
       return json(
         { status: "ok", timestamp: new Date().toISOString() },
-        { headers: corsHeaders }
+        { headers: corsHeaders },
       );
     }
 
@@ -183,7 +183,7 @@ export default {
       if (!pk) {
         return json(
           { error: "Missing 'publicKey' parameter" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
 
@@ -191,7 +191,7 @@ export default {
         const rpc = await callRpc("getBalance", [pk], Date.now());
         const j = JSON.parse(String(rpc?.body || "{}"));
         const lamports =
-          typeof j.result === "number" ? j.result : j?.result?.value ?? null;
+          typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
         if (typeof lamports === "number" && isFinite(lamports)) {
           const balance = lamports / 1000000000;
           return json(
@@ -200,12 +200,12 @@ export default {
               balance,
               balanceLamports: lamports,
             },
-            { headers: corsHeaders }
+            { headers: corsHeaders },
           );
         }
         return json(
           { error: "Invalid RPC response" },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       } catch (e) {
         return json(
@@ -213,7 +213,7 @@ export default {
             error: "Failed to fetch balance",
             details: e instanceof Error ? e.message : String(e),
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -226,7 +226,7 @@ export default {
         if (!body || typeof body !== "object") {
           return json(
             { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -237,7 +237,7 @@ export default {
         if (!methodName || typeof methodName !== "string") {
           return json(
             { error: "Missing RPC method" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -286,12 +286,12 @@ export default {
 
         return json(
           { error: "All RPC endpoints failed", details: lastError?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       } catch (e) {
         return json(
           { error: "Failed to execute RPC call", details: e?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -302,7 +302,7 @@ export default {
       if (!mints) {
         return json(
           { error: "Missing 'mints' query parameter" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
       const rawMints = String(mints)
@@ -313,7 +313,7 @@ export default {
       if (uniqSorted.length === 0) {
         return json(
           { error: "No valid token mints provided" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
       try {
@@ -326,12 +326,12 @@ export default {
             schemaVersion: data?.schemaVersion || "1.0.0",
             pairs,
           },
-          { headers: corsHeaders }
+          { headers: corsHeaders },
         );
       } catch (e) {
         return json(
           { error: "Failed to fetch DexScreener data", details: e?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -356,7 +356,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: `DexScreener API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
 
@@ -373,7 +373,7 @@ export default {
       } catch (e) {
         return json(
           { error: "Failed to fetch SOL price", details: e?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -385,7 +385,7 @@ export default {
       if (!mint) {
         return json(
           { error: "Missing 'mint' parameter" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
 
@@ -401,7 +401,7 @@ export default {
               Accept: "application/json",
             },
             signal: controller.signal,
-          }
+          },
         );
 
         clearTimeout(timeoutId);
@@ -409,7 +409,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: `Pump.fun API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
 
@@ -418,7 +418,7 @@ export default {
       } catch (e) {
         return json(
           { error: "Failed to fetch swap quote", details: e?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -431,16 +431,24 @@ export default {
         if (!body || typeof body !== "object") {
           return json(
             { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
-        const { mint, amount, decimals, slippage, txVersion, priorityFee, wallet } = body;
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body;
 
         if (!mint || !amount) {
           return json(
             { error: "Missing required fields: mint, amount" },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: corsHeaders },
           );
         }
 
@@ -476,7 +484,7 @@ export default {
               error: `Pump.fun API returned ${resp.status}`,
               details: errorText,
             },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
 
@@ -488,7 +496,7 @@ export default {
             error: "Failed to execute swap",
             details: e?.message,
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -504,7 +512,7 @@ export default {
           {
             error: "Missing required parameters: inputMint, outputMint, amount",
           },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
 
@@ -530,7 +538,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: `Jupiter API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
 
@@ -542,7 +550,7 @@ export default {
             error: "Failed to fetch Jupiter swap quote",
             details: e?.message,
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -553,7 +561,7 @@ export default {
       if (!ids) {
         return json(
           { error: "Missing 'ids' query parameter" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
       try {
@@ -568,7 +576,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: "Jupiter API error" },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
         const data = await resp.json();
@@ -579,7 +587,7 @@ export default {
             error: "Failed to fetch Jupiter prices",
             details: e?.message || String(e),
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -596,7 +604,7 @@ export default {
           {
             error: "Missing required parameters: inputMint, outputMint, amount",
           },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
 
@@ -612,7 +620,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: "Jupiter API error" },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
         const data = await resp.json();
@@ -623,7 +631,7 @@ export default {
             error: "Failed to fetch Jupiter quote",
             details: e?.message || String(e),
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -640,7 +648,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: "Jupiter swap failed" },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
         const data = await resp.json();
@@ -651,7 +659,7 @@ export default {
             error: "Failed to execute Jupiter swap",
             details: e?.message || String(e),
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -671,7 +679,7 @@ export default {
         if (!resp.ok) {
           return json(
             { error: "Jupiter tokens API error" },
-            { status: resp.status, headers: corsHeaders }
+            { status: resp.status, headers: corsHeaders },
           );
         }
         const data = await resp.json();
@@ -682,7 +690,7 @@ export default {
             error: "Failed to fetch Jupiter tokens",
             details: e?.message || String(e),
           },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -735,7 +743,7 @@ export default {
                 symbols: [firstSymbol],
                 rates: { [firstSymbol]: rate },
               },
-              { headers: corsHeaders }
+              { headers: corsHeaders },
             );
           }
           lastErr = "invalid response";
@@ -748,7 +756,7 @@ export default {
           error: "Failed to fetch forex rate",
           details: lastErr,
         },
-        { status: 502, headers: corsHeaders }
+        { status: 502, headers: corsHeaders },
       );
     }
 
@@ -759,7 +767,7 @@ export default {
       if (!signature) {
         return json(
           { error: "Missing 'signature' parameter" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
 
@@ -794,7 +802,7 @@ export default {
       } catch (e) {
         return json(
           { error: "Failed to fetch transaction", details: e?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -806,7 +814,7 @@ export default {
       if (!publicKey) {
         return json(
           { error: "Missing 'publicKey' parameter" },
-          { status: 400, headers: corsHeaders }
+          { status: 400, headers: corsHeaders },
         );
       }
 
@@ -838,7 +846,7 @@ export default {
       } catch (e) {
         return json(
           { error: "Failed to fetch account", details: e?.message },
-          { status: 502, headers: corsHeaders }
+          { status: 502, headers: corsHeaders },
         );
       }
     }
@@ -846,7 +854,7 @@ export default {
     // 404
     return json(
       { error: "API endpoint not found", path: pathname },
-      { status: 404, headers: corsHeaders }
+      { status: 404, headers: corsHeaders },
     );
   },
 };

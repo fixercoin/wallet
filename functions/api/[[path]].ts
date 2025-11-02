@@ -189,7 +189,6 @@ function jsonCors(status: number, body: any) {
   });
 }
 
-import p2pHandler from "./p2p";
 import {
   addEasypaisaPayment,
   listEasypaisaPayments,
@@ -214,10 +213,6 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
-    // P2P routes passthrough to dedicated handler
-    if (url.pathname.startsWith("/api/p2p")) {
-      return await p2pHandler(request, env);
-    }
 
     // Easypaisa webhook ingestion (best-effort schema)
     if (normalizedPath === "/easypaisa/webhook" && request.method === "POST") {

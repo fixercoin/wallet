@@ -47,13 +47,25 @@ export type TradeRoom = {
 
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
-// In-memory store (per server instance) with on-disk persistence to data/p2p-store.json
-import fs from "fs";
-import fsPromises from "fs/promises";
-import path from "path";
+// In-memory store (per server instance) with optional on-disk persistence
+let fs: any = null;
+let fsPromises: any = null;
+let path: any = null;
+let DATA_DIR: string = "";
+let DATA_FILE: string = "";
 
-const DATA_DIR = path.resolve(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
+// Try to load Node.js modules only if available
+try {
+  if (typeof window === "undefined") {
+    fs = require("fs");
+    fsPromises = require("fs/promises");
+    path = require("path");
+    DATA_DIR = path.resolve(process.cwd(), "data");
+    DATA_FILE = path.join(DATA_DIR, "p2p-store.json");
+  }
+} catch {
+  // Running in browser/Worker environment, skip file system
+}
 
 type EasypaisaPayment = {
   id: string;

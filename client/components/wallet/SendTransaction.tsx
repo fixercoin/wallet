@@ -765,15 +765,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       value={selectedMint}
                       onValueChange={setSelectedMint}
                     >
-                      <SelectTrigger className="w-full bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white placeholder:text-gray-300">
+                      <SelectTrigger className="w-full bg-transparent border border-white/20 text-white placeholder:text-gray-300">
                         <SelectValue placeholder="Select token" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#2d1b47] border border-[#a855f7]/20 text-white">
+                      <SelectContent className="bg-transparent border border-white/10 text-white">
                         {availableTokens.map((t) => (
                           <SelectItem
-                            key={t.mint}
-                            value={t.mint}
-                            className="text-gray-900"
+                          key={t.mint}
+                          value={t.mint}
+                          className="text-white"
                           >
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
@@ -804,7 +804,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="Enter Solana address"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
-                      className="font-mono text-sm bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="font-mono text-sm bg-transparent border border-white/20 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                   </div>
 
@@ -831,7 +831,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-white/20 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -889,7 +889,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="Add a note"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-white/20 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                   </div>
 

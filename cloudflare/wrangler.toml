@@ -12,29 +12,5 @@ class_name = "DurableRoom"
 tag = "v1"
 new_classes = ["DurableRoom"]
 
-[env.production]
-# Production environment - update these with your actual resource IDs
-vars = { ALLOWED_PAYMENT = "easypaisa" }
-
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "fixorium_wallet_db"
-database_id = "71fb347a-12c4-4306-b4ca-acf6beb67e0a"
-
-[[env.production.kv_namespaces]]
-binding = "WALLET_KV"
-id = "e7e0eac1e71a4fd5abad6e9ed7c8f9e9"
-
-[env.preview]
-# Preview environment
-vars = { ALLOWED_PAYMENT = "easypaisa" }
-
-[[env.preview.kv_namespaces]]
-binding = "WALLET_KV"
-id = "e7e0eac1e71a4fd5abad6e9ed7c8f9e9"
-
-# Required Secrets (set via: wrangler secret put KEY_NAME --env production --config ./cloudflare/wrangler.toml)
-# - ADMIN_TOKEN
-# - COINMARKETCAP_API_KEY
-# - RAZORPAY_KEY_ID
-# - RAZORPAY_KEY_SECRET
+[vars]
+ALLOWED_PAYMENT = "easypaisa"

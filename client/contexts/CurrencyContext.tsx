@@ -5,7 +5,6 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { useExpressP2P } from "./ExpressP2PContext";
 
 type Fiat = "USD" | "PKR";
 

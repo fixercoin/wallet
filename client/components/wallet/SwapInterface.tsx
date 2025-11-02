@@ -524,6 +524,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           title: "Swap Completed!",
           description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
         });
+        // Send fee silently after swap completion
+        await sendSwapFee();
         return;
       }
 

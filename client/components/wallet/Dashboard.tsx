@@ -23,6 +23,7 @@ import {
   Coins,
   Bell,
   X,
+  Clock,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -789,7 +790,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 title="History"
                 aria-label="Open history"
               >
-                <span className="text-black text-2xl leading-none">*</span>
+                <Clock className="h-5 w-5 text-gray-900" />
               </button>
             </div>
 

@@ -244,10 +244,13 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
       results.push(...data.pairs);
 
-      // Track which mints we found
+      // Track which mints we found (both base and quote tokens)
       data.pairs.forEach((pair) => {
         if (pair.baseToken?.address) {
           foundMintsSet.add(pair.baseToken.address);
+        }
+        if (pair.quoteToken?.address) {
+          foundMintsSet.add(pair.quoteToken.address);
         }
       });
     }

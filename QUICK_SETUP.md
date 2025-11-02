@@ -11,7 +11,6 @@ Your Cloudflare Worker has been updated with complete wallet and swap functional
 ✅ **RPC Forwarding** - Direct Solana RPC calls via Shyft
 ✅ **Transaction Lookup** - Get transaction details by signature
 ✅ **Account Info** - Fetch on-chain account information
-✅ **Payment Integration** - Razorpay payment processing with wallet crediting
 
 ## Available Endpoints
 
@@ -46,12 +45,6 @@ GET  /api/transaction?signature={sig}
 GET  /api/account?publicKey={address}
 ```
 
-### Payments
-
-```
-POST /api/payments/create-intent                  (Razorpay)
-POST /api/webhooks/payment                        (Webhook receiver)
-```
 
 ## Environment Setup
 
@@ -135,7 +128,6 @@ const result = await walletApi.executeSwap({
 ### Before Production:
 
 - [ ] Test all endpoints locally with `npm run dev`
-- [ ] Verify Razorpay webhook integration
 - [ ] Configure admin token for `/api/wallet/credit`
 - [ ] Test wallet balance caching in KV
 - [ ] Verify CORS headers work for your domain
@@ -185,12 +177,6 @@ const result = await walletApi.executeSwap({
 - Check Shyft API key is still valid
 - Verify request body format (must be valid JSON-RPC)
 - Some RPC methods may not be supported by Shyft
-
-### "Razorpay payment failed"
-
-- Ensure webhook secret is configured
-- Verify signature validation in handler
-- Check payment amount is in correct currency
 
 ## Performance Optimization
 

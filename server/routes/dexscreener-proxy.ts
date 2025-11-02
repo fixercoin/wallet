@@ -422,11 +422,16 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
               Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: "USDT",
             };
 
-            const symbol = STABLE_MINTS[mint] || MINT_TO_SEARCH_SYMBOL[mint] || undefined;
-            const fallbackPrice = symbol ? FALLBACK_USD[symbol] ?? FALLBACK_USD.FIXERCOIN : undefined;
+            const symbol =
+              STABLE_MINTS[mint] || MINT_TO_SEARCH_SYMBOL[mint] || undefined;
+            const fallbackPrice = symbol
+              ? (FALLBACK_USD[symbol] ?? FALLBACK_USD.FIXERCOIN)
+              : undefined;
 
             if (symbol && typeof fallbackPrice === "number") {
-              console.log(`[DexScreener] Adding synthetic fallback for ${mint} -> ${symbol} price=${fallbackPrice}`);
+              console.log(
+                `[DexScreener] Adding synthetic fallback for ${mint} -> ${symbol} price=${fallbackPrice}`,
+              );
               const synthetic: any = {
                 chainId: "solana",
                 dexId: "fallback",
@@ -444,7 +449,12 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
                 },
                 priceNative: "0",
                 priceUsd: String(fallbackPrice),
-                txns: { m5: { buys: 0, sells: 0 }, h1: { buys: 0, sells: 0 }, h6: { buys: 0, sells: 0 }, h24: { buys: 0, sells: 0 } },
+                txns: {
+                  m5: { buys: 0, sells: 0 },
+                  h1: { buys: 0, sells: 0 },
+                  h6: { buys: 0, sells: 0 },
+                  h24: { buys: 0, sells: 0 },
+                },
                 volume: { h24: 0, h6: 0, h1: 0, m5: 0 },
                 priceChange: { m5: 0, h1: 0, h6: 0, h24: 0 },
                 liquidity: { usd: 0 },

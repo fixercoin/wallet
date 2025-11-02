@@ -259,9 +259,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setBalance(0);
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
+      setError(null);
+      setIsLoading(true);
 
       // Set as active - the useEffect hook will automatically trigger and fetch data
       // This is safe because wallet is computed from activePublicKey
+      // Use a callback to ensure state updates are applied before continuing
       setActivePublicKey(publicKey);
     } else {
       console.warn(

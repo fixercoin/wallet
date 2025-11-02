@@ -175,37 +175,54 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {
-    if (wallet) {
-      console.log(
-        `[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`,
-      );
-      (async () => {
-        await refreshBalance();
-        await refreshTokens();
-      })();
-
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-
-      refreshIntervalRef.current = setInterval(async () => {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 500));
-        await refreshTokens();
-      }, 10000);
-    } else {
+    if (!wallet) {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
         refreshIntervalRef.current = null;
       }
+      return;
     }
 
+    console.log(
+      `[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`,
+    );
+
+    // Trigger immediate refresh
+    const doRefresh = async () => {
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch (err) {
+        console.error("[WalletContext] Error refreshing data:", err);
+      }
+    };
+
+    doRefresh();
+
+    // Clear any existing interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+
+    // Setup periodic refresh every 10 seconds
+    refreshIntervalRef.current = setInterval(async () => {
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 500));
+        await refreshTokens();
+      } catch (err) {
+        console.error("[WalletContext] Error in periodic refresh:", err);
+      }
+    }, 10000);
+
+    // Cleanup on unmount or wallet change
     return () => {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet?.publicKey]);
 
   const setWallet = (newWallet: WalletData | null) => {

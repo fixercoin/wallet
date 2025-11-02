@@ -517,50 +517,7 @@ export default {
       }
     }
 
-    // DexTools price proxy (fallback): /api/dextools/price?tokenAddress=...&chainId=solana
-    if (pathname === "/api/dextools/price" && req.method === "GET") {
-      const tokenAddress = url.searchParams.get("tokenAddress") || "";
-      const chainId = url.searchParams.get("chainId") || "solana";
-
-      if (!tokenAddress) {
-        return json(
-          { error: "Missing 'tokenAddress' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const dexUrl = `https://api.dextools.io/v1/token/${chainId}/${tokenAddress}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(dexUrl, {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `DexTools API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data.data || data, { headers: corsHeaders });
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch DexTools price", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
+    
     // SOL price proxy: /api/sol/price
     if (pathname === "/api/sol/price" && req.method === "GET") {
       try {

@@ -1220,6 +1220,10 @@ export default {
       );
 
       const COINGECKO_IDS: Record<string, { id: string; mint: string }> = {
+        SOL: {
+          id: "solana",
+          mint: "So11111111111111111111111111111111111111112",
+        },
         USDC: {
           id: "usd-coin",
           mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",

@@ -53,6 +53,11 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
   app.get("/api/dexscreener/search", handleDexscreenerSearch);
   app.get("/api/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/price", handleDexscreenerPrice);
+
+  // Price routes
+  app.get("/api/sol/price", handleSolPrice);
+  app.get("/api/token/price", handleTokenPrice);
 
   // CoinMarketCap routes
   app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);

@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare, Copy, Send, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";

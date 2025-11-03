@@ -148,10 +148,15 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
     }
 
     let priceUsd: number | null = null;
+    let priceChange24h: number = 0;
+    let volume24h: number = 0;
+    let matchingPair: DexscreenerToken | null = null;
 
     try {
       if (token === "USDC" || token === "USDT") {
         priceUsd = 1.0;
+        priceChange24h = 0;
+        volume24h = 0;
       } else if (mint) {
         const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
         if (pairAddress) {
@@ -161,7 +166,10 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             );
             const pair = pairData?.pair || (pairData?.pairs || [])[0] || null;
             if (pair && pair.priceUsd) {
+              matchingPair = pair;
               priceUsd = parseFloat(pair.priceUsd);
+              priceChange24h = pair.priceChange?.h24 || 0;
+              volume24h = pair.volume?.h24 || 0;
             }
           } catch (e) {
             console.warn(`[Token Price] Pair address lookup failed:`, e);
@@ -174,8 +182,6 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             const pairs = Array.isArray(tokenData?.pairs)
               ? tokenData.pairs
               : [];
-
-            let matchingPair = null;
 
             if (pairs.length > 0) {
               matchingPair = pairs.find(
@@ -200,6 +206,8 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
 
               if (matchingPair && matchingPair.priceUsd) {
                 priceUsd = parseFloat(matchingPair.priceUsd);
+                priceChange24h = matchingPair.priceChange?.h24 || 0;
+                volume24h = matchingPair.volume?.h24 || 0;
               }
             }
           } catch (e) {
@@ -213,6 +221,8 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
 
     if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
       priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      priceChange24h = 0;
+      volume24h = 0;
     }
 
     const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
@@ -224,6 +234,9 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
       rate: rateInPKR,
       pkrPerUsd: PKR_PER_USD,
       markup: MARKUP,
+      priceChange24h,
+      volume24h,
+      pair: matchingPair || undefined,
     });
   } catch (error) {
     console.error(`[Token Price] Handler error:`, error);

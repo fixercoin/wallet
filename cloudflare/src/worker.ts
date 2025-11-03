@@ -694,8 +694,9 @@ export default {
             success: true,
             data: {
               address,
-              value: dexscreenerPrice,
+              value: dexscreenerPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: dexscreenerPrice.priceChange24h,
             },
             _source: "dexscreener",
           },

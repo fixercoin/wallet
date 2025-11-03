@@ -312,6 +312,36 @@ export default {
         return null;
       };
 
+      const getPriceFromJupiter = async (mint) => {
+        try {
+          console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
+          const jupUrl = `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`;
+          const jupResp = await fetch(jupUrl, {
+            headers: { Accept: "application/json" },
+          });
+
+          if (jupResp.ok) {
+            const jupData = await jupResp.json();
+            const priceData = jupData?.data?.[mint];
+
+            if (priceData?.price) {
+              const price = parseFloat(priceData.price);
+              if (isFinite(price) && price > 0) {
+                console.log(
+                  `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
+                );
+                return price;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(
+            `[Birdeye Fallback] Jupiter error: ${e?.message}`,
+          );
+        }
+        return null;
+      };
+
       try {
         const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(address)}`;
         const birdeyeApiKey =

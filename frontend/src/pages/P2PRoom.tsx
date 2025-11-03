@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { useDurableRoom } from "../hooks/useDurableRoom";
 import { API_BASE, createOrder } from "../api";
 import { OrderCard } from "../components/OrderCard";
 

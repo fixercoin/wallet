@@ -180,7 +180,6 @@ export default function BuyTrade() {
     clearNotificationsForRoom(rid);
   }, [order?.id, wallet]);
 
-
   // Auto-open chat if flagged
   useEffect(() => {
     if (openChat) {

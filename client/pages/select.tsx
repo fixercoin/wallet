@@ -87,7 +87,6 @@ export default function Select() {
     setChatLog(history);
   }, [effectiveRoomId]);
 
-
   const sendTextMessage = () => {
     if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;
     const userRole: "buyer" | "seller" =

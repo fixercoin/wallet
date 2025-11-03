@@ -73,7 +73,6 @@ export default function VerifySell() {
     setChatLog(history);
   }, [selectedOrder]);
 
-
   const moveOrderToCompleted = () => {
     try {
       const completedRaw = localStorage.getItem("orders_completed");

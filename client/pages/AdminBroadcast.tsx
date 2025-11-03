@@ -30,7 +30,6 @@ export default function AdminBroadcast() {
     [orderId, sender, text, typeParam],
   );
 
-
   const [sent, setSent] = useState(false);
 
   const doSend = () => {

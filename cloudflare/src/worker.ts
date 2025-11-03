@@ -556,7 +556,7 @@ export default {
 
       const getPriceFromDexScreener = async (
         mint: string,
-      ): Promise<number | null> => {
+      ): Promise<{ price: number; priceChange24h: number } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
           const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
@@ -579,10 +579,11 @@ export default {
               if (pair && pair.priceUsd) {
                 const price = parseFloat(pair.priceUsd);
                 if (isFinite(price) && price > 0) {
+                  const priceChange24h = pair?.priceChange?.h24 ?? 0;
                   console.log(
-                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
+                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
                   );
-                  return price;
+                  return { price, priceChange24h };
                 }
               }
             }

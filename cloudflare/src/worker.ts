@@ -475,13 +475,19 @@ export default {
         const SOL_MINT = "So11111111111111111111111111111111111111112";
         const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${SOL_MINT}`;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const resp = await fetch(dexUrl, {
           headers: {
             Accept: "application/json",
           },
           signal: controller.signal,
+          cf: {
+            cacheEverything: false,
+            cacheTtl: 30,
+            mirage: false,
+            polish: "off",
+          } as any,
         });
 
         clearTimeout(timeoutId);

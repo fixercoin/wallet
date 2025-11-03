@@ -365,6 +365,125 @@ class HeliusAPI {
   getKnownTokens(): Record<string, TokenMetadata> {
     return { ...KNOWN_TOKENS };
   }
+
+  /**
+   * Get transaction signatures for a wallet
+   */
+  async getSignaturesForAddress(
+    publicKey: string,
+    limit: number = 20,
+  ): Promise<
+    Array<{
+      signature: string;
+      blockTime: number | null;
+      err: any | null;
+    }>
+  > {
+    try {
+      console.log(
+        `Fetching ${limit} transaction signatures for ${publicKey}...`,
+      );
+      return await this.makeRpcCall("getSignaturesForAddress", [
+        publicKey,
+        { limit },
+      ]);
+    } catch (error) {
+      console.error("Error fetching signatures for address:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get parsed transaction details
+   */
+  async getParsedTransaction(
+    signature: string,
+  ): Promise<any> {
+    try {
+      console.log(`Fetching parsed transaction: ${signature}`);
+      return await this.makeRpcCall("getParsedTransaction", [
+        signature,
+        "jsonParsed",
+      ]);
+    } catch (error) {
+      console.error("Error fetching parsed transaction:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Parse transaction to extract token transfers
+   */
+  parseTransactionForTokenTransfers(
+    tx: any,
+    walletAddress: string,
+  ): Array<{
+    type: "send" | "receive";
+    token: string;
+    amount: number;
+    decimals: number;
+    signature: string;
+    blockTime: number | null;
+    mint?: string;
+  }> {
+    const transfers: Array<{
+      type: "send" | "receive";
+      token: string;
+      amount: number;
+      decimals: number;
+      signature: string;
+      blockTime: number | null;
+      mint?: string;
+    }> = [];
+
+    if (!tx || !tx.transaction || !tx.transaction.message) return transfers;
+
+    const message = tx.transaction.message;
+    const blockTime = tx.blockTime;
+    const signature = tx.transaction.signatures?.[0];
+
+    // Look for token transfer instructions
+    if (message.instructions && Array.isArray(message.instructions)) {
+      message.instructions.forEach((instr: any) => {
+        // Check for parsed token instructions
+        if (instr.parsed?.type === "transfer" || instr.parsed?.type === "transferChecked") {
+          const info = instr.parsed.info;
+          const amount = info.tokenAmount?.uiAmount || info.tokenAmount?.amount || 0;
+          const decimals = info.tokenAmount?.decimals || 0;
+          const destination = info.destination;
+          const source = info.source;
+          const mint = info.mint || info.token;
+
+          // Determine if wallet sent or received
+          if (destination === walletAddress || destination?.includes(walletAddress)) {
+            transfers.push({
+              type: "receive",
+              token: mint || "UNKNOWN",
+              amount: parseFloat(String(amount)),
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint,
+            });
+          }
+
+          if (source === walletAddress || source?.includes(walletAddress)) {
+            transfers.push({
+              type: "send",
+              token: mint || "UNKNOWN",
+              amount: parseFloat(String(amount)),
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint,
+            });
+          }
+        }
+      });
+    }
+
+    return transfers;
+  }
 }
 
 // Create and export singleton instance

@@ -991,7 +991,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-gray-50 border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-300 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -1100,7 +1100,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-gray-50 border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-300 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}

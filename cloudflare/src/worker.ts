@@ -678,6 +678,7 @@ export default {
                 address,
                 value: derivedPrice,
                 updateUnixTime: Math.floor(Date.now() / 1000),
+                priceChange24h: 0,
               },
               _source: "derived",
             },

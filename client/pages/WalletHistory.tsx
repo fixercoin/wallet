@@ -1,10 +1,34 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { heliusAPI } from "@/lib/services/helius";
 
 const BASE_SOLSCAN_TX = (sig: string) => `https://solscan.io/tx/${sig}`;
+
+const KNOWN_TOKENS: Record<string, { symbol: string; decimals: number }> = {
+  So11111111111111111111111111111111111111112: {
+    symbol: "SOL",
+    decimals: 9,
+  },
+  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: {
+    symbol: "USDC",
+    decimals: 6,
+  },
+  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
+    symbol: "USDT",
+    decimals: 6,
+  },
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {
+    symbol: "FIXERCOIN",
+    decimals: 6,
+  },
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: {
+    symbol: "LOCKER",
+    decimals: 6,
+  },
+};
 
 function findSignaturesInObject(obj: any): string[] {
   const results: string[] = [];
@@ -51,12 +75,26 @@ function findSignaturesInObject(obj: any): string[] {
   return results;
 }
 
+interface BlockchainTransaction {
+  type: "send" | "receive";
+  signature: string;
+  blockTime: number | null;
+  token: string;
+  amount: number;
+  decimals: number;
+  __source: "blockchain";
+}
+
 export default function WalletHistory() {
   const { wallet } = useWallet();
   const navigate = useNavigate();
   const [locks, setLocks] = useState<any[]>([]);
   const [completedOrders, setCompletedOrders] = useState<any[]>([]);
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
+  const [blockchainTxs, setBlockchainTxs] = useState<BlockchainTransaction[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!wallet?.publicKey) return;

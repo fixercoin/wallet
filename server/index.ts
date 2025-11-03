@@ -9,6 +9,11 @@ import {
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
 import {
+  handleDexscreenerPrice,
+  handleSolPrice,
+  handleTokenPrice,
+} from "./routes/dexscreener-price";
+import {
   handleCoinMarketCapQuotes,
   handleCoinMarketCapSearch,
 } from "./routes/coinmarketcap-proxy";
@@ -48,6 +53,11 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
   app.get("/api/dexscreener/search", handleDexscreenerSearch);
   app.get("/api/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/price", handleDexscreenerPrice);
+
+  // Price routes
+  app.get("/api/sol/price", handleSolPrice);
+  app.get("/api/token/price", handleTokenPrice);
 
   // CoinMarketCap routes
   app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);
@@ -94,12 +104,9 @@ export async function createServer(): Promise<express.Application> {
         }
 
         if (!inputMint || !outputMint || !amount) {
-          return res
-            .status(400)
-            .json({
-              error:
-                "Missing required parameters: inputMint, outputMint, amount",
-            });
+          return res.status(400).json({
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          });
         }
 
         const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
@@ -136,12 +143,10 @@ export async function createServer(): Promise<express.Application> {
 
       return res.status(404).json({ error: "Pumpfun proxy path not found" });
     } catch (e: any) {
-      return res
-        .status(502)
-        .json({
-          error: "Failed to proxy Pumpfun request",
-          details: e?.message || String(e),
-        });
+      return res.status(502).json({
+        error: "Failed to proxy Pumpfun request",
+        details: e?.message || String(e),
+      });
     }
   });
 
@@ -201,12 +206,10 @@ export async function createServer(): Promise<express.Application> {
       // Last resort
       return res.status(404).json({ error: "Token price not available" });
     } catch (e: any) {
-      return res
-        .status(502)
-        .json({
-          error: "Failed to fetch token price",
-          details: e?.message || String(e),
-        });
+      return res.status(502).json({
+        error: "Failed to fetch token price",
+        details: e?.message || String(e),
+      });
     }
   });
 

@@ -91,7 +91,7 @@ async function tryDexEndpoints(path: string) {
     const url = `${endpoint}${path}`;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const resp = await fetch(url, {
         headers: {
           Accept: "application/json",
@@ -99,10 +99,16 @@ async function tryDexEndpoints(path: string) {
           "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
         },
         signal: controller.signal,
+        cf: {
+          cacheEverything: false,
+          cacheTtl: 30,
+          mirage: false,
+          polish: "off",
+        } as any,
       });
       clearTimeout(timeout);
       if (!resp.ok) {
-        if (resp.status === 429) continue;
+        if (resp.status === 429 || resp.status === 526) continue;
         const t = await resp.text().catch(() => "");
         throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
       }
@@ -112,7 +118,7 @@ async function tryDexEndpoints(path: string) {
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       if (i < DEXSCREENER_ENDPOINTS.length - 1)
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 1500));
     }
   }
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
@@ -328,13 +334,19 @@ export default {
       try {
         const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${token}`;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const resp = await fetch(dexUrl, {
           headers: {
             Accept: "application/json",
           },
           signal: controller.signal,
+          cf: {
+            cacheEverything: false,
+            cacheTtl: 30,
+            mirage: false,
+            polish: "off",
+          } as any,
         });
 
         clearTimeout(timeoutId);
@@ -463,13 +475,19 @@ export default {
         const SOL_MINT = "So11111111111111111111111111111111111111112";
         const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${SOL_MINT}`;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const resp = await fetch(dexUrl, {
           headers: {
             Accept: "application/json",
           },
           signal: controller.signal,
+          cf: {
+            cacheEverything: false,
+            cacheTtl: 30,
+            mirage: false,
+            polish: "off",
+          } as any,
         });
 
         clearTimeout(timeoutId);

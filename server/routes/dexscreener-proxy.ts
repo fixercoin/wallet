@@ -131,7 +131,7 @@ const tryDexscreenerEndpoints = async (
   );
 };
 
-const fetchDexscreenerData = async (
+export const fetchDexscreenerData = async (
   path: string,
 ): Promise<DexscreenerResponse> => {
   const cached = cache.get(path);
@@ -180,7 +180,7 @@ const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
 };
 
 // Mint to pair address mapping for pump.fun tokens
-const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
+export const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:

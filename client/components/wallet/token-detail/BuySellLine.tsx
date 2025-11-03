@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
+import { birdeyeAPI, BirdeyeToken } from "@/lib/services/birdeye";
 
 interface BuySellLineProps {
   mint: string;
@@ -21,7 +21,7 @@ interface Point {
 }
 
 export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
-  const [token, setToken] = useState<DexscreenerToken | null>(null);
+  const [token, setToken] = useState<BirdeyeToken | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Known stablecoin mints on Solana

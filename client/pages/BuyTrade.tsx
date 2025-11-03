@@ -230,7 +230,6 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setMessageInput("");
   };
@@ -247,7 +246,6 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     toast({ title: "Payment received" });
     setHasReceived(true);
     setPhase("seller_verified");
@@ -270,7 +268,6 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     toast({ title: "Assets sent" });
     setPhase("seller_transferred");
   };
@@ -294,7 +291,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -312,7 +308,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -330,7 +325,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -349,7 +343,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -367,7 +360,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setPhase("completed");
   };
@@ -424,7 +416,6 @@ export default function BuyTrade() {
         timestamp: Date.now(),
       };
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
     } catch (e) {
       console.error("Attachment failed", e);

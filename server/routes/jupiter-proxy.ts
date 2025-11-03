@@ -158,7 +158,7 @@ export const handleJupiterTokens: RequestHandler = async (req, res) => {
       for (let attempt = 1; attempt <= 3; attempt++) {
         for (const endpoint of endpoints) {
           try {
-            const response = await fetchWithTimeout(endpoint, 15000);
+            const response = await fetchWithTimeout(endpoint, 25000);
             if (!response.ok) {
               lastError = `${endpoint} -> ${response.status} ${response.statusText}`;
               // retry on rate limiting / server errors

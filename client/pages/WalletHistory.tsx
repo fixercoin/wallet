@@ -120,7 +120,73 @@ export default function WalletHistory() {
     } catch (e) {
       setPendingOrders([]);
     }
+
+    // Fetch blockchain transactions
+    fetchBlockchainTransactions();
   }, [wallet?.publicKey]);
+
+  const fetchBlockchainTransactions = async () => {
+    if (!wallet?.publicKey) return;
+
+    setLoading(true);
+    try {
+      console.log(`Fetching blockchain transactions for ${wallet.publicKey}`);
+
+      // Get last 20 transaction signatures
+      const signatures = await heliusAPI.getSignaturesForAddress(
+        wallet.publicKey,
+        20,
+      );
+
+      if (!signatures || !Array.isArray(signatures)) {
+        console.log("No signatures returned");
+        setLoading(false);
+        return;
+      }
+
+      console.log(`Found ${signatures.length} signatures, fetching details...`);
+
+      const txs: BlockchainTransaction[] = [];
+
+      // Fetch and parse each transaction
+      for (const sig of signatures) {
+        if (!sig.signature) continue;
+
+        try {
+          const tx = await heliusAPI.getParsedTransaction(sig.signature);
+          if (!tx) continue;
+
+          // Extract token transfers
+          const transfers = heliusAPI.parseTransactionForTokenTransfers(
+            tx,
+            wallet.publicKey,
+          );
+
+          for (const transfer of transfers) {
+            txs.push({
+              type: transfer.type,
+              signature: transfer.signature,
+              blockTime: transfer.blockTime,
+              token: transfer.mint || transfer.token,
+              amount: transfer.amount,
+              decimals: transfer.decimals,
+              __source: "blockchain",
+            });
+          }
+        } catch (e) {
+          console.warn(`Error parsing transaction ${sig.signature}:`, e);
+        }
+      }
+
+      console.log(`Extracted ${txs.length} token transfers`);
+      setBlockchainTxs(txs);
+    } catch (error) {
+      console.error("Error fetching blockchain transactions:", error);
+      setBlockchainTxs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">

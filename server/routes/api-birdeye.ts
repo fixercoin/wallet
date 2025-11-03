@@ -1,8 +1,26 @@
 import { Request, Response } from "express";
+import { fetchDexscreenerData } from "./dexscreener-proxy";
 
 const BIRDEYE_API_KEY =
   process.env.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
 const BIRDEYE_API_URL = "https://public-api.birdeye.so";
+
+// Standard Solana token mints and fallback prices
+const TOKEN_MINTS: Record<string, string> = {
+  SOL: "So11111111111111111111111111111111111111112",
+  USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+  FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+  LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+};
+
+const FALLBACK_USD: Record<string, number> = {
+  FIXERCOIN: 0.005,
+  SOL: 180,
+  USDC: 1.0,
+  USDT: 1.0,
+  LOCKER: 0.1,
+};
 
 export interface BirdeyePriceData {
   address: string;
@@ -15,6 +33,50 @@ export interface BirdeyePriceResponse {
   success: boolean;
   data?: BirdeyePriceData;
   error?: string;
+}
+
+// Try to get price from DexScreener as fallback
+async function getPriceFromDexScreener(
+  mint: string,
+): Promise<number | null> {
+  try {
+    console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
+    const data = await fetchDexscreenerData(`/tokens/${mint}`);
+    const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+
+    if (pairs.length > 0) {
+      const pair = pairs.find(
+        (p: any) =>
+          (p?.baseToken?.address === mint || p?.quoteToken?.address === mint) &&
+          p?.priceUsd,
+      );
+
+      if (pair && pair.priceUsd) {
+        const price = parseFloat(pair.priceUsd);
+        if (isFinite(price) && price > 0) {
+          console.log(
+            `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
+          );
+          return price;
+        }
+      }
+    }
+  } catch (error: any) {
+    console.warn(
+      `[Birdeye Fallback] DexScreener error: ${error?.message || String(error)}`,
+    );
+  }
+  return null;
+}
+
+// Try to get token symbol to lookup fallback
+function getTokenSymbol(address: string): string | null {
+  for (const [symbol, mint] of Object.entries(TOKEN_MINTS)) {
+    if (mint === address) {
+      return symbol;
+    }
+  }
+  return null;
 }
 
 export async function handleBirdeyePrice(
@@ -38,54 +100,81 @@ export async function handleBirdeyePrice(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(birdeyeUrl, {
-      headers: {
-        Accept: "application/json",
-        "X-API-KEY": BIRDEYE_API_KEY,
-      },
-      signal: controller.signal,
-    });
+    try {
+      const response = await fetch(birdeyeUrl, {
+        headers: {
+          Accept: "application/json",
+          "X-API-KEY": BIRDEYE_API_KEY,
+        },
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
+      if (response.ok) {
+        const data: BirdeyePriceResponse = await response.json();
+
+        if (data.success && data.data) {
+          console.log(
+            `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
+          );
+          res.json(data);
+          return;
+        }
+      }
+
+      // Birdeye failed, try fallback
       console.warn(
-        `[Birdeye] API returned ${response.status} for address ${address}`,
+        `[Birdeye] Request failed with status ${response.status}, trying fallback...`,
       );
-      const errorText = await response.text();
-      console.warn(`[Birdeye] Error response: ${errorText}`);
-
-      res.status(response.status).json({
-        success: false,
-        error: `Birdeye API returned ${response.status}`,
-        details: errorText,
-      });
-      return;
+    } catch (error: any) {
+      console.warn(`[Birdeye] Fetch error: ${error?.message}, trying fallback...`);
     }
 
-    const data: BirdeyePriceResponse = await response.json();
-
-    if (!data.success || !data.data) {
-      console.warn(`[Birdeye] No price data returned for ${address}`);
-      res.status(200).json({
-        success: false,
-        error: "No price data available for this token",
+    // Fallback 1: Try DexScreener
+    const dexscreenerPrice = await getPriceFromDexScreener(address);
+    if (dexscreenerPrice !== null) {
+      return res.json({
+        success: true,
+        data: {
+          address,
+          value: dexscreenerPrice,
+          updateUnixTime: Math.floor(Date.now() / 1000),
+        },
+        _source: "dexscreener",
       });
-      return;
     }
 
-    console.log(
-      `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
-    );
-    res.json(data);
+    // Fallback 2: Check hardcoded fallback prices
+    const tokenSymbol = getTokenSymbol(address);
+    if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
+      console.log(
+        `[Birdeye] Using fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
+      );
+      return res.json({
+        success: true,
+        data: {
+          address,
+          value: FALLBACK_USD[tokenSymbol],
+          updateUnixTime: Math.floor(Date.now() / 1000),
+        },
+        _source: "fallback",
+      });
+    }
+
+    console.warn(`[Birdeye] No price available for ${address}`);
+    res.status(404).json({
+      success: false,
+      error: "No price data available for this token",
+    });
   } catch (error: any) {
     console.error(
-      `[Birdeye] Error fetching price:`,
+      `[Birdeye] Handler error:`,
       error?.message || String(error),
     );
     res.status(502).json({
       success: false,
-      error: "Failed to fetch Birdeye price",
+      error: "Failed to fetch token price",
       details: error?.message || String(error),
     });
   }

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -21,7 +22,7 @@ interface Point {
   sells: number;
 }
 
-export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
+export const BuySellLine: React.FC<BuySellLineProps> = ({ mint, priceData }) => {
   const [token, setToken] = useState<BirdeyeToken | null>(null);
   const [error, setError] = useState<string | null>(null);
 

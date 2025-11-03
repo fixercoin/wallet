@@ -1010,7 +1010,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                               </Avatar>
                               <span className="font-medium">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,
@@ -1119,7 +1119,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                               </Avatar>
                               <span className="font-medium">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,

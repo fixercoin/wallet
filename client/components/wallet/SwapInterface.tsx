@@ -237,13 +237,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
       try {
-        const tokens = await dexscreenerAPI.getTokensByMints(mints);
-        const dsMap = dexscreenerAPI.getTokenPrices(tokens);
+        const tokens = await birdeyeAPI.getTokensByMints(mints);
+        const birdeyeMap = birdeyeAPI.getTokenPrices(tokens);
         const fromPrice: number | null = fromToken?.mint
-          ? (dsMap[fromToken.mint] ?? null)
+          ? (birdeyeMap[fromToken.mint] ?? null)
           : null;
         const toPrice: number | null = toToken?.mint
-          ? (dsMap[toToken.mint] ?? null)
+          ? (birdeyeMap[toToken.mint] ?? null)
           : null;
         setFromUsdPrice(fromPrice ?? null);
         setToUsdPrice(toPrice ?? null);

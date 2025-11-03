@@ -104,12 +104,9 @@ export async function createServer(): Promise<express.Application> {
         }
 
         if (!inputMint || !outputMint || !amount) {
-          return res
-            .status(400)
-            .json({
-              error:
-                "Missing required parameters: inputMint, outputMint, amount",
-            });
+          return res.status(400).json({
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          });
         }
 
         const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
@@ -146,12 +143,10 @@ export async function createServer(): Promise<express.Application> {
 
       return res.status(404).json({ error: "Pumpfun proxy path not found" });
     } catch (e: any) {
-      return res
-        .status(502)
-        .json({
-          error: "Failed to proxy Pumpfun request",
-          details: e?.message || String(e),
-        });
+      return res.status(502).json({
+        error: "Failed to proxy Pumpfun request",
+        details: e?.message || String(e),
+      });
     }
   });
 
@@ -211,12 +206,10 @@ export async function createServer(): Promise<express.Application> {
       // Last resort
       return res.status(404).json({ error: "Token price not available" });
     } catch (e: any) {
-      return res
-        .status(502)
-        .json({
-          error: "Failed to fetch token price",
-          details: e?.message || String(e),
-        });
+      return res.status(502).json({
+        error: "Failed to fetch token price",
+        details: e?.message || String(e),
+      });
     }
   });
 

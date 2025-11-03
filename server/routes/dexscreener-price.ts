@@ -1,7 +1,10 @@
 import { RequestHandler } from "express";
 
 // Import the shared fetch function from dexscreener-proxy
-import { fetchDexscreenerData, MINT_TO_PAIR_ADDRESS } from "./dexscreener-proxy";
+import {
+  fetchDexscreenerData,
+  MINT_TO_PAIR_ADDRESS,
+} from "./dexscreener-proxy";
 
 interface DexscreenerToken {
   chainId: string;
@@ -53,7 +56,9 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
       const pair = data?.pairs?.[0];
 
       if (!pair) {
-        return res.status(404).json({ error: "Token not found on DexScreener" });
+        return res
+          .status(404)
+          .json({ error: "Token not found on DexScreener" });
       }
 
       return res.json({
@@ -154,8 +159,7 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             const pairData = await fetchDexscreenerData(
               `/pairs/solana/${pairAddress}`,
             );
-            const pair =
-              pairData?.pair || (pairData?.pairs || [])[0] || null;
+            const pair = pairData?.pair || (pairData?.pairs || [])[0] || null;
             if (pair && pair.priceUsd) {
               priceUsd = parseFloat(pair.priceUsd);
             }
@@ -176,15 +180,13 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             if (pairs.length > 0) {
               matchingPair = pairs.find(
                 (p: DexscreenerToken) =>
-                  p?.baseToken?.address === mint &&
-                  p?.chainId === "solana",
+                  p?.baseToken?.address === mint && p?.chainId === "solana",
               );
 
               if (!matchingPair) {
                 matchingPair = pairs.find(
                   (p: DexscreenerToken) =>
-                    p?.quoteToken?.address === mint &&
-                    p?.chainId === "solana",
+                    p?.quoteToken?.address === mint && p?.chainId === "solana",
                 );
               }
 

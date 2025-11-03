@@ -398,58 +398,58 @@ export default {
 
     // SOL price proxy: /api/sol/price
     if (pathname === "/api/sol/price" && req.method === "GET") {
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const endpoints = [
+        "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
+        "https://api.dexscreener.io/latest/dex/tokens/So11111111111111111111111111111111111111112",
+      ];
+      let lastError: any = null;
 
-        const resp = await fetch(dexUrl, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+      for (const dexUrl of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-        if (resp.ok) {
-          const data = await resp.json();
-          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-          if (pairs.length > 0) {
-            const pair = pairs[0];
-            const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
-            const priceChange24h =
-              pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
-            return json(
-              {
-                price,
-                priceUsd: price,
-                price_change_24h: priceChange24h,
-                data: { price, priceUsd: price, priceChange24h },
-              },
-              { headers: corsHeaders },
-            );
+          const resp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (resp.ok) {
+            const data = await resp.json();
+            const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+            if (pairs.length > 0) {
+              const pair = pairs[0];
+              const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
+              const priceChange24h =
+                pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
+              return json(
+                {
+                  price,
+                  priceUsd: price,
+                  price_change_24h: priceChange24h,
+                  data: { price, priceUsd: price, priceChange24h },
+                },
+                { headers: corsHeaders },
+              );
+            }
           }
+          lastError = resp.status;
+        } catch (e: any) {
+          lastError = e?.message || String(e);
         }
-
-        // Fallback SOL price
-        return json(
-          {
-            price: 180,
-            priceUsd: 180,
-            price_change_24h: 0,
-            data: { price: 180, priceUsd: 180, priceChange24h: 0 },
-          },
-          { headers: corsHeaders },
-        );
-      } catch (e: any) {
-        return json(
-          {
-            price: 180,
-            priceUsd: 180,
-            price_change_24h: 0,
-            data: { price: 180, priceUsd: 180, priceChange24h: 0 },
-          },
-          { headers: corsHeaders },
-        );
       }
+
+      // Fallback SOL price
+      return json(
+        {
+          price: 180,
+          priceUsd: 180,
+          price_change_24h: 0,
+          data: { price: 180, priceUsd: 180, priceChange24h: 0 },
+        },
+        { headers: corsHeaders },
+      );
     }
 
     // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>

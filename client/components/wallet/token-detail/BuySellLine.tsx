@@ -12,6 +12,7 @@ import { birdeyeAPI, BirdeyeToken } from "@/lib/services/birdeye";
 
 interface BuySellLineProps {
   mint: string;
+  priceData?: Array<{ time: string; price: number; volume: number }>;
 }
 
 interface Point {

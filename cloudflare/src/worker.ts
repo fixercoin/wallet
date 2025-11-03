@@ -400,7 +400,6 @@ export default {
     if (pathname === "/api/sol/price" && req.method === "GET") {
       const endpoints = [
         "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
-        "https://api.dexscreener.io/latest/dex/tokens/So11111111111111111111111111111111111111112",
       ];
       let lastError: any = null;
 
@@ -421,14 +420,17 @@ export default {
             if (pairs.length > 0) {
               const pair = pairs[0];
               const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
-              const priceChange24h =
-                pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
+              const priceChange24h = pair?.priceChange?.h24 ?? 0;
+              console.log(`[SOL Price] Price: $${price}, 24h Change: ${priceChange24h}%`);
               return json(
                 {
-                  price,
-                  priceUsd: price,
-                  price_change_24h: priceChange24h,
-                  data: { price, priceUsd: price, priceChange24h },
+                  success: true,
+                  data: {
+                    address: "So11111111111111111111111111111111111111112",
+                    value: price,
+                    priceChange24h,
+                    updateUnixTime: Math.floor(Date.now() / 1000),
+                  },
                 },
                 { headers: corsHeaders },
               );
@@ -441,12 +443,16 @@ export default {
       }
 
       // Fallback SOL price
+      console.warn(`[SOL Price] Using fallback price. Error: ${lastError}`);
       return json(
         {
-          price: 180,
-          priceUsd: 180,
-          price_change_24h: 0,
-          data: { price: 180, priceUsd: 180, priceChange24h: 0 },
+          success: true,
+          data: {
+            address: "So11111111111111111111111111111111111111112",
+            value: 180,
+            priceChange24h: 0,
+            updateUnixTime: Math.floor(Date.now() / 1000),
+          },
         },
         { headers: corsHeaders },
       );

@@ -432,6 +432,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
+        const stableMints = [
+          "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+          "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+        ];
         stableMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;
           if (
@@ -446,10 +450,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const hasSolPrice = prices[solMint];
 
         if (Object.keys(prices).length > 0) {
-          priceSource = "dexscreener";
+          priceSource = "token-price-api";
         } else {
           throw new Error(
-            "DexScreener returned no prices, falling back to Jupiter",
+            "Token price API returned no prices, falling back to SOL price service",
           );
         }
       } catch (dexError) {

@@ -421,7 +421,9 @@ export default {
               const pair = pairs[0];
               const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
               const priceChange24h = pair?.priceChange?.h24 ?? 0;
-              console.log(`[SOL Price] Price: $${price}, 24h Change: ${priceChange24h}%`);
+              console.log(
+                `[SOL Price] Price: $${price}, 24h Change: ${priceChange24h}%`,
+              );
               return json(
                 {
                   success: true,

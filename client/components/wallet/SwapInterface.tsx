@@ -316,7 +316,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       return "Insufficient balance";
 
     // Check if enough SOL for network fees
-    const solToken = availableTokens.find(t => t.symbol === "SOL");
+    const solToken = availableTokens.find((t) => t.symbol === "SOL");
     if (solToken) {
       const solBalance = getTokenBalance(solToken);
       const swapAmt = parseFloat(fromAmount || "0");

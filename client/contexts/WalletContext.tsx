@@ -447,10 +447,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const hasSolPrice = prices[solMint];
 
         if (Object.keys(prices).length > 0) {
-          priceSource = "token-price-api";
+          priceSource = "birdeye";
         } else {
           throw new Error(
-            "Token price API returned no prices, falling back to SOL price service",
+            "Birdeye returned no prices, falling back to SOL price service",
           );
         }
       } catch (dexError) {

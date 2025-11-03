@@ -622,10 +622,16 @@ export const onRequest = async ({ request, env }) => {
       }
 
       let priceUsd: number | null = null;
+      let priceChange24h: number = 0;
+      let volume24h: number = 0;
+      let matchingPair: any = null;
+
       try {
         // Stablecoins -> 1
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
+          priceChange24h = 0;
+          volume24h = 0;
         } else {
           // If we have a mint, try pair lookup and token lookup via DexScreener
           if (!mint && TOKEN_MINTS[token]) mint = TOKEN_MINTS[token];
@@ -643,7 +649,10 @@ export const onRequest = async ({ request, env }) => {
                   pairData.pairs.length > 0 &&
                   pairData.pairs[0]?.priceUsd
                 ) {
-                  priceUsd = Number(pairData.pairs[0].priceUsd);
+                  matchingPair = pairData.pairs[0];
+                  priceUsd = Number(matchingPair.priceUsd);
+                  priceChange24h = matchingPair.priceChange?.h24 || 0;
+                  volume24h = matchingPair.volume?.h24 || 0;
                 }
               } catch (e) {
                 // continue
@@ -655,11 +664,13 @@ export const onRequest = async ({ request, env }) => {
               try {
                 const data = await fetchDexscreenerData(`/tokens/${mint}`);
                 const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-                const p =
-                  pairs.length > 0 && pairs[0]?.priceUsd
-                    ? Number(pairs[0].priceUsd)
-                    : null;
-                if (typeof p === "number" && isFinite(p) && p > 0) priceUsd = p;
+                const p = pairs.length > 0 ? pairs[0] : null;
+                if (p && p.priceUsd) {
+                  matchingPair = p;
+                  priceUsd = Number(p.priceUsd);
+                  priceChange24h = p.priceChange?.h24 || 0;
+                  volume24h = p.volume?.h24 || 0;
+                }
               } catch (e) {
                 // continue
               }
@@ -676,20 +687,24 @@ export const onRequest = async ({ request, env }) => {
                   const searchPairs = Array.isArray(searchData?.pairs)
                     ? searchData.pairs
                     : [];
-                  let matchingPair = searchPairs.find(
+                  let foundPair = searchPairs.find(
                     (p: any) =>
                       p?.baseToken?.address === mint && p?.chainId === "solana",
                   );
-                  if (!matchingPair) {
-                    matchingPair = searchPairs.find(
+                  if (!foundPair) {
+                    foundPair = searchPairs.find(
                       (p: any) =>
                         p?.quoteToken?.address === mint &&
                         p?.chainId === "solana",
                     );
                   }
-                  if (!matchingPair) matchingPair = searchPairs[0];
-                  if (matchingPair && matchingPair.priceUsd)
-                    priceUsd = Number(matchingPair.priceUsd);
+                  if (!foundPair) foundPair = searchPairs[0];
+                  if (foundPair && foundPair.priceUsd) {
+                    matchingPair = foundPair;
+                    priceUsd = Number(foundPair.priceUsd);
+                    priceChange24h = foundPair.priceChange?.h24 || 0;
+                    volume24h = foundPair.volume?.h24 || 0;
+                  }
                 } catch (e) {
                   // continue
                 }
@@ -703,6 +718,8 @@ export const onRequest = async ({ request, env }) => {
 
       if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+        priceChange24h = 0;
+        volume24h = 0;
       }
 
       const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
@@ -714,6 +731,9 @@ export const onRequest = async ({ request, env }) => {
         rate: rateInPKR,
         pkrPerUsd: PKR_PER_USD,
         markup: MARKUP,
+        priceChange24h,
+        volume24h,
+        pair: matchingPair || undefined,
       });
     }
 

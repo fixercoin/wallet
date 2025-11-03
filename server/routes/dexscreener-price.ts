@@ -34,12 +34,59 @@ const TOKEN_MINTS: Record<string, string> = {
 };
 
 const FALLBACK_USD: Record<string, number> = {
-  FIXERCOIN: 0.005,
+  FIXERCOIN: 0.000089,
   SOL: 180,
   USDC: 1.0,
   USDT: 1.0,
-  LOCKER: 0.1,
+  LOCKER: 0.000012,
 };
+
+/**
+ * Derive token price from its SOL trading pair
+ * If 1 SOL = X tokens, then 1 token = SOL price / X
+ */
+async function getDerivedTokenPrice(
+  tokenMint: string,
+  tokenSymbol: string,
+): Promise<{ price: number; pairRatio: number } | null> {
+  try {
+    // Get SOL price
+    const solData = await fetchDexscreenerData(`/tokens/${TOKEN_MINTS.SOL}`);
+    const solPair = solData?.pairs?.[0];
+    const solPrice = solPair?.priceUsd
+      ? parseFloat(solPair.priceUsd)
+      : FALLBACK_USD.SOL;
+
+    // Get token price (this gives us the direct USDT price from any pair)
+    const tokenData = await fetchDexscreenerData(`/tokens/${tokenMint}`);
+    const tokenPair = tokenData?.pairs?.[0];
+
+    if (!tokenPair || !tokenPair.priceUsd) {
+      return null;
+    }
+
+    const tokenPrice = parseFloat(tokenPair.priceUsd);
+
+    // Calculate how many tokens per 1 SOL
+    // pairRatio = SOL price / token price = how many tokens you get for 1 SOL
+    const pairRatio = solPrice / tokenPrice;
+
+    console.log(
+      `[Derived Price] ${tokenSymbol}: 1 SOL = ${pairRatio.toFixed(2)} tokens, 1 token = $${tokenPrice.toFixed(8)}`,
+    );
+
+    return {
+      price: tokenPrice,
+      pairRatio,
+    };
+  } catch (error) {
+    console.warn(
+      `[Derived Price] Error calculating derived price for ${tokenSymbol}:`,
+      error,
+    );
+    return null;
+  }
+}
 
 export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
   try {
@@ -148,10 +195,96 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
     }
 
     let priceUsd: number | null = null;
+    let priceChange24h: number = 0;
+    let volume24h: number = 0;
+    let matchingPair: DexscreenerToken | null = null;
+    let derivedViaSOLPair = false;
 
     try {
       if (token === "USDC" || token === "USDT") {
         priceUsd = 1.0;
+        priceChange24h = 0;
+        volume24h = 0;
+      } else if (token === "FIXERCOIN" || token === "LOCKER") {
+        // Use derived pricing from SOL pair for FIXERCOIN and LOCKER
+        const derived = await getDerivedTokenPrice(mint, token);
+        if (derived && derived.price > 0) {
+          priceUsd = derived.price;
+          derivedViaSOLPair = true;
+          // Try to get 24h data from DexScreener
+          try {
+            const tokenData = await fetchDexscreenerData(`/tokens/${mint}`);
+            if (tokenData?.pairs?.[0]) {
+              matchingPair = tokenData.pairs[0];
+              priceChange24h = matchingPair.priceChange?.h24 || 0;
+              volume24h = matchingPair.volume?.h24 || 0;
+            }
+          } catch (e) {
+            console.warn(
+              `[Token Price] Could not fetch 24h data for ${token}:`,
+              e,
+            );
+          }
+        } else if (mint) {
+          // Fallback to standard lookup if derived pricing fails
+          const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
+          if (pairAddress) {
+            try {
+              const pairData = await fetchDexscreenerData(
+                `/pairs/solana/${pairAddress}`,
+              );
+              const pair = pairData?.pair || (pairData?.pairs || [])[0] || null;
+              if (pair && pair.priceUsd) {
+                matchingPair = pair;
+                priceUsd = parseFloat(pair.priceUsd);
+                priceChange24h = pair.priceChange?.h24 || 0;
+                volume24h = pair.volume?.h24 || 0;
+              }
+            } catch (e) {
+              console.warn(`[Token Price] Pair address lookup failed:`, e);
+            }
+          }
+
+          if (priceUsd === null) {
+            try {
+              const tokenData = await fetchDexscreenerData(`/tokens/${mint}`);
+              const pairs = Array.isArray(tokenData?.pairs)
+                ? tokenData.pairs
+                : [];
+
+              if (pairs.length > 0) {
+                matchingPair = pairs.find(
+                  (p: DexscreenerToken) =>
+                    p?.baseToken?.address === mint && p?.chainId === "solana",
+                );
+
+                if (!matchingPair) {
+                  matchingPair = pairs.find(
+                    (p: DexscreenerToken) =>
+                      p?.quoteToken?.address === mint &&
+                      p?.chainId === "solana",
+                  );
+                }
+
+                if (!matchingPair) {
+                  matchingPair = pairs.find(
+                    (p: DexscreenerToken) =>
+                      p?.baseToken?.address === mint ||
+                      p?.quoteToken?.address === mint,
+                  );
+                }
+
+                if (matchingPair && matchingPair.priceUsd) {
+                  priceUsd = parseFloat(matchingPair.priceUsd);
+                  priceChange24h = matchingPair.priceChange?.h24 || 0;
+                  volume24h = matchingPair.volume?.h24 || 0;
+                }
+              }
+            } catch (e) {
+              console.warn(`[Token Price] Token lookup failed:`, e);
+            }
+          }
+        }
       } else if (mint) {
         const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
         if (pairAddress) {
@@ -161,7 +294,10 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             );
             const pair = pairData?.pair || (pairData?.pairs || [])[0] || null;
             if (pair && pair.priceUsd) {
+              matchingPair = pair;
               priceUsd = parseFloat(pair.priceUsd);
+              priceChange24h = pair.priceChange?.h24 || 0;
+              volume24h = pair.volume?.h24 || 0;
             }
           } catch (e) {
             console.warn(`[Token Price] Pair address lookup failed:`, e);
@@ -174,8 +310,6 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             const pairs = Array.isArray(tokenData?.pairs)
               ? tokenData.pairs
               : [];
-
-            let matchingPair = null;
 
             if (pairs.length > 0) {
               matchingPair = pairs.find(
@@ -200,6 +334,8 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
 
               if (matchingPair && matchingPair.priceUsd) {
                 priceUsd = parseFloat(matchingPair.priceUsd);
+                priceChange24h = matchingPair.priceChange?.h24 || 0;
+                volume24h = matchingPair.volume?.h24 || 0;
               }
             }
           } catch (e) {
@@ -213,6 +349,8 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
 
     if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
       priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+      priceChange24h = 0;
+      volume24h = 0;
     }
 
     const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
@@ -224,6 +362,10 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
       rate: rateInPKR,
       pkrPerUsd: PKR_PER_USD,
       markup: MARKUP,
+      priceChange24h,
+      volume24h,
+      pair: matchingPair || undefined,
+      pricingMethod: derivedViaSOLPair ? "derived-from-sol-pair" : "direct",
     });
   } catch (error) {
     console.error(`[Token Price] Handler error:`, error);

@@ -50,7 +50,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     const load = async () => {
       try {
         const birdeye = await birdeyeAPI.getTokenByMint(tokenMint);
-        const price = birdeye?.priceUsd ? parseFloat(String(birdeye.priceUsd)) : null;
+        const price = birdeye?.priceUsd
+          ? parseFloat(String(birdeye.priceUsd))
+          : null;
         const change = birdeye?.priceChange?.h24 ?? 0;
         const base = price || 0;
         const data = Array.from({ length: 24 }, (_, i) => {

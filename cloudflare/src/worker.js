@@ -35,7 +35,6 @@ function getRpcEndpoints(env) {
   return list.filter(Boolean);
 }
 
-
 // Helper functions
 async function callRpc(env, method, params = [], id = Date.now()) {
   let lastError = null;
@@ -77,7 +76,6 @@ async function callRpc(env, method, params = [], id = Date.now()) {
 
   throw new Error(lastError?.message || "All RPC endpoints failed");
 }
-
 
 // Main worker
 export default {
@@ -266,9 +264,7 @@ export default {
         clearTimeout(timeoutId);
 
         if (!resp.ok) {
-          console.warn(
-            `Birdeye API returned ${resp.status} for ${address}`,
-          );
+          console.warn(`Birdeye API returned ${resp.status} for ${address}`);
           return json(
             { error: `Birdeye API returned ${resp.status}` },
             { status: resp.status, headers: corsHeaders },

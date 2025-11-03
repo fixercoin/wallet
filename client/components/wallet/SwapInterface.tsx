@@ -176,7 +176,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           const fromUsd = fromBirdeye?.priceUsd
             ? parseFloat(String(fromBirdeye.priceUsd))
             : null;
-          const toUsd = toBirdeye?.priceUsd ? parseFloat(String(toBirdeye.priceUsd)) : null;
+          const toUsd = toBirdeye?.priceUsd
+            ? parseFloat(String(toBirdeye.priceUsd))
+            : null;
 
           console.log(
             `Birdeye prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,

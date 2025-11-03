@@ -412,9 +412,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
 
           if (allMintsToFetch.length > 0) {
-            const birdeyeTokens = await birdeyeAPI.getTokensByMints(
-              allMintsToFetch,
-            );
+            const birdeyeTokens =
+              await birdeyeAPI.getTokensByMints(allMintsToFetch);
             const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
             prices = { ...prices, ...birdeyePrices };
 

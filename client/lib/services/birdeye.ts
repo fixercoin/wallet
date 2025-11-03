@@ -116,9 +116,7 @@ class BirdeyeAPI {
       try {
         const promises = toFetch.map((mint) => this.getTokenPrice(mint));
         const results = await Promise.all(promises);
-        fetchedTokens = results.filter(
-          (t): t is BirdeyeToken => t !== null,
-        );
+        fetchedTokens = results.filter((t): t is BirdeyeToken => t !== null);
 
         const ttl = now + BirdeyeAPI.TOKEN_CACHE_TTL_MS;
         fetchedTokens.forEach((token) => {
@@ -145,9 +143,7 @@ class BirdeyeAPI {
     return tokens[0] || null;
   }
 
-  getTokenPrices(
-    tokens: BirdeyeToken[],
-  ): Record<string, number> {
+  getTokenPrices(tokens: BirdeyeToken[]): Record<string, number> {
     const prices: Record<string, number> = {};
 
     tokens.forEach((token) => {

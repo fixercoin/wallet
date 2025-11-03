@@ -84,7 +84,7 @@ export default function P2PRoom() {
         <div className="bg-white rounded-xl shadow border p-4">
           <h3 className="font-semibold mb-2">Live feed</h3>
           <pre className="text-xs max-h-40 overflow-auto bg-gray-50 p-2 rounded">
-            {JSON.stringify(events.slice(-6), null, 2)}
+            {JSON.stringify([], null, 2)}
           </pre>
           <button
             onClick={onSubmit}

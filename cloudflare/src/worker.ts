@@ -451,7 +451,30 @@ export default {
         );
       }
 
-      // Fallback 1: Try DexScreener
+      // Fallback 1: Try derived pricing for FIXERCOIN and LOCKER
+      const tokenSymbol = getTokenSymbol(address);
+      if (
+        tokenSymbol === "FIXERCOIN" ||
+        tokenSymbol === "LOCKER"
+      ) {
+        const derivedPrice = await getDerivedPrice(address);
+        if (derivedPrice !== null && derivedPrice > 0) {
+          return json(
+            {
+              success: true,
+              data: {
+                address,
+                value: derivedPrice,
+                updateUnixTime: Math.floor(Date.now() / 1000),
+              },
+              _source: "derived",
+            },
+            { headers: corsHeaders },
+          );
+        }
+      }
+
+      // Fallback 2: Try DexScreener
       const dexscreenerPrice = await getPriceFromDexScreener(address);
       if (dexscreenerPrice !== null) {
         return json(
@@ -468,7 +491,7 @@ export default {
         );
       }
 
-      // Fallback 2: Try Jupiter
+      // Fallback 3: Try Jupiter
       const jupiterPrice = await getPriceFromJupiter(address);
       if (jupiterPrice !== null) {
         return json(
@@ -485,8 +508,7 @@ export default {
         );
       }
 
-      // Fallback 3: Check hardcoded fallback prices
-      const tokenSymbol = getTokenSymbol(address);
+      // Fallback 4: Check hardcoded fallback prices
       if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
         console.log(
           `[Birdeye] Using hardcoded fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,

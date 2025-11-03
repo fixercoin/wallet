@@ -315,13 +315,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     if (parseFloat(fromAmount) > getTokenBalance(fromToken))
       return "Insufficient balance";
 
-    // Check if enough SOL for network fees
+    // Check if enough SOL for network fees and rent
     const solToken = availableTokens.find(t => t.symbol === "SOL");
     if (solToken) {
       const solBalance = getTokenBalance(solToken);
-      const minSolForFees = 0.001; // Minimum SOL needed for network fees
+      const minSolForFees = 0.003; // Minimum SOL for transaction + potential rent
       if (solBalance < minSolForFees) {
-        return `Insufficient SOL for fees. Need at least ${minSolForFees} SOL, you have ${solBalance.toFixed(6)} SOL`;
+        return `Insufficient SOL. Need at least ${minSolForFees} SOL for fees and rent, you have ${solBalance.toFixed(6)} SOL`;
       }
     }
 

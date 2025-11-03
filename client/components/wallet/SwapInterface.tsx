@@ -749,13 +749,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
   };
 
-  // Meteora helpers
+  // Meteora helpers - using proxied endpoints through server
   async function getMeteoraQuote(
     inputMint: string,
     outputMint: string,
     amount: number,
   ) {
-    const url = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(
+    const url = `${resolveApiUrl("/api/swap/meteora/quote")}?inputMint=${encodeURIComponent(
       inputMint,
     )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
       String(amount),
@@ -766,7 +766,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   async function buildMeteoraSwap(route: any, userPublicKey: string) {
-    const res = await fetch("https://api.meteora.ag/swap/v3/swap", {
+    const res = await fetch(resolveApiUrl("/api/swap/meteora/swap"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ route, userPublicKey }),

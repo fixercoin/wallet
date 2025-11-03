@@ -104,7 +104,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
 
     const notification: ChatNotification = {
       type: "trade_initiated",
@@ -117,8 +116,6 @@ export default function BuyTrade() {
     };
 
     saveNotification(notification);
-    broadcastNotification(send, notification);
-    broadcastNotification(sendGlobal, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({

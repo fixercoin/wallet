@@ -261,7 +261,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 10000);
+    const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
 
     return () => {
       cancelled = true;

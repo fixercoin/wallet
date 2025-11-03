@@ -41,6 +41,7 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
+import { handleBirdeyePrice } from "./routes/api-birdeye";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -71,6 +72,9 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/jupiter/quote", handleJupiterQuote);
   app.post("/api/jupiter/swap", handleJupiterSwap);
   app.get("/api/jupiter/tokens", handleJupiterTokens);
+
+  // Birdeye routes
+  app.get("/api/birdeye/price", handleBirdeyePrice);
 
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);

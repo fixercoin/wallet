@@ -405,31 +405,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Attempt to fill token prices via dedicated /api/token/price endpoint
+        // Fetch prices from Birdeye API (via proxy)
         try {
-          const missingMints = tokenMints.filter((m) => m && !prices[m]);
-          if (missingMints.length > 0) {
-            const fetches = missingMints.map((m) =>
-              fetch(`/api/token/price?mint=${encodeURIComponent(m)}`)
-                .then((r) => (r.ok ? r.json().catch(() => null) : null))
-                .catch(() => null),
+          const allMintsToFetch = Array.from(
+            new Set(tokenMints.filter(Boolean)),
+          );
+
+          if (allMintsToFetch.length > 0) {
+            const birdeyeTokens = await birdeyeAPI.getTokensByMints(
+              allMintsToFetch,
             );
-            const results = await Promise.all(fetches);
-            results.forEach((res, idx) => {
-              const mint = missingMints[idx];
-              if (!mint) return;
-              if (
-                res &&
-                typeof res.priceUsd === "number" &&
-                isFinite(res.priceUsd) &&
-                res.priceUsd > 0
-              ) {
-                prices[mint] = Number(res.priceUsd);
+            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
+            prices = { ...prices, ...birdeyePrices };
+
+            birdeyeTokens.forEach((token) => {
+              if (token.address && token.priceChange?.h24) {
+                changeMap[token.address] = token.priceChange.h24;
               }
             });
           }
         } catch (e) {
-          // ignore missing price fetch failures
+          console.warn("Birdeye fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing

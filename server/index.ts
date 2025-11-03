@@ -9,6 +9,11 @@ import {
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
 import {
+  handleDexscreenerPrice,
+  handleSolPrice,
+  handleTokenPrice,
+} from "./routes/dexscreener-price";
+import {
   handleCoinMarketCapQuotes,
   handleCoinMarketCapSearch,
 } from "./routes/coinmarketcap-proxy";

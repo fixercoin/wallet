@@ -158,7 +158,15 @@ export async function handleBirdeyePrice(
           console.log(
             `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
           );
-          res.json(data);
+          res.json({
+            success: true,
+            data: {
+              address: data.data.address,
+              value: data.data.value,
+              updateUnixTime: data.data.updateUnixTime,
+              priceChange24h: data.data.priceChange24h || 0,
+            },
+          });
           return;
         }
       }
@@ -180,8 +188,10 @@ export async function handleBirdeyePrice(
         success: true,
         data: {
           address,
-          value: dexscreenerPrice,
+          value: dexscreenerPrice.price,
           updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: dexscreenerPrice.priceChange24h,
+          volume24h: dexscreenerPrice.volume24h,
         },
         _source: "dexscreener",
       });
@@ -194,8 +204,10 @@ export async function handleBirdeyePrice(
         success: true,
         data: {
           address,
-          value: jupiterPrice,
+          value: jupiterPrice.price,
           updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: jupiterPrice.priceChange24h,
+          volume24h: jupiterPrice.volume24h,
         },
         _source: "jupiter",
       });
@@ -213,6 +225,8 @@ export async function handleBirdeyePrice(
           address,
           value: FALLBACK_USD[tokenSymbol],
           updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: 0,
+          volume24h: 0,
         },
         _source: "fallback",
       });

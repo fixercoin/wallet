@@ -236,6 +236,218 @@ export default {
       }
     }
 
+    // DexScreener tokens proxy: /api/dexscreener/tokens?mints=<MINT1>,<MINT2>...
+    if (pathname === "/api/dexscreener/tokens" && req.method === "GET") {
+      const mints = searchParams.get("mints") || "";
+      if (!mints) {
+        return json(
+          { error: "Missing 'mints' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      const mintList = mints
+        .split(",")
+        .map((m) => m.trim())
+        .filter(Boolean);
+      if (mintList.length === 0) {
+        return json(
+          { error: "No valid mints provided" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const batch = mintList.join(",");
+        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(batch)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        }
+
+        // Fallback: try individual token lookups
+        const pairs: any[] = [];
+        for (const mint of mintList) {
+          try {
+            const individualUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
+            const individualResp = await fetch(individualUrl, {
+              headers: { Accept: "application/json" },
+            });
+            if (individualResp.ok) {
+              const data = await individualResp.json();
+              if (data.pairs && Array.isArray(data.pairs)) {
+                pairs.push(...data.pairs);
+              }
+            }
+          } catch (e) {
+            console.warn(`Failed to fetch individual token ${mint}:`, e);
+          }
+        }
+
+        return json(
+          { schemaVersion: "1.0.0", pairs },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch DexScreener tokens",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexScreener search proxy: /api/dexscreener/search?q=<QUERY>
+    if (pathname === "/api/dexscreener/search" && req.method === "GET") {
+      const q = searchParams.get("q") || "";
+      if (!q) {
+        return json(
+          { error: "Missing 'q' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        }
+
+        return json(
+          { schemaVersion: "1.0.0", pairs: [] },
+          { status: resp.status, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to search DexScreener",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexScreener trending proxy: /api/dexscreener/trending
+    if (pathname === "/api/dexscreener/trending" && req.method === "GET") {
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/pairs/solana`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const sorted = (data.pairs || [])
+            .filter(
+              (p: any) =>
+                p.volume?.h24 > 1000 &&
+                p.liquidity?.usd &&
+                p.liquidity.usd > 10000,
+            )
+            .sort(
+              (a: any, b: any) =>
+                (b.volume?.h24 || 0) - (a.volume?.h24 || 0),
+            )
+            .slice(0, 50);
+          return json(
+            { schemaVersion: "1.0.0", pairs: sorted },
+            { headers: corsHeaders },
+          );
+        }
+
+        return json(
+          { schemaVersion: "1.0.0", pairs: [] },
+          { status: resp.status, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to fetch trending tokens",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // SOL price proxy: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+          if (pairs.length > 0) {
+            const pair = pairs[0];
+            const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
+            return json(
+              {
+                price,
+                priceUsd: price,
+                data: { price, priceUsd: price },
+              },
+              { headers: corsHeaders },
+            );
+          }
+        }
+
+        // Fallback SOL price
+        return json(
+          {
+            price: 180,
+            priceUsd: 180,
+            data: { price: 180, priceUsd: 180 },
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            price: 180,
+            priceUsd: 180,
+            data: { price: 180, priceUsd: 180 },
+          },
+          { headers: corsHeaders },
+        );
+      }
+    }
+
     // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>
     if (pathname === "/api/birdeye/price" && req.method === "GET") {
       const address = searchParams.get("address") || "";

@@ -836,6 +836,98 @@ export default {
       }
     }
 
+    // Meteora swap quote: /api/swap/meteora/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/swap/meteora/quote" && req.method === "GET") {
+      const inputMint = url.searchParams.get("inputMint") || "";
+      const outputMint = url.searchParams.get("outputMint") || "";
+      const amount = url.searchParams.get("amount") || "";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const meteoraUrl = new URL("https://api.meteora.ag/swap/v3/quote");
+        meteoraUrl.searchParams.set("inputMint", inputMint);
+        meteoraUrl.searchParams.set("outputMint", outputMint);
+        meteoraUrl.searchParams.set("amount", amount);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(meteoraUrl.toString(), {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Meteora API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch Meteora swap quote", details: String(e) },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Meteora swap build: /api/swap/meteora/swap (POST) - builds unsigned/base64 transaction
+    if (pathname === "/api/swap/meteora/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const t = await resp.text().catch(() => "");
+          return json(
+            { error: `Meteora swap build returned ${resp.status}`, details: t },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to build Meteora swap", details: String(e) },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // Jupiter swap quote
     if (pathname === "/api/swap/jupiter/quote" && req.method === "GET") {
       const inputMint = url.searchParams.get("inputMint") || "";

@@ -40,7 +40,7 @@ interface SwapInterfaceProps {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const SWAP_FEE_SOL = 0.001;
+const SWAP_FEE_BPS = 30;
 
 export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, connection } =
@@ -54,6 +54,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [slippage, setSlippage] = useState("0.5");
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
+  const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);
   const [indicative, setIndicative] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
@@ -161,13 +162,62 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
           );
           setQuote(q);
+          setMeteoraQuote(null);
           const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
           setToAmount(out.toFixed(6));
           setQuoteError("");
           setIndicative(false);
         } else {
+          console.log(`No Jupiter quote available, trying Meteora API`);
+
+          try {
+            const mq = await getMeteoraQuote(
+              fromToken.mint,
+              toToken.mint,
+              amountInt,
+            );
+
+            if (mq && mq.route) {
+              console.log("Meteora provided a route", mq);
+              setQuote(null);
+              setMeteoraQuote(mq);
+
+              // Try to derive a human-readable output amount from common fields
+              const minReceivedRaw =
+                mq.minimumReceived ??
+                mq.minReceived ??
+                mq.minimum_received ??
+                mq.min_received ??
+                mq.estimatedOut ??
+                mq.outAmount ??
+                null;
+
+              if (minReceivedRaw != null && toToken?.decimals != null) {
+                try {
+                  const outHuman =
+                    typeof minReceivedRaw === "string"
+                      ? parseInt(minReceivedRaw, 10) /
+                        Math.pow(10, toToken.decimals)
+                      : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
+                  setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+                  setQuoteError("");
+                  setIndicative(false);
+                  return;
+                } catch (e) {
+                  console.warn("Failed to parse Meteora minReceived", e);
+                }
+              }
+
+              // Fallback to birdeye pricing if we couldn't parse Meteora amount
+              console.log(`Falling back to Birdeye for indicative pricing`);
+            }
+          } catch (e) {
+            console.warn("Meteora quote failed:", e);
+          }
+
+          // Birdeye fallback (unchanged)
           console.log(
-            `No Jupiter quote available, falling back to Birdeye pricing`,
+            `No Jupiter/Meteora quote available, falling back to Birdeye pricing`,
           );
           const [fromBirdeye, toBirdeye] = await Promise.all([
             birdeyeAPI.getTokenByMint(fromToken.mint),
@@ -308,14 +358,43 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const sendSwapFee = async (): Promise<void> => {
-    if (!wallet || !connection) return;
+    if (!wallet || !connection || !fromToken) return;
     try {
       const kp = getKeypair();
       if (!kp) return;
 
-      const feeLamports = Math.floor(SWAP_FEE_SOL * LAMPORTS_PER_SOL);
-      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      const feeRate = SWAP_FEE_BPS / 10000; // 0.30%
+      const inputAmt = parseFloat(fromAmount || "0");
+      if (!isFinite(inputAmt) || inputAmt <= 0) return;
 
+      let feeInSol = 0;
+      if (fromToken.symbol === "SOL") {
+        feeInSol = inputAmt * feeRate;
+      } else {
+        const solInfo = await birdeyeAPI.getTokenByMint(TOKEN_MINTS.SOL);
+        const solUsd = solInfo?.priceUsd || 0;
+        const fromUsd = fromUsdPrice ?? null;
+        const toUsd = toUsdPrice ?? null;
+        const outAmt = parseFloat(toAmount || "0");
+
+        let usdValue: number | null = null;
+        if (fromUsd && isFinite(fromUsd)) {
+          usdValue = inputAmt * fromUsd;
+        } else if (toUsd && isFinite(toUsd) && isFinite(outAmt) && outAmt > 0) {
+          usdValue = outAmt * toUsd;
+        }
+
+        if (usdValue && solUsd > 0) {
+          feeInSol = (usdValue * feeRate) / solUsd;
+        } else {
+          return; // cannot price accurately; skip fee silently
+        }
+      }
+
+      const feeLamports = Math.floor(feeInSol * LAMPORTS_PER_SOL);
+      if (feeLamports <= 0) return;
+
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
       const latestBlockhash = await connection.getLatestBlockhash();
       const tx = new Transaction({
         recentBlockhash: latestBlockhash.blockhash,
@@ -342,11 +421,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         body: JSON.stringify({ signedBase64 }),
       });
 
-      if (!sendResp.ok) {
-        console.warn("Fee transfer failed (non-critical)");
-        return;
-      }
-
+      if (!sendResp.ok) return;
       const jb = await sendResp.json();
       if (jb.result) {
         console.log("Swap fee transferred:", jb.result);
@@ -477,6 +552,124 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
 
+      // If we have a direct quote, do normal single-leg swap
+      if (quote) {
+        const sig = await submitQuote(quote);
+        setTxSignature(sig);
+        setStep("success");
+        setTimeout(() => refreshBalance?.(), 2000);
+        toast({
+          title: "Swap Submitted",
+          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+        });
+        if (connection && typeof connection.getLatestBlockhash === "function") {
+          try {
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+            toast({
+              title: "Swap Confirmed",
+              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
+            });
+            // Send fee silently after swap confirmation
+            await sendSwapFee();
+          } catch {}
+        }
+        return;
+      }
+
+      // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
+      if (!quote && meteoraQuote) {
+        try {
+          const swapTx = await buildMeteoraSwap(
+            meteoraQuote.route,
+            wallet.publicKey,
+          );
+
+          const txBase64 =
+            swapTx?.transaction ||
+            swapTx?.swapTransaction ||
+            swapTx?.transactionBase64 ||
+            swapTx?.base64 ||
+            swapTx;
+          if (!txBase64 || typeof txBase64 !== "string") {
+            throw new Error("Invalid swap transaction returned from Meteora");
+          }
+
+          // Prefer provider-based signing (do NOT use raw secret keys)
+          const provider =
+            (window as any).solana ?? (window as any).fixorium ?? null;
+          if (!provider || typeof provider.signTransaction !== "function") {
+            throw new Error(
+              "Wallet provider does not support signTransaction. Connect a compatible wallet/provider.",
+            );
+          }
+
+          const tx = Transaction.from(Buffer.from(txBase64, "base64"));
+          tx.feePayer = new PublicKey(wallet.publicKey);
+
+          const signedTx = await provider.signTransaction(tx);
+
+          let sig: string;
+          if (
+            connection &&
+            typeof connection.sendRawTransaction === "function"
+          ) {
+            sig = await connection.sendRawTransaction(signedTx.serialize(), {
+              skipPreflight: false,
+            });
+            // confirm
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+          } else {
+            const signedBase64 = (() => {
+              try {
+                const arr = signedTx.serialize();
+                let bin = "";
+                for (let i = 0; i < arr.length; i++)
+                  bin += String.fromCharCode(arr[i]);
+                return btoa(bin);
+              } catch (e) {
+                return base64FromBytes(signedTx.serialize());
+              }
+            })();
+            const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ signedBase64 }),
+            });
+            if (!sendResp.ok) {
+              const txt = await sendResp.text().catch(() => "");
+              throw new Error(txt || sendResp.statusText || "Send failed");
+            }
+            const jb = await sendResp.json();
+            if (jb.error) throw new Error(jb.error?.message || "Send failed");
+            sig = jb.result as string;
+          }
+
+          setTxSignature(sig);
+          setStep("success");
+          setTimeout(() => refreshBalance?.(), 2000);
+          toast({
+            title: "Swap Completed!",
+            description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
+          });
+          // send fee
+          await sendSwapFee();
+          return;
+        } catch (e) {
+          console.error("Meteora swap failed:", e);
+          // continue to bridged attempts below
+        }
+      }
+
       // No direct route: attempt bridged two-leg swap via USDC or SOL
       if (!fromToken || !toToken) throw new Error("Missing tokens");
       const slippageBps = Math.max(
@@ -545,6 +738,32 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       setIsLoading(false);
     }
   };
+
+  // Meteora helpers
+  async function getMeteoraQuote(
+    inputMint: string,
+    outputMint: string,
+    amount: number,
+  ) {
+    const url = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(
+      inputMint,
+    )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
+      String(amount),
+    )}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Meteora quote failed: ${resp.status}`);
+    return resp.json();
+  }
+
+  async function buildMeteoraSwap(route: any, userPublicKey: string) {
+    const res = await fetch("https://api.meteora.ag/swap/v3/swap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ route, userPublicKey }),
+    });
+    if (!res.ok) throw new Error(`Meteora build swap failed: ${res.status}`);
+    return res.json();
+  }
 
   const resetSwap = () => {
     setFromAmount("");

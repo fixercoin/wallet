@@ -239,6 +239,52 @@ export default {
       }
     }
 
+    // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>
+    if (pathname === "/api/birdeye/price" && req.method === "GET") {
+      const address = searchParams.get("address") || "";
+
+      if (!address) {
+        return json(
+          { error: "Missing 'address' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(address)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(birdeyeUrl, {
+          headers: {
+            Accept: "application/json",
+            "X-API-KEY": "cecae2ad38d7461eaf382f533726d9bb",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          console.warn(
+            `Birdeye API returned ${resp.status} for ${address}`,
+          );
+          return json(
+            { error: `Birdeye API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        console.error(`Birdeye fetch failed for ${address}:`, e?.message);
+        return json(
+          { error: "Failed to fetch Birdeye price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
 
     // Dedicated token price endpoint: /api/token/price
     if (pathname === "/api/token/price" && req.method === "GET") {

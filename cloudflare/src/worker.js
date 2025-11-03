@@ -35,15 +35,6 @@ function getRpcEndpoints(env) {
   return list.filter(Boolean);
 }
 
-const DEXSCREENER_ENDPOINTS = [
-  "https://api.dexscreener.com/latest/dex",
-  "https://api.dexscreener.io/latest/dex",
-];
-let currentDexIdx = 0;
-
-const DEX_CACHE_TTL_MS = 30000;
-const DEX_CACHE = new Map();
-const DEX_INFLIGHT = new Map();
 
 // Helper functions
 async function callRpc(env, method, params = [], id = Date.now()) {

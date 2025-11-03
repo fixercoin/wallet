@@ -208,64 +208,121 @@ export default function WalletHistory() {
           </div>
 
           <section className="mb-6">
-            <h2 className="text-lg font-medium mb-2">Transactions</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-medium">Transactions</h2>
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            </div>
 
-            {/* Combine completed + pending into a single list and filter for Buy/Sell/Send/Receive */}
+            {/* Combine blockchain txs + completed + pending orders */}
             {(() => {
-              const all = [
+              const appOrders = [
                 ...(completedOrders || []).map((o: any) => ({
                   ...o,
                   __status: "completed",
+                  __source: "app",
                 })),
                 ...(pendingOrders || []).map((o: any) => ({
                   ...o,
                   __status: "pending",
+                  __source: "app",
                 })),
               ];
 
-              const txs = all.filter((item: any) => {
-                const s = JSON.stringify(item).toLowerCase();
-                return /\b(buy|sell|send|receive|received|sent)\b/.test(s);
-              });
+              const allTxs = [
+                ...blockchainTxs.map((t) => ({
+                  ...t,
+                  __status: "confirmed",
+                  __source: "blockchain",
+                })),
+                ...appOrders,
+              ];
 
-              if (txs.length === 0) {
+              // Filter and sort by date (newest first)
+              const filteredTxs = allTxs
+                .filter((item: any) => {
+                  const s = JSON.stringify(item).toLowerCase();
+                  return (
+                    /\b(buy|sell|send|receive|received|sent)\b/.test(s) ||
+                    item.__source === "blockchain"
+                  );
+                })
+                .sort((a: any, b: any) => {
+                  const timeA =
+                    a.blockTime ||
+                    new Date(a.createdAt || a.timestamp || 0).getTime() / 1000;
+                  const timeB =
+                    b.blockTime ||
+                    new Date(b.createdAt || b.timestamp || 0).getTime() / 1000;
+                  return timeB - timeA;
+                });
+
+              if (filteredTxs.length === 0) {
                 return (
                   <div className="text-sm text-gray-600">
-                    No transactions found.
+                    {loading
+                      ? "Loading transactions..."
+                      : "No transactions found."}
                   </div>
                 );
               }
 
               return (
                 <ul className="space-y-3">
-                  {txs.map((t: any, idx: number) => {
+                  {filteredTxs.map((t: any, idx: number) => {
                     const sigs = findSignaturesInObject(t);
                     // infer type
-                    const text = (
-                      t.type ||
-                      t.description ||
-                      JSON.stringify(t) ||
-                      ""
-                    )
-                      .toString()
-                      .toLowerCase();
                     let kind = "TX";
-                    if (/buy/.test(text)) kind = "BUY";
-                    else if (/sell/.test(text)) kind = "SELL";
-                    else if (/receive|received/.test(text)) kind = "RECEIVE";
-                    else if (/send|sent/.test(text)) kind = "SEND";
+                    if (t.__source === "blockchain") {
+                      kind =
+                        t.type === "send"
+                          ? "SEND"
+                          : t.type === "receive"
+                            ? "RECEIVE"
+                            : "TX";
+                    } else {
+                      const text = (
+                        t.type ||
+                        t.description ||
+                        JSON.stringify(t) ||
+                        ""
+                      )
+                        .toString()
+                        .toLowerCase();
+                      if (/buy/.test(text)) kind = "BUY";
+                      else if (/sell/.test(text)) kind = "SELL";
+                      else if (/receive|received/.test(text)) kind = "RECEIVE";
+                      else if (/send|sent/.test(text)) kind = "SEND";
+                    }
 
                     const when =
                       t.createdAt ||
                       t.timestamp ||
                       t.time ||
                       t.date ||
-                      t.txTime;
+                      t.txTime ||
+                      (t.blockTime ? t.blockTime * 1000 : null);
                     const whenStr = when ? new Date(when).toLocaleString() : "";
+
+                    // Get amount and token for blockchain transactions
+                    let description = t.description || "";
+                    if (t.__source === "blockchain" && !description) {
+                      const tokenSymbol =
+                        KNOWN_TOKENS[t.token]?.symbol || t.token.slice(0, 6);
+                      const amount =
+                        t.amount /
+                        Math.pow(10, t.decimals || 6);
+                      description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
+                    }
+
+                    const allSigs = [
+                      ...(t.signature ? [t.signature] : []),
+                      ...sigs,
+                    ];
+                    const uniqueSigs = Array.from(new Set(allSigs));
 
                     return (
                       <li
-                        key={t.id || t.txid || idx}
+                        key={t.id || t.txid || t.signature || idx}
                         className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -277,11 +334,15 @@ export default function WalletHistory() {
                               <span className="text-xs text-gray-500">
                                 {t.__status}
                               </span>
+                              {t.__source === "blockchain" && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                  On-chain
+                                </span>
+                              )}
                             </div>
                             <div className="mt-1 text-sm text-gray-700">
-                              {t.description
-                                ? t.description
-                                : JSON.stringify(t)}
+                              {description ||
+                                JSON.stringify(t).slice(0, 100)}
                             </div>
                             {whenStr ? (
                               <div className="text-xs text-gray-500 mt-1">
@@ -290,7 +351,7 @@ export default function WalletHistory() {
                             ) : null}
                           </div>
                           <div className="flex flex-col items-end gap-2">
-                            {sigs.map((s: string) => (
+                            {uniqueSigs.map((s: string) => (
                               <a
                                 key={s}
                                 href={BASE_SOLSCAN_TX(s)}

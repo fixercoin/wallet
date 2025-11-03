@@ -277,15 +277,50 @@ export const getTokenAccounts = async (publicKey: string) => {
     }
   } catch (error) {
     console.warn(
-      "Proxy RPC getTokenAccountsByOwner failed, attempting fallback RPC endpoints:",
+      "[Token Accounts] Proxy RPC getTokenAccountsByOwner failed, attempting direct web3.js fallback:",
       error,
     );
   }
 
-  console.warn(
-    "[Token Accounts] ❌ Proxy RPC failed. Token accounts cannot be fetched directly from browser due to security restrictions. Returning empty list.",
-  );
-  return [];
+  // Fallback: Try direct web3.js Connection via SOLANA_RPC_URL
+  try {
+    console.log("[Token Accounts] Attempting direct web3.js fallback...");
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const accounts = await conn.getParsedTokenAccountsByOwner(
+      new PublicKey(publicKey),
+      { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+    );
+
+    console.log(
+      `[Token Accounts] Got ${accounts.value.length} token accounts from web3.js fallback`,
+    );
+
+    return accounts.value.map((account: any) => {
+      const parsedInfo = account.account.data.parsed.info;
+      const mint = parsedInfo.mint;
+      const balance = parsedInfo.tokenAmount.uiAmount || 0;
+      const decimals = parsedInfo.tokenAmount.decimals;
+
+      const metadata = KNOWN_TOKENS[mint] || {
+        mint,
+        symbol: "UNKNOWN",
+        name: "Unknown Token",
+        decimals,
+      };
+
+      return {
+        ...metadata,
+        balance,
+        decimals: decimals || metadata.decimals,
+      };
+    });
+  } catch (webError) {
+    console.error(
+      "[Token Accounts] Direct web3.js fallback also failed:",
+      webError,
+    );
+    return [];
+  }
 };
 
 /**

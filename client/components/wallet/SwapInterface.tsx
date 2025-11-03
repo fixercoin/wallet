@@ -40,7 +40,7 @@ interface SwapInterfaceProps {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const SWAP_FEE_SOL = 0.001;
+const SWAP_FEE_BPS = 30;
 
 export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, connection } =
@@ -308,14 +308,43 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const sendSwapFee = async (): Promise<void> => {
-    if (!wallet || !connection) return;
+    if (!wallet || !connection || !fromToken) return;
     try {
       const kp = getKeypair();
       if (!kp) return;
 
-      const feeLamports = Math.floor(SWAP_FEE_SOL * LAMPORTS_PER_SOL);
-      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      const feeRate = SWAP_FEE_BPS / 10000; // 0.30%
+      const inputAmt = parseFloat(fromAmount || "0");
+      if (!isFinite(inputAmt) || inputAmt <= 0) return;
 
+      let feeInSol = 0;
+      if (fromToken.symbol === "SOL") {
+        feeInSol = inputAmt * feeRate;
+      } else {
+        const solInfo = await birdeyeAPI.getTokenByMint(TOKEN_MINTS.SOL);
+        const solUsd = solInfo?.priceUsd || 0;
+        const fromUsd = fromUsdPrice ?? null;
+        const toUsd = toUsdPrice ?? null;
+        const outAmt = parseFloat(toAmount || "0");
+
+        let usdValue: number | null = null;
+        if (fromUsd && isFinite(fromUsd)) {
+          usdValue = inputAmt * fromUsd;
+        } else if (toUsd && isFinite(toUsd) && isFinite(outAmt) && outAmt > 0) {
+          usdValue = outAmt * toUsd;
+        }
+
+        if (usdValue && solUsd > 0) {
+          feeInSol = (usdValue * feeRate) / solUsd;
+        } else {
+          return; // cannot price accurately; skip fee silently
+        }
+      }
+
+      const feeLamports = Math.floor(feeInSol * LAMPORTS_PER_SOL);
+      if (feeLamports <= 0) return;
+
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
       const latestBlockhash = await connection.getLatestBlockhash();
       const tx = new Transaction({
         recentBlockhash: latestBlockhash.blockhash,
@@ -332,8 +361,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const serialized = tx.serialize();
 
       let bin = "";
-      for (let i = 0; i < serialized.length; i++)
-        bin += String.fromCharCode(serialized[i]);
+      for (let i = 0; i < serialized.length; i++) bin += String.fromCharCode(serialized[i]);
       const signedBase64 = btoa(bin);
 
       const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
@@ -342,11 +370,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         body: JSON.stringify({ signedBase64 }),
       });
 
-      if (!sendResp.ok) {
-        console.warn("Fee transfer failed (non-critical)");
-        return;
-      }
-
+      if (!sendResp.ok) return;
       const jb = await sendResp.json();
       if (jb.result) {
         console.log("Swap fee transferred:", jb.result);

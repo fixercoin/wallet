@@ -101,7 +101,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           variant="ghost"
           size="sm"
           onClick={onToggleBalance}
-          className={`${variant === "light" ? "text-gray-500 hover:text-gray-900 hover:bg-white/50" : "text-gray-400 hover:text-white hover:bg-gray-700"}`}
+          className={`${variant === "light" ? "text-gray-500/60 hover:text-gray-900 hover:bg-white/50" : "text-gray-500/60 hover:text-white hover:bg-gray-700"}`}
         >
           {showBalance ? (
             <Eye className="h-4 w-4" />

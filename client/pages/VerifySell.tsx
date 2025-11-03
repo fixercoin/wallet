@@ -171,7 +171,6 @@ export default function VerifySell() {
       };
 
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
       setSellerConfirmed(true);
 

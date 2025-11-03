@@ -400,7 +400,6 @@ export default {
     if (pathname === "/api/sol/price" && req.method === "GET") {
       const endpoints = [
         "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
-        "https://api.dexscreener.io/latest/dex/tokens/So11111111111111111111111111111111111111112",
       ];
       let lastError: any = null;
 
@@ -421,14 +420,19 @@ export default {
             if (pairs.length > 0) {
               const pair = pairs[0];
               const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
-              const priceChange24h =
-                pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
+              const priceChange24h = pair?.priceChange?.h24 ?? 0;
+              console.log(
+                `[SOL Price] Price: $${price}, 24h Change: ${priceChange24h}%`,
+              );
               return json(
                 {
-                  price,
-                  priceUsd: price,
-                  price_change_24h: priceChange24h,
-                  data: { price, priceUsd: price, priceChange24h },
+                  success: true,
+                  data: {
+                    address: "So11111111111111111111111111111111111111112",
+                    value: price,
+                    priceChange24h,
+                    updateUnixTime: Math.floor(Date.now() / 1000),
+                  },
                 },
                 { headers: corsHeaders },
               );
@@ -441,12 +445,16 @@ export default {
       }
 
       // Fallback SOL price
+      console.warn(`[SOL Price] Using fallback price. Error: ${lastError}`);
       return json(
         {
-          price: 180,
-          priceUsd: 180,
-          price_change_24h: 0,
-          data: { price: 180, priceUsd: 180, priceChange24h: 0 },
+          success: true,
+          data: {
+            address: "So11111111111111111111111111111111111111112",
+            value: 180,
+            priceChange24h: 0,
+            updateUnixTime: Math.floor(Date.now() / 1000),
+          },
         },
         { headers: corsHeaders },
       );
@@ -556,7 +564,7 @@ export default {
 
       const getPriceFromDexScreener = async (
         mint: string,
-      ): Promise<number | null> => {
+      ): Promise<{ price: number; priceChange24h: number } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
           const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
@@ -579,10 +587,11 @@ export default {
               if (pair && pair.priceUsd) {
                 const price = parseFloat(pair.priceUsd);
                 if (isFinite(price) && price > 0) {
+                  const priceChange24h = pair?.priceChange?.h24 ?? 0;
                   console.log(
-                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
+                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
                   );
-                  return price;
+                  return { price, priceChange24h };
                 }
               }
             }
@@ -652,7 +661,17 @@ export default {
             console.log(
               `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
             );
-            return json(data, { headers: corsHeaders });
+            // Ensure priceChange24h is included
+            const responseData = {
+              success: true,
+              data: {
+                address: data.data.address,
+                value: data.data.value,
+                updateUnixTime: data.data.updateUnixTime,
+                priceChange24h: data.data.priceChange24h ?? 0,
+              },
+            };
+            return json(responseData, { headers: corsHeaders });
           }
         }
 
@@ -677,6 +696,7 @@ export default {
                 address,
                 value: derivedPrice,
                 updateUnixTime: Math.floor(Date.now() / 1000),
+                priceChange24h: 0,
               },
               _source: "derived",
             },
@@ -693,8 +713,9 @@ export default {
             success: true,
             data: {
               address,
-              value: dexscreenerPrice,
+              value: dexscreenerPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: dexscreenerPrice.priceChange24h,
             },
             _source: "dexscreener",
           },
@@ -712,6 +733,7 @@ export default {
               address,
               value: jupiterPrice,
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: 0,
             },
             _source: "jupiter",
           },
@@ -731,6 +753,7 @@ export default {
               address,
               value: FALLBACK_USD[tokenSymbol],
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: 0,
             },
             _source: "fallback",
           },

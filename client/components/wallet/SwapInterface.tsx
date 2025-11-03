@@ -314,6 +314,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       return "Enter a valid amount";
     if (parseFloat(fromAmount) > getTokenBalance(fromToken))
       return "Insufficient balance";
+
+    // Check if enough SOL for network fees
+    const solToken = availableTokens.find((t) => t.symbol === "SOL");
+    if (solToken) {
+      const solBalance = getTokenBalance(solToken);
+      const swapAmt = parseFloat(fromAmount || "0");
+      // Need swap amount + transaction fee (~0.00025) + small buffer
+      const minNeeded = fromToken?.symbol === "SOL" ? swapAmt + 0.0003 : 0.0005;
+      if (solBalance < minNeeded) {
+        return `Insufficient SOL. Need ${minNeeded.toFixed(6)} SOL, have ${solBalance.toFixed(6)} SOL`;
+      }
+    }
+
     return null;
   };
 
@@ -991,7 +1004,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -1008,9 +1021,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,
@@ -1100,7 +1113,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -1117,9 +1130,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,

@@ -183,7 +183,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                 Buys vs Sells (5m → 24h)
               </div>
               <div className="p-3">
-                <BuySellLine mint={tokenMint} />
+                <BuySellLine mint={tokenMint} priceData={priceData} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">

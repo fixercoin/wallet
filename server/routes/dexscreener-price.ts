@@ -34,12 +34,59 @@ const TOKEN_MINTS: Record<string, string> = {
 };
 
 const FALLBACK_USD: Record<string, number> = {
-  FIXERCOIN: 0.005,
+  FIXERCOIN: 0.000089,
   SOL: 180,
   USDC: 1.0,
   USDT: 1.0,
-  LOCKER: 0.1,
+  LOCKER: 0.000012,
 };
+
+/**
+ * Derive token price from its SOL trading pair
+ * If 1 SOL = X tokens, then 1 token = SOL price / X
+ */
+async function getDerivedTokenPrice(
+  tokenMint: string,
+  tokenSymbol: string,
+): Promise<{ price: number; pairRatio: number } | null> {
+  try {
+    // Get SOL price
+    const solData = await fetchDexscreenerData(`/tokens/${TOKEN_MINTS.SOL}`);
+    const solPair = solData?.pairs?.[0];
+    const solPrice = solPair?.priceUsd
+      ? parseFloat(solPair.priceUsd)
+      : FALLBACK_USD.SOL;
+
+    // Get token price (this gives us the direct USDT price from any pair)
+    const tokenData = await fetchDexscreenerData(`/tokens/${tokenMint}`);
+    const tokenPair = tokenData?.pairs?.[0];
+
+    if (!tokenPair || !tokenPair.priceUsd) {
+      return null;
+    }
+
+    const tokenPrice = parseFloat(tokenPair.priceUsd);
+
+    // Calculate how many tokens per 1 SOL
+    // pairRatio = SOL price / token price = how many tokens you get for 1 SOL
+    const pairRatio = solPrice / tokenPrice;
+
+    console.log(
+      `[Derived Price] ${tokenSymbol}: 1 SOL = ${pairRatio.toFixed(2)} tokens, 1 token = $${tokenPrice.toFixed(8)}`,
+    );
+
+    return {
+      price: tokenPrice,
+      pairRatio,
+    };
+  } catch (error) {
+    console.warn(
+      `[Derived Price] Error calculating derived price for ${tokenSymbol}:`,
+      error,
+    );
+    return null;
+  }
+}
 
 export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
   try {

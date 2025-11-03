@@ -87,20 +87,6 @@ export default function Select() {
     setChatLog(history);
   }, [effectiveRoomId]);
 
-  useEffect(() => {
-    if (!events.length) return;
-    const last = events[events.length - 1] as any;
-    if (last.kind === "chat" && last.data?.text) {
-      const msg = parseWebSocketMessage(last.data.text);
-      if (msg && msg.roomId === effectiveRoomId) {
-        saveChatMessage(msg);
-        setChatLog((prev) => {
-          if (prev.find((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-      }
-    }
-  }, [events, effectiveRoomId]);
 
   const sendTextMessage = () => {
     if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;
@@ -116,7 +102,6 @@ export default function Select() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setMessageInput("");
   };
@@ -175,7 +160,6 @@ export default function Select() {
         timestamp: Date.now(),
       };
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
     } catch (e) {
       toast({
@@ -230,7 +214,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveChatMessage(message);
-        sendChatMessage(send, message);
         const notification: ChatNotification = {
           type: "payment_received",
           roomId,
@@ -246,8 +229,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveNotification(notification);
-        broadcastNotification(send, notification);
-        broadcastNotification(sendGlobal, notification);
         toast({
           title: "Seller notified",
           description: "Waiting for seller to verify payment...",
@@ -274,7 +255,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveChatMessage(message);
-        sendChatMessage(send, message);
         const notification: ChatNotification = {
           type: "status_change",
           roomId,
@@ -285,8 +265,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveNotification(notification);
-        broadcastNotification(send, notification);
-        broadcastNotification(sendGlobal, notification);
         toast({
           title: "Transfer marked sent",
           description: "Buyer will be notified",

@@ -198,12 +198,93 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
     let priceChange24h: number = 0;
     let volume24h: number = 0;
     let matchingPair: DexscreenerToken | null = null;
+    let derivedViaSOLPair = false;
 
     try {
       if (token === "USDC" || token === "USDT") {
         priceUsd = 1.0;
         priceChange24h = 0;
         volume24h = 0;
+      } else if (token === "FIXERCOIN" || token === "LOCKER") {
+        // Use derived pricing from SOL pair for FIXERCOIN and LOCKER
+        const derived = await getDerivedTokenPrice(mint, token);
+        if (derived && derived.price > 0) {
+          priceUsd = derived.price;
+          derivedViaSOLPair = true;
+          // Try to get 24h data from DexScreener
+          try {
+            const tokenData = await fetchDexscreenerData(`/tokens/${mint}`);
+            if (tokenData?.pairs?.[0]) {
+              matchingPair = tokenData.pairs[0];
+              priceChange24h = matchingPair.priceChange?.h24 || 0;
+              volume24h = matchingPair.volume?.h24 || 0;
+            }
+          } catch (e) {
+            console.warn(
+              `[Token Price] Could not fetch 24h data for ${token}:`,
+              e,
+            );
+          }
+        } else if (mint) {
+          // Fallback to standard lookup if derived pricing fails
+          const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
+          if (pairAddress) {
+            try {
+              const pairData = await fetchDexscreenerData(
+                `/pairs/solana/${pairAddress}`,
+              );
+              const pair = pairData?.pair || (pairData?.pairs || [])[0] || null;
+              if (pair && pair.priceUsd) {
+                matchingPair = pair;
+                priceUsd = parseFloat(pair.priceUsd);
+                priceChange24h = pair.priceChange?.h24 || 0;
+                volume24h = pair.volume?.h24 || 0;
+              }
+            } catch (e) {
+              console.warn(`[Token Price] Pair address lookup failed:`, e);
+            }
+          }
+
+          if (priceUsd === null) {
+            try {
+              const tokenData = await fetchDexscreenerData(`/tokens/${mint}`);
+              const pairs = Array.isArray(tokenData?.pairs)
+                ? tokenData.pairs
+                : [];
+
+              if (pairs.length > 0) {
+                matchingPair = pairs.find(
+                  (p: DexscreenerToken) =>
+                    p?.baseToken?.address === mint && p?.chainId === "solana",
+                );
+
+                if (!matchingPair) {
+                  matchingPair = pairs.find(
+                    (p: DexscreenerToken) =>
+                      p?.quoteToken?.address === mint &&
+                      p?.chainId === "solana",
+                  );
+                }
+
+                if (!matchingPair) {
+                  matchingPair = pairs.find(
+                    (p: DexscreenerToken) =>
+                      p?.baseToken?.address === mint ||
+                      p?.quoteToken?.address === mint,
+                  );
+                }
+
+                if (matchingPair && matchingPair.priceUsd) {
+                  priceUsd = parseFloat(matchingPair.priceUsd);
+                  priceChange24h = matchingPair.priceChange?.h24 || 0;
+                  volume24h = matchingPair.volume?.h24 || 0;
+                }
+              }
+            } catch (e) {
+              console.warn(`[Token Price] Token lookup failed:`, e);
+            }
+          }
+        }
       } else if (mint) {
         const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
         if (pairAddress) {

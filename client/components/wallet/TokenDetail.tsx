@@ -8,7 +8,6 @@ import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 interface TokenDetailProps {
   tokenMint: string;

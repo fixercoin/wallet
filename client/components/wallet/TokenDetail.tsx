@@ -6,8 +6,8 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
+import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -44,19 +44,16 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     }
   }, [token]);
 
-  // Load live price data from DexScreener for this token
+  // Load live price data from Birdeye for this token
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        const ds = await dexscreenerAPI.getTokenByMint(tokenMint);
-        const price = ds?.priceUsd ? parseFloat(ds.priceUsd) : null;
-        const change =
-          ds?.priceChange?.h24 ??
-          ds?.priceChange?.h6 ??
-          ds?.priceChange?.h1 ??
-          ds?.priceChange?.m5 ??
-          0;
+        const birdeye = await birdeyeAPI.getTokenByMint(tokenMint);
+        const price = birdeye?.priceUsd
+          ? parseFloat(String(birdeye.priceUsd))
+          : null;
+        const change = birdeye?.priceChange?.h24 ?? 0;
         const base = price || 0;
         const data = Array.from({ length: 24 }, (_, i) => {
           // create simple intraday points around the base price using change to simulate trend
@@ -68,7 +65,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           return {
             time: `${i}:00`,
             price: parseFloat((base * factor).toFixed(8)),
-            volume: ds?.volume?.h24 || Math.random() * 100000,
+            volume: birdeye?.volume?.h24 || Math.random() * 100000,
           };
         });
         if (mounted) setPriceData(data);
@@ -87,15 +84,15 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     try {
       await refreshTokens();
       // reload prices
-      const ds = await dexscreenerAPI
+      const birdeye = await birdeyeAPI
         .getTokenByMint(tokenMint)
         .catch(() => null);
-      if (ds?.priceUsd) {
-        const base = parseFloat(ds.priceUsd);
+      if (birdeye?.priceUsd) {
+        const base = parseFloat(String(birdeye.priceUsd));
         const data = Array.from({ length: 24 }, (_, i) => ({
           time: `${i}:00`,
           price: base,
-          volume: ds.volume?.h24 || 0,
+          volume: birdeye.volume?.h24 || 0,
         }));
         setPriceData(data);
       }

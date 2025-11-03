@@ -27,16 +27,6 @@ function getRpcEndpoints(env: Partial<Env> | undefined): string[] {
   return list.filter(Boolean);
 }
 
-const DEXSCREENER_ENDPOINTS = [
-  "https://api.dexscreener.com/latest/dex",
-  "https://api.dexscreener.io/latest/dex",
-];
-let currentDexIdx = 0;
-
-const DEX_CACHE_TTL_MS = 30_000;
-const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
-const DEX_INFLIGHT = new Map<string, Promise<any>>();
-
 async function callRpc(
   env: Partial<Env> | undefined,
   method: string,
@@ -81,80 +71,6 @@ async function callRpc(
   }
 
   throw new Error(lastError?.message || "All RPC endpoints failed");
-}
-
-async function tryDexEndpoints(path: string) {
-  let lastError: Error | null = null;
-  for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
-    const idx = (currentDexIdx + i) % DEXSCREENER_ENDPOINTS.length;
-    const endpoint = DEXSCREENER_ENDPOINTS[idx];
-    const url = `${endpoint}${path}`;
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const resp = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        signal: controller.signal,
-        cf: {
-          cacheEverything: false,
-          cacheTtl: 30,
-          mirage: false,
-          polish: "off",
-        } as any,
-      });
-      clearTimeout(timeout);
-      if (!resp.ok) {
-        if (resp.status === 429 || resp.status === 526) continue;
-        const t = await resp.text().catch(() => "");
-        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
-      }
-      const data = await resp.json();
-      currentDexIdx = idx;
-      return data;
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      if (i < DEXSCREENER_ENDPOINTS.length - 1)
-        await new Promise((r) => setTimeout(r, 1500));
-    }
-  }
-  throw new Error(lastError?.message || "All DexScreener endpoints failed");
-}
-
-async function fetchDexData(path: string) {
-  const now = Date.now();
-  const cached = DEX_CACHE.get(path);
-  if (cached && cached.expiresAt > now) {
-    const hasPriceChangeData =
-      Array.isArray(cached.data?.pairs) &&
-      cached.data.pairs.some(
-        (p: any) =>
-          p?.priceChange &&
-          (typeof p.priceChange.h24 === "number" ||
-            typeof p.priceChange.h6 === "number" ||
-            typeof p.priceChange.h1 === "number" ||
-            typeof p.priceChange.m5 === "number"),
-      );
-    if (hasPriceChangeData) {
-      return cached.data;
-    }
-  }
-  const existing = DEX_INFLIGHT.get(path);
-  if (existing) return existing;
-  const request = (async () => {
-    try {
-      const data = await tryDexEndpoints(path);
-      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
-      return data;
-    } finally {
-      DEX_INFLIGHT.delete(path);
-    }
-  })();
-  DEX_INFLIGHT.set(path, request);
-  return request;
 }
 
 export default {
@@ -320,40 +236,36 @@ export default {
       }
     }
 
-    // DexScreener token price proxy: /api/dexscreener/price?token=...
-    if (pathname === "/api/dexscreener/price" && req.method === "GET") {
-      const token = url.searchParams.get("token") || "";
+    // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>
+    if (pathname === "/api/birdeye/price" && req.method === "GET") {
+      const address = searchParams.get("address") || "";
 
-      if (!token) {
+      if (!address) {
         return json(
-          { error: "Missing 'token' parameter" },
+          { error: "Missing 'address' parameter" },
           { status: 400, headers: corsHeaders },
         );
       }
 
       try {
-        const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${token}`;
+        const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(address)}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(dexUrl, {
+        const resp = await fetch(birdeyeUrl, {
           headers: {
             Accept: "application/json",
+            "X-API-KEY": "cecae2ad38d7461eaf382f533726d9bb",
           },
           signal: controller.signal,
-          cf: {
-            cacheEverything: false,
-            cacheTtl: 30,
-            mirage: false,
-            polish: "off",
-          } as any,
         });
 
         clearTimeout(timeoutId);
 
         if (!resp.ok) {
+          console.warn(`Birdeye API returned ${resp.status} for ${address}`);
           return json(
-            { error: `DexScreener API returned ${resp.status}` },
+            { error: `Birdeye API returned ${resp.status}` },
             { status: resp.status, headers: corsHeaders },
           );
         }
@@ -361,157 +273,9 @@ export default {
         const data = await resp.json();
         return json(data, { headers: corsHeaders });
       } catch (e: any) {
+        console.error(`Birdeye fetch failed for ${address}:`, e?.message);
         return json(
-          { error: "Failed to fetch DexScreener price", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // DexScreener: tokens
-    if (pathname === "/api/dexscreener/tokens" && req.method === "GET") {
-      const mints = searchParams.get("mints");
-      if (!mints) {
-        return json(
-          { error: "Missing 'mints' query parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-      const rawMints = String(mints)
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const uniqSorted = Array.from(new Set(rawMints)).sort();
-      if (uniqSorted.length === 0) {
-        return json(
-          { error: "No valid token mints provided" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-      try {
-        const data = await fetchDexData(`/tokens/${uniqSorted.join(",")}`);
-        const pairs = Array.isArray(data?.pairs)
-          ? data.pairs.filter((p: any) => p?.chainId === "solana")
-          : [];
-        return json(
-          {
-            schemaVersion: data?.schemaVersion || "1.0.0",
-            pairs,
-          },
-          { headers: corsHeaders },
-        );
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch DexScreener data", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // DexScreener: search
-    if (pathname === "/api/dexscreener/search" && req.method === "GET") {
-      const q = searchParams.get("q");
-      if (!q) {
-        return json(
-          { error: "Missing 'q' query parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-      try {
-        const data = await fetchDexData(`/search/?q=${encodeURIComponent(q)}`);
-        const pairs = Array.isArray(data?.pairs)
-          ? data.pairs.filter((p: any) => p?.chainId === "solana").slice(0, 20)
-          : [];
-        return json(
-          {
-            schemaVersion: data?.schemaVersion || "1.0.0",
-            pairs,
-          },
-          { headers: corsHeaders },
-        );
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch DexScreener data", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // DexScreener: trending
-    if (pathname === "/api/dexscreener/trending" && req.method === "GET") {
-      try {
-        const data = await fetchDexData(`/pairs/solana`);
-        const pairs = Array.isArray(data?.pairs)
-          ? data.pairs
-              .filter(
-                (p: any) =>
-                  (p?.volume?.h24 || 0) > 1000 &&
-                  (p?.liquidity?.usd || 0) > 10000,
-              )
-              .sort(
-                (a: any, b: any) =>
-                  (b?.volume?.h24 || 0) - (a?.volume?.h24 || 0),
-              )
-              .slice(0, 50)
-          : [];
-        return json(
-          {
-            schemaVersion: data?.schemaVersion || "1.0.0",
-            pairs,
-          },
-          { headers: corsHeaders },
-        );
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch DexScreener data", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // SOL price proxy: /api/sol/price
-    if (pathname === "/api/sol/price" && req.method === "GET") {
-      try {
-        const SOL_MINT = "So11111111111111111111111111111111111111112";
-        const dexUrl = `https://api.dexscreener.io/latest/dex/tokens/${SOL_MINT}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(dexUrl, {
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-          cf: {
-            cacheEverything: false,
-            cacheTtl: 30,
-            mirage: false,
-            polish: "off",
-          } as any,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `DexScreener API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        const pair = data.pairs?.[0];
-        const priceData = {
-          price: parseFloat(pair?.priceUsd || "0"),
-          priceChange24h: parseFloat(pair?.priceChange?.h24 || "0"),
-          volume24h: parseFloat(pair?.volume?.h24 || "0"),
-          marketCap: pair?.marketCap || 0,
-        };
-
-        return json(priceData, { headers: corsHeaders });
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch SOL price", details: e?.message },
+          { error: "Failed to fetch Birdeye price", details: e?.message },
           { status: 502, headers: corsHeaders },
         );
       }
@@ -568,92 +332,12 @@ export default {
         }
 
         let priceUsd: number | null = null;
-        try {
-          // Stablecoins -> 1
-          if (token === "USDC" || token === "USDT") {
-            priceUsd = 1.0;
-          } else {
-            // If we have a mint, try pair lookup and token lookup via DexScreener
-            if (!mint && TOKEN_MINTS[token]) mint = TOKEN_MINTS[token];
 
-            if (mint) {
-              // Pair address lookup
-              const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
-              if (pairAddress) {
-                try {
-                  const pairData = await fetchDexData(
-                    `/pairs/solana/${pairAddress}`,
-                  );
-                  // DexScreener pair format may vary; try common fields
-                  const maybePair =
-                    pairData?.pair || pairData?.pairs?.[0] || null;
-                  if (maybePair && maybePair.priceUsd) {
-                    priceUsd = Number(maybePair.priceUsd);
-                  }
-                } catch (e) {
-                  // continue
-                }
-              }
-
-              // If not found, try tokens lookup
-              if (priceUsd === null) {
-                try {
-                  const tokenData = await fetchDexData(`/tokens/${mint}`);
-                  const searchPairs = Array.isArray(tokenData?.pairs)
-                    ? tokenData.pairs
-                    : [];
-
-                  let matchingPair = null;
-
-                  if (searchPairs.length > 0) {
-                    // prefer SOL pair
-                    matchingPair = searchPairs.find(
-                      (p: any) =>
-                        p?.baseToken?.address === mint &&
-                        p?.chainId === "solana",
-                    );
-
-                    // try quote
-                    if (!matchingPair) {
-                      matchingPair = searchPairs.find(
-                        (p: any) =>
-                          p?.quoteToken?.address === mint &&
-                          p?.chainId === "solana",
-                      );
-                    }
-
-                    // fallback to any pair that includes the mint
-                    if (!matchingPair) {
-                      matchingPair = searchPairs.find(
-                        (p: any) =>
-                          p?.baseToken?.address === mint ||
-                          p?.quoteToken?.address === mint,
-                      );
-                    }
-
-                    if (matchingPair && matchingPair.priceUsd) {
-                      priceUsd = Number(matchingPair.priceUsd);
-                    }
-                  }
-                } catch (e) {
-                  // continue
-                }
-              }
-            }
-
-            // As a last resort, try searching by symbol mapping
-            if (
-              (priceUsd === null || !isFinite(priceUsd)) &&
-              MINT_TO_SEARCH_SYMBOL[mint]
-            ) {
-              // In practice this will be handled by FALLBACK_USD below
-            }
-          }
-        } catch (e) {
-          // ignore
-        }
-
-        if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        // Stablecoins -> 1
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else {
+          // Use fallback prices for non-stablecoins
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
         }
 

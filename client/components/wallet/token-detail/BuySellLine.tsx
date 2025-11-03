@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
+import { birdeyeAPI, BirdeyeToken } from "@/lib/services/birdeye";
 
 interface BuySellLineProps {
   mint: string;
@@ -21,7 +21,7 @@ interface Point {
 }
 
 export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
-  const [token, setToken] = useState<DexscreenerToken | null>(null);
+  const [token, setToken] = useState<BirdeyeToken | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Known stablecoin mints on Solana
@@ -42,7 +42,7 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
       };
     }
 
-    dexscreenerAPI
+    birdeyeAPI
       .getTokenByMint(mint)
       .then((t) => {
         if (!mounted) return;
@@ -60,25 +60,15 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
 
   const data: Point[] = useMemo(() => {
     const isStable = STABLE_MINTS.has(mint);
-    if (isStable) {
-      // Provide a neutral placeholder dataset for stablecoins
-      return [
-        { label: "5m", buys: 0, sells: 0 },
-        { label: "1h", buys: 0, sells: 0 },
-        { label: "6h", buys: 0, sells: 0 },
-        { label: "24h", buys: 0, sells: 0 },
-      ];
-    }
-    if (!token) return [];
-    const tx = token.txns;
-    if (!tx) return [];
+    // Provide a neutral placeholder dataset for stablecoins and when data is unavailable
+    // (Birdeye API doesn't provide transaction breakdown)
     return [
-      { label: "5m", buys: tx.m5.buys, sells: tx.m5.sells },
-      { label: "1h", buys: tx.h1.buys, sells: tx.h1.sells },
-      { label: "6h", buys: tx.h6.buys, sells: tx.h6.sells },
-      { label: "24h", buys: tx.h24.buys, sells: tx.h24.sells },
+      { label: "5m", buys: 0, sells: 0 },
+      { label: "1h", buys: 0, sells: 0 },
+      { label: "6h", buys: 0, sells: 0 },
+      { label: "24h", buys: 0, sells: 0 },
     ];
-  }, [token, mint]);
+  }, [mint]);
 
   const isStable = STABLE_MINTS.has(mint);
   return (

@@ -25,7 +25,7 @@ import { resolveApiUrl } from "@/lib/api-client";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { birdeyeAPI } from "@/lib/services/birdeye";
 import {
   Keypair,
   VersionedTransaction,
@@ -167,19 +167,21 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setIndicative(false);
         } else {
           console.log(
-            `No Jupiter quote available, falling back to DexScreener pricing`,
+            `No Jupiter quote available, falling back to Birdeye pricing`,
           );
-          const [fromDex, toDex] = await Promise.all([
-            dexscreenerAPI.getTokenByMint(fromToken.mint),
-            dexscreenerAPI.getTokenByMint(toToken.mint),
+          const [fromBirdeye, toBirdeye] = await Promise.all([
+            birdeyeAPI.getTokenByMint(fromToken.mint),
+            birdeyeAPI.getTokenByMint(toToken.mint),
           ]);
-          const fromUsd = fromDex?.priceUsd
-            ? parseFloat(fromDex.priceUsd)
+          const fromUsd = fromBirdeye?.priceUsd
+            ? parseFloat(String(fromBirdeye.priceUsd))
             : null;
-          const toUsd = toDex?.priceUsd ? parseFloat(toDex.priceUsd) : null;
+          const toUsd = toBirdeye?.priceUsd
+            ? parseFloat(String(toBirdeye.priceUsd))
+            : null;
 
           console.log(
-            `DexScreener prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
+            `Birdeye prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
           );
 
           if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
@@ -194,7 +196,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             setIndicative(true);
           } else {
             console.warn(
-              `Could not get prices from DexScreener: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+              `Could not get prices from Birdeye: fromUsd=${fromUsd}, toUsd=${toUsd}`,
             );
             setQuote(null);
             setToAmount("");
@@ -237,13 +239,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
       try {
-        const tokens = await dexscreenerAPI.getTokensByMints(mints);
-        const dsMap = dexscreenerAPI.getTokenPrices(tokens);
+        const tokens = await birdeyeAPI.getTokensByMints(mints);
+        const birdeyeMap = birdeyeAPI.getTokenPrices(tokens);
         const fromPrice: number | null = fromToken?.mint
-          ? (dsMap[fromToken.mint] ?? null)
+          ? (birdeyeMap[fromToken.mint] ?? null)
           : null;
         const toPrice: number | null = toToken?.mint
-          ? (dsMap[toToken.mint] ?? null)
+          ? (birdeyeMap[toToken.mint] ?? null)
           : null;
         setFromUsdPrice(fromPrice ?? null);
         setToUsdPrice(toPrice ?? null);

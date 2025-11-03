@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Send } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
 import { listOrders } from "@/lib/p2p";
@@ -44,8 +43,6 @@ export default function Select() {
     () => derivedRoomId || "global",
     [derivedRoomId],
   );
-  const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
-  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);

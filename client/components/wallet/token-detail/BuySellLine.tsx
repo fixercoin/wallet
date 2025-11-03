@@ -42,7 +42,7 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ mint }) => {
       };
     }
 
-    dexscreenerAPI
+    birdeyeAPI
       .getTokenByMint(mint)
       .then((t) => {
         if (!mounted) return;

@@ -242,20 +242,27 @@ export default {
 
       if (!address) {
         return json(
-          { error: "Missing 'address' parameter" },
+          { success: false, error: "Missing 'address' parameter" },
           { status: 400, headers: corsHeaders },
         );
       }
 
       try {
         const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(address)}`;
+        const birdeyeApiKey =
+          env.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
+
+        console.log(
+          `[Birdeye] Fetching price for ${address} from ${birdeyeUrl}`,
+        );
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const resp = await fetch(birdeyeUrl, {
           headers: {
             Accept: "application/json",
-            "X-API-KEY": "cecae2ad38d7461eaf382f533726d9bb",
+            "X-API-KEY": birdeyeApiKey,
           },
           signal: controller.signal,
         });
@@ -263,19 +270,48 @@ export default {
         clearTimeout(timeoutId);
 
         if (!resp.ok) {
-          console.warn(`Birdeye API returned ${resp.status} for ${address}`);
+          const errorText = await resp.text();
+          console.warn(
+            `[Birdeye] API returned ${resp.status} for ${address}: ${errorText}`,
+          );
           return json(
-            { error: `Birdeye API returned ${resp.status}` },
+            {
+              success: false,
+              error: `Birdeye API returned ${resp.status}`,
+              details: errorText,
+            },
             { status: resp.status, headers: corsHeaders },
           );
         }
 
         const data = await resp.json();
+
+        if (!data.success || !data.data) {
+          console.warn(
+            `[Birdeye] No price data returned for ${address}`,
+            data,
+          );
+          return json(
+            {
+              success: false,
+              error: "No price data available for this token",
+            },
+            { status: 200, headers: corsHeaders },
+          );
+        }
+
+        console.log(
+          `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
+        );
         return json(data, { headers: corsHeaders });
       } catch (e: any) {
-        console.error(`Birdeye fetch failed for ${address}:`, e?.message);
+        console.error(`[Birdeye] Fetch failed for ${address}:`, e?.message);
         return json(
-          { error: "Failed to fetch Birdeye price", details: e?.message },
+          {
+            success: false,
+            error: "Failed to fetch Birdeye price",
+            details: e?.message,
+          },
           { status: 502, headers: corsHeaders },
         );
       }

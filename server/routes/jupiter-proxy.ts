@@ -275,12 +275,16 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
           if (response.status === 404 || response.status === 400) {
             console.warn(
               `Jupiter quote returned ${response.status} - likely no route for this pair`,
-              { inputMint: req.query.inputMint, outputMint: req.query.outputMint },
+              {
+                inputMint: req.query.inputMint,
+                outputMint: req.query.outputMint,
+              },
             );
             return res.status(response.status).json({
               error: `No swap route found for this pair`,
               details: lastText,
-              code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+              code:
+                response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
             });
           }
 

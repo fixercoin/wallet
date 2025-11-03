@@ -33,7 +33,7 @@ const determineBase = (): string => {
   if (
     typeof window !== "undefined" &&
     (window.location.hostname.includes("fixorium.com.pk") ||
-     window.location.hostname.includes("fixorium.com"))
+      window.location.hostname.includes("fixorium.com"))
   ) {
     return "";
   }

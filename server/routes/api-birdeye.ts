@@ -72,7 +72,7 @@ async function getPriceFromDexScreener(mint: string): Promise<{ price: number; p
 }
 
 // Try to get price from Jupiter as fallback
-async function getPriceFromJupiter(mint: string): Promise<number | null> {
+async function getPriceFromJupiter(mint: string): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> {
   try {
     console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
     const response = await fetch(
@@ -94,7 +94,11 @@ async function getPriceFromJupiter(mint: string): Promise<number | null> {
       const price = parseFloat(priceData.price);
       if (isFinite(price) && price > 0) {
         console.log(`[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`);
-        return price;
+        return {
+          price,
+          priceChange24h: 0,
+          volume24h: 0,
+        };
       }
     }
   } catch (error: any) {

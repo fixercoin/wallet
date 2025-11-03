@@ -404,36 +404,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices exclusively from DexScreener via client service (proxy)
-        try {
-          const allMintsToFetch = Array.from(
-            new Set(tokenMints.filter(Boolean)),
-          );
-
-          const dexTokens =
-            await dexscreenerAPI.getTokensByMints(allMintsToFetch);
-          priceSource = "dexscreener";
-
-          // Extract prices and changeMap
-          const dsPrices = dexscreenerAPI.getTokenPrices(dexTokens);
-          prices = { ...prices, ...dsPrices };
-
-          dexTokens.forEach((dt: any) => {
-            const mint = dt?.baseToken?.address;
-            const pc = dt?.priceChange || {};
-            const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-            const ch = candidates.find(
-              (v: any) => typeof v === "number" && isFinite(v),
-            );
-            if (mint && typeof ch === "number") changeMap[mint] = ch;
-          });
-        } catch (dexErr) {
-          console.warn("DexScreener fetch failed:", dexErr);
-          prices = {};
-          changeMap = {};
-        }
-
-        // Attempt to fill missing token prices via dedicated /api/token/price endpoint
+        // Attempt to fill token prices via dedicated /api/token/price endpoint
         try {
           const missingMints = tokenMints.filter((m) => m && !prices[m]);
           if (missingMints.length > 0) {

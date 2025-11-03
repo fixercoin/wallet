@@ -54,6 +54,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [slippage, setSlippage] = useState("0.5");
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
+  const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);
   const [indicative, setIndicative] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);

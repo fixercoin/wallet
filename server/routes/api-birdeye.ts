@@ -69,6 +69,42 @@ async function getPriceFromDexScreener(
   return null;
 }
 
+// Try to get price from Jupiter as fallback
+async function getPriceFromJupiter(mint: string): Promise<number | null> {
+  try {
+    console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
+    const response = await fetch(
+      `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`,
+      { headers: { Accept: "application/json" } },
+    );
+
+    if (!response.ok) {
+      console.warn(
+        `[Birdeye Fallback] Jupiter API returned ${response.status}`,
+      );
+      return null;
+    }
+
+    const data = await response.json();
+    const priceData = data?.data?.[mint];
+
+    if (priceData?.price) {
+      const price = parseFloat(priceData.price);
+      if (isFinite(price) && price > 0) {
+        console.log(
+          `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
+        );
+        return price;
+      }
+    }
+  } catch (error: any) {
+    console.warn(
+      `[Birdeye Fallback] Jupiter error: ${error?.message || String(error)}`,
+    );
+  }
+  return null;
+}
+
 // Try to get token symbol to lookup fallback
 function getTokenSymbol(address: string): string | null {
   for (const [symbol, mint] of Object.entries(TOKEN_MINTS)) {

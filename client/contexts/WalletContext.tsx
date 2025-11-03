@@ -490,10 +490,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             setTimeout(() => resolve(null), 3000),
           );
           const solPriceData = await Promise.race([solPricePromise, timeout]);
+          const solMint = "So11111111111111111111111111111111111111112";
           prices = {
-            So11111111111111111111111111111111111111112:
-              solPriceData?.price || 100,
+            [solMint]: solPriceData?.price || 100,
           };
+          if (
+            solPriceData &&
+            typeof solPriceData.price_change_24h === "number"
+          ) {
+            changeMap[solMint] = solPriceData.price_change_24h;
+          }
           priceSource = solPriceData ? "coingecko" : "static";
         } catch {
           prices = { So11111111111111111111111111111111111111112: 100 };

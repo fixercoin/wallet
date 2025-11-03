@@ -167,19 +167,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setIndicative(false);
         } else {
           console.log(
-            `No Jupiter quote available, falling back to DexScreener pricing`,
+            `No Jupiter quote available, falling back to Birdeye pricing`,
           );
-          const [fromDex, toDex] = await Promise.all([
-            dexscreenerAPI.getTokenByMint(fromToken.mint),
-            dexscreenerAPI.getTokenByMint(toToken.mint),
+          const [fromBirdeye, toBirdeye] = await Promise.all([
+            birdeyeAPI.getTokenByMint(fromToken.mint),
+            birdeyeAPI.getTokenByMint(toToken.mint),
           ]);
-          const fromUsd = fromDex?.priceUsd
-            ? parseFloat(fromDex.priceUsd)
+          const fromUsd = fromBirdeye?.priceUsd
+            ? parseFloat(String(fromBirdeye.priceUsd))
             : null;
-          const toUsd = toDex?.priceUsd ? parseFloat(toDex.priceUsd) : null;
+          const toUsd = toBirdeye?.priceUsd ? parseFloat(String(toBirdeye.priceUsd)) : null;
 
           console.log(
-            `DexScreener prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
+            `Birdeye prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
           );
 
           if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
@@ -194,7 +194,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             setIndicative(true);
           } else {
             console.warn(
-              `Could not get prices from DexScreener: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+              `Could not get prices from Birdeye: fromUsd=${fromUsd}, toUsd=${toUsd}`,
             );
             setQuote(null);
             setToAmount("");

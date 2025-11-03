@@ -29,7 +29,6 @@ import {
   getPaymentReceivedNotifications,
   saveNotification,
 } from "@/lib/p2p-chat";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -118,7 +117,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     removeToken,
   } = useWallet();
   const { toast } = useToast();
-  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);

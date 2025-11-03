@@ -653,7 +653,17 @@ export default {
             console.log(
               `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
             );
-            return json(data, { headers: corsHeaders });
+            // Ensure priceChange24h is included
+            const responseData = {
+              success: true,
+              data: {
+                address: data.data.address,
+                value: data.data.value,
+                updateUnixTime: data.data.updateUnixTime,
+                priceChange24h: data.data.priceChange24h ?? 0,
+              },
+            };
+            return json(responseData, { headers: corsHeaders });
           }
         }
 

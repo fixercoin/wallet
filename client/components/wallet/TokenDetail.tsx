@@ -160,7 +160,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-500/60 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>

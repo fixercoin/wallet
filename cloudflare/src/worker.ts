@@ -270,6 +270,74 @@ export default {
         return null;
       };
 
+      const getSolPrice = async (): Promise<number> => {
+        try {
+          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
+          const dexResp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+          });
+
+          if (dexResp.ok) {
+            const dexData = await dexResp.json();
+            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+
+            if (pairs.length > 0) {
+              const pair = pairs[0];
+              if (pair?.priceUsd) {
+                const price = parseFloat(pair.priceUsd);
+                if (isFinite(price) && price > 0) {
+                  return price;
+                }
+              }
+            }
+          }
+        } catch (e: any) {
+          console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
+        }
+        return 180; // fallback SOL price
+      };
+
+      const getDerivedPrice = async (mint: string): Promise<number | null> => {
+        try {
+          console.log(
+            `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
+          );
+          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
+          const dexResp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+          });
+
+          if (dexResp.ok) {
+            const dexData = await dexResp.json();
+            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+
+            if (pairs.length > 0) {
+              const pair = pairs.find(
+                (p: any) =>
+                  (p?.baseToken?.address === mint ||
+                    p?.quoteToken?.address === mint) &&
+                  p?.priceUsd,
+              );
+
+              if (pair && pair.priceUsd) {
+                const price = parseFloat(pair.priceUsd);
+                if (isFinite(price) && price > 0) {
+                  console.log(
+                    `[Birdeye] Derived price for ${mint}: $${price.toFixed(8)}`,
+                  );
+                  return price;
+                }
+              }
+            }
+          }
+        } catch (e: any) {
+          console.warn(
+            `[Birdeye] Error fetching derived price for ${mint}: ${e?.message}`,
+          );
+        }
+        return null;
+      };
+
       const getPriceFromDexScreener = async (
         mint: string,
       ): Promise<number | null> => {
@@ -381,7 +449,27 @@ export default {
         );
       }
 
-      // Fallback 1: Try DexScreener
+      // Fallback 1: Try derived pricing for FIXERCOIN and LOCKER
+      const tokenSymbol = getTokenSymbol(address);
+      if (tokenSymbol === "FIXERCOIN" || tokenSymbol === "LOCKER") {
+        const derivedPrice = await getDerivedPrice(address);
+        if (derivedPrice !== null && derivedPrice > 0) {
+          return json(
+            {
+              success: true,
+              data: {
+                address,
+                value: derivedPrice,
+                updateUnixTime: Math.floor(Date.now() / 1000),
+              },
+              _source: "derived",
+            },
+            { headers: corsHeaders },
+          );
+        }
+      }
+
+      // Fallback 2: Try DexScreener
       const dexscreenerPrice = await getPriceFromDexScreener(address);
       if (dexscreenerPrice !== null) {
         return json(
@@ -398,7 +486,7 @@ export default {
         );
       }
 
-      // Fallback 2: Try Jupiter
+      // Fallback 3: Try Jupiter
       const jupiterPrice = await getPriceFromJupiter(address);
       if (jupiterPrice !== null) {
         return json(
@@ -415,8 +503,7 @@ export default {
         );
       }
 
-      // Fallback 3: Check hardcoded fallback prices
-      const tokenSymbol = getTokenSymbol(address);
+      // Fallback 4: Check hardcoded fallback prices
       if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
         console.log(
           `[Birdeye] Using hardcoded fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
@@ -500,8 +587,16 @@ export default {
         // Stablecoins -> 1
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
+        } else if (token === "FIXERCOIN" || token === "LOCKER") {
+          // Try to fetch derived price for FIXERCOIN and LOCKER
+          const derivedPrice = await getDerivedPrice(mint);
+          if (derivedPrice !== null && derivedPrice > 0) {
+            priceUsd = derivedPrice;
+          } else {
+            priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+          }
         } else {
-          // Use fallback prices for non-stablecoins
+          // Use fallback prices for other non-stablecoins
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
         }
 
@@ -514,6 +609,10 @@ export default {
             rate: rateInPKR,
             pkrPerUsd: PKR_PER_USD,
             markup: MARKUP,
+            source:
+              token === "FIXERCOIN" || token === "LOCKER"
+                ? "derived"
+                : "fallback",
           },
           { headers: corsHeaders },
         );

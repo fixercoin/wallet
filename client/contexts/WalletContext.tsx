@@ -17,6 +17,8 @@ import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { lockerPriceService } from "@/lib/services/locker-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -441,6 +443,35 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             changeMap[mint] = 0;
           }
         });
+
+        // Fetch FIXERCOIN and LOCKER prices using specialized services
+        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+
+        try {
+          const [fixercoinData, lockerData] = await Promise.all([
+            fixercoinPriceService.getFixercoinPrice(),
+            lockerPriceService.getLockerPrice(),
+          ]);
+
+          if (fixercoinData && fixercoinData.price > 0) {
+            prices[fixercoinMint] = fixercoinData.price;
+            changeMap[fixercoinMint] = fixercoinData.priceChange24h;
+            console.log(
+              `[WalletContext] FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%)`,
+            );
+          }
+
+          if (lockerData && lockerData.price > 0) {
+            prices[lockerMint] = lockerData.price;
+            changeMap[lockerMint] = lockerData.priceChange24h;
+            console.log(
+              `[WalletContext] LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%)`,
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to fetch FIXERCOIN/LOCKER prices:", e);
+        }
 
         const solMint = "So11111111111111111111111111111111111111112";
         const hasSolPrice = prices[solMint];

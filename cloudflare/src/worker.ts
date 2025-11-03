@@ -270,6 +270,76 @@ export default {
         return null;
       };
 
+      const getSolPrice = async (): Promise<number> => {
+        try {
+          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
+          const dexResp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+          });
+
+          if (dexResp.ok) {
+            const dexData = await dexResp.json();
+            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+
+            if (pairs.length > 0) {
+              const pair = pairs[0];
+              if (pair?.priceUsd) {
+                const price = parseFloat(pair.priceUsd);
+                if (isFinite(price) && price > 0) {
+                  return price;
+                }
+              }
+            }
+          }
+        } catch (e: any) {
+          console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
+        }
+        return 180; // fallback SOL price
+      };
+
+      const getDerivedPrice = async (
+        mint: string,
+      ): Promise<number | null> => {
+        try {
+          console.log(
+            `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
+          );
+          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
+          const dexResp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+          });
+
+          if (dexResp.ok) {
+            const dexData = await dexResp.json();
+            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+
+            if (pairs.length > 0) {
+              const pair = pairs.find(
+                (p: any) =>
+                  (p?.baseToken?.address === mint ||
+                    p?.quoteToken?.address === mint) &&
+                  p?.priceUsd,
+              );
+
+              if (pair && pair.priceUsd) {
+                const price = parseFloat(pair.priceUsd);
+                if (isFinite(price) && price > 0) {
+                  console.log(
+                    `[Birdeye] Derived price for ${mint}: $${price.toFixed(8)}`,
+                  );
+                  return price;
+                }
+              }
+            }
+          }
+        } catch (e: any) {
+          console.warn(
+            `[Birdeye] Error fetching derived price for ${mint}: ${e?.message}`,
+          );
+        }
+        return null;
+      };
+
       const getPriceFromDexScreener = async (
         mint: string,
       ): Promise<number | null> => {

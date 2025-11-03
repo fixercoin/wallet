@@ -297,9 +297,7 @@ export default {
         return 180; // fallback SOL price
       };
 
-      const getDerivedPrice = async (
-        mint: string,
-      ): Promise<number | null> => {
+      const getDerivedPrice = async (mint: string): Promise<number | null> => {
         try {
           console.log(
             `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
@@ -453,10 +451,7 @@ export default {
 
       // Fallback 1: Try derived pricing for FIXERCOIN and LOCKER
       const tokenSymbol = getTokenSymbol(address);
-      if (
-        tokenSymbol === "FIXERCOIN" ||
-        tokenSymbol === "LOCKER"
-      ) {
+      if (tokenSymbol === "FIXERCOIN" || tokenSymbol === "LOCKER") {
         const derivedPrice = await getDerivedPrice(address);
         if (derivedPrice !== null && derivedPrice > 0) {
           return json(
@@ -614,7 +609,10 @@ export default {
             rate: rateInPKR,
             pkrPerUsd: PKR_PER_USD,
             markup: MARKUP,
-            source: token === "FIXERCOIN" || token === "LOCKER" ? "derived" : "fallback",
+            source:
+              token === "FIXERCOIN" || token === "LOCKER"
+                ? "derived"
+                : "fallback",
           },
           { headers: corsHeaders },
         );

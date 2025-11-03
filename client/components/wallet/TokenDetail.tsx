@@ -82,15 +82,15 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     try {
       await refreshTokens();
       // reload prices
-      const ds = await dexscreenerAPI
+      const birdeye = await birdeyeAPI
         .getTokenByMint(tokenMint)
         .catch(() => null);
-      if (ds?.priceUsd) {
-        const base = parseFloat(ds.priceUsd);
+      if (birdeye?.priceUsd) {
+        const base = parseFloat(String(birdeye.priceUsd));
         const data = Array.from({ length: 24 }, (_, i) => ({
           time: `${i}:00`,
           price: base,
-          volume: ds.volume?.h24 || 0,
+          volume: birdeye.volume?.h24 || 0,
         }));
         setPriceData(data);
       }

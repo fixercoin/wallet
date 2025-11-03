@@ -12,7 +12,6 @@ import {
   Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { API_BASE } from "@/lib/p2p";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
@@ -33,7 +32,6 @@ export default function VerifySell() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
-  const { send, events } = useDurableRoom("global", API_BASE);
 
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);

@@ -365,6 +365,7 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
       priceChange24h,
       volume24h,
       pair: matchingPair || undefined,
+      pricingMethod: derivedViaSOLPair ? "derived-from-sol-pair" : "direct",
     });
   } catch (error) {
     console.error(`[Token Price] Handler error:`, error);

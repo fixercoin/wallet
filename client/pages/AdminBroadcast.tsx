@@ -35,8 +35,6 @@ export default function AdminBroadcast() {
 
   const doSend = () => {
     saveNotification(notification);
-    broadcastNotification(send, notification);
-    broadcastNotification(sendGlobal, notification);
     setSent(true);
   };
 

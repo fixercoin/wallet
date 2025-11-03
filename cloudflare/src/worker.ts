@@ -372,8 +372,7 @@ export default {
                 p.liquidity.usd > 10000,
             )
             .sort(
-              (a: any, b: any) =>
-                (b.volume?.h24 || 0) - (a.volume?.h24 || 0),
+              (a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0),
             )
             .slice(0, 50);
           return json(

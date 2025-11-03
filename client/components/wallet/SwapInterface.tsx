@@ -733,7 +733,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       let errorMsg = err instanceof Error ? err.message : String(err);
 
       // Improve error message for insufficient lamports
-      if (errorMsg.includes("insufficient lamports") || errorMsg.includes("Insufficient SOL")) {
+      if (
+        errorMsg.includes("insufficient lamports") ||
+        errorMsg.includes("Insufficient SOL")
+      ) {
         errorMsg = `Insufficient SOL for transaction. You need more SOL to cover fees and rent. Current balance: ~${(balance || 0).toFixed(6)} SOL. Try adding more SOL to your wallet.`;
       } else if (errorMsg.includes("custom program error: 0x1")) {
         errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;

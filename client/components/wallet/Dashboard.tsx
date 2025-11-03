@@ -288,27 +288,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [wallet?.publicKey]);
 
-  // Persist incoming notifications and update pending badge (admin only)
-  useEffect(() => {
-    if (!wallet?.publicKey) return;
-    const last = events?.[events.length - 1];
-    if (!last || last.kind !== "notification") return;
-    const notif = last.data as any;
-    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
-      return;
-    try {
-      saveNotification(notif);
-    } catch {}
-    if (
-      ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() ===
-        String(ADMIN_WALLET).toLowerCase()
-    ) {
-      const updated = getPaymentReceivedNotifications(wallet.publicKey);
-      setPendingOrdersCount(updated.length);
-    }
-  }, [events, wallet?.publicKey]);
-
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
   useEffect(() => {

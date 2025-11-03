@@ -480,11 +480,11 @@ export default {
         };
 
         const FALLBACK_USD: Record<string, number> = {
-          FIXERCOIN: 0.005,
+          FIXERCOIN: 0.00008900,
           SOL: 180,
           USDC: 1.0,
           USDT: 1.0,
-          LOCKER: 0.1,
+          LOCKER: 0.00001200,
         };
 
         const PKR_PER_USD = 280; // base FX

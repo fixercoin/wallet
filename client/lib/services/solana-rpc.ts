@@ -94,6 +94,48 @@ export const makeRpcCall = async (
           const fetchError =
             fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
+          // Try calling known public RPC endpoints directly as a fallback
+          const directEndpoints = [
+            SOLANA_RPC_URL,
+            "https://rpc.ankr.com/solana",
+            "https://api.mainnet-beta.solana.com",
+            "https://solana.publicnode.com",
+          ].filter(Boolean);
+
+          for (const endpoint of directEndpoints) {
+            try {
+              const controller2 = new AbortController();
+              const timeout2 = setTimeout(() => controller2.abort(), 10000);
+              const resp2 = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
+                signal: controller2.signal,
+              });
+              clearTimeout(timeout2);
+
+              if (!resp2.ok) {
+                const t = await resp2.text().catch(() => "");
+                console.warn(`Direct RPC ${endpoint} returned ${resp2.status}: ${t}`);
+                continue;
+              }
+
+              const txt2 = await resp2.text().catch(() => "");
+              try {
+                const parsed = txt2 ? JSON.parse(txt2) : null;
+                if (parsed && parsed.error) {
+                  throw new Error(parsed.error.message || "RPC error");
+                }
+                return parsed?.result ?? parsed ?? txt2;
+              } catch (e) {
+                return txt2;
+              }
+            } catch (e) {
+              console.warn(`Direct RPC endpoint ${endpoint} failed:`, e instanceof Error ? e.message : String(e));
+              continue;
+            }
+          }
+
           // Health check to provide better guidance
           try {
             const health = await fetch("/api/health")

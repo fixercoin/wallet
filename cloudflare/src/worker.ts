@@ -1221,32 +1221,39 @@ export default {
     // Jupiter tokens: /api/jupiter/tokens?type=strict|all
     if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
       const type = searchParams.get("type") || "strict";
-      try {
-        const url_str = `https://token.jup.ag/${type}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter tokens API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
+      const endpoints = [
+        `https://token.jup.ag/${type}`,
+        `https://cache.jup.ag/tokens`,
+      ];
+      let lastError: any = null;
+
+      for (const url_str of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastError = resp.status;
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e: any) {
+          lastError = e?.message || String(e);
         }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e: any) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter tokens",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
       }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter tokens",
+          details: lastError,
+        },
+        { status: 502, headers: corsHeaders },
+      );
     }
 
     // Pumpfun quote: /api/pumpfun/quote (POST or GET)

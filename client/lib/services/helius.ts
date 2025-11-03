@@ -396,9 +396,7 @@ class HeliusAPI {
   /**
    * Get parsed transaction details
    */
-  async getParsedTransaction(
-    signature: string,
-  ): Promise<any> {
+  async getParsedTransaction(signature: string): Promise<any> {
     try {
       console.log(`Fetching parsed transaction: ${signature}`);
       return await this.makeRpcCall("getParsedTransaction", [
@@ -446,16 +444,23 @@ class HeliusAPI {
     if (message.instructions && Array.isArray(message.instructions)) {
       message.instructions.forEach((instr: any) => {
         // Check for parsed token instructions
-        if (instr.parsed?.type === "transfer" || instr.parsed?.type === "transferChecked") {
+        if (
+          instr.parsed?.type === "transfer" ||
+          instr.parsed?.type === "transferChecked"
+        ) {
           const info = instr.parsed.info;
-          const amount = info.tokenAmount?.uiAmount || info.tokenAmount?.amount || 0;
+          const amount =
+            info.tokenAmount?.uiAmount || info.tokenAmount?.amount || 0;
           const decimals = info.tokenAmount?.decimals || 0;
           const destination = info.destination;
           const source = info.source;
           const mint = info.mint || info.token;
 
           // Determine if wallet sent or received
-          if (destination === walletAddress || destination?.includes(walletAddress)) {
+          if (
+            destination === walletAddress ||
+            destination?.includes(walletAddress)
+          ) {
             transfers.push({
               type: "receive",
               token: mint || "UNKNOWN",

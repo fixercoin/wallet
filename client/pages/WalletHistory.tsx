@@ -308,9 +308,7 @@ export default function WalletHistory() {
                     if (t.__source === "blockchain" && !description) {
                       const tokenSymbol =
                         KNOWN_TOKENS[t.token]?.symbol || t.token.slice(0, 6);
-                      const amount =
-                        t.amount /
-                        Math.pow(10, t.decimals || 6);
+                      const amount = t.amount / Math.pow(10, t.decimals || 6);
                       description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
                     }
 
@@ -341,8 +339,7 @@ export default function WalletHistory() {
                               )}
                             </div>
                             <div className="mt-1 text-sm text-gray-700">
-                              {description ||
-                                JSON.stringify(t).slice(0, 100)}
+                              {description || JSON.stringify(t).slice(0, 100)}
                             </div>
                             {whenStr ? (
                               <div className="text-xs text-gray-500 mt-1">

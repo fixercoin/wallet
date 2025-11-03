@@ -36,7 +36,13 @@ export interface BirdeyePriceResponse {
 }
 
 // Try to get price from DexScreener as fallback
-async function getPriceFromDexScreener(mint: string): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> {
+async function getPriceFromDexScreener(
+  mint: string,
+): Promise<{
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+} | null> {
   try {
     console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
     const data = await fetchDexscreenerData(`/tokens/${mint}`);
@@ -72,7 +78,13 @@ async function getPriceFromDexScreener(mint: string): Promise<{ price: number; p
 }
 
 // Try to get price from Jupiter as fallback
-async function getPriceFromJupiter(mint: string): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> {
+async function getPriceFromJupiter(
+  mint: string,
+): Promise<{
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+} | null> {
   try {
     console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
     const response = await fetch(

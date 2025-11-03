@@ -31,9 +31,8 @@ class FixercoinPriceService {
       );
 
       // Use derived pricing based on SOL pair
-      const pairingData = await tokenPairPricingService.getDerivedPrice(
-        "FIXERCOIN",
-      );
+      const pairingData =
+        await tokenPairPricingService.getDerivedPrice("FIXERCOIN");
 
       if (!pairingData) {
         console.warn("Failed to derive FIXERCOIN price");

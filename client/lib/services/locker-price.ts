@@ -30,9 +30,8 @@ class LockerPriceService {
       );
 
       // Use derived pricing based on SOL pair
-      const pairingData = await tokenPairPricingService.getDerivedPrice(
-        "LOCKER",
-      );
+      const pairingData =
+        await tokenPairPricingService.getDerivedPrice("LOCKER");
 
       if (!pairingData) {
         console.warn("Failed to derive LOCKER price");

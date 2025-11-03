@@ -415,11 +415,14 @@ export default {
           if (pairs.length > 0) {
             const pair = pairs[0];
             const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
+            const priceChange24h =
+              pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
             return json(
               {
                 price,
                 priceUsd: price,
-                data: { price, priceUsd: price },
+                price_change_24h: priceChange24h,
+                data: { price, priceUsd: price, priceChange24h },
               },
               { headers: corsHeaders },
             );
@@ -431,7 +434,8 @@ export default {
           {
             price: 180,
             priceUsd: 180,
-            data: { price: 180, priceUsd: 180 },
+            price_change_24h: 0,
+            data: { price: 180, priceUsd: 180, priceChange24h: 0 },
           },
           { headers: corsHeaders },
         );
@@ -440,7 +444,8 @@ export default {
           {
             price: 180,
             priceUsd: 180,
-            data: { price: 180, priceUsd: 180 },
+            price_change_24h: 0,
+            data: { price: 180, priceUsd: 180, priceChange24h: 0 },
           },
           { headers: corsHeaders },
         );

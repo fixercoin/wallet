@@ -30,8 +30,6 @@ export default function AdminBroadcast() {
     [orderId, sender, text, typeParam],
   );
 
-  const { send } = useDurableRoom(orderId, API_BASE);
-  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
 
   const [sent, setSent] = useState(false);
 

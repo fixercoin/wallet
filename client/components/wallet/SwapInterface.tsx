@@ -25,7 +25,7 @@ import { resolveApiUrl } from "@/lib/api-client";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { birdeyeAPI } from "@/lib/services/birdeye";
 import {
   Keypair,
   VersionedTransaction,

@@ -729,9 +729,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
     } catch (err: any) {
       console.error("Swap execution error:", err);
+
+      let errorMsg = err instanceof Error ? err.message : String(err);
+
+      // Improve error message for insufficient lamports
+      if (
+        errorMsg.includes("insufficient lamports") ||
+        errorMsg.includes("Insufficient SOL")
+      ) {
+        errorMsg = `Insufficient SOL for transaction. You need more SOL to cover fees and rent. Current balance: ~${(balance || 0).toFixed(6)} SOL. Try adding more SOL to your wallet.`;
+      } else if (errorMsg.includes("custom program error: 0x1")) {
+        errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;
+      }
+
       toast({
         title: "Swap Failed",
-        description: err instanceof Error ? err.message : String(err),
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -739,13 +752,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
   };
 
-  // Meteora helpers
+  // Meteora helpers - using proxied endpoints through server
   async function getMeteoraQuote(
     inputMint: string,
     outputMint: string,
     amount: number,
   ) {
-    const url = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(
+    const url = `${resolveApiUrl("/api/swap/meteora/quote")}?inputMint=${encodeURIComponent(
       inputMint,
     )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
       String(amount),
@@ -756,7 +769,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   async function buildMeteoraSwap(route: any, userPublicKey: string) {
-    const res = await fetch("https://api.meteora.ag/swap/v3/swap", {
+    const res = await fetch(resolveApiUrl("/api/swap/meteora/swap"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ route, userPublicKey }),

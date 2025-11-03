@@ -131,7 +131,7 @@ const tryDexscreenerEndpoints = async (
   );
 };
 
-const fetchDexscreenerData = async (
+export const fetchDexscreenerData = async (
   path: string,
 ): Promise<DexscreenerResponse> => {
   const cached = cache.get(path);

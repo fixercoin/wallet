@@ -73,36 +73,6 @@ export default function VerifySell() {
     setChatLog(history);
   }, [selectedOrder]);
 
-  useEffect(() => {
-    if (!events || !selectedOrder) return;
-    const last = events[events.length - 1];
-    if (!last) return;
-
-    if (last.kind === "chat") {
-      const txt = (last as any).data?.text || "";
-      const msg = parseWebSocketMessage(txt);
-      if (msg && msg.roomId === selectedOrder.roomId) {
-        saveChatMessage(msg);
-        setChatLog((prev) => [...prev, msg]);
-
-        if (
-          msg.type === "buyer_confirmed_receipt" &&
-          msg.senderWallet !== wallet?.publicKey
-        ) {
-          setBuyerConfirmed(true);
-          toast({
-            title: "Order Confirmed",
-            description: "Buyer has confirmed receipt. Closing chat...",
-          });
-          setTimeout(() => {
-            setPhase("completed");
-            clearNotificationsForRoom(selectedOrder.roomId);
-            moveOrderToCompleted();
-          }, 2000);
-        }
-      }
-    }
-  }, [events, selectedOrder, wallet?.publicKey]);
 
   const moveOrderToCompleted = () => {
     try {
@@ -138,7 +108,6 @@ export default function VerifySell() {
       };
 
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
 
       const notification: ChatNotification = {
@@ -151,7 +120,6 @@ export default function VerifySell() {
       };
 
       saveNotification(notification);
-      broadcastNotification(send, notification);
 
       toast({
         title: "Payment Verified",
@@ -183,7 +151,6 @@ export default function VerifySell() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setMessageInput("");
   };

@@ -1008,7 +1008,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
                                 <span className="text-white">
                                   {formatAmount(
@@ -1117,7 +1117,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
                                 <span className="text-white">
                                   {formatAmount(

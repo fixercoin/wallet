@@ -4,10 +4,6 @@ import { OrderCard } from "../components/OrderCard";
 
 export default function P2PRoom() {
   const roomId = "global";
-  const { events } = useDurableRoom(
-    roomId,
-    API_BASE.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws")),
-  );
 
   const [spend, setSpend] = useState(25000);
   const rate = 313.99; // PKR per USDT

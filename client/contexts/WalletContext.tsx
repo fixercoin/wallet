@@ -17,6 +17,8 @@ import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { lockerPriceService } from "@/lib/services/locker-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 

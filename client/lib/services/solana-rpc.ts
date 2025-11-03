@@ -109,14 +109,21 @@ export const makeRpcCall = async (
               const resp2 = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: Date.now(),
+                  method,
+                  params,
+                }),
                 signal: controller2.signal,
               });
               clearTimeout(timeout2);
 
               if (!resp2.ok) {
                 const t = await resp2.text().catch(() => "");
-                console.warn(`Direct RPC ${endpoint} returned ${resp2.status}: ${t}`);
+                console.warn(
+                  `Direct RPC ${endpoint} returned ${resp2.status}: ${t}`,
+                );
                 continue;
               }
 
@@ -131,7 +138,10 @@ export const makeRpcCall = async (
                 return txt2;
               }
             } catch (e) {
-              console.warn(`Direct RPC endpoint ${endpoint} failed:`, e instanceof Error ? e.message : String(e));
+              console.warn(
+                `Direct RPC endpoint ${endpoint} failed:`,
+                e instanceof Error ? e.message : String(e),
+              );
               continue;
             }
           }

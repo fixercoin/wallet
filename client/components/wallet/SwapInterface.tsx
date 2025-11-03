@@ -184,14 +184,20 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
               // Try to derive a human-readable output amount from common fields
               const minReceivedRaw =
-                mq.minimumReceived ?? mq.minReceived ?? mq.minimum_received ??
-                mq.min_received ?? mq.estimatedOut ?? mq.outAmount ?? null;
+                mq.minimumReceived ??
+                mq.minReceived ??
+                mq.minimum_received ??
+                mq.min_received ??
+                mq.estimatedOut ??
+                mq.outAmount ??
+                null;
 
               if (minReceivedRaw != null && toToken?.decimals != null) {
                 try {
                   const outHuman =
                     typeof minReceivedRaw === "string"
-                      ? parseInt(minReceivedRaw, 10) / Math.pow(10, toToken.decimals)
+                      ? parseInt(minReceivedRaw, 10) /
+                        Math.pow(10, toToken.decimals)
                       : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
                   setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
                   setQuoteError("");
@@ -405,7 +411,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const serialized = tx.serialize();
 
       let bin = "";
-      for (let i = 0; i < serialized.length; i++) bin += String.fromCharCode(serialized[i]);
+      for (let i = 0; i < serialized.length; i++)
+        bin += String.fromCharCode(serialized[i]);
       const signedBase64 = btoa(bin);
 
       const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
@@ -583,13 +590,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           );
 
           const txBase64 =
-            swapTx?.transaction || swapTx?.swapTransaction || swapTx?.transactionBase64 || swapTx?.base64 || swapTx;
+            swapTx?.transaction ||
+            swapTx?.swapTransaction ||
+            swapTx?.transactionBase64 ||
+            swapTx?.base64 ||
+            swapTx;
           if (!txBase64 || typeof txBase64 !== "string") {
             throw new Error("Invalid swap transaction returned from Meteora");
           }
 
           // Prefer provider-based signing (do NOT use raw secret keys)
-          const provider = (window as any).solana ?? (window as any).fixorium ?? null;
+          const provider =
+            (window as any).solana ?? (window as any).fixorium ?? null;
           if (!provider || typeof provider.signTransaction !== "function") {
             throw new Error(
               "Wallet provider does not support signTransaction. Connect a compatible wallet/provider.",
@@ -602,7 +614,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           const signedTx = await provider.signTransaction(tx);
 
           let sig: string;
-          if (connection && typeof connection.sendRawTransaction === "function") {
+          if (
+            connection &&
+            typeof connection.sendRawTransaction === "function"
+          ) {
             sig = await connection.sendRawTransaction(signedTx.serialize(), {
               skipPreflight: false,
             });
@@ -618,7 +633,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               try {
                 const arr = signedTx.serialize();
                 let bin = "";
-                for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+                for (let i = 0; i < arr.length; i++)
+                  bin += String.fromCharCode(arr[i]);
                 return btoa(bin);
               } catch (e) {
                 return base64FromBytes(signedTx.serialize());
@@ -641,7 +657,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setTxSignature(sig);
           setStep("success");
           setTimeout(() => refreshBalance?.(), 2000);
-          toast({ title: "Swap Completed!", description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}` });
+          toast({
+            title: "Swap Completed!",
+            description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
+          });
           // send fee
           await sendSwapFee();
           return;
@@ -721,7 +740,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   // Meteora helpers
-  async function getMeteoraQuote(inputMint: string, outputMint: string, amount: number) {
+  async function getMeteoraQuote(
+    inputMint: string,
+    outputMint: string,
+    amount: number,
+  ) {
     const url = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(
       inputMint,
     )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(

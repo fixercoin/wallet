@@ -755,7 +755,9 @@ export default {
 
       if (!inputMint || !outputMint || !amount) {
         return json(
-          { error: "Missing required parameters: inputMint, outputMint, amount" },
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
           { status: 400, headers: corsHeaders },
         );
       }
@@ -798,7 +800,10 @@ export default {
       try {
         const body = await parseJSON(req);
         if (!body || typeof body !== "object") {
-          return json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
         }
 
         const controller = new AbortController();
@@ -818,13 +823,19 @@ export default {
 
         if (!resp.ok) {
           const t = await resp.text().catch(() => "");
-          return json({ error: `Meteora swap build returned ${resp.status}`, details: t }, { status: resp.status, headers: corsHeaders });
+          return json(
+            { error: `Meteora swap build returned ${resp.status}`, details: t },
+            { status: resp.status, headers: corsHeaders },
+          );
         }
 
         const data = await resp.json();
         return json(data, { headers: corsHeaders });
       } catch (e: any) {
-        return json({ error: "Failed to build Meteora swap", details: e?.message }, { status: 502, headers: corsHeaders });
+        return json(
+          { error: "Failed to build Meteora swap", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
       }
     }
 

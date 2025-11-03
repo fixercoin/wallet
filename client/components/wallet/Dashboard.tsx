@@ -29,7 +29,6 @@ import {
   getPaymentReceivedNotifications,
   saveNotification,
 } from "@/lib/p2p-chat";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";

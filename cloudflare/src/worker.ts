@@ -592,8 +592,16 @@ export default {
         // Stablecoins -> 1
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
+        } else if (token === "FIXERCOIN" || token === "LOCKER") {
+          // Try to fetch derived price for FIXERCOIN and LOCKER
+          const derivedPrice = await getDerivedPrice(mint);
+          if (derivedPrice !== null && derivedPrice > 0) {
+            priceUsd = derivedPrice;
+          } else {
+            priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+          }
         } else {
-          // Use fallback prices for non-stablecoins
+          // Use fallback prices for other non-stablecoins
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
         }
 
@@ -606,6 +614,7 @@ export default {
             rate: rateInPKR,
             pkrPerUsd: PKR_PER_USD,
             markup: MARKUP,
+            source: token === "FIXERCOIN" || token === "LOCKER" ? "derived" : "fallback",
           },
           { headers: corsHeaders },
         );

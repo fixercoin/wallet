@@ -289,70 +289,12 @@ export default {
         }
 
         let priceUsd = null;
-        try {
-          if (token === "USDC" || token === "USDT") {
-            priceUsd = 1.0;
-          } else {
-            if (!mint && TOKEN_MINTS[token]) mint = TOKEN_MINTS[token];
 
-            if (mint) {
-              const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
-              if (pairAddress) {
-                try {
-                  const pairData = await fetchDexData(
-                    `/pairs/solana/${pairAddress}`,
-                  );
-                  const maybePair =
-                    pairData?.pair || (pairData?.pairs || [])[0] || null;
-                  if (maybePair && maybePair.priceUsd) {
-                    priceUsd = Number(maybePair.priceUsd);
-                  }
-                } catch (e) {}
-              }
-
-              if (priceUsd === null) {
-                try {
-                  const tokenData = await fetchDexData(`/tokens/${mint}`);
-                  const searchPairs = Array.isArray(tokenData?.pairs)
-                    ? tokenData.pairs
-                    : [];
-
-                  let matchingPair = null;
-
-                  if (searchPairs.length > 0) {
-                    matchingPair = searchPairs.find(
-                      (p) =>
-                        p?.baseToken?.address === mint &&
-                        p?.chainId === "solana",
-                    );
-
-                    if (!matchingPair) {
-                      matchingPair = searchPairs.find(
-                        (p) =>
-                          p?.quoteToken?.address === mint &&
-                          p?.chainId === "solana",
-                      );
-                    }
-
-                    if (!matchingPair) {
-                      matchingPair = searchPairs.find(
-                        (p) =>
-                          p?.baseToken?.address === mint ||
-                          p?.quoteToken?.address === mint,
-                      );
-                    }
-
-                    if (matchingPair && matchingPair.priceUsd) {
-                      priceUsd = Number(matchingPair.priceUsd);
-                    }
-                  }
-                } catch (e) {}
-              }
-            }
-          }
-        } catch (e) {}
-
-        if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        // Stablecoins -> 1
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+        } else {
+          // Use fallback prices for non-stablecoins
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
         }
 

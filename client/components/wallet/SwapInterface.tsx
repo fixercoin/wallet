@@ -1172,24 +1172,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </div>
             ) : null}
 
-            {/* Alerts */}
+            {/* Loading indicator */}
             {isLoading && (
               <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
                 Signing & Connecting - submitting transaction ...
-              </Alert>
-            )}
-            {indicative && (
-              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
-                <AlertDescription>
-                  Jupiter has no direct route for this pair. Price is estimated
-                  from DEX data and may vary. You can still attempt the swap,
-                  but execution depends on available liquidity.
-                </AlertDescription>
-              </Alert>
-            )}
-            {quoteError && !indicative && (
-              <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
-                <AlertDescription>{quoteError}</AlertDescription>
               </Alert>
             )}
 

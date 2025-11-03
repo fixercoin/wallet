@@ -15,11 +15,11 @@ const TOKEN_MINTS: Record<string, string> = {
 };
 
 const FALLBACK_USD: Record<string, number> = {
-  FIXERCOIN: 0.00008900,
+  FIXERCOIN: 0.000089,
   SOL: 180,
   USDC: 1.0,
   USDT: 1.0,
-  LOCKER: 0.00001200,
+  LOCKER: 0.000012,
 };
 
 export interface BirdeyePriceData {
@@ -36,9 +36,7 @@ export interface BirdeyePriceResponse {
 }
 
 // Try to get price from DexScreener as fallback
-async function getPriceFromDexScreener(
-  mint: string,
-): Promise<number | null> {
+async function getPriceFromDexScreener(mint: string): Promise<number | null> {
   try {
     console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
     const data = await fetchDexscreenerData(`/tokens/${mint}`);
@@ -91,9 +89,7 @@ async function getPriceFromJupiter(mint: string): Promise<number | null> {
     if (priceData?.price) {
       const price = parseFloat(priceData.price);
       if (isFinite(price) && price > 0) {
-        console.log(
-          `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
-        );
+        console.log(`[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`);
         return price;
       }
     }
@@ -164,7 +160,9 @@ export async function handleBirdeyePrice(
         `[Birdeye] Request failed with status ${response.status}, trying fallback...`,
       );
     } catch (error: any) {
-      console.warn(`[Birdeye] Fetch error: ${error?.message}, trying fallback...`);
+      console.warn(
+        `[Birdeye] Fetch error: ${error?.message}, trying fallback...`,
+      );
     }
 
     // Fallback 1: Try DexScreener
@@ -218,10 +216,7 @@ export async function handleBirdeyePrice(
       error: "No price data available for this token",
     });
   } catch (error: any) {
-    console.error(
-      `[Birdeye] Handler error:`,
-      error?.message || String(error),
-    );
+    console.error(`[Birdeye] Handler error:`, error?.message || String(error));
     res.status(502).json({
       success: false,
       error: "Failed to fetch token price",

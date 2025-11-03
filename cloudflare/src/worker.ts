@@ -256,11 +256,11 @@ export default {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.00008900,
+        FIXERCOIN: 0.000089,
         SOL: 180,
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.00001200,
+        LOCKER: 0.000012,
       };
 
       const getTokenSymbol = (addr: string): string | null => {
@@ -274,9 +274,7 @@ export default {
         mint: string,
       ): Promise<number | null> => {
         try {
-          console.log(
-            `[Birdeye Fallback] Trying DexScreener for ${mint}`,
-          );
+          console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
           const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
           const dexResp = await fetch(dexUrl, {
             headers: { Accept: "application/json" },
@@ -306,9 +304,7 @@ export default {
             }
           }
         } catch (e: any) {
-          console.warn(
-            `[Birdeye Fallback] DexScreener error: ${e?.message}`,
-          );
+          console.warn(`[Birdeye Fallback] DexScreener error: ${e?.message}`);
         }
         return null;
       };
@@ -338,9 +334,7 @@ export default {
             }
           }
         } catch (e: any) {
-          console.warn(
-            `[Birdeye Fallback] Jupiter error: ${e?.message}`,
-          );
+          console.warn(`[Birdeye Fallback] Jupiter error: ${e?.message}`);
         }
         return null;
       };
@@ -480,11 +474,11 @@ export default {
         };
 
         const FALLBACK_USD: Record<string, number> = {
-          FIXERCOIN: 0.00008900,
+          FIXERCOIN: 0.000089,
           SOL: 180,
           USDC: 1.0,
           USDT: 1.0,
-          LOCKER: 0.00001200,
+          LOCKER: 0.000012,
         };
 
         const PKR_PER_USD = 280; // base FX

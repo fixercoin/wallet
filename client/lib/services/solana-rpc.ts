@@ -72,6 +72,7 @@ export const makeRpcCall = async (
 
   const requestPromise = (async () => {
     let lastError: Error | null = null;
+    let lastErrorStatus: number | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
@@ -136,6 +137,15 @@ export const makeRpcCall = async (
           const diagSuffix = serverDiag
             ? ` Server diagnostics: ${serverDiag}`
             : "";
+
+          // Special handling for rate limiting - use longer backoff
+          if (response.status === 429) {
+            lastErrorStatus = 429;
+            throw new Error(
+              `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
+            );
+          }
+
           throw new Error(
             `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
           );
@@ -161,9 +171,17 @@ export const makeRpcCall = async (
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < retries) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * (attempt + 1)),
+          // Use exponential backoff, with extra delay for rate limiting
+          const isRateLimited = lastErrorStatus === 429;
+          const baseDelay = isRateLimited ? 3000 : 1000; // 3s base for 429, 1s for others
+          const delayMs = baseDelay * Math.pow(2, attempt); // Exponential: 3s, 6s, 12s for 429
+
+          console.warn(
+            `[RPC Call] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms:`,
+            lastError.message,
           );
+
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
     }

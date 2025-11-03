@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
 import {
   broadcastNotification,

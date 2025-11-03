@@ -181,11 +181,25 @@ export async function handleBirdeyePrice(
       });
     }
 
-    // Fallback 2: Check hardcoded fallback prices
+    // Fallback 2: Try Jupiter
+    const jupiterPrice = await getPriceFromJupiter(address);
+    if (jupiterPrice !== null) {
+      return res.json({
+        success: true,
+        data: {
+          address,
+          value: jupiterPrice,
+          updateUnixTime: Math.floor(Date.now() / 1000),
+        },
+        _source: "jupiter",
+      });
+    }
+
+    // Fallback 3: Check hardcoded fallback prices
     const tokenSymbol = getTokenSymbol(address);
     if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
       console.log(
-        `[Birdeye] Using fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
+        `[Birdeye] Using hardcoded fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
       );
       return res.json({
         success: true,

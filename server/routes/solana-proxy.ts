@@ -17,7 +17,10 @@ const RPC_ENDPOINTS = [
 ].filter(Boolean);
 
 // Track rate-limited endpoints with cooldown periods
-const rateLimitedEndpoints = new Map<string, { until: number; count: number }>();
+const rateLimitedEndpoints = new Map<
+  string,
+  { until: number; count: number }
+>();
 
 function getEndpointKey(endpoint: string): string {
   try {

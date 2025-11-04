@@ -21,6 +21,18 @@ import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
+import {
+  encryptWalletData,
+  decryptWalletData,
+  isEncryptedWalletStorage,
+  isPlaintextWalletStorage,
+} from "@/lib/secure-storage";
+import {
+  getWalletPassword,
+  setWalletPassword,
+  markWalletAsPasswordProtected,
+  doesWalletRequirePassword,
+} from "@/lib/wallet-password";
 
 interface WalletContextType {
   wallet: WalletData | null; // active
@@ -39,6 +51,9 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
+  unlockWithPassword: (password: string) => Promise<boolean>; // Decrypt wallets with password
+  needsPasswordUnlock: boolean; // True if wallets are encrypted but not unlocked
+  setNeedsPasswordUnlock: (value: boolean) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);

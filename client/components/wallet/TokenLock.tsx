@@ -839,7 +839,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 </>
               ) : (
                 <>
-                  <LockIcon className="h-4 w-4 mr-2 text-black" />
+                  <LockIcon className="h-4 w-4 mr-2 text-black" fill="none" strokeWidth={2} />
                   Lock tokens
                 </>
               )}

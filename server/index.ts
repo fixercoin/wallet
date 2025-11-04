@@ -229,7 +229,7 @@ export async function createServer(): Promise<express.Application> {
         SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.000010, // Updated fallback
+        LOCKER: 0.00001, // Updated fallback
       };
 
       // If stablecoins or known symbols, return deterministic prices

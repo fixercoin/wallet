@@ -14,7 +14,7 @@ const FALLBACK_RATES: Record<string, number> = {
   SOL: 150, // Updated fallback (previously was 180)
   USDC: 1.0, // $1 USDC
   USDT: 1.0, // $1 USDT
-  LOCKER: 0.000010, // Updated fallback
+  LOCKER: 0.00001, // Updated fallback
 };
 
 const PKR_PER_USD = 280; // Approximate conversion rate

@@ -343,7 +343,7 @@ export const handler = async (event: any) => {
         SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.000010, // Updated fallback
+        LOCKER: 0.00001, // Updated fallback
       };
 
       const PKR_PER_USD = 280; // base FX

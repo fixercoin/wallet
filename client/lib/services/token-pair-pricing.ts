@@ -42,7 +42,7 @@ const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
 // Fallback prices if derivation fails - Updated to more recent market prices
 const FALLBACK_PRICES: Record<string, number> = {
   FIXERCOIN: 0.00007297, // Updated to real market price
-  LOCKER: 0.000010, // Updated fallback
+  LOCKER: 0.00001, // Updated fallback
 };
 
 class TokenPairPricingService {
@@ -59,12 +59,21 @@ class TokenPairPricingService {
     try {
       // Use dedicated SOL price service which has better error handling and fallbacks
       const solPriceData = await solPriceService.getSolPrice();
-      if (solPriceData && solPriceData.price > 0 && isFinite(solPriceData.price)) {
-        console.log(`[TokenPairPricing] SOL price from solPriceService: $${solPriceData.price}`);
+      if (
+        solPriceData &&
+        solPriceData.price > 0 &&
+        isFinite(solPriceData.price)
+      ) {
+        console.log(
+          `[TokenPairPricing] SOL price from solPriceService: $${solPriceData.price}`,
+        );
         return solPriceData.price;
       }
     } catch (error) {
-      console.warn("[TokenPairPricing] Error fetching SOL price from service:", error);
+      console.warn(
+        "[TokenPairPricing] Error fetching SOL price from service:",
+        error,
+      );
     }
 
     // Fallback 1: Try DexScreener as backup
@@ -73,12 +82,17 @@ class TokenPairPricingService {
       if (solToken && solToken.priceUsd) {
         const price = parseFloat(solToken.priceUsd);
         if (isFinite(price) && price > 0) {
-          console.log(`[TokenPairPricing] SOL price from DexScreener (fallback 1): $${price}`);
+          console.log(
+            `[TokenPairPricing] SOL price from DexScreener (fallback 1): $${price}`,
+          );
           return price;
         }
       }
     } catch (error) {
-      console.warn("[TokenPairPricing] Error fetching SOL price from DexScreener:", error);
+      console.warn(
+        "[TokenPairPricing] Error fetching SOL price from DexScreener:",
+        error,
+      );
     }
 
     // Final fallback - use a more reasonable default

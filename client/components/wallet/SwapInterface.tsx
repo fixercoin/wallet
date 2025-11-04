@@ -428,19 +428,27 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       } else if (wallet.secretKey instanceof Uint8Array) {
         secretKey = wallet.secretKey;
       } else {
-        console.error("getKeypair: secretKey is in an unsupported format:", typeof wallet.secretKey);
+        console.error(
+          "getKeypair: secretKey is in an unsupported format:",
+          typeof wallet.secretKey,
+        );
         return null;
       }
 
       if (!secretKey || secretKey.length !== 64) {
-        console.error(`getKeypair: Invalid secret key length: ${secretKey?.length}`);
+        console.error(
+          `getKeypair: Invalid secret key length: ${secretKey?.length}`,
+        );
         return null;
       }
 
       try {
         return Keypair.fromSecretKey(secretKey);
       } catch (err) {
-        console.error("getKeypair: Failed to create Keypair from secret key:", err);
+        console.error(
+          "getKeypair: Failed to create Keypair from secret key:",
+          err,
+        );
         return null;
       }
     } catch (err) {
@@ -450,7 +458,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const sendSwapFee = async (): Promise<void> => {
-    if (!wallet || !wallet.publicKey || !wallet.secretKey || !connection || !fromToken) return;
+    if (
+      !wallet ||
+      !wallet.publicKey ||
+      !wallet.secretKey ||
+      !connection ||
+      !fromToken
+    )
+      return;
     try {
       const kp = getKeypair();
       if (!kp) return;
@@ -550,7 +565,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     if (!wallet || !wallet.publicKey || !wallet.secretKey) {
       toast({
         title: "Wallet Error",
-        description: "Wallet is not properly initialized. Please reconnect your wallet.",
+        description:
+          "Wallet is not properly initialized. Please reconnect your wallet.",
         variant: "destructive",
       });
       return;
@@ -561,7 +577,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       // Helper to submit a single-quote swap via Jupiter
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
         if (!wallet || !wallet.publicKey) {
-          throw new Error("Wallet not available. Please reconnect your wallet.");
+          throw new Error(
+            "Wallet not available. Please reconnect your wallet.",
+          );
         }
 
         const swapRequest = {
@@ -573,7 +591,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!swapResponse || !swapResponse.swapTransaction)
           throw new Error("Failed to get swap transaction");
         const kp = getKeypair();
-        if (!kp) throw new Error("Missing wallet key to sign transaction. Please ensure your wallet is properly connected.");
+        if (!kp)
+          throw new Error(
+            "Missing wallet key to sign transaction. Please ensure your wallet is properly connected.",
+          );
         const swapTransactionBuf = bytesFromBase64(
           swapResponse.swapTransaction,
         );
@@ -669,7 +690,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!quote && meteoraQuote) {
         try {
           if (!wallet || !wallet.publicKey) {
-            throw new Error("Wallet not available for Meteora swap. Please reconnect your wallet.");
+            throw new Error(
+              "Wallet not available for Meteora swap. Please reconnect your wallet.",
+            );
           }
 
           const swapTx = await buildMeteoraSwap(
@@ -1344,7 +1367,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             {!walletReady && (
               <Alert className="bg-red-500/10 border-red-400/20 text-red-600 mb-2">
                 <AlertDescription>
-                  Wallet not ready. Please ensure your wallet is properly loaded.
+                  Wallet not ready. Please ensure your wallet is properly
+                  loaded.
                 </AlertDescription>
               </Alert>
             )}

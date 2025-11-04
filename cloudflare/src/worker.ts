@@ -1738,6 +1738,194 @@ mint: string,
       }
     }
 
+    // Unified quote endpoint: /api/quote?inputMint=...&outputMint=...&amount=...
+    // Tries multiple DEX providers in order
+    if (pathname === "/api/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+      const provider = (searchParams.get("provider") || "auto").toLowerCase();
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error:
+              "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      const providers = [
+        {
+          name: "jupiter",
+          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
+        },
+        {
+          name: "meteora",
+          url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+        {
+          name: "pumpfun",
+          url: `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+      ];
+
+      let lastError: any = null;
+
+      for (const p of providers) {
+        if (provider !== "auto" && provider !== p.name) continue;
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+          const resp = await fetch(p.url, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (resp.ok) {
+            const data = await resp.json();
+            return json(
+              { source: p.name, quote: data },
+              { headers: corsHeaders },
+            );
+          }
+
+          lastError = `${p.name}: ${resp.status}`;
+        } catch (e: any) {
+          lastError = `${p.name}: ${e?.message || String(e)}`;
+        }
+      }
+
+      return json(
+        {
+          error: "Failed to fetch quote from any provider",
+          details: lastError || "All providers failed",
+        },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Unified swap execution endpoint: /api/swap (POST)
+    // Handles swap execution for multiple DEX providers
+    if (pathname === "/api/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const provider = (body.provider || "auto").toLowerCase();
+        const { inputMint, outputMint, amount, mint, wallet } = body as any;
+
+        // Try Pumpfun swap if mint is provided (Pumpfun specific)
+        if (
+          (provider === "pumpfun" || provider === "auto") &&
+          mint &&
+          amount
+        ) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const swapPayload = {
+              mint,
+              amount: String(amount),
+              decimals: body.decimals || 6,
+              slippage: body.slippage || 10,
+              txVersion: body.txVersion || "V0",
+              priorityFee: body.priorityFee || 0.0005,
+              wallet,
+            };
+
+            const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(swapPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "pumpfun", swap: data },
+                { headers: corsHeaders },
+              );
+            }
+          } catch (e: any) {
+            if (provider === "pumpfun") {
+              return json(
+                { error: "Pumpfun swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
+
+        // Try Jupiter swap if inputMint is provided (Jupiter specific)
+        if (
+          (provider === "jupiter" || provider === "auto") &&
+          inputMint &&
+          body.routePlan
+        ) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "jupiter", swap: data },
+                { headers: corsHeaders },
+              );
+            }
+          } catch (e: any) {
+            if (provider === "jupiter") {
+              return json(
+                { error: "Jupiter swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
+
+        return json(
+          {
+            error: "Unable to execute swap - missing required fields or unsupported provider",
+            required: ["mint or inputMint", "amount", "provider (optional)"],
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to execute swap",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

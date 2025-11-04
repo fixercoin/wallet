@@ -481,6 +481,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return;
     }
 
+    // Clear price service caches to force fresh fetches
+    fixercoinPriceService.clearCache();
+    lockerPriceService.clearCache();
+    solPriceService.clearCache();
+    birdeyeAPI.clearCache();
+
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
     );

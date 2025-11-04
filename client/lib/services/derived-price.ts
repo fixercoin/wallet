@@ -34,19 +34,38 @@ async function getSolUsd(): Promise<number> {
     const json = await res.json();
     const v = Number(json?.priceUsd);
     return Number.isFinite(v) && v > 0 ? v : FALLBACK_USD.SOL;
-  } catch {
+  } catch (err) {
+    console.warn("Failed to get SOL price:", err);
     return FALLBACK_USD.SOL;
   }
 }
 
 async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
-  const solMint = TOKEN_MINTS.SOL;
-  const tokenMint = TOKEN_MINTS[token];
-  const rawAmt = jupiterAPI.formatSwapAmount(1, DECIMALS.SOL);
-  const q = await jupiterAPI.getQuote(solMint, tokenMint, rawAmt as any);
-  if (!q) return null;
-  const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
-  return Number.isFinite(out) && out > 0 ? out : null;
+  try {
+    const solMint = TOKEN_MINTS.SOL;
+    const tokenMint = TOKEN_MINTS[token];
+
+    // Use Jupiter API to get 1 SOL quote
+    const rawAmt = jupiterAPI.formatSwapAmount(1, DECIMALS.SOL);
+    const q = await jupiterAPI.getQuote(solMint, tokenMint, rawAmt as any);
+
+    if (!q) {
+      console.warn(`No Jupiter quote for ${token}`);
+      return null;
+    }
+
+    const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
+    if (!Number.isFinite(out) || out <= 0) {
+      console.warn(`Invalid quote output for ${token}: ${out}`);
+      return null;
+    }
+
+    console.log(`${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter)`);
+    return out;
+  } catch (error) {
+    console.warn(`Error getting ${token} from Jupiter:`, error);
+    return null;
+  }
 }
 
 async function getUsdFromServer(token: SupportedToken): Promise<number | null> {

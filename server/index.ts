@@ -50,6 +50,10 @@ import {
   handleSolanaSendProxy,
   handleSolanaSimulateProxy,
 } from "./routes/swap-proxy";
+import {
+  handleSolanaSend,
+  handleSolanaSimulate,
+} from "./routes/solana-transaction";
 import { handleUnifiedSwapLocal } from "./routes/swap-handler";
 import { handleLocalQuote } from "./routes/quote-handler";
 import { handleSwapQuoteV2, handleSwapExecuteV2 } from "./routes/swap-v2";
@@ -121,13 +125,13 @@ export async function createServer(): Promise<express.Application> {
     "/api/solana-send",
     requireApiKey,
     validateSolanaSend,
-    handleSolanaSendProxy,
+    handleSolanaSend,
   );
   app.post(
     "/api/solana-simulate",
     requireApiKey,
     validateSolanaSend,
-    handleSolanaSimulateProxy,
+    handleSolanaSimulate,
   );
 
   // POST /api/swap/submit - require API key and validate

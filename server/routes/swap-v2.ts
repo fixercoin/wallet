@@ -48,24 +48,56 @@ async function getJupiterQuote(
       amount,
       slippageBps: slippageBps.toString(),
       onlyDirectRoutes: "false",
+      asLegacyTransaction: "false",
     });
 
-    const url = `https://quote-api.jup.ag/v6/quote?${params.toString()}`;
-    console.log(`[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`);
+    const urls = [
+      `https://quote-api.jup.ag/v6/quote?${params.toString()}`,
+      `https://lite-api.jup.ag/swap/v1/quote?${params.toString()}`,
+    ];
 
-    const response = await fetchWithTimeout(url);
-    if (!response.ok) {
-      console.warn(
-        `[Swap] Jupiter quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
-      );
-      return null;
+    for (const url of urls) {
+      try {
+        console.log(
+          `[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`,
+        );
+
+        const response = await fetchWithTimeout(url);
+        if (!response.ok) {
+          if (response.status === 404 || response.status === 400) {
+            console.warn(
+              `[Swap] Jupiter quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+            );
+            continue;
+          }
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(
+              `[Swap] Jupiter API error ${response.status}, trying next endpoint`,
+            );
+            continue;
+          }
+          return null;
+        }
+
+        const data = await response.json();
+        if (!data.outAmount || data.outAmount === "0") {
+          console.warn(
+            `[Swap] Jupiter returned empty quote for ${inputMint} -> ${outputMint}`,
+          );
+          continue;
+        }
+
+        console.log(
+          `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}`,
+        );
+        return data;
+      } catch (e: any) {
+        console.warn(`[Swap] Jupiter endpoint error: ${e?.message || e}`);
+        continue;
+      }
     }
 
-    const data = await response.json();
-    console.log(
-      `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}`,
-    );
-    return data;
+    return null;
   } catch (e: any) {
     console.warn(`[Swap] Jupiter quote error: ${e?.message || e}`);
     return null;
@@ -89,6 +121,18 @@ async function getMeteOraQuote(
 
     const response = await fetchWithTimeout(url);
     if (!response.ok) {
+      if (response.status === 404 || response.status === 400) {
+        console.warn(
+          `[Swap] Meteora quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+        );
+        return null;
+      }
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(
+          `[Swap] Meteora API error ${response.status}, trying fallback`,
+        );
+        return null;
+      }
       console.warn(
         `[Swap] Meteora quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
       );
@@ -96,6 +140,15 @@ async function getMeteOraQuote(
     }
 
     const data = await response.json();
+
+    // Validate Meteora response has expected fields
+    if (!data || (!data.estimatedOut && !data.outAmount && !data.minReceived)) {
+      console.warn(
+        `[Swap] Meteora returned invalid quote for ${inputMint} -> ${outputMint}`,
+      );
+      return null;
+    }
+
     console.log(
       `[Swap] ✅ Meteora quote success: ${inputMint} -> ${outputMint}`,
     );
@@ -165,6 +218,7 @@ async function getBridgedQuote(
 /**
  * GET /api/swap/quote
  * Unified quote endpoint with fallback chain
+ * Returns quotes from Jupiter, Meteora, or bridged routes
  */
 export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
   try {
@@ -179,16 +233,27 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       });
     }
 
-    if (isNaN(slippageBps) || slippageBps < 0) {
+    if (isNaN(slippageBps) || slippageBps < 0 || slippageBps > 10000) {
       return res.status(400).json({
-        error: "Invalid slippageBps",
+        error: "Invalid slippageBps (must be 0-10000)",
+      });
+    }
+
+    // Validate amount is a valid number
+    const amountNum = BigInt(amount);
+    if (amountNum <= 0n) {
+      return res.status(400).json({
+        error: "Amount must be greater than 0",
       });
     }
 
     const attempts: SwapAttempt[] = [];
 
     // Try Jupiter direct quote first
-    console.log(`[Swap Quote] ${inputMint} -> ${outputMint} (${amount})`);
+    console.log(
+      `[Swap Quote] Requesting: ${inputMint} -> ${outputMint} (amount: ${amount})`,
+    );
+
     let quote = await getJupiterQuote(
       inputMint,
       outputMint,
@@ -197,35 +262,50 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     );
     if (quote && quote.outAmount && quote.outAmount !== "0") {
       attempts.push({ provider: "jupiter", status: "success" });
+      console.log(
+        `[Swap Quote] ✅ Jupiter route: ${quote.outAmount} output tokens`,
+      );
       return res.json({
         quote,
         source: "jupiter",
+        inputMint,
+        outputMint,
+        amount,
+        slippageBps,
         attempts,
       });
     }
     attempts.push({
       provider: "jupiter",
       status: "failed",
-      reason: "No liquidity or route",
+      reason: "No liquidity or route found",
     });
 
-    // Try Meteora quote
+    // Try Meteora quote as secondary option
+    console.log(`[Swap Quote] Jupiter failed, trying Meteora...`);
     quote = await getMeteOraQuote(inputMint, outputMint, amount);
-    if (quote && quote.outAmount && quote.outAmount !== "0") {
+    if (quote && (quote.outAmount || quote.estimatedOut || quote.minReceived)) {
       attempts.push({ provider: "meteora", status: "success" });
+      console.log(
+        `[Swap Quote] ✅ Meteora route: ${quote.outAmount || quote.estimatedOut || quote.minReceived} output`,
+      );
       return res.json({
         quote,
         source: "meteora",
+        inputMint,
+        outputMint,
+        amount,
         attempts,
       });
     }
     attempts.push({
       provider: "meteora",
       status: "failed",
-      reason: "No liquidity or route",
+      reason: "No liquidity or route found",
     });
 
-    // Try bridged routes
+    // Try bridged routes as last resort
+    console.log(`[Swap Quote] Meteora failed, trying bridged routes...`);
     const bridged = await getBridgedQuote(
       inputMint,
       outputMint,
@@ -238,12 +318,19 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
         status: "success",
         reason: `via ${bridged.bridge}`,
       });
+      console.log(
+        `[Swap Quote] ✅ Bridged route via ${bridged.bridge}: ${bridged.q2.outAmount} output`,
+      );
       return res.json({
-        quote: bridged.q2, // Return final quote
+        quote: bridged.q2,
         source: "bridged",
         bridgeToken: bridged.bridge,
         leg1: bridged.q1,
         leg2: bridged.q2,
+        inputMint,
+        outputMint,
+        amount,
+        slippageBps,
         attempts,
       });
     }
@@ -255,18 +342,20 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
 
     // All routes exhausted
     console.warn(
-      `[Swap Quote] No routes found for ${inputMint} -> ${outputMint}`,
+      `[Swap Quote] ❌ No routes found for ${inputMint} -> ${outputMint}`,
     );
     return res.status(404).json({
-      error: "No swap route found",
+      error: "No swap route found - no liquidity available for this pair",
       inputMint,
       outputMint,
       amount,
+      slippageBps,
       attempts,
       suggestions: [
-        "Check token pair liquidity",
-        "Try different slippage tolerance",
-        "Check token is bridged/supported",
+        "Verify token pair has liquidity on supported exchanges",
+        "Try swapping through an intermediate token (e.g., USDC)",
+        "Check that both tokens are supported on Jupiter/Meteora",
+        "Increase slippage tolerance if using low liquidity pair",
       ],
     });
   } catch (e: any) {
@@ -274,26 +363,57 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     return res.status(500).json({
       error: "Quote handler error",
       details: e?.message || String(e),
+      code: "QUOTE_HANDLER_ERROR",
     });
   }
 };
 
 /**
  * POST /api/swap/execute
- * Execute a swap transaction (unsigned)
+ * Builds an unsigned swap transaction from a quote
+ *
+ * Request body:
+ * {
+ *   quoteResponse: object (quote from /api/swap/quote),
+ *   userPublicKey: string (wallet address),
+ *   swapMode?: string (optional: ExactIn, ExactOut),
+ *   wrapAndUnwrapSol?: boolean (optional, default: true),
+ *   slippageBps?: number (optional)
+ * }
  */
 export const handleSwapExecuteV2: RequestHandler = async (req, res) => {
   try {
     const body = req.body || {};
     const { quoteResponse, userPublicKey, swapMode } = body;
 
-    if (!quoteResponse || !userPublicKey) {
+    if (!quoteResponse) {
       return res.status(400).json({
-        error: "Missing required fields: quoteResponse, userPublicKey",
+        error: "Missing required field: quoteResponse",
+        details: "quoteResponse should be the result from /api/swap/quote",
       });
     }
 
-    console.log(`[Swap Execute] Building transaction for ${userPublicKey}`);
+    if (!userPublicKey) {
+      return res.status(400).json({
+        error: "Missing required field: userPublicKey",
+        details: "userPublicKey should be a valid Solana address",
+      });
+    }
+
+    // Validate public key format (base58, ~34-44 chars)
+    if (typeof userPublicKey !== "string" || userPublicKey.length < 32) {
+      return res.status(400).json({
+        error: "Invalid userPublicKey format",
+        details: "Public key must be a valid Solana address",
+      });
+    }
+
+    console.log(
+      `[Swap Execute] Building transaction for wallet: ${userPublicKey.slice(0, 10)}...`,
+    );
+    console.log(
+      `[Swap Execute] Quote source: ${quoteResponse.source || "unknown"}`,
+    );
 
     // Build Jupiter swap transaction
     const swapPayload = {
@@ -303,43 +423,93 @@ export const handleSwapExecuteV2: RequestHandler = async (req, res) => {
       ...(swapMode && { swapMode }),
     };
 
-    const response = await fetchWithTimeout(
+    const urls = [
       "https://quote-api.jup.ag/v6/swap",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(swapPayload),
-      },
-    );
+      "https://lite-api.jup.ag/swap/v1/swap",
+    ];
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      console.error(`[Swap Execute] Jupiter swap failed: ${response.status}`);
-      return res.status(response.status).json({
-        error: "Failed to build swap transaction",
-        details: errorText,
-      });
+    for (const url of urls) {
+      try {
+        console.log(`[Swap Execute] Attempting: ${url}`);
+
+        const response = await fetchWithTimeout(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          console.warn(
+            `[Swap Execute] Endpoint ${url} failed with ${response.status}`,
+          );
+
+          if (response.status === 400 || response.status === 404) {
+            // Client error - don't retry other endpoints
+            return res.status(response.status).json({
+              error: "Failed to build swap transaction",
+              details: errorText || response.statusText,
+              code:
+                response.status === 404 ? "ROUTE_NOT_FOUND" : "INVALID_REQUEST",
+            });
+          }
+
+          // Server error - try next endpoint
+          if (url === urls[0]) {
+            console.log(`[Swap Execute] Trying fallback endpoint...`);
+            continue;
+          }
+
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const swapData = await response.json();
+
+        if (swapData.error) {
+          return res.status(400).json({
+            error: "Swap transaction error",
+            details: swapData.error,
+            code: swapData.code,
+          });
+        }
+
+        if (!swapData.swapTransaction) {
+          return res.status(500).json({
+            error: "Invalid response from swap API",
+            details: "Missing swapTransaction in response",
+          });
+        }
+
+        console.log(
+          `[Swap Execute] ✅ Transaction built successfully (${swapData.swapTransaction.length} bytes base64)`,
+        );
+        return res.json(swapData);
+      } catch (e: any) {
+        console.warn(
+          `[Swap Execute] Error with ${url}:`,
+          e instanceof Error ? e.message : String(e),
+        );
+
+        // If this is the last URL, throw
+        if (url === urls[urls.length - 1]) {
+          throw e;
+        }
+
+        // Otherwise continue to next
+        continue;
+      }
     }
 
-    const swapData = await response.json();
-
-    if (swapData.error) {
-      return res.status(400).json({
-        error: swapData.error,
-        code: swapData.code,
-      });
-    }
-
-    console.log(`[Swap Execute] ✅ Transaction built successfully`);
-    return res.json(swapData);
+    throw new Error("All swap endpoints failed");
   } catch (e: any) {
-    console.error("[Swap Execute] Error:", e);
+    console.error("[Swap Execute] Handler error:", e);
     return res.status(502).json({
-      error: "Failed to execute swap",
-      details: e?.message || String(e),
+      error: "Failed to build swap transaction",
+      details: e instanceof Error ? e.message : String(e),
+      code: "EXECUTION_ERROR",
     });
   }
 };

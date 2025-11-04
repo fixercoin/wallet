@@ -48,24 +48,54 @@ async function getJupiterQuote(
       amount,
       slippageBps: slippageBps.toString(),
       onlyDirectRoutes: "false",
+      asLegacyTransaction: "false",
     });
 
-    const url = `https://quote-api.jup.ag/v6/quote?${params.toString()}`;
-    console.log(`[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`);
+    const urls = [
+      `https://quote-api.jup.ag/v6/quote?${params.toString()}`,
+      `https://lite-api.jup.ag/swap/v1/quote?${params.toString()}`,
+    ];
 
-    const response = await fetchWithTimeout(url);
-    if (!response.ok) {
-      console.warn(
-        `[Swap] Jupiter quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
-      );
-      return null;
+    for (const url of urls) {
+      try {
+        console.log(`[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`);
+
+        const response = await fetchWithTimeout(url);
+        if (!response.ok) {
+          if (response.status === 404 || response.status === 400) {
+            console.warn(
+              `[Swap] Jupiter quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+            );
+            continue;
+          }
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(
+              `[Swap] Jupiter API error ${response.status}, trying next endpoint`,
+            );
+            continue;
+          }
+          return null;
+        }
+
+        const data = await response.json();
+        if (!data.outAmount || data.outAmount === "0") {
+          console.warn(
+            `[Swap] Jupiter returned empty quote for ${inputMint} -> ${outputMint}`,
+          );
+          continue;
+        }
+
+        console.log(
+          `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}`,
+        );
+        return data;
+      } catch (e: any) {
+        console.warn(`[Swap] Jupiter endpoint error: ${e?.message || e}`);
+        continue;
+      }
     }
 
-    const data = await response.json();
-    console.log(
-      `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}`,
-    );
-    return data;
+    return null;
   } catch (e: any) {
     console.warn(`[Swap] Jupiter quote error: ${e?.message || e}`);
     return null;

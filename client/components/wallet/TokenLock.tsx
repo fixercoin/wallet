@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { formatTokenAmount } from "@/lib/utils";
 import { shortenAddress } from "@/lib/wallet";
 import type { TokenInfo } from "@/lib/wallet";
 import {

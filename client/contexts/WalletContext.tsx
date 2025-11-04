@@ -244,6 +244,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [wallets]);
 
+  // Declare wallet first before using it in useEffect
+  const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
+
   // Sync wallet with Fixorium provider
   useEffect(() => {
     const provider = providerRef.current ?? ensureFixoriumProvider();
@@ -294,8 +297,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       );
     }
   }, [wallet]);
-
-  const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
 
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {

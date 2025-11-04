@@ -92,12 +92,16 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/wallet/balance", handleWalletBalance);
 
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
-  app.post("/api/swap", handleSwapProxy);
+  // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
+  app.post("/api/swap", handleUnifiedSwapLocal);
+  // Keep proxy handlers as fallbacks (registered after local handler if needed)
   app.get("/api/quote", handleQuoteProxy);
   app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
   app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
   app.post("/api/solana-send", handleSolanaSendProxy);
   app.post("/api/solana-simulate", handleSolanaSimulateProxy);
+  // Proxy for /api/swap to worker (fallback) - registered last
+  app.post("/api/swap/proxy", handleSwapProxy);
 
   // Pumpfun proxy (quote & swap)
   app.all(["/api/pumpfun/quote", "/api/pumpfun/swap"], async (req, res) => {

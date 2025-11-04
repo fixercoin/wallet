@@ -143,6 +143,131 @@ export default {
       );
     }
 
+    // === Simple Jupiter Swap Endpoints ===
+
+    // GET /api/quote - Get swap quote from Jupiter API
+    if (pathname === "/api/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+      const slippageBps = searchParams.get("slippageBps") || "50";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+
+        const resp = await fetch(quoteUrl, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            { error: `Jupiter API returned ${resp.status}`, details: errorText },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const quoteData = await resp.json();
+        return json(quoteData, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          { error: "Failed to fetch quote from Jupiter", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // POST /api/swap - Execute swap and return transaction
+    if (pathname === "/api/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { quoteResponse, userPublicKey } = body as any;
+
+        if (!quoteResponse || !userPublicKey) {
+          return json(
+            {
+              error: "Missing required fields: quoteResponse, userPublicKey",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const swapPayload = {
+          quoteResponse,
+          userPublicKey,
+          wrapAndUnwrapSol: true,
+        };
+
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            { error: `Jupiter API returned ${resp.status}`, details: errorText },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const swapData = await resp.json();
+
+        if (swapData.error) {
+          return json(
+            { error: swapData.error },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        return json(
+          { swapTransaction: swapData.swapTransaction },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to execute swap", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // Disable P2P orders endpoints handled elsewhere
     if (pathname.startsWith("/api/p2p/orders")) {
       return json(

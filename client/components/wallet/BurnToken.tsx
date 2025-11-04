@@ -542,7 +542,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           <span className="text-sm font-medium">
                             {token.symbol || token.mint.slice(0, 6)}
                           </span>
-                          <span className="text-[10px] text-gray-300 uppercase">
+                          <span className="text-[10px] text-gray-600 uppercase">
                             Balance:{" "}
                             {formatNumber(token.balance, token.decimals ?? 0)}
                           </span>

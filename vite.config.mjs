@@ -48,19 +48,20 @@ export default defineConfig({
       },
     },
   ],
+
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "client"),       // ✅ Your UI
+      "@shared": path.resolve(__dirname, "shared"), // ✅ Shared logic folder
+      "@lib": path.resolve(__dirname, "shared/lib") // ✅ This replaces "@/lib"
+    },
+  },
+
   build: {
     outDir: "dist/spa",
     emptyOutDir: true,
   },
   server: {
     hmr: { overlay: false },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "client"),
-      "@lib": path.resolve(__dirname, "client/lib"),   // ✅ FIXED — REQUIRED
-      "@shared": path.resolve(__dirname, "client/lib/services"),
-      "@utils": path.resolve(__dirname, "client/lib/services/derived-price.ts"),
-    },
   },
 });

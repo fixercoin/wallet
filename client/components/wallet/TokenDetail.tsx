@@ -167,6 +167,11 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             </Button>
           </div>
 
+          {/* Token Quick Info Card */}
+          <div className="px-4 py-3">
+            <TokenQuickInfoCard token={displayToken} variant="light" />
+          </div>
+
           {/* Price Section (inside single card) */}
           <PriceCard
             token={displayToken}

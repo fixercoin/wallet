@@ -806,7 +806,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
-                  Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
+                  Available: {formatTokenAmount(selectedToken.balance || 0, selectedToken.symbol)}{" "}
                   {selectedToken.symbol}
                 </p>
               ) : null}

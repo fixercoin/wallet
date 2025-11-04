@@ -2333,6 +2333,74 @@ export default {
       }
     }
 
+    // Alias for frontend: /api/solana-send (POST) - accepts signedBase64/signedTx/tx
+    if (pathname === "/api/solana-send" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        const signedTx =
+          body?.signedBase64 || body?.signedTx || body?.tx || body?.signedTransaction;
+        if (!signedTx) {
+          return json(
+            { error: "Missing signed transaction (base64)" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        try {
+          const rpcResult = await callRpc(env, "sendTransaction", [signedTx]);
+          const parsed = JSON.parse(String(rpcResult?.body || "{}"));
+          return json(parsed, { status: parsed?.error ? 502 : 200, headers: corsHeaders });
+        } catch (rpcErr: any) {
+          return json(
+            {
+              error: "Failed to submit signed transaction to RPC",
+              details: rpcErr?.message || String(rpcErr),
+            },
+            { status: 502, headers: corsHeaders },
+          );
+        }
+      } catch (e: any) {
+        return json(
+          { error: "Invalid request body", details: e?.message },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Simulate signed transaction helper: /api/solana-simulate (POST)
+    if (pathname === "/api/solana-simulate" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        const signedTx =
+          body?.signedBase64 || body?.signedTx || body?.tx || body?.signedTransaction;
+        if (!signedTx) {
+          return json(
+            { error: "Missing signed transaction (base64)" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        try {
+          const rpcResult = await callRpc(env, "simulateTransaction", [signedTx, { encoding: "base64", replaceRecentBlockhash: true, sigVerify: true }]);
+          const parsed = JSON.parse(String(rpcResult?.body || "{}"));
+          return json(parsed, { status: parsed?.error ? 502 : 200, headers: corsHeaders });
+        } catch (rpcErr: any) {
+          return json(
+            {
+              error: "Failed to simulate transaction via RPC",
+              details: rpcErr?.message || String(rpcErr),
+            },
+            { status: 502, headers: corsHeaders },
+          );
+        }
+      } catch (e: any) {
+        return json(
+          { error: "Invalid request body", details: e?.message },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+    }
+
     // Build unsigned swap transaction (proxy to /api/swap with sign=false): /api/swap/build (POST)
     if (pathname === "/api/swap/build" && req.method === "POST") {
       try {

@@ -1012,7 +1012,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
                     {lock.error ? (
                       <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
-                        <AlertTriangle className="h-4 w-4 text-black" />
+                        <AlertTriangle className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
                         <div>
                           <div className="font-medium">Last attempt failed</div>
                           <div className="opacity-80">{lock.error}</div>

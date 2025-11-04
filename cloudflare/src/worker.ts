@@ -485,8 +485,10 @@ export default {
             success: true,
             data: {
               address,
-              value: dexscreenerPrice,
+              value: dexscreenerPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: dexscreenerPrice.priceChange24h,
+              volume24h: dexscreenerPrice.volume24h,
             },
             _source: "dexscreener",
           },
@@ -502,8 +504,10 @@ export default {
             success: true,
             data: {
               address,
-              value: jupiterPrice,
+              value: jupiterPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: jupiterPrice.priceChange24h,
+              volume24h: jupiterPrice.volume24h,
             },
             _source: "jupiter",
           },

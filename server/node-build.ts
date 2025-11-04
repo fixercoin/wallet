@@ -3,13 +3,9 @@ import express from "express";
 import * as nodePath from "path";
 
 (async () => {
-  // Create the API app
-  const apiApp = await createServer();
+  // Create the API app (routes already have /api prefix)
+  const app = await createServer();
   const port = process.env.PORT || 3000;
-
-  // Create the root app and mount API under /api (match dev behavior)
-  const app = express();
-  app.use("/api", apiApp);
 
   // In production, serve the built SPA files
   const __dirname = import.meta.dirname;

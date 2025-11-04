@@ -125,13 +125,13 @@ export async function createServer(): Promise<express.Application> {
     "/api/solana-send",
     requireApiKey,
     validateSolanaSend,
-    handleSolanaSendProxy,
+    handleSolanaSend,
   );
   app.post(
     "/api/solana-simulate",
     requireApiKey,
     validateSolanaSend,
-    handleSolanaSimulateProxy,
+    handleSolanaSimulate,
   );
 
   // POST /api/swap/submit - require API key and validate

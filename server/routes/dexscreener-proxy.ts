@@ -132,7 +132,9 @@ const tryDexscreenerEndpoints = async (
       return data;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`DexScreener endpoint ${endpoint} failed:`, errorMsg);
+      console.warn(
+        `DexScreener endpoint ${endpoint} failed: ${errorMsg}`,
+      );
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Small delay before trying next endpoint

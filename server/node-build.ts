@@ -19,7 +19,7 @@ import * as nodePath from "path";
   app.use(express.static(distPath));
 
   // SPA fallback for non-API routes
-  app.get("*", (req, res) => {
+  app.use((req, res) => {
     // Do not intercept API or health endpoints
     if (req.path.startsWith("/api/")) {
       return res.status(404).json({ error: "API endpoint not found" });

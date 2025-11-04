@@ -34,11 +34,11 @@ const TOKEN_MINTS: Record<string, string> = {
 };
 
 const FALLBACK_USD: Record<string, number> = {
-  FIXERCOIN: 0.000089,
-  SOL: 180,
+  FIXERCOIN: 0.00007297, // Updated to real market price
+  SOL: 150, // Updated fallback (previously was 180)
   USDC: 1.0,
   USDT: 1.0,
-  LOCKER: 0.000012,
+  LOCKER: 0.000010, // Updated fallback
 };
 
 /**

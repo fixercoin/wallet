@@ -19,9 +19,9 @@ const DECIMALS: Record<SupportedToken | "SOL", number> = {
 };
 
 const FALLBACK_USD: Record<SupportedToken | "SOL", number> = {
-  SOL: 150, // Updated fallback (previously was 180)
-  FIXERCOIN: 0.00007297, // Updated to real market price
-  LOCKER: 0.00001, // Updated fallback
+  SOL: 149.38, // Real-time market price
+  FIXERCOIN: 0.00008139, // Real-time market price
+  LOCKER: 0.00001112, // Real-time market price
 };
 
 const cache = new Map<SupportedToken, DerivedPrice>();

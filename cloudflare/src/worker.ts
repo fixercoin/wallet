@@ -668,7 +668,7 @@ export default {
 
       const FALLBACK_USD: Record<string, number> = {
         FIXERCOIN: 0.00007297, // Updated to real market price
-        SOL: 180,
+        SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
         LOCKER: 0.000012,
@@ -1079,7 +1079,7 @@ export default {
 
         const FALLBACK_USD: Record<string, number> = {
           FIXERCOIN: 0.00007297, // Updated to real market price
-          SOL: 180,
+          SOL: 150, // Updated fallback (previously was 180)
           USDC: 1.0,
           USDT: 1.0,
           LOCKER: 0.000012,
@@ -1440,7 +1440,7 @@ export default {
           // WARNING: Server-side signing is a security risk!
           // The client should handle signing locally instead
           console.warn(
-            "[Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.",
+            "[Meteora Swap] ⚠���  Server-side signing requested. This is not recommended for security reasons.",
           );
 
           // For now, we return the transaction with a warning

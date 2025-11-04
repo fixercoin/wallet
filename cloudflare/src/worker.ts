@@ -8,6 +8,45 @@ export interface Env {
   MORALIS_RPC_URL?: string;
 }
 
+// Helper function to sign transactions with a keypair
+function signTransactionWithKeypair(
+  transactionBuffer: Uint8Array,
+  secretKeyBase58: string,
+): Uint8Array {
+  // Import required crypto functions for signing
+  // Note: In Cloudflare Workers, we use the Web Crypto API
+  // For Solana transactions, we need to use tweetnacl or similar for Ed25519 signing
+
+  // This is a placeholder - actual implementation would require
+  // tweetnacl or @noble/signatures for Ed25519 signing
+  // For now, we return the transaction buffer as-is
+  // The client should handle signing for security reasons
+  console.warn(
+    "[Wallet Signing] Warning: Server-side signing is not implemented for security reasons. Use client-side signing instead.",
+  );
+  return transactionBuffer;
+}
+
+// Helper function to decode base64 transaction to buffer
+function base64ToBuffer(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Helper function to encode buffer to base64
+function bufferToBase64(buffer: Uint8Array): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 const DEFAULT_RPCS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",

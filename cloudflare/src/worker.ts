@@ -705,7 +705,7 @@ export default {
         } catch (e: any) {
           console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
         }
-        return 180; // fallback SOL price
+        return 150; // fallback SOL price (updated from 180)
       };
 
       const getDerivedPrice = async (

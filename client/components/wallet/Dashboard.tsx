@@ -991,7 +991,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                       <div className="text-right">
                         <p className="text-sm font-semibold text-white">
-                          {formatBalance(token.balance || 0)}
+                          {formatBalance(token.balance || 0, token.symbol)}
                         </p>
                         <p className="text-xs text-gray-300">
                           {typeof token.price === "number" && token.price > 0

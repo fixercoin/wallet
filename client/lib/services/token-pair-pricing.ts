@@ -39,10 +39,10 @@ const TOKEN_CONFIGS: Record<
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
 
-// Fallback prices if derivation fails
+// Fallback prices if derivation fails - Updated to more recent market prices
 const FALLBACK_PRICES: Record<string, number> = {
-  FIXERCOIN: 0.000089,
-  LOCKER: 0.000012,
+  FIXERCOIN: 0.00007297, // Updated to real market price
+  LOCKER: 0.000010, // Updated fallback
 };
 
 class TokenPairPricingService {

@@ -17,6 +17,8 @@ import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { lockerPriceService } from "@/lib/services/locker-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -397,10 +399,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      // Price fetching logic (same as before) - trimmed for brevity but preserved
+      // Price fetching logic
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
+      const solMint = "So11111111111111111111111111111111111111112";
 
       try {
         const tokenMints = allTokens.map((token) => token.mint);
@@ -442,17 +445,79 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
-        const solMint = "So11111111111111111111111111111111111111112";
-        const hasSolPrice = prices[solMint];
+        // Fetch FIXERCOIN and LOCKER prices using specialized services
+        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+
+        try {
+          const [fixercoinData, lockerData] = await Promise.all([
+            fixercoinPriceService.getFixercoinPrice(),
+            lockerPriceService.getLockerPrice(),
+          ]);
+
+          if (fixercoinData && fixercoinData.price > 0) {
+            prices[fixercoinMint] = fixercoinData.price;
+            changeMap[fixercoinMint] = fixercoinData.priceChange24h;
+            console.log(
+              `[WalletContext] FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%)`,
+            );
+          }
+
+          if (lockerData && lockerData.price > 0) {
+            prices[lockerMint] = lockerData.price;
+            changeMap[lockerMint] = lockerData.priceChange24h;
+            console.log(
+              `[WalletContext] LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%)`,
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to fetch FIXERCOIN/LOCKER prices:", e);
+        }
+
+        // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint
+        if (!prices[solMint] || !isFinite(prices[solMint])) {
+          console.log(
+            "[WalletContext] SOL price missing from Birdeye, fetching from dedicated endpoint",
+          );
+          try {
+            const solPricePromise = solPriceService.getSolPrice();
+            const timeout = new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), 3000),
+            );
+            const solPriceData = await Promise.race([solPricePromise, timeout]);
+
+            if (solPriceData && isFinite(solPriceData.price)) {
+              prices[solMint] = solPriceData.price;
+              if (
+                typeof solPriceData.price_change_24h === "number" &&
+                isFinite(solPriceData.price_change_24h)
+              ) {
+                changeMap[solMint] = solPriceData.price_change_24h;
+              }
+              console.log(
+                `[WalletContext] SOL price from dedicated endpoint: $${solPriceData.price}`,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              "[WalletContext] Failed to fetch SOL from dedicated endpoint:",
+              e,
+            );
+          }
+        }
 
         if (Object.keys(prices).length > 0) {
           priceSource = "birdeye";
         } else {
           throw new Error(
-            "Birdeye returned no prices, falling back to SOL price service",
+            "No prices available from any source, using fallback",
           );
         }
       } catch (dexError) {
+        console.warn(
+          "[WalletContext] Price fetching failed, using static fallback:",
+          dexError,
+        );
         try {
           const solPricePromise = solPriceService.getSolPrice();
           const timeout = new Promise<null>((resolve) =>
@@ -460,12 +525,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
           const solPriceData = await Promise.race([solPricePromise, timeout]);
           prices = {
-            So11111111111111111111111111111111111111112:
-              solPriceData?.price || 100,
+            [solMint]: solPriceData?.price || 100,
           };
+          if (
+            solPriceData &&
+            typeof solPriceData.price_change_24h === "number"
+          ) {
+            changeMap[solMint] = solPriceData.price_change_24h;
+          }
           priceSource = solPriceData ? "coingecko" : "static";
         } catch {
-          prices = { So11111111111111111111111111111111111111112: 100 };
+          prices = { [solMint]: 100 };
           priceSource = "static";
         }
       }

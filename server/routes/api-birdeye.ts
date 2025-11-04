@@ -36,7 +36,13 @@ export interface BirdeyePriceResponse {
 }
 
 // Try to get price from DexScreener as fallback
-async function getPriceFromDexScreener(mint: string): Promise<number | null> {
+async function getPriceFromDexScreener(
+  mint: string,
+): Promise<{
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+} | null> {
   try {
     console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
     const data = await fetchDexscreenerData(`/tokens/${mint}`);
@@ -55,7 +61,11 @@ async function getPriceFromDexScreener(mint: string): Promise<number | null> {
           console.log(
             `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
           );
-          return price;
+          return {
+            price,
+            priceChange24h: pair.priceChange?.h24 || 0,
+            volume24h: pair.volume?.h24 || 0,
+          };
         }
       }
     }
@@ -68,7 +78,13 @@ async function getPriceFromDexScreener(mint: string): Promise<number | null> {
 }
 
 // Try to get price from Jupiter as fallback
-async function getPriceFromJupiter(mint: string): Promise<number | null> {
+async function getPriceFromJupiter(
+  mint: string,
+): Promise<{
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+} | null> {
   try {
     console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
     const response = await fetch(
@@ -90,7 +106,11 @@ async function getPriceFromJupiter(mint: string): Promise<number | null> {
       const price = parseFloat(priceData.price);
       if (isFinite(price) && price > 0) {
         console.log(`[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`);
-        return price;
+        return {
+          price,
+          priceChange24h: 0,
+          volume24h: 0,
+        };
       }
     }
   } catch (error: any) {
@@ -150,7 +170,15 @@ export async function handleBirdeyePrice(
           console.log(
             `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
           );
-          res.json(data);
+          res.json({
+            success: true,
+            data: {
+              address: data.data.address,
+              value: data.data.value,
+              updateUnixTime: data.data.updateUnixTime,
+              priceChange24h: data.data.priceChange24h || 0,
+            },
+          });
           return;
         }
       }
@@ -172,8 +200,10 @@ export async function handleBirdeyePrice(
         success: true,
         data: {
           address,
-          value: dexscreenerPrice,
+          value: dexscreenerPrice.price,
           updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: dexscreenerPrice.priceChange24h,
+          volume24h: dexscreenerPrice.volume24h,
         },
         _source: "dexscreener",
       });
@@ -186,8 +216,10 @@ export async function handleBirdeyePrice(
         success: true,
         data: {
           address,
-          value: jupiterPrice,
+          value: jupiterPrice.price,
           updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: jupiterPrice.priceChange24h,
+          volume24h: jupiterPrice.volume24h,
         },
         _source: "jupiter",
       });
@@ -205,6 +237,8 @@ export async function handleBirdeyePrice(
           address,
           value: FALLBACK_USD[tokenSymbol],
           updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: 0,
+          volume24h: 0,
         },
         _source: "fallback",
       });

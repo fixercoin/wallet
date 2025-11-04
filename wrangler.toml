@@ -10,7 +10,14 @@ watch_paths = ["src/**/*.ts", "client/**/*.ts", "client/**/*.tsx"]
 
 [env.production]
 name = "wallet-c36-prod"
-route = "fixorium-proxy.khanbabusargodha.workers.dev/*"
+routes = [
+  { pattern = "fixorium-proxy.khanbabusargodha.workers.dev/*", zone_name = "workers.dev" },
+  { pattern = "wallet.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" }
+]
+
+[env.staging]
+name = "wallet-c36-staging"
+route = "wallet-staging.fixorium.com.pk/*"
 
 [vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"

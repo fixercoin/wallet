@@ -112,6 +112,12 @@ export default {
     outDir: "dist/spa",
     emptyOutDir: true,
   },
+  // Disable Vite's client error overlay which can crash in some environments
+  server: {
+    hmr: {
+      overlay: false,
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client"),

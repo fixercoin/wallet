@@ -40,7 +40,7 @@ interface SwapInterfaceProps {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const SWAP_FEE_SOL = 0.001;
+const SWAP_FEE_BPS = 30;
 
 export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, connection } =
@@ -54,6 +54,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [slippage, setSlippage] = useState("0.5");
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
+  const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);
   const [indicative, setIndicative] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
@@ -143,71 +144,98 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!amountInt || amountInt <= 0) {
           setQuote(null);
           setToAmount("");
+          setQuoteError("");
           setIndicative(false);
           setIsLoading(false);
           return;
         }
+
         console.log(
-          `Requesting Jupiter quote: ${fromToken.symbol} (${fromToken.mint}) -> ${toToken.symbol} (${toToken.mint}), amount: ${amountInt}`,
+          `Fetching quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
-        const q = await jupiterAPI.getQuote(
-          fromToken.mint,
-          toToken.mint,
-          amountInt,
-          Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
-        );
-        if (q) {
-          console.log(
-            `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
+
+        let foundQuote = false;
+
+        // Try Meteora first
+        try {
+          const mq = await getMeteoraQuote(
+            fromToken.mint,
+            toToken.mint,
+            amountInt,
           );
-          setQuote(q);
-          const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
-          setToAmount(out.toFixed(6));
+
+          if (mq && mq.route) {
+            console.log("Meteora provided a route", mq);
+            setQuote(null);
+            setMeteoraQuote(mq);
+
+            const minReceivedRaw =
+              mq.minimumReceived ??
+              mq.minReceived ??
+              mq.minimum_received ??
+              mq.min_received ??
+              mq.estimatedOut ??
+              mq.outAmount ??
+              null;
+
+            if (minReceivedRaw != null && toToken?.decimals != null) {
+              try {
+                const outHuman =
+                  typeof minReceivedRaw === "string"
+                    ? parseInt(minReceivedRaw, 10) /
+                      Math.pow(10, toToken.decimals)
+                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
+                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+                setQuoteError("");
+                setIndicative(false);
+                foundQuote = true;
+              } catch (e) {
+                console.debug("Failed to parse Meteora minReceived", e);
+              }
+            }
+
+            if (foundQuote) {
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.debug("Meteora quote attempt failed silently:", e);
+        }
+
+        // Fall back to Birdeye pricing
+        console.log(
+          `Falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
+        );
+        const [fromBirdeye, toBirdeye] = await Promise.all([
+          birdeyeAPI.getTokenByMint(fromToken.mint),
+          birdeyeAPI.getTokenByMint(toToken.mint),
+        ]);
+        const fromUsd = fromBirdeye?.priceUsd
+          ? parseFloat(String(fromBirdeye.priceUsd))
+          : null;
+        const toUsd = toBirdeye?.priceUsd
+          ? parseFloat(String(toBirdeye.priceUsd))
+          : null;
+
+        if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
+          const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
+          const estOutHuman = (fromHuman * fromUsd) / toUsd;
+          setQuote(null);
+          setToAmount(estOutHuman.toFixed(6));
+          setQuoteError("");
+          setIndicative(true);
+        } else {
+          console.debug(
+            `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+          );
+          setQuote(null);
+          setToAmount("");
           setQuoteError("");
           setIndicative(false);
-        } else {
-          console.log(
-            `No Jupiter quote available, falling back to Birdeye pricing`,
-          );
-          const [fromBirdeye, toBirdeye] = await Promise.all([
-            birdeyeAPI.getTokenByMint(fromToken.mint),
-            birdeyeAPI.getTokenByMint(toToken.mint),
-          ]);
-          const fromUsd = fromBirdeye?.priceUsd
-            ? parseFloat(String(fromBirdeye.priceUsd))
-            : null;
-          const toUsd = toBirdeye?.priceUsd
-            ? parseFloat(String(toBirdeye.priceUsd))
-            : null;
-
-          console.log(
-            `Birdeye prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
-          );
-
-          if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
-            const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
-            const estOutHuman = (fromHuman * fromUsd) / toUsd;
-            console.log(
-              `Using indicative pricing: ${estOutHuman.toFixed(6)} ${toToken.symbol}`,
-            );
-            setQuote(null);
-            setToAmount(estOutHuman.toFixed(6));
-            setQuoteError("");
-            setIndicative(true);
-          } else {
-            console.warn(
-              `Could not get prices from Birdeye: fromUsd=${fromUsd}, toUsd=${toUsd}`,
-            );
-            setQuote(null);
-            setToAmount("");
-            setQuoteError(
-              `No liquidity data found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
-            );
-            setIndicative(false);
-          }
         }
       } catch (err) {
-        console.error("Quote error:", err);
+        console.debug("Quote fetch error:", err);
         setQuote(null);
         setToAmount("");
         setQuoteError("");
@@ -276,7 +304,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const formatAmount = (amount: number | string, symbol?: string) => {
     const num =
       typeof amount === "string" ? parseFloat(amount) : (amount as number);
-    if (isNaN(num)) return "0.000";
+    if (isNaN(num)) return "0.00";
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return num.toFixed(3);
   };
 
@@ -286,6 +320,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       return "Enter a valid amount";
     if (parseFloat(fromAmount) > getTokenBalance(fromToken))
       return "Insufficient balance";
+
+    // Check if enough SOL for network fees
+    const solToken = availableTokens.find((t) => t.symbol === "SOL");
+    if (solToken) {
+      const solBalance = getTokenBalance(solToken);
+      const swapAmt = parseFloat(fromAmount || "0");
+      // Need swap amount + transaction fee (~0.00025) + small buffer
+      const minNeeded = fromToken?.symbol === "SOL" ? swapAmt + 0.0003 : 0.0005;
+      if (solBalance < minNeeded) {
+        return `Insufficient SOL. Need ${minNeeded.toFixed(6)} SOL, have ${solBalance.toFixed(6)} SOL`;
+      }
+    }
+
     return null;
   };
 
@@ -308,14 +355,43 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const sendSwapFee = async (): Promise<void> => {
-    if (!wallet || !connection) return;
+    if (!wallet || !connection || !fromToken) return;
     try {
       const kp = getKeypair();
       if (!kp) return;
 
-      const feeLamports = Math.floor(SWAP_FEE_SOL * LAMPORTS_PER_SOL);
-      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      const feeRate = SWAP_FEE_BPS / 10000; // 0.30%
+      const inputAmt = parseFloat(fromAmount || "0");
+      if (!isFinite(inputAmt) || inputAmt <= 0) return;
 
+      let feeInSol = 0;
+      if (fromToken.symbol === "SOL") {
+        feeInSol = inputAmt * feeRate;
+      } else {
+        const solInfo = await birdeyeAPI.getTokenByMint(TOKEN_MINTS.SOL);
+        const solUsd = solInfo?.priceUsd || 0;
+        const fromUsd = fromUsdPrice ?? null;
+        const toUsd = toUsdPrice ?? null;
+        const outAmt = parseFloat(toAmount || "0");
+
+        let usdValue: number | null = null;
+        if (fromUsd && isFinite(fromUsd)) {
+          usdValue = inputAmt * fromUsd;
+        } else if (toUsd && isFinite(toUsd) && isFinite(outAmt) && outAmt > 0) {
+          usdValue = outAmt * toUsd;
+        }
+
+        if (usdValue && solUsd > 0) {
+          feeInSol = (usdValue * feeRate) / solUsd;
+        } else {
+          return; // cannot price accurately; skip fee silently
+        }
+      }
+
+      const feeLamports = Math.floor(feeInSol * LAMPORTS_PER_SOL);
+      if (feeLamports <= 0) return;
+
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
       const latestBlockhash = await connection.getLatestBlockhash();
       const tx = new Transaction({
         recentBlockhash: latestBlockhash.blockhash,
@@ -342,11 +418,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         body: JSON.stringify({ signedBase64 }),
       });
 
-      if (!sendResp.ok) {
-        console.warn("Fee transfer failed (non-critical)");
-        return;
-      }
-
+      if (!sendResp.ok) return;
       const jb = await sendResp.json();
       if (jb.result) {
         console.log("Swap fee transferred:", jb.result);
@@ -477,6 +549,124 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
 
+      // If we have a direct quote, do normal single-leg swap
+      if (quote) {
+        const sig = await submitQuote(quote);
+        setTxSignature(sig);
+        setStep("success");
+        setTimeout(() => refreshBalance?.(), 2000);
+        toast({
+          title: "Swap Submitted",
+          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
+        });
+        if (connection && typeof connection.getLatestBlockhash === "function") {
+          try {
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+            toast({
+              title: "Swap Confirmed",
+              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
+            });
+            // Send fee silently after swap confirmation
+            await sendSwapFee();
+          } catch {}
+        }
+        return;
+      }
+
+      // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
+      if (!quote && meteoraQuote) {
+        try {
+          const swapTx = await buildMeteoraSwap(
+            meteoraQuote.route,
+            wallet.publicKey,
+          );
+
+          const txBase64 =
+            swapTx?.transaction ||
+            swapTx?.swapTransaction ||
+            swapTx?.transactionBase64 ||
+            swapTx?.base64 ||
+            swapTx;
+          if (!txBase64 || typeof txBase64 !== "string") {
+            throw new Error("Invalid swap transaction returned from Meteora");
+          }
+
+          // Prefer provider-based signing (do NOT use raw secret keys)
+          const provider =
+            (window as any).solana ?? (window as any).fixorium ?? null;
+          if (!provider || typeof provider.signTransaction !== "function") {
+            throw new Error(
+              "Wallet provider does not support signTransaction. Connect a compatible wallet/provider.",
+            );
+          }
+
+          const tx = Transaction.from(Buffer.from(txBase64, "base64"));
+          tx.feePayer = new PublicKey(wallet.publicKey);
+
+          const signedTx = await provider.signTransaction(tx);
+
+          let sig: string;
+          if (
+            connection &&
+            typeof connection.sendRawTransaction === "function"
+          ) {
+            sig = await connection.sendRawTransaction(signedTx.serialize(), {
+              skipPreflight: false,
+            });
+            // confirm
+            const latest = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+              signature: sig,
+            });
+          } else {
+            const signedBase64 = (() => {
+              try {
+                const arr = signedTx.serialize();
+                let bin = "";
+                for (let i = 0; i < arr.length; i++)
+                  bin += String.fromCharCode(arr[i]);
+                return btoa(bin);
+              } catch (e) {
+                return base64FromBytes(signedTx.serialize());
+              }
+            })();
+            const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ signedBase64 }),
+            });
+            if (!sendResp.ok) {
+              const txt = await sendResp.text().catch(() => "");
+              throw new Error(txt || sendResp.statusText || "Send failed");
+            }
+            const jb = await sendResp.json();
+            if (jb.error) throw new Error(jb.error?.message || "Send failed");
+            sig = jb.result as string;
+          }
+
+          setTxSignature(sig);
+          setStep("success");
+          setTimeout(() => refreshBalance?.(), 2000);
+          toast({
+            title: "Swap Completed!",
+            description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
+          });
+          // send fee
+          await sendSwapFee();
+          return;
+        } catch (e) {
+          console.error("Meteora swap failed:", e);
+          // continue to bridged attempts below
+        }
+      }
+
       // No direct route: attempt bridged two-leg swap via USDC or SOL
       if (!fromToken || !toToken) throw new Error("Missing tokens");
       const slippageBps = Math.max(
@@ -536,15 +726,54 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
     } catch (err: any) {
       console.error("Swap execution error:", err);
+
+      let errorMsg = err instanceof Error ? err.message : String(err);
+
+      // Improve error message for insufficient lamports
+      if (
+        errorMsg.includes("insufficient lamports") ||
+        errorMsg.includes("Insufficient SOL")
+      ) {
+        errorMsg = `Insufficient SOL for transaction. You need more SOL to cover fees and rent. Current balance: ~${(balance || 0).toFixed(6)} SOL. Try adding more SOL to your wallet.`;
+      } else if (errorMsg.includes("custom program error: 0x1")) {
+        errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;
+      }
+
       toast({
         title: "Swap Failed",
-        description: err instanceof Error ? err.message : String(err),
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Meteora helpers - using proxied endpoints through server
+  async function getMeteoraQuote(
+    inputMint: string,
+    outputMint: string,
+    amount: number,
+  ) {
+    const url = `${resolveApiUrl("/api/swap/meteora/quote")}?inputMint=${encodeURIComponent(
+      inputMint,
+    )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
+      String(amount),
+    )}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Meteora quote failed: ${resp.status}`);
+    return resp.json();
+  }
+
+  async function buildMeteoraSwap(route: any, userPublicKey: string) {
+    const res = await fetch(resolveApiUrl("/api/swap/meteora/swap"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ route, userPublicKey }),
+    });
+    if (!res.ok) throw new Error(`Meteora build swap failed: ${res.status}`);
+    return res.json();
+  }
 
   const resetSwap = () => {
     setFromAmount("");
@@ -757,7 +986,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gray-200 border border-gray-300 text-gray-900 hover:bg-gray-300 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
                         <SelectValue>
                           <div className="flex items-center gap-2 text-gray-900">
                             {fromToken ? (
@@ -781,7 +1010,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -798,9 +1027,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,
@@ -890,7 +1119,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -907,9 +1136,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,
@@ -962,24 +1191,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </div>
             ) : null}
 
-            {/* Alerts */}
+            {/* Loading indicator */}
             {isLoading && (
               <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
                 Signing & Connecting - submitting transaction ...
-              </Alert>
-            )}
-            {indicative && (
-              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
-                <AlertDescription>
-                  Jupiter has no direct route for this pair. Price is estimated
-                  from DEX data and may vary. You can still attempt the swap,
-                  but execution depends on available liquidity.
-                </AlertDescription>
-              </Alert>
-            )}
-            {quoteError && !indicative && (
-              <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
-                <AlertDescription>{quoteError}</AlertDescription>
               </Alert>
             )}
 

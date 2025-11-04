@@ -693,8 +693,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0";
-    const fractionDigits = selectedSymbol === "FIXERCOIN" ? 8 : 6;
+    if (isNaN(num)) return "0.00";
+    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    const fractionDigits = 6;
     return num.toLocaleString(undefined, {
       minimumFractionDigits: Math.min(2, fractionDigits),
       maximumFractionDigits: fractionDigits,
@@ -846,7 +852,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="ENTER SOLANA ADDRESS"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
-                      className="font-mono text-sm bg-transparent border border-white/20 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="font-mono text-sm bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                   </div>
 
@@ -873,7 +879,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="bg-transparent border border-white/20 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -931,7 +937,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="ADD A NOTE"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="bg-transparent border border-white/20 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                   </div>
 

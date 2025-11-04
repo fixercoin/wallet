@@ -1,4 +1,5 @@
 import { dexscreenerAPI } from "./dexscreener";
+import { solPriceService } from "./sol-price";
 
 export interface PairPricingData {
   tokenAddress: string;

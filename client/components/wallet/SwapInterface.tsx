@@ -395,7 +395,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const sendSwapFee = async (): Promise<void> => {
-    if (!wallet || !connection || !fromToken) return;
+    if (!wallet || !wallet.publicKey || !wallet.secretKey || !connection || !fromToken) return;
     try {
       const kp = getKeypair();
       if (!kp) return;

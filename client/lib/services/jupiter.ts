@@ -58,6 +58,8 @@ export interface JupiterToken {
   tags?: string[];
 }
 
+import { resolveApiUrl } from "@/lib/api-client";
+
 class JupiterAPI {
   private readonly baseUrl = "https://lite-api.jup.ag/swap/v1";
   private readonly priceApiUrl = "https://price.jup.ag/v4";

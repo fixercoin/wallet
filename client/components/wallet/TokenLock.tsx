@@ -994,11 +994,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         disabled={!canWithdraw}
                       >
                         {lock.status === "withdrawing" ? (
-                          <RefreshCw className="h-4 w-4 animate-spin text-black" />
+                          <RefreshCw className="h-4 w-4 animate-spin text-black" fill="none" strokeWidth={2} />
                         ) : isWithdrawn ? (
-                          <CheckCircle2 className="h-4 w-4 text-black" />
+                          <CheckCircle2 className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
                         ) : (
-                          <LockIcon className="h-4 w-4 text-black" />
+                          <LockIcon className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
                         )}
                         <span className="ml-2">
                           {isWithdrawn

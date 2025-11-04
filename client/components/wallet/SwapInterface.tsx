@@ -805,13 +805,31 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     return resp.json();
   }
 
-  async function buildMeteoraSwap(route: any, userPublicKey: string) {
-    const res = await fetch(resolveApiUrl("/api/swap/meteora/swap"), {
+  async function buildMeteoraSwap(_route: any, userPublicKey: string) {
+    // Use local unified /api/swap endpoint with provider=meteora to build an unsigned transaction.
+    if (!fromToken || !toToken || !fromAmount) throw new Error("Missing tokens or amount for Meteora build");
+    const amountInt = parseInt(
+      jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+      10,
+    );
+    const payload = {
+      provider: "meteora",
+      inputMint: fromToken.mint,
+      outputMint: toToken.mint,
+      amount: amountInt,
+      wallet: userPublicKey,
+      sign: false,
+    } as any;
+
+    const res = await fetch(resolveApiUrl("/api/swap"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ route, userPublicKey }),
+      body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Meteora build swap failed: ${res.status}`);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(txt || `Meteora build swap failed: ${res.status}`);
+    }
     return res.json();
   }
 

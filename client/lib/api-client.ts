@@ -73,6 +73,13 @@ export const resolveApiUrl = (path: string): string => {
   }
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const base = getApiBaseUrl();
-  if (!base) return normalizedPath;
+  if (!base) {
+    // When no base is configured, ensure /api prefix is present for local routes
+    return normalizedPath.startsWith("/api") ? normalizedPath : `/api${normalizedPath}`;
+  }
+  // When base is set (e.g., https://wallet.fixorium.com.pk/api), don't duplicate /api
+  if (normalizedPath.startsWith("/api/")) {
+    return `${base}${normalizedPath.substring(4)}`; // Remove /api prefix from path
+  }
   return `${base}${normalizedPath}`;
 };

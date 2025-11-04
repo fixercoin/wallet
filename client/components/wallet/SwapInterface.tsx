@@ -1341,6 +1341,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* Submit */}
+            {!walletReady && (
+              <Alert className="bg-red-500/10 border-red-400/20 text-red-600 mb-2">
+                <AlertDescription>
+                  Wallet not ready. Please ensure your wallet is properly loaded.
+                </AlertDescription>
+              </Alert>
+            )}
             <Button
               onClick={handleSwap}
               className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-gray-900 shadow-lg hover:shadow-2xl transition-all"
@@ -1350,10 +1357,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 !fromToken ||
                 !toToken ||
                 !fromAmount ||
-                isLoading
+                isLoading ||
+                !walletReady
               }
             >
-              {indicative ? "Swap (Estimated)" : "Submit"}
+              {!walletReady
+                ? "Loading Wallet..."
+                : indicative
+                  ? "Swap (Estimated)"
+                  : "Submit"}
             </Button>
           </div>
         </div>

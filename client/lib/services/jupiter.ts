@@ -78,8 +78,7 @@ class JupiterAPI {
         slippageBps: slippageBps.toString(),
       });
 
-      const params_str = params.toString();
-      const url = resolveApiUrl(`/api/jupiter/quote?${params_str}`);
+      const url = resolveApiUrl(`/jupiter/quote?${params.toString()}`);
       console.log("Jupiter quote proxy request:", url);
 
       const response = await this.fetchWithTimeout(url, 15000).catch(
@@ -135,7 +134,7 @@ class JupiterAPI {
     swapRequest: JupiterSwapRequest,
   ): Promise<JupiterSwapResponse | null> {
     try {
-      const url = resolveApiUrl("/api/jupiter/swap");
+      const url = resolveApiUrl("/jupiter/swap");
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -161,7 +160,7 @@ class JupiterAPI {
 
   async getTokenPrice(tokenMint: string): Promise<number | null> {
     try {
-      const url = resolveApiUrl(`/api/jupiter/price?ids=${tokenMint}`);
+      const url = resolveApiUrl(`/jupiter/price?ids=${tokenMint}`);
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -186,7 +185,7 @@ class JupiterAPI {
         `Fetching prices for ${tokenMints.length} tokens via Jupiter`,
       );
 
-      const url = resolveApiUrl(`/api/jupiter/price?ids=${ids}`);
+      const url = resolveApiUrl(`/jupiter/price?ids=${ids}`);
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -250,7 +249,7 @@ class JupiterAPI {
 
   async getAllTokens(): Promise<JupiterToken[]> {
     try {
-      const url = resolveApiUrl("/api/jupiter/tokens?type=all");
+      const url = resolveApiUrl("/jupiter/tokens?type=all");
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -274,11 +273,11 @@ class JupiterAPI {
     };
     try {
       let response = await fetchWithTimeout(
-        resolveApiUrl("/api/jupiter/tokens?type=strict"),
+        resolveApiUrl("/jupiter/tokens?type=strict"),
       );
       if (!response.ok) {
         response = await fetchWithTimeout(
-          resolveApiUrl("/api/jupiter/tokens?type=all"),
+          resolveApiUrl("/jupiter/tokens?type=all"),
         );
       }
       if (!response.ok) {

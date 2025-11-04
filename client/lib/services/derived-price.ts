@@ -1,6 +1,7 @@
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { getPoolForPair, computeSwapOutput } from "@/lib/services/pumpswap";
 
 export type SupportedToken = "FIXERCOIN" | "LOCKER";
 
@@ -39,7 +40,40 @@ async function getSolUsd(): Promise<number> {
   }
 }
 
+async function getTokensPerSolFromPump(
+  token: SupportedToken,
+): Promise<number | null> {
+  try {
+    const solMint = TOKEN_MINTS.SOL;
+    const tokenMint = TOKEN_MINTS[token];
+
+    // Try to get pool data for SOL/TOKEN pair
+    const pool = await getPoolForPair(solMint, tokenMint);
+    if (!pool || !pool.baseReserve || !pool.quoteReserve) {
+      return null;
+    }
+
+    // Calculate tokens per SOL using pool reserves
+    // If pool is SOL/TOKEN, then tokensPerSol = quoteReserve / baseReserve
+    // But we need to account for the pool orientation
+    const baseIsSol = pool.baseMint === solMint;
+    const tokensPerSol = baseIsSol
+      ? pool.quoteReserve / pool.baseReserve
+      : pool.baseReserve / pool.quoteReserve;
+
+    return Number.isFinite(tokensPerSol) && tokensPerSol > 0 ? tokensPerSol : null;
+  } catch (error) {
+    console.warn(`Error getting tokens per SOL from Pump for ${token}:`, error);
+    return null;
+  }
+}
+
 async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
+  // For Pump.fun tokens, try Pump.fun pool first
+  const pumpResult = await getTokensPerSolFromPump(token);
+  if (pumpResult) return pumpResult;
+
+  // Fallback to Jupiter API
   const solMint = TOKEN_MINTS.SOL;
   const tokenMint = TOKEN_MINTS[token];
   const rawAmt = jupiterAPI.formatSwapAmount(1, DECIMALS.SOL);

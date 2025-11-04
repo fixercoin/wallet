@@ -603,21 +603,31 @@ export default {
         }
 
         let priceUsd: number | null = null;
+        let priceChange24h: number = 0;
+        let volume24h: number = 0;
 
         // Stablecoins -> 1
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
+          priceChange24h = 0;
+          volume24h = 0;
         } else if (token === "FIXERCOIN" || token === "LOCKER") {
           // Try to fetch derived price for FIXERCOIN and LOCKER
           const derivedPrice = await getDerivedPrice(mint);
-          if (derivedPrice !== null && derivedPrice > 0) {
-            priceUsd = derivedPrice;
+          if (derivedPrice !== null && derivedPrice.price > 0) {
+            priceUsd = derivedPrice.price;
+            priceChange24h = derivedPrice.priceChange24h;
+            volume24h = derivedPrice.volume24h;
           } else {
             priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+            priceChange24h = 0;
+            volume24h = 0;
           }
         } else {
           // Use fallback prices for other non-stablecoins
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+          priceChange24h = 0;
+          volume24h = 0;
         }
 
         const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
@@ -629,6 +639,8 @@ export default {
             rate: rateInPKR,
             pkrPerUsd: PKR_PER_USD,
             markup: MARKUP,
+            priceChange24h,
+            volume24h,
             source:
               token === "FIXERCOIN" || token === "LOCKER"
                 ? "derived"

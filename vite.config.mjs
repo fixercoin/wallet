@@ -16,14 +16,8 @@ export default defineConfig({
       name: "express-server",
       apply: "serve",
       async configureServer(server) {
-        try {
-          const { createServer: createExpressServer } = await import("./server/index.ts");
-          apiServer = await createExpressServer();
-          console.log("[Vite] ✅ Express server initialized");
-        } catch (err) {
-          console.error("[Vite] ❌ Failed to initialize Express:", err);
-          throw err;
-        }
+        const { createServer: createExpressServer } = await import("./server/index.ts");
+        apiServer = await createExpressServer();
 
         server.middlewares.use((req, res, next) => {
           if (req.url.startsWith("/api") || req.url === "/health") {
@@ -45,34 +39,6 @@ export default defineConfig({
             const users = rooms.get(roomId);
             users.add(ws);
 
-            ws.on("message", (data) => {
-              let msg;
-              try {
-                msg = JSON.parse(data.toString());
-              } catch {
-                return;
-              }
-
-              const broadcast = (payload) => {
-                for (const client of users) client.send(JSON.stringify(payload));
-              };
-
-              if (msg.type === "chat") {
-                broadcast({
-                  kind: "chat",
-                  data: {
-                    id: Math.random().toString(36).slice(2),
-                    text: msg.text ?? "",
-                    at: Date.now(),
-                  },
-                });
-              } else if (msg.kind === "notification") {
-                broadcast({ kind: "notification", data: msg.data });
-              } else if (msg.type === "ping") {
-                ws.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
-              }
-            });
-
             ws.on("close", () => {
               users.delete(ws);
               if (users.size === 0) rooms.delete(roomId);
@@ -82,21 +48,19 @@ export default defineConfig({
       },
     },
   ],
-
-  // ✅ FIX ALIAS ISSUE HERE
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@lib": path.resolve(__dirname, "src/lib"), // <---- REQUIRED
-    },
-  },
-
   build: {
     outDir: "dist/spa",
     emptyOutDir: true,
   },
-
   server: {
     hmr: { overlay: false },
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@shared": path.resolve(__dirname, "shared"),
+      "@utils": path.resolve(__dirname, "utils"),
+      // ❌ DO NOT ADD @/lib — that folder does not exist
+    },
   },
 });

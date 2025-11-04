@@ -17,5 +17,12 @@
       "@shared/*": ["shared/*"]
     }
   },
-  "include": ["functions/**/*.ts", "src", "utils", "server/**/*.ts", "client/**/*.ts", "shared/**/*.ts"]
+  "include": [
+    "functions/**/*.ts",
+    "src",
+    "utils",
+    "server/**/*.ts",
+    "client/**/*.ts",
+    "shared/**/*.ts"
+  ]
 }

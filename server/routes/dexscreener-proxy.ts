@@ -129,10 +129,7 @@ const tryDexscreenerEndpoints = async (
         data = (await response.json()) as DexscreenerResponse;
       } catch (parseError) {
         const text = await response.text();
-        console.error(
-          `Failed to parse JSON from ${endpoint}:`,
-          parseError,
-        );
+        console.error(`Failed to parse JSON from ${endpoint}:`, parseError);
         if (text.startsWith("<!doctype") || text.startsWith("<html")) {
           throw new Error(
             `DexScreener returned HTML instead of JSON (likely a 5xx error). Status: ${response.status}`,
@@ -149,9 +146,7 @@ const tryDexscreenerEndpoints = async (
       return data;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `DexScreener endpoint ${endpoint} failed: ${errorMsg}`,
-      );
+      console.warn(`DexScreener endpoint ${endpoint} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Small delay before trying next endpoint

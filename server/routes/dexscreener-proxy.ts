@@ -108,6 +108,22 @@ const tryDexscreenerEndpoints = async (
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          console.warn(
+            `Got HTML response from ${endpoint} instead of JSON. Status: ${response.status}`,
+          );
+          throw new Error(
+            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`,
+          );
+        }
+        throw new Error(
+          `Invalid content-type from ${endpoint}: ${contentType}`,
+        );
+      }
+
       const data = (await response.json()) as DexscreenerResponse;
 
       // Success - update current endpoint

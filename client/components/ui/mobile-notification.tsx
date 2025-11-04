@@ -47,6 +47,13 @@ export const MobileNotification: React.FC<MobileNotificationProps> = ({
       return `${amount.toFixed(6)} SOL`;
     }
 
+    if (token === "FIXERCOIN" || token === "LOCKER") {
+      return `${amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      })} ${token}`;
+    }
+
     return `${amount.toLocaleString()} ${token}`;
   };
 

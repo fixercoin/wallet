@@ -91,8 +91,15 @@ export async function getDerivedPrice(
   if (tokensPerSol > 0) {
     tokenUsd = solUsd / tokensPerSol;
   } else {
-    // Fallback: get token USD directly, then infer tokensPerSol
-    const usd = await getUsdFromDexscreener(token);
+    // Fallback 1: Try server endpoint for accurate pricing
+    let usd = await getUsdFromServer(token);
+
+    // Fallback 2: get token USD from DexScreener if server call fails
+    if (!usd) {
+      usd = await getUsdFromDexscreener(token);
+    }
+
+    // Fallback 3: Use hardcoded fallback price
     tokenUsd = usd ?? FALLBACK_USD[token];
     tokensPerSol = tokenUsd > 0 ? solUsd / tokenUsd : 0;
   }

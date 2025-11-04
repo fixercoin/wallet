@@ -749,7 +749,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
             </Button>
-            <LockIcon className="h-5 w-5 text-black" />
+            <LockIcon className="h-5 w-5 text-black" fill="none" strokeWidth={2} />
             <span className="text-sm font-semibold text-gray-900">
               Create new lock
             </span>

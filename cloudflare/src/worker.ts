@@ -1739,7 +1739,7 @@ export default {
     }
 
     // Unified quote endpoint: /api/quote?inputMint=...&outputMint=...&amount=...
-    // Tries multiple DEX providers in order
+    // Tries multiple DEX providers in order (Jupiter -> Meteora -> DexScreener)
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
       const outputMint = searchParams.get("outputMint") || "";
@@ -1765,19 +1765,19 @@ export default {
           url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
         },
         {
-          name: "pumpfun",
-          url: `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+          name: "dexscreener",
+          url: `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(inputMint)}`,
         },
       ];
 
-      let lastError: any = null;
+      let lastErrors: string[] = [];
 
       for (const p of providers) {
         if (provider !== "auto" && provider !== p.name) continue;
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const resp = await fetch(p.url, {
             headers: { Accept: "application/json" },
@@ -1788,22 +1788,46 @@ export default {
 
           if (resp.ok) {
             const data = await resp.json();
-            return json(
-              { source: p.name, quote: data },
-              { headers: corsHeaders },
-            );
+
+            // For DexScreener, transform the response to match quote format
+            if (p.name === "dexscreener" && data.pairs) {
+              const pair = data.pairs.find((p: any) => p.baseToken?.address === inputMint && p.priceUsd);
+              if (pair) {
+                return json(
+                  {
+                    source: "dexscreener",
+                    quote: {
+                      inAmount: amount,
+                      outAmount: pair.priceUsd,
+                      priceImpact: 0,
+                    },
+                  },
+                  { headers: corsHeaders },
+                );
+              }
+            } else if (p.name !== "dexscreener") {
+              return json(
+                { source: p.name, quote: data },
+                { headers: corsHeaders },
+              );
+            }
           }
 
-          lastError = `${p.name}: ${resp.status}`;
+          lastErrors.push(`${p.name}: ${resp.status}`);
         } catch (e: any) {
-          lastError = `${p.name}: ${e?.message || String(e)}`;
+          lastErrors.push(
+            `${p.name}: ${e?.message || String(e)}`,
+          );
         }
       }
+
+      console.warn(`[/api/quote] All providers failed:`, lastErrors);
 
       return json(
         {
           error: "Failed to fetch quote from any provider",
-          details: lastError || "All providers failed",
+          details: lastErrors.join(" | ") || "All providers failed",
+          providers_attempted: ["jupiter", "meteora", "dexscreener"],
         },
         { status: 502, headers: corsHeaders },
       );

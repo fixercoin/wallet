@@ -580,6 +580,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                         {formatNumber(
                           selectedToken.balance,
                           selectedToken.decimals ?? 0,
+                          selectedToken.symbol,
                         )}
                       </p>
                     </div>

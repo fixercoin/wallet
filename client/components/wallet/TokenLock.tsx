@@ -353,7 +353,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       // keep the spinner visible briefly so users see activity
       setTimeout(() => setIsRefreshing(false), 500);
     }
-  }, [wallet]);
+  }, [wallet?.publicKey]);
 
   useEffect(() => {
     if (!wallet) return;

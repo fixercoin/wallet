@@ -6,6 +6,8 @@ export interface Env {
   HELIUS_RPC_URL?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
+  BIRDEYE_API_KEY?: string;
+  ASSETS: Fetcher;
 }
 
 // Helper function to sign transactions with a keypair
@@ -141,6 +143,18 @@ export default {
         { status: "ok", timestamp: new Date().toISOString() },
         { headers: corsHeaders },
       );
+    }
+
+    // Try to serve static assets first (for built frontend)
+    if (req.method === "GET" && !pathname.startsWith("/api")) {
+      try {
+        const assetResponse = await env.ASSETS.fetch(req);
+        if (assetResponse.status !== 404) {
+          return assetResponse;
+        }
+      } catch (e) {
+        // ASSETS might not be available, continue to API handling
+      }
     }
 
     // === Simple Jupiter Swap Endpoints ===
@@ -2612,6 +2626,33 @@ export default {
           { error: "Failed to build swap transaction", details: e?.message },
           { status: 502, headers: corsHeaders },
         );
+      }
+    }
+
+    // SPA fallback: For non-API routes, serve index.html (React Router handles the routing)
+    if (req.method === "GET" && !pathname.startsWith("/api")) {
+      try {
+        // Try to serve index.html as fallback for SPA routing
+        const indexRequest = new Request(
+          new URL(req.url).origin + "/index.html",
+          {
+            method: "GET",
+            headers: req.headers,
+          },
+        );
+        const indexResponse = await env.ASSETS.fetch(indexRequest);
+        if (indexResponse.status === 200) {
+          return new Response(indexResponse.body, {
+            status: 200,
+            headers: new Headers({
+              ...Object.fromEntries(indexResponse.headers),
+              "Content-Type": "text/html; charset=utf-8",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            }),
+          });
+        }
+      } catch (e) {
+        // ASSETS might not be available, fall through to 404
       }
     }
 

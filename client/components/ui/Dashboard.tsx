@@ -379,7 +379,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <span
                             className={`text-xs text-gray-400 ${
                               ["SOL", "FIXERCOIN", "LOCKER"].includes(
-                                token.symbol,
+                                (token.symbol || "").toUpperCase(),
                               )
                                 ? "animate-price-pulse"
                                 : ""

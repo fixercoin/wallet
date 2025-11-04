@@ -115,11 +115,9 @@ export function decryptWalletData(
 
   try {
     // Decode from base64
-    const encryptedData = new Uint8Array(
-      Buffer.from(encrypted.encryptedData, "base64"),
-    );
-    const nonce = new Uint8Array(Buffer.from(encrypted.nonce, "base64"));
-    const salt = new Uint8Array(Buffer.from(encrypted.salt, "base64"));
+    const encryptedData = base64ToBytes(encrypted.encryptedData);
+    const nonce = base64ToBytes(encrypted.nonce);
+    const salt = base64ToBytes(encrypted.salt);
 
     // Derive the same key using password and salt
     const key = deriveKeyFromPassword(password, salt);

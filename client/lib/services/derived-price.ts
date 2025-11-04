@@ -19,9 +19,9 @@ const DECIMALS: Record<SupportedToken | "SOL", number> = {
 };
 
 const FALLBACK_USD: Record<SupportedToken | "SOL", number> = {
-  SOL: 150, // Updated fallback (previously was 180)
-  FIXERCOIN: 0.00007297, // Updated to real market price
-  LOCKER: 0.00001, // Updated fallback
+  SOL: 149.38, // Real-time market price
+  FIXERCOIN: 0.00008139, // Real-time market price
+  LOCKER: 0.00001112, // Real-time market price
 };
 
 const cache = new Map<SupportedToken, DerivedPrice>();
@@ -47,6 +47,18 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
   if (!q) return null;
   const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
   return Number.isFinite(out) && out > 0 ? out : null;
+}
+
+async function getUsdFromServer(token: SupportedToken): Promise<number | null> {
+  try {
+    const res = await fetch(`/api/token/price?token=${token}`);
+    if (!res.ok) throw new Error(String(res.status));
+    const json = await res.json();
+    const v = Number(json?.priceUsd);
+    return Number.isFinite(v) && v > 0 ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 async function getUsdFromDexscreener(
@@ -79,8 +91,15 @@ export async function getDerivedPrice(
   if (tokensPerSol > 0) {
     tokenUsd = solUsd / tokensPerSol;
   } else {
-    // Fallback: get token USD directly, then infer tokensPerSol
-    const usd = await getUsdFromDexscreener(token);
+    // Fallback 1: Try server endpoint for accurate pricing
+    let usd = await getUsdFromServer(token);
+
+    // Fallback 2: get token USD from DexScreener if server call fails
+    if (!usd) {
+      usd = await getUsdFromDexscreener(token);
+    }
+
+    // Fallback 3: Use hardcoded fallback price
     tokenUsd = usd ?? FALLBACK_USD[token];
     tokensPerSol = tokenUsd > 0 ? solUsd / tokenUsd : 0;
   }

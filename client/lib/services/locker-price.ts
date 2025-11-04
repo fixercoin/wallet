@@ -68,7 +68,7 @@ class LockerPriceService {
   private getFallbackPrice(): LockerPriceData {
     console.log("Using fallback LOCKER price");
     return {
-      price: 0.000012,
+      price: 0.00001112,
       priceChange24h: 0,
       volume24h: 0,
       lastUpdated: new Date(),
@@ -79,7 +79,7 @@ class LockerPriceService {
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getLockerPrice();
-    return data?.price || 0.000012;
+    return data?.price || 0.00001112;
   }
 
   // Clear cache to force fresh fetch

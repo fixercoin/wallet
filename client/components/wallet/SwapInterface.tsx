@@ -128,7 +128,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       setQuoteError("");
 
       if (parseFloat(fromAmount) <= 0) {
-        setQuote(null);
         setToAmount("");
         setIndicative(false);
         return;
@@ -142,7 +141,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         );
         const amountInt = parseInt(amount, 10);
         if (!amountInt || amountInt <= 0) {
-          setQuote(null);
           setToAmount("");
           setQuoteError("");
           setIndicative(false);
@@ -203,6 +201,51 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           console.debug("Meteora quote attempt failed silently:", e);
         }
 
+        try {
+          const mq = await getMeteoraQuote(
+            fromToken.mint,
+            toToken.mint,
+            amountInt,
+          );
+
+          if (mq && mq.route) {
+            console.log("Meteora provided a route", mq);
+            setMeteoraQuote(mq);
+
+            const minReceivedRaw =
+              mq.minimumReceived ??
+              mq.minReceived ??
+              mq.minimum_received ??
+              mq.min_received ??
+              mq.estimatedOut ??
+              mq.outAmount ??
+              null;
+
+            if (minReceivedRaw != null && toToken?.decimals != null) {
+              try {
+                const outHuman =
+                  typeof minReceivedRaw === "string"
+                    ? parseInt(minReceivedRaw, 10) /
+                      Math.pow(10, toToken.decimals)
+                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
+                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+                setQuoteError("");
+                setIndicative(false);
+                foundQuote = true;
+              } catch (e) {
+                console.debug("Failed to parse Meteora minReceived", e);
+              }
+            }
+
+            if (foundQuote) {
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.debug("Meteora quote attempt failed silently:", e);
+        }
+
         // Fall back to Birdeye pricing
         console.log(
           `Falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
@@ -221,7 +264,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
           const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
           const estOutHuman = (fromHuman * fromUsd) / toUsd;
-          setQuote(null);
           setToAmount(estOutHuman.toFixed(6));
           setQuoteError("");
           setIndicative(true);
@@ -229,14 +271,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           console.debug(
             `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
           );
-          setQuote(null);
           setToAmount("");
           setQuoteError("");
           setIndicative(false);
         }
       } catch (err) {
         console.debug("Quote fetch error:", err);
-        setQuote(null);
         setToAmount("");
         setQuoteError("");
         setIndicative(false);
@@ -765,13 +805,32 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     return resp.json();
   }
 
-  async function buildMeteoraSwap(route: any, userPublicKey: string) {
-    const res = await fetch(resolveApiUrl("/api/swap/meteora/swap"), {
+  async function buildMeteoraSwap(_route: any, userPublicKey: string) {
+    // Use local unified /api/swap endpoint with provider=meteora to build an unsigned transaction.
+    if (!fromToken || !toToken || !fromAmount)
+      throw new Error("Missing tokens or amount for Meteora build");
+    const amountInt = parseInt(
+      jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+      10,
+    );
+    const payload = {
+      provider: "meteora",
+      inputMint: fromToken.mint,
+      outputMint: toToken.mint,
+      amount: amountInt,
+      wallet: userPublicKey,
+      sign: false,
+    } as any;
+
+    const res = await fetch(resolveApiUrl("/api/swap"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ route, userPublicKey }),
+      body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Meteora build swap failed: ${res.status}`);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(txt || `Meteora build swap failed: ${res.status}`);
+    }
     return res.json();
   }
 

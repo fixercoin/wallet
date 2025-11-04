@@ -26,6 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TokenInfo } from "@/lib/wallet";
+import { SendOTPVerification } from "./SendOTPVerification";
+import { clearOTPSession } from "@/lib/otp-utils";
 
 interface SendTransactionProps {
   onBack: () => void;
@@ -54,11 +56,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const [step, setStep] = useState<"form" | "confirm" | "otp" | "success">(
+    "form",
+  );
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
     initialMint || TOKEN_MINTS.SOL,
   );
+  const [pendingTransactionSend, setPendingTransactionSend] = useState(false);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),
@@ -115,6 +120,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
     setError(null);
     setStep("confirm");
+  };
+
+  const handleProceedToOTP = () => {
+    setError(null);
+    setPendingTransactionSend(true);
+    setStep("otp");
+  };
+
+  const handleOTPConfirmed = async () => {
+    // OTP verification passed, now send the transaction
+    if (selectedSymbol === "SOL") {
+      await handleSendSOL();
+    } else {
+      await handleSendSPL();
+    }
+    clearOTPSession();
   };
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
@@ -689,6 +710,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     setError(null);
     setStep("form");
     setTxSignature(null);
+    setPendingTransactionSend(false);
+    clearOTPSession();
   };
 
   const formatAmount = (value: string): string => {
@@ -706,6 +729,23 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       maximumFractionDigits: fractionDigits,
     });
   };
+
+  if (step === "otp") {
+    return (
+      <SendOTPVerification
+        transactionAmount={amount}
+        recipientAddress={recipient}
+        tokenSymbol={selectedSymbol}
+        onConfirm={handleOTPConfirmed}
+        onCancel={() => {
+          setStep("confirm");
+          setPendingTransactionSend(false);
+          clearOTPSession();
+        }}
+        isLoading={isLoading}
+      />
+    );
+  }
 
   if (step === "success") {
     return (
@@ -1018,11 +1058,11 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       Back
                     </Button>
                     <Button
-                      onClick={handleSend}
+                      onClick={handleProceedToOTP}
                       className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
                       disabled={isLoading}
                     >
-                      {isLoading ? "Sending..." : "Send Transaction"}
+                      {isLoading ? "Sending..." : "Next: Verify"}
                     </Button>
                   </div>
                 </>

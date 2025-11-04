@@ -652,7 +652,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
       return num.toLocaleString(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 6,
+        maximumFractionDigits: 2,
       });
     }
     const fractionDigits = 6;

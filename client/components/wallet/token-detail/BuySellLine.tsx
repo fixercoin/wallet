@@ -68,13 +68,6 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
     // If caller provided priceData, derive buys/sells from price movements & volumes
     if (priceData && Array.isArray(priceData) && priceData.length > 0) {
       const points = priceData;
-      // compute aggregates
-      const sumVolumes = (startIndex: number) => {
-        let s = 0;
-        for (let i = startIndex; i < points.length; i++)
-          s += points[i].volume || 0;
-        return s;
-      };
 
       const last = points[points.length - 1];
       const lastHourVol = last?.volume || 0;
@@ -91,15 +84,30 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
         priceStart: number,
         priceEnd: number,
       ): Point => {
-        // If price increased -> more buys, else more sells
-        const change = priceEnd - priceStart;
-        const ratio =
-          Math.tanh(Math.abs(change) / (Math.max(priceStart, 1) / 100)) * 0.5 +
-          0.5; // 0..1
-        const buys =
-          change >= 0 ? Math.round(vol * ratio) : Math.round(vol * (1 - ratio));
-        const sells = Math.round(Math.max(0, vol - buys));
-        return { label: "", buys, sells };
+        // Calculate price change percentage
+        const priceDiff = priceEnd - priceStart;
+        const priceChangePercent =
+          Math.abs(priceStart) > 0 ? (priceDiff / priceStart) * 100 : 0;
+
+        // Use a smoother ratio calculation: more buys when price goes up, more sells when it goes down
+        // But never go to 100% buys or 100% sells - always show both
+        let ratio = 0.5; // default to 50/50
+
+        if (Math.abs(priceChangePercent) > 0.1) {
+          // Price changed noticeably
+          ratio = 0.5 + Math.tanh(priceChangePercent / 2) * 0.3; // range: 0.2 to 0.8
+        }
+
+        const buys = Math.round(vol * ratio);
+        const sells = Math.round(vol * (1 - ratio));
+
+        // Ensure minimum values to show both bars
+        const minValue = Math.max(1, Math.round(vol * 0.1)); // at least 10% of one side
+        return {
+          label: "",
+          buys: Math.max(minValue, buys),
+          sells: Math.max(minValue, sells),
+        };
       };
 
       // determine price start/end for intervals
@@ -113,10 +121,10 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
       const price1End = last.price;
       const price5mStart = price1Start; // approximate
 
-      const entry5m = makeEntry(approx5m, price5mStart, price1End);
-      const entry1h = makeEntry(lastHourVol, price1Start, price1End);
-      const entry6h = makeEntry(last6hVol, price6Start, price6End);
-      const entry24h = makeEntry(last24hVol, price24Start, price24End);
+      const entry5m = makeEntry(Math.max(100, approx5m), price5mStart, price1End);
+      const entry1h = makeEntry(Math.max(100, lastHourVol), price1Start, price1End);
+      const entry6h = makeEntry(Math.max(100, last6hVol), price6Start, price6End);
+      const entry24h = makeEntry(Math.max(100, last24hVol), price24Start, price24End);
 
       return [
         { label: "5m", buys: entry5m.buys, sells: entry5m.sells },
@@ -128,10 +136,10 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
 
     // Provide a neutral placeholder dataset for stablecoins and when data is unavailable
     return [
-      { label: "5m", buys: 0, sells: 0 },
-      { label: "1h", buys: 0, sells: 0 },
-      { label: "6h", buys: 0, sells: 0 },
-      { label: "24h", buys: 0, sells: 0 },
+      { label: "5m", buys: 50, sells: 50 },
+      { label: "1h", buys: 50, sells: 50 },
+      { label: "6h", buys: 50, sells: 50 },
+      { label: "24h", buys: 50, sells: 50 },
     ];
   }, [mint, priceData]);
 

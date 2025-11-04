@@ -82,25 +82,21 @@ export default defineConfig({
       },
     },
   ],
+
+  // ✅ FIX ALIAS ISSUE HERE
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@lib": path.resolve(__dirname, "src/lib"), // <---- REQUIRED
+    },
+  },
+
   build: {
     outDir: "dist/spa",
     emptyOutDir: true,
   },
+
   server: {
     hmr: { overlay: false },
-  },
- import path from "path";
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export default defineConfig({
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@lib": path.resolve(__dirname, "src/lib"),   // ✅ REQUIRED FIX
-    },
-  },
-});
-,
   },
 });

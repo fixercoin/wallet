@@ -21,9 +21,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
   return (
     <div
       className={`rounded-lg border border-black p-4 ${
-        variant === "light"
-          ? "bg-white/50"
-          : "bg-gray-800/50"
+        variant === "light" ? "bg-white/50" : "bg-gray-800/50"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
@@ -83,9 +81,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
                 )}
                 <span
                   className={`text-[10px] font-semibold ${
-                    priceChangePercent >= 0
-                      ? "text-green-500"
-                      : "text-red-500"
+                    priceChangePercent >= 0 ? "text-green-500" : "text-red-500"
                   }`}
                 >
                   {priceChangePercent >= 0 ? "+" : ""}

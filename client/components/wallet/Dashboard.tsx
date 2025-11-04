@@ -972,11 +972,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-xs">
-                            <span className={`text-xs text-gray-300 ${
-                              ["SOL", "FIXERCOIN", "LOCKER"].includes(token.symbol)
-                                ? "animate-price-pulse"
-                                : ""
-                            }`}>
+                            <span
+                              className={`text-xs text-gray-300 ${
+                                ["SOL", "FIXERCOIN", "LOCKER"].includes(
+                                  token.symbol,
+                                )
+                                  ? "animate-price-pulse"
+                                  : ""
+                              }`}
+                            >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
                             {percentChange !== null ? (

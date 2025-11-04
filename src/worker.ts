@@ -322,7 +322,10 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     if (!response.ok) {
       const text = await response.text().catch(() => "");
       return new Response(
-        JSON.stringify({ error: `Swap failed: ${response.statusText}`, details: text }),
+        JSON.stringify({
+          error: `Swap failed: ${response.statusText}`,
+          details: text,
+        }),
         { status: response.status, headers: CORS_HEADERS },
       );
     }
@@ -330,10 +333,10 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     const data = await response.json();
     return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
   } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e) }),
-      { status: 500, headers: CORS_HEADERS },
-    );
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
   }
 }
 
@@ -373,10 +376,10 @@ async function handleJupiterPrice(url: URL): Promise<Response> {
     }
   }
 
-  return new Response(
-    JSON.stringify({ error: "Price API error", data: {} }),
-    { status: 500, headers: CORS_HEADERS },
-  );
+  return new Response(JSON.stringify({ error: "Price API error", data: {} }), {
+    status: 500,
+    headers: CORS_HEADERS,
+  });
 }
 
 // Jupiter Tokens handler
@@ -409,10 +412,10 @@ async function handleJupiterTokens(url: URL): Promise<Response> {
     }
   }
 
-  return new Response(
-    JSON.stringify({ error: "Tokens API error", data: [] }),
-    { status: 502, headers: CORS_HEADERS },
-  );
+  return new Response(JSON.stringify({ error: "Tokens API error", data: [] }), {
+    status: 502,
+    headers: CORS_HEADERS,
+  });
 }
 
 // Main fetch handler for worker

@@ -1964,7 +1964,8 @@ export default {
         {
           error: "Failed to fetch quote from any provider",
           details: lastErrors.join(" | ") || "All providers failed",
-          providers_attempted: ["jupiter", "meteora", "dexscreener"],
+          providers_attempted: ["meteora", "jupiter", "dexscreener"],
+          note: "Meteora is the preferred provider. If it fails, try Jupiter or use DexScreener for price data only.",
         },
         { status: 502, headers: corsHeaders },
       );

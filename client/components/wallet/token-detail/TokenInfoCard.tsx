@@ -58,7 +58,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
           <div>
             <span className="text-sm text-gray-400">Balance</span>
             <p className="text-white font-medium">
-              {(token.balance || 0).toLocaleString()}
+              {formatTokenAmount(token.balance || 0, token.symbol)}
             </p>
           </div>
         </div>

@@ -467,14 +467,16 @@ export default {
       const tokenSymbol = getTokenSymbol(address);
       if (tokenSymbol === "FIXERCOIN" || tokenSymbol === "LOCKER") {
         const derivedPrice = await getDerivedPrice(address);
-        if (derivedPrice !== null && derivedPrice > 0) {
+        if (derivedPrice !== null && derivedPrice.price > 0) {
           return json(
             {
               success: true,
               data: {
                 address,
-                value: derivedPrice,
+                value: derivedPrice.price,
                 updateUnixTime: Math.floor(Date.now() / 1000),
+                priceChange24h: derivedPrice.priceChange24h,
+                volume24h: derivedPrice.volume24h,
               },
               _source: "derived",
             },

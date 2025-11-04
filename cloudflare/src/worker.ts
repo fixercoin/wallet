@@ -2001,6 +2001,76 @@ export default {
           `[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`,
         );
 
+        // Try Meteora swap if inputMint and outputMint are provided (Meteora preferred)
+        if (
+          (provider === "meteora" || provider === "auto") &&
+          inputMint &&
+          outputMint &&
+          amount
+        ) {
+          try {
+            console.log(
+              `[/api/swap] Attempting Meteora swap for ${inputMint} -> ${outputMint}`,
+            );
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            const meteoraPayload = {
+              userPublicKey: wallet,
+              inputMint,
+              outputMint,
+              inputAmount: String(amount),
+              slippageBps: body.slippageBps || 500,
+              sign: false,
+            };
+
+            const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(meteoraPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                {
+                  source: "meteora",
+                  swap: data,
+                  signingRequired: true,
+                  hint: "The transaction must be signed by the wallet on the client-side",
+                },
+                { headers: corsHeaders },
+              );
+            } else {
+              console.warn(`[/api/swap] Meteora swap returned ${resp.status}`);
+              if (provider === "meteora") {
+                const errorText = await resp.text().catch(() => "");
+                return json(
+                  {
+                    error: `Meteora swap failed with status ${resp.status}`,
+                    details: errorText,
+                  },
+                  { status: resp.status, headers: corsHeaders },
+                );
+              }
+            }
+          } catch (e: any) {
+            console.warn(`[/api/swap] Meteora swap error:`, e?.message);
+            if (provider === "meteora") {
+              return json(
+                { error: "Meteora swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
+
         // Try Jupiter swap if inputMint is provided (Jupiter specific)
         if (
           (provider === "jupiter" || provider === "auto") &&

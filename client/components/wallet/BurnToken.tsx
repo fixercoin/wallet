@@ -610,7 +610,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     variant="secondary"
                     onClick={handleUseMax}
                     disabled={isLoading || !selectedToken}
-                    className="h-11 rounded-full px-4 text-sm bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/20"
+                    className="h-11 rounded-full px-4 text-sm bg-gray-300 border border-gray-300 text-gray-900 hover:bg-gray-400"
                   >
                     Max
                   </Button>

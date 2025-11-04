@@ -451,11 +451,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00007297, // Updated to real market price
+        SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.000010, // Updated fallback
       };
 
       const PKR_PER_USD = 280; // base FX
@@ -599,11 +599,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00007297, // Updated to real market price
+        SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.000010, // Updated fallback
       };
 
       const PKR_PER_USD = 280; // base FX

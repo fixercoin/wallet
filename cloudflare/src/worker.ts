@@ -630,12 +630,15 @@ export default {
 
       // Fallback SOL price
       console.warn(`[SOL Price] Using fallback price. Error: ${lastError}`);
+      // Using a more reasonable fallback based on recent market prices
+      // This should be updated periodically or replaced with a cache
+      const fallbackPrice = 150; // Updated fallback (previously was 180)
       return json(
         {
           success: true,
           data: {
             address: "So11111111111111111111111111111111111111112",
-            value: 180,
+            value: fallbackPrice,
             priceChange24h: 0,
             updateUnixTime: Math.floor(Date.now() / 1000),
           },
@@ -664,11 +667,11 @@ export default {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.000089,
-        SOL: 180,
+        FIXERCOIN: 0.00007297, // Updated to real market price
+        SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.000012,
+        LOCKER: 0.00001, // Updated fallback
       };
 
       const getTokenSymbol = (addr: string): string | null => {
@@ -702,7 +705,7 @@ export default {
         } catch (e: any) {
           console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
         }
-        return 180; // fallback SOL price
+        return 150; // fallback SOL price (updated from 180)
       };
 
       const getDerivedPrice = async (
@@ -1075,11 +1078,11 @@ export default {
         };
 
         const FALLBACK_USD: Record<string, number> = {
-          FIXERCOIN: 0.000089,
-          SOL: 180,
+          FIXERCOIN: 0.00007297, // Updated to real market price
+          SOL: 150, // Updated fallback (previously was 180)
           USDC: 1.0,
           USDT: 1.0,
-          LOCKER: 0.000012,
+          LOCKER: 0.00001, // Updated fallback
         };
 
         const PKR_PER_USD = 280; // base FX

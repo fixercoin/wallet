@@ -15,11 +15,11 @@ const TOKEN_MINTS: Record<string, string> = {
 };
 
 const FALLBACK_USD: Record<string, number> = {
-  FIXERCOIN: 0.000089,
-  SOL: 180,
+  FIXERCOIN: 0.00007297, // Updated to real market price
+  SOL: 150, // Updated fallback (previously was 180)
   USDC: 1.0,
   USDT: 1.0,
-  LOCKER: 0.000012,
+  LOCKER: 0.00001, // Updated fallback
 };
 
 export interface BirdeyePriceData {
@@ -36,9 +36,7 @@ export interface BirdeyePriceResponse {
 }
 
 // Try to get price from DexScreener as fallback
-async function getPriceFromDexScreener(
-  mint: string,
-): Promise<{
+async function getPriceFromDexScreener(mint: string): Promise<{
   price: number;
   priceChange24h: number;
   volume24h: number;
@@ -78,9 +76,7 @@ async function getPriceFromDexScreener(
 }
 
 // Try to get price from Jupiter as fallback
-async function getPriceFromJupiter(
-  mint: string,
-): Promise<{
+async function getPriceFromJupiter(mint: string): Promise<{
   price: number;
   priceChange24h: number;
   volume24h: number;

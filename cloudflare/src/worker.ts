@@ -2627,6 +2627,30 @@ export default {
       }
     }
 
+    // SPA fallback: For non-API routes, serve index.html (React Router handles the routing)
+    if (req.method === "GET" && !pathname.startsWith("/api")) {
+      try {
+        // Try to serve index.html as fallback for SPA routing
+        const indexRequest = new Request(new URL(req.url).origin + "/index.html", {
+          method: "GET",
+          headers: req.headers,
+        });
+        const indexResponse = await env.ASSETS.fetch(indexRequest);
+        if (indexResponse.status === 200) {
+          return new Response(indexResponse.body, {
+            status: 200,
+            headers: new Headers({
+              ...Object.fromEntries(indexResponse.headers),
+              "Content-Type": "text/html; charset=utf-8",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            }),
+          });
+        }
+      } catch (e) {
+        // ASSETS might not be available, fall through to 404
+      }
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

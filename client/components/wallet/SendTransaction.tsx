@@ -120,6 +120,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     setStep("confirm");
   };
 
+  const handleProceedToOTP = () => {
+    setError(null);
+    setPendingTransactionSend(true);
+    setStep("otp");
+  };
+
+  const handleOTPConfirmed = async () => {
+    // OTP verification passed, now send the transaction
+    if (selectedSymbol === "SOL") {
+      await handleSendSOL();
+    } else {
+      await handleSendSPL();
+    }
+    clearOTPSession();
+  };
+
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
     try {
       if (!val) return null;

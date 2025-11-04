@@ -13,7 +13,8 @@ export function requireApiKey(req: Request, res: Response, next: NextFunction) {
   let provided: string | null = null;
   if (authHeader && typeof authHeader === "string") {
     const parts = authHeader.split(" ");
-    if (parts.length === 2 && parts[0].toLowerCase() === "bearer") provided = parts[1];
+    if (parts.length === 2 && parts[0].toLowerCase() === "bearer")
+      provided = parts[1];
   }
   if (!provided) provided = (req.headers["x-api-key"] as string) || null;
 

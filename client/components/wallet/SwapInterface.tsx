@@ -807,7 +807,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   async function buildMeteoraSwap(_route: any, userPublicKey: string) {
     // Use local unified /api/swap endpoint with provider=meteora to build an unsigned transaction.
-    if (!fromToken || !toToken || !fromAmount) throw new Error("Missing tokens or amount for Meteora build");
+    if (!fromToken || !toToken || !fromAmount)
+      throw new Error("Missing tokens or amount for Meteora build");
     const amountInt = parseInt(
       jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
       10,
@@ -832,7 +833,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
     return res.json();
   }
-
 
   const resetSwap = () => {
     setFromAmount("");

@@ -366,8 +366,7 @@ export default {
       if (!inputMint || !outputMint || !amount) {
         return json(
           {
-            error:
-              "Missing required parameters: inputMint, outputMint, amount",
+            error: "Missing required parameters: inputMint, outputMint, amount",
           },
           { status: 400, headers: corsHeaders },
         );
@@ -443,11 +442,7 @@ export default {
         const { inputMint, outputMint, amount, mint, wallet } = body;
 
         // Try Pumpfun swap if mint is provided
-        if (
-          (provider === "pumpfun" || provider === "auto") &&
-          mint &&
-          amount
-        ) {
+        if ((provider === "pumpfun" || provider === "auto") && mint && amount) {
           try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -526,7 +521,8 @@ export default {
 
         return json(
           {
-            error: "Unable to execute swap - missing required fields or unsupported provider",
+            error:
+              "Unable to execute swap - missing required fields or unsupported provider",
             required: ["mint or inputMint", "amount", "provider (optional)"],
           },
           { status: 400, headers: corsHeaders },

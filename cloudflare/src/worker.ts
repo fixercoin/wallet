@@ -573,47 +573,47 @@ export default {
       };
 
       const getPriceFromDexScreener = async (
-mint: string,
-): Promise<{
-  price: number;
-  priceChange24h: number;
-  volume24h: number;
-} | null> => {
-  try {
-    console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
-    const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
-    const dexResp = await fetch(dexUrl, {
-      headers: { Accept: "application/json" },
-    });
+        mint: string,
+      ): Promise<{
+        price: number;
+        priceChange24h: number;
+        volume24h: number;
+      } | null> => {
+        try {
+          console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
+          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
+          const dexResp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+          });
 
-    if (dexResp.ok) {
-      const dexData = await dexResp.json();
-      const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+          if (dexResp.ok) {
+            const dexData = await dexResp.json();
+            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
 
-      if (pairs.length > 0) {
-        const pair = pairs.find(
-          (p: any) =>
-            (p?.baseToken?.address === mint ||
-              p?.quoteToken?.address === mint) &&
-            p?.priceUsd,
-        );
+            if (pairs.length > 0) {
+              const pair = pairs.find(
+                (p: any) =>
+                  (p?.baseToken?.address === mint ||
+                    p?.quoteToken?.address === mint) &&
+                  p?.priceUsd,
+              );
 
-        if (pair && pair.priceUsd) {
-          const price = parseFloat(pair.priceUsd);
-          if (isFinite(price) && price > 0) {
-            const priceChange24h = pair?.priceChange?.h24 ?? 0;
-            console.log(
-              `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
-            );
-            return {
-              price,
-              priceChange24h: pair?.priceChange?.h24 ?? 0,
-              volume24h: pair?.volume?.h24 ?? 0,
-            };
+              if (pair && pair.priceUsd) {
+                const price = parseFloat(pair.priceUsd);
+                if (isFinite(price) && price > 0) {
+                  const priceChange24h = pair?.priceChange?.h24 ?? 0;
+                  console.log(
+                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
+                  );
+                  return {
+                    price,
+                    priceChange24h: pair?.priceChange?.h24 ?? 0,
+                    volume24h: pair?.volume?.h24 ?? 0,
+                  };
+                }
+              }
+            }
           }
-        }
-      }
-    }
         } catch (e: any) {
           console.warn(`[Birdeye Fallback] DexScreener error: ${e?.message}`);
         }
@@ -722,9 +722,9 @@ mint: string,
                 address,
                 value: derivedPrice.price,
                 updateUnixTime: Math.floor(Date.now() / 1000),
-    priceChange24h: derivedPrice?.priceChange24h ?? 0,
-    volume24h: derivedPrice?.volume24h ?? 0,
-  },
+                priceChange24h: derivedPrice?.priceChange24h ?? 0,
+                volume24h: derivedPrice?.volume24h ?? 0,
+              },
               _source: "derived",
             },
             { headers: corsHeaders },
@@ -1749,8 +1749,7 @@ mint: string,
       if (!inputMint || !outputMint || !amount) {
         return json(
           {
-            error:
-              "Missing required parameters: inputMint, outputMint, amount",
+            error: "Missing required parameters: inputMint, outputMint, amount",
           },
           { status: 400, headers: corsHeaders },
         );
@@ -1827,11 +1826,7 @@ mint: string,
         const { inputMint, outputMint, amount, mint, wallet } = body as any;
 
         // Try Pumpfun swap if mint is provided (Pumpfun specific)
-        if (
-          (provider === "pumpfun" || provider === "auto") &&
-          mint &&
-          amount
-        ) {
+        if ((provider === "pumpfun" || provider === "auto") && mint && amount) {
           try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -1910,7 +1905,8 @@ mint: string,
 
         return json(
           {
-            error: "Unable to execute swap - missing required fields or unsupported provider",
+            error:
+              "Unable to execute swap - missing required fields or unsupported provider",
             required: ["mint or inputMint", "amount", "provider (optional)"],
           },
           { status: 400, headers: corsHeaders },

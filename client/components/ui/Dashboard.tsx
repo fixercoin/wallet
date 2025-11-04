@@ -376,7 +376,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400">
+                          <span className={`text-xs text-gray-400 ${
+                            ["SOL", "FIXERCOIN", "LOCKER"].includes(token.symbol)
+                              ? "animate-price-pulse"
+                              : ""
+                          }`}>
                             ${formatTokenPriceDisplay(token.price)}
                           </span>
                           {percentChange !== null ? (

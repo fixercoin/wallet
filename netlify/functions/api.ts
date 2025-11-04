@@ -907,6 +907,44 @@ export const handler = async (event: any) => {
       }
     }
 
+    // Submit signed transaction aliases: /api/solana-send, /api/swap/submit (POST)
+    if ((path === "/solana-send" || path === "/swap/submit") && method === "POST") {
+      let body: any = {};
+      try { body = event.body ? JSON.parse(event.body) : {}; } catch {}
+
+      const txBase64 = body?.signedBase64 || body?.signedTx || body?.signedTransaction || body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, { error: "Missing signed transaction (base64)" });
+      }
+
+      try {
+        const rpc = await callRpc("sendTransaction", [txBase64], Date.now());
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, { error: "Failed to submit signed transaction", details: e?.message || String(e) });
+      }
+    }
+
+    // Simulate signed transaction: /api/solana-simulate (POST)
+    if (path === "/solana-simulate" && method === "POST") {
+      let body: any = {};
+      try { body = event.body ? JSON.parse(event.body) : {}; } catch {}
+
+      const txBase64 = body?.signedBase64 || body?.signedTx || body?.signedTransaction || body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, { error: "Missing signed transaction (base64)" });
+      }
+
+      try {
+        const rpc = await callRpc("simulateTransaction", [txBase64, { encoding: "base64", replaceRecentBlockhash: true, sigVerify: true }], Date.now());
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, { error: "Failed to simulate transaction", details: e?.message || String(e) });
+      }
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {

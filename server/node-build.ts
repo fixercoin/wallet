@@ -14,15 +14,31 @@ import * as nodePath from "path";
   // In production, serve the built SPA files
   const __dirname = import.meta.dirname;
   const distPath = nodePath.join(__dirname, "../spa");
+  const isDevelopment = process.env.NODE_ENV !== "production";
 
-  // Serve static assets
-  app.use(express.static(distPath));
+  // Only serve static assets if they exist (production mode)
+  try {
+    const fs = await import("fs");
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+    }
+  } catch {
+    // Ignore
+  }
 
-  // SPA fallback for non-API routes
+  // SPA fallback for non-API routes (only in production when spa exists)
   app.use((req, res) => {
     // Do not intercept API or health endpoints
     if (req.path.startsWith("/api/")) {
       return res.status(404).json({ error: "API endpoint not found" });
+    }
+    // In development, return a helpful message instead of trying to serve a non-existent file
+    if (isDevelopment) {
+      return res.send(
+        "API Server is running on port " +
+          port +
+          ". Use Vite dev server on port 5173 for frontend.",
+      );
     }
     res.sendFile(nodePath.join(distPath, "index.html"));
   });

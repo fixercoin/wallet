@@ -56,11 +56,12 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const [step, setStep] = useState<"form" | "confirm" | "otp" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
     initialMint || TOKEN_MINTS.SOL,
   );
+  const [pendingTransactionSend, setPendingTransactionSend] = useState(false);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),

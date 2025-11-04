@@ -191,6 +191,70 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
     }
   };
 
+  // Show password unlock modal if wallets are encrypted but not unlocked
+  if (needsPasswordUnlock && !pendingWallet && !showPasswordSetup) {
+    return (
+      <>
+        <PasswordSetup
+          isOpen={true}
+          onConfirm={handleUnlockWallets}
+          onCancel={() => {
+            // Allow canceling unlock to show main menu
+            setShowPasswordSetup(false);
+          }}
+          isLoading={isLoading}
+          title="Unlock Your Wallets"
+          description="Enter your password to decrypt your wallets"
+          mode="unlock"
+        />
+        {/* Main welcome screen */}
+        <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+          {/* Decorative bottom green wave (SVG) */}
+          <svg
+            className="bottom-wave z-0"
+            viewBox="0 0 1440 220"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="60%" stopColor="#e6ffed" />
+                <stop offset="100%" stopColor="#22c55e" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+              fill="url(#g1)"
+              opacity="0.95"
+            />
+          </svg>
+
+          <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
+            <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+              <div className="space-y-6">
+                <div className="text-center pb-2">
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
+                    alt="Wallet"
+                    className="mx-auto w-[240px] h-[240px] object-contain"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-center text-gray-600">
+                    Your wallets are encrypted and locked. Please enter your password above to unlock them.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   // Main welcome screen
   if (activeTab === "create" && !generatedWallet) {
     return (

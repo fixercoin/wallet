@@ -50,6 +50,7 @@ import {
   handleSolanaSendProxy,
   handleSolanaSimulateProxy,
 } from "./routes/swap-proxy";
+import { handleUnifiedSwapLocal } from "./routes/swap-handler";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

@@ -753,6 +753,32 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setTokens(DEFAULT_TOKENS);
   };
 
+  const unlockWithPassword = async (password: string): Promise<boolean> => {
+    try {
+      if (encryptedWalletsRef.current.length === 0) {
+        console.warn(
+          "[WalletContext] No encrypted wallets to unlock"
+        );
+        return false;
+      }
+
+      const decrypted = encryptedWalletsRef.current.map((enc) =>
+        decryptWalletData(enc, password),
+      );
+
+      setWalletPassword(password);
+      setWallets(decrypted);
+      setNeedsPasswordUnlock(false);
+      if (decrypted.length > 0) setActivePublicKey(decrypted[0].publicKey);
+
+      console.log("[WalletContext] Wallets unlocked successfully");
+      return true;
+    } catch (error) {
+      console.error("[WalletContext] Failed to unlock wallets:", error);
+      return false;
+    }
+  };
+
   const value: WalletContextType = {
     wallet,
     wallets,

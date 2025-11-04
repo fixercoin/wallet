@@ -12,7 +12,8 @@ watch_paths = ["src/**/*.ts", "client/**/*.ts", "client/**/*.tsx"]
 name = "wallet-c36-prod"
 routes = [
   { pattern = "fixorium-proxy.khanbabusargodha.workers.dev/*", zone_name = "workers.dev" },
-  { pattern = "wallet.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" }
+  { pattern = "wallet.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" },
+  { pattern = "app.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" }
 ]
 
 [env.staging]

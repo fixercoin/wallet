@@ -99,8 +99,11 @@ export async function createServer(): Promise<express.Application> {
   // Local unified swap endpoint (build unsigned swap). Validate payload.
   app.post("/api/swap", validateSwapRequest, handleUnifiedSwapLocal);
 
+  // Local quote handler (preferred over external worker)
+  import { handleLocalQuote } from "./routes/quote-handler";
+  app.get("/api/quote", handleLocalQuote);
+
   // Keep proxy handlers as fallbacks (registered after local handler if needed)
-  app.get("/api/quote", handleQuoteProxy);
   app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
   app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
 

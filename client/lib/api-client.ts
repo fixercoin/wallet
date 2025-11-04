@@ -37,20 +37,14 @@ const determineBase = (): string => {
     return CLOUDFLARE_WORKER_BASE;
   }
 
-  // Custom domain deployment (fixorium.com.pk): use Cloudflare Worker for www/wallet subdomains, local API for others
+  // Custom domain deployment (fixorium.com.pk): use Cloudflare Worker for all subdomains
   if (
     typeof window !== "undefined" &&
     (window.location.hostname.includes("fixorium.com.pk") ||
       window.location.hostname.includes("fixorium.com"))
   ) {
-    // If it's a subdomain like wallet.fixorium.com.pk deployed on the same server with local API,
-    // use empty base to hit local /api endpoints
-    if (
-      window.location.hostname.startsWith("wallet.") ||
-      window.location.hostname.startsWith("app.")
-    ) {
-      return "";
-    }
+    // Use Cloudflare Worker for all fixorium.com.pk domains
+    // The Cloudflare Worker handles /api/* routing via wallet.fixorium.com.pk/api/*
     return CLOUDFLARE_WORKER_BASE;
   }
 

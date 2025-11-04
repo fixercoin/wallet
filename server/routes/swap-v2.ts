@@ -216,6 +216,7 @@ async function getBridgedQuote(
 /**
  * GET /api/swap/quote
  * Unified quote endpoint with fallback chain
+ * Returns quotes from Jupiter, Meteora, or bridged routes
  */
 export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
   try {
@@ -230,16 +231,27 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       });
     }
 
-    if (isNaN(slippageBps) || slippageBps < 0) {
+    if (isNaN(slippageBps) || slippageBps < 0 || slippageBps > 10000) {
       return res.status(400).json({
-        error: "Invalid slippageBps",
+        error: "Invalid slippageBps (must be 0-10000)",
+      });
+    }
+
+    // Validate amount is a valid number
+    const amountNum = BigInt(amount);
+    if (amountNum <= 0n) {
+      return res.status(400).json({
+        error: "Amount must be greater than 0",
       });
     }
 
     const attempts: SwapAttempt[] = [];
 
     // Try Jupiter direct quote first
-    console.log(`[Swap Quote] ${inputMint} -> ${outputMint} (${amount})`);
+    console.log(
+      `[Swap Quote] Requesting: ${inputMint} -> ${outputMint} (amount: ${amount})`,
+    );
+
     let quote = await getJupiterQuote(
       inputMint,
       outputMint,
@@ -248,35 +260,50 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     );
     if (quote && quote.outAmount && quote.outAmount !== "0") {
       attempts.push({ provider: "jupiter", status: "success" });
+      console.log(
+        `[Swap Quote] ✅ Jupiter route: ${quote.outAmount} output tokens`,
+      );
       return res.json({
         quote,
         source: "jupiter",
+        inputMint,
+        outputMint,
+        amount,
+        slippageBps,
         attempts,
       });
     }
     attempts.push({
       provider: "jupiter",
       status: "failed",
-      reason: "No liquidity or route",
+      reason: "No liquidity or route found",
     });
 
-    // Try Meteora quote
+    // Try Meteora quote as secondary option
+    console.log(`[Swap Quote] Jupiter failed, trying Meteora...`);
     quote = await getMeteOraQuote(inputMint, outputMint, amount);
-    if (quote && quote.outAmount && quote.outAmount !== "0") {
+    if (quote && (quote.outAmount || quote.estimatedOut || quote.minReceived)) {
       attempts.push({ provider: "meteora", status: "success" });
+      console.log(
+        `[Swap Quote] ✅ Meteora route: ${quote.outAmount || quote.estimatedOut || quote.minReceived} output`,
+      );
       return res.json({
         quote,
         source: "meteora",
+        inputMint,
+        outputMint,
+        amount,
         attempts,
       });
     }
     attempts.push({
       provider: "meteora",
       status: "failed",
-      reason: "No liquidity or route",
+      reason: "No liquidity or route found",
     });
 
-    // Try bridged routes
+    // Try bridged routes as last resort
+    console.log(`[Swap Quote] Meteora failed, trying bridged routes...`);
     const bridged = await getBridgedQuote(
       inputMint,
       outputMint,
@@ -289,12 +316,19 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
         status: "success",
         reason: `via ${bridged.bridge}`,
       });
+      console.log(
+        `[Swap Quote] ✅ Bridged route via ${bridged.bridge}: ${bridged.q2.outAmount} output`,
+      );
       return res.json({
-        quote: bridged.q2, // Return final quote
+        quote: bridged.q2,
         source: "bridged",
         bridgeToken: bridged.bridge,
         leg1: bridged.q1,
         leg2: bridged.q2,
+        inputMint,
+        outputMint,
+        amount,
+        slippageBps,
         attempts,
       });
     }
@@ -306,18 +340,20 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
 
     // All routes exhausted
     console.warn(
-      `[Swap Quote] No routes found for ${inputMint} -> ${outputMint}`,
+      `[Swap Quote] ❌ No routes found for ${inputMint} -> ${outputMint}`,
     );
     return res.status(404).json({
-      error: "No swap route found",
+      error: "No swap route found - no liquidity available for this pair",
       inputMint,
       outputMint,
       amount,
+      slippageBps,
       attempts,
       suggestions: [
-        "Check token pair liquidity",
-        "Try different slippage tolerance",
-        "Check token is bridged/supported",
+        "Verify token pair has liquidity on supported exchanges",
+        "Try swapping through an intermediate token (e.g., USDC)",
+        "Check that both tokens are supported on Jupiter/Meteora",
+        "Increase slippage tolerance if using low liquidity pair",
       ],
     });
   } catch (e: any) {
@@ -325,6 +361,7 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     return res.status(500).json({
       error: "Quote handler error",
       details: e?.message || String(e),
+      code: "QUOTE_HANDLER_ERROR",
     });
   }
 };

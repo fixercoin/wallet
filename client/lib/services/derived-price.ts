@@ -49,6 +49,18 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
   return Number.isFinite(out) && out > 0 ? out : null;
 }
 
+async function getUsdFromServer(token: SupportedToken): Promise<number | null> {
+  try {
+    const res = await fetch(`/api/token/price?token=${token}`);
+    if (!res.ok) throw new Error(String(res.status));
+    const json = await res.json();
+    const v = Number(json?.priceUsd);
+    return Number.isFinite(v) && v > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 async function getUsdFromDexscreener(
   token: SupportedToken,
 ): Promise<number | null> {

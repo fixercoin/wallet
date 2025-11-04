@@ -667,7 +667,7 @@ export default {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.000089,
+        FIXERCOIN: 0.00007297, // Updated to real market price
         SOL: 180,
         USDC: 1.0,
         USDT: 1.0,
@@ -1078,7 +1078,7 @@ export default {
         };
 
         const FALLBACK_USD: Record<string, number> = {
-          FIXERCOIN: 0.000089,
+          FIXERCOIN: 0.00007297, // Updated to real market price
           SOL: 180,
           USDC: 1.0,
           USDT: 1.0,

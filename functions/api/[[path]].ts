@@ -451,11 +451,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
@@ -599,11 +599,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX

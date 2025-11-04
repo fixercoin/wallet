@@ -66,6 +66,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [quoteError, setQuoteError] = useState<string>("");
   const [fromUsdPrice, setFromUsdPrice] = useState<number | null>(null);
   const [toUsdPrice, setToUsdPrice] = useState<number | null>(null);
+  const [walletReady, setWalletReady] = useState(false);
+
+  // Monitor wallet readiness
+  useEffect(() => {
+    const isReady = !!(
+      wallet &&
+      wallet.publicKey &&
+      wallet.secretKey &&
+      balance !== undefined &&
+      tokens.length > 0
+    );
+    setWalletReady(isReady);
+
+    if (!isReady) {
+      console.log("[SwapInterface] Wallet not ready:", {
+        wallet: !!wallet,
+        publicKey: !!wallet?.publicKey,
+        secretKey: !!wallet?.secretKey,
+        balance: balance,
+        tokensLength: tokens?.length || 0,
+      });
+    }
+  }, [wallet, balance, tokens]);
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -378,24 +401,71 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   const getKeypair = (): Keypair | null => {
     try {
-      if (!wallet?.secretKey) return null;
+      if (!wallet) {
+        console.error("getKeypair: wallet is null");
+        return null;
+      }
+      if (!wallet.secretKey) {
+        console.error("getKeypair: wallet.secretKey is not available");
+        return null;
+      }
+      if (!wallet.publicKey) {
+        console.error("getKeypair: wallet.publicKey is not available");
+        return null;
+      }
+
       let secretKey: Uint8Array;
+
       if (typeof wallet.secretKey === "string") {
-        secretKey = Uint8Array.from(bytesFromBase64(wallet.secretKey));
+        try {
+          secretKey = Uint8Array.from(bytesFromBase64(wallet.secretKey));
+        } catch (e) {
+          console.error("Failed to decode base64 secretKey:", e);
+          return null;
+        }
       } else if (Array.isArray(wallet.secretKey)) {
         secretKey = Uint8Array.from(wallet.secretKey);
-      } else {
+      } else if (wallet.secretKey instanceof Uint8Array) {
         secretKey = wallet.secretKey;
+      } else {
+        console.error(
+          "getKeypair: secretKey is in an unsupported format:",
+          typeof wallet.secretKey,
+        );
+        return null;
       }
-      return Keypair.fromSecretKey(secretKey);
+
+      if (!secretKey || secretKey.length !== 64) {
+        console.error(
+          `getKeypair: Invalid secret key length: ${secretKey?.length}`,
+        );
+        return null;
+      }
+
+      try {
+        return Keypair.fromSecretKey(secretKey);
+      } catch (err) {
+        console.error(
+          "getKeypair: Failed to create Keypair from secret key:",
+          err,
+        );
+        return null;
+      }
     } catch (err) {
-      console.error("getKeypair error:", err);
+      console.error("getKeypair unexpected error:", err);
       return null;
     }
   };
 
   const sendSwapFee = async (): Promise<void> => {
-    if (!wallet || !connection || !fromToken) return;
+    if (
+      !wallet ||
+      !wallet.publicKey ||
+      !wallet.secretKey ||
+      !connection ||
+      !fromToken
+    )
+      return;
     try {
       const kp = getKeypair();
       if (!kp) return;
@@ -469,6 +539,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const handleSwap = () => {
+    // Check wallet availability first
+    if (!wallet || !wallet.publicKey || !wallet.secretKey) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet before performing a swap.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const err = validateSwap();
     if (err) {
       toast({
@@ -482,12 +562,26 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const executeSwap = async () => {
-    if (!wallet) return;
+    if (!wallet || !wallet.publicKey || !wallet.secretKey) {
+      toast({
+        title: "Wallet Error",
+        description:
+          "Wallet is not properly initialized. Please reconnect your wallet.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
 
     try {
       // Helper to submit a single-quote swap via Jupiter
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+        if (!wallet || !wallet.publicKey) {
+          throw new Error(
+            "Wallet not available. Please reconnect your wallet.",
+          );
+        }
+
         const swapRequest = {
           quoteResponse: q,
           userPublicKey: wallet.publicKey,
@@ -497,7 +591,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!swapResponse || !swapResponse.swapTransaction)
           throw new Error("Failed to get swap transaction");
         const kp = getKeypair();
-        if (!kp) throw new Error("Missing wallet key to sign transaction");
+        if (!kp)
+          throw new Error(
+            "Missing wallet key to sign transaction. Please ensure your wallet is properly connected.",
+          );
         const swapTransactionBuf = bytesFromBase64(
           swapResponse.swapTransaction,
         );
@@ -589,38 +686,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
 
-      // If we have a direct quote, do normal single-leg swap
-      if (quote) {
-        const sig = await submitQuote(quote);
-        setTxSignature(sig);
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Submitted",
-          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-        });
-        if (connection && typeof connection.getLatestBlockhash === "function") {
-          try {
-            const latest = await connection.getLatestBlockhash();
-            await connection.confirmTransaction({
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-              signature: sig,
-            });
-            toast({
-              title: "Swap Confirmed",
-              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-            });
-            // Send fee silently after swap confirmation
-            await sendSwapFee();
-          } catch {}
-        }
-        return;
-      }
-
       // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
       if (!quote && meteoraQuote) {
         try {
+          if (!wallet || !wallet.publicKey) {
+            throw new Error(
+              "Wallet not available for Meteora swap. Please reconnect your wallet.",
+            );
+          }
+
           const swapTx = await buildMeteoraSwap(
             meteoraQuote.route,
             wallet.publicKey,
@@ -769,14 +843,22 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       let errorMsg = err instanceof Error ? err.message : String(err);
 
-      // Improve error message for insufficient lamports
+      // Improve error messages
       if (
+        errorMsg.includes("Wallet not available") ||
+        errorMsg.includes("Missing wallet") ||
+        errorMsg.includes("not properly initialized")
+      ) {
+        errorMsg = `Wallet connection lost. Please ensure your wallet is properly connected and try again.`;
+      } else if (
         errorMsg.includes("insufficient lamports") ||
         errorMsg.includes("Insufficient SOL")
       ) {
         errorMsg = `Insufficient SOL for transaction. You need more SOL to cover fees and rent. Current balance: ~${(balance || 0).toFixed(6)} SOL. Try adding more SOL to your wallet.`;
       } else if (errorMsg.includes("custom program error: 0x1")) {
         errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;
+      } else if (errorMsg.includes("secret key")) {
+        errorMsg = `Wallet signing failed. Your wallet may not be properly configured. Please reconnect your wallet and try again.`;
       }
 
       toast({
@@ -1282,6 +1364,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* Submit */}
+            {!walletReady && (
+              <Alert className="bg-red-500/10 border-red-400/20 text-red-600 mb-2">
+                <AlertDescription>
+                  Wallet not ready. Please ensure your wallet is properly
+                  loaded.
+                </AlertDescription>
+              </Alert>
+            )}
             <Button
               onClick={handleSwap}
               className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-gray-900 shadow-lg hover:shadow-2xl transition-all"
@@ -1291,10 +1381,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 !fromToken ||
                 !toToken ||
                 !fromAmount ||
-                isLoading
+                isLoading ||
+                !walletReady
               }
             >
-              {indicative ? "Swap (Estimated)" : "Submit"}
+              {!walletReady
+                ? "Loading Wallet..."
+                : indicative
+                  ? "Swap (Estimated)"
+                  : "Submit"}
             </Button>
           </div>
         </div>

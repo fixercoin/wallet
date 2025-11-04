@@ -2163,9 +2163,13 @@ export default {
         const hasInputMint = !!inputMint;
         const hasMint = !!mint;
         const hasAmount = !!amount;
+        const hasOutputMint = !!outputMint;
 
         let helpText = "Missing required fields for swap. ";
-        if (hasInputMint) {
+        if (hasInputMint && hasOutputMint) {
+          helpText +=
+            "For Meteora swaps, you need: inputMint, outputMint, amount, and wallet. ";
+        } else if (hasInputMint) {
           helpText +=
             "For Jupiter swaps, you need: inputMint, outputMint, amount, and routePlan (from /api/quote). ";
         }
@@ -2175,7 +2179,7 @@ export default {
         }
         if (!hasInputMint && !hasMint) {
           helpText +=
-            "Provide either mint (for Pumpfun) or inputMint + outputMint (for Jupiter). ";
+            "Provide either mint (for Pumpfun), or inputMint + outputMint + amount (for Meteora/Jupiter). ";
         }
 
         return json(
@@ -2183,9 +2187,15 @@ export default {
             error: "Unable to execute swap - missing required fields",
             message: helpText,
             supported_providers: {
+              meteora: {
+                required: ["inputMint", "outputMint", "amount", "wallet"],
+                optional: ["slippageBps"],
+                note: "Preferred DEX for general token swaps",
+              },
               jupiter: {
-                required: ["inputMint", "amount", "routePlan"],
+                required: ["inputMint", "outputMint", "amount", "routePlan"],
                 optional: ["wallet", "slippageBps"],
+                note: "Requires routePlan from /api/quote endpoint",
               },
               pumpfun: {
                 required: ["mint", "amount"],
@@ -2196,14 +2206,17 @@ export default {
                   "txVersion",
                   "priorityFee",
                 ],
+                note: "For pump.fun token launches",
               },
             },
             received: {
               provider,
               has_inputMint: hasInputMint,
+              has_outputMint: hasOutputMint,
               has_mint: hasMint,
               has_amount: hasAmount,
               has_routePlan: !!routePlan,
+              has_wallet: !!wallet,
             },
           },
           { status: 400, headers: corsHeaders },

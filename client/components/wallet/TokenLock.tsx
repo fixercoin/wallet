@@ -371,7 +371,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       console.error("Failed to read token locks", error);
       setLocks([]);
     }
-  }, [wallet]);
+  }, [wallet?.publicKey]);
 
   // Auto-refresh locks from localStorage every 20 seconds
   useEffect(() => {

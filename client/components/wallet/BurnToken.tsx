@@ -152,11 +152,11 @@ const toBaseUnits = (value: string, decimals: number): bigint => {
 
 const formatNumber = (value: number | undefined, decimals: number, symbol?: string): string => {
   if (typeof value !== "number" || !isFinite(value)) return "0.00";
-  // FIXERCOIN and LOCKER always show minimum 2 decimal places
+  // FIXERCOIN and LOCKER always show exactly 2 decimal places
   if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
     return value.toLocaleString("en-US", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
+      maximumFractionDigits: 2,
       useGrouping: false,
     });
   }

@@ -58,9 +58,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      "@lib": path.resolve(__dirname, "src/lib"),   // ✅ FIXED — REQUIRED
       "@shared": path.resolve(__dirname, "shared"),
       "@utils": path.resolve(__dirname, "utils"),
-      // ❌ DO NOT ADD @/lib — that folder does not exist
     },
   },
 });

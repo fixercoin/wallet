@@ -541,7 +541,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 semicolons)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-gray-100 placeholder:text-gray-500"
+                className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-black placeholder:text-gray-500"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"

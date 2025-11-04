@@ -1,4 +1,3 @@
-import express from "express";
 import cors from "cors";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
@@ -95,8 +94,6 @@ export async function createServer(): Promise<express.Application> {
 
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
-  import { requireApiKey } from "./middleware/auth";
-  import { validateSwapRequest, validateSolanaSend, validateSwapSubmit } from "./middleware/validate";
 
   // Local unified swap endpoint (build unsigned swap). Validate payload.
   app.post("/api/swap", validateSwapRequest, handleUnifiedSwapLocal);

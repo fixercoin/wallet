@@ -552,7 +552,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           </span>
                           <span className="text-[10px] text-gray-600 uppercase">
                             Balance:{" "}
-                            {formatNumber(token.balance, token.decimals ?? 0)}
+                            {formatNumber(token.balance, token.decimals ?? 0, token.symbol)}
                           </span>
                         </div>
                       </SelectItem>

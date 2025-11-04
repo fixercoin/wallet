@@ -378,18 +378,50 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   const getKeypair = (): Keypair | null => {
     try {
-      if (!wallet?.secretKey) return null;
+      if (!wallet) {
+        console.error("getKeypair: wallet is null");
+        return null;
+      }
+      if (!wallet.secretKey) {
+        console.error("getKeypair: wallet.secretKey is not available");
+        return null;
+      }
+      if (!wallet.publicKey) {
+        console.error("getKeypair: wallet.publicKey is not available");
+        return null;
+      }
+
       let secretKey: Uint8Array;
+
       if (typeof wallet.secretKey === "string") {
-        secretKey = Uint8Array.from(bytesFromBase64(wallet.secretKey));
+        try {
+          secretKey = Uint8Array.from(bytesFromBase64(wallet.secretKey));
+        } catch (e) {
+          console.error("Failed to decode base64 secretKey:", e);
+          return null;
+        }
       } else if (Array.isArray(wallet.secretKey)) {
         secretKey = Uint8Array.from(wallet.secretKey);
-      } else {
+      } else if (wallet.secretKey instanceof Uint8Array) {
         secretKey = wallet.secretKey;
+      } else {
+        console.error("getKeypair: secretKey is in an unsupported format:", typeof wallet.secretKey);
+        return null;
       }
-      return Keypair.fromSecretKey(secretKey);
+
+      if (!secretKey || secretKey.length !== 64) {
+        console.error(`getKeypair: Invalid secret key length: ${secretKey?.length}`);
+        return null;
+      }
+
+      try {
+        return Keypair.fromSecretKey(secretKey);
+      } catch (err) {
+        console.error("getKeypair: Failed to create Keypair from secret key:", err);
+        return null;
+      }
     } catch (err) {
-      console.error("getKeypair error:", err);
+      console.error("getKeypair unexpected error:", err);
       return null;
     }
   };

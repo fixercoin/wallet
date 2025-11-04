@@ -14,11 +14,11 @@ export function formatTokenAmount(
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   if (isNaN(num)) return "0.00";
 
-  // FIXERCOIN and LOCKER always show minimum 2 decimal places
+  // FIXERCOIN and LOCKER always show exactly 2 decimal places
   if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
     return num.toLocaleString(undefined, {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
+      maximumFractionDigits: 2,
     });
   }
 

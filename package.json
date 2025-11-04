@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npx tsx server/node-build.ts\" \"vite\"",
+    "dev": "concurrently --kill-others \"npx tsx server/node-build.ts\" --restart-tries 3 \"sleep 3 && vite\"",
     "dev:frontend": "vite",
     "dev:backend": "npx tsx server/node-build.ts",
     "build": "vite build",

@@ -359,7 +359,24 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Recovery screen
   if (activeTab === "recover") {
     return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+      <>
+        <PasswordSetup
+          isOpen={showPasswordSetup}
+          onConfirm={
+            passwordSetupMode === "create"
+              ? handlePasswordSetup
+              : handleUnlockWallets
+          }
+          onCancel={() => {
+            setShowPasswordSetup(false);
+            setPendingWallet(null);
+          }}
+          isLoading={isLoading}
+          title={passwordSetupTitle}
+          description={passwordSetupDescription}
+          mode={passwordSetupMode}
+        />
+        <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
         {/* Decorative bottom green wave (SVG) */}
         <svg
           className="bottom-wave z-0"
@@ -515,6 +532,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 

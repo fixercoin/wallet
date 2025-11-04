@@ -5,7 +5,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
-import { PriceCard } from "./token-detail/PriceCard";
+import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
 
@@ -32,7 +32,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     { time: string; price: number; volume: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
   // Find the token from the tokens list
@@ -166,15 +165,10 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             </Button>
           </div>
 
-          {/* Price Section (inside single card) */}
-          <PriceCard
-            token={displayToken}
-            priceData={priceData}
-            showBalance={showBalance}
-            onToggleBalance={() => setShowBalance(!showBalance)}
-            withinCard
-            variant="light"
-          />
+          {/* Token Quick Info Card */}
+          <div className="px-4 py-3">
+            <TokenQuickInfoCard token={displayToken} variant="light" />
+          </div>
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">

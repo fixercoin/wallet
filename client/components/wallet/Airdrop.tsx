@@ -502,13 +502,18 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 Select Token (only available here)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-white/50 text-gray-900 placeholder:text-gray-500 mt-2">
+                <SelectTrigger className="w-full bg-gray-300 text-gray-900 placeholder:text-gray-500 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">
+                <SelectContent className="bg-gray-300 text-gray-900">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
-                      {t.symbol} {t.balance ? ` �� ${t.balance}` : ""}
+                      {t.symbol} ~{" "}
+                      {t.balance
+                        ? t.balance.toLocaleString(undefined, {
+                            maximumFractionDigits: 8,
+                          })
+                        : "0"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -524,7 +529,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-white/50 border border-gray-100 text-gray-900 placeholder:text-gray-500"
+                  className="flex-1 bg-white/50 border border-black text-gray-900 placeholder:text-gray-500"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}
@@ -541,7 +546,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 semicolons)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-gray-100 placeholder:text-gray-500"
+                className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-black placeholder:text-gray-500"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"

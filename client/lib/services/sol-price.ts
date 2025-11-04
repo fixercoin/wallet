@@ -41,9 +41,9 @@ class SolPriceService {
         // Direct response format from proxy
         priceData = {
           price: data.price || 0,
-          price_change_24h: data.price_change_24h || 0,
-          market_cap: data.market_cap || 0,
-          volume_24h: data.volume_24h || 0,
+          price_change_24h: data.price_change_24h ?? data.priceChange24h ?? 0,
+          market_cap: data.market_cap ?? data.marketCap ?? 0,
+          volume_24h: data.volume_24h ?? data.volume24h ?? 0,
         };
       } else if (data.solana) {
         // CoinGecko response format

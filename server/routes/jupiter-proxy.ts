@@ -158,7 +158,7 @@ export const handleJupiterTokens: RequestHandler = async (req, res) => {
       for (let attempt = 1; attempt <= 3; attempt++) {
         for (const endpoint of endpoints) {
           try {
-            const response = await fetchWithTimeout(endpoint, 15000);
+            const response = await fetchWithTimeout(endpoint, 25000);
             if (!response.ok) {
               lastError = `${endpoint} -> ${response.status} ${response.statusText}`;
               // retry on rate limiting / server errors
@@ -231,9 +231,12 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
         typeof asLegacyTransaction === "string" ? asLegacyTransaction : "false",
     });
 
-    const url = `${JUPITER_SWAP_BASE}/quote?${params.toString()}`;
+    const urls = [
+      `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
+      `https://quote-api.jup.ag/v6/quote?${params.toString()}`,
+    ];
 
-    const fetchWithTimeout = (timeoutMs: number) => {
+    const fetchWithTimeout = (url: string, timeoutMs: number) => {
       const timeoutPromise = new Promise<Response>((resolve) => {
         setTimeout(
           () =>
@@ -254,46 +257,56 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
       return Promise.race([fetchPromise, timeoutPromise]) as Promise<Response>;
     };
 
-    // Try up to 3 attempts with small backoff on 5xx/429
-    let lastStatus = 0;
-    let lastText = "";
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const response = await fetchWithTimeout(15000);
-      lastStatus = response.status;
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-      lastText = await response.text().catch(() => "");
+    // Try both endpoints with retries
+    for (const url of urls) {
+      let lastStatus = 0;
+      let lastText = "";
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const response = await fetchWithTimeout(url, 25000);
+          lastStatus = response.status;
+          if (response.ok) {
+            const data = await response.json();
+            return res.json(data);
+          }
+          lastText = await response.text().catch(() => "");
 
-      // If 404 or 400, likely means no route exists for this pair
-      if (response.status === 404 || response.status === 400) {
-        console.warn(
-          `Jupiter quote returned ${response.status} - likely no route for this pair`,
-          { inputMint: req.query.inputMint, outputMint: req.query.outputMint },
-        );
-        return res.status(response.status).json({
-          error: `No swap route found for this pair`,
-          details: lastText,
-          code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
-        });
-      }
+          // If 404 or 400, likely means no route exists for this pair
+          if (response.status === 404 || response.status === 400) {
+            console.warn(
+              `Jupiter quote returned ${response.status} - likely no route for this pair`,
+              {
+                inputMint: req.query.inputMint,
+                outputMint: req.query.outputMint,
+              },
+            );
+            return res.status(response.status).json({
+              error: `No swap route found for this pair`,
+              details: lastText,
+              code:
+                response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            });
+          }
 
-      // Retry on rate limit or server errors
-      if (response.status === 429 || response.status >= 500) {
-        console.warn(
-          `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/3)`,
-        );
-        await new Promise((r) => setTimeout(r, attempt * 500));
-        continue;
+          // Retry on rate limit or server errors
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(
+              `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/2)`,
+            );
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+          break;
+        } catch (e) {
+          console.warn(`Jupiter quote fetch error on ${url}: ${e}`);
+        }
       }
-      break;
     }
 
-    return res.status(lastStatus || 500).json({
+    return res.status(500).json({
       error: `Quote API error`,
-      details: lastText,
-      code: lastStatus === 504 ? "TIMEOUT" : "API_ERROR",
+      details: "All Jupiter quote endpoints failed",
+      code: "API_ERROR",
     });
   } catch (error) {
     console.error("Jupiter quote proxy error:", {

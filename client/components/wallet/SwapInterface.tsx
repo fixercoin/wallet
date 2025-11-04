@@ -144,120 +144,98 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!amountInt || amountInt <= 0) {
           setQuote(null);
           setToAmount("");
+          setQuoteError("");
           setIndicative(false);
           setIsLoading(false);
           return;
         }
+
         console.log(
-          `Requesting Jupiter quote: ${fromToken.symbol} (${fromToken.mint}) -> ${toToken.symbol} (${toToken.mint}), amount: ${amountInt}`,
+          `Fetching quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
-        const q = await jupiterAPI.getQuote(
-          fromToken.mint,
-          toToken.mint,
-          amountInt,
-          Math.max(1, Math.round(parseFloat(slippage || "0.5") * 100)),
-        );
-        if (q) {
-          console.log(
-            `Got Jupiter quote successfully: ${q.outAmount} ${toToken.symbol}`,
+
+        let foundQuote = false;
+
+        // Try Meteora first
+        try {
+          const mq = await getMeteoraQuote(
+            fromToken.mint,
+            toToken.mint,
+            amountInt,
           );
-          setQuote(q);
-          setMeteoraQuote(null);
-          const out = jupiterAPI.parseSwapAmount(q.outAmount, toToken.decimals);
-          setToAmount(out.toFixed(6));
+
+          if (mq && mq.route) {
+            console.log("Meteora provided a route", mq);
+            setQuote(null);
+            setMeteoraQuote(mq);
+
+            const minReceivedRaw =
+              mq.minimumReceived ??
+              mq.minReceived ??
+              mq.minimum_received ??
+              mq.min_received ??
+              mq.estimatedOut ??
+              mq.outAmount ??
+              null;
+
+            if (minReceivedRaw != null && toToken?.decimals != null) {
+              try {
+                const outHuman =
+                  typeof minReceivedRaw === "string"
+                    ? parseInt(minReceivedRaw, 10) /
+                      Math.pow(10, toToken.decimals)
+                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
+                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+                setQuoteError("");
+                setIndicative(false);
+                foundQuote = true;
+              } catch (e) {
+                console.debug("Failed to parse Meteora minReceived", e);
+              }
+            }
+
+            if (foundQuote) {
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.debug("Meteora quote attempt failed silently:", e);
+        }
+
+        // Fall back to Birdeye pricing
+        console.log(
+          `Falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
+        );
+        const [fromBirdeye, toBirdeye] = await Promise.all([
+          birdeyeAPI.getTokenByMint(fromToken.mint),
+          birdeyeAPI.getTokenByMint(toToken.mint),
+        ]);
+        const fromUsd = fromBirdeye?.priceUsd
+          ? parseFloat(String(fromBirdeye.priceUsd))
+          : null;
+        const toUsd = toBirdeye?.priceUsd
+          ? parseFloat(String(toBirdeye.priceUsd))
+          : null;
+
+        if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
+          const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
+          const estOutHuman = (fromHuman * fromUsd) / toUsd;
+          setQuote(null);
+          setToAmount(estOutHuman.toFixed(6));
+          setQuoteError("");
+          setIndicative(true);
+        } else {
+          console.debug(
+            `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
+          );
+          setQuote(null);
+          setToAmount("");
           setQuoteError("");
           setIndicative(false);
-        } else {
-          console.log(`No Jupiter quote available, trying Meteora API`);
-
-          try {
-            const mq = await getMeteoraQuote(
-              fromToken.mint,
-              toToken.mint,
-              amountInt,
-            );
-
-            if (mq && mq.route) {
-              console.log("Meteora provided a route", mq);
-              setQuote(null);
-              setMeteoraQuote(mq);
-
-              // Try to derive a human-readable output amount from common fields
-              const minReceivedRaw =
-                mq.minimumReceived ??
-                mq.minReceived ??
-                mq.minimum_received ??
-                mq.min_received ??
-                mq.estimatedOut ??
-                mq.outAmount ??
-                null;
-
-              if (minReceivedRaw != null && toToken?.decimals != null) {
-                try {
-                  const outHuman =
-                    typeof minReceivedRaw === "string"
-                      ? parseInt(minReceivedRaw, 10) /
-                        Math.pow(10, toToken.decimals)
-                      : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
-                  setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-                  setQuoteError("");
-                  setIndicative(false);
-                  return;
-                } catch (e) {
-                  console.warn("Failed to parse Meteora minReceived", e);
-                }
-              }
-
-              // Fallback to birdeye pricing if we couldn't parse Meteora amount
-              console.log(`Falling back to Birdeye for indicative pricing`);
-            }
-          } catch (e) {
-            console.warn("Meteora quote failed:", e);
-          }
-
-          // Birdeye fallback (unchanged)
-          console.log(
-            `No Jupiter/Meteora quote available, falling back to Birdeye pricing`,
-          );
-          const [fromBirdeye, toBirdeye] = await Promise.all([
-            birdeyeAPI.getTokenByMint(fromToken.mint),
-            birdeyeAPI.getTokenByMint(toToken.mint),
-          ]);
-          const fromUsd = fromBirdeye?.priceUsd
-            ? parseFloat(String(fromBirdeye.priceUsd))
-            : null;
-          const toUsd = toBirdeye?.priceUsd
-            ? parseFloat(String(toBirdeye.priceUsd))
-            : null;
-
-          console.log(
-            `Birdeye prices - ${fromToken.symbol}: $${fromUsd || "N/A"}, ${toToken.symbol}: $${toUsd || "N/A"}`,
-          );
-
-          if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
-            const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
-            const estOutHuman = (fromHuman * fromUsd) / toUsd;
-            console.log(
-              `Using indicative pricing: ${estOutHuman.toFixed(6)} ${toToken.symbol}`,
-            );
-            setQuote(null);
-            setToAmount(estOutHuman.toFixed(6));
-            setQuoteError("");
-            setIndicative(true);
-          } else {
-            console.warn(
-              `Could not get prices from Birdeye: fromUsd=${fromUsd}, toUsd=${toUsd}`,
-            );
-            setQuote(null);
-            setToAmount("");
-            setQuoteError(
-              `No liquidity data found for ${fromToken.symbol} ↔ ${toToken.symbol}. Try a different trading pair or amount.`,
-            );
-            setIndicative(false);
-          }
         }
       } catch (err) {
-        console.error("Quote error:", err);
+        console.debug("Quote fetch error:", err);
         setQuote(null);
         setToAmount("");
         setQuoteError("");
@@ -336,6 +314,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       return "Enter a valid amount";
     if (parseFloat(fromAmount) > getTokenBalance(fromToken))
       return "Insufficient balance";
+
+    // Check if enough SOL for network fees
+    const solToken = availableTokens.find((t) => t.symbol === "SOL");
+    if (solToken) {
+      const solBalance = getTokenBalance(solToken);
+      const swapAmt = parseFloat(fromAmount || "0");
+      // Need swap amount + transaction fee (~0.00025) + small buffer
+      const minNeeded = fromToken?.symbol === "SOL" ? swapAmt + 0.0003 : 0.0005;
+      if (solBalance < minNeeded) {
+        return `Insufficient SOL. Need ${minNeeded.toFixed(6)} SOL, have ${solBalance.toFixed(6)} SOL`;
+      }
+    }
+
     return null;
   };
 
@@ -989,7 +980,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         if (t) setFromToken(t);
                       }}
                     >
-                      <SelectTrigger className="h-11 rounded-full bg-gray-200 border border-gray-300 text-gray-900 hover:bg-gray-300 w-auto px-3 transition-colors">
+                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
                         <SelectValue>
                           <div className="flex items-center gap-2 text-gray-900">
                             {fromToken ? (
@@ -1013,7 +1004,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -1030,9 +1021,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,
@@ -1122,7 +1113,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-white border border-[#e6f6ec]/20 text-gray-900">
+                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
                         {allTokens.map((token) => (
                           <SelectItem
                             key={token.mint}
@@ -1139,9 +1130,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                                   {token.symbol.slice(0, 2)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">
+                              <span className="font-medium text-xs whitespace-nowrap">
                                 {token.symbol} ~{" "}
-                                <span className="text-black">
+                                <span className="text-white">
                                   {formatAmount(
                                     getTokenBalance(token),
                                     token.symbol,
@@ -1194,24 +1185,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </div>
             ) : null}
 
-            {/* Alerts */}
+            {/* Loading indicator */}
             {isLoading && (
               <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
                 Signing & Connecting - submitting transaction ...
-              </Alert>
-            )}
-            {indicative && (
-              <Alert className="bg-amber-500/10 border-amber-400/20 text-amber-100">
-                <AlertDescription>
-                  Jupiter has no direct route for this pair. Price is estimated
-                  from DEX data and may vary. You can still attempt the swap,
-                  but execution depends on available liquidity.
-                </AlertDescription>
-              </Alert>
-            )}
-            {quoteError && !indicative && (
-              <Alert className="bg-red-500/10 border-red-400/20 text-red-200">
-                <AlertDescription>{quoteError}</AlertDescription>
               </Alert>
             )}
 

@@ -37,6 +37,15 @@ const determineBase = (): string => {
     return CLOUDFLARE_WORKER_BASE;
   }
 
+  // Custom domain deployment (fixorium.com.pk): use Cloudflare Worker
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("fixorium.com.pk") ||
+      window.location.hostname.includes("fixorium.com"))
+  ) {
+    return CLOUDFLARE_WORKER_BASE;
+  }
+
   // Fallback to Cloudflare Worker
   return CLOUDFLARE_WORKER_BASE;
 };

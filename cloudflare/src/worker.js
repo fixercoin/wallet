@@ -16,6 +16,42 @@ async function parseJSON(req) {
   }
 }
 
+// Helper function to sign transactions with a keypair
+function signTransactionWithKeypair(transactionBuffer, secretKeyBase58) {
+  // Import required crypto functions for signing
+  // Note: In Cloudflare Workers, we use the Web Crypto API
+  // For Solana transactions, we need to use tweetnacl or similar for Ed25519 signing
+
+  // This is a placeholder - actual implementation would require
+  // tweetnacl or @noble/signatures for Ed25519 signing
+  // For now, we return the transaction buffer as-is
+  // The client should handle signing for security reasons
+  console.warn(
+    "[Wallet Signing] Warning: Server-side signing is not implemented for security reasons. Use client-side signing instead.",
+  );
+  return transactionBuffer;
+}
+
+// Helper function to decode base64 transaction to buffer
+function base64ToBuffer(base64) {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Helper function to encode buffer to base64
+function bufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 // Constants
 const DEFAULT_RPCS = [
   "https://api.mainnet-beta.solana.com",
@@ -24,6 +60,7 @@ const DEFAULT_RPCS = [
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
 ];
+
 function getRpcEndpoints(env) {
   const list = [
     env?.SOLANA_RPC || "",
@@ -77,7 +114,7 @@ async function callRpc(env, method, params = [], id = Date.now()) {
   throw new Error(lastError?.message || "All RPC endpoints failed");
 }
 
-// Main worker
+// Main worker export
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -113,7 +150,7 @@ export default {
       );
     }
 
-    // Wallet balance
+    // Wallet balance: /api/wallet/balance?publicKey=...
     if (pathname === "/api/wallet/balance" && req.method === "GET") {
       const pk =
         searchParams.get("publicKey") ||
@@ -133,7 +170,7 @@ export default {
         const lamports =
           typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
         if (typeof lamports === "number" && isFinite(lamports)) {
-          const balance = lamports / 1000000000;
+          const balance = lamports / 1_000_000_000;
           return json(
             {
               publicKey: pk,
@@ -153,85 +190,6 @@ export default {
             error: "Failed to fetch balance",
             details: e instanceof Error ? e.message : String(e),
           },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Solana RPC
-    if (pathname === "/api/solana-rpc" && req.method === "POST") {
-      try {
-        const body = await parseJSON(req);
-
-        if (!body || typeof body !== "object") {
-          return json(
-            { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const methodName = body?.method;
-        const params = body?.params ?? [];
-        const id = body?.id ?? Date.now();
-
-        if (!methodName || typeof methodName !== "string") {
-          return json(
-            { error: "Missing RPC method" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const payload = {
-          jsonrpc: "2.0",
-          id,
-          method: methodName,
-          params,
-        };
-
-        let lastError = null;
-
-        const endpoints = getRpcEndpoints(env);
-        for (const endpoint of endpoints) {
-          try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 10000);
-            const resp = await fetch(endpoint, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              body: JSON.stringify(payload),
-              signal: controller.signal,
-            });
-            clearTimeout(timeout);
-
-            if (!resp.ok) {
-              if ([429, 502, 503].includes(resp.status)) continue;
-              const t = await resp.text().catch(() => "");
-              throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
-            }
-
-            const data = await resp.text();
-            return new Response(data, {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
-                ...corsHeaders,
-              },
-            });
-          } catch (e) {
-            lastError = e instanceof Error ? e : new Error(String(e));
-          }
-        }
-
-        return json(
-          { error: "All RPC endpoints failed", details: lastError?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          { error: "Failed to execute RPC call", details: e?.message },
           { status: 502, headers: corsHeaders },
         );
       }
@@ -309,143 +267,6 @@ export default {
       }
     }
 
-    // DexScreener search proxy: /api/dexscreener/search?q=<QUERY>
-    if (pathname === "/api/dexscreener/search" && req.method === "GET") {
-      const q = searchParams.get("q") || "";
-      if (!q) {
-        return json(
-          { error: "Missing 'q' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(dexUrl, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          return json(data, { headers: corsHeaders });
-        }
-
-        return json(
-          { schemaVersion: "1.0.0", pairs: [] },
-          { status: resp.status, headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to search DexScreener",
-            details: e?.message,
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // DexScreener trending proxy: /api/dexscreener/trending
-    if (pathname === "/api/dexscreener/trending" && req.method === "GET") {
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/pairs/solana`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(dexUrl, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          const sorted = (data.pairs || [])
-            .filter(
-              (p) =>
-                p.volume?.h24 > 1000 &&
-                p.liquidity?.usd &&
-                p.liquidity.usd > 10000,
-            )
-            .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
-            .slice(0, 50);
-          return json(
-            { schemaVersion: "1.0.0", pairs: sorted },
-            { headers: corsHeaders },
-          );
-        }
-
-        return json(
-          { schemaVersion: "1.0.0", pairs: [] },
-          { status: resp.status, headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch trending tokens",
-            details: e?.message,
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // SOL price proxy: /api/sol/price
-    if (pathname === "/api/sol/price" && req.method === "GET") {
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(dexUrl, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-          if (pairs.length > 0) {
-            const pair = pairs[0];
-            const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
-            return json(
-              {
-                price,
-                priceUsd: price,
-                data: { price, priceUsd: price },
-              },
-              { headers: corsHeaders },
-            );
-          }
-        }
-
-        // Fallback SOL price
-        return json(
-          {
-            price: 180,
-            priceUsd: 180,
-            data: { price: 180, priceUsd: 180 },
-          },
-          { headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          {
-            price: 180,
-            priceUsd: 180,
-            data: { price: 180, priceUsd: 180 },
-          },
-          { headers: corsHeaders },
-        );
-      }
-    }
-
     // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>
     if (pathname === "/api/birdeye/price" && req.method === "GET") {
       const address = searchParams.get("address") || "";
@@ -480,74 +301,6 @@ export default {
         return null;
       };
 
-      const getSolPrice = async () => {
-        try {
-          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
-          const dexResp = await fetch(dexUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          if (dexResp.ok) {
-            const dexData = await dexResp.json();
-            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
-
-            if (pairs.length > 0) {
-              const pair = pairs[0];
-              if (pair?.priceUsd) {
-                const price = parseFloat(pair.priceUsd);
-                if (isFinite(price) && price > 0) {
-                  return price;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
-        }
-        return 180; // fallback SOL price
-      };
-
-      const getDerivedPrice = async (mint) => {
-        try {
-          console.log(
-            `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
-          );
-          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
-          const dexResp = await fetch(dexUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          if (dexResp.ok) {
-            const dexData = await dexResp.json();
-            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
-
-            if (pairs.length > 0) {
-              const pair = pairs.find(
-                (p) =>
-                  (p?.baseToken?.address === mint ||
-                    p?.quoteToken?.address === mint) &&
-                  p?.priceUsd,
-              );
-
-              if (pair && pair.priceUsd) {
-                const price = parseFloat(pair.priceUsd);
-                if (isFinite(price) && price > 0) {
-                  console.log(
-                    `[Birdeye] Derived price for ${mint}: $${price.toFixed(8)}`,
-                  );
-                  return price;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(
-            `[Birdeye] Error fetching derived price for ${mint}: ${e?.message}`,
-          );
-        }
-        return null;
-      };
-
       const getPriceFromDexScreener = async (mint) => {
         try {
           console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
@@ -571,44 +324,21 @@ export default {
               if (pair && pair.priceUsd) {
                 const price = parseFloat(pair.priceUsd);
                 if (isFinite(price) && price > 0) {
+                  const priceChange24h = pair?.priceChange?.h24 ?? 0;
                   console.log(
-                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
+                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
                   );
-                  return price;
+                  return {
+                    price,
+                    priceChange24h: pair?.priceChange?.h24 ?? 0,
+                    volume24h: pair?.volume?.h24 ?? 0,
+                  };
                 }
               }
             }
           }
         } catch (e) {
           console.warn(`[Birdeye Fallback] DexScreener error: ${e?.message}`);
-        }
-        return null;
-      };
-
-      const getPriceFromJupiter = async (mint) => {
-        try {
-          console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
-          const jupUrl = `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`;
-          const jupResp = await fetch(jupUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          if (jupResp.ok) {
-            const jupData = await jupResp.json();
-            const priceData = jupData?.data?.[mint];
-
-            if (priceData?.price) {
-              const price = parseFloat(priceData.price);
-              if (isFinite(price) && price > 0) {
-                console.log(
-                  `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
-                );
-                return price;
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(`[Birdeye Fallback] Jupiter error: ${e?.message}`);
         }
         return null;
       };
@@ -642,7 +372,16 @@ export default {
             console.log(
               `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
             );
-            return json(data, { headers: corsHeaders });
+            const responseData = {
+              success: true,
+              data: {
+                address: data.data.address,
+                value: data.data.value,
+                updateUnixTime: data.data.updateUnixTime,
+                priceChange24h: data.data.priceChange24h ?? 0,
+              },
+            };
+            return json(responseData, { headers: corsHeaders });
           }
         }
 
@@ -655,27 +394,7 @@ export default {
         );
       }
 
-      // Fallback 1: Try derived pricing for FIXERCOIN and LOCKER
-      const tokenSymbol = getTokenSymbol(address);
-      if (tokenSymbol === "FIXERCOIN" || tokenSymbol === "LOCKER") {
-        const derivedPrice = await getDerivedPrice(address);
-        if (derivedPrice !== null && derivedPrice > 0) {
-          return json(
-            {
-              success: true,
-              data: {
-                address,
-                value: derivedPrice,
-                updateUnixTime: Math.floor(Date.now() / 1000),
-              },
-              _source: "derived",
-            },
-            { headers: corsHeaders },
-          );
-        }
-      }
-
-      // Fallback 2: Try DexScreener
+      // Fallback 1: Try DexScreener
       const dexscreenerPrice = await getPriceFromDexScreener(address);
       if (dexscreenerPrice !== null) {
         return json(
@@ -683,8 +402,10 @@ export default {
             success: true,
             data: {
               address,
-              value: dexscreenerPrice,
+              value: dexscreenerPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: dexscreenerPrice.priceChange24h,
+              volume24h: dexscreenerPrice?.volume24h ?? 0,
             },
             _source: "dexscreener",
           },
@@ -692,24 +413,8 @@ export default {
         );
       }
 
-      // Fallback 3: Try Jupiter
-      const jupiterPrice = await getPriceFromJupiter(address);
-      if (jupiterPrice !== null) {
-        return json(
-          {
-            success: true,
-            data: {
-              address,
-              value: jupiterPrice,
-              updateUnixTime: Math.floor(Date.now() / 1000),
-            },
-            _source: "jupiter",
-          },
-          { headers: corsHeaders },
-        );
-      }
-
-      // Fallback 4: Check hardcoded fallback prices
+      // Fallback 2: Check hardcoded fallback prices
+      const tokenSymbol = getTokenSymbol(address);
       if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
         console.log(
           `[Birdeye] Using hardcoded fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
@@ -721,6 +426,7 @@ export default {
               address,
               value: FALLBACK_USD[tokenSymbol],
               updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: 0,
             },
             _source: "fallback",
           },
@@ -738,97 +444,467 @@ export default {
       );
     }
 
-    // Dedicated token price endpoint: /api/token/price
-    if (pathname === "/api/token/price" && req.method === "GET") {
+    // SOL price endpoint: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      const SOL_MINT = "So11111111111111111111111111111111111111112";
       try {
-        const tokenParam = (
-          url.searchParams.get("token") ||
-          url.searchParams.get("symbol") ||
-          "FIXERCOIN"
-        ).toUpperCase();
-        const mintParam = url.searchParams.get("mint") || "";
+        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${SOL_MINT}`;
+        const dexResp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+        });
 
-        const TOKEN_MINTS = {
-          SOL: "So11111111111111111111111111111111111111112",
-          USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-          USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
-          FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-          LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
-        };
+        if (dexResp.ok) {
+          const dexData = await dexResp.json();
+          const pair =
+            Array.isArray(dexData?.pairs) && dexData.pairs.length > 0
+              ? dexData.pairs[0]
+              : null;
 
-        const MINT_TO_PAIR_ADDRESS_EX = {
-          H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
-            "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
-        };
-
-        const MINT_TO_SEARCH_SYMBOL = {
-          H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
-          EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
-        };
-
-        const FALLBACK_USD = {
-          FIXERCOIN: 0.000089,
-          SOL: 180,
-          USDC: 1.0,
-          USDT: 1.0,
-          LOCKER: 0.000012,
-        };
-
-        const PKR_PER_USD = 280; // base FX
-        const MARKUP = 1.0425; // 4.25%
-
-        let token = tokenParam;
-        let mint = mintParam || TOKEN_MINTS[token] || "";
-
-        if (!mint && tokenParam && tokenParam.length > 40) {
-          mint = tokenParam;
-          const inv = Object.entries(TOKEN_MINTS).find(([, m]) => m === mint);
-          if (inv) token = inv[0];
-        }
-
-        let priceUsd = null;
-
-        // Stablecoins -> 1
-        if (token === "USDC" || token === "USDT") {
-          priceUsd = 1.0;
-        } else if (token === "FIXERCOIN" || token === "LOCKER") {
-          // Try to fetch derived price for FIXERCOIN and LOCKER
-          const derivedPrice = await getDerivedPrice(mint);
-          if (derivedPrice !== null && derivedPrice > 0) {
-            priceUsd = derivedPrice;
-          } else {
-            priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+          if (pair && pair.priceUsd) {
+            const priceUsd = parseFloat(pair.priceUsd);
+            if (isFinite(priceUsd) && priceUsd > 0) {
+              return json(
+                {
+                  token: "SOL",
+                  price: priceUsd,
+                  priceUsd,
+                  priceChange24h: pair.priceChange?.h24 || 0,
+                  volume24h: pair.volume?.h24 || 0,
+                  marketCap: pair.marketCap || 0,
+                },
+                { headers: corsHeaders },
+              );
+            }
           }
-        } else {
-          // Use fallback prices for other non-stablecoins
-          priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
         }
 
-        const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+        // Fallback to hardcoded price
         return json(
           {
-            token,
-            priceUsd,
-            priceInPKR: rateInPKR,
-            rate: rateInPKR,
-            pkrPerUsd: PKR_PER_USD,
-            markup: MARKUP,
-            source:
-              token === "FIXERCOIN" || token === "LOCKER"
-                ? "derived"
-                : "fallback",
+            token: "SOL",
+            price: 180,
+            priceUsd: 180,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
           },
           { headers: corsHeaders },
         );
       } catch (e) {
+        console.error(`[SOL Price] Error:`, e?.message);
         return json(
-          { error: "Failed to get token price", details: e?.message },
+          {
+            token: "SOL",
+            price: 180,
+            priceUsd: 180,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
+          },
+          { headers: corsHeaders },
+        );
+      }
+    }
+
+    // Meteora swap quote: /api/swap/meteora/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/swap/meteora/quote" && req.method === "GET") {
+      const inputMint = url.searchParams.get("inputMint") || "";
+      const outputMint = url.searchParams.get("outputMint") || "";
+      const amount = url.searchParams.get("amount") || "";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const meteoraUrl = new URL("https://api.meteora.ag/swap/v3/quote");
+        meteoraUrl.searchParams.set("inputMint", inputMint);
+        meteoraUrl.searchParams.set("outputMint", outputMint);
+        meteoraUrl.searchParams.set("amount", amount);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(meteoraUrl.toString(), {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Meteora API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch Meteora swap quote", details: e?.message },
           { status: 502, headers: corsHeaders },
         );
       }
     }
 
-    // Pumpfun proxy: /api/pumpfun/quote and /api/pumpfun/swap
+    // Meteora swap build: /api/swap/meteora/swap (POST) - builds unsigned/base64 transaction
+    // Supports optional local wallet signing via signerKeypair parameter
+    if (pathname === "/api/swap/meteora/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        // Extract optional signer keypair if provided (for local signing)
+        const signerKeypair = body.signerKeypair;
+        const shouldSign = body.sign === true && signerKeypair;
+
+        // Remove sensitive fields before forwarding to Meteora
+        const meteoraPayload = { ...body };
+        delete meteoraPayload.signerKeypair;
+        delete meteoraPayload.sign;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(meteoraPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const t = await resp.text().catch(() => "");
+          return json(
+            { error: `Meteora swap build returned ${resp.status}`, details: t },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+
+        // If signing was requested and a keypair was provided
+        if (shouldSign && data.swapTransaction) {
+          // WARNING: Server-side signing is a security risk!
+          // The client should handle signing locally instead
+          console.warn(
+            "[Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.",
+          );
+
+          // For now, we return the transaction with a warning
+          // Actual signing implementation would require:
+          // 1. Decoding the base64 transaction
+          // 2. Signing with the provided keypair using Ed25519
+          // 3. Re-encoding to base64
+          // This is commented out for security reasons - use client-side signing instead
+
+          return json(
+            {
+              swapTransaction: data.swapTransaction,
+              signed: false,
+              warning:
+                "Server-side signing is disabled for security. Please sign this transaction on the client-side using the wallet's signing capability.",
+              signingWarning:
+                "Never share private keys with servers. Always use client-side wallet signing.",
+              _source: "meteora",
+            },
+            { headers: corsHeaders },
+          );
+        }
+
+        return json(
+          {
+            swapTransaction: data.swapTransaction,
+            signed: false,
+            _source: "meteora",
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to build Meteora swap", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Transaction signing endpoint: /api/sign/transaction (POST)
+    // Signs a transaction with a provided keypair (client should prefer local signing)
+    if (pathname === "/api/sign/transaction" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { transaction, signerKeypair } = body;
+
+        if (!transaction || !signerKeypair) {
+          return json(
+            {
+              error: "Missing required fields: transaction and signerKeypair",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        // Security warning
+        console.warn(
+          "[Transaction Signing] ⚠️  Private key received for server-side signing. This is not recommended!",
+        );
+
+        return json(
+          {
+            error:
+              "Server-side transaction signing is disabled for security reasons",
+            message:
+              "Please sign transactions on the client-side using your wallet. Never share private keys with servers.",
+            documentation:
+              "Use @solana/web3.js with your wallet adapter for secure client-side signing",
+          },
+          { status: 403, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to process signing request",
+            details: e?.message,
+          },
+          { status: 500, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter swap quote: /api/swap/jupiter/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/swap/jupiter/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const jupiterUrl = new URL("https://quote-api.jup.ag/v6/quote");
+        jupiterUrl.searchParams.set("inputMint", inputMint);
+        jupiterUrl.searchParams.set("outputMint", outputMint);
+        jupiterUrl.searchParams.set("amount", amount);
+        jupiterUrl.searchParams.set("slippageBps", "500");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(jupiterUrl.toString(), {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Jupiter API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to fetch Jupiter swap quote",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter price: /api/jupiter/price?ids=...
+    if (pathname === "/api/jupiter/price" && req.method === "GET") {
+      const ids = searchParams.get("ids") || "";
+      if (!ids) {
+        return json(
+          { error: "Missing 'ids' query parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      try {
+        const url_str = `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url_str, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return json(
+            { error: "Jupiter API error" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to fetch Jupiter prices",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter quote: /api/jupiter/quote?inputMint=...&outputMint=...&amount=...
+    if (pathname === "/api/jupiter/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+      const slippageBps = searchParams.get("slippageBps") || "50";
+
+      if (!inputMint || !outputMint || !amount) {
+        return json(
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      const endpoints = [
+        `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`,
+        `https://lite-api.jup.ag/swap/v1/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`,
+      ];
+      let lastError = null;
+
+      for (const url_str of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 25000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastError = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          lastError = e?.message || String(e);
+        }
+      }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter quote",
+          details: lastError,
+        },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Jupiter swap: /api/jupiter/swap (POST)
+    if (pathname === "/api/jupiter/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return json(
+            { error: "Jupiter swap failed" },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to execute Jupiter swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter tokens: /api/jupiter/tokens?type=strict|all
+    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
+      const type = searchParams.get("type") || "strict";
+      const endpoints = [
+        `https://token.jup.ag/${type}`,
+        `https://cache.jup.ag/tokens`,
+      ];
+      let lastError = null;
+
+      for (const url_str of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastError = resp.status;
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          lastError = e?.message || String(e);
+        }
+      }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter tokens",
+          details: lastError,
+        },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Pumpfun quote: /api/pumpfun/quote (POST or GET)
     if (pathname === "/api/pumpfun/quote") {
       if (req.method === "POST" || req.method === "GET") {
         let inputMint = "";
@@ -889,15 +965,18 @@ export default {
       );
     }
 
+    // Pumpfun swap: /api/pumpfun/swap (POST)
     if (pathname === "/api/pumpfun/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
+
         if (!body || typeof body !== "object") {
           return json(
             { error: "Invalid request body" },
             { status: 400, headers: corsHeaders },
           );
         }
+
         const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -922,118 +1001,355 @@ export default {
       }
     }
 
-    // Pump.fun swap quote
-    if (pathname === "/api/swap/quote" && req.method === "GET") {
-      const mint = url.searchParams.get("mint") || "";
+    // Unified quote endpoint: /api/quote?inputMint=...&outputMint=...&amount=...
+    // Tries multiple DEX providers in order (Meteora -> Jupiter -> DexScreener)
+    // Meteora is now the preferred provider for general token swaps
+    if (pathname === "/api/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+      const provider = (searchParams.get("provider") || "auto").toLowerCase();
 
-      if (!mint) {
+      if (!inputMint || !outputMint || !amount) {
         return json(
-          { error: "Missing 'mint' parameter" },
+          {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          },
           { status: 400, headers: corsHeaders },
         );
       }
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const providers = [
+        {
+          name: "meteora",
+          url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+        {
+          name: "jupiter",
+          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
+        },
+        {
+          name: "dexscreener",
+          url: `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(inputMint)}`,
+        },
+      ];
 
-        const resp = await fetch(
-          `https://pumpportal.fun/api/quote?mint=${encodeURIComponent(mint)}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
+      const lastErrors = [];
+
+      for (const p of providers) {
+        if (provider !== "auto" && provider !== p.name) continue;
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+          const resp = await fetch(p.url, {
+            headers: { Accept: "application/json" },
             signal: controller.signal,
-          },
-        );
+          });
 
-        clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-        if (!resp.ok) {
-          return json(
-            { error: `Pump.fun API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
+          if (resp.ok) {
+            const data = await resp.json();
+
+            // For DexScreener, transform the response to match quote format
+            if (p.name === "dexscreener" && data.pairs) {
+              const pair = data.pairs.find(
+                (p) => p.baseToken?.address === inputMint && p.priceUsd,
+              );
+              if (pair) {
+                return json(
+                  {
+                    source: "dexscreener",
+                    quote: {
+                      inAmount: amount,
+                      outAmount: pair.priceUsd,
+                      priceImpact: 0,
+                    },
+                  },
+                  { headers: corsHeaders },
+                );
+              }
+            } else if (p.name !== "dexscreener") {
+              return json(
+                { source: p.name, quote: data },
+                { headers: corsHeaders },
+              );
+            }
+          }
+
+          lastErrors.push(`${p.name}: ${resp.status}`);
+        } catch (e) {
+          lastErrors.push(`${p.name}: ${e?.message || String(e)}`);
         }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch swap quote", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
       }
+
+      console.warn(`[/api/quote] All providers failed:`, lastErrors);
+
+      return json(
+        {
+          error: "Failed to fetch quote from any provider",
+          details: lastErrors.join(" | ") || "All providers failed",
+          providers_attempted: ["meteora", "jupiter", "dexscreener"],
+          note: "Meteora is the preferred provider. If it fails, try Jupiter or use DexScreener for price data only.",
+        },
+        { status: 502, headers: corsHeaders },
+      );
     }
 
-    // Pump.fun swap execute
-    if (pathname === "/api/swap/execute" && req.method === "POST") {
+    // Unified swap execution endpoint: /api/swap (POST)
+    // Handles swap execution for multiple DEX providers (Jupiter, Pumpfun, Meteora)
+    // Preferred provider: Meteora (with local wallet signing support)
+    if (pathname === "/api/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
 
         if (!body || typeof body !== "object") {
           return json(
-            { error: "Invalid request body" },
+            {
+              error: "Invalid request body",
+              message: "POST body must be valid JSON",
+            },
             { status: 400, headers: corsHeaders },
           );
         }
 
+        const provider = (body.provider || "auto").toLowerCase();
         const {
-          mint,
+          inputMint,
+          outputMint,
           amount,
-          decimals,
-          slippage,
-          txVersion,
-          priorityFee,
+          mint,
           wallet,
+          routePlan,
+          signerKeypair,
         } = body;
 
-        if (!mint || !amount) {
-          return json(
-            { error: "Missing required fields: mint, amount" },
-            { status: 400, headers: corsHeaders },
-          );
+        console.log(
+          `[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`,
+        );
+
+        // Try Meteora swap if inputMint and outputMint are provided (Meteora preferred)
+        if (
+          (provider === "meteora" || provider === "auto") &&
+          inputMint &&
+          outputMint &&
+          amount
+        ) {
+          try {
+            console.log(
+              `[/api/swap] Attempting Meteora swap for ${inputMint} -> ${outputMint}`,
+            );
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            const meteoraPayload = {
+              userPublicKey: wallet,
+              inputMint,
+              outputMint,
+              inputAmount: String(amount),
+              slippageBps: body.slippageBps || 500,
+              sign: false,
+            };
+
+            const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(meteoraPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                {
+                  source: "meteora",
+                  swap: data,
+                  signingRequired: true,
+                  hint: "The transaction must be signed by the wallet on the client-side",
+                },
+                { headers: corsHeaders },
+              );
+            } else {
+              console.warn(`[/api/swap] Meteora swap returned ${resp.status}`);
+              if (provider === "meteora") {
+                const errorText = await resp.text().catch(() => "");
+                return json(
+                  {
+                    error: `Meteora swap failed with status ${resp.status}`,
+                    details: errorText,
+                  },
+                  { status: resp.status, headers: corsHeaders },
+                );
+              }
+            }
+          } catch (e) {
+            console.warn(`[/api/swap] Meteora swap error:`, e?.message);
+            if (provider === "meteora") {
+              return json(
+                { error: "Meteora swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
         }
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        // Try Jupiter swap if inputMint is provided (Jupiter specific)
+        if (
+          (provider === "jupiter" || provider === "auto") &&
+          inputMint &&
+          routePlan
+        ) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const swapPayload = {
-          mint,
-          amount: String(amount),
-          decimals: decimals || 6,
-          slippage: slippage || 10,
-          txVersion: txVersion || "V0",
-          priorityFee: priorityFee || 0.0005,
-          wallet,
-        };
+            const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
 
-        const resp = await fetch("https://pumpportal.fun/api/trade", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(swapPayload),
-          signal: controller.signal,
-        });
+            clearTimeout(timeoutId);
 
-        clearTimeout(timeoutId);
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "jupiter", swap: data },
+                { headers: corsHeaders },
+              );
+            } else {
+              console.warn(`[/api/swap] Jupiter swap returned ${resp.status}`);
+            }
+          } catch (e) {
+            console.warn(`[/api/swap] Jupiter swap error:`, e?.message);
+            if (provider === "jupiter") {
+              return json(
+                {
+                  error: "Jupiter swap failed",
+                  details: e?.message,
+                  hint: "Ensure routePlan is provided from the quote endpoint",
+                },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
 
-        if (!resp.ok) {
-          const errorText = await resp.text();
-          return json(
-            {
-              error: `Pump.fun API returned ${resp.status}`,
-              details: errorText,
+        // Try Pumpfun swap if mint is provided (Pumpfun specific)
+        if ((provider === "pumpfun" || provider === "auto") && mint && amount) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const swapPayload = {
+              mint,
+              amount: String(amount),
+              decimals: body.decimals || 6,
+              slippage: body.slippage || 10,
+              txVersion: body.txVersion || "V0",
+              priorityFee: body.priorityFee || 0.0005,
+              wallet,
+            };
+
+            const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(swapPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "pumpfun", swap: data },
+                { headers: corsHeaders },
+              );
+            } else {
+              console.warn(`[/api/swap] Pumpfun swap returned ${resp.status}`);
+            }
+          } catch (e) {
+            console.warn(`[/api/swap] Pumpfun swap error:`, e?.message);
+            if (provider === "pumpfun") {
+              return json(
+                { error: "Pumpfun swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
+
+        // Provide helpful error message with examples
+        const hasInputMint = !!inputMint;
+        const hasMint = !!mint;
+        const hasAmount = !!amount;
+        const hasOutputMint = !!outputMint;
+
+        let helpText = "Missing required fields for swap. ";
+        if (hasInputMint && hasOutputMint) {
+          helpText +=
+            "For Meteora swaps, you need: inputMint, outputMint, amount, and wallet. ";
+        } else if (hasInputMint) {
+          helpText +=
+            "For Jupiter swaps, you need: inputMint, outputMint, amount, and routePlan (from /api/quote). ";
+        }
+        if (hasMint) {
+          helpText +=
+            "For Pumpfun swaps, you need: mint, amount, wallet, and optionally decimals, slippage. ";
+        }
+        if (!hasInputMint && !hasMint) {
+          helpText +=
+            "Provide either mint (for Pumpfun), or inputMint + outputMint + amount (for Meteora/Jupiter). ";
+        }
+
+        return json(
+          {
+            error: "Unable to execute swap - missing required fields",
+            message: helpText,
+            supported_providers: {
+              meteora: {
+                required: ["inputMint", "outputMint", "amount", "wallet"],
+                optional: ["slippageBps"],
+                note: "Preferred DEX for general token swaps",
+              },
+              jupiter: {
+                required: ["inputMint", "outputMint", "amount", "routePlan"],
+                optional: ["wallet", "slippageBps"],
+                note: "Requires routePlan from /api/quote endpoint",
+              },
+              pumpfun: {
+                required: ["mint", "amount"],
+                optional: [
+                  "wallet",
+                  "decimals",
+                  "slippage",
+                  "txVersion",
+                  "priorityFee",
+                ],
+                note: "For pump.fun token launches",
+              },
             },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
+            received: {
+              provider,
+              has_inputMint: hasInputMint,
+              has_outputMint: hasOutputMint,
+              has_mint: hasMint,
+              has_amount: hasAmount,
+              has_routePlan: !!routePlan,
+              has_wallet: !!wallet,
+            },
+          },
+          { status: 400, headers: corsHeaders },
+        );
       } catch (e) {
         return json(
           {
@@ -1045,449 +1361,7 @@ export default {
       }
     }
 
-    // Meteora swap quote: /api/swap/meteora/quote?inputMint=...&outputMint=...&amount=...
-    if (pathname === "/api/swap/meteora/quote" && req.method === "GET") {
-      const inputMint = url.searchParams.get("inputMint") || "";
-      const outputMint = url.searchParams.get("outputMint") || "";
-      const amount = url.searchParams.get("amount") || "";
-
-      if (!inputMint || !outputMint || !amount) {
-        return json(
-          {
-            error: "Missing required parameters: inputMint, outputMint, amount",
-          },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const meteoraUrl = new URL("https://api.meteora.ag/swap/v3/quote");
-        meteoraUrl.searchParams.set("inputMint", inputMint);
-        meteoraUrl.searchParams.set("outputMint", outputMint);
-        meteoraUrl.searchParams.set("amount", amount);
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(meteoraUrl.toString(), {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `Meteora API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch Meteora swap quote", details: String(e) },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Meteora swap build: /api/swap/meteora/swap (POST) - builds unsigned/base64 transaction
-    if (pathname === "/api/swap/meteora/swap" && req.method === "POST") {
-      try {
-        const body = await parseJSON(req);
-        if (!body || typeof body !== "object") {
-          return json(
-            { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-        const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          const t = await resp.text().catch(() => "");
-          return json(
-            { error: `Meteora swap build returned ${resp.status}`, details: t },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to build Meteora swap", details: String(e) },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter swap quote
-    if (pathname === "/api/swap/jupiter/quote" && req.method === "GET") {
-      const inputMint = url.searchParams.get("inputMint") || "";
-      const outputMint = url.searchParams.get("outputMint") || "";
-      const amount = url.searchParams.get("amount") || "";
-
-      if (!inputMint || !outputMint || !amount) {
-        return json(
-          {
-            error: "Missing required parameters: inputMint, outputMint, amount",
-          },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const jupiterUrl = new URL("https://quote-api.jup.ag/v6/quote");
-        jupiterUrl.searchParams.set("inputMint", inputMint);
-        jupiterUrl.searchParams.set("outputMint", outputMint);
-        jupiterUrl.searchParams.set("amount", amount);
-        jupiterUrl.searchParams.set("slippageBps", "500");
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(jupiterUrl.toString(), {
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `Jupiter API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter swap quote",
-            details: e?.message,
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter price
-    if (pathname === "/api/jupiter/price" && req.method === "GET") {
-      const ids = searchParams.get("ids") || "";
-      if (!ids) {
-        return json(
-          { error: "Missing 'ids' query parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-      try {
-        const url_str = `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter prices",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter quote
-    if (pathname === "/api/jupiter/quote" && req.method === "GET") {
-      const inputMint = searchParams.get("inputMint") || "";
-      const outputMint = searchParams.get("outputMint") || "";
-      const amount = searchParams.get("amount") || "";
-      const slippageBps = searchParams.get("slippageBps") || "50";
-
-      if (!inputMint || !outputMint || !amount) {
-        return json(
-          {
-            error: "Missing required parameters: inputMint, outputMint, amount",
-          },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const url_str = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter quote",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter swap
-    if (pathname === "/api/jupiter/swap" && req.method === "POST") {
-      try {
-        const body = await parseJSON(req);
-        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter swap failed" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to execute Jupiter swap",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter tokens
-    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
-      const type = searchParams.get("type") || "strict";
-      try {
-        const url_str = `https://token.jup.ag/${type}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter tokens API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter tokens",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Forex rate
-    if (pathname === "/api/forex/rate" && req.method === "GET") {
-      const base = (searchParams.get("base") || "USD").toUpperCase();
-      const symbols = (searchParams.get("symbols") || "PKR").toUpperCase();
-      const firstSymbol = symbols.split(",")[0];
-      const providers = [
-        {
-          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) =>
-            j && j.rates && typeof j.rates[firstSymbol] === "number"
-              ? j.rates[firstSymbol]
-              : null,
-        },
-        {
-          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) =>
-            j && j.rates && typeof j.rates[firstSymbol] === "number"
-              ? j.rates[firstSymbol]
-              : null,
-        },
-        {
-          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
-          parse: (j) =>
-            j && j.rates && typeof j.rates[firstSymbol] === "number"
-              ? j.rates[firstSymbol]
-              : null,
-        },
-      ];
-      let lastErr = "";
-      for (const p of providers) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 12000);
-          const resp = await fetch(p.url, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            lastErr = `${resp.status} ${resp.statusText}`;
-            continue;
-          }
-          const apiJson = await resp.json();
-          const rate = p.parse(apiJson);
-          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
-            return json(
-              {
-                base,
-                symbols: [firstSymbol],
-                rates: { [firstSymbol]: rate },
-              },
-              { headers: corsHeaders },
-            );
-          }
-          lastErr = "invalid response";
-        } catch (e) {
-          lastErr = e?.message || String(e);
-        }
-      }
-      return json(
-        {
-          error: "Failed to fetch forex rate",
-          details: lastErr,
-        },
-        { status: 502, headers: corsHeaders },
-      );
-    }
-
-    // Transaction
-    if (pathname === "/api/transaction" && req.method === "GET") {
-      const signature = searchParams.get("signature") || "";
-
-      if (!signature) {
-        return json(
-          { error: "Missing 'signature' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const rpcUrl = "https://api.mainnet-beta.solana.com";
-        const payload = {
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getTransaction",
-          params: [
-            signature,
-            { encoding: "json", maxSupportedTransactionVersion: 0 },
-          ],
-        };
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(rpcUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const data = await resp.json();
-        return json(data, { status: resp.status, headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch transaction", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Account
-    if (pathname === "/api/account" && req.method === "GET") {
-      const publicKey = searchParams.get("publicKey") || "";
-
-      if (!publicKey) {
-        return json(
-          { error: "Missing 'publicKey' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const rpcUrl = "https://api.mainnet-beta.solana.com";
-        const payload = {
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getAccountInfo",
-          params: [publicKey, { encoding: "jsonParsed" }],
-        };
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(rpcUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const data = await resp.json();
-        return json(data, { status: resp.status, headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch account", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // 404
+    // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },
       { status: 404, headers: corsHeaders },

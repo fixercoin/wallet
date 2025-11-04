@@ -508,7 +508,12 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 <SelectContent className="bg-gray-300 text-gray-900">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
-                      {t.symbol} ~ {t.balance ? t.balance.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0"}
+                      {t.symbol} ~{" "}
+                      {t.balance
+                        ? t.balance.toLocaleString(undefined, {
+                            maximumFractionDigits: 8,
+                          })
+                        : "0"}
                     </SelectItem>
                   ))}
                 </SelectContent>

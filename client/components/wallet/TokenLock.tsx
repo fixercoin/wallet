@@ -747,9 +747,17 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label="Back"
             >
-              <ArrowLeft className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
+              <ArrowLeft
+                className="h-4 w-4 text-black"
+                fill="none"
+                strokeWidth={2}
+              />
             </Button>
-            <LockIcon className="h-5 w-5 text-black" fill="none" strokeWidth={2} />
+            <LockIcon
+              className="h-5 w-5 text-black"
+              fill="none"
+              strokeWidth={2}
+            />
             <span className="text-sm font-semibold text-gray-900">
               Create new lock
             </span>
@@ -834,12 +842,20 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             >
               {isSubmitting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin text-black" fill="none" strokeWidth={2} />
+                  <RefreshCw
+                    className="h-4 w-4 mr-2 animate-spin text-black"
+                    fill="none"
+                    strokeWidth={2}
+                  />
                   Locking tokens...
                 </>
               ) : (
                 <>
-                  <LockIcon className="h-4 w-4 mr-2 text-black" fill="none" strokeWidth={2} />
+                  <LockIcon
+                    className="h-4 w-4 mr-2 text-black"
+                    fill="none"
+                    strokeWidth={2}
+                  />
                   Lock tokens
                 </>
               )}
@@ -850,7 +866,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-black" fill="none" strokeWidth={2} />
+              <Clock
+                className="h-5 w-5 text-black"
+                fill="none"
+                strokeWidth={2}
+              />
               <span className="text-sm font-semibold text-white">
                 Active locks
               </span>
@@ -994,11 +1014,23 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         disabled={!canWithdraw}
                       >
                         {lock.status === "withdrawing" ? (
-                          <RefreshCw className="h-4 w-4 animate-spin text-black" fill="none" strokeWidth={2} />
+                          <RefreshCw
+                            className="h-4 w-4 animate-spin text-black"
+                            fill="none"
+                            strokeWidth={2}
+                          />
                         ) : isWithdrawn ? (
-                          <CheckCircle2 className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
+                          <CheckCircle2
+                            className="h-4 w-4 text-black"
+                            fill="none"
+                            strokeWidth={2}
+                          />
                         ) : (
-                          <LockIcon className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
+                          <LockIcon
+                            className="h-4 w-4 text-black"
+                            fill="none"
+                            strokeWidth={2}
+                          />
                         )}
                         <span className="ml-2">
                           {isWithdrawn
@@ -1012,7 +1044,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
                     {lock.error ? (
                       <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
-                        <AlertTriangle className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
+                        <AlertTriangle
+                          className="h-4 w-4 text-black"
+                          fill="none"
+                          strokeWidth={2}
+                        />
                         <div>
                           <div className="font-medium">Last attempt failed</div>
                           <div className="opacity-80">{lock.error}</div>

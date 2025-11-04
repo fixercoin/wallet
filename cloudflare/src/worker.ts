@@ -552,6 +552,67 @@ export default {
       );
     }
 
+    // SOL price endpoint: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      const SOL_MINT = "So11111111111111111111111111111111111111112";
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${SOL_MINT}`;
+        const dexResp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+        });
+
+        if (dexResp.ok) {
+          const dexData = await dexResp.json();
+          const pair = Array.isArray(dexData?.pairs) && dexData.pairs.length > 0
+            ? dexData.pairs[0]
+            : null;
+
+          if (pair && pair.priceUsd) {
+            const priceUsd = parseFloat(pair.priceUsd);
+            if (isFinite(priceUsd) && priceUsd > 0) {
+              return json(
+                {
+                  token: "SOL",
+                  price: priceUsd,
+                  priceUsd,
+                  priceChange24h: pair.priceChange?.h24 || 0,
+                  volume24h: pair.volume?.h24 || 0,
+                  marketCap: pair.marketCap || 0,
+                },
+                { headers: corsHeaders },
+              );
+            }
+          }
+        }
+
+        // Fallback to hardcoded price
+        return json(
+          {
+            token: "SOL",
+            price: 180,
+            priceUsd: 180,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        console.error(`[SOL Price] Error:`, e?.message);
+        return json(
+          {
+            token: "SOL",
+            price: 180,
+            priceUsd: 180,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
+          },
+          { headers: corsHeaders },
+        );
+      }
+    }
+
     // Dedicated token price endpoint: /api/token/price
     if (pathname === "/api/token/price" && req.method === "GET") {
       try {

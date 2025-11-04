@@ -170,7 +170,7 @@ export default {
         const resp = await fetch(quoteUrl, {
           method: "GET",
           headers: {
-            "Accept": "application/json",
+            Accept: "application/json",
           },
           signal: controller.signal,
         });
@@ -180,7 +180,10 @@ export default {
         if (!resp.ok) {
           const errorText = await resp.text().catch(() => "");
           return json(
-            { error: `Jupiter API returned ${resp.status}`, details: errorText },
+            {
+              error: `Jupiter API returned ${resp.status}`,
+              details: errorText,
+            },
             { status: resp.status, headers: corsHeaders },
           );
         }
@@ -231,7 +234,7 @@ export default {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify(swapPayload),
           signal: controller.signal,
@@ -242,7 +245,10 @@ export default {
         if (!resp.ok) {
           const errorText = await resp.text().catch(() => "");
           return json(
-            { error: `Jupiter API returned ${resp.status}`, details: errorText },
+            {
+              error: `Jupiter API returned ${resp.status}`,
+              details: errorText,
+            },
             { status: resp.status, headers: corsHeaders },
           );
         }

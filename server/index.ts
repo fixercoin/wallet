@@ -51,6 +51,8 @@ import {
   handleSolanaSimulateProxy,
 } from "./routes/swap-proxy";
 import { handleUnifiedSwapLocal } from "./routes/swap-handler";
+import { requireApiKey } from "./middleware/auth";
+import { validateSwapRequest, validateSolanaSend, validateSwapSubmit } from "./middleware/validate";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

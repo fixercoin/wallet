@@ -299,7 +299,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
         // Health check via pumpfun/quote endpoint with minimal valid parameters
-        const res = await fetch("/api/pumpfun/quote", {
+        const url = resolveApiUrl("/api/pumpfun/quote");
+        const res = await fetch(url, {
           method: "POST",
           signal: controller.signal,
           headers: {

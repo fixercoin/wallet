@@ -29,19 +29,19 @@ const determineBase = (): string => {
     return "";
   }
 
-  // Custom domain deployment: use local /api proxy
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname.includes("fixorium.com.pk") ||
-      window.location.hostname.includes("fixorium.com"))
-  ) {
-    return "";
-  }
-
   // Production on Cloudflare Pages: use Cloudflare Worker
   if (
     typeof window !== "undefined" &&
     window.location.hostname.includes("pages.dev")
+  ) {
+    return CLOUDFLARE_WORKER_BASE;
+  }
+
+  // Custom domain deployment (fixorium.com.pk): use Cloudflare Worker
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("fixorium.com.pk") ||
+      window.location.hostname.includes("fixorium.com"))
   ) {
     return CLOUDFLARE_WORKER_BASE;
   }

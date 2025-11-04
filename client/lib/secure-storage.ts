@@ -36,6 +36,26 @@ function deriveKeyFromPassword(password: string, salt: Uint8Array): Uint8Array {
 }
 
 /**
+ * Convert Uint8Array to base64 string (browser-compatible)
+ */
+function bytesToBase64(bytes: Uint8Array): string {
+  const binaryString = String.fromCharCode.apply(null, Array.from(bytes));
+  return btoa(binaryString);
+}
+
+/**
+ * Convert base64 string to Uint8Array (browser-compatible)
+ */
+function base64ToBytes(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
  * Encrypt wallet data with a password
  * Returns encrypted blob that can be stored safely
  */
@@ -75,9 +95,9 @@ export function encryptWalletData(
   return {
     version: STORAGE_VERSION,
     algorithm: ENCRYPTION_ALGORITHM,
-    encryptedData: Buffer.from(encrypted).toString("base64"),
-    nonce: Buffer.from(nonce).toString("base64"),
-    salt: Buffer.from(salt).toString("base64"),
+    encryptedData: bytesToBase64(encrypted),
+    nonce: bytesToBase64(nonce),
+    salt: bytesToBase64(salt),
   };
 }
 

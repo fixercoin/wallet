@@ -55,6 +55,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
   const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);
+  const [fixoriumQuote, setFixoriumQuote] = useState<any | null>(null);
   const [indicative, setIndicative] = useState(false);
   const [step, setStep] = useState<"form" | "success">("form");
   const [txSignature, setTxSignature] = useState<string | null>(null);
@@ -106,8 +107,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
   useEffect(() => {
     const getQuote = async () => {
+      // reset previous provider quotes
+      setQuote(null);
+      setMeteoraQuote(null);
+      setFixoriumQuote(null);
+
       if (!fromAmount || !fromToken || !toToken) {
-        setQuote(null);
         setToAmount("");
         setQuoteError("");
         setIndicative(false);
@@ -119,7 +124,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         (!supportedMints.has(fromToken.mint) ||
           !supportedMints.has(toToken.mint))
       ) {
-        setQuote(null);
         setToAmount("");
         setQuoteError("Quotes unavailable for this pair on Jupiter");
         setIndicative(false);
@@ -128,7 +132,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       setQuoteError("");
 
       if (parseFloat(fromAmount) <= 0) {
-        setQuote(null);
         setToAmount("");
         setIndicative(false);
         return;
@@ -142,7 +145,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         );
         const amountInt = parseInt(amount, 10);
         if (!amountInt || amountInt <= 0) {
-          setQuote(null);
           setToAmount("");
           setQuoteError("");
           setIndicative(false);
@@ -156,7 +158,41 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
         let foundQuote = false;
 
-        // Try Meteora first
+        // Try Fixorium first (unified quote endpoint)
+        try {
+          const fq = await getFixoriumQuote(fromToken.mint, toToken.mint, amountInt);
+          if (fq && fq.route) {
+            console.log("Fixorium provided a route", fq);
+            setFixoriumQuote(fq);
+
+            const minReceivedRaw =
+              fq.minimumReceived ?? fq.minReceived ?? fq.minimum_received ?? fq.min_received ?? fq.estimatedOut ?? fq.outAmount ?? null;
+
+            if (minReceivedRaw != null && toToken?.decimals != null) {
+              try {
+                const outHuman =
+                  typeof minReceivedRaw === "string"
+                    ? parseInt(minReceivedRaw, 10) / Math.pow(10, toToken.decimals)
+                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
+                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+                setQuoteError("");
+                setIndicative(false);
+                foundQuote = true;
+              } catch (e) {
+                console.debug("Failed to parse Fixorium minReceived", e);
+              }
+            }
+
+            if (foundQuote) {
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.debug("Fixorium quote attempt failed silently:", e);
+        }
+
+        // Try Meteora next
         try {
           const mq = await getMeteoraQuote(
             fromToken.mint,
@@ -166,7 +202,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
           if (mq && mq.route) {
             console.log("Meteora provided a route", mq);
-            setQuote(null);
             setMeteoraQuote(mq);
 
             const minReceivedRaw =
@@ -221,7 +256,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
           const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
           const estOutHuman = (fromHuman * fromUsd) / toUsd;
-          setQuote(null);
           setToAmount(estOutHuman.toFixed(6));
           setQuoteError("");
           setIndicative(true);
@@ -229,14 +263,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           console.debug(
             `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
           );
-          setQuote(null);
           setToAmount("");
           setQuoteError("");
           setIndicative(false);
         }
       } catch (err) {
         console.debug("Quote fetch error:", err);
-        setQuote(null);
         setToAmount("");
         setQuoteError("");
         setIndicative(false);
@@ -772,6 +804,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       body: JSON.stringify({ route, userPublicKey }),
     });
     if (!res.ok) throw new Error(`Meteora build swap failed: ${res.status}`);
+    return res.json();
+  }
+
+  // Fixorium unified quote & swap helpers
+  async function getFixoriumQuote(inputMint: string, outputMint: string, amount: number) {
+    const url = `${resolveApiUrl("/api/quote")}?inputMint=${encodeURIComponent(
+      inputMint,
+    )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
+      String(amount),
+    )}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Fixorium quote failed: ${resp.status}`);
+    return resp.json();
+  }
+
+  async function buildFixoriumSwap(route: any, userPublicKey: string) {
+    // POST to unified /api/swap - server will build swap transaction using configured provider
+    const res = await fetch(resolveApiUrl("/api/swap"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ route, userPublicKey }),
+    });
+    if (!res.ok) throw new Error(`Fixorium build swap failed: ${res.status}`);
     return res.json();
   }
 

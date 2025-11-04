@@ -57,10 +57,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@lib": path.resolve(__dirname, "src/lib"),   // ✅ FIXED — REQUIRED
-      "@shared": path.resolve(__dirname, "shared"),
-      "@utils": path.resolve(__dirname, "utils"),
+      "@": path.resolve(__dirname, "client"),
+      "@lib": path.resolve(__dirname, "client/lib"),   // ✅ FIXED — REQUIRED
+      "@shared": path.resolve(__dirname, "client/lib/services"),
+      "@utils": path.resolve(__dirname, "client/lib/services/dereved-price.ts"),
     },
   },
 });

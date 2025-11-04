@@ -6,6 +6,7 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
+import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
 

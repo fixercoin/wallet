@@ -1739,7 +1739,7 @@ export default {
     }
 
     // Unified quote endpoint: /api/quote?inputMint=...&outputMint=...&amount=...
-    // Tries multiple DEX providers in order
+    // Tries multiple DEX providers in order (Jupiter -> Meteora -> DexScreener)
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
       const outputMint = searchParams.get("outputMint") || "";
@@ -1765,19 +1765,19 @@ export default {
           url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
         },
         {
-          name: "pumpfun",
-          url: `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+          name: "dexscreener",
+          url: `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(inputMint)}`,
         },
       ];
 
-      let lastError: any = null;
+      let lastErrors: string[] = [];
 
       for (const p of providers) {
         if (provider !== "auto" && provider !== p.name) continue;
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const resp = await fetch(p.url, {
             headers: { Accept: "application/json" },
@@ -1788,22 +1788,46 @@ export default {
 
           if (resp.ok) {
             const data = await resp.json();
-            return json(
-              { source: p.name, quote: data },
-              { headers: corsHeaders },
-            );
+
+            // For DexScreener, transform the response to match quote format
+            if (p.name === "dexscreener" && data.pairs) {
+              const pair = data.pairs.find(
+                (p: any) => p.baseToken?.address === inputMint && p.priceUsd,
+              );
+              if (pair) {
+                return json(
+                  {
+                    source: "dexscreener",
+                    quote: {
+                      inAmount: amount,
+                      outAmount: pair.priceUsd,
+                      priceImpact: 0,
+                    },
+                  },
+                  { headers: corsHeaders },
+                );
+              }
+            } else if (p.name !== "dexscreener") {
+              return json(
+                { source: p.name, quote: data },
+                { headers: corsHeaders },
+              );
+            }
           }
 
-          lastError = `${p.name}: ${resp.status}`;
+          lastErrors.push(`${p.name}: ${resp.status}`);
         } catch (e: any) {
-          lastError = `${p.name}: ${e?.message || String(e)}`;
+          lastErrors.push(`${p.name}: ${e?.message || String(e)}`);
         }
       }
+
+      console.warn(`[/api/quote] All providers failed:`, lastErrors);
 
       return json(
         {
           error: "Failed to fetch quote from any provider",
-          details: lastError || "All providers failed",
+          details: lastErrors.join(" | ") || "All providers failed",
+          providers_attempted: ["jupiter", "meteora", "dexscreener"],
         },
         { status: 502, headers: corsHeaders },
       );
@@ -1817,13 +1841,64 @@ export default {
 
         if (!body || typeof body !== "object") {
           return json(
-            { error: "Invalid request body" },
+            {
+              error: "Invalid request body",
+              message: "POST body must be valid JSON",
+            },
             { status: 400, headers: corsHeaders },
           );
         }
 
         const provider = (body.provider || "auto").toLowerCase();
-        const { inputMint, outputMint, amount, mint, wallet } = body as any;
+        const { inputMint, outputMint, amount, mint, wallet, routePlan } =
+          body as any;
+
+        console.log(
+          `[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`,
+        );
+
+        // Try Jupiter swap if inputMint is provided (Jupiter specific)
+        if (
+          (provider === "jupiter" || provider === "auto") &&
+          inputMint &&
+          routePlan
+        ) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "jupiter", swap: data },
+                { headers: corsHeaders },
+              );
+            } else {
+              console.warn(`[/api/swap] Jupiter swap returned ${resp.status}`);
+            }
+          } catch (e: any) {
+            console.warn(`[/api/swap] Jupiter swap error:`, e?.message);
+            if (provider === "jupiter") {
+              return json(
+                {
+                  error: "Jupiter swap failed",
+                  details: e?.message,
+                  hint: "Ensure routePlan is provided from the quote endpoint",
+                },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
 
         // Try Pumpfun swap if mint is provided (Pumpfun specific)
         if ((provider === "pumpfun" || provider === "auto") && mint && amount) {
@@ -1856,8 +1931,11 @@ export default {
                 { source: "pumpfun", swap: data },
                 { headers: corsHeaders },
               );
+            } else {
+              console.warn(`[/api/swap] Pumpfun swap returned ${resp.status}`);
             }
           } catch (e: any) {
+            console.warn(`[/api/swap] Pumpfun swap error:`, e?.message);
             if (provider === "pumpfun") {
               return json(
                 { error: "Pumpfun swap failed", details: e?.message },
@@ -1867,47 +1945,52 @@ export default {
           }
         }
 
-        // Try Jupiter swap if inputMint is provided (Jupiter specific)
-        if (
-          (provider === "jupiter" || provider === "auto") &&
-          inputMint &&
-          body.routePlan
-        ) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
+        // Provide helpful error message with examples
+        const hasInputMint = !!inputMint;
+        const hasMint = !!mint;
+        const hasAmount = !!amount;
 
-            const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body),
-              signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            if (resp.ok) {
-              const data = await resp.json();
-              return json(
-                { source: "jupiter", swap: data },
-                { headers: corsHeaders },
-              );
-            }
-          } catch (e: any) {
-            if (provider === "jupiter") {
-              return json(
-                { error: "Jupiter swap failed", details: e?.message },
-                { status: 502, headers: corsHeaders },
-              );
-            }
-          }
+        let helpText = "Missing required fields for swap. ";
+        if (hasInputMint) {
+          helpText +=
+            "For Jupiter swaps, you need: inputMint, outputMint, amount, and routePlan (from /api/quote). ";
+        }
+        if (hasMint) {
+          helpText +=
+            "For Pumpfun swaps, you need: mint, amount, wallet, and optionally decimals, slippage. ";
+        }
+        if (!hasInputMint && !hasMint) {
+          helpText +=
+            "Provide either mint (for Pumpfun) or inputMint + outputMint (for Jupiter). ";
         }
 
         return json(
           {
-            error:
-              "Unable to execute swap - missing required fields or unsupported provider",
-            required: ["mint or inputMint", "amount", "provider (optional)"],
+            error: "Unable to execute swap - missing required fields",
+            message: helpText,
+            supported_providers: {
+              jupiter: {
+                required: ["inputMint", "amount", "routePlan"],
+                optional: ["wallet", "slippageBps"],
+              },
+              pumpfun: {
+                required: ["mint", "amount"],
+                optional: [
+                  "wallet",
+                  "decimals",
+                  "slippage",
+                  "txVersion",
+                  "priorityFee",
+                ],
+              },
+            },
+            received: {
+              provider,
+              has_inputMint: hasInputMint,
+              has_mint: hasMint,
+              has_amount: hasAmount,
+              has_routePlan: !!routePlan,
+            },
           },
           { status: 400, headers: corsHeaders },
         );

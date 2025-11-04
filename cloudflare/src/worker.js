@@ -301,18 +301,19 @@ export default {
       }
     }
 
-    // SOL price proxy
+    // SOL price proxy - with improved fallback logic
     if (pathname === "/api/sol/price" && req.method === "GET") {
+      const SOL_MINT = "So11111111111111111111111111111111111111112";
       const endpoints = [
-        "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
-        "https://api.dexscreener.io/latest/dex/tokens/So11111111111111111111111111111111111111112",
+        `https://api.dexscreener.com/latest/dex/tokens/${SOL_MINT}`,
+        `https://api.dexscreener.io/latest/dex/tokens/${SOL_MINT}`,
       ];
       let lastError = null;
 
       for (const dexUrl of endpoints) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const resp = await fetch(dexUrl, {
             headers: { Accept: "application/json" },
@@ -323,40 +324,61 @@ export default {
           if (resp.ok) {
             const data = await resp.json();
             const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-            if (pairs.length > 0) {
-              const pair = pairs[0];
-              const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
+
+            // Find the best pair (typically the first one with good liquidity)
+            const pair = pairs.find(
+              (p) => p && p.priceUsd && parseFloat(p.priceUsd) > 0,
+            );
+
+            if (pair) {
+              const price = parseFloat(pair.priceUsd);
+              // Get 24h price change from either priceChange.h24 or priceChange24h
               const priceChange24h =
-                pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
+                pair?.priceChange?.h24 ??
+                pair?.priceChange24h ??
+                pair?.price24hChange ??
+                0;
+
+              console.log(
+                `[SOL Price] Success: $${price}, 24h change: ${priceChange24h}%`,
+              );
+
               return json(
                 {
+                  token: "SOL",
                   price,
                   priceUsd: price,
                   price_change_24h: priceChange24h,
-                  data: { price, priceUsd: price, priceChange24h },
+                  volume_24h: pair?.volume?.h24 ?? 0,
+                  market_cap: pair?.marketCap ?? 0,
                 },
                 { headers: corsHeaders },
               );
             }
           }
-          lastError = resp.status;
+          lastError = `DexScreener returned ${resp.status}`;
         } catch (e) {
           lastError = e?.message || String(e);
         }
       }
 
+      console.warn(`[SOL Price] All endpoints failed:`, lastError);
+
+      // Fallback to static price
       return json(
         {
+          token: "SOL",
           price: 180,
           priceUsd: 180,
           price_change_24h: 0,
-          data: { price: 180, priceUsd: 180, priceChange24h: 0 },
+          volume_24h: 0,
+          market_cap: 0,
         },
         { headers: corsHeaders },
       );
     }
 
-    // Unified quote endpoint
+    // Unified quote endpoint - with improved fallback logic
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
       const outputMint = searchParams.get("outputMint") || "";
@@ -382,19 +404,19 @@ export default {
           url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
         },
         {
-          name: "pumpfun",
-          url: `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+          name: "dexscreener",
+          url: `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(inputMint)}`,
         },
       ];
 
-      let lastError = null;
+      let lastErrors = [];
 
       for (const p of providers) {
         if (provider !== "auto" && provider !== p.name) continue;
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const resp = await fetch(p.url, {
             headers: { Accept: "application/json" },
@@ -405,22 +427,49 @@ export default {
 
           if (resp.ok) {
             const data = await resp.json();
-            return json(
-              { source: p.name, quote: data },
-              { headers: corsHeaders },
-            );
+
+            // For DexScreener, transform response to match quote format
+            if (
+              p.name === "dexscreener" &&
+              data.pairs &&
+              Array.isArray(data.pairs)
+            ) {
+              const pair = data.pairs[0];
+              if (pair && pair.priceUsd) {
+                return json(
+                  {
+                    source: "dexscreener",
+                    quote: {
+                      inAmount: amount,
+                      outAmount: pair.priceUsd,
+                      priceImpact: 0,
+                      priceChange24h: pair.priceChange?.h24 ?? 0,
+                    },
+                  },
+                  { headers: corsHeaders },
+                );
+              }
+            } else if (p.name !== "dexscreener") {
+              return json(
+                { source: p.name, quote: data },
+                { headers: corsHeaders },
+              );
+            }
           }
 
-          lastError = `${p.name}: ${resp.status}`;
+          lastErrors.push(`${p.name}: ${resp.status}`);
         } catch (e) {
-          lastError = `${p.name}: ${e?.message || String(e)}`;
+          lastErrors.push(`${p.name}: ${e?.message || String(e)}`);
         }
       }
+
+      console.warn(`[/api/quote] All providers failed:`, lastErrors);
 
       return json(
         {
           error: "Failed to fetch quote from any provider",
-          details: lastError || "All providers failed",
+          details: lastErrors.join(" | ") || "All providers failed",
+          providers_attempted: ["jupiter", "meteora", "dexscreener"],
         },
         { status: 502, headers: corsHeaders },
       );

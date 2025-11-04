@@ -5,6 +5,8 @@
 // function below is a placeholder that returns null and instructs the caller to perform server-side
 // transaction construction with PumpSwap program details.
 
+import { resolveApiUrl } from "@/lib/api-client";
+
 export interface PumpPoolInfo {
   address: string;
   baseMint: string; // token A mint (e.g. SOL or token)

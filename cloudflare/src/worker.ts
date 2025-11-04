@@ -1006,21 +1006,31 @@ export default {
     }
 
     // Unified swap quote: /api/swap/quote
-  // Supports: pump.fun (mint), meteora/jupiter (inputMint+outputMint+amount)
-  if (pathname === "/api/swap/quote" && req.method === "GET") {
+    // Supports: pump.fun (mint), meteora/jupiter (inputMint+outputMint+amount)
+    if (pathname === "/api/swap/quote" && req.method === "GET") {
       const mint = url.searchParams.get("mint") || "";
       const inputMint = url.searchParams.get("inputMint") || "";
       const outputMint = url.searchParams.get("outputMint") || "";
       const amount = url.searchParams.get("amount") || "";
 
       // Helper to try fetching an endpoint with timeout
-      const tryFetch = async (target: string, method = "GET", body?: any, timeoutMs = 10000) => {
+      const tryFetch = async (
+        target: string,
+        method = "GET",
+        body?: any,
+        timeoutMs = 10000,
+      ) => {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
           const resp = await fetch(target, {
             method,
-            headers: body ? { "Content-Type": "application/json", Accept: "application/json" } : { Accept: "application/json" },
+            headers: body
+              ? {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                }
+              : { Accept: "application/json" },
             body: body ? JSON.stringify(body) : undefined,
             signal: controller.signal,
           });
@@ -1035,7 +1045,9 @@ export default {
       try {
         // 1) If pump.fun mint query provided
         if (mint) {
-          const pump = await tryFetch(`https://pumpportal.fun/api/quote?mint=${encodeURIComponent(mint)}`);
+          const pump = await tryFetch(
+            `https://pumpportal.fun/api/quote?mint=${encodeURIComponent(mint)}`,
+          );
           if (pump) return json(pump, { headers: corsHeaders });
         }
 
@@ -1044,25 +1056,51 @@ export default {
           // Meteora
           const meteoraUrl = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
           const met = await tryFetch(meteoraUrl, "GET", undefined, 12000);
-          if (met) return json({ source: "meteora", quote: met }, { headers: corsHeaders });
+          if (met)
+            return json(
+              { source: "meteora", quote: met },
+              { headers: corsHeaders },
+            );
 
           // Jupiter
           const jupiterUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
           const jup = await tryFetch(jupiterUrl, "GET", undefined, 10000);
-          if (jup) return json({ source: "jupiter", quote: jup }, { headers: corsHeaders });
+          if (jup)
+            return json(
+              { source: "jupiter", quote: jup },
+              { headers: corsHeaders },
+            );
         }
 
         // 3) Try Raydium/Orca public quote endpoints as fallback
         if (inputMint && outputMint && amount) {
           // Raydium - SDK endpoints are not fully public; attempt community endpoint
           const rayUrl = `https://api.raydium.io/swap/quote`; // best-effort - many Raydium endpoints are private
-          const ray = await tryFetch(rayUrl, "POST", { inputMint, outputMint, amount }, 8000);
-          if (ray) return json({ source: "raydium", quote: ray }, { headers: corsHeaders });
+          const ray = await tryFetch(
+            rayUrl,
+            "POST",
+            { inputMint, outputMint, amount },
+            8000,
+          );
+          if (ray)
+            return json(
+              { source: "raydium", quote: ray },
+              { headers: corsHeaders },
+            );
 
           // Orca - community endpoints may vary
           const orcaUrl = `https://api.orca.so/pools/price`; // placeholder
-          const orca = await tryFetch(orcaUrl, "POST", { inputMint, outputMint, amount }, 8000);
-          if (orca) return json({ source: "orca", quote: orca }, { headers: corsHeaders });
+          const orca = await tryFetch(
+            orcaUrl,
+            "POST",
+            { inputMint, outputMint, amount },
+            8000,
+          );
+          if (orca)
+            return json(
+              { source: "orca", quote: orca },
+              { headers: corsHeaders },
+            );
         }
 
         return json(
@@ -1070,7 +1108,10 @@ export default {
           { status: 502, headers: corsHeaders },
         );
       } catch (e: any) {
-        return json({ error: "Failed to fetch swap quote", details: e?.message }, { status: 502, headers: corsHeaders });
+        return json(
+          { error: "Failed to fetch swap quote", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
       }
     }
 
@@ -2274,13 +2315,13 @@ export default {
         try {
           const rpcResult = await callRpc(env, "sendTransaction", [signedTx]);
           const parsed = JSON.parse(String(rpcResult?.body || "{}"));
-          return json(
-            { ok: true, result: parsed },
-            { headers: corsHeaders },
-          );
+          return json({ ok: true, result: parsed }, { headers: corsHeaders });
         } catch (rpcErr: any) {
           return json(
-            { error: "Failed to submit signed transaction to RPC", details: rpcErr?.message || String(rpcErr) },
+            {
+              error: "Failed to submit signed transaction to RPC",
+              details: rpcErr?.message || String(rpcErr),
+            },
             { status: 502, headers: corsHeaders },
           );
         }
@@ -2329,10 +2370,17 @@ export default {
         }
 
         // Prefer common locations for swapTransaction
-        const swapTx = data?.swap?.swapTransaction || data?.swapTransaction || data?.swapTransactionBase64;
+        const swapTx =
+          data?.swap?.swapTransaction ||
+          data?.swapTransaction ||
+          data?.swapTransactionBase64;
         if (swapTx) {
           return json(
-            { swapTransaction: swapTx, signed: false, source: data?._source || data?.source || null },
+            {
+              swapTransaction: swapTx,
+              signed: false,
+              source: data?._source || data?.source || null,
+            },
             { headers: corsHeaders },
           );
         }

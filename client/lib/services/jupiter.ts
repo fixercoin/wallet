@@ -273,9 +273,13 @@ class JupiterAPI {
       return (await Promise.race([fetch(url), timeout])) as Response;
     };
     try {
-      let response = await fetchWithTimeout(resolveApiUrl("/api/jupiter/tokens?type=strict"));
+      let response = await fetchWithTimeout(
+        resolveApiUrl("/api/jupiter/tokens?type=strict"),
+      );
       if (!response.ok) {
-        response = await fetchWithTimeout(resolveApiUrl("/api/jupiter/tokens?type=all"));
+        response = await fetchWithTimeout(
+          resolveApiUrl("/api/jupiter/tokens?type=all"),
+        );
       }
       if (!response.ok) {
         return [];

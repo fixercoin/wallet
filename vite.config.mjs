@@ -60,7 +60,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "client"),
       "@lib": path.resolve(__dirname, "client/lib"),   // ✅ FIXED — REQUIRED
       "@shared": path.resolve(__dirname, "client/lib/services"),
-      "@utils": path.resolve(__dirname, "client/lib/services/dereved-price.ts"),
+      "@utils": path.resolve(__dirname, "client/lib/services/derived-price.ts"),
     },
   },
 });

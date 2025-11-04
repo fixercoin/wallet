@@ -119,6 +119,18 @@ async function getMeteOraQuote(
 
     const response = await fetchWithTimeout(url);
     if (!response.ok) {
+      if (response.status === 404 || response.status === 400) {
+        console.warn(
+          `[Swap] Meteora quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+        );
+        return null;
+      }
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(
+          `[Swap] Meteora API error ${response.status}, trying fallback`,
+        );
+        return null;
+      }
       console.warn(
         `[Swap] Meteora quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
       );
@@ -126,6 +138,15 @@ async function getMeteOraQuote(
     }
 
     const data = await response.json();
+
+    // Validate Meteora response has expected fields
+    if (!data || (!data.estimatedOut && !data.outAmount && !data.minReceived)) {
+      console.warn(
+        `[Swap] Meteora returned invalid quote for ${inputMint} -> ${outputMint}`,
+      );
+      return null;
+    }
+
     console.log(
       `[Swap] ✅ Meteora quote success: ${inputMint} -> ${outputMint}`,
     );

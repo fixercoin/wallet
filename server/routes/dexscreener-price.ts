@@ -57,15 +57,49 @@ async function getDerivedTokenPrice(
       ? parseFloat(solPair.priceUsd)
       : FALLBACK_USD.SOL;
 
-    // Get token price (this gives us the direct USDT price from any pair)
-    const tokenData = await fetchDexscreenerData(`/tokens/${tokenMint}`);
-    const tokenPair = tokenData?.pairs?.[0];
+    // Try to get token price via pair address first for better accuracy
+    let tokenPrice: number | null = null;
+    const pairAddress = MINT_TO_PAIR_ADDRESS[tokenMint];
 
-    if (!tokenPair || !tokenPair.priceUsd) {
-      return null;
+    if (pairAddress) {
+      try {
+        console.log(
+          `[Derived Price] Trying pair address ${pairAddress} for ${tokenSymbol}`,
+        );
+        const pairData = await fetchDexscreenerData(
+          `/pairs/solana/${pairAddress}`,
+        );
+        const pair = pairData?.pair || (pairData?.pairs || [])[0];
+
+        if (pair && pair.priceUsd) {
+          tokenPrice = parseFloat(pair.priceUsd);
+          if (isFinite(tokenPrice) && tokenPrice > 0) {
+            console.log(
+              `[Derived Price] ✅ Got ${tokenSymbol} price via pair address: $${tokenPrice.toFixed(8)}`,
+            );
+          } else {
+            tokenPrice = null;
+          }
+        }
+      } catch (e) {
+        console.warn(`[Derived Price] Pair address lookup failed:`, e);
+      }
     }
 
-    const tokenPrice = parseFloat(tokenPair.priceUsd);
+    // Fallback to token mint lookup if pair address didn't work
+    if (tokenPrice === null) {
+      const tokenData = await fetchDexscreenerData(`/tokens/${tokenMint}`);
+      const tokenPair = tokenData?.pairs?.[0];
+
+      if (tokenPair && tokenPair.priceUsd) {
+        tokenPrice = parseFloat(tokenPair.priceUsd);
+        if (!isFinite(tokenPrice) || tokenPrice <= 0) {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
 
     // Calculate how many tokens per 1 SOL
     // pairRatio = SOL price / token price = how many tokens you get for 1 SOL

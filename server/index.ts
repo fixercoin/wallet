@@ -101,7 +101,6 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/swap", validateSwapRequest, handleUnifiedSwapLocal);
 
   // Local quote handler (preferred over external worker)
-  import { handleLocalQuote } from "./routes/quote-handler";
   app.get("/api/quote", handleLocalQuote);
 
   // Keep proxy handlers as fallbacks (registered after local handler if needed)

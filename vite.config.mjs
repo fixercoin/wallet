@@ -4,11 +4,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
 
-const __dirname = path.dirname(fileURLToPath(new URL(import.meta.url)));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let apiServer = null;
 
-export default {
+export default defineConfig({
   base: "./",
   plugins: [
     react(),
@@ -16,11 +16,8 @@ export default {
       name: "express-server",
       apply: "serve",
       async configureServer(server) {
-        // Load and initialize the Express server
         try {
-          const { createServer: createExpressServer } = await import(
-            "./server/index.ts"
-          );
+          const { createServer: createExpressServer } = await import("./server/index.ts");
           apiServer = await createExpressServer();
           console.log("[Vite] ✅ Express server initialized");
         } catch (err) {
@@ -28,83 +25,60 @@ export default {
           throw err;
         }
 
-        // Register middleware BEFORE other middleware
         server.middlewares.use((req, res, next) => {
-          // Only handle /api and /health requests with the Express app
           if (req.url.startsWith("/api") || req.url === "/health") {
-            console.log(
-              `[Vite Middleware] Routing ${req.method} ${req.url} to Express`,
-            );
             return apiServer(req, res, next);
           }
           next();
         });
 
-        // Lightweight in-memory WebSocket rooms at /ws/:roomId for dev
         const wss = new WebSocketServer({ noServer: true });
-        const rooms = new Map(); // roomId -> Set<WebSocket>
+        const rooms = new Map();
 
         server.httpServer?.on("upgrade", (request, socket, head) => {
-          try {
-            const url = request.url || "";
-            const match = url.match(/^\/ws\/(.+)$/);
-            if (!match) return; // not our WS route
+          const match = request.url?.match(/^\/ws\/(.+)$/);
+          if (!match) return;
 
-            wss.handleUpgrade(request, socket, head, (ws) => {
-              const roomId = decodeURIComponent(match[1]);
-              if (!rooms.has(roomId)) rooms.set(roomId, new Set());
-              const set = rooms.get(roomId);
-              set.add(ws);
+          wss.handleUpgrade(request, socket, head, (ws) => {
+            const roomId = decodeURIComponent(match[1]);
+            if (!rooms.has(roomId)) rooms.set(roomId, new Set());
+            const users = rooms.get(roomId);
+            users.add(ws);
 
-              ws.on("message", (data) => {
-                let msg;
-                try {
-                  msg = JSON.parse(data.toString());
-                } catch {
-                  return;
-                }
-                if (msg && msg.type === "chat") {
-                  const payload = JSON.stringify({
-                    kind: "chat",
-                    data: {
-                      id: Math.random().toString(36).slice(2),
-                      text: String(msg.text || ""),
-                      at: Date.now(),
-                    },
-                  });
-                  for (const client of set) {
-                    try {
-                      client.send(payload);
-                    } catch {}
-                  }
-                } else if (msg && msg.kind === "notification") {
-                  const payload = JSON.stringify({
-                    kind: "notification",
-                    data: msg.data,
-                  });
-                  for (const client of set) {
-                    try {
-                      client.send(payload);
-                    } catch {}
-                  }
-                } else if (msg && msg.type === "ping") {
-                  try {
-                    ws.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
-                  } catch {}
-                }
-              });
+            ws.on("message", (data) => {
+              let msg;
+              try {
+                msg = JSON.parse(data.toString());
+              } catch {
+                return;
+              }
 
-              ws.on("close", () => {
-                set.delete(ws);
-                if (set.size === 0) rooms.delete(roomId);
-              });
+              const broadcast = (payload) => {
+                for (const client of users) client.send(JSON.stringify(payload));
+              };
+
+              if (msg.type === "chat") {
+                broadcast({
+                  kind: "chat",
+                  data: {
+                    id: Math.random().toString(36).slice(2),
+                    text: msg.text ?? "",
+                    at: Date.now(),
+                  },
+                });
+              } else if (msg.kind === "notification") {
+                broadcast({ kind: "notification", data: msg.data });
+              } else if (msg.type === "ping") {
+                ws.send(JSON.stringify({ kind: "pong", ts: Date.now() }));
+              }
             });
-          } catch (e) {
-            // ignore ws errors
-          }
-        });
 
-        // Don't return anything - middleware is already registered
+            ws.on("close", () => {
+              users.delete(ws);
+              if (users.size === 0) rooms.delete(roomId);
+            });
+          });
+        });
       },
     },
   ],
@@ -112,17 +86,14 @@ export default {
     outDir: "dist/spa",
     emptyOutDir: true,
   },
-  // Disable Vite's client error overlay which can crash in some environments
   server: {
-    hmr: {
-      overlay: false,
-    },
+    hmr: { overlay: false },
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "client"),
+      "@": path.resolve(__dirname, "src"),          // ✅ FIXED
       "@shared": path.resolve(__dirname, "shared"),
       "@utils": path.resolve(__dirname, "utils"),
     },
   },
-};
+});

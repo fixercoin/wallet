@@ -340,7 +340,7 @@ export default {
 
       const getPriceFromDexScreener = async (
         mint: string,
-      ): Promise<number | null> => {
+      ): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
           const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
@@ -366,7 +366,11 @@ export default {
                   console.log(
                     `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
                   );
-                  return price;
+                  return {
+                    price,
+                    priceChange24h: pair.priceChange?.h24 || 0,
+                    volume24h: pair.volume?.h24 || 0,
+                  };
                 }
               }
             }

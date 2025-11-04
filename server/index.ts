@@ -50,6 +50,10 @@ import {
   handleSolanaSendProxy,
   handleSolanaSimulateProxy,
 } from "./routes/swap-proxy";
+import {
+  handleSolanaSend,
+  handleSolanaSimulate,
+} from "./routes/solana-transaction";
 import { handleUnifiedSwapLocal } from "./routes/swap-handler";
 import { handleLocalQuote } from "./routes/quote-handler";
 import { handleSwapQuoteV2, handleSwapExecuteV2 } from "./routes/swap-v2";

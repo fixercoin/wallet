@@ -786,7 +786,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           {token.symbol || token.name || token.mint.slice(0, 6)}
                         </span>
                         <span className="text-[10px] text-gray-300 uppercase">
-                          Balance: {(token.balance || 0).toLocaleString()}
+                          Balance: {formatTokenAmount(token.balance || 0, token.symbol)}
                         </span>
                       </div>
                     </SelectItem>

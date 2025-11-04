@@ -225,11 +225,11 @@ export async function createServer(): Promise<express.Application> {
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00007297, // Updated to real market price
+        SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.000010, // Updated fallback
       };
 
       // If stablecoins or known symbols, return deterministic prices

@@ -143,6 +143,18 @@ export default {
       );
     }
 
+    // Try to serve static assets first (for built frontend)
+    if (req.method === "GET" && !pathname.startsWith("/api")) {
+      try {
+        const assetResponse = await env.ASSETS.fetch(req);
+        if (assetResponse.status !== 404) {
+          return assetResponse;
+        }
+      } catch (e) {
+        // ASSETS might not be available, continue to API handling
+      }
+    }
+
     // === Simple Jupiter Swap Endpoints ===
 
     // GET /api/quote - Get swap quote from Jupiter API

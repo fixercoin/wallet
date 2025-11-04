@@ -15,6 +15,11 @@ import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { prefetchWalletAddressData } from "@/lib/services/address-setup";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { PasswordSetup } from "./PasswordSetup";
+import {
+  setWalletPassword,
+  markWalletAsPasswordProtected,
+} from "@/lib/wallet-password";
 
 interface WalletSetupProps {
   onComplete: () => void;
@@ -455,7 +460,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••��•••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>

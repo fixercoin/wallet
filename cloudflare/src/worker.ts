@@ -2633,10 +2633,13 @@ export default {
     if (req.method === "GET" && !pathname.startsWith("/api")) {
       try {
         // Try to serve index.html as fallback for SPA routing
-        const indexRequest = new Request(new URL(req.url).origin + "/index.html", {
-          method: "GET",
-          headers: req.headers,
-        });
+        const indexRequest = new Request(
+          new URL(req.url).origin + "/index.html",
+          {
+            method: "GET",
+            headers: req.headers,
+          },
+        );
         const indexResponse = await env.ASSETS.fetch(indexRequest);
         if (indexResponse.status === 200) {
           return new Response(indexResponse.body, {

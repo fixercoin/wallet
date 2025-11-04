@@ -786,7 +786,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           {token.symbol || token.name || token.mint.slice(0, 6)}
                         </span>
                         <span className="text-[10px] text-gray-300 uppercase">
-                          Balance: {formatTokenAmount(token.balance || 0, token.symbol)}
+                          Balance:{" "}
+                          {formatTokenAmount(token.balance || 0, token.symbol)}
                         </span>
                       </div>
                     </SelectItem>
@@ -806,7 +807,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
-                  Available: {formatTokenAmount(selectedToken.balance || 0, selectedToken.symbol)}{" "}
+                  Available:{" "}
+                  {formatTokenAmount(
+                    selectedToken.balance || 0,
+                    selectedToken.symbol,
+                  )}{" "}
                   {selectedToken.symbol}
                 </p>
               ) : null}

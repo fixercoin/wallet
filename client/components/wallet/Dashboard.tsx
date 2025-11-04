@@ -411,7 +411,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const formatBalance = (amount: number | undefined, symbol?: string): string => {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     if (!amount || isNaN(amount)) return "0.00";
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
@@ -460,7 +463,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"));
+        const res = await fetch(
+          resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"),
+        );
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;

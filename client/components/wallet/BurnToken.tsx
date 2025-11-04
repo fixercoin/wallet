@@ -150,7 +150,11 @@ const toBaseUnits = (value: string, decimals: number): bigint => {
   return wholePart * pow + fractionPart;
 };
 
-const formatNumber = (value: number | undefined, decimals: number, symbol?: string): string => {
+const formatNumber = (
+  value: number | undefined,
+  decimals: number,
+  symbol?: string,
+): string => {
   if (typeof value !== "number" || !isFinite(value)) return "0.00";
   // FIXERCOIN and LOCKER always show exactly 2 decimal places
   if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
@@ -552,7 +556,11 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           </span>
                           <span className="text-[10px] text-gray-600 uppercase">
                             Balance:{" "}
-                            {formatNumber(token.balance, token.decimals ?? 0, token.symbol)}
+                            {formatNumber(
+                              token.balance,
+                              token.decimals ?? 0,
+                              token.symbol,
+                            )}
                           </span>
                         </div>
                       </SelectItem>

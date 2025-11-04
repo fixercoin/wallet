@@ -221,9 +221,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const kp = getKeypair();
       if (!kp) throw new Error("Missing wallet key to sign transaction");
 
-      const swapTransactionBuf = bytesFromBase64(
-        swapResponse.swapTransaction,
-      );
+      const swapTransactionBuf = bytesFromBase64(swapResponse.swapTransaction);
       const tx = VersionedTransaction.deserialize(swapTransactionBuf);
       tx.sign([kp]);
       const serialized = tx.serialize();

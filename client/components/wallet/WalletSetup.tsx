@@ -78,6 +78,46 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
     }
   };
 
+  const handlePasswordSetup = async (password: string) => {
+    if (!pendingWallet) {
+      setShowPasswordSetup(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Set password in session and mark wallet as password protected
+      setWalletPassword(password);
+      markWalletAsPasswordProtected();
+
+      // Set the wallet (will be encrypted on persist)
+      setWallet(pendingWallet);
+
+      // Prefetch address data via RPC providers
+      void prefetchWalletAddressData(pendingWallet.publicKey).catch(
+        () => undefined,
+      );
+
+      await refreshBalance().catch(() => {});
+      await refreshTokens().catch(() => {});
+
+      toast({
+        title: "Wallet Secured",
+        description: "Your wallet has been created and encrypted with your password.",
+      });
+
+      setShowPasswordSetup(false);
+      setPendingWallet(null);
+      onComplete();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRecoverWallet = async () => {
     setIsLoading(true);
     try {
@@ -86,22 +126,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setRecoveryPhrase(normalizedMnemonic);
 
       const walletData = recoverWallet(normalizedMnemonic);
-      setWallet(walletData);
 
-      // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-      void prefetchWalletAddressData(walletData.publicKey).catch(
-        () => undefined,
-      );
-
-      await refreshBalance().catch(() => {});
-      await refreshTokens().catch(() => {});
-
-      toast({
-        title: "Wallet Recovered",
-        description: "Successfully recovered your wallet from recovery phrase.",
-      });
-
-      onComplete();
+      // Show password setup for new wallet import
+      setPendingWallet(walletData);
+      setPasswordSetupMode("create");
+      setShowPasswordSetup(true);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to recover wallet",
@@ -113,24 +142,32 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
   const handleConfirmWallet = async () => {
     if (!generatedWallet) return;
-    setIsLoading(true);
+
+    // Show password setup for new wallet creation
+    setPendingWallet(generatedWallet);
+    setPasswordSetupMode("create");
+    setShowPasswordSetup(true);
+  };
+
+  const handleUnlockWallets = async (password: string) => {
     try {
-      setWallet(generatedWallet);
-      // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-      void prefetchWalletAddressData(generatedWallet.publicKey).catch(
-        () => undefined,
-      );
+      setIsLoading(true);
+      setError(null);
+      const success = await unlockWithPassword(password);
 
-      await refreshBalance().catch(() => {});
-      await refreshTokens().catch(() => {});
-
-      toast({
-        title: "Wallet Created",
-        description: "Your new Solana wallet has been created successfully.",
-      });
-      onComplete();
+      if (success) {
+        setWalletPassword(password);
+        toast({
+          title: "Wallets Unlocked",
+          description: "Your wallets have been decrypted successfully.",
+        });
+        setShowPasswordSetup(false);
+        onComplete();
+      } else {
+        setError("Invalid password. Please try again.");
+      }
     } catch (error) {
-      setError(error instanceof Error ? error.message : String(error));
+      setError(error instanceof Error ? error.message : "Failed to unlock wallets");
     } finally {
       setIsLoading(false);
     }
@@ -467,7 +504,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "���•••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
+                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>

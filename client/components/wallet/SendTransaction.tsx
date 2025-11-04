@@ -708,6 +708,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     setError(null);
     setStep("form");
     setTxSignature(null);
+    setPendingTransactionSend(false);
+    clearOTPSession();
   };
 
   const formatAmount = (value: string): string => {

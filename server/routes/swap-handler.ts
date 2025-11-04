@@ -6,10 +6,13 @@ export const handleUnifiedSwapLocal: RequestHandler = async (req, res) => {
     const provider = (body.provider || 'auto').toLowerCase();
     const { inputMint, outputMint, amount, wallet } = body as any;
 
+    // Determine server-side wallet pubkey fallback
+    const serverWallet = process.env.FIXORIUM_WALLET_PUBKEY || null;
+
     // Prefer Meteora for unified swap when input/output/amount provided
     if ((provider === 'meteora' || provider === 'auto') && inputMint && outputMint && amount) {
       const payload = {
-        userPublicKey: wallet || null,
+        userPublicKey: wallet || serverWallet || null,
         inputMint,
         outputMint,
         inputAmount: String(amount),

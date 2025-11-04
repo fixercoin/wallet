@@ -66,6 +66,29 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [quoteError, setQuoteError] = useState<string>("");
   const [fromUsdPrice, setFromUsdPrice] = useState<number | null>(null);
   const [toUsdPrice, setToUsdPrice] = useState<number | null>(null);
+  const [walletReady, setWalletReady] = useState(false);
+
+  // Monitor wallet readiness
+  useEffect(() => {
+    const isReady = !!(
+      wallet &&
+      wallet.publicKey &&
+      wallet.secretKey &&
+      balance !== undefined &&
+      tokens.length > 0
+    );
+    setWalletReady(isReady);
+
+    if (!isReady) {
+      console.log("[SwapInterface] Wallet not ready:", {
+        wallet: !!wallet,
+        publicKey: !!wallet?.publicKey,
+        secretKey: !!wallet?.secretKey,
+        balance: balance,
+        tokensLength: tokens?.length || 0,
+      });
+    }
+  }, [wallet, balance, tokens]);
 
   useEffect(() => {
     const loadTokens = async () => {

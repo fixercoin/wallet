@@ -1970,7 +1970,8 @@ export default {
     }
 
     // Unified swap execution endpoint: /api/swap (POST)
-    // Handles swap execution for multiple DEX providers
+    // Handles swap execution for multiple DEX providers (Jupiter, Pumpfun, Meteora)
+    // Preferred provider: Meteora (with local wallet signing support)
     if (pathname === "/api/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
@@ -1986,8 +1987,15 @@ export default {
         }
 
         const provider = (body.provider || "auto").toLowerCase();
-        const { inputMint, outputMint, amount, mint, wallet, routePlan } =
-          body as any;
+        const {
+          inputMint,
+          outputMint,
+          amount,
+          mint,
+          wallet,
+          routePlan,
+          signerKeypair,
+        } = body as any;
 
         console.log(
           `[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`,

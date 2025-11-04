@@ -411,8 +411,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const formatBalance = (amount: number | undefined): string => {
+  const formatBalance = (amount: number | undefined, symbol?: string): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // FIXERCOIN and LOCKER always show exactly 2 decimal places
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,

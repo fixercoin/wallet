@@ -299,7 +299,11 @@ export default {
 
       const getDerivedPrice = async (
         mint: string,
-      ): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> => {
+      ): Promise<{
+        price: number;
+        priceChange24h: number;
+        volume24h: number;
+      } | null> => {
         try {
           console.log(
             `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
@@ -346,7 +350,11 @@ export default {
 
       const getPriceFromDexScreener = async (
         mint: string,
-      ): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> => {
+      ): Promise<{
+        price: number;
+        priceChange24h: number;
+        volume24h: number;
+      } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
           const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
@@ -389,7 +397,11 @@ export default {
 
       const getPriceFromJupiter = async (
         mint: string,
-      ): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> => {
+      ): Promise<{
+        price: number;
+        priceChange24h: number;
+        volume24h: number;
+      } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
           const jupUrl = `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`;
@@ -563,9 +575,10 @@ export default {
 
         if (dexResp.ok) {
           const dexData = await dexResp.json();
-          const pair = Array.isArray(dexData?.pairs) && dexData.pairs.length > 0
-            ? dexData.pairs[0]
-            : null;
+          const pair =
+            Array.isArray(dexData?.pairs) && dexData.pairs.length > 0
+              ? dexData.pairs[0]
+              : null;
 
           if (pair && pair.priceUsd) {
             const priceUsd = parseFloat(pair.priceUsd);

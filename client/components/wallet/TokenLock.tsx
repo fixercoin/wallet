@@ -850,7 +850,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-black" />
+              <Clock className="h-5 w-5 text-black" fill="none" strokeWidth={2} />
               <span className="text-sm font-semibold text-white">
                 Active locks
               </span>

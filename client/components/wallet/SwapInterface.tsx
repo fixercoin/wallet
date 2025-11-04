@@ -482,12 +482,23 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const executeSwap = async () => {
-    if (!wallet) return;
+    if (!wallet || !wallet.publicKey || !wallet.secretKey) {
+      toast({
+        title: "Wallet Error",
+        description: "Wallet is not properly initialized. Please reconnect your wallet.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
 
     try {
       // Helper to submit a single-quote swap via Jupiter
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+        if (!wallet || !wallet.publicKey) {
+          throw new Error("Wallet not available. Please reconnect your wallet.");
+        }
+
         const swapRequest = {
           quoteResponse: q,
           userPublicKey: wallet.publicKey,
@@ -497,7 +508,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (!swapResponse || !swapResponse.swapTransaction)
           throw new Error("Failed to get swap transaction");
         const kp = getKeypair();
-        if (!kp) throw new Error("Missing wallet key to sign transaction");
+        if (!kp) throw new Error("Missing wallet key to sign transaction. Please ensure your wallet is properly connected.");
         const swapTransactionBuf = bytesFromBase64(
           swapResponse.swapTransaction,
         );

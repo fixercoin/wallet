@@ -29,7 +29,8 @@ async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
     "Content-Type": "application/json",
   };
 
-  const res = await fetch(`${PUMP_SWAP_PROXY_BASE}${path}`, {
+  const url = resolveApiUrl(`${PUMP_SWAP_PROXY_BASE}${path}`);
+  const res = await fetch(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,

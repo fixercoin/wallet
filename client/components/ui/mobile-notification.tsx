@@ -50,7 +50,7 @@ export const MobileNotification: React.FC<MobileNotificationProps> = ({
     if (token === "FIXERCOIN" || token === "LOCKER") {
       return `${amount.toLocaleString(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 6,
+        maximumFractionDigits: 2,
       })} ${token}`;
     }
 

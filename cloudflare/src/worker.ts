@@ -630,12 +630,15 @@ export default {
 
       // Fallback SOL price
       console.warn(`[SOL Price] Using fallback price. Error: ${lastError}`);
+      // Using a more reasonable fallback based on recent market prices
+      // This should be updated periodically or replaced with a cache
+      const fallbackPrice = 150; // Updated fallback (previously was 180)
       return json(
         {
           success: true,
           data: {
             address: "So11111111111111111111111111111111111111112",
-            value: 180,
+            value: fallbackPrice,
             priceChange24h: 0,
             updateUnixTime: Math.floor(Date.now() / 1000),
           },

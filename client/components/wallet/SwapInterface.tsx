@@ -308,7 +308,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
       return num.toLocaleString(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 6,
+        maximumFractionDigits: 2,
       });
     }
     return num.toFixed(3);

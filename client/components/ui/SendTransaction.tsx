@@ -648,8 +648,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0";
-    const fractionDigits = selectedSymbol === "FIXERCOIN" ? 8 : 6;
+    if (isNaN(num)) return "0.00";
+    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      });
+    }
+    const fractionDigits = 6;
     return num.toLocaleString(undefined, {
       minimumFractionDigits: Math.min(2, fractionDigits),
       maximumFractionDigits: fractionDigits,

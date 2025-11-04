@@ -93,15 +93,29 @@ export async function createServer(): Promise<express.Application> {
 
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
-  app.post("/api/swap", handleUnifiedSwapLocal);
+  import { requireApiKey } from "./middleware/auth";
+  import { validateSwapRequest, validateSolanaSend, validateSwapSubmit } from "./middleware/validate";
+
+  // Local unified swap endpoint (build unsigned swap). Validate payload.
+  app.post("/api/swap", validateSwapRequest, handleUnifiedSwapLocal);
+
   // Keep proxy handlers as fallbacks (registered after local handler if needed)
   app.get("/api/quote", handleQuoteProxy);
   app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
   app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
-  app.post("/api/solana-send", handleSolanaSendProxy);
-  app.post("/api/solana-simulate", handleSolanaSimulateProxy);
-  // Proxy for /api/swap to worker (fallback) - registered last
-  app.post("/api/swap/proxy", handleSwapProxy);
+
+  // Protect endpoints that accept signed txns or submit to RPC with API key + validation
+  app.post("/api/solana-send", requireApiKey, validateSolanaSend, handleSolanaSendProxy);
+  app.post("/api/solana-simulate", requireApiKey, validateSolanaSend, handleSolanaSimulateProxy);
+
+  // POST /api/swap/submit - require API key and validate
+  app.post("/api/swap/submit", requireApiKey, validateSwapSubmit, (req, res) => {
+    // forward to proxy handler which calls RPC; reuse handleSolanaSendProxy logic by adapting body
+    return handleSolanaSendProxy(req, res as any);
+  });
+
+  // Proxy for /api/swap to worker (fallback) - registered last (protected by API key when forwarding sensitive actions)
+  app.post("/api/swap/proxy", requireApiKey, validateSwapRequest, handleSwapProxy);
 
   // Pumpfun proxy (quote & swap)
   app.all(["/api/pumpfun/quote", "/api/pumpfun/swap"], async (req, res) => {

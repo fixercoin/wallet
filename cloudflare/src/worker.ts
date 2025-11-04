@@ -2235,6 +2235,96 @@ export default {
       }
     }
 
+    // Submit signed transaction: /api/swap/submit (POST)
+    if (pathname === "/api/swap/submit" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        const signedTx = body?.signedTx || body?.tx || body?.signedTransaction;
+        if (!signedTx) {
+          return json(
+            { error: "Missing 'signedTx' field (base64 transaction)" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        try {
+          const rpcResult = await callRpc(env, "sendTransaction", [signedTx]);
+          const parsed = JSON.parse(String(rpcResult?.body || "{}"));
+          return json(
+            { ok: true, result: parsed },
+            { headers: corsHeaders },
+          );
+        } catch (rpcErr: any) {
+          return json(
+            { error: "Failed to submit signed transaction to RPC", details: rpcErr?.message || String(rpcErr) },
+            { status: 502, headers: corsHeaders },
+          );
+        }
+      } catch (e: any) {
+        return json(
+          { error: "Invalid request body", details: e?.message },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Build unsigned swap transaction (proxy to /api/swap with sign=false): /api/swap/build (POST)
+    if (pathname === "/api/swap/build" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        // Forward to existing unified /api/swap endpoint asking for unsigned transaction
+        const forwardPayload = { ...body, sign: false };
+        const forwardUrl = new URL(req.url);
+        forwardUrl.pathname = "/api/swap";
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const resp = await fetch(forwardUrl.toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(forwardPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok) {
+          return json(
+            { error: `Build proxy returned ${resp.status}`, details: data },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        // Prefer common locations for swapTransaction
+        const swapTx = data?.swap?.swapTransaction || data?.swapTransaction || data?.swapTransactionBase64;
+        if (swapTx) {
+          return json(
+            { swapTransaction: swapTx, signed: false, source: data?._source || data?.source || null },
+            { headers: corsHeaders },
+          );
+        }
+
+        return json(
+          { error: "Unable to build swap transaction", details: data },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to build swap transaction", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

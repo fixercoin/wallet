@@ -52,10 +52,7 @@ import {
 } from "./routes/swap-proxy";
 import { handleUnifiedSwapLocal } from "./routes/swap-handler";
 import { handleLocalQuote } from "./routes/quote-handler";
-import {
-  handleSwapQuoteV2,
-  handleSwapExecuteV2,
-} from "./routes/swap-v2";
+import { handleSwapQuoteV2, handleSwapExecuteV2 } from "./routes/swap-v2";
 import { requireApiKey } from "./middleware/auth";
 import {
   validateSwapRequest,

@@ -759,7 +759,9 @@ export default {
                 }
               }
             } catch (e: any) {
-              console.warn(`[Birdeye] Pair address lookup failed: ${e?.message}`);
+              console.warn(
+                `[Birdeye] Pair address lookup failed: ${e?.message}`,
+              );
             }
           }
 

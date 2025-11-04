@@ -85,9 +85,7 @@ async function getMeteOraQuote(
     });
 
     const url = `https://api.meteora.ag/swap/v3/quote?${params.toString()}`;
-    console.log(
-      `[Swap] Trying Meteora quote: ${inputMint} -> ${outputMint}`,
-    );
+    console.log(`[Swap] Trying Meteora quote: ${inputMint} -> ${outputMint}`);
 
     const response = await fetchWithTimeout(url);
     if (!response.ok) {
@@ -125,22 +123,30 @@ async function getBridgedQuote(
         );
 
         // First leg: inputMint -> bridge
-        const q1 = await getJupiterQuote(inputMint, bridge, amount, slippageBps);
+        const q1 = await getJupiterQuote(
+          inputMint,
+          bridge,
+          amount,
+          slippageBps,
+        );
         if (!q1 || !q1.outAmount) {
           console.warn(`[Swap] Leg 1 failed for bridge ${bridge}`);
           continue;
         }
 
         // Second leg: bridge -> outputMint
-        const q2 = await getJupiterQuote(bridge, outputMint, q1.outAmount, slippageBps);
+        const q2 = await getJupiterQuote(
+          bridge,
+          outputMint,
+          q1.outAmount,
+          slippageBps,
+        );
         if (!q2 || !q2.outAmount) {
           console.warn(`[Swap] Leg 2 failed for bridge ${bridge}`);
           continue;
         }
 
-        console.log(
-          `[Swap] ✅ Bridged route successful via ${bridge}`,
-        );
+        console.log(`[Swap] ✅ Bridged route successful via ${bridge}`);
         return { bridge, q1, q2 };
       } catch (e) {
         console.warn(`[Swap] Bridge ${bridge} error: ${e}`);
@@ -183,7 +189,12 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
 
     // Try Jupiter direct quote first
     console.log(`[Swap Quote] ${inputMint} -> ${outputMint} (${amount})`);
-    let quote = await getJupiterQuote(inputMint, outputMint, amount, slippageBps);
+    let quote = await getJupiterQuote(
+      inputMint,
+      outputMint,
+      amount,
+      slippageBps,
+    );
     if (quote && quote.outAmount && quote.outAmount !== "0") {
       attempts.push({ provider: "jupiter", status: "success" });
       return res.json({
@@ -215,7 +226,12 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     });
 
     // Try bridged routes
-    const bridged = await getBridgedQuote(inputMint, outputMint, amount, slippageBps);
+    const bridged = await getBridgedQuote(
+      inputMint,
+      outputMint,
+      amount,
+      slippageBps,
+    );
     if (bridged && bridged.q1 && bridged.q2) {
       attempts.push({
         provider: "bridged",
@@ -238,7 +254,9 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     });
 
     // All routes exhausted
-    console.warn(`[Swap Quote] No routes found for ${inputMint} -> ${outputMint}`);
+    console.warn(
+      `[Swap Quote] No routes found for ${inputMint} -> ${outputMint}`,
+    );
     return res.status(404).json({
       error: "No swap route found",
       inputMint,

@@ -796,6 +796,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     logout,
     updateWalletLabel,
     connection: globalConnection,
+    unlockWithPassword,
+    needsPasswordUnlock,
+    setNeedsPasswordUnlock,
   };
 
   return (

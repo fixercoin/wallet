@@ -521,7 +521,13 @@ export default {
         return 180; // fallback SOL price
       };
 
-      const getDerivedPrice = async (mint: string): Promise<number | null> => {
+      const getDerivedPrice = async (
+        mint: string,
+      ): Promise<{
+        price: number;
+        priceChange24h: number;
+        volume24h: number;
+      } | null> => {
         try {
           console.log(
             `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
@@ -549,7 +555,11 @@ export default {
                   console.log(
                     `[Birdeye] Derived price for ${mint}: $${price.toFixed(8)}`,
                   );
-                  return price;
+                  return {
+                    price,
+                    priceChange24h: pair.priceChange?.h24 || 0,
+                    volume24h: pair.volume?.h24 || 0,
+                  };
                 }
               }
             }
@@ -563,39 +573,47 @@ export default {
       };
 
       const getPriceFromDexScreener = async (
-        mint: string,
-      ): Promise<{ price: number; priceChange24h: number } | null> => {
-        try {
-          console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
-          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
-          const dexResp = await fetch(dexUrl, {
-            headers: { Accept: "application/json" },
-          });
+mint: string,
+): Promise<{
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+} | null> => {
+  try {
+    console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
+    const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
+    const dexResp = await fetch(dexUrl, {
+      headers: { Accept: "application/json" },
+    });
 
-          if (dexResp.ok) {
-            const dexData = await dexResp.json();
-            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+    if (dexResp.ok) {
+      const dexData = await dexResp.json();
+      const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
 
-            if (pairs.length > 0) {
-              const pair = pairs.find(
-                (p: any) =>
-                  (p?.baseToken?.address === mint ||
-                    p?.quoteToken?.address === mint) &&
-                  p?.priceUsd,
-              );
+      if (pairs.length > 0) {
+        const pair = pairs.find(
+          (p: any) =>
+            (p?.baseToken?.address === mint ||
+              p?.quoteToken?.address === mint) &&
+            p?.priceUsd,
+        );
 
-              if (pair && pair.priceUsd) {
-                const price = parseFloat(pair.priceUsd);
-                if (isFinite(price) && price > 0) {
-                  const priceChange24h = pair?.priceChange?.h24 ?? 0;
-                  console.log(
-                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
-                  );
-                  return { price, priceChange24h };
-                }
-              }
-            }
+        if (pair && pair.priceUsd) {
+          const price = parseFloat(pair.priceUsd);
+          if (isFinite(price) && price > 0) {
+            const priceChange24h = pair?.priceChange?.h24 ?? 0;
+            console.log(
+              `[Birdeye Fallback] ✅ Got price from DexScreener: $${price} (24h: ${priceChange24h}%)`,
+            );
+            return {
+              price,
+              priceChange24h: pair?.priceChange?.h24 ?? 0,
+              volume24h: pair?.volume?.h24 ?? 0,
+            };
           }
+        }
+      }
+    }
         } catch (e: any) {
           console.warn(`[Birdeye Fallback] DexScreener error: ${e?.message}`);
         }
@@ -604,7 +622,11 @@ export default {
 
       const getPriceFromJupiter = async (
         mint: string,
-      ): Promise<number | null> => {
+      ): Promise<{
+        price: number;
+        priceChange24h: number;
+        volume24h: number;
+      } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
           const jupUrl = `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`;
@@ -622,7 +644,11 @@ export default {
                 console.log(
                   `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
                 );
-                return price;
+                return {
+                  price,
+                  priceChange24h: 0,
+                  volume24h: 0,
+                };
               }
             }
           }
@@ -688,16 +714,17 @@ export default {
       const tokenSymbol = getTokenSymbol(address);
       if (tokenSymbol === "FIXERCOIN" || tokenSymbol === "LOCKER") {
         const derivedPrice = await getDerivedPrice(address);
-        if (derivedPrice !== null && derivedPrice > 0) {
+        if (derivedPrice !== null && derivedPrice.price > 0) {
           return json(
             {
               success: true,
               data: {
                 address,
-                value: derivedPrice,
+                value: derivedPrice.price,
                 updateUnixTime: Math.floor(Date.now() / 1000),
-                priceChange24h: 0,
-              },
+    priceChange24h: derivedPrice?.priceChange24h ?? 0,
+    volume24h: derivedPrice?.volume24h ?? 0,
+  },
               _source: "derived",
             },
             { headers: corsHeaders },
@@ -716,7 +743,9 @@ export default {
               value: dexscreenerPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
               priceChange24h: dexscreenerPrice.priceChange24h,
-            },
+{
+  volume24h: dexscreenerPrice?.volume24h ?? 0,
+}
             _source: "dexscreener",
           },
           { headers: corsHeaders },
@@ -731,10 +760,13 @@ export default {
             success: true,
             data: {
               address,
-              value: jupiterPrice,
+              value: jupiterPrice.price,
               updateUnixTime: Math.floor(Date.now() / 1000),
-              priceChange24h: 0,
-            },
+{
+  priceChange24h: jupiterPrice?.priceChange24h ?? 0,
+  volume24h: jupiterPrice?.volume24h ?? 0,
+},
+
             _source: "jupiter",
           },
           { headers: corsHeaders },
@@ -769,6 +801,68 @@ export default {
         },
         { status: 404, headers: corsHeaders },
       );
+    }
+
+    // SOL price endpoint: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      const SOL_MINT = "So11111111111111111111111111111111111111112";
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${SOL_MINT}`;
+        const dexResp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+        });
+
+        if (dexResp.ok) {
+          const dexData = await dexResp.json();
+          const pair =
+            Array.isArray(dexData?.pairs) && dexData.pairs.length > 0
+              ? dexData.pairs[0]
+              : null;
+
+          if (pair && pair.priceUsd) {
+            const priceUsd = parseFloat(pair.priceUsd);
+            if (isFinite(priceUsd) && priceUsd > 0) {
+              return json(
+                {
+                  token: "SOL",
+                  price: priceUsd,
+                  priceUsd,
+                  priceChange24h: pair.priceChange?.h24 || 0,
+                  volume24h: pair.volume?.h24 || 0,
+                  marketCap: pair.marketCap || 0,
+                },
+                { headers: corsHeaders },
+              );
+            }
+          }
+        }
+
+        // Fallback to hardcoded price
+        return json(
+          {
+            token: "SOL",
+            price: 180,
+            priceUsd: 180,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        console.error(`[SOL Price] Error:`, e?.message);
+        return json(
+          {
+            token: "SOL",
+            price: 180,
+            priceUsd: 180,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
+          },
+          { headers: corsHeaders },
+        );
+      }
     }
 
     // Dedicated token price endpoint: /api/token/price
@@ -822,21 +916,31 @@ export default {
         }
 
         let priceUsd: number | null = null;
+        let priceChange24h: number = 0;
+        let volume24h: number = 0;
 
         // Stablecoins -> 1
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
+          priceChange24h = 0;
+          volume24h = 0;
         } else if (token === "FIXERCOIN" || token === "LOCKER") {
           // Try to fetch derived price for FIXERCOIN and LOCKER
           const derivedPrice = await getDerivedPrice(mint);
-          if (derivedPrice !== null && derivedPrice > 0) {
-            priceUsd = derivedPrice;
+          if (derivedPrice !== null && derivedPrice.price > 0) {
+            priceUsd = derivedPrice.price;
+            priceChange24h = derivedPrice.priceChange24h;
+            volume24h = derivedPrice.volume24h;
           } else {
             priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+            priceChange24h = 0;
+            volume24h = 0;
           }
         } else {
           // Use fallback prices for other non-stablecoins
           priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+          priceChange24h = 0;
+          volume24h = 0;
         }
 
         const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
@@ -848,6 +952,8 @@ export default {
             rate: rateInPKR,
             pkrPerUsd: PKR_PER_USD,
             markup: MARKUP,
+            priceChange24h,
+            volume24h,
             source:
               token === "FIXERCOIN" || token === "LOCKER"
                 ? "derived"

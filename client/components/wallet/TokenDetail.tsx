@@ -32,7 +32,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     { time: string; price: number; volume: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
   // Find the token from the tokens list

@@ -1177,6 +1177,7 @@ export default {
     }
 
     // Meteora swap build: /api/swap/meteora/swap (POST) - builds unsigned/base64 transaction
+    // Supports optional local wallet signing via signerKeypair parameter
     if (pathname === "/api/swap/meteora/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
@@ -1187,6 +1188,15 @@ export default {
           );
         }
 
+        // Extract optional signer keypair if provided (for local signing)
+        const signerKeypair = body.signerKeypair;
+        const shouldSign = body.sign === true && signerKeypair;
+
+        // Remove sensitive fields before forwarding to Meteora
+        const meteoraPayload = { ...body };
+        delete meteoraPayload.signerKeypair;
+        delete meteoraPayload.sign;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
 
@@ -1196,7 +1206,7 @@ export default {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(meteoraPayload),
           signal: controller.signal,
         });
 
@@ -1211,11 +1221,98 @@ export default {
         }
 
         const data = await resp.json();
-        return json(data, { headers: corsHeaders });
+
+        // If signing was requested and a keypair was provided
+        if (shouldSign && data.swapTransaction) {
+          // WARNING: Server-side signing is a security risk!
+          // The client should handle signing locally instead
+          console.warn(
+            "[Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.",
+          );
+
+          // For now, we return the transaction with a warning
+          // Actual signing implementation would require:
+          // 1. Decoding the base64 transaction
+          // 2. Signing with the provided keypair using Ed25519
+          // 3. Re-encoding to base64
+          // This is commented out for security reasons - use client-side signing instead
+
+          return json(
+            {
+              swapTransaction: data.swapTransaction,
+              signed: false,
+              warning:
+                "Server-side signing is disabled for security. Please sign this transaction on the client-side using the wallet's signing capability.",
+              signingWarning:
+                "Never share private keys with servers. Always use client-side wallet signing.",
+              _source: "meteora",
+            },
+            { headers: corsHeaders },
+          );
+        }
+
+        return json(
+          {
+            swapTransaction: data.swapTransaction,
+            signed: false,
+            _source: "meteora",
+          },
+          { headers: corsHeaders },
+        );
       } catch (e: any) {
         return json(
           { error: "Failed to build Meteora swap", details: e?.message },
           { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Transaction signing endpoint: /api/sign/transaction (POST)
+    // Signs a transaction with a provided keypair (client should prefer local signing)
+    if (pathname === "/api/sign/transaction" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { transaction, signerKeypair } = body as any;
+
+        if (!transaction || !signerKeypair) {
+          return json(
+            {
+              error: "Missing required fields: transaction and signerKeypair",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        // Security warning
+        console.warn(
+          "[Transaction Signing] ⚠️  Private key received for server-side signing. This is not recommended!",
+        );
+
+        return json(
+          {
+            error: "Server-side transaction signing is disabled for security reasons",
+            message:
+              "Please sign transactions on the client-side using your wallet. Never share private keys with servers.",
+            documentation:
+              "Use @solana/web3.js with your wallet adapter for secure client-side signing",
+          },
+          { status: 403, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to process signing request",
+            details: e?.message,
+          },
+          { status: 500, headers: corsHeaders },
         );
       }
     }

@@ -22,21 +22,13 @@ import * as nodePath from "path";
     // Ignore
   }
 
-  // SPA fallback for non-API routes (only in production when spa exists)
+  // 404 fallback for unmapped routes
   app.use((req, res) => {
-    // Do not intercept API or health endpoints
-    if (req.path.startsWith("/api/")) {
-      return res.status(404).json({ error: "API endpoint not found" });
-    }
-    // In development, return a helpful message instead of trying to serve a non-existent file
-    if (isDevelopment) {
-      return res.send(
-        "API Server is running on port " +
-          port +
-          ". Use Vite dev server on port 5173 for frontend.",
-      );
-    }
-    res.sendFile(nodePath.join(distPath, "index.html"));
+    res.status(404).json({
+      error: "Not found",
+      path: req.path,
+      method: req.method,
+    });
   });
 
   app.listen(port, () => {

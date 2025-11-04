@@ -2338,7 +2338,10 @@ export default {
       try {
         const body = await parseJSON(req);
         const signedTx =
-          body?.signedBase64 || body?.signedTx || body?.tx || body?.signedTransaction;
+          body?.signedBase64 ||
+          body?.signedTx ||
+          body?.tx ||
+          body?.signedTransaction;
         if (!signedTx) {
           return json(
             { error: "Missing signed transaction (base64)" },
@@ -2349,7 +2352,10 @@ export default {
         try {
           const rpcResult = await callRpc(env, "sendTransaction", [signedTx]);
           const parsed = JSON.parse(String(rpcResult?.body || "{}"));
-          return json(parsed, { status: parsed?.error ? 502 : 200, headers: corsHeaders });
+          return json(parsed, {
+            status: parsed?.error ? 502 : 200,
+            headers: corsHeaders,
+          });
         } catch (rpcErr: any) {
           return json(
             {
@@ -2372,7 +2378,10 @@ export default {
       try {
         const body = await parseJSON(req);
         const signedTx =
-          body?.signedBase64 || body?.signedTx || body?.tx || body?.signedTransaction;
+          body?.signedBase64 ||
+          body?.signedTx ||
+          body?.tx ||
+          body?.signedTransaction;
         if (!signedTx) {
           return json(
             { error: "Missing signed transaction (base64)" },
@@ -2381,9 +2390,19 @@ export default {
         }
 
         try {
-          const rpcResult = await callRpc(env, "simulateTransaction", [signedTx, { encoding: "base64", replaceRecentBlockhash: true, sigVerify: true }]);
+          const rpcResult = await callRpc(env, "simulateTransaction", [
+            signedTx,
+            {
+              encoding: "base64",
+              replaceRecentBlockhash: true,
+              sigVerify: true,
+            },
+          ]);
           const parsed = JSON.parse(String(rpcResult?.body || "{}"));
-          return json(parsed, { status: parsed?.error ? 502 : 200, headers: corsHeaders });
+          return json(parsed, {
+            status: parsed?.error ? 502 : 200,
+            headers: corsHeaders,
+          });
         } catch (rpcErr: any) {
           return json(
             {

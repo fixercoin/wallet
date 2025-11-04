@@ -13,7 +13,10 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
 
   if (!txBase64 || typeof txBase64 !== "string") {
     return Response.json(
-      { error: "Missing signed transaction (base64)", expected: ["signedBase64", "signedTx", "signedTransaction", "tx"] },
+      {
+        error: "Missing signed transaction (base64)",
+        expected: ["signedBase64", "signedTx", "signedTransaction", "tx"],
+      },
       { status: 400 },
     );
   }
@@ -24,7 +27,9 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
     env.HELIUS_RPC_URL as string,
     env.MORALIS_RPC_URL as string,
     env.ALCHEMY_RPC_URL as string,
-    env.HELIUS_API_KEY ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}` : "",
+    env.HELIUS_API_KEY
+      ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
+      : "",
     "https://api.mainnet-beta.solana.com",
     "https://rpc.ankr.com/solana",
     "https://solana.publicnode.com",
@@ -34,7 +39,10 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
     jsonrpc: "2.0",
     id: 1,
     method: "simulateTransaction",
-    params: [txBase64, { encoding: "base64", replaceRecentBlockhash: true, sigVerify: true }],
+    params: [
+      txBase64,
+      { encoding: "base64", replaceRecentBlockhash: true, sigVerify: true },
+    ],
   };
 
   let lastErr: string = "";
@@ -64,7 +72,10 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
   }
 
   return Response.json(
-    { error: "rpc_simulate_failed", details: lastErr || "All RPC endpoints failed" },
+    {
+      error: "rpc_simulate_failed",
+      details: lastErr || "All RPC endpoints failed",
+    },
     { status: 502 },
   );
 };

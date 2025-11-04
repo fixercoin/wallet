@@ -297,13 +297,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
 
-  useEffect(() => {
-    const provider = providerRef.current ?? ensureFixoriumProvider();
-    if (!provider) return;
-    provider.setDefaultConnection(globalConnection ?? null);
-    provider.setWallet(wallet);
-  }, [wallet]);
-
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {
     if (!wallet) {

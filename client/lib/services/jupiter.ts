@@ -78,7 +78,8 @@ class JupiterAPI {
         slippageBps: slippageBps.toString(),
       });
 
-      const url = `/api/jupiter/quote?${params.toString()}`;
+      const path = `/api/jupiter/quote?${params.toString()}`;
+      const url = resolveApiUrl(path);
       console.log("Jupiter quote proxy request:", url);
 
       const response = await this.fetchWithTimeout(url, 15000).catch(
@@ -134,7 +135,8 @@ class JupiterAPI {
     swapRequest: JupiterSwapRequest,
   ): Promise<JupiterSwapResponse | null> {
     try {
-      const response = await fetch(`/api/jupiter/swap`, {
+      const url = resolveApiUrl("/api/jupiter/swap");
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,7 +161,8 @@ class JupiterAPI {
 
   async getTokenPrice(tokenMint: string): Promise<number | null> {
     try {
-      const response = await fetch(`/api/jupiter/price?ids=${tokenMint}`);
+      const url = resolveApiUrl(`/api/jupiter/price?ids=${tokenMint}`);
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Jupiter Price API error: ${response.status}`);
@@ -183,7 +186,8 @@ class JupiterAPI {
         `Fetching prices for ${tokenMints.length} tokens via Jupiter`,
       );
 
-      const response = await fetch(`/api/jupiter/price?ids=${ids}`, {
+      const url = resolveApiUrl(`/api/jupiter/price?ids=${ids}`);
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -246,7 +250,8 @@ class JupiterAPI {
 
   async getAllTokens(): Promise<JupiterToken[]> {
     try {
-      const response = await fetch("/api/jupiter/tokens?type=all");
+      const url = resolveApiUrl("/api/jupiter/tokens?type=all");
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Jupiter Token API error: ${response.status}`);
@@ -268,9 +273,9 @@ class JupiterAPI {
       return (await Promise.race([fetch(url), timeout])) as Response;
     };
     try {
-      let response = await fetchWithTimeout("/api/jupiter/tokens?type=strict");
+      let response = await fetchWithTimeout(resolveApiUrl("/api/jupiter/tokens?type=strict"));
       if (!response.ok) {
-        response = await fetchWithTimeout("/api/jupiter/tokens?type=all");
+        response = await fetchWithTimeout(resolveApiUrl("/api/jupiter/tokens?type=all"));
       }
       if (!response.ok) {
         return [];

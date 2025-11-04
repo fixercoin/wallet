@@ -45,7 +45,10 @@ export function createOTPSession(phoneNumber: string): OTPSession {
 /**
  * Verify an OTP code against a session
  */
-export function verifyOTP(session: OTPSession, enteredCode: string): {
+export function verifyOTP(
+  session: OTPSession,
+  enteredCode: string,
+): {
   valid: boolean;
   error?: string;
 } {

@@ -90,7 +90,7 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       setOtpCode("");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to generate OTP code"
+        err instanceof Error ? err.message : "Failed to generate OTP code",
       );
     } finally {
       setIsProcessing(false);
@@ -128,7 +128,9 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       await onConfirm();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Transaction failed. Please try again."
+        err instanceof Error
+          ? err.message
+          : "Transaction failed. Please try again.",
       );
     } finally {
       setIsProcessing(false);
@@ -202,7 +204,8 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
                       autoFocus
                     />
                     <p className="text-xs text-gray-600">
-                      Enter your phone number. In production, we'll send a verification code via SMS.
+                      Enter your phone number. In production, we'll send a
+                      verification code via SMS.
                     </p>
                   </div>
 
@@ -250,7 +253,9 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
                       placeholder="000000"
                       value={otpCode}
                       onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        const val = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 6);
                         setOtpCode(val);
                       }}
                       maxLength={6}
@@ -260,7 +265,13 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
                     />
                     <div className="flex justify-between items-center text-xs text-gray-600">
                       <span>Enter 6-digit code</span>
-                      <span className={timeRemaining <= 30 ? "text-red-600 font-semibold" : ""}>
+                      <span
+                        className={
+                          timeRemaining <= 30
+                            ? "text-red-600 font-semibold"
+                            : ""
+                        }
+                      >
                         Expires in {timeRemaining}s
                       </span>
                     </div>
@@ -269,16 +280,21 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
                   {/* Demo OTP Display (remove in production) */}
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                     <p className="text-xs text-yellow-800">
-                      <strong>Demo Mode:</strong> Your OTP code is: <code className="font-bold text-yellow-900">{otpSession.code}</code>
+                      <strong>Demo Mode:</strong> Your OTP code is:{" "}
+                      <code className="font-bold text-yellow-900">
+                        {otpSession.code}
+                      </code>
                     </p>
                     <p className="text-xs text-yellow-700 mt-1">
-                      (In production, this code would be sent via SMS and not displayed here)
+                      (In production, this code would be sent via SMS and not
+                      displayed here)
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <p className="text-xs text-gray-600">
-                      Attempts remaining: {otpSession.maxAttempts - otpSession.attempts}
+                      Attempts remaining:{" "}
+                      {otpSession.maxAttempts - otpSession.attempts}
                     </p>
                   </div>
 

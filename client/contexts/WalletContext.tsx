@@ -161,7 +161,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               if (decrypted.length > 0)
                 setActivePublicKey(decrypted[0].publicKey);
               setNeedsPasswordUnlock(false);
-              console.log("[WalletContext] Wallets unlocked with stored password");
+              console.log(
+                "[WalletContext] Wallets unlocked with stored password",
+              );
             } catch (e) {
               console.warn(
                 "[WalletContext] Failed to unlock with stored password:",
@@ -170,7 +172,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               setNeedsPasswordUnlock(true);
             }
           } else {
-            console.log("[WalletContext] No password in session, awaiting unlock");
+            console.log(
+              "[WalletContext] No password in session, awaiting unlock",
+            );
           }
         } else {
           // Plaintext wallets - coerce and load normally
@@ -756,9 +760,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const unlockWithPassword = async (password: string): Promise<boolean> => {
     try {
       if (encryptedWalletsRef.current.length === 0) {
-        console.warn(
-          "[WalletContext] No encrypted wallets to unlock"
-        );
+        console.warn("[WalletContext] No encrypted wallets to unlock");
         return false;
       }
 

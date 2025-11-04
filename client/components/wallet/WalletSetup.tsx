@@ -52,9 +52,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   // Password protection state
   const [showPasswordSetup, setShowPasswordSetup] = useState(false);
   const [pendingWallet, setPendingWallet] = useState<any>(null);
-  const [passwordSetupMode, setPasswordSetupMode] = useState<"create" | "unlock">(
-    "create",
-  );
+  const [passwordSetupMode, setPasswordSetupMode] = useState<
+    "create" | "unlock"
+  >("create");
 
   const normalizedRecoveryPhrase = normalizeMnemonicInput(recoveryPhrase);
   const recoveryWordCount = normalizedRecoveryPhrase
@@ -63,7 +63,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const isMnemonicWordCountValid =
     recoveryWordCount === 12 || recoveryWordCount === 24;
 
-  const { setWallet, refreshBalance, refreshTokens, needsPasswordUnlock, unlockWithPassword } = useWallet();
+  const {
+    setWallet,
+    refreshBalance,
+    refreshTokens,
+    needsPasswordUnlock,
+    unlockWithPassword,
+  } = useWallet();
   const { toast } = useToast();
 
   const handleCreateWallet = () => {
@@ -105,7 +111,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
       toast({
         title: "Wallet Secured",
-        description: "Your wallet has been created and encrypted with your password.",
+        description:
+          "Your wallet has been created and encrypted with your password.",
       });
 
       setShowPasswordSetup(false);
@@ -167,7 +174,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         setError("Invalid password. Please try again.");
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to unlock wallets");
+      setError(
+        error instanceof Error ? error.message : "Failed to unlock wallets",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -244,7 +253,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
                 <div className="space-y-4">
                   <p className="text-center text-gray-600">
-                    Your wallets are encrypted and locked. Please enter your password above to unlock them.
+                    Your wallets are encrypted and locked. Please enter your
+                    password above to unlock them.
                   </p>
                 </div>
               </div>
@@ -286,72 +296,72 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           mode={passwordSetupMode}
         />
         <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-        {/* Decorative bottom green wave (SVG) */}
-        <svg
-          className="bottom-wave z-0"
-          viewBox="0 0 1440 220"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="60%" stopColor="#e6ffed" />
-              <stop offset="100%" stopColor="#22c55e" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-            fill="url(#g1)"
-            opacity="0.95"
-          />
-        </svg>
+          {/* Decorative bottom green wave (SVG) */}
+          <svg
+            className="bottom-wave z-0"
+            viewBox="0 0 1440 220"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="60%" stopColor="#e6ffed" />
+                <stop offset="100%" stopColor="#22c55e" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+              fill="url(#g1)"
+              opacity="0.95"
+            />
+          </svg>
 
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-          <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
-            <div className="space-y-6">
-              <div className="text-center pb-2">
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
-                  alt="Wallet"
-                  className="mx-auto w-[240px] h-[240px] object-contain"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Button
-                  onClick={handleCreateWallet}
-                  disabled={isLoading}
-                  className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
-                >
-                  <Plus
-                    size={20}
-                    className="mr-2"
-                    color="white"
-                    strokeWidth={3}
+          <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
+            <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+              <div className="space-y-6">
+                <div className="text-center pb-2">
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
+                    alt="Wallet"
+                    className="mx-auto w-[240px] h-[240px] object-contain"
                   />
-                  CREATE NEW WALLET
-                </Button>
+                </div>
 
-                <Button
-                  onClick={() => setActiveTab("recover")}
-                  variant="ghost"
-                  className="w-full h-12 rounded-xl text-black hover:bg-[#16a34a]/10"
-                >
-                  IMPORT WALLET
-                </Button>
+                <div className="space-y-4">
+                  <Button
+                    onClick={handleCreateWallet}
+                    disabled={isLoading}
+                    className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                  >
+                    <Plus
+                      size={20}
+                      className="mr-2"
+                      color="white"
+                      strokeWidth={3}
+                    />
+                    CREATE NEW WALLET
+                  </Button>
 
-                {error && (
-                  <Alert className="bg-red-500/10 text-red-200">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+                  <Button
+                    onClick={() => setActiveTab("recover")}
+                    variant="ghost"
+                    className="w-full h-12 rounded-xl text-black hover:bg-[#16a34a]/10"
+                  >
+                    IMPORT WALLET
+                  </Button>
+
+                  {error && (
+                    <Alert className="bg-red-500/10 text-red-200">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       </>
     );
   }
@@ -377,161 +387,161 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           mode={passwordSetupMode}
         />
         <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-        {/* Decorative bottom green wave (SVG) */}
-        <svg
-          className="bottom-wave z-0"
-          viewBox="0 0 1440 220"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="60%" stopColor="#e6ffed" />
-              <stop offset="100%" stopColor="#22c55e" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-            fill="url(#g1)"
-            opacity="0.95"
-          />
-        </svg>
+          {/* Decorative bottom green wave (SVG) */}
+          <svg
+            className="bottom-wave z-0"
+            viewBox="0 0 1440 220"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="60%" stopColor="#e6ffed" />
+                <stop offset="100%" stopColor="#22c55e" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+              fill="url(#g1)"
+              opacity="0.95"
+            />
+          </svg>
 
-        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-          <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-                <div className="text-white">Importing wallet...</div>
-              </div>
-            )}
+          <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
+            <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
+              {isLoading && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
+                  <div className="text-white">Importing wallet...</div>
+                </div>
+              )}
 
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-4 text-sm">
-                    <span
-                      onClick={() => setRecoverMode("mnemonic")}
-                      className={`${recoverMode === "mnemonic" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
-                    >
-                      Recovery Phrase
-                    </span>
-                    <span
-                      onClick={() => setRecoverMode("privateKey")}
-                      className={`${recoverMode === "privateKey" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
-                    >
-                      Private Key
-                    </span>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span
+                        onClick={() => setRecoverMode("mnemonic")}
+                        className={`${recoverMode === "mnemonic" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
+                      >
+                        Recovery Phrase
+                      </span>
+                      <span
+                        onClick={() => setRecoverMode("privateKey")}
+                        className={`${recoverMode === "privateKey" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
+                      >
+                        Private Key
+                      </span>
+                    </div>
+                    {recoverMode === "privateKey" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowPrivateKeyInput((s) => !s)}
+                        className="text-white hover:bg-[#16a34a]/10"
+                      >
+                        <span className="text-lg leading-none">*</span>
+                      </Button>
+                    )}
                   </div>
-                  {recoverMode === "privateKey" && (
+
+                  {recoverMode === "mnemonic" ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={recoveryPhrase}
+                        onChange={(e) => setRecoveryPhrase(e.target.value)}
+                        placeholder="Paste your 12 or 24-word recovery phrase here..."
+                        aria-label="Recovery Phrase"
+                        className="w-full h-32 p-4 bg-[#083c2c]/50 rounded-none border border-white/80 text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
+                      />
+                      <p className="text-xs text-gray-300">
+                        Derivation Path (Solana default) →
+                        <span className="ml-2 font-mono text-[11px] text-gray-300">
+                          m/44&apos;/501&apos;/0&apos;/0&apos;
+                        </span>
+                        <span className="ml-1 text-gray-300">
+                          (compatible with Phantom and other Solana wallets)
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <textarea
+                      value={privateKeyInput}
+                      onChange={(e) => setPrivateKeyInput(e.target.value)}
+                      placeholder={
+                        showPrivateKeyInput
+                          ? "Paste your private key here (base58/base64/hex/JSON array)"
+                          : "Hidden"
+                      }
+                      aria-label="Private Key"
+                      className="w-full h-32 p-4 bg-[#083c2c]/50 rounded-none border border-white/80 text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
+                    />
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab("create")}
+                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
+                  >
+                    Back
+                  </Button>
+                  {recoverMode === "mnemonic" ? (
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowPrivateKeyInput((s) => !s)}
-                      className="text-white hover:bg-[#16a34a]/10"
+                      onClick={handleRecoverWallet}
+                      disabled={!isMnemonicWordCountValid || isLoading}
+                      className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
-                      <span className="text-lg leading-none">*</span>
+                      Recover Wallet
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={async () => {
+                        setIsLoading(true);
+                        try {
+                          const walletData =
+                            importWalletFromPrivateKey(privateKeyInput);
+                          setWallet(walletData);
+                          // Prefetch address data via RPC providers (Helius, Moralis, etc.)
+                          void prefetchWalletAddressData(
+                            walletData.publicKey,
+                          ).catch(() => undefined);
+                          await refreshBalance().catch(() => {});
+                          await refreshTokens().catch(() => {});
+                          toast({
+                            title: "Wallet Imported",
+                            description: "Imported wallet from private key.",
+                          });
+                          onComplete();
+                        } catch (e) {
+                          setError(
+                            e instanceof Error
+                              ? e.message
+                              : "Failed to import private key",
+                          );
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={!privateKeyInput.trim()}
+                      className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    >
+                      Import Wallet
                     </Button>
                   )}
                 </div>
 
-                {recoverMode === "mnemonic" ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={recoveryPhrase}
-                      onChange={(e) => setRecoveryPhrase(e.target.value)}
-                      placeholder="Paste your 12 or 24-word recovery phrase here..."
-                      aria-label="Recovery Phrase"
-                      className="w-full h-32 p-4 bg-[#083c2c]/50 rounded-none border border-white/80 text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
-                    />
-                    <p className="text-xs text-gray-300">
-                      Derivation Path (Solana default) →
-                      <span className="ml-2 font-mono text-[11px] text-gray-300">
-                        m/44&apos;/501&apos;/0&apos;/0&apos;
-                      </span>
-                      <span className="ml-1 text-gray-300">
-                        (compatible with Phantom and other Solana wallets)
-                      </span>
-                    </p>
-                  </div>
-                ) : (
-                  <textarea
-                    value={privateKeyInput}
-                    onChange={(e) => setPrivateKeyInput(e.target.value)}
-                    placeholder={
-                      showPrivateKeyInput
-                        ? "Paste your private key here (base58/base64/hex/JSON array)"
-                        : "Hidden"
-                    }
-                    aria-label="Private Key"
-                    className="w-full h-32 p-4 bg-[#083c2c]/50 rounded-none border border-white/80 text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
-                  />
+                {error && (
+                  <Alert className="bg-red-500/10 text-red-200">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
               </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveTab("create")}
-                  className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                >
-                  Back
-                </Button>
-                {recoverMode === "mnemonic" ? (
-                  <Button
-                    onClick={handleRecoverWallet}
-                    disabled={!isMnemonicWordCountValid || isLoading}
-                    className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
-                  >
-                    Recover Wallet
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={async () => {
-                      setIsLoading(true);
-                      try {
-                        const walletData =
-                          importWalletFromPrivateKey(privateKeyInput);
-                        setWallet(walletData);
-                        // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-                        void prefetchWalletAddressData(
-                          walletData.publicKey,
-                        ).catch(() => undefined);
-                        await refreshBalance().catch(() => {});
-                        await refreshTokens().catch(() => {});
-                        toast({
-                          title: "Wallet Imported",
-                          description: "Imported wallet from private key.",
-                        });
-                        onComplete();
-                      } catch (e) {
-                        setError(
-                          e instanceof Error
-                            ? e.message
-                            : "Failed to import private key",
-                        );
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    }}
-                    disabled={!privateKeyInput.trim()}
-                    className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
-                  >
-                    Import Wallet
-                  </Button>
-                )}
-              </div>
-
-              {error && (
-                <Alert className="bg-red-500/10 text-red-200">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
             </div>
           </div>
         </div>
-      </div>
       </>
     );
   }
@@ -557,118 +567,123 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           mode={passwordSetupMode}
         />
         <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-        {/* Decorative bottom green wave (SVG) */}
-        <svg
-          className="bottom-wave z-0"
-          viewBox="0 0 1440 220"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="60%" stopColor="#e6ffed" />
-              <stop offset="100%" stopColor="#22c55e" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-            fill="url(#g1)"
-            opacity="0.95"
-          />
-        </svg>
+          {/* Decorative bottom green wave (SVG) */}
+          <svg
+            className="bottom-wave z-0"
+            viewBox="0 0 1440 220"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="60%" stopColor="#e6ffed" />
+                <stop offset="100%" stopColor="#22c55e" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+              fill="url(#g1)"
+              opacity="0.95"
+            />
+          </svg>
 
-        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-          <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-                <div className="text-white">Creating wallet...</div>
-              </div>
-            )}
-
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold">Secret Recovery Phrase</div>
-                <div className="opacity-80">
-                  Save these words in a safe place. They&apos;re the only way to
-                  recover your wallet.
+          <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
+            <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
+              {isLoading && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
+                  <div className="text-white">Creating wallet...</div>
                 </div>
-              </div>
+              )}
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold">
-                    Recovery Phrase
-                  </Label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowMnemonic(!showMnemonic)}
-                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                    >
-                      {showMnemonic ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      {showMnemonic ? "Hide" : "Show"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyFullMnemonic}
-                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy All
-                    </Button>
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">
+                    Secret Recovery Phrase
+                  </div>
+                  <div className="opacity-80">
+                    Save these words in a safe place. They&apos;re the only way
+                    to recover your wallet.
                   </div>
                 </div>
 
-                <div className="bg-[#064e3b]/50 rounded-xl p-6">
-                  <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
-                    {showMnemonic
-                      ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
-                  </p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-lg font-semibold">
+                      Recovery Phrase
+                    </Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowMnemonic(!showMnemonic)}
+                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                      >
+                        {showMnemonic ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                        {showMnemonic ? "Hide" : "Show"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyFullMnemonic}
+                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy All
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#064e3b]/50 rounded-xl p-6">
+                    <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
+                      {showMnemonic
+                        ? generatedWallet.mnemonic
+                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="confirm-backup"
-                  checked={confirmedMnemonic}
-                  onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                  className="rounded bg-[#064e3b]/50"
-                />
-                <Label htmlFor="confirm-backup" className="text-sm opacity-80">
-                  I have safely backed up my recovery phrase
-                </Label>
-              </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="confirm-backup"
+                    checked={confirmedMnemonic}
+                    onChange={(e) => setConfirmedMnemonic(e.target.checked)}
+                    className="rounded bg-[#064e3b]/50"
+                  />
+                  <Label
+                    htmlFor="confirm-backup"
+                    className="text-sm opacity-80"
+                  >
+                    I have safely backed up my recovery phrase
+                  </Label>
+                </div>
 
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveTab("create")}
-                  className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleConfirmWallet}
-                  disabled={!confirmedMnemonic}
-                  className="flex-1 h-12 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
-                >
-                  Create Wallet
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab("create")}
+                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleConfirmWallet}
+                    disabled={!confirmedMnemonic}
+                    className="flex-1 h-12 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                  >
+                    Create Wallet
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       </>
     );
   }

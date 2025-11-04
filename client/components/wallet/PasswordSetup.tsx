@@ -171,7 +171,11 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                 disabled={isLoading || (!password.trim() && mode === "create")}
                 className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold"
               >
-                {isLoading ? "Processing..." : mode === "create" ? "Secure Wallet" : "Unlock"}
+                {isLoading
+                  ? "Processing..."
+                  : mode === "create"
+                    ? "Secure Wallet"
+                    : "Unlock"}
               </Button>
             </div>
           </form>

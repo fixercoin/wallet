@@ -9,13 +9,15 @@ Your wallet application now includes **encrypted wallet storage** that protects 
 ### What Changed
 
 **Before**: Private keys were stored in `localStorage` as plaintext JSON arrays
+
 ```
 localStorage["solana_wallet_accounts"] = '[{ "publicKey": "...", "secretKey": [1,2,3,...] }]'
 ```
 
 **After**: Private keys are encrypted with NaCl SecretBox before storage
+
 ```
-localStorage["solana_wallet_accounts"] = '[{ 
+localStorage["solana_wallet_accounts"] = '[{
   "version": "1",
   "algorithm": "nacl.secretbox",
   "encryptedData": "base64...",
@@ -34,18 +36,22 @@ localStorage["solana_wallet_accounts"] = '[{
 ## New Files Added
 
 ### 1. `client/lib/secure-storage.ts`
+
 Handles encryption/decryption of wallet data using NaCl.
 
 **Key Functions**:
+
 - `encryptWalletData(wallet, password)` - Encrypts and returns encrypted blob
 - `decryptWalletData(encryptedBlob, password)` - Decrypts and returns WalletData
 - `isEncryptedWalletStorage(data)` - Checks if data is encrypted
 - `isPlaintextWalletStorage(data)` - Checks if data is plaintext (legacy)
 
 ### 2. `client/lib/wallet-password.ts`
+
 Manages password storage in sessionStorage (temporary, cleared on browser close).
 
 **Key Functions**:
+
 - `setWalletPassword(password)` - Stores password in sessionStorage
 - `getWalletPassword()` - Retrieves password from sessionStorage
 - `clearWalletPassword()` - Clears password from sessionStorage
@@ -53,9 +59,11 @@ Manages password storage in sessionStorage (temporary, cleared on browser close)
 - `doesWalletRequirePassword()` - Checks if wallet is password-protected
 
 ### 3. `client/components/wallet/PasswordSetup.tsx`
+
 Modal component for creating/entering wallet password.
 
 **Features**:
+
 - Password strength validation (8+ chars, uppercase, numbers)
 - Show/hide password toggle
 - Create mode (new wallet setup)
@@ -63,23 +71,28 @@ Modal component for creating/entering wallet password.
 - Clear error messages and guidance
 
 ### 4. Updated `client/contexts/WalletContext.tsx`
+
 Enhanced with encryption support.
 
 **New Functions**:
+
 - `unlockWithPassword(password)` - Decrypts wallets with password
 - `needsPasswordUnlock` - State indicating encrypted wallets need unlocking
 - `setNeedsPasswordUnlock(value)` - Updates unlock state
 
 **Changes**:
+
 - On load: Detects encrypted wallets and prompts for password
 - On save: Encrypts wallets before storing to localStorage
 - Handles migration from plaintext to encrypted format
 - Stores password in sessionStorage for auto-unlock
 
 ### 5. Updated `client/components/wallet/WalletSetup.tsx`
+
 Integrated password setup flow.
 
 **Changes**:
+
 - Shows password modal on wallet creation
 - Shows password modal on wallet import
 - Shows unlock modal if wallets are encrypted but not unlocked
@@ -154,10 +167,10 @@ If you have existing wallets stored in plaintext:
 
 ```typescript
 // User password + random salt → 32-byte key (BLAKE2b)
-const key = deriveKeyFromPassword(password, salt)
+const key = deriveKeyFromPassword(password, salt);
 
 // Wallet data JSON → plaintext bytes → encrypted bytes
-const encrypted = nacl.secretbox(plaintext, nonce, key)
+const encrypted = nacl.secretbox(plaintext, nonce, key);
 
 // Store: {version, algorithm, encryptedData, nonce, salt} as JSON
 ```
@@ -166,19 +179,20 @@ const encrypted = nacl.secretbox(plaintext, nonce, key)
 
 ```typescript
 // Reverse the salt from stored data
-const salt = base64ToBytes(encrypted.salt)
+const salt = base64ToBytes(encrypted.salt);
 
 // Derive same key: password + salt → 32-byte key
-const key = deriveKeyFromPassword(password, salt)
+const key = deriveKeyFromPassword(password, salt);
 
 // Decrypt: encrypted bytes → plaintext bytes → JSON → WalletData
-const plaintext = nacl.secretbox.open(encrypted, nonce, key)
-const wallet = JSON.parse(plaintext)
+const plaintext = nacl.secretbox.open(encrypted, nonce, key);
+const wallet = JSON.parse(plaintext);
 ```
 
 ## Backward Compatibility
 
 ✅ **Fully backward compatible**:
+
 - Existing plaintext wallets still work
 - New wallets are encrypted by default
 - Mixed plaintext + encrypted wallets supported
@@ -195,6 +209,7 @@ const wallet = JSON.parse(plaintext)
 ## Security Guarantees
 
 ✅ **What is now protected**:
+
 - Private keys encrypted in storage
 - Recovery phrases encrypted in storage
 - Protection against localStorage inspection
@@ -202,6 +217,7 @@ const wallet = JSON.parse(plaintext)
 - Protection against malicious code reading storage
 
 ⚠️ **What is NOT protected**:
+
 - In-memory wallets during active use (require wallet to be in memory for signing)
 - Password strength (user's responsibility)
 - Browser extensions with full access
@@ -253,11 +269,11 @@ Potential improvements (not implemented):
 ### Accessing Wallet with Password
 
 ```typescript
-import { useWallet } from '@/contexts/WalletContext';
+import { useWallet } from "@/contexts/WalletContext";
 
 function MyComponent() {
   const { wallet, needsPasswordUnlock, unlockWithPassword } = useWallet();
-  
+
   const handleUnlock = async (password: string) => {
     const success = await unlockWithPassword(password);
     if (success) {
@@ -271,14 +287,14 @@ function MyComponent() {
 ### Manual Encryption/Decryption
 
 ```typescript
-import { encryptWalletData, decryptWalletData } from '@/lib/secure-storage';
+import { encryptWalletData, decryptWalletData } from "@/lib/secure-storage";
 
 // Encrypt
 const encrypted = encryptWalletData(walletData, userPassword);
-localStorage.setItem('my_wallet', JSON.stringify(encrypted));
+localStorage.setItem("my_wallet", JSON.stringify(encrypted));
 
 // Decrypt
-const encrypted = JSON.parse(localStorage.getItem('my_wallet'));
+const encrypted = JSON.parse(localStorage.getItem("my_wallet"));
 const wallet = decryptWalletData(encrypted, userPassword);
 ```
 

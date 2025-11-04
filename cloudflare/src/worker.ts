@@ -383,7 +383,7 @@ export default {
 
       const getPriceFromJupiter = async (
         mint: string,
-      ): Promise<number | null> => {
+      ): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> => {
         try {
           console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
           const jupUrl = `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`;
@@ -401,7 +401,11 @@ export default {
                 console.log(
                   `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
                 );
-                return price;
+                return {
+                  price,
+                  priceChange24h: 0,
+                  volume24h: 0,
+                };
               }
             }
           }

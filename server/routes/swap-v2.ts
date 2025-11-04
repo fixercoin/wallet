@@ -58,7 +58,9 @@ async function getJupiterQuote(
 
     for (const url of urls) {
       try {
-        console.log(`[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`);
+        console.log(
+          `[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`,
+        );
 
         const response = await fetchWithTimeout(url);
         if (!response.ok) {
@@ -409,7 +411,9 @@ export const handleSwapExecuteV2: RequestHandler = async (req, res) => {
     console.log(
       `[Swap Execute] Building transaction for wallet: ${userPublicKey.slice(0, 10)}...`,
     );
-    console.log(`[Swap Execute] Quote source: ${quoteResponse.source || "unknown"}`);
+    console.log(
+      `[Swap Execute] Quote source: ${quoteResponse.source || "unknown"}`,
+    );
 
     // Build Jupiter swap transaction
     const swapPayload = {
@@ -448,7 +452,8 @@ export const handleSwapExecuteV2: RequestHandler = async (req, res) => {
             return res.status(response.status).json({
               error: "Failed to build swap transaction",
               details: errorText || response.statusText,
-              code: response.status === 404 ? "ROUTE_NOT_FOUND" : "INVALID_REQUEST",
+              code:
+                response.status === 404 ? "ROUTE_NOT_FOUND" : "INVALID_REQUEST",
             });
           }
 

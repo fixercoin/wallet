@@ -122,9 +122,7 @@ async function getMeteOraQuote(
         console.warn(`[Swap] Meteora API error ${response.status}`);
         return null;
       }
-      console.warn(
-        `[Swap] Meteora quote failed with ${response.status}`,
-      );
+      console.warn(`[Swap] Meteora quote failed with ${response.status}`);
       return null;
     }
 
@@ -205,7 +203,10 @@ export async function handleSwapQuote(
     const inputMint = url.searchParams.get("inputMint") || "";
     const outputMint = url.searchParams.get("outputMint") || "";
     const amount = url.searchParams.get("amount") || "";
-    const slippageBps = parseInt(url.searchParams.get("slippageBps") || "50", 10);
+    const slippageBps = parseInt(
+      url.searchParams.get("slippageBps") || "50",
+      10,
+    );
 
     if (!inputMint || !outputMint || !amount) {
       return json(
@@ -400,10 +401,7 @@ export async function handleSwapExecute(
       );
     }
 
-    if (
-      typeof userPublicKey !== "string" ||
-      userPublicKey.length < 32
-    ) {
+    if (typeof userPublicKey !== "string" || userPublicKey.length < 32) {
       return json(
         {
           error: "Invalid userPublicKey format",
@@ -496,9 +494,7 @@ export async function handleSwapExecute(
         console.log(`[Swap Execute] ✅ Transaction built successfully`);
         return json(swapData, { headers: corsHeaders });
       } catch (e: any) {
-        console.warn(
-          `[Swap Execute] Error with ${url}: ${e?.message}`,
-        );
+        console.warn(`[Swap Execute] Error with ${url}: ${e?.message}`);
 
         if (url === urls[urls.length - 1]) {
           throw e;

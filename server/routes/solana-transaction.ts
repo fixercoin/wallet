@@ -36,7 +36,9 @@ async function callSolanaRpc(
 
       if (!response.ok) {
         if (response.status === 429 || response.status === 403) {
-          lastError = new Error(`HTTP ${response.status} - trying next endpoint`);
+          lastError = new Error(
+            `HTTP ${response.status} - trying next endpoint`,
+          );
           continue;
         }
         throw new Error(`HTTP ${response.status}`);
@@ -45,7 +47,9 @@ async function callSolanaRpc(
       const data = await response.json();
 
       if (data.error) {
-        lastError = new Error(`RPC error (${data.error.code}): ${data.error.message}`);
+        lastError = new Error(
+          `RPC error (${data.error.code}): ${data.error.message}`,
+        );
         continue;
       }
 
@@ -178,7 +182,9 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
       });
     }
 
-    console.log(`[Solana Simulate] Simulating transaction (${txBuffer.length} bytes)`);
+    console.log(
+      `[Solana Simulate] Simulating transaction (${txBuffer.length} bytes)`,
+    );
 
     try {
       const result = await callSolanaRpc("simulateTransaction", [

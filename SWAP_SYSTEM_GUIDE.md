@@ -7,23 +7,28 @@ This document outlines the complete server-side swap system implementation and h
 The swap system is composed of several key endpoints:
 
 ### 1. Quote Endpoint (`GET /api/swap/quote`)
+
 Gets a price quote for swapping tokens using a fallback chain:
+
 1. **Jupiter** - Primary provider, most liquidity
 2. **Meteora** - Secondary provider
 3. **Bridged Routes** - Multi-leg swaps through USDC/USDT/SOL
 
 **Parameters:**
+
 - `inputMint` (required) - Token mint address to swap from
 - `outputMint` (required) - Token mint address to swap to
 - `amount` (required) - Amount in smallest unit (lamports for SOL, etc.)
 - `slippageBps` (optional, default: 50) - Slippage tolerance in basis points (1 bps = 0.01%)
 
 **Example Request:**
+
 ```bash
 curl "http://localhost:8080/api/swap/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000"
 ```
 
 **Response:**
+
 ```json
 {
   "quote": {
@@ -48,9 +53,11 @@ curl "http://localhost:8080/api/swap/quote?inputMint=So1111111111111111111111111
 ```
 
 ### 2. Execute Endpoint (`POST /api/swap/execute`)
+
 Builds an unsigned swap transaction from a quote.
 
 **Request Body:**
+
 ```json
 {
   "quoteResponse": {
@@ -64,6 +71,7 @@ Builds an unsigned swap transaction from a quote.
 ```
 
 **Response:**
+
 ```json
 {
   "swapTransaction": "base64-encoded-transaction-data",
@@ -73,9 +81,11 @@ Builds an unsigned swap transaction from a quote.
 ```
 
 ### 3. Send Transaction Endpoint (`POST /api/solana-send`)
+
 Sends a signed transaction to the blockchain.
 
 **Request Body:**
+
 ```json
 {
   "signedBase64": "base64-encoded-signed-transaction"
@@ -83,6 +93,7 @@ Sends a signed transaction to the blockchain.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -94,9 +105,11 @@ Sends a signed transaction to the blockchain.
 **Note:** Requires `FIXORIUM_API_KEY` environment variable if configured.
 
 ### 4. Simulate Transaction Endpoint (`POST /api/solana-simulate`)
+
 Simulates a transaction without sending it.
 
 **Request Body:**
+
 ```json
 {
   "signedBase64": "base64-encoded-transaction"
@@ -104,6 +117,7 @@ Simulates a transaction without sending it.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -186,6 +200,7 @@ curl -X POST http://localhost:8080/api/solana-send \
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -196,7 +211,9 @@ Response:
 ## Error Handling
 
 ### No Route Found (404)
+
 Returned when no swap route exists between the tokens:
+
 ```json
 {
   "error": "No swap route found - no liquidity available for this pair",
@@ -217,7 +234,9 @@ Returned when no swap route exists between the tokens:
 **Solution:** Try a different token pair or increase the amount.
 
 ### Insufficient SOL (400 on /api/solana-send)
+
 Transaction would fail due to insufficient fees:
+
 ```json
 {
   "error": "Insufficient SOL for transaction fees",
@@ -232,7 +251,9 @@ Transaction would fail due to insufficient fees:
 **Solution:** Add more SOL to the wallet.
 
 ### Rate Limiting (429)
+
 If Jupiter or Meteora APIs are rate limited:
+
 ```json
 {
   "error": "No swap route found - no liquidity available for this pair",
@@ -284,12 +305,15 @@ The `SwapInterface` component in `client/components/wallet/SwapInterface.tsx` ha
 ## Troubleshooting
 
 ### Quote endpoint returns 500
+
 Check server logs for RPC endpoint issues. This usually means all RPC endpoints are rate limited or down.
 
 ### Transaction send fails with "Blockhash expired"
+
 The transaction was built too long ago. Rebuild with a fresh quote and transaction.
 
 ### Swap succeeds but funds not received
+
 Check `https://solscan.io/tx/{signature}` to see transaction status.
 
 ## Cloudflare Worker Migration

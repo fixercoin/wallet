@@ -9,6 +9,7 @@ The swap system has been successfully implemented and tested on the Express serv
 ## Current Implementation (Express)
 
 The Express server has:
+
 - ✅ Quote endpoint (`GET /api/swap/quote`) with fallback chain (Jupiter → Meteora → Bridged)
 - ✅ Execute endpoint (`POST /api/swap/execute`) for building unsigned transactions
 - ✅ Transaction handlers (`/api/solana-send`, `/api/solana-simulate`) for RPC calls
@@ -16,6 +17,7 @@ The Express server has:
 - ✅ Rate limiting recovery with exponential backoff
 
 **Files:**
+
 - `server/routes/swap-v2.ts` - Main swap quote & execute handlers
 - `server/routes/solana-transaction.ts` - Transaction send/simulate handlers
 - `server/index.ts` - Server setup and route registration
@@ -23,6 +25,7 @@ The Express server has:
 ## Cloudflare Implementation
 
 The Cloudflare version is being prepared in:
+
 - `cloudflare/src/swap-handlers.ts` - New swap quote & execute handlers for Cloudflare
 - `cloudflare/src/worker.ts` - Main worker file (needs integration)
 
@@ -62,7 +65,7 @@ if (pathname === "/api/solana-send" && req.method === "POST") {
     if (!signedBase64 || typeof signedBase64 !== "string") {
       return json(
         { error: "Missing required field: signedBase64" },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: corsHeaders },
       );
     }
 
@@ -75,12 +78,12 @@ if (pathname === "/api/solana-send" && req.method === "POST") {
 
     return json(
       { success: true, result: rpcResult, signature: rpcResult },
-      { headers: corsHeaders }
+      { headers: corsHeaders },
     );
   } catch (e: any) {
     return json(
       { error: "Failed to send transaction", details: e?.message },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: corsHeaders },
     );
   }
 }
@@ -94,7 +97,7 @@ if (pathname === "/api/solana-simulate" && req.method === "POST") {
     if (!signedBase64) {
       return json(
         { error: "Missing required field: signedBase64" },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: corsHeaders },
       );
     }
 
@@ -110,12 +113,12 @@ if (pathname === "/api/solana-simulate" && req.method === "POST") {
         unitsConsumed: rpcResult?.unitsConsumed || 0,
         logs: rpcResult?.logs || [],
       },
-      { headers: corsHeaders }
+      { headers: corsHeaders },
     );
   } catch (e: any) {
     return json(
       { error: "Failed to simulate transaction", details: e?.message },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: corsHeaders },
     );
   }
 }
@@ -132,6 +135,7 @@ vars = { SOLANA_RPC = "https://api.mainnet-beta.solana.com" }
 ```
 
 Or via Cloudflare Dashboard:
+
 - Settings → Variables → Environment Variables
 - Add `SOLANA_RPC` = your RPC endpoint URL
 
@@ -155,31 +159,34 @@ const API_BASE = "https://your-worker.your-domain.workers.dev";
 ```
 
 Or if you're using the proxy feature:
+
 ```bash
 # In vite.config.mjs, the proxy will automatically route /api calls
 ```
 
 ## Key Differences: Express vs Cloudflare
 
-| Aspect | Express | Cloudflare |
-|--------|---------|-----------|
-| **RPC Calls** | Direct fetch to RPC endpoints | Via `callRpc()` helper with KV caching |
-| **Rate Limiting** | In-memory Map tracking | KV storage for persistence |
-| **Logging** | console.log | console.log (Cloudflare Logs) |
-| **Timeouts** | Node.js AbortController | Cloudflare request timeout |
-| **External Fetches** | Node.js fetch | Web APIs fetch |
-| **File System** | Node.js fs module | Cloudflare R2 (if needed) |
+| Aspect               | Express                       | Cloudflare                             |
+| -------------------- | ----------------------------- | -------------------------------------- |
+| **RPC Calls**        | Direct fetch to RPC endpoints | Via `callRpc()` helper with KV caching |
+| **Rate Limiting**    | In-memory Map tracking        | KV storage for persistence             |
+| **Logging**          | console.log                   | console.log (Cloudflare Logs)          |
+| **Timeouts**         | Node.js AbortController       | Cloudflare request timeout             |
+| **External Fetches** | Node.js fetch                 | Web APIs fetch                         |
+| **File System**      | Node.js fs module             | Cloudflare R2 (if needed)              |
 
 ## API Compatibility
 
 Both implementations expose identical API endpoints:
 
 ### Quote Endpoint
+
 ```
 GET /api/swap/quote?inputMint=...&outputMint=...&amount=...&slippageBps=50
 ```
 
 **Response:**
+
 ```json
 {
   "quote": { ... },
@@ -192,6 +199,7 @@ GET /api/swap/quote?inputMint=...&outputMint=...&amount=...&slippageBps=50
 ```
 
 ### Execute Endpoint
+
 ```
 POST /api/swap/execute
 Content-Type: application/json
@@ -203,6 +211,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "swapTransaction": "base64-encoded-transaction",
@@ -211,6 +220,7 @@ Content-Type: application/json
 ```
 
 ### Send Transaction Endpoint
+
 ```
 POST /api/solana-send
 Content-Type: application/json
@@ -221,6 +231,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -231,6 +242,7 @@ Content-Type: application/json
 ## Testing the Migration
 
 ### 1. Test Quote Endpoint
+
 ```bash
 curl "https://your-worker.workers.dev/api/swap/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000"
 ```
@@ -238,6 +250,7 @@ curl "https://your-worker.workers.dev/api/swap/quote?inputMint=So111111111111111
 Expected: Quote from Jupiter, Meteora, or bridged route
 
 ### 2. Test Execute Endpoint
+
 ```bash
 curl -X POST https://your-worker.workers.dev/api/swap/execute \
   -H "Content-Type: application/json" \
@@ -250,6 +263,7 @@ curl -X POST https://your-worker.workers.dev/api/swap/execute \
 Expected: Unsigned swap transaction in base64
 
 ### 3. Test Send Endpoint
+
 ```bash
 curl -X POST https://your-worker.workers.dev/api/solana-send \
   -H "Content-Type: application/json" \
@@ -261,12 +275,15 @@ Expected: Transaction signature
 ## Monitoring & Debugging
 
 ### Cloudflare Logs
+
 View logs in real-time:
+
 ```bash
 wrangler tail
 ```
 
 ### Metrics to Monitor
+
 - Quote response times
 - Success rate of fallback chain
 - RPC endpoint performance
@@ -275,16 +292,19 @@ wrangler tail
 ### Common Issues
 
 **Issue: "All RPC endpoints failed"**
+
 - Check SOLANA_RPC environment variable is set
 - Verify RPC endpoint is accessible
 - Check rate limiting on your RPC provider
 
 **Issue: "No swap route found"**
+
 - Normal for illiquid token pairs
 - Check both tokens exist and have liquidity
 - Try intermediate token pair (SOL → USDC → Token)
 
 **Issue: "Invalid response from swap API"**
+
 - Jupiter API format changed (unlikely)
 - May need to update fallback endpoint URLs
 
@@ -298,6 +318,7 @@ wrangler tail
 ## Future Enhancements
 
 1. **KV Caching**: Cache quotes to reduce external API calls
+
    ```typescript
    const cached = await env.SWAP_CACHE.get(`quote:${inputMint}:${outputMint}`);
    ```
@@ -306,7 +327,7 @@ wrangler tail
 
 3. **Analytics**: Track swap success rates, popular pairs, average slippage
 
-4. **Advanced Routing**: Implement A* or dynamic programming for better multi-leg routes
+4. **Advanced Routing**: Implement A\* or dynamic programming for better multi-leg routes
 
 ## Rollback Plan
 
@@ -330,6 +351,7 @@ If issues occur after migration:
 ## Support
 
 For issues during migration:
+
 1. Check server logs: `wrangler tail`
 2. Test individual endpoints with curl
 3. Compare responses with Express implementation

@@ -188,6 +188,13 @@ class DexscreenerAPI {
 
         if (response.ok) {
           try {
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+              throw new Error(
+                `Invalid content-type: ${contentType}. Expected application/json`,
+              );
+            }
+
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
             console.log(

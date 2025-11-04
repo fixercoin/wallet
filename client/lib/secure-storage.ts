@@ -39,7 +39,10 @@ function deriveKeyFromPassword(password: string, salt: Uint8Array): Uint8Array {
  * Convert Uint8Array to base64 string (browser-compatible)
  */
 function bytesToBase64(bytes: Uint8Array): string {
-  const binaryString = String.fromCharCode.apply(null, Array.from(bytes));
+  let binaryString = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
   return btoa(binaryString);
 }
 

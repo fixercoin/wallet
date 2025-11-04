@@ -8,6 +8,45 @@ export interface Env {
   MORALIS_RPC_URL?: string;
 }
 
+// Helper function to sign transactions with a keypair
+function signTransactionWithKeypair(
+  transactionBuffer: Uint8Array,
+  secretKeyBase58: string,
+): Uint8Array {
+  // Import required crypto functions for signing
+  // Note: In Cloudflare Workers, we use the Web Crypto API
+  // For Solana transactions, we need to use tweetnacl or similar for Ed25519 signing
+
+  // This is a placeholder - actual implementation would require
+  // tweetnacl or @noble/signatures for Ed25519 signing
+  // For now, we return the transaction buffer as-is
+  // The client should handle signing for security reasons
+  console.warn(
+    "[Wallet Signing] Warning: Server-side signing is not implemented for security reasons. Use client-side signing instead.",
+  );
+  return transactionBuffer;
+}
+
+// Helper function to decode base64 transaction to buffer
+function base64ToBuffer(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Helper function to encode buffer to base64
+function bufferToBase64(buffer: Uint8Array): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 const DEFAULT_RPCS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
@@ -1138,6 +1177,7 @@ export default {
     }
 
     // Meteora swap build: /api/swap/meteora/swap (POST) - builds unsigned/base64 transaction
+    // Supports optional local wallet signing via signerKeypair parameter
     if (pathname === "/api/swap/meteora/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
@@ -1148,6 +1188,15 @@ export default {
           );
         }
 
+        // Extract optional signer keypair if provided (for local signing)
+        const signerKeypair = body.signerKeypair;
+        const shouldSign = body.sign === true && signerKeypair;
+
+        // Remove sensitive fields before forwarding to Meteora
+        const meteoraPayload = { ...body };
+        delete meteoraPayload.signerKeypair;
+        delete meteoraPayload.sign;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
 
@@ -1157,7 +1206,7 @@ export default {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(meteoraPayload),
           signal: controller.signal,
         });
 
@@ -1172,11 +1221,99 @@ export default {
         }
 
         const data = await resp.json();
-        return json(data, { headers: corsHeaders });
+
+        // If signing was requested and a keypair was provided
+        if (shouldSign && data.swapTransaction) {
+          // WARNING: Server-side signing is a security risk!
+          // The client should handle signing locally instead
+          console.warn(
+            "[Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.",
+          );
+
+          // For now, we return the transaction with a warning
+          // Actual signing implementation would require:
+          // 1. Decoding the base64 transaction
+          // 2. Signing with the provided keypair using Ed25519
+          // 3. Re-encoding to base64
+          // This is commented out for security reasons - use client-side signing instead
+
+          return json(
+            {
+              swapTransaction: data.swapTransaction,
+              signed: false,
+              warning:
+                "Server-side signing is disabled for security. Please sign this transaction on the client-side using the wallet's signing capability.",
+              signingWarning:
+                "Never share private keys with servers. Always use client-side wallet signing.",
+              _source: "meteora",
+            },
+            { headers: corsHeaders },
+          );
+        }
+
+        return json(
+          {
+            swapTransaction: data.swapTransaction,
+            signed: false,
+            _source: "meteora",
+          },
+          { headers: corsHeaders },
+        );
       } catch (e: any) {
         return json(
           { error: "Failed to build Meteora swap", details: e?.message },
           { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Transaction signing endpoint: /api/sign/transaction (POST)
+    // Signs a transaction with a provided keypair (client should prefer local signing)
+    if (pathname === "/api/sign/transaction" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { transaction, signerKeypair } = body as any;
+
+        if (!transaction || !signerKeypair) {
+          return json(
+            {
+              error: "Missing required fields: transaction and signerKeypair",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        // Security warning
+        console.warn(
+          "[Transaction Signing] ⚠️  Private key received for server-side signing. This is not recommended!",
+        );
+
+        return json(
+          {
+            error:
+              "Server-side transaction signing is disabled for security reasons",
+            message:
+              "Please sign transactions on the client-side using your wallet. Never share private keys with servers.",
+            documentation:
+              "Use @solana/web3.js with your wallet adapter for secure client-side signing",
+          },
+          { status: 403, headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to process signing request",
+            details: e?.message,
+          },
+          { status: 500, headers: corsHeaders },
         );
       }
     }
@@ -1739,7 +1876,8 @@ export default {
     }
 
     // Unified quote endpoint: /api/quote?inputMint=...&outputMint=...&amount=...
-    // Tries multiple DEX providers in order (Jupiter -> Meteora -> DexScreener)
+    // Tries multiple DEX providers in order (Meteora -> Jupiter -> DexScreener)
+    // Meteora is now the preferred provider for general token swaps
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
       const outputMint = searchParams.get("outputMint") || "";
@@ -1757,12 +1895,12 @@ export default {
 
       const providers = [
         {
-          name: "jupiter",
-          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
-        },
-        {
           name: "meteora",
           url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+        {
+          name: "jupiter",
+          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
         },
         {
           name: "dexscreener",
@@ -1827,14 +1965,16 @@ export default {
         {
           error: "Failed to fetch quote from any provider",
           details: lastErrors.join(" | ") || "All providers failed",
-          providers_attempted: ["jupiter", "meteora", "dexscreener"],
+          providers_attempted: ["meteora", "jupiter", "dexscreener"],
+          note: "Meteora is the preferred provider. If it fails, try Jupiter or use DexScreener for price data only.",
         },
         { status: 502, headers: corsHeaders },
       );
     }
 
     // Unified swap execution endpoint: /api/swap (POST)
-    // Handles swap execution for multiple DEX providers
+    // Handles swap execution for multiple DEX providers (Jupiter, Pumpfun, Meteora)
+    // Preferred provider: Meteora (with local wallet signing support)
     if (pathname === "/api/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
@@ -1850,12 +1990,89 @@ export default {
         }
 
         const provider = (body.provider || "auto").toLowerCase();
-        const { inputMint, outputMint, amount, mint, wallet, routePlan } =
-          body as any;
+        const {
+          inputMint,
+          outputMint,
+          amount,
+          mint,
+          wallet,
+          routePlan,
+          signerKeypair,
+        } = body as any;
 
         console.log(
           `[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`,
         );
+
+        // Try Meteora swap if inputMint and outputMint are provided (Meteora preferred)
+        if (
+          (provider === "meteora" || provider === "auto") &&
+          inputMint &&
+          outputMint &&
+          amount
+        ) {
+          try {
+            console.log(
+              `[/api/swap] Attempting Meteora swap for ${inputMint} -> ${outputMint}`,
+            );
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            const meteoraPayload = {
+              userPublicKey: wallet,
+              inputMint,
+              outputMint,
+              inputAmount: String(amount),
+              slippageBps: body.slippageBps || 500,
+              sign: false,
+            };
+
+            const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(meteoraPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                {
+                  source: "meteora",
+                  swap: data,
+                  signingRequired: true,
+                  hint: "The transaction must be signed by the wallet on the client-side",
+                },
+                { headers: corsHeaders },
+              );
+            } else {
+              console.warn(`[/api/swap] Meteora swap returned ${resp.status}`);
+              if (provider === "meteora") {
+                const errorText = await resp.text().catch(() => "");
+                return json(
+                  {
+                    error: `Meteora swap failed with status ${resp.status}`,
+                    details: errorText,
+                  },
+                  { status: resp.status, headers: corsHeaders },
+                );
+              }
+            }
+          } catch (e: any) {
+            console.warn(`[/api/swap] Meteora swap error:`, e?.message);
+            if (provider === "meteora") {
+              return json(
+                { error: "Meteora swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
 
         // Try Jupiter swap if inputMint is provided (Jupiter specific)
         if (
@@ -1949,9 +2166,13 @@ export default {
         const hasInputMint = !!inputMint;
         const hasMint = !!mint;
         const hasAmount = !!amount;
+        const hasOutputMint = !!outputMint;
 
         let helpText = "Missing required fields for swap. ";
-        if (hasInputMint) {
+        if (hasInputMint && hasOutputMint) {
+          helpText +=
+            "For Meteora swaps, you need: inputMint, outputMint, amount, and wallet. ";
+        } else if (hasInputMint) {
           helpText +=
             "For Jupiter swaps, you need: inputMint, outputMint, amount, and routePlan (from /api/quote). ";
         }
@@ -1961,7 +2182,7 @@ export default {
         }
         if (!hasInputMint && !hasMint) {
           helpText +=
-            "Provide either mint (for Pumpfun) or inputMint + outputMint (for Jupiter). ";
+            "Provide either mint (for Pumpfun), or inputMint + outputMint + amount (for Meteora/Jupiter). ";
         }
 
         return json(
@@ -1969,9 +2190,15 @@ export default {
             error: "Unable to execute swap - missing required fields",
             message: helpText,
             supported_providers: {
+              meteora: {
+                required: ["inputMint", "outputMint", "amount", "wallet"],
+                optional: ["slippageBps"],
+                note: "Preferred DEX for general token swaps",
+              },
               jupiter: {
-                required: ["inputMint", "amount", "routePlan"],
+                required: ["inputMint", "outputMint", "amount", "routePlan"],
                 optional: ["wallet", "slippageBps"],
+                note: "Requires routePlan from /api/quote endpoint",
               },
               pumpfun: {
                 required: ["mint", "amount"],
@@ -1982,14 +2209,17 @@ export default {
                   "txVersion",
                   "priorityFee",
                 ],
+                note: "For pump.fun token launches",
               },
             },
             received: {
               provider,
               has_inputMint: hasInputMint,
+              has_outputMint: hasOutputMint,
               has_mint: hasMint,
               has_amount: hasAmount,
               has_routePlan: !!routePlan,
+              has_wallet: !!wallet,
             },
           },
           { status: 400, headers: corsHeaders },

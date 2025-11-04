@@ -117,10 +117,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
-    return price.toFixed(6);
+    if (price >= 0.0001) return price.toFixed(6);
+    return price.toFixed(8);
   };
 
   const [usdToPkr, setUsdToPkr] = useState<number>(() => {

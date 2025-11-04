@@ -150,8 +150,16 @@ const toBaseUnits = (value: string, decimals: number): bigint => {
   return wholePart * pow + fractionPart;
 };
 
-const formatNumber = (value: number | undefined, decimals: number): string => {
-  if (typeof value !== "number" || !isFinite(value)) return "0";
+const formatNumber = (value: number | undefined, decimals: number, symbol?: string): string => {
+  if (typeof value !== "number" || !isFinite(value)) return "0.00";
+  // FIXERCOIN and LOCKER always show minimum 2 decimal places
+  if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+    return value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+      useGrouping: false,
+    });
+  }
   const safeDecimals = Math.max(0, Math.min(decimals, 9));
   return value.toLocaleString("en-US", {
     minimumFractionDigits: 0,

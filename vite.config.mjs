@@ -89,11 +89,18 @@ export default defineConfig({
   server: {
     hmr: { overlay: false },
   },
+ import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // ✅ Correct alias root
-      "@shared": path.resolve(__dirname, "shared"),
-      "@utils": path.resolve(__dirname, "utils"),
+      "@": path.resolve(__dirname, "src"),
+      "@lib": path.resolve(__dirname, "src/lib"),   // ✅ REQUIRED FIX
     },
+  },
+});
+,
   },
 });

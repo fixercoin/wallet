@@ -199,16 +199,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Persist wallets whenever they change
   useEffect(() => {
     try {
-      const toStore = wallets.map((w) => {
-        const copy: any = { ...w } as any;
-        if (copy.secretKey instanceof Uint8Array)
-          copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-        return copy;
-      });
-      if (toStore.length > 0) {
-        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-      } else {
+      if (wallets.length === 0) {
         localStorage.removeItem(WALLETS_STORAGE_KEY);
+        return;
+      }
+
+      // Check if wallets should be encrypted
+      const password = getWalletPassword();
+      const shouldEncrypt = doesWalletRequirePassword();
+
+      if (shouldEncrypt && password) {
+        // Encrypt wallets before storing
+        const encrypted = wallets.map((w) => {
+          try {
+            return encryptWalletData(w, password);
+          } catch (e) {
+            console.error("Failed to encrypt wallet:", e);
+            // Fallback to plaintext if encryption fails
+            const copy: any = { ...w } as any;
+            if (copy.secretKey instanceof Uint8Array)
+              copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+            return copy;
+          }
+        });
+        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(encrypted));
+        console.log("[WalletContext] Wallets saved encrypted");
+      } else {
+        // Store plaintext (for backward compatibility or if no password set)
+        const toStore = wallets.map((w) => {
+          const copy: any = { ...w } as any;
+          if (copy.secretKey instanceof Uint8Array)
+            copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+          return copy;
+        });
+        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
+        console.log("[WalletContext] Wallets saved as plaintext");
       }
     } catch (e) {
       console.error("Failed to persist wallets:", e);

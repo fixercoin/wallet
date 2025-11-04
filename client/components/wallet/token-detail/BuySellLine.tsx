@@ -121,10 +121,26 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
       const price1End = last.price;
       const price5mStart = price1Start; // approximate
 
-      const entry5m = makeEntry(Math.max(100, approx5m), price5mStart, price1End);
-      const entry1h = makeEntry(Math.max(100, lastHourVol), price1Start, price1End);
-      const entry6h = makeEntry(Math.max(100, last6hVol), price6Start, price6End);
-      const entry24h = makeEntry(Math.max(100, last24hVol), price24Start, price24End);
+      const entry5m = makeEntry(
+        Math.max(100, approx5m),
+        price5mStart,
+        price1End,
+      );
+      const entry1h = makeEntry(
+        Math.max(100, lastHourVol),
+        price1Start,
+        price1End,
+      );
+      const entry6h = makeEntry(
+        Math.max(100, last6hVol),
+        price6Start,
+        price6End,
+      );
+      const entry24h = makeEntry(
+        Math.max(100, last24hVol),
+        price24Start,
+        price24End,
+      );
 
       return [
         { label: "5m", buys: entry5m.buys, sells: entry5m.sells },

@@ -326,14 +326,22 @@ export default {
             const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
 
             // Find the best pair (typically the first one with good liquidity)
-            const pair = pairs.find(p => p && p.priceUsd && parseFloat(p.priceUsd) > 0);
+            const pair = pairs.find(
+              (p) => p && p.priceUsd && parseFloat(p.priceUsd) > 0,
+            );
 
             if (pair) {
               const price = parseFloat(pair.priceUsd);
               // Get 24h price change from either priceChange.h24 or priceChange24h
-              const priceChange24h = pair?.priceChange?.h24 ?? pair?.priceChange24h ?? pair?.price24hChange ?? 0;
+              const priceChange24h =
+                pair?.priceChange?.h24 ??
+                pair?.priceChange24h ??
+                pair?.price24hChange ??
+                0;
 
-              console.log(`[SOL Price] Success: $${price}, 24h change: ${priceChange24h}%`);
+              console.log(
+                `[SOL Price] Success: $${price}, 24h change: ${priceChange24h}%`,
+              );
 
               return json(
                 {
@@ -421,7 +429,11 @@ export default {
             const data = await resp.json();
 
             // For DexScreener, transform response to match quote format
-            if (p.name === "dexscreener" && data.pairs && Array.isArray(data.pairs)) {
+            if (
+              p.name === "dexscreener" &&
+              data.pairs &&
+              Array.isArray(data.pairs)
+            ) {
               const pair = data.pairs[0];
               if (pair && pair.priceUsd) {
                 return json(

@@ -1791,7 +1791,9 @@ export default {
 
             // For DexScreener, transform the response to match quote format
             if (p.name === "dexscreener" && data.pairs) {
-              const pair = data.pairs.find((p: any) => p.baseToken?.address === inputMint && p.priceUsd);
+              const pair = data.pairs.find(
+                (p: any) => p.baseToken?.address === inputMint && p.priceUsd,
+              );
               if (pair) {
                 return json(
                   {
@@ -1815,9 +1817,7 @@ export default {
 
           lastErrors.push(`${p.name}: ${resp.status}`);
         } catch (e: any) {
-          lastErrors.push(
-            `${p.name}: ${e?.message || String(e)}`,
-          );
+          lastErrors.push(`${p.name}: ${e?.message || String(e)}`);
         }
       }
 
@@ -1853,7 +1853,9 @@ export default {
         const { inputMint, outputMint, amount, mint, wallet, routePlan } =
           body as any;
 
-        console.log(`[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`);
+        console.log(
+          `[/api/swap] Request - provider: ${provider}, mint: ${mint}, inputMint: ${inputMint}, amount: ${amount}`,
+        );
 
         // Try Jupiter swap if inputMint is provided (Jupiter specific)
         if (
@@ -1881,9 +1883,7 @@ export default {
                 { headers: corsHeaders },
               );
             } else {
-              console.warn(
-                `[/api/swap] Jupiter swap returned ${resp.status}`,
-              );
+              console.warn(`[/api/swap] Jupiter swap returned ${resp.status}`);
             }
           } catch (e: any) {
             console.warn(`[/api/swap] Jupiter swap error:`, e?.message);
@@ -1932,9 +1932,7 @@ export default {
                 { headers: corsHeaders },
               );
             } else {
-              console.warn(
-                `[/api/swap] Pumpfun swap returned ${resp.status}`,
-              );
+              console.warn(`[/api/swap] Pumpfun swap returned ${resp.status}`);
             }
           } catch (e: any) {
             console.warn(`[/api/swap] Pumpfun swap error:`, e?.message);

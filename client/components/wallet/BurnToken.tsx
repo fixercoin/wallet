@@ -603,7 +603,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
+                    className="h-11 bg-gray-300 border border-gray-300 text-gray-900 placeholder:text-gray-500"
                   />
                   <Button
                     type="button"

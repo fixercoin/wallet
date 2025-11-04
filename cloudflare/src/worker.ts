@@ -671,7 +671,7 @@ export default {
         SOL: 150, // Updated fallback (previously was 180)
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.000012,
+        LOCKER: 0.000010, // Updated fallback
       };
 
       const getTokenSymbol = (addr: string): string | null => {
@@ -1082,7 +1082,7 @@ export default {
           SOL: 150, // Updated fallback (previously was 180)
           USDC: 1.0,
           USDT: 1.0,
-          LOCKER: 0.000012,
+          LOCKER: 0.000010, // Updated fallback
         };
 
         const PKR_PER_USD = 280; // base FX
@@ -1440,7 +1440,7 @@ export default {
           // WARNING: Server-side signing is a security risk!
           // The client should handle signing locally instead
           console.warn(
-            "[Meteora Swap] ⚠���  Server-side signing requested. This is not recommended for security reasons.",
+            "[Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.",
           );
 
           // For now, we return the transaction with a warning

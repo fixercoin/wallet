@@ -26,6 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TokenInfo } from "@/lib/wallet";
+import { SendOTPVerification } from "./SendOTPVerification";
+import { clearOTPSession } from "@/lib/otp-utils";
 
 interface SendTransactionProps {
   onBack: () => void;

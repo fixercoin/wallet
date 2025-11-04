@@ -1875,7 +1875,8 @@ export default {
     }
 
     // Unified quote endpoint: /api/quote?inputMint=...&outputMint=...&amount=...
-    // Tries multiple DEX providers in order (Jupiter -> Meteora -> DexScreener)
+    // Tries multiple DEX providers in order (Meteora -> Jupiter -> DexScreener)
+    // Meteora is now the preferred provider for general token swaps
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
       const outputMint = searchParams.get("outputMint") || "";
@@ -1893,12 +1894,12 @@ export default {
 
       const providers = [
         {
-          name: "jupiter",
-          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
-        },
-        {
           name: "meteora",
           url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+        {
+          name: "jupiter",
+          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
         },
         {
           name: "dexscreener",

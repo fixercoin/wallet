@@ -380,7 +380,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       refreshLocksFromStorage();
     }, 20000);
     return () => clearInterval(interval);
-  }, [wallet, refreshLocksFromStorage]);
+  }, [wallet?.publicKey, refreshLocksFromStorage]);
 
   useEffect(() => {
     if (!storageKey) return;

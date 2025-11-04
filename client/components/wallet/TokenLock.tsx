@@ -870,6 +870,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               >
                 <RefreshCw
                   className={`h-4 w-4 text-black ${isRefreshing ? "animate-spin" : ""}`}
+                  fill="none"
+                  strokeWidth={2}
                 />
               </Button>
             </div>

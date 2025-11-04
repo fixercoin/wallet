@@ -237,6 +237,220 @@ export default {
       }
     }
 
+    // DexScreener tokens proxy: /api/dexscreener/tokens?mints=<MINT1>,<MINT2>...
+    if (pathname === "/api/dexscreener/tokens" && req.method === "GET") {
+      const mints = searchParams.get("mints") || "";
+      if (!mints) {
+        return json(
+          { error: "Missing 'mints' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      const mintList = mints
+        .split(",")
+        .map((m) => m.trim())
+        .filter(Boolean);
+      if (mintList.length === 0) {
+        return json(
+          { error: "No valid mints provided" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const batch = mintList.join(",");
+        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(batch)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        }
+
+        // Fallback: try individual token lookups
+        const pairs = [];
+        for (const mint of mintList) {
+          try {
+            const individualUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
+            const individualResp = await fetch(individualUrl, {
+              headers: { Accept: "application/json" },
+            });
+            if (individualResp.ok) {
+              const data = await individualResp.json();
+              if (data.pairs && Array.isArray(data.pairs)) {
+                pairs.push(...data.pairs);
+              }
+            }
+          } catch (e) {
+            console.warn(`Failed to fetch individual token ${mint}:`, e);
+          }
+        }
+
+        return json(
+          { schemaVersion: "1.0.0", pairs },
+          { headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to fetch DexScreener tokens",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexScreener search proxy: /api/dexscreener/search?q=<QUERY>
+    if (pathname === "/api/dexscreener/search" && req.method === "GET") {
+      const q = searchParams.get("q") || "";
+      if (!q) {
+        return json(
+          { error: "Missing 'q' parameter" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        }
+
+        return json(
+          { schemaVersion: "1.0.0", pairs: [] },
+          { status: resp.status, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to search DexScreener",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // DexScreener trending proxy: /api/dexscreener/trending
+    if (pathname === "/api/dexscreener/trending" && req.method === "GET") {
+      try {
+        const dexUrl = `https://api.dexscreener.com/latest/dex/pairs/solana`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(dexUrl, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const sorted = (data.pairs || [])
+            .filter(
+              (p) =>
+                p.volume?.h24 > 1000 &&
+                p.liquidity?.usd &&
+                p.liquidity.usd > 10000,
+            )
+            .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
+            .slice(0, 50);
+          return json(
+            { schemaVersion: "1.0.0", pairs: sorted },
+            { headers: corsHeaders },
+          );
+        }
+
+        return json(
+          { schemaVersion: "1.0.0", pairs: [] },
+          { status: resp.status, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to fetch trending tokens",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // SOL price proxy: /api/sol/price
+    if (pathname === "/api/sol/price" && req.method === "GET") {
+      const endpoints = [
+        "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
+        "https://api.dexscreener.io/latest/dex/tokens/So11111111111111111111111111111111111111112",
+      ];
+      let lastError = null;
+
+      for (const dexUrl of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+          const resp = await fetch(dexUrl, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (resp.ok) {
+            const data = await resp.json();
+            const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+            if (pairs.length > 0) {
+              const pair = pairs[0];
+              const price = pair?.priceUsd ? parseFloat(pair.priceUsd) : 0;
+              const priceChange24h =
+                pair?.priceChange?.h24 ?? pair?.priceChange24h ?? 0;
+              return json(
+                {
+                  price,
+                  priceUsd: price,
+                  price_change_24h: priceChange24h,
+                  data: { price, priceUsd: price, priceChange24h },
+                },
+                { headers: corsHeaders },
+              );
+            }
+          }
+          lastError = resp.status;
+        } catch (e) {
+          lastError = e?.message || String(e);
+        }
+      }
+
+      // Fallback SOL price
+      return json(
+        {
+          price: 180,
+          priceUsd: 180,
+          price_change_24h: 0,
+          data: { price: 180, priceUsd: 180, priceChange24h: 0 },
+        },
+        { headers: corsHeaders },
+      );
+    }
+
     // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>
     if (pathname === "/api/birdeye/price" && req.method === "GET") {
       const address = searchParams.get("address") || "";
@@ -1035,32 +1249,37 @@ export default {
         );
       }
 
-      try {
-        const url_str = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
+      const urls = [
+        `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`,
+        `https://lite-api.jup.ag/swap/v1/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`,
+      ];
+
+      for (const url_str of urls) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 25000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          // Try next endpoint
         }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter quote",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
       }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter quote",
+          details: "All endpoints failed",
+        },
+        { status: 502, headers: corsHeaders },
+      );
     }
 
     // Jupiter swap
@@ -1094,32 +1313,39 @@ export default {
     // Jupiter tokens
     if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
       const type = searchParams.get("type") || "strict";
-      try {
-        const url_str = `https://token.jup.ag/${type}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter tokens API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
+      const endpoints = [
+        `https://token.jup.ag/${type}`,
+        `https://cache.jup.ag/tokens`,
+      ];
+      let lastError = null;
+
+      for (const url_str of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastError = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          lastError = e?.message || String(e);
         }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter tokens",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
       }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter tokens",
+          details: lastError || "All endpoints failed",
+        },
+        { status: 502, headers: corsHeaders },
+      );
     }
 
     // Forex rate

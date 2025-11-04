@@ -36,9 +36,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
             src={token.logoURI}
             alt={token.symbol}
             className={`h-10 w-10 rounded-full border ${
-              variant === "light"
-                ? "border-[#e6f6ec]/20"
-                : "border-gray-700"
+              variant === "light" ? "border-[#e6f6ec]/20" : "border-gray-700"
             }`}
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -68,7 +66,8 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
                   variant === "light" ? "text-gray-900" : "text-white"
                 }`}
               >
-                ${currentPrice.toLocaleString(undefined, {
+                $
+                {currentPrice.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 8,
                 })}

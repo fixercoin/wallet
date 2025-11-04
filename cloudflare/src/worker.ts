@@ -1298,7 +1298,8 @@ export default {
 
         return json(
           {
-            error: "Server-side transaction signing is disabled for security reasons",
+            error:
+              "Server-side transaction signing is disabled for security reasons",
             message:
               "Please sign transactions on the client-side using your wallet. Never share private keys with servers.",
             documentation:

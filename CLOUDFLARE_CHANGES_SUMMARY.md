@@ -3,6 +3,7 @@
 ## Overview
 
 Updated the Cloudflare Worker (`cloudflare/src/worker.ts`) to:
+
 1. **Use DexScreener for price fetching** ✅ (Already implemented)
 2. **Use Meteora for swap quotes** ✅ (Now prioritized)
 3. **Use Meteora for swap execution** ✅ (Added with local wallet signing support)
@@ -19,11 +20,11 @@ Updated the Cloudflare Worker (`cloudflare/src/worker.ts`) to:
 function signTransactionWithKeypair(
   transactionBuffer: Uint8Array,
   secretKeyBase58: string,
-): Uint8Array
+): Uint8Array;
 
 // Base64 encoding/decoding helpers
-function base64ToBuffer(base64: string): Uint8Array
-function bufferToBase64(buffer: Uint8Array): string
+function base64ToBuffer(base64: string): Uint8Array;
+function bufferToBase64(buffer: Uint8Array): string;
 ```
 
 **Purpose:** Support potential local wallet signing operations with proper base64 encoding/decoding.
@@ -33,6 +34,7 @@ function bufferToBase64(buffer: Uint8Array): string
 **Endpoint:** `/api/swap/meteora/swap` (POST)
 
 **Changes:**
+
 - Now accepts optional `signerKeypair` and `sign` parameters
 - Removes sensitive fields before forwarding to Meteora
 - Returns unsigned transaction with security warnings
@@ -40,6 +42,7 @@ function bufferToBase64(buffer: Uint8Array): string
 - Recommends client-side signing
 
 **Response includes:**
+
 - `swapTransaction`: Base64-encoded transaction from Meteora
 - `signed`: Boolean flag (always false for security)
 - `warning`: Security message about server-side signing
@@ -52,6 +55,7 @@ function bufferToBase64(buffer: Uint8Array): string
 **Purpose:** Intentionally disabled endpoint for transaction signing
 
 **Behavior:**
+
 - Returns HTTP 403 (Forbidden)
 - Logs security warnings
 - Directs users to client-side signing
@@ -64,12 +68,14 @@ function bufferToBase64(buffer: Uint8Array): string
 **Endpoint:** `/api/quote` (GET)
 
 **Changes:**
+
 - Reordered provider list: **Meteora → Jupiter → DexScreener**
 - Meteora is now the **first and preferred provider**
 - Updated comments to reflect new priority
 - Updated error message to mention Meteora preference
 
 **Provider order:**
+
 1. Meteora (preferred)
 2. Jupiter (fallback)
 3. DexScreener (last resort)
@@ -79,6 +85,7 @@ function bufferToBase64(buffer: Uint8Array): string
 **Endpoint:** `/api/swap` (POST)
 
 **Changes:**
+
 - Added Meteora swap support before Jupiter
 - Meteora is now tried first when `provider === "auto"`
 - Builds proper payload for Meteora API
@@ -86,6 +93,7 @@ function bufferToBase64(buffer: Uint8Array): string
 - Includes helpful hint about client-side signing requirement
 
 **New Meteora Payload Structure:**
+
 ```json
 {
   "userPublicKey": "wallet_address",
@@ -98,10 +106,11 @@ function bufferToBase64(buffer: Uint8Array): string
 ```
 
 **New Response Structure:**
+
 ```json
 {
   "source": "meteora",
-  "swap": { "swapTransaction": "...", "..." : "other_fields" },
+  "swap": { "swapTransaction": "...", "...": "other_fields" },
   "signingRequired": true,
   "hint": "The transaction must be signed by the wallet on the client-side"
 }
@@ -110,6 +119,7 @@ function bufferToBase64(buffer: Uint8Array): string
 #### Updated Error Messages (Lines 2164-2225)
 
 **Changes:**
+
 - Added Meteora to supported providers list
 - Updated `supported_providers` object to include Meteora with full specs
 - Added `note` field for each provider explaining its purpose
@@ -117,6 +127,7 @@ function bufferToBase64(buffer: Uint8Array): string
 - Enhanced `received` object to track `has_outputMint` and `has_wallet`
 
 **New Error Response Format:**
+
 ```json
 {
   "error": "Unable to execute swap - missing required fields",
@@ -149,11 +160,13 @@ function bufferToBase64(buffer: Uint8Array): string
 **Status:** Already fully implemented
 
 **Endpoints:**
+
 - `/api/birdeye/price?address=<token_mint>`
 - `/api/dexscreener/tokens?mints=<mint1>,<mint2>,...`
 - `/api/sol/price`
 
 **Fallback Chain:**
+
 1. DexScreener API
 2. Jupiter API
 3. Hardcoded fallback prices
@@ -163,12 +176,14 @@ function bufferToBase64(buffer: Uint8Array): string
 **Endpoint:** `/api/quote`
 
 **Features:**
+
 - Automatic provider selection with Meteora first
 - Falls back to Jupiter if Meteora fails
 - DexScreener as last resort (price data only)
 - Clear error messages with provider details
 
 **Example Request:**
+
 ```bash
 curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
 ```
@@ -176,16 +191,19 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 ### 3. Swap Execution - Meteora with Client-Side Signing ✅
 
 **Endpoints:**
+
 - `/api/swap` (unified, tries Meteora first)
 - `/api/swap/meteora/swap` (Meteora-specific)
 
 **Security Features:**
+
 - ❌ Server-side signing **disabled**
 - ✅ Transactions returned unsigned
 - ✅ Clear warnings about security
 - ✅ Client must sign using wallet adapter
 
 **Transaction Flow:**
+
 ```
 1. Client requests swap via /api/swap
    ↓
@@ -205,6 +223,7 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 ### Step 1: No changes needed to Cloudflare configuration
 
 The wrangler.toml is already configured correctly:
+
 ```toml
 name = "wallet-c36"
 main = "./src/worker.js"
@@ -327,14 +346,17 @@ Potential improvements for later:
 ### Common Issues
 
 **Issue:** Quote returns 404 for valid token
+
 - **Cause:** Token not available on Meteora
 - **Solution:** Check token exists on Solana mainnet, try Jupiter
 
 **Issue:** Swap fails with "missing required fields"
+
 - **Cause:** Parameters don't match provider requirements
 - **Solution:** Use `/api/swap` with proper payload (see error message)
 
 **Issue:** "Server-side signing is disabled"
+
 - **Cause:** Attempting to use disabled signing endpoint
 - **Solution:** Sign transactions on client-side using wallet adapter
 

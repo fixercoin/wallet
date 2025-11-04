@@ -9,7 +9,11 @@ import axios from "axios";
 
 const API_BASE = "https://wallet.fixorium.com.pk";
 
-async function getSwapQuote(inputMint: string, outputMint: string, amount: string) {
+async function getSwapQuote(
+  inputMint: string,
+  outputMint: string,
+  amount: string,
+) {
   const params = new URLSearchParams({
     inputMint,
     outputMint,
@@ -69,7 +73,11 @@ const { swap } = await buildSwapTransaction(
 ### 3. Sign Transaction Client-Side
 
 ```typescript
-import { Connection, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import {
+  Connection,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import { WalletAdapter } from "@solana/wallet-adapter-base";
 
 async function executeSwap(
@@ -297,12 +305,14 @@ function SwapComponent() {
 Get a swap quote from the best available DEX (Meteora preferred).
 
 **Parameters:**
+
 - `inputMint` (string, required): Token mint to sell
 - `outputMint` (string, required): Token mint to buy
 - `amount` (string, required): Amount in smallest units (lamports for SOL)
 - `provider` (string, optional): Force specific provider ("meteora", "jupiter", "dexscreener", "auto")
 
 **Response:**
+
 ```json
 {
   "source": "meteora",
@@ -320,6 +330,7 @@ Get a swap quote from the best available DEX (Meteora preferred).
 Execute a swap on the best available DEX (Meteora preferred).
 
 **Request Body:**
+
 ```json
 {
   "provider": "meteora",
@@ -332,6 +343,7 @@ Execute a swap on the best available DEX (Meteora preferred).
 ```
 
 **Response:**
+
 ```json
 {
   "source": "meteora",
@@ -350,9 +362,11 @@ Execute a swap on the best available DEX (Meteora preferred).
 Get token price data.
 
 **Parameters:**
+
 - `address` (string, required): Token mint address
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -528,6 +542,7 @@ const { wallet } = useWallet();
 ### Issue: "Wallet not connected"
 
 **Solution:** Check wallet is connected before calling swap
+
 ```typescript
 if (!wallet.publicKey) {
   throw new Error("Please connect your wallet first");
@@ -537,6 +552,7 @@ if (!wallet.publicKey) {
 ### Issue: "Invalid transaction"
 
 **Solution:** Ensure base64 decoding is correct
+
 ```typescript
 const txBuffer = Buffer.from(swap.swapTransaction, "base64");
 // Verify buffer is not empty
@@ -548,6 +564,7 @@ if (txBuffer.length === 0) {
 ### Issue: "Transaction failed"
 
 **Solution:** Check for sufficient balance
+
 ```typescript
 const balance = await connection.getBalance(publicKey);
 if (balance < amount) {

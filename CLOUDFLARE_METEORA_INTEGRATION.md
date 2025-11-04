@@ -15,6 +15,7 @@ This document describes the updated Cloudflare Worker configuration that priorit
 - Status: ✅ Already in production
 
 **Example:**
+
 ```bash
 curl "https://wallet.fixorium.com.pk/api/birdeye/price?address=H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"
 ```
@@ -28,11 +29,13 @@ curl "https://wallet.fixorium.com.pk/api/birdeye/price?address=H4qKn8FMFha8jJuj8
 - **Order of Preference:** Meteora → Jupiter → DexScreener
 
 **Example:**
+
 ```bash
 curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
 ```
 
 **Response:**
+
 ```json
 {
   "source": "meteora",
@@ -56,6 +59,7 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 - Returns base64-encoded transaction
 
 **Request:**
+
 ```json
 {
   "userPublicKey": "...",
@@ -68,6 +72,7 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 ```
 
 **Response:**
+
 ```json
 {
   "swapTransaction": "base64_encoded_transaction",
@@ -86,6 +91,7 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 - Returns transaction requiring client-side signing
 
 **Request:**
+
 ```json
 {
   "provider": "meteora",
@@ -98,6 +104,7 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 ```
 
 **Response:**
+
 ```json
 {
   "source": "meteora",
@@ -141,22 +148,23 @@ const signature = await connection.sendTransaction(signedTransaction);
 
 ## Endpoint Summary
 
-| Endpoint | Method | Provider | Purpose | Status |
-|----------|--------|----------|---------|--------|
-| `/api/quote` | GET | Meteora (preferred) | Get swap quotes | ✅ Updated |
-| `/api/swap` | POST | Meteora/Jupiter/Pumpfun | Execute swaps | ✅ Updated |
-| `/api/swap/meteora/quote` | GET | Meteora | Meteora quotes | ✅ Working |
-| `/api/swap/meteora/swap` | POST | Meteora | Build transactions | ✅ Updated |
-| `/api/birdeye/price` | GET | DexScreener | Token prices | ✅ Working |
-| `/api/dexscreener/tokens` | GET | DexScreener | Token data | ✅ Working |
-| `/api/sol/price` | GET | DexScreener | SOL price | ✅ Working |
-| `/api/sign/transaction` | POST | N/A | Sign transactions | ❌ Disabled |
+| Endpoint                  | Method | Provider                | Purpose            | Status      |
+| ------------------------- | ------ | ----------------------- | ------------------ | ----------- |
+| `/api/quote`              | GET    | Meteora (preferred)     | Get swap quotes    | ✅ Updated  |
+| `/api/swap`               | POST   | Meteora/Jupiter/Pumpfun | Execute swaps      | ✅ Updated  |
+| `/api/swap/meteora/quote` | GET    | Meteora                 | Meteora quotes     | ✅ Working  |
+| `/api/swap/meteora/swap`  | POST   | Meteora                 | Build transactions | ✅ Updated  |
+| `/api/birdeye/price`      | GET    | DexScreener             | Token prices       | ✅ Working  |
+| `/api/dexscreener/tokens` | GET    | DexScreener             | Token data         | ✅ Working  |
+| `/api/sol/price`          | GET    | DexScreener             | SOL price          | ✅ Working  |
+| `/api/sign/transaction`   | POST   | N/A                     | Sign transactions  | ❌ Disabled |
 
 ## Deployment Steps
 
 ### 1. Update the Worker Code
 
 The updated `cloudflare/src/worker.ts` includes:
+
 - Meteora prioritization for quotes and swaps
 - Enhanced error messages with provider-specific requirements
 - Security warnings for server-side signing
@@ -230,7 +238,7 @@ SOLANA_RPC = "https://rpc.shyft.to?api_key=..."
 ```typescript
 // 1. Get quote from Meteora
 const quoteResponse = await fetch(
-  `https://wallet.fixorium.com.pk/api/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}`
+  `https://wallet.fixorium.com.pk/api/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}`,
 );
 const { quote, source } = await quoteResponse.json();
 
@@ -267,6 +275,7 @@ await connection.confirmTransaction(signature);
 **Error:** `"Failed to fetch quote from any provider"`
 
 **Solution:** Check if Meteora API is available:
+
 ```bash
 curl "https://api.meteora.ag/swap/v3/quote?inputMint=...&outputMint=...&amount=..."
 ```
@@ -276,6 +285,7 @@ curl "https://api.meteora.ag/swap/v3/quote?inputMint=...&outputMint=...&amount=.
 **Error:** `"Meteora swap returned 4xx/5xx"`
 
 **Solution:**
+
 1. Verify wallet address is valid
 2. Check inputMint and outputMint are correct
 3. Ensure amount is in smallest units (lamports for SOL)
@@ -290,6 +300,7 @@ curl "https://api.meteora.ag/swap/v3/quote?inputMint=...&outputMint=...&amount=.
 ## Support
 
 For issues or questions:
+
 1. Check Cloudflare Worker logs: https://dash.cloudflare.com
 2. Review API response error messages
 3. Test with curl before integrating in frontend

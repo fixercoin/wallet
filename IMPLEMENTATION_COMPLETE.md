@@ -35,6 +35,7 @@ The Cloudflare Worker has been successfully updated to:
 **Provider:** DexScreener (with fallbacks)
 
 **Endpoints:**
+
 - `GET /api/birdeye/price?address=<mint>` - Get token price
 - `GET /api/dexscreener/tokens?mints=<mint1>,<mint2>` - Get multiple token prices
 - `GET /api/sol/price` - Get SOL price
@@ -48,6 +49,7 @@ The Cloudflare Worker has been successfully updated to:
 **Endpoint:** `GET /api/quote?inputMint=...&outputMint=...&amount=...`
 
 **Features:**
+
 - Automatic fallback to Jupiter if Meteora fails
 - DexScreener as last resort for price data
 - Clear source attribution in response
@@ -58,10 +60,12 @@ The Cloudflare Worker has been successfully updated to:
 **Primary Provider:** Meteora
 
 **Endpoints:**
+
 - `POST /api/swap` - Unified endpoint (tries Meteora first)
 - `POST /api/swap/meteora/swap` - Meteora-specific endpoint
 
 **Features:**
+
 - Returns unsigned transactions
 - Requires client-side wallet signing
 - Security warnings included
@@ -72,12 +76,14 @@ The Cloudflare Worker has been successfully updated to:
 **Status:** Implemented but disabled for security
 
 **How it works:**
+
 1. Client receives unsigned transaction
 2. Client signs using wallet adapter (web3.js)
 3. Client submits signed transaction to RPC
 4. Server-side signing endpoint intentionally disabled
 
 **Why disabled:**
+
 - Never send private keys to servers
 - Risk of key exposure or theft
 - Browser wallet extensions are secure
@@ -85,16 +91,16 @@ The Cloudflare Worker has been successfully updated to:
 
 ## API Endpoints Summary
 
-| Endpoint | Method | Provider | Purpose | Status |
-|----------|--------|----------|---------|--------|
-| `/api/quote` | GET | Meteora (primary) | Get swap quotes | ✅ Updated |
-| `/api/swap` | POST | Meteora (primary) | Execute swaps | ✅ Updated |
-| `/api/swap/meteora/quote` | GET | Meteora | Meteora quotes | ✅ Working |
-| `/api/swap/meteora/swap` | POST | Meteora | Build transactions | ✅ Updated |
-| `/api/birdeye/price` | GET | DexScreener | Token prices | ✅ Working |
-| `/api/dexscreener/tokens` | GET | DexScreener | Token data | ✅ Working |
-| `/api/sol/price` | GET | DexScreener | SOL price | ✅ Working |
-| `/api/sign/transaction` | POST | N/A | Sign transactions | ❌ Disabled |
+| Endpoint                  | Method | Provider          | Purpose            | Status      |
+| ------------------------- | ------ | ----------------- | ------------------ | ----------- |
+| `/api/quote`              | GET    | Meteora (primary) | Get swap quotes    | ✅ Updated  |
+| `/api/swap`               | POST   | Meteora (primary) | Execute swaps      | ✅ Updated  |
+| `/api/swap/meteora/quote` | GET    | Meteora           | Meteora quotes     | ✅ Working  |
+| `/api/swap/meteora/swap`  | POST   | Meteora           | Build transactions | ✅ Updated  |
+| `/api/birdeye/price`      | GET    | DexScreener       | Token prices       | ✅ Working  |
+| `/api/dexscreener/tokens` | GET    | DexScreener       | Token data         | ✅ Working  |
+| `/api/sol/price`          | GET    | DexScreener       | SOL price          | ✅ Working  |
+| `/api/sign/transaction`   | POST   | N/A               | Sign transactions  | ❌ Disabled |
 
 ## Quick Start
 
@@ -155,6 +161,7 @@ const signature = await connection.sendTransaction(signedTx);
 ## Documentation Files
 
 ### 1. `CLOUDFLARE_METEORA_INTEGRATION.md`
+
 - Architecture overview
 - All endpoint specifications
 - Security notes and warnings
@@ -162,6 +169,7 @@ const signature = await connection.sendTransaction(signedTx);
 - Troubleshooting guide
 
 ### 2. `CLOUDFLARE_CHANGES_SUMMARY.md`
+
 - Detailed code changes
 - Line-by-line explanations
 - Breaking changes (none)
@@ -169,6 +177,7 @@ const signature = await connection.sendTransaction(signedTx);
 - Future enhancements
 
 ### 3. `CLOUDFLARE_CLIENT_INTEGRATION.md`
+
 - Complete code examples
 - React hooks pattern
 - Error handling
@@ -176,6 +185,7 @@ const signature = await connection.sendTransaction(signedTx);
 - Security guidelines
 
 ### 4. `CLOUDFLARE_DEPLOYMENT_CHECKLIST.md`
+
 - Pre-deployment checklist
 - Step-by-step deployment
 - Post-deployment verification
@@ -263,12 +273,12 @@ wrangler tail --format json
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| Quote fails | Check if provider is up, try Jupiter fallback |
-| Swap fails | Verify wallet address and token mints are valid |
-| Timeout error | Provider may be slow, retry or use different provider |
-| Signing endpoint returns 403 | This is by design - sign on client-side instead |
+| Issue                        | Solution                                              |
+| ---------------------------- | ----------------------------------------------------- |
+| Quote fails                  | Check if provider is up, try Jupiter fallback         |
+| Swap fails                   | Verify wallet address and token mints are valid       |
+| Timeout error                | Provider may be slow, retry or use different provider |
+| Signing endpoint returns 403 | This is by design - sign on client-side instead       |
 
 ## Deployment Checklist
 

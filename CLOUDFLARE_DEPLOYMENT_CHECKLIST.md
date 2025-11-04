@@ -3,6 +3,7 @@
 ## Pre-Deployment Checklist
 
 ### Code Review
+
 - [x] All changes committed to `cloudflare/src/worker.ts`
 - [x] Helper functions added (transaction encoding/decoding)
 - [x] Meteora quote endpoint prioritized
@@ -13,12 +14,14 @@
 - [x] Server-side signing endpoint disabled
 
 ### Dependencies
+
 - [x] No new npm dependencies required
 - [x] All required APIs are external (Meteora, Jupiter, DexScreener)
 - [x] Cloudflare Workers compatibility verified
 - [x] TypeScript compilation will generate worker.js
 
 ### Configuration
+
 - [x] wrangler.toml is correctly configured
 - [x] Environment variables are set (SOLANA_RPC)
 - [x] Production environment configured
@@ -60,6 +63,7 @@ wrangler deploy --config ./wrangler.toml --name wallet-c36-prod
 Expected time: 30-60 seconds
 
 **Monitor deployment:**
+
 ```bash
 # View deployment logs
 wrangler tail
@@ -150,7 +154,8 @@ curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So111111111111111111111
 # }
 ```
 
-**✓ Pass Criteria:** 
+**✓ Pass Criteria:**
+
 - Default provider is Meteora
 - Can force Jupiter fallback
 - Responses have correct "source" field
@@ -217,6 +222,7 @@ curl -X POST https://wallet.fixorium.com.pk/api/swap \
 ```
 
 **✓ Pass Criteria:**
+
 - Returns unsigned transactions
 - All responses include `signingRequired: true`
 - No private key processing
@@ -262,6 +268,7 @@ curl -X POST https://wallet.fixorium.com.pk/api/swap/meteora/swap \
 ```
 
 **✓ Pass Criteria:**
+
 - Signing endpoint returns HTTP 403
 - Signing keypair parameter is ignored
 - Security warnings are present in responses
@@ -300,6 +307,7 @@ curl -X POST https://wallet.fixorium.com.pk/api/swap \
 ```
 
 **✓ Pass Criteria:**
+
 - Error messages are helpful
 - Status codes are correct (400 for bad request, 502 for provider error)
 - No sensitive information leaked in errors
@@ -319,6 +327,7 @@ done
 ```
 
 **✓ Pass Criteria:**
+
 - Quote responses: < 2s (usually faster)
 - Swap responses: < 5s (Meteora has 20s timeout)
 - No timeout errors unless provider is slow
@@ -342,18 +351,21 @@ wrangler tail --format json
 ### Expected Log Entries
 
 **For successful quote:**
+
 ```
 [/api/quote] Attempting Meteora swap for So11... -> EPj...
 ✅ Got quote from meteora
 ```
 
 **For successful swap:**
+
 ```
 [/api/swap] Request - provider: meteora, inputMint: So11..., amount: 1000000
 [/api/swap] Attempting Meteora swap for So11... -> EPj...
 ```
 
 **For disabled signing:**
+
 ```
 [Transaction Signing] ⚠️  Private key received for server-side signing. This is not recommended!
 [Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.
@@ -386,27 +398,32 @@ wrangler deploy --config ./wrangler.toml --env production
 ### Option 3: Full Revert
 
 If major issues:
+
 1. Restore last known-good version from git
 2. Deploy: `wrangler deploy --config ./wrangler.toml --env production`
 
 ## Post-Deployment Tasks
 
 ### 1. Update Client Code
+
 - [ ] Update frontend to use new Meteora endpoints
 - [ ] Add client-side wallet signing logic
 - [ ] Test with real wallets
 
 ### 2. Documentation
+
 - [ ] Review all documentation is accurate
 - [ ] Update API docs with new endpoints
 - [ ] Share implementation guide with team
 
 ### 3. Monitoring
+
 - [ ] Set up error alerts in Cloudflare
 - [ ] Monitor error rates
 - [ ] Track performance metrics
 
 ### 4. Communication
+
 - [ ] Notify stakeholders of deployment
 - [ ] Share changelog with team
 - [ ] Update status page if applicable
@@ -418,6 +435,7 @@ If major issues:
 **Cause:** TypeScript syntax error
 
 **Solution:**
+
 ```bash
 # Check for syntax errors
 npx tsc --noEmit src/worker.ts
@@ -431,6 +449,7 @@ wrangler deploy --config ./wrangler.toml --env production
 **Cause:** Upstream provider error or timeout
 
 **Solution:**
+
 ```bash
 # Check if provider is up
 curl https://api.meteora.ag/swap/v3/quote -I
@@ -446,6 +465,7 @@ wrangler tail
 **Cause:** All DEX providers are down or rates limited
 
 **Solution:**
+
 ```bash
 # Check provider status
 curl https://api.meteora.ag/health 2>/dev/null || echo "Meteora down"
@@ -460,6 +480,7 @@ curl https://quote-api.jup.ag/health 2>/dev/null || echo "Jupiter down"
 **Cause:** Invalid requests or provider issues
 
 **Solution:**
+
 1. Check error patterns in logs
 2. Verify client is sending correct format
 3. Check with specific test cases
@@ -481,6 +502,7 @@ curl https://quote-api.jup.ag/health 2>/dev/null || echo "Jupiter down"
 ## Contact & Support
 
 For issues:
+
 1. Check Cloudflare Worker logs: `wrangler tail`
 2. Review error messages in response
 3. Test specific endpoints with curl

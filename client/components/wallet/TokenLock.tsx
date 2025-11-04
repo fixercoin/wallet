@@ -747,7 +747,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label="Back"
             >
-              <ArrowLeft className="h-4 w-4 text-black" />
+              <ArrowLeft className="h-4 w-4 text-black" fill="none" strokeWidth={2} />
             </Button>
             <LockIcon className="h-5 w-5 text-black" />
             <span className="text-sm font-semibold text-gray-900">

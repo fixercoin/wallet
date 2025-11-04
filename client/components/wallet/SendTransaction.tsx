@@ -1037,11 +1037,11 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       Back
                     </Button>
                     <Button
-                      onClick={handleSend}
+                      onClick={handleProceedToOTP}
                       className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
                       disabled={isLoading}
                     >
-                      {isLoading ? "Sending..." : "Send Transaction"}
+                      {isLoading ? "Sending..." : "Next: Verify"}
                     </Button>
                   </div>
                 </>

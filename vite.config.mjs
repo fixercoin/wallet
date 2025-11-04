@@ -91,7 +91,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),          // ✅ FIXED
+      "@": path.resolve(__dirname, "src"), // ✅ Correct alias root
       "@shared": path.resolve(__dirname, "shared"),
       "@utils": path.resolve(__dirname, "utils"),
     },

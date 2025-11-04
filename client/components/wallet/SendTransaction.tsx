@@ -726,6 +726,23 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     });
   };
 
+  if (step === "otp") {
+    return (
+      <SendOTPVerification
+        transactionAmount={amount}
+        recipientAddress={recipient}
+        tokenSymbol={selectedSymbol}
+        onConfirm={handleOTPConfirmed}
+        onCancel={() => {
+          setStep("confirm");
+          setPendingTransactionSend(false);
+          clearOTPSession();
+        }}
+        isLoading={isLoading}
+      />
+    );
+  }
+
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">

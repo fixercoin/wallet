@@ -78,8 +78,8 @@ class JupiterAPI {
         slippageBps: slippageBps.toString(),
       });
 
-      const path = `jupiter/quote?${params.toString()}`;
-      const url = resolveApiUrl(`/api/${path}`);
+      const params_str = params.toString();
+      const url = resolveApiUrl(`/api/jupiter/quote?${params_str}`);
       console.log("Jupiter quote proxy request:", url);
 
       const response = await this.fetchWithTimeout(url, 15000).catch(

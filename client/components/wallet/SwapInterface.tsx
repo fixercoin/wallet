@@ -600,38 +600,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
 
-      // If we have a direct quote, do normal single-leg swap
-      if (quote) {
-        const sig = await submitQuote(quote);
-        setTxSignature(sig);
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Submitted",
-          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-        });
-        if (connection && typeof connection.getLatestBlockhash === "function") {
-          try {
-            const latest = await connection.getLatestBlockhash();
-            await connection.confirmTransaction({
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-              signature: sig,
-            });
-            toast({
-              title: "Swap Confirmed",
-              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-            });
-            // Send fee silently after swap confirmation
-            await sendSwapFee();
-          } catch {}
-        }
-        return;
-      }
-
       // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
       if (!quote && meteoraQuote) {
         try {
+          if (!wallet || !wallet.publicKey) {
+            throw new Error("Wallet not available for Meteora swap. Please reconnect your wallet.");
+          }
+
           const swapTx = await buildMeteoraSwap(
             meteoraQuote.route,
             wallet.publicKey,

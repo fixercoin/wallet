@@ -51,6 +51,7 @@ import {
   handleSolanaSimulateProxy,
 } from "./routes/swap-proxy";
 import { handleUnifiedSwapLocal } from "./routes/swap-handler";
+import { handleLocalQuote } from "./routes/quote-handler";
 import { requireApiKey } from "./middleware/auth";
 import { validateSwapRequest, validateSolanaSend, validateSwapSubmit } from "./middleware/validate";
 

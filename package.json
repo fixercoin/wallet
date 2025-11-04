@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently --kill-others \"npx tsx server/node-build.ts\" \"sleep 2 && vite\"",
+    "dev:frontend": "vite",
+    "dev:backend": "npx tsx server/node-build.ts",
     "build": "vite build",
     "preview": "vite preview",
     "deploy:cloudflare": "bash scripts/deploy-cloudflare.sh"

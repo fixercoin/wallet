@@ -108,7 +108,37 @@ const tryDexscreenerEndpoints = async (
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as DexscreenerResponse;
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          console.warn(
+            `Got HTML response from ${endpoint} instead of JSON. Status: ${response.status}`,
+          );
+          throw new Error(
+            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`,
+          );
+        }
+        throw new Error(
+          `Invalid content-type from ${endpoint}: ${contentType}`,
+        );
+      }
+
+      let data: DexscreenerResponse;
+      try {
+        data = (await response.json()) as DexscreenerResponse;
+      } catch (parseError) {
+        const text = await response.text();
+        console.error(`Failed to parse JSON from ${endpoint}:`, parseError);
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          throw new Error(
+            `DexScreener returned HTML instead of JSON (likely a 5xx error). Status: ${response.status}`,
+          );
+        }
+        throw new Error(
+          `Failed to parse JSON response from DexScreener: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        );
+      }
 
       // Success - update current endpoint
       currentEndpointIndex = endpointIndex;
@@ -116,7 +146,7 @@ const tryDexscreenerEndpoints = async (
       return data;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`DexScreener endpoint ${endpoint} failed:`, errorMsg);
+      console.warn(`DexScreener endpoint ${endpoint} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Small delay before trying next endpoint
@@ -388,7 +418,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
                 if (matchingPair) {
                   console.log(
-                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
+                    `[DexScreener] �� Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                   );
                   results.push(matchingPair);
                   foundMintsSet.add(mint);

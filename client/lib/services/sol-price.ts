@@ -29,10 +29,20 @@ class SolPriceService {
       const response = await fetch("/api/sol/price");
 
       if (!response.ok) {
+        console.warn(`SOL price API returned ${response.status}`);
         throw new Error(`Failed to fetch SOL price: ${response.status}`);
       }
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error(
+          "Failed to parse SOL price response as JSON:",
+          parseError,
+        );
+        throw parseError;
+      }
 
       // Handle both direct price response and nested structure
       let priceData: SolPriceData;

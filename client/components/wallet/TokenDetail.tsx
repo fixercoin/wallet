@@ -171,16 +171,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <TokenQuickInfoCard token={displayToken} variant="light" />
           </div>
 
-          {/* Price Section (inside single card) */}
-          <PriceCard
-            token={displayToken}
-            priceData={priceData}
-            showBalance={showBalance}
-            onToggleBalance={() => setShowBalance(!showBalance)}
-            withinCard
-            variant="light"
-          />
-
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
             <div className="rounded-lg overflow-hidden border border-[#e6f6ec]/20 bg-white/80 text-gray-900">

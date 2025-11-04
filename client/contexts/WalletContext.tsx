@@ -76,6 +76,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
+  const [needsPasswordUnlock, setNeedsPasswordUnlock] =
+    useState<boolean>(false);
+  const encryptedWalletsRef = useRef<any[]>([]);
 
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {

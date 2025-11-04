@@ -152,8 +152,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const formatAmount = (amount: number | string, symbol?: string) => {
     const num =
       typeof amount === "string" ? parseFloat(amount) : (amount as number);
-    if (isNaN(num)) return "0.0000";
-    if (symbol === "FIXERCOIN" || symbol === "FIXER") return num.toFixed(8);
+    if (isNaN(num)) return "0.00";
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      });
+    }
     return num.toFixed(4);
   };
 

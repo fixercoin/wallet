@@ -6,6 +6,8 @@ export interface Env {
   HELIUS_RPC_URL?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
+  BIRDEYE_API_KEY?: string;
+  ASSETS: Fetcher;
 }
 
 // Helper function to sign transactions with a keypair

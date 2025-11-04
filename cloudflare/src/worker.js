@@ -24,6 +24,7 @@ const DEFAULT_RPCS = [
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
 ];
+
 function getRpcEndpoints(env) {
   const list = [
     env?.SOLANA_RPC || "",
@@ -77,7 +78,7 @@ async function callRpc(env, method, params = [], id = Date.now()) {
   throw new Error(lastError?.message || "All RPC endpoints failed");
 }
 
-// Main worker
+// Main worker export
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -102,14 +103,6 @@ export default {
       return json(
         { status: "ok", timestamp: new Date().toISOString() },
         { headers: corsHeaders },
-      );
-    }
-
-    // Disable P2P orders endpoints handled elsewhere
-    if (pathname.startsWith("/api/p2p/orders")) {
-      return json(
-        { error: "P2P orders API is disabled on this server" },
-        { status: 410, headers: corsHeaders },
       );
     }
 
@@ -237,7 +230,7 @@ export default {
       }
     }
 
-    // DexScreener tokens proxy: /api/dexscreener/tokens?mints=<MINT1>,<MINT2>...
+    // DexScreener tokens proxy
     if (pathname === "/api/dexscreener/tokens" && req.method === "GET") {
       const mints = searchParams.get("mints") || "";
       if (!mints) {
@@ -275,7 +268,6 @@ export default {
           return json(data, { headers: corsHeaders });
         }
 
-        // Fallback: try individual token lookups
         const pairs = [];
         for (const mint of mintList) {
           try {
@@ -309,93 +301,7 @@ export default {
       }
     }
 
-    // DexScreener search proxy: /api/dexscreener/search?q=<QUERY>
-    if (pathname === "/api/dexscreener/search" && req.method === "GET") {
-      const q = searchParams.get("q") || "";
-      if (!q) {
-        return json(
-          { error: "Missing 'q' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(dexUrl, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          return json(data, { headers: corsHeaders });
-        }
-
-        return json(
-          { schemaVersion: "1.0.0", pairs: [] },
-          { status: resp.status, headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to search DexScreener",
-            details: e?.message,
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // DexScreener trending proxy: /api/dexscreener/trending
-    if (pathname === "/api/dexscreener/trending" && req.method === "GET") {
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/pairs/solana`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(dexUrl, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          const sorted = (data.pairs || [])
-            .filter(
-              (p) =>
-                p.volume?.h24 > 1000 &&
-                p.liquidity?.usd &&
-                p.liquidity.usd > 10000,
-            )
-            .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
-            .slice(0, 50);
-          return json(
-            { schemaVersion: "1.0.0", pairs: sorted },
-            { headers: corsHeaders },
-          );
-        }
-
-        return json(
-          { schemaVersion: "1.0.0", pairs: [] },
-          { status: resp.status, headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch trending tokens",
-            details: e?.message,
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // SOL price proxy: /api/sol/price
+    // SOL price proxy
     if (pathname === "/api/sol/price" && req.method === "GET") {
       const endpoints = [
         "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
@@ -439,7 +345,6 @@ export default {
         }
       }
 
-      // Fallback SOL price
       return json(
         {
           price: 180,
@@ -451,594 +356,181 @@ export default {
       );
     }
 
-    // Birdeye price endpoint: /api/birdeye/price?address=<TOKEN_MINT>
-    if (pathname === "/api/birdeye/price" && req.method === "GET") {
-      const address = searchParams.get("address") || "";
+    // Unified quote endpoint
+    if (pathname === "/api/quote" && req.method === "GET") {
+      const inputMint = searchParams.get("inputMint") || "";
+      const outputMint = searchParams.get("outputMint") || "";
+      const amount = searchParams.get("amount") || "";
+      const provider = (searchParams.get("provider") || "auto").toLowerCase();
 
-      if (!address) {
+      if (!inputMint || !outputMint || !amount) {
         return json(
-          { success: false, error: "Missing 'address' parameter" },
+          {
+            error:
+              "Missing required parameters: inputMint, outputMint, amount",
+          },
           { status: 400, headers: corsHeaders },
         );
       }
 
-      const TOKEN_MINTS = {
-        SOL: "So11111111111111111111111111111111111111112",
-        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
-        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
-      };
+      const providers = [
+        {
+          name: "jupiter",
+          url: `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=500`,
+        },
+        {
+          name: "meteora",
+          url: `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+        {
+          name: "pumpfun",
+          url: `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`,
+        },
+      ];
 
-      const FALLBACK_USD = {
-        FIXERCOIN: 0.000089,
-        SOL: 180,
-        USDC: 1.0,
-        USDT: 1.0,
-        LOCKER: 0.000012,
-      };
+      let lastError = null;
 
-      const getTokenSymbol = (addr) => {
-        for (const [symbol, mint] of Object.entries(TOKEN_MINTS)) {
-          if (mint === addr) return symbol;
-        }
-        return null;
-      };
+      for (const p of providers) {
+        if (provider !== "auto" && provider !== p.name) continue;
 
-      const getSolPrice = async () => {
         try {
-          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112`;
-          const dexResp = await fetch(dexUrl, {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+          const resp = await fetch(p.url, {
             headers: { Accept: "application/json" },
+            signal: controller.signal,
           });
 
-          if (dexResp.ok) {
-            const dexData = await dexResp.json();
-            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+          clearTimeout(timeoutId);
 
-            if (pairs.length > 0) {
-              const pair = pairs[0];
-              if (pair?.priceUsd) {
-                const price = parseFloat(pair.priceUsd);
-                if (isFinite(price) && price > 0) {
-                  return price;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
-        }
-        return 180; // fallback SOL price
-      };
-
-      const getDerivedPrice = async (mint) => {
-        try {
-          console.log(
-            `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
-          );
-          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
-          const dexResp = await fetch(dexUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          if (dexResp.ok) {
-            const dexData = await dexResp.json();
-            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
-
-            if (pairs.length > 0) {
-              const pair = pairs.find(
-                (p) =>
-                  (p?.baseToken?.address === mint ||
-                    p?.quoteToken?.address === mint) &&
-                  p?.priceUsd,
-              );
-
-              if (pair && pair.priceUsd) {
-                const price = parseFloat(pair.priceUsd);
-                if (isFinite(price) && price > 0) {
-                  console.log(
-                    `[Birdeye] Derived price for ${mint}: $${price.toFixed(8)}`,
-                  );
-                  return price;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(
-            `[Birdeye] Error fetching derived price for ${mint}: ${e?.message}`,
-          );
-        }
-        return null;
-      };
-
-      const getPriceFromDexScreener = async (mint) => {
-        try {
-          console.log(`[Birdeye Fallback] Trying DexScreener for ${mint}`);
-          const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
-          const dexResp = await fetch(dexUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          if (dexResp.ok) {
-            const dexData = await dexResp.json();
-            const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
-
-            if (pairs.length > 0) {
-              const pair = pairs.find(
-                (p) =>
-                  (p?.baseToken?.address === mint ||
-                    p?.quoteToken?.address === mint) &&
-                  p?.priceUsd,
-              );
-
-              if (pair && pair.priceUsd) {
-                const price = parseFloat(pair.priceUsd);
-                if (isFinite(price) && price > 0) {
-                  console.log(
-                    `[Birdeye Fallback] ✅ Got price from DexScreener: $${price}`,
-                  );
-                  return price;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(`[Birdeye Fallback] DexScreener error: ${e?.message}`);
-        }
-        return null;
-      };
-
-      const getPriceFromJupiter = async (mint) => {
-        try {
-          console.log(`[Birdeye Fallback] Trying Jupiter for ${mint}`);
-          const jupUrl = `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`;
-          const jupResp = await fetch(jupUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          if (jupResp.ok) {
-            const jupData = await jupResp.json();
-            const priceData = jupData?.data?.[mint];
-
-            if (priceData?.price) {
-              const price = parseFloat(priceData.price);
-              if (isFinite(price) && price > 0) {
-                console.log(
-                  `[Birdeye Fallback] ✅ Got price from Jupiter: $${price}`,
-                );
-                return price;
-              }
-            }
-          }
-        } catch (e) {
-          console.warn(`[Birdeye Fallback] Jupiter error: ${e?.message}`);
-        }
-        return null;
-      };
-
-      try {
-        const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(address)}`;
-        const birdeyeApiKey =
-          env.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
-
-        console.log(
-          `[Birdeye] Fetching price for ${address} from ${birdeyeUrl}`,
-        );
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(birdeyeUrl, {
-          headers: {
-            Accept: "application/json",
-            "X-API-KEY": birdeyeApiKey,
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (resp.ok) {
-          const data = await resp.json();
-
-          if (data.success && data.data) {
-            console.log(
-              `[Birdeye] ✅ Got price for ${address}: $${data.data.value || "N/A"}`,
+          if (resp.ok) {
+            const data = await resp.json();
+            return json(
+              { source: p.name, quote: data },
+              { headers: corsHeaders },
             );
-            return json(data, { headers: corsHeaders });
           }
-        }
 
-        console.warn(
-          `[Birdeye] Request failed with status ${resp.status}, trying fallback...`,
-        );
-      } catch (e) {
-        console.warn(
-          `[Birdeye] Fetch error: ${e?.message}, trying fallback...`,
-        );
-      }
-
-      // Fallback 1: Try derived pricing for FIXERCOIN and LOCKER
-      const tokenSymbol = getTokenSymbol(address);
-      if (tokenSymbol === "FIXERCOIN" || tokenSymbol === "LOCKER") {
-        const derivedPrice = await getDerivedPrice(address);
-        if (derivedPrice !== null && derivedPrice > 0) {
-          return json(
-            {
-              success: true,
-              data: {
-                address,
-                value: derivedPrice,
-                updateUnixTime: Math.floor(Date.now() / 1000),
-              },
-              _source: "derived",
-            },
-            { headers: corsHeaders },
-          );
+          lastError = `${p.name}: ${resp.status}`;
+        } catch (e) {
+          lastError = `${p.name}: ${e?.message || String(e)}`;
         }
       }
 
-      // Fallback 2: Try DexScreener
-      const dexscreenerPrice = await getPriceFromDexScreener(address);
-      if (dexscreenerPrice !== null) {
-        return json(
-          {
-            success: true,
-            data: {
-              address,
-              value: dexscreenerPrice,
-              updateUnixTime: Math.floor(Date.now() / 1000),
-            },
-            _source: "dexscreener",
-          },
-          { headers: corsHeaders },
-        );
-      }
-
-      // Fallback 3: Try Jupiter
-      const jupiterPrice = await getPriceFromJupiter(address);
-      if (jupiterPrice !== null) {
-        return json(
-          {
-            success: true,
-            data: {
-              address,
-              value: jupiterPrice,
-              updateUnixTime: Math.floor(Date.now() / 1000),
-            },
-            _source: "jupiter",
-          },
-          { headers: corsHeaders },
-        );
-      }
-
-      // Fallback 4: Check hardcoded fallback prices
-      if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
-        console.log(
-          `[Birdeye] Using hardcoded fallback price for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
-        );
-        return json(
-          {
-            success: true,
-            data: {
-              address,
-              value: FALLBACK_USD[tokenSymbol],
-              updateUnixTime: Math.floor(Date.now() / 1000),
-            },
-            _source: "fallback",
-          },
-          { headers: corsHeaders },
-        );
-      }
-
-      console.warn(`[Birdeye] No price available for ${address}`);
       return json(
         {
-          success: false,
-          error: "No price data available for this token",
+          error: "Failed to fetch quote from any provider",
+          details: lastError || "All providers failed",
         },
-        { status: 404, headers: corsHeaders },
+        { status: 502, headers: corsHeaders },
       );
     }
 
-    // Dedicated token price endpoint: /api/token/price
-    if (pathname === "/api/token/price" && req.method === "GET") {
-      try {
-        const tokenParam = (
-          url.searchParams.get("token") ||
-          url.searchParams.get("symbol") ||
-          "FIXERCOIN"
-        ).toUpperCase();
-        const mintParam = url.searchParams.get("mint") || "";
-
-        const TOKEN_MINTS = {
-          SOL: "So11111111111111111111111111111111111111112",
-          USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-          USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
-          FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-          LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
-        };
-
-        const MINT_TO_PAIR_ADDRESS_EX = {
-          H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
-            "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
-        };
-
-        const MINT_TO_SEARCH_SYMBOL = {
-          H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
-          EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
-        };
-
-        const FALLBACK_USD = {
-          FIXERCOIN: 0.000089,
-          SOL: 180,
-          USDC: 1.0,
-          USDT: 1.0,
-          LOCKER: 0.000012,
-        };
-
-        const PKR_PER_USD = 280; // base FX
-        const MARKUP = 1.0425; // 4.25%
-
-        let token = tokenParam;
-        let mint = mintParam || TOKEN_MINTS[token] || "";
-
-        if (!mint && tokenParam && tokenParam.length > 40) {
-          mint = tokenParam;
-          const inv = Object.entries(TOKEN_MINTS).find(([, m]) => m === mint);
-          if (inv) token = inv[0];
-        }
-
-        let priceUsd = null;
-
-        // Stablecoins -> 1
-        if (token === "USDC" || token === "USDT") {
-          priceUsd = 1.0;
-        } else if (token === "FIXERCOIN" || token === "LOCKER") {
-          // Try to fetch derived price for FIXERCOIN and LOCKER
-          const derivedPrice = await getDerivedPrice(mint);
-          if (derivedPrice !== null && derivedPrice > 0) {
-            priceUsd = derivedPrice;
-          } else {
-            priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
-          }
-        } else {
-          // Use fallback prices for other non-stablecoins
-          priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
-        }
-
-        const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
-        return json(
-          {
-            token,
-            priceUsd,
-            priceInPKR: rateInPKR,
-            rate: rateInPKR,
-            pkrPerUsd: PKR_PER_USD,
-            markup: MARKUP,
-            source:
-              token === "FIXERCOIN" || token === "LOCKER"
-                ? "derived"
-                : "fallback",
-          },
-          { headers: corsHeaders },
-        );
-      } catch (e) {
-        return json(
-          { error: "Failed to get token price", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Pumpfun proxy: /api/pumpfun/quote and /api/pumpfun/swap
-    if (pathname === "/api/pumpfun/quote") {
-      if (req.method === "POST" || req.method === "GET") {
-        let inputMint = "";
-        let outputMint = "";
-        let amount = "";
-
-        if (req.method === "POST") {
-          const body = await parseJSON(req);
-          inputMint = body?.inputMint || "";
-          outputMint = body?.outputMint || "";
-          amount = body?.amount || "";
-        } else {
-          inputMint = searchParams.get("inputMint") || "";
-          outputMint = searchParams.get("outputMint") || "";
-          amount = searchParams.get("amount") || "";
-        }
-
-        if (!inputMint || !outputMint || !amount) {
-          return json(
-            {
-              error:
-                "Missing required parameters: inputMint, outputMint, amount",
-            },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        try {
-          const url_str = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
-          const resp = await fetch(url_str, {
-            headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            return json(
-              { error: "Pumpfun API error" },
-              { status: resp.status, headers: corsHeaders },
-            );
-          }
-          const data = await resp.json();
-          return json(data, { headers: corsHeaders });
-        } catch (e) {
-          return json(
-            {
-              error: "Failed to fetch Pumpfun quote",
-              details: e?.message || String(e),
-            },
-            { status: 502, headers: corsHeaders },
-          );
-        }
-      }
-      return json(
-        { error: "Method not allowed" },
-        { status: 405, headers: corsHeaders },
-      );
-    }
-
-    if (pathname === "/api/pumpfun/swap" && req.method === "POST") {
+    // Unified swap execution endpoint
+    if (pathname === "/api/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
+
         if (!body || typeof body !== "object") {
           return json(
             { error: "Invalid request body" },
             { status: 400, headers: corsHeaders },
           );
         }
-        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok) {
-          return json(
-            { error: "Pumpfun swap failed" },
-            { status: resp.status, headers: corsHeaders },
-          );
+
+        const provider = (body.provider || "auto").toLowerCase();
+        const { inputMint, outputMint, amount, mint, wallet } = body;
+
+        // Try Pumpfun swap if mint is provided
+        if (
+          (provider === "pumpfun" || provider === "auto") &&
+          mint &&
+          amount
+        ) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const swapPayload = {
+              mint,
+              amount: String(amount),
+              decimals: body.decimals || 6,
+              slippage: body.slippage || 10,
+              txVersion: body.txVersion || "V0",
+              priorityFee: body.priorityFee || 0.0005,
+              wallet,
+            };
+
+            const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(swapPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "pumpfun", swap: data },
+                { headers: corsHeaders },
+              );
+            }
+          } catch (e) {
+            if (provider === "pumpfun") {
+              return json(
+                { error: "Pumpfun swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
         }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
+
+        // Try Jupiter swap if inputMint is provided
+        if (
+          (provider === "jupiter" || provider === "auto") &&
+          inputMint &&
+          body.routePlan
+        ) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json();
+              return json(
+                { source: "jupiter", swap: data },
+                { headers: corsHeaders },
+              );
+            }
+          } catch (e) {
+            if (provider === "jupiter") {
+              return json(
+                { error: "Jupiter swap failed", details: e?.message },
+                { status: 502, headers: corsHeaders },
+              );
+            }
+          }
+        }
+
         return json(
           {
-            error: "Failed to execute Pumpfun swap",
-            details: e?.message || String(e),
+            error: "Unable to execute swap - missing required fields or unsupported provider",
+            required: ["mint or inputMint", "amount", "provider (optional)"],
           },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Pump.fun swap quote
-    if (pathname === "/api/swap/quote" && req.method === "GET") {
-      const mint = url.searchParams.get("mint") || "";
-
-      if (!mint) {
-        return json(
-          { error: "Missing 'mint' parameter" },
           { status: 400, headers: corsHeaders },
         );
-      }
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(
-          `https://pumpportal.fun/api/quote?mint=${encodeURIComponent(mint)}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
-          },
-        );
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `Pump.fun API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch swap quote", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Pump.fun swap execute
-    if (pathname === "/api/swap/execute" && req.method === "POST") {
-      try {
-        const body = await parseJSON(req);
-
-        if (!body || typeof body !== "object") {
-          return json(
-            { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const {
-          mint,
-          amount,
-          decimals,
-          slippage,
-          txVersion,
-          priorityFee,
-          wallet,
-        } = body;
-
-        if (!mint || !amount) {
-          return json(
-            { error: "Missing required fields: mint, amount" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const swapPayload = {
-          mint,
-          amount: String(amount),
-          decimals: decimals || 6,
-          slippage: slippage || 10,
-          txVersion: txVersion || "V0",
-          priorityFee: priorityFee || 0.0005,
-          wallet,
-        };
-
-        const resp = await fetch("https://pumpportal.fun/api/trade", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(swapPayload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          const errorText = await resp.text();
-          return json(
-            {
-              error: `Pump.fun API returned ${resp.status}`,
-              details: errorText,
-            },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
       } catch (e) {
         return json(
           {
@@ -1050,461 +542,7 @@ export default {
       }
     }
 
-    // Meteora swap quote: /api/swap/meteora/quote?inputMint=...&outputMint=...&amount=...
-    if (pathname === "/api/swap/meteora/quote" && req.method === "GET") {
-      const inputMint = url.searchParams.get("inputMint") || "";
-      const outputMint = url.searchParams.get("outputMint") || "";
-      const amount = url.searchParams.get("amount") || "";
-
-      if (!inputMint || !outputMint || !amount) {
-        return json(
-          {
-            error: "Missing required parameters: inputMint, outputMint, amount",
-          },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const meteoraUrl = new URL("https://api.meteora.ag/swap/v3/quote");
-        meteoraUrl.searchParams.set("inputMint", inputMint);
-        meteoraUrl.searchParams.set("outputMint", outputMint);
-        meteoraUrl.searchParams.set("amount", amount);
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(meteoraUrl.toString(), {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `Meteora API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch Meteora swap quote", details: String(e) },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Meteora swap build: /api/swap/meteora/swap (POST) - builds unsigned/base64 transaction
-    if (pathname === "/api/swap/meteora/swap" && req.method === "POST") {
-      try {
-        const body = await parseJSON(req);
-        if (!body || typeof body !== "object") {
-          return json(
-            { error: "Invalid request body" },
-            { status: 400, headers: corsHeaders },
-          );
-        }
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-        const resp = await fetch("https://api.meteora.ag/swap/v3/swap", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          const t = await resp.text().catch(() => "");
-          return json(
-            { error: `Meteora swap build returned ${resp.status}`, details: t },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to build Meteora swap", details: String(e) },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter swap quote
-    if (pathname === "/api/swap/jupiter/quote" && req.method === "GET") {
-      const inputMint = url.searchParams.get("inputMint") || "";
-      const outputMint = url.searchParams.get("outputMint") || "";
-      const amount = url.searchParams.get("amount") || "";
-
-      if (!inputMint || !outputMint || !amount) {
-        return json(
-          {
-            error: "Missing required parameters: inputMint, outputMint, amount",
-          },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const jupiterUrl = new URL("https://quote-api.jup.ag/v6/quote");
-        jupiterUrl.searchParams.set("inputMint", inputMint);
-        jupiterUrl.searchParams.set("outputMint", outputMint);
-        jupiterUrl.searchParams.set("amount", amount);
-        jupiterUrl.searchParams.set("slippageBps", "500");
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const resp = await fetch(jupiterUrl.toString(), {
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          return json(
-            { error: `Jupiter API returned ${resp.status}` },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter swap quote",
-            details: e?.message,
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter price
-    if (pathname === "/api/jupiter/price" && req.method === "GET") {
-      const ids = searchParams.get("ids") || "";
-      if (!ids) {
-        return json(
-          { error: "Missing 'ids' query parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-      try {
-        const url_str = `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url_str, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter API error" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to fetch Jupiter prices",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter quote
-    if (pathname === "/api/jupiter/quote" && req.method === "GET") {
-      const inputMint = searchParams.get("inputMint") || "";
-      const outputMint = searchParams.get("outputMint") || "";
-      const amount = searchParams.get("amount") || "";
-      const slippageBps = searchParams.get("slippageBps") || "50";
-
-      if (!inputMint || !outputMint || !amount) {
-        return json(
-          {
-            error: "Missing required parameters: inputMint, outputMint, amount",
-          },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      const urls = [
-        `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`,
-        `https://lite-api.jup.ag/swap/v1/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`,
-      ];
-
-      for (const url_str of urls) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 25000);
-          const resp = await fetch(url_str, {
-            headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            continue;
-          }
-          const data = await resp.json();
-          return json(data, { headers: corsHeaders });
-        } catch (e) {
-          // Try next endpoint
-        }
-      }
-
-      return json(
-        {
-          error: "Failed to fetch Jupiter quote",
-          details: "All endpoints failed",
-        },
-        { status: 502, headers: corsHeaders },
-      );
-    }
-
-    // Jupiter swap
-    if (pathname === "/api/jupiter/swap" && req.method === "POST") {
-      try {
-        const body = await parseJSON(req);
-        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter swap failed" },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
-      } catch (e) {
-        return json(
-          {
-            error: "Failed to execute Jupiter swap",
-            details: e?.message || String(e),
-          },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Jupiter tokens
-    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
-      const type = searchParams.get("type") || "strict";
-      const endpoints = [
-        `https://token.jup.ag/${type}`,
-        `https://cache.jup.ag/tokens`,
-      ];
-      let lastError = null;
-
-      for (const url_str of endpoints) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 20000);
-          const resp = await fetch(url_str, {
-            headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            lastError = `${resp.status} ${resp.statusText}`;
-            continue;
-          }
-          const data = await resp.json();
-          return json(data, { headers: corsHeaders });
-        } catch (e) {
-          lastError = e?.message || String(e);
-        }
-      }
-
-      return json(
-        {
-          error: "Failed to fetch Jupiter tokens",
-          details: lastError || "All endpoints failed",
-        },
-        { status: 502, headers: corsHeaders },
-      );
-    }
-
-    // Forex rate
-    if (pathname === "/api/forex/rate" && req.method === "GET") {
-      const base = (searchParams.get("base") || "USD").toUpperCase();
-      const symbols = (searchParams.get("symbols") || "PKR").toUpperCase();
-      const firstSymbol = symbols.split(",")[0];
-      const providers = [
-        {
-          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) =>
-            j && j.rates && typeof j.rates[firstSymbol] === "number"
-              ? j.rates[firstSymbol]
-              : null,
-        },
-        {
-          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
-          parse: (j) =>
-            j && j.rates && typeof j.rates[firstSymbol] === "number"
-              ? j.rates[firstSymbol]
-              : null,
-        },
-        {
-          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
-          parse: (j) =>
-            j && j.rates && typeof j.rates[firstSymbol] === "number"
-              ? j.rates[firstSymbol]
-              : null,
-        },
-      ];
-      let lastErr = "";
-      for (const p of providers) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 12000);
-          const resp = await fetch(p.url, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            lastErr = `${resp.status} ${resp.statusText}`;
-            continue;
-          }
-          const apiJson = await resp.json();
-          const rate = p.parse(apiJson);
-          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
-            return json(
-              {
-                base,
-                symbols: [firstSymbol],
-                rates: { [firstSymbol]: rate },
-              },
-              { headers: corsHeaders },
-            );
-          }
-          lastErr = "invalid response";
-        } catch (e) {
-          lastErr = e?.message || String(e);
-        }
-      }
-      return json(
-        {
-          error: "Failed to fetch forex rate",
-          details: lastErr,
-        },
-        { status: 502, headers: corsHeaders },
-      );
-    }
-
-    // Transaction
-    if (pathname === "/api/transaction" && req.method === "GET") {
-      const signature = searchParams.get("signature") || "";
-
-      if (!signature) {
-        return json(
-          { error: "Missing 'signature' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const rpcUrl = "https://api.mainnet-beta.solana.com";
-        const payload = {
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getTransaction",
-          params: [
-            signature,
-            { encoding: "json", maxSupportedTransactionVersion: 0 },
-          ],
-        };
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(rpcUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const data = await resp.json();
-        return json(data, { status: resp.status, headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch transaction", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // Account
-    if (pathname === "/api/account" && req.method === "GET") {
-      const publicKey = searchParams.get("publicKey") || "";
-
-      if (!publicKey) {
-        return json(
-          { error: "Missing 'publicKey' parameter" },
-          { status: 400, headers: corsHeaders },
-        );
-      }
-
-      try {
-        const rpcUrl = "https://api.mainnet-beta.solana.com";
-        const payload = {
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getAccountInfo",
-          params: [publicKey, { encoding: "jsonParsed" }],
-        };
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(rpcUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const data = await resp.json();
-        return json(data, { status: resp.status, headers: corsHeaders });
-      } catch (e) {
-        return json(
-          { error: "Failed to fetch account", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
-      }
-    }
-
-    // 404
+    // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },
       { status: 404, headers: corsHeaders },

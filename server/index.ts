@@ -42,6 +42,14 @@ import {
   handleDeleteOrder,
 } from "./routes/orders";
 import { handleBirdeyePrice } from "./routes/api-birdeye";
+import {
+  handleSwapProxy,
+  handleQuoteProxy,
+  handleMeteoraQuoteProxy,
+  handleMeteoraSwapProxy,
+  handleSolanaSendProxy,
+  handleSolanaSimulateProxy,
+} from "./routes/swap-proxy";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -81,6 +89,14 @@ export async function createServer(): Promise<express.Application> {
 
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
+
+  // Unified swap & quote proxies (forward to Fixorium worker or configured API)
+  app.post("/api/swap", handleSwapProxy);
+  app.get("/api/quote", handleQuoteProxy);
+  app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
+  app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
+  app.post("/api/solana-send", handleSolanaSendProxy);
+  app.post("/api/solana-simulate", handleSolanaSimulateProxy);
 
   // Pumpfun proxy (quote & swap)
   app.all(["/api/pumpfun/quote", "/api/pumpfun/swap"], async (req, res) => {

@@ -53,18 +53,37 @@ class TokenPairPricingService {
   private readonly CACHE_DURATION = 60000; // 1 minute
 
   /**
-   * Get SOL price in USD
+   * Get SOL price in USD from reliable dedicated service
    */
   private async getSolPrice(): Promise<number> {
     try {
-      const solToken = await dexscreenerAPI.getTokenByMint(SOL_MINT);
-      if (solToken && solToken.priceUsd) {
-        return parseFloat(solToken.priceUsd);
+      // Use dedicated SOL price service which has better error handling and fallbacks
+      const solPriceData = await solPriceService.getSolPrice();
+      if (solPriceData && solPriceData.price > 0 && isFinite(solPriceData.price)) {
+        console.log(`[TokenPairPricing] SOL price from solPriceService: $${solPriceData.price}`);
+        return solPriceData.price;
       }
     } catch (error) {
-      console.warn("Error fetching SOL price:", error);
+      console.warn("[TokenPairPricing] Error fetching SOL price from service:", error);
     }
-    return 176; // Fallback SOL price
+
+    // Fallback 1: Try DexScreener as backup
+    try {
+      const solToken = await dexscreenerAPI.getTokenByMint(SOL_MINT);
+      if (solToken && solToken.priceUsd) {
+        const price = parseFloat(solToken.priceUsd);
+        if (isFinite(price) && price > 0) {
+          console.log(`[TokenPairPricing] SOL price from DexScreener (fallback 1): $${price}`);
+          return price;
+        }
+      }
+    } catch (error) {
+      console.warn("[TokenPairPricing] Error fetching SOL price from DexScreener:", error);
+    }
+
+    // Final fallback - use a more reasonable default
+    console.warn("[TokenPairPricing] Using hardcoded SOL price fallback: $150");
+    return 150;
   }
 
   /**

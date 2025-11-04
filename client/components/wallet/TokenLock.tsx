@@ -834,7 +834,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             >
               {isSubmitting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin text-black" />
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin text-black" fill="none" strokeWidth={2} />
                   Locking tokens...
                 </>
               ) : (

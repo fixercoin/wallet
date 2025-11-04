@@ -524,7 +524,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-white/50 border border-gray-100 text-gray-900 placeholder:text-gray-500"
+                  className="flex-1 bg-white/50 border border-black text-gray-900 placeholder:text-gray-500"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}

@@ -368,20 +368,48 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
 
 /**
  * POST /api/swap/execute
- * Execute a swap transaction (unsigned)
+ * Builds an unsigned swap transaction from a quote
+ *
+ * Request body:
+ * {
+ *   quoteResponse: object (quote from /api/swap/quote),
+ *   userPublicKey: string (wallet address),
+ *   swapMode?: string (optional: ExactIn, ExactOut),
+ *   wrapAndUnwrapSol?: boolean (optional, default: true),
+ *   slippageBps?: number (optional)
+ * }
  */
 export const handleSwapExecuteV2: RequestHandler = async (req, res) => {
   try {
     const body = req.body || {};
     const { quoteResponse, userPublicKey, swapMode } = body;
 
-    if (!quoteResponse || !userPublicKey) {
+    if (!quoteResponse) {
       return res.status(400).json({
-        error: "Missing required fields: quoteResponse, userPublicKey",
+        error: "Missing required field: quoteResponse",
+        details: "quoteResponse should be the result from /api/swap/quote",
       });
     }
 
-    console.log(`[Swap Execute] Building transaction for ${userPublicKey}`);
+    if (!userPublicKey) {
+      return res.status(400).json({
+        error: "Missing required field: userPublicKey",
+        details: "userPublicKey should be a valid Solana address",
+      });
+    }
+
+    // Validate public key format (base58, ~34-44 chars)
+    if (typeof userPublicKey !== "string" || userPublicKey.length < 32) {
+      return res.status(400).json({
+        error: "Invalid userPublicKey format",
+        details: "Public key must be a valid Solana address",
+      });
+    }
+
+    console.log(
+      `[Swap Execute] Building transaction for wallet: ${userPublicKey.slice(0, 10)}...`,
+    );
+    console.log(`[Swap Execute] Quote source: ${quoteResponse.source || "unknown"}`);
 
     // Build Jupiter swap transaction
     const swapPayload = {
@@ -391,43 +419,92 @@ export const handleSwapExecuteV2: RequestHandler = async (req, res) => {
       ...(swapMode && { swapMode }),
     };
 
-    const response = await fetchWithTimeout(
+    const urls = [
       "https://quote-api.jup.ag/v6/swap",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(swapPayload),
-      },
-    );
+      "https://lite-api.jup.ag/swap/v1/swap",
+    ];
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      console.error(`[Swap Execute] Jupiter swap failed: ${response.status}`);
-      return res.status(response.status).json({
-        error: "Failed to build swap transaction",
-        details: errorText,
-      });
+    for (const url of urls) {
+      try {
+        console.log(`[Swap Execute] Attempting: ${url}`);
+
+        const response = await fetchWithTimeout(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          console.warn(
+            `[Swap Execute] Endpoint ${url} failed with ${response.status}`,
+          );
+
+          if (response.status === 400 || response.status === 404) {
+            // Client error - don't retry other endpoints
+            return res.status(response.status).json({
+              error: "Failed to build swap transaction",
+              details: errorText || response.statusText,
+              code: response.status === 404 ? "ROUTE_NOT_FOUND" : "INVALID_REQUEST",
+            });
+          }
+
+          // Server error - try next endpoint
+          if (url === urls[0]) {
+            console.log(`[Swap Execute] Trying fallback endpoint...`);
+            continue;
+          }
+
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const swapData = await response.json();
+
+        if (swapData.error) {
+          return res.status(400).json({
+            error: "Swap transaction error",
+            details: swapData.error,
+            code: swapData.code,
+          });
+        }
+
+        if (!swapData.swapTransaction) {
+          return res.status(500).json({
+            error: "Invalid response from swap API",
+            details: "Missing swapTransaction in response",
+          });
+        }
+
+        console.log(
+          `[Swap Execute] ✅ Transaction built successfully (${swapData.swapTransaction.length} bytes base64)`,
+        );
+        return res.json(swapData);
+      } catch (e: any) {
+        console.warn(
+          `[Swap Execute] Error with ${url}:`,
+          e instanceof Error ? e.message : String(e),
+        );
+
+        // If this is the last URL, throw
+        if (url === urls[urls.length - 1]) {
+          throw e;
+        }
+
+        // Otherwise continue to next
+        continue;
+      }
     }
 
-    const swapData = await response.json();
-
-    if (swapData.error) {
-      return res.status(400).json({
-        error: swapData.error,
-        code: swapData.code,
-      });
-    }
-
-    console.log(`[Swap Execute] ✅ Transaction built successfully`);
-    return res.json(swapData);
+    throw new Error("All swap endpoints failed");
   } catch (e: any) {
-    console.error("[Swap Execute] Error:", e);
+    console.error("[Swap Execute] Handler error:", e);
     return res.status(502).json({
-      error: "Failed to execute swap",
-      details: e?.message || String(e),
+      error: "Failed to build swap transaction",
+      details: e instanceof Error ? e.message : String(e),
+      code: "EXECUTION_ERROR",
     });
   }
 };

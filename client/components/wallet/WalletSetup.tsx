@@ -49,6 +49,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const [privateKeyInput, setPrivateKeyInput] = useState<string>("");
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
 
+  // Password protection state
+  const [showPasswordSetup, setShowPasswordSetup] = useState(false);
+  const [pendingWallet, setPendingWallet] = useState<any>(null);
+  const [passwordSetupMode, setPasswordSetupMode] = useState<"create" | "unlock">(
+    "create",
+  );
+
   const normalizedRecoveryPhrase = normalizeMnemonicInput(recoveryPhrase);
   const recoveryWordCount = normalizedRecoveryPhrase
     ? normalizedRecoveryPhrase.split(" ").length
@@ -56,7 +63,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const isMnemonicWordCountValid =
     recoveryWordCount === 12 || recoveryWordCount === 24;
 
-  const { setWallet, refreshBalance, refreshTokens } = useWallet();
+  const { setWallet, refreshBalance, refreshTokens, needsPasswordUnlock, unlockWithPassword } = useWallet();
   const { toast } = useToast();
 
   const handleCreateWallet = () => {
@@ -460,7 +467,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                     {showMnemonic
                       ? generatedWallet.mnemonic
-                      : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••��•••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
+                      : "���•••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
                   </p>
                 </div>
               </div>

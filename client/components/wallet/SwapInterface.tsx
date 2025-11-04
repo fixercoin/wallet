@@ -469,6 +469,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const handleSwap = () => {
+    // Check wallet availability first
+    if (!wallet || !wallet.publicKey || !wallet.secretKey) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet before performing a swap.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const err = validateSwap();
     if (err) {
       toast({

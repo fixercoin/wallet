@@ -297,7 +297,9 @@ export default {
         return 180; // fallback SOL price
       };
 
-      const getDerivedPrice = async (mint: string): Promise<number | null> => {
+      const getDerivedPrice = async (
+        mint: string,
+      ): Promise<{ price: number; priceChange24h: number; volume24h: number } | null> => {
         try {
           console.log(
             `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
@@ -325,7 +327,11 @@ export default {
                   console.log(
                     `[Birdeye] Derived price for ${mint}: $${price.toFixed(8)}`,
                   );
-                  return price;
+                  return {
+                    price,
+                    priceChange24h: pair.priceChange?.h24 || 0,
+                    volume24h: pair.volume?.h24 || 0,
+                  };
                 }
               }
             }

@@ -163,11 +163,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   useEffect(() => {
+    if (!wallet) return;
+
     setInitialized(false);
+
+    if (userTokens && userTokens.length > 0 && tokenList.length === 0) {
+      const fallbackTokens = userTokens.map(ut => ({
+        address: ut.mint,
+        symbol: ut.symbol,
+        decimals: ut.decimals,
+        name: ut.name,
+      }));
+      setTokenList(fallbackTokens);
+    }
+
     initJupiter().catch((e) => {
       console.warn("Jupiter init warning:", e);
     });
-  }, [wallet]);
+  }, [wallet, userTokens]);
 
   const humanToRaw = (amountStr, decimals) => {
     const amt = Number(amountStr);

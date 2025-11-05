@@ -74,8 +74,8 @@ export async function updateOrder(
   }>,
   adminToken: string,
 ) {
-  const base = API_BASE;
-  const res = await fetch(`${base}/api/orders/${encodeURIComponent(id)}`, {
+  const url = resolveApiUrl(`/api/orders/${encodeURIComponent(id)}`);
+  const res = await fetch(url, {
     method: "PUT",
     headers: {
       "content-type": "application/json",
@@ -88,8 +88,8 @@ export async function updateOrder(
 }
 
 export async function deleteOrder(id: string, adminToken: string) {
-  const base = API_BASE;
-  const res = await fetch(`${base}/api/orders/${encodeURIComponent(id)}`, {
+  const url = resolveApiUrl(`/api/orders/${encodeURIComponent(id)}`);
+  const res = await fetch(url, {
     method: "DELETE",
     headers: { authorization: `Bearer ${adminToken}` },
   });

@@ -331,15 +331,29 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="flex gap-3">
               <Select value={fromMint} onValueChange={setFromMint}>
                 <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
-                  <SelectValue placeholder="Select token" />
+                  <SelectValue>
+                    {fromToken ? (
+                      <span className="text-gray-900 font-medium">{fromToken.symbol}</span>
+                    ) : (
+                      <span className="text-gray-400">Select token</span>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 z-50">
                   {tokenList.length > 0 ? (
-                    tokenList.map((t) => (
-                      <SelectItem key={t.address} value={t.address}>
-                        <span className="text-gray-900 font-medium">{t.symbol}</span>
-                      </SelectItem>
-                    ))
+                    tokenList.map((t) => {
+                      const tokenBalance = userTokens?.find(ut => ut.mint === t.address)?.balance || 0;
+                      return (
+                        <SelectItem key={t.address} value={t.address}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-900 font-medium">{t.symbol}</span>
+                            <span className="text-gray-500 text-sm">
+                              ({(tokenBalance || 0).toFixed(6)})
+                            </span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })
                   ) : (
                     <div className="p-2 text-center text-sm text-gray-500">Loading tokens...</div>
                   )}

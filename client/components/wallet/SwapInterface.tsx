@@ -758,7 +758,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
         10,
       );
-      const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
+      // Prefer SOL as bridge first. For pump.fun tokens, only try SOL.
+      const isPumpfunToken =
+        toToken?.mint === TOKEN_MINTS.FIXERCOIN ||
+        PUMP_TOKENS.some(
+          (p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint,
+        );
+      const BRIDGES = isPumpfunToken
+        ? [TOKEN_MINTS.SOL]
+        : [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
 
       const bridgeAttempts = [];
       let lastBridgeError = null;

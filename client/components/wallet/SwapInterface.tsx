@@ -23,6 +23,7 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { PUMP_TOKENS } from "@/lib/constants/pump-tokens";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 import { birdeyeAPI } from "@/lib/services/birdeye";

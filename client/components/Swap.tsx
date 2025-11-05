@@ -172,16 +172,28 @@ export default function Swap() {
   const executeSwap = async () => {
     try {
       setStatus("Preparing swap…");
-      if (!provider) await connectWallet();
-      if (!jupiter) await initJupiter();
 
-      const fromMeta = jupiter.tokens[fromMint];
-      const toMeta = jupiter.tokens[toMint];
+      if (!wallet) {
+        setStatus("No wallet detected. Please set up a wallet first.");
+        return null;
+      }
+
+      let jup = jupiter;
+      if (!jup) {
+        jup = await initJupiter();
+        if (!jup) {
+          setStatus("Failed to initialize Jupiter.");
+          return null;
+        }
+      }
+
+      const fromMeta = jup.tokens[fromMint];
+      const toMeta = jup.tokens[toMint];
 
       const decimalsIn = fromMeta.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
 
-      const routes = await jupiter.computeRoutes({
+      const routes = await jup.computeRoutes({
         inputMint: fromMint,
         outputMint: toMint,
         amount: amountRaw.toString(),
@@ -193,13 +205,9 @@ export default function Swap() {
 
       const routeInfo = routes.routesInfos[0];
 
-      const { execute } = await jupiter.exchange({ routeInfo });
+      const { execute } = await jup.exchange({ routeInfo });
 
-      setStatus("Awaiting wallet signature (Phantom)…");
-
-      if (!jupiter.user) {
-        jupiter.setUser(provider);
-      }
+      setStatus("Signing and sending transaction…");
 
       const swapResult = await execute();
       setStatus(
@@ -254,7 +262,7 @@ export default function Swap() {
           </select>
         </div>
         <div style={{ width: "14px", textAlign: "center", color: "#999" }}>
-          ���
+          →
         </div>
         <div style={{ flex: 1 }}>
           <label style={{ fontSize: "12px", color: "#333" }}>To</label>

@@ -5,6 +5,47 @@ import process from "process";
 (window as any).Buffer = Buffer;
 (window as any).process = process;
 
+// In Builder preview the Builder iframe may proxy analytics requests (Amplitude) through
+// cdn.builder.codes which can hit rate limits (429) and cause the editor iframe to fail.
+// Intercept those specific proxied amplitude requests when running inside a Builder preview
+// so they return a harmless success and don't block iframe evaluation.
+if (typeof window !== "undefined") {
+  try {
+    const isBuilderPreview =
+      window.location.hostname.includes("projects.builder.my") ||
+      window.location.hostname.endsWith("builder.my") ||
+      window.location.search.includes("fusion=true") ||
+      window.location.search.includes("builder.frameEditing");
+
+    if (isBuilderPreview && window.fetch) {
+      const originalFetch = window.fetch.bind(window);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      window.fetch = async (input: any, init?: any) => {
+        try {
+          const url = typeof input === "string" ? input : input?.url;
+          if (
+            typeof url === "string" &&
+            url.includes("cdn.builder.codes/api/v1/proxy-api") &&
+            url.includes("amplitude.com")
+          ) {
+            // Return a minimal OK response to stop repeated proxy calls causing 429s
+            return new Response(JSON.stringify({ status: "skipped" }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+        } catch (e) {
+          // swallow
+        }
+        return originalFetch(input, init);
+      };
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
 import "./global.css";
 
 import { Toaster } from "@/components/ui/toaster";

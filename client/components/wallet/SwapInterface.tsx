@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { PublicKey, Connection } from "@solana/web3.js";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const RPC = "https://api.mainnet-beta.solana.com";
 
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const { wallet } = useWallet();
+  const { wallet, tokens: userTokens } = useWallet();
   const { toast } = useToast();
 
   const [jupiter, setJupiter] = useState(null);

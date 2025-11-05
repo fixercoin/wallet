@@ -572,6 +572,31 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             )}
           </Button>
         </div>
+
+        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <AlertDialogContent className="bg-gray-900 border border-gray-700">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">
+                Confirm Swap
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                You are about to swap {amount} {fromToken?.symbol} for approximately{" "}
+                {quote?.outHuman.toFixed(6)} {quote?.outToken}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmSwap}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Confirm Swap
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

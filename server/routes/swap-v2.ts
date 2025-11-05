@@ -3,6 +3,10 @@ import { TOKEN_MINTS } from "../../client/lib/constants/token-mints";
 
 const TIMEOUT_MS = 20000;
 const BRIDGE_TOKENS = [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
+const PUMP_MINTS = new Set<string>([
+  TOKEN_MINTS.FIXERCOIN,
+  TOKEN_MINTS.LOCKER,
+]);
 
 interface SwapQuote {
   inputMint: string;
@@ -293,10 +297,12 @@ async function getBridgedQuote(
   outputMint: string,
   amount: string,
   slippageBps: number = 50,
+  bridges?: string[],
 ): Promise<{ bridge: string; q1: any; q2: any } | null> {
   try {
-    // Try each bridge token
-    for (const bridge of BRIDGE_TOKENS) {
+    // Try each bridge token (optionally restricted)
+    const bridgeList = bridges && bridges.length ? bridges : BRIDGE_TOKENS;
+    for (const bridge of bridgeList) {
       if (bridge === inputMint || bridge === outputMint) continue;
 
       try {
@@ -408,6 +414,45 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       });
     }
 
+    // If either token is a Pump.fun token (Fixercoin/Locker), only use Pump.fun
+    const isPumpMint =
+      PUMP_MINTS.has(inputMint) || PUMP_MINTS.has(outputMint);
+    if (isPumpMint) {
+      console.log(
+        `[Swap Quote] Pumpfun-only path for ${inputMint} -> ${outputMint}`,
+      );
+      const pf = await getPumpFunQuote(inputMint, outputMint, amount);
+      if (pf && pf.outAmount && pf.outAmount !== "0") {
+        return res.json({
+          quote: pf,
+          source: "pumpfun",
+          inputMint,
+          outputMint,
+          amount,
+          slippageBps,
+          attempts: [{ provider: "pumpfun", status: "success" }],
+        });
+      }
+      // Do not fall back to Jupiter/Meteora/Raydium for Pump.fun tokens
+      console.warn(
+        `[Swap Quote] No Pumpfun quote available for ${inputMint} -> ${outputMint}`,
+      );
+      return res.status(404).json({
+        error: "No pumpfun route found for this pair",
+        inputMint,
+        outputMint,
+        amount,
+        slippageBps,
+        attempts: [
+          {
+            provider: "pumpfun",
+            status: "failed",
+            reason: "No pumpfun liquidity or pair not supported",
+          },
+        ],
+      });
+    }
+
     const attempts: SwapAttempt[] = [];
 
     // Try Jupiter direct quote first
@@ -493,6 +538,7 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       outputMint,
       amount,
       slippageBps,
+      undefined,
     );
     if (bridged && bridged.q1 && bridged.q2) {
       attempts.push({

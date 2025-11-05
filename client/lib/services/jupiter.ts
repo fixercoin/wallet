@@ -156,14 +156,17 @@ class JupiterAPI {
             errorMsg?.includes("Swap simulation failed") ||
             errorMsg?.includes("simulation")
           ) {
-            throw new Error(`Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`);
+            throw new Error(
+              `Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`,
+            );
           }
           throw new Error(
             `Jupiter proxy swap error: ${response.status} ${errorMsg}`,
           );
         } catch (parseErr: any) {
           const detailedMsg =
-            parseErr?.message || `Jupiter proxy swap error: ${response.status} ${txt}`;
+            parseErr?.message ||
+            `Jupiter proxy swap error: ${response.status} ${txt}`;
           throw new Error(detailedMsg);
         }
       }

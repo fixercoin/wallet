@@ -156,7 +156,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         (!supportedMints.has(fromToken.mint) ||
           !supportedMints.has(toToken.mint))
       ) {
-        // Not in Jupiter strict list; still attempt unified quote (Meteora/Pumpfun/Bridged)
+        // Not in Jupiter strict list; still attempt unified quote
         console.debug(
           "Tokens not in Jupiter strict list, trying other providers...",
         );
@@ -186,7 +186,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
 
         console.log(
-          `Fetching Jupiter Pump-only quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
+          `Fetching quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
 
         const slippageBps = Math.max(
@@ -194,25 +194,15 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           Math.round(parseFloat(slippage || "1.2") * 100),
         );
 
-        // Request Pump.fun-only liquidity from Jupiter
+        // Request quote from Jupiter (supports all DEXes including Pump.fun via Jupiter routing)
         const q = await jupiterAPI.getQuote(
           fromToken.mint,
           toToken.mint,
           amountInt,
           slippageBps,
-          { includeDexes: "Pump" },
         );
 
-        // Validate that all legs are Pump-only; if not, reject
-        const isPumpOnly =
-          !!q && Array.isArray((q as any).routePlan)
-            ? ((q as any).routePlan as any[]).every((rp: any) => {
-                const lbl = rp?.swapInfo?.label || "";
-                return /pump/i.test(String(lbl));
-              })
-            : false;
-
-        if (q && q.outAmount && q.outAmount !== "0" && isPumpOnly) {
+        if (q && q.outAmount && q.outAmount !== "0") {
           setQuote(q);
           setMeteoraQuote(null);
           setQuoteSource("jupiter");
@@ -222,15 +212,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setQuoteError("");
           setIndicative(false);
           setIsLoading(false);
+          console.log(
+            `✅ Quote received: ${fromToken.symbol} -> ${toToken.symbol} = ${outHuman}`,
+          );
           return;
         }
 
-        // No Pump.fun route available
+        // No route available
         setQuote(null);
         setToAmount("");
         setIndicative(false);
         setQuoteSource(null);
-        setQuoteError("No Pump.fun route available for this pair/amount.");
+        setQuoteError("No liquidity route available for this pair/amount.");
       } catch (err) {
         console.debug("Quote fetch error:", err);
         setToAmount("");

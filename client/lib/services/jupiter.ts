@@ -176,6 +176,13 @@ class JupiterAPI {
   ): Promise<JupiterSwapResponse | null> {
     try {
       const url = resolveApiUrl("/api/jupiter/swap");
+      console.log(
+        "Sending Jupiter swap request for:",
+        swapRequest.quoteResponse?.inputMint,
+        "->",
+        swapRequest.quoteResponse?.outputMint,
+      );
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -186,10 +193,38 @@ class JupiterAPI {
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");
-        throw new Error(`Jupiter proxy swap error: ${response.status} ${txt}`);
+        const errorObj = (() => {
+          try {
+            return JSON.parse(txt);
+          } catch {
+            return { error: txt };
+          }
+        })();
+
+        console.error(
+          "Jupiter swap error response:",
+          response.status,
+          errorObj,
+        );
+
+        // Parse the error response to get more details
+        const errorMsg =
+          errorObj?.error || errorObj?.details || txt || "Unknown error";
+        const details = errorObj?.details || "";
+
+        throw new Error(
+          `Jupiter swap failed (${response.status}): ${errorMsg}${details ? ` - ${details}` : ""}`,
+        );
       }
 
-      return await response.json();
+      const data = await response.json();
+      if (!data.swapTransaction) {
+        console.warn(
+          "Jupiter swap response missing swapTransaction field:",
+          Object.keys(data),
+        );
+      }
+      return data;
     } catch (error) {
       console.error(
         "Error getting swap transaction from Jupiter proxy:",

@@ -350,17 +350,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <Label htmlFor="to-token" className="text-gray-700 uppercase text-xs font-semibold">
               To
             </Label>
-            <select
-              value={toMint}
-              onChange={(e) => setToMint(e.target.value)}
-              className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400"
-            >
-              {tokenList.map((t) => (
-                <option key={t.address} value={t.address}>
-                  {t.symbol}
-                </option>
-              ))}
-            </select>
+            <Select value={toMint} onValueChange={setToMint}>
+              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                <SelectValue placeholder="Select token" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200">
+                {tokenList.map((t) => (
+                  <SelectItem key={t.address} value={t.address}>
+                    <span className="text-gray-900 font-medium">{t.symbol}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {quote && (

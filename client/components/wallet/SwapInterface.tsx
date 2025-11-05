@@ -285,7 +285,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="w-full max-w-md mx-auto px-4">
         <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
           <div className="space-y-6 p-6 text-center">
-            <h3 className="text-lg font-semibold text-gray-900">Fixorium — Convert (Direct)</h3>
+            <h3 className="text-lg font-semibold text-gray-900">FIXORIUM TRADE</h3>
             <p className="text-gray-600">No wallet detected. Please set up or import a wallet to use the swap feature.</p>
             <Button
               onClick={onBack}
@@ -310,7 +310,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         )}
 
         <div className="space-y-6 p-6">
-          <div className="font-semibold text-sm text-gray-900 uppercase">Convert Tokens (Direct)</div>
+          <div className="font-semibold text-sm text-gray-900 uppercase">FIXORIUM TRADE</div>
 
           <div className="space-y-2">
             <Label htmlFor="from-token" className="text-gray-700 uppercase text-xs font-semibold">

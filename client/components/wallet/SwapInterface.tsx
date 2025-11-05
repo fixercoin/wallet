@@ -52,7 +52,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [toToken, setToToken] = useState<TokenInfo | null>(null);
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
-  const [slippage, setSlippage] = useState("0.5");
+  const [slippage, setSlippage] = useState("1.2");
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
   const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);

@@ -57,46 +57,71 @@ async function getJupiterQuote(
     ];
 
     for (const url of urls) {
-      try {
-        console.log(
-          `[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`,
-        );
-
-        const response = await fetchWithTimeout(url);
-        if (!response.ok) {
-          if (response.status === 404 || response.status === 400) {
-            console.warn(
-              `[Swap] Jupiter quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
-            );
-            continue;
-          }
-          if (response.status === 429 || response.status >= 500) {
-            console.warn(
-              `[Swap] Jupiter API error ${response.status}, trying next endpoint`,
-            );
-            continue;
-          }
-          return null;
-        }
-
-        const data = await response.json();
-        if (!data.outAmount || data.outAmount === "0") {
-          console.warn(
-            `[Swap] Jupiter returned empty quote for ${inputMint} -> ${outputMint}`,
+      // Retry logic for transient failures
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          console.log(
+            `[Swap] Trying Jupiter quote (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
           );
-          continue;
-        }
 
-        console.log(
-          `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}`,
-        );
-        return data;
-      } catch (e: any) {
-        console.warn(`[Swap] Jupiter endpoint error: ${e?.message || e}`);
-        continue;
+          const response = await fetchWithTimeout(url);
+          if (!response.ok) {
+            const text = await response.text().catch(() => "");
+
+            // For 404/400, skip to next endpoint (may be a token Jupiter doesn't support)
+            if (response.status === 404 || response.status === 400) {
+              console.warn(
+                `[Swap] Jupiter returned ${response.status} - likely unsupported pair or invalid params`,
+                { inputMint, outputMint, text: text.substring(0, 100) },
+              );
+              break; // Move to next URL
+            }
+
+            // For rate limit or server errors, retry
+            if (response.status === 429 || response.status >= 500) {
+              console.warn(
+                `[Swap] Jupiter API error ${response.status}, retrying... (attempt ${attempt}/2)`,
+              );
+              if (attempt < 2) {
+                await new Promise((r) => setTimeout(r, attempt * 1000));
+                continue; // Retry same URL
+              }
+              break; // Move to next URL
+            }
+
+            return null;
+          }
+
+          const data = await response.json();
+          if (!data.outAmount || data.outAmount === "0") {
+            console.warn(
+              `[Swap] Jupiter returned zero/empty quote for ${inputMint} -> ${outputMint}`,
+            );
+            break; // Move to next URL
+          }
+
+          console.log(
+            `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}: ${data.outAmount}`,
+          );
+          return data;
+        } catch (e: any) {
+          const msg = e?.message || String(e);
+          if (attempt < 2 && (msg.includes("timeout") || msg.includes("ECONNREFUSED"))) {
+            console.warn(
+              `[Swap] Jupiter transient error, retrying... (attempt ${attempt}/2): ${msg}`,
+            );
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+          console.warn(`[Swap] Jupiter endpoint error (attempt ${attempt}/2): ${msg}`);
+          break;
+        }
       }
     }
 
+    console.warn(
+      `[Swap] All Jupiter endpoints exhausted for ${inputMint} -> ${outputMint}`,
+    );
     return null;
   } catch (e: any) {
     console.warn(`[Swap] Jupiter quote error: ${e?.message || e}`);

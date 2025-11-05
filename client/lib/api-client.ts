@@ -1,6 +1,5 @@
 // Production deployment defaults
-const CLOUDFLARE_WORKER_BASE =
-  "https://proxy.fixorium.com.pk";
+const CLOUDFLARE_WORKER_BASE = "https://proxy.fixorium.com.pk";
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";

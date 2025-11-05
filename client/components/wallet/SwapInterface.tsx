@@ -221,6 +221,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             // Store the full quote response for execution
             setQuote(q);
             setMeteoraQuote(null);
+            setQuoteSource(quoteResponse.source || null);
 
             // Parse and display output amount
             const outHuman =

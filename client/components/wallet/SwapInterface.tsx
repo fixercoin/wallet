@@ -144,8 +144,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setTokenList(fallbackTokens);
     }
 
-    initJupiter().catch((e) => {
-      console.warn("Jupiter init warning:", e);
+    initTokenList().catch((e) => {
+      console.warn("Token list init warning:", e);
     });
   }, [wallet, userTokens]);
 

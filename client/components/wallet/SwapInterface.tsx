@@ -109,8 +109,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         );
 
         const userTokens = tokens || [];
+        const pumpTokens: TokenInfo[] = (PUMP_TOKENS || []).map((p: any) => ({
+          mint: p.mint,
+          symbol: p.symbol,
+          name: p.symbol,
+          decimals: p.decimals,
+          logoURI: undefined,
+        }));
+
         const combined = [
           ...userTokens,
+          ...pumpTokens.filter((pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint)),
           ...popularTokens.filter(
             (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint),
           ),

@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { TOKEN_MINTS } from "../../client/lib/constants/token-mints";
 
 const TIMEOUT_MS = 20000;
-const BRIDGE_TOKENS = [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
+const BRIDGE_TOKENS = [TOKEN_MINTS.SOL];
 const PUMP_MINTS = new Set<string>([TOKEN_MINTS.FIXERCOIN, TOKEN_MINTS.LOCKER]);
 
 interface SwapQuote {
@@ -577,7 +577,7 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       attempts,
       suggestions: [
         "Verify token pair has liquidity on supported exchanges",
-        "Try swapping through an intermediate token (e.g., USDC)",
+        "Try swapping through an intermediate token (e.g., SOL)",
         "Check that both tokens are supported on Jupiter/Meteora",
         "Increase slippage tolerance if using low liquidity pair",
       ],

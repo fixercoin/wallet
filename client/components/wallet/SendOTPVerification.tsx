@@ -305,6 +305,18 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
                     </p>
                   </div>
 
+                  {/* Sent SMS preview (demo fake SMS inbox) */}
+                  {smsPreview && (
+                    <div className="bg-white/5 border border-gray-200 rounded-lg p-3 mt-2">
+                      <p className="text-xs text-gray-700">
+                        <strong>SMS Inbox (demo):</strong>
+                      </p>
+                      <p className="text-sm text-gray-900 font-mono mt-1">
+                        {smsPreview.body}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <p className="text-xs text-gray-600">
                       Attempts remaining:{" "}

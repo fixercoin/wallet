@@ -286,6 +286,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
+      if (!wallet.secretKey) {
+        setStatus("No private key found in wallet.");
+        setIsLoading(false);
+        return null;
+      }
+
       let jup = jupiter;
       if (!jup) {
         jup = await initJupiter();
@@ -305,9 +311,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const fromMeta = jup.tokens[fromMint];
       const toMeta = jup.tokens[toMint];
 
+      if (!fromMeta || !toMeta) {
+        setStatus("Token metadata not found");
+        setIsLoading(false);
+        return null;
+      }
+
       const decimalsIn = fromMeta.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
 
+      setStatus("Computing swap routes…");
       const routes = await jup.computeRoutes({
         inputMint: fromMint,
         outputMint: toMint,
@@ -316,20 +329,26 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       });
 
       if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
-        throw new Error("No route found");
+        throw new Error("No swap route found for this pair and amount");
       }
 
       const routeInfo = routes.routesInfos[0];
+      setStatus("Preparing transaction…");
       const { execute } = await jup.exchange({ routeInfo });
 
       setStatus("Signing and sending transaction…");
+      console.log("[SwapInterface] Executing swap with route:", routeInfo);
 
       const swapResult = await execute();
 
+      if (!swapResult) {
+        throw new Error("Swap execution returned no result");
+      }
+
       setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`,
+        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "pending"}`,
       );
-      console.log("Swap result:", swapResult);
+      console.log("[SwapInterface] Swap result:", swapResult);
 
       toast({
         title: "Swap Completed!",
@@ -343,13 +362,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       return swapResult;
     } catch (err) {
-      setStatus("Swap error: " + (err.message || err));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("[SwapInterface] Swap error:", err);
+      setStatus("Swap error: " + errorMsg);
       setIsLoading(false);
-      console.error(err);
 
       toast({
         title: "Swap Failed",
-        description: err.message || "Unknown error",
+        description: errorMsg || "Unknown error occurred",
         variant: "destructive",
       });
     }

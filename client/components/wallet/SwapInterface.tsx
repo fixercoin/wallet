@@ -888,6 +888,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;
       } else if (errorMsg.includes("secret key")) {
         errorMsg = `Wallet signing failed. Your wallet may not be properly configured. Please reconnect your wallet and try again.`;
+      } else if (errorMsg.includes("No executable bridged route found")) {
+        errorMsg = `Unable to find a swap route for this token pair. This could mean: (1) Insufficient liquidity, (2) Tokens are not supported on Jupiter, or (3) The pair requires using a DEX that doesn't support your tokens. Try selecting different tokens or check token availability.`;
       }
 
       toast({

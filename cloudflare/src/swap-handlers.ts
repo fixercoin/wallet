@@ -245,6 +245,62 @@ export async function handleSwapQuote(
       );
     }
 
+    // Pump.fun-only path for Fixercoin/Locker
+    const FIXER = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+    const LOCKER = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+    const isPumpMint =
+      inputMint === FIXER ||
+      outputMint === FIXER ||
+      inputMint === LOCKER ||
+      outputMint === LOCKER;
+    if (isPumpMint) {
+      console.log(
+        `[Swap Quote] Pumpfun-only path for ${inputMint} -> ${outputMint}`,
+      );
+      const pfUrl = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
+        inputMint,
+      )}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
+        amount,
+      )}`;
+      try {
+        const resp = await fetchWithTimeout(pfUrl);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data?.outAmount && data.outAmount !== "0") {
+            return json(
+              {
+                quote: data,
+                source: "pumpfun",
+                inputMint,
+                outputMint,
+                amount,
+                slippageBps,
+                attempts: [{ provider: "pumpfun", status: "success" }],
+              },
+              { headers: corsHeaders },
+            );
+          }
+        }
+      } catch {}
+      return json(
+        {
+          error: "No pumpfun route found for this pair",
+          inputMint,
+          outputMint,
+          amount,
+          slippageBps,
+          attempts: [
+            {
+              provider: "pumpfun",
+              status: "failed",
+              reason: "No pumpfun liquidity or pair not supported",
+            },
+          ],
+        },
+        { status: 404, headers: corsHeaders },
+      );
+    }
+
     const attempts: SwapAttempt[] = [];
 
     console.log(

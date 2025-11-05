@@ -32,8 +32,7 @@ export type P2PPost = {
 // ---------------------------
 
 export async function listOrders(roomId: string = "global") {
-  const base = API_BASE;
-  const url = `${base}/api/orders?roomId=${encodeURIComponent(roomId)}`;
+  const url = resolveApiUrl(`/api/orders?roomId=${encodeURIComponent(roomId)}`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load orders: ${res.status}`);
   return res.json() as Promise<{ orders: any[] }>;

@@ -106,14 +106,19 @@ async function getJupiterQuote(
           return data;
         } catch (e: any) {
           const msg = e?.message || String(e);
-          if (attempt < 2 && (msg.includes("timeout") || msg.includes("ECONNREFUSED"))) {
+          if (
+            attempt < 2 &&
+            (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
+          ) {
             console.warn(
               `[Swap] Jupiter transient error, retrying... (attempt ${attempt}/2): ${msg}`,
             );
             await new Promise((r) => setTimeout(r, attempt * 500));
             continue;
           }
-          console.warn(`[Swap] Jupiter endpoint error (attempt ${attempt}/2): ${msg}`);
+          console.warn(
+            `[Swap] Jupiter endpoint error (attempt ${attempt}/2): ${msg}`,
+          );
           break;
         }
       }
@@ -181,7 +186,8 @@ async function getMeteOraQuote(
       const data = await response.json();
 
       // Validate Meteora response has expected fields
-      const outAmount = data?.estimatedOut || data?.outAmount || data?.minReceived;
+      const outAmount =
+        data?.estimatedOut || data?.outAmount || data?.minReceived;
       if (!data || !outAmount || outAmount === "0") {
         console.warn(
           `[Swap] Meteora returned invalid/empty quote for ${inputMint} -> ${outputMint}`,
@@ -199,16 +205,17 @@ async function getMeteOraQuote(
       return data;
     } catch (e: any) {
       const msg = e?.message || String(e);
-      if (attempt < 2 && (msg.includes("timeout") || msg.includes("ECONNREFUSED"))) {
+      if (
+        attempt < 2 &&
+        (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
+      ) {
         console.warn(
           `[Swap] Meteora transient error (attempt ${attempt}/2), retrying: ${msg}`,
         );
         await new Promise((r) => setTimeout(r, attempt * 500));
         continue;
       }
-      console.warn(
-        `[Swap] Meteora quote error (attempt ${attempt}): ${msg}`,
-      );
+      console.warn(`[Swap] Meteora quote error (attempt ${attempt}): ${msg}`);
       if (attempt === 2) return null;
     }
   }
@@ -298,12 +305,7 @@ async function getBridgedQuote(
         );
 
         // First leg: inputMint -> bridge (try Jupiter, then Meteora)
-        let q1 = await getJupiterQuote(
-          inputMint,
-          bridge,
-          amount,
-          slippageBps,
-        );
+        let q1 = await getJupiterQuote(inputMint, bridge, amount, slippageBps);
 
         if (!q1 || !q1.outAmount || q1.outAmount === "0") {
           console.log(
@@ -321,9 +323,7 @@ async function getBridgedQuote(
 
         const outAmount1 = q1.outAmount || q1.estimatedOut || q1.minReceived;
         if (!outAmount1 || outAmount1 === "0") {
-          console.warn(
-            `[Swap] Leg 1 failed for bridge ${bridge}: zero output`,
-          );
+          console.warn(`[Swap] Leg 1 failed for bridge ${bridge}: zero output`);
           continue;
         }
 
@@ -352,9 +352,7 @@ async function getBridgedQuote(
         const outAmount2 =
           q2.outAmount || q2.estimatedOut || q2.minReceived || "0";
         if (!outAmount2 || outAmount2 === "0") {
-          console.warn(
-            `[Swap] Leg 2 failed for bridge ${bridge}: zero output`,
-          );
+          console.warn(`[Swap] Leg 2 failed for bridge ${bridge}: zero output`);
           continue;
         }
 
@@ -472,9 +470,7 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     quote = await getPumpFunQuote(inputMint, outputMint, amount);
     if (quote && quote.outAmount && quote.outAmount !== "0") {
       attempts.push({ provider: "pumpfun", status: "success" });
-      console.log(
-        `[Swap Quote] ✅ PumpFun route: ${quote.outAmount} output`,
-      );
+      console.log(`[Swap Quote] ✅ PumpFun route: ${quote.outAmount} output`);
       return res.json({
         quote,
         source: "pumpfun",

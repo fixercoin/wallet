@@ -141,7 +141,10 @@ class JupiterAPI {
         }
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        if (attempt < 2 && (msg.includes("timeout") || msg.includes("ECONNREFUSED"))) {
+        if (
+          attempt < 2 &&
+          (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
+        ) {
           console.warn(
             `Jupiter transient error (attempt ${attempt}/2), retrying: ${msg}`,
           );

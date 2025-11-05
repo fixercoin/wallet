@@ -810,9 +810,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           }
 
           // Execute leg1 then leg2
-          console.log(
-            `Executing bridged swap via ${bridgeToken?.symbol}...`,
-          );
+          console.log(`Executing bridged swap via ${bridgeToken?.symbol}...`);
           const sig1 = await submitQuote(q1);
           toast({ title: "Leg 1 submitted", description: sig1 });
           const sig2 = await submitQuote(q2);

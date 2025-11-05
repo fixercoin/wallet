@@ -292,7 +292,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       let tx = VersionedTransaction.deserialize(swapTransactionBuf);
 
       if (fromToken) {
-        tx = await addFeeTransferInstruction(
+        tx = addFeeTransferInstruction(
           tx,
           fromToken.mint,
           jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),

@@ -43,6 +43,8 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
   const [otpSession, setOtpSession] = useState<OTPSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [smsPreview, setSmsPreview] = useState<{ body: string; ts: number } | null>(null);
+  const { toast } = useToast();
 
   // Countdown timer for OTP expiry
   useEffect(() => {

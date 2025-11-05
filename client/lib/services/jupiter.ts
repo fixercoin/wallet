@@ -146,7 +146,26 @@ class JupiterAPI {
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");
-        throw new Error(`Jupiter proxy swap error: ${response.status} ${txt}`);
+        try {
+          const errorJson = JSON.parse(txt);
+          const errorMsg = errorJson?.error || errorJson?.message || txt;
+          // Check for Jupiter error 1016 (swap simulation failed)
+          if (
+            errorJson?.code === 1016 ||
+            errorMsg?.includes("1016") ||
+            errorMsg?.includes("Swap simulation failed") ||
+            errorMsg?.includes("simulation")
+          ) {
+            throw new Error(`Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`);
+          }
+          throw new Error(
+            `Jupiter proxy swap error: ${response.status} ${errorMsg}`,
+          );
+        } catch (parseErr: any) {
+          const detailedMsg =
+            parseErr?.message || `Jupiter proxy swap error: ${response.status} ${txt}`;
+          throw new Error(detailedMsg);
+        }
       }
 
       return await response.json();
@@ -155,7 +174,7 @@ class JupiterAPI {
         "Error getting swap transaction from Jupiter proxy:",
         error,
       );
-      return null;
+      throw error; // Re-throw to let caller handle retry logic
     }
   }
 

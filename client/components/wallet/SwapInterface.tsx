@@ -162,58 +162,55 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       if (!wallet) {
         setStatus("No wallet detected.");
+        setIsLoading(false);
         return null;
-      }
-
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          return null;
-        }
       }
 
       if (!fromMint || !toMint) {
         throw new Error("Select tokens");
       }
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
-      if (!fromMeta || !toMeta) {
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+      if (!fromToken || !toToken) {
         throw new Error("Token metadata not found");
       }
 
-      const decimalsIn = fromMeta.decimals ?? 6;
+      const decimalsIn = fromToken.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
+      const amountStr = jupiterAPI.formatSwapAmount(
+        Number(amountRaw) / Math.pow(10, decimalsIn),
+        decimalsIn,
+      );
 
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
+      const quote = await jupiterAPI.getQuote(
+        fromMint,
+        toMint,
+        parseInt(amountStr),
+        5000,
+      );
 
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
+      if (!quote || !quote.routesInfos || quote.routesInfos.length === 0) {
         setQuote(null);
         setStatus("No route found for this pair/amount.");
+        setIsLoading(false);
         return null;
       }
 
-      const best = routes.routesInfos[0];
-      const outAmount = BigInt(best.outAmount) ?? BigInt(0);
-      const outHuman = Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
+      const best = quote.routesInfos[0];
+      const outAmount = BigInt(best.outAmount ?? 0);
+      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
 
       setQuote({
-        routes,
+        routes: quote,
         best,
         outHuman,
-        outToken: toMeta.symbol,
-        hops: best.marketInfos.length,
+        outToken: toToken.symbol,
+        hops: best.marketInfos?.length ?? 0,
       });
       setStatus("");
       setIsLoading(false);
-      return { routes, best };
+      return { routes: quote, best };
     } catch (err) {
       setStatus("Error: " + (err.message || err));
       setIsLoading(false);

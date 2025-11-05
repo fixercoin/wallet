@@ -236,26 +236,26 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="w-full flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              onClick={handleLogout}
+              variant="default"
+              className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
 
-              <Button
-                onClick={handleDeleteAccount}
-                variant={confirmDelete ? "destructive" : "outline"}
-                className={`w-full flex items-center gap-2 ${
-                  confirmDelete
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                }`}
-              >
-                <Trash2 className="h-4 w-4" />
-                {confirmDelete ? "Confirm Delete" : "Delete Account"}
-              </Button>
+            <Button
+              onClick={handleDeleteAccount}
+              variant="default"
+              className={`w-full flex items-center gap-2 ${
+                confirmDelete
+                  ? "bg-green-700 hover:bg-green-800 text-white"
+                  : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
+            >
+              <Trash2 className="h-4 w-4" />
+              {confirmDelete ? "Confirm Delete" : "Delete Account"}
+            </Button>
 
               {confirmDelete && (
                 <div className="p-3 bg-red-500/20 border border-red-400/30 rounded-lg">

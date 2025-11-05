@@ -9,7 +9,7 @@ cwd = "."
 watch_paths = ["src/**/*.ts", "client/**/*.ts", "client/**/*.tsx"]
 
 [assets]
-directory = "dist/spa"
+directory = "dist"
 binding = "ASSETS"
 
 [env.production]

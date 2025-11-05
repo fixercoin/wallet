@@ -101,10 +101,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       // Set the wallet (will be encrypted on persist)
       setWallet(pendingWallet);
 
-      // Prefetch address data via RPC providers
-      void prefetchWalletAddressData(pendingWallet.publicKey).catch(
-        () => undefined,
-      );
 
       await refreshBalance().catch(() => {});
       await refreshTokens().catch(() => {});

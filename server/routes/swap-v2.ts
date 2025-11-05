@@ -467,8 +467,31 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       reason: "No liquidity or route found",
     });
 
+    // Try PumpFun quote for pump.fun tokens
+    console.log(`[Swap Quote] Meteora failed, trying PumpFun...`);
+    quote = await getPumpFunQuote(inputMint, outputMint, amount);
+    if (quote && quote.outAmount && quote.outAmount !== "0") {
+      attempts.push({ provider: "pumpfun", status: "success" });
+      console.log(
+        `[Swap Quote] ✅ PumpFun route: ${quote.outAmount} output`,
+      );
+      return res.json({
+        quote,
+        source: "pumpfun",
+        inputMint,
+        outputMint,
+        amount,
+        attempts,
+      });
+    }
+    attempts.push({
+      provider: "pumpfun",
+      status: "failed",
+      reason: "No liquidity or pair not supported",
+    });
+
     // Try bridged routes as last resort
-    console.log(`[Swap Quote] Meteora failed, trying bridged routes...`);
+    console.log(`[Swap Quote] Direct routes failed, trying bridged routes...`);
     const bridged = await getBridgedQuote(
       inputMint,
       outputMint,

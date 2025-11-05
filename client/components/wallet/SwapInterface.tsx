@@ -137,9 +137,28 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("");
       return jup;
     } catch (err) {
-      setStatus("Error initializing Jupiter");
-      console.error(err);
-      throw err;
+      console.error("[SwapInterface] Error initializing Jupiter:", err);
+      setStatus("Using available tokens...");
+
+      const fallbackTokens = (userTokens || []).map(ut => ({
+        address: ut.mint,
+        symbol: ut.symbol,
+        decimals: ut.decimals,
+        name: ut.name,
+      }));
+
+      if (fallbackTokens.length === 0) {
+        const defaultTokens = [
+          { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+          { address: FIXER_MINT, symbol: "FIXERCOIN", decimals: 6, name: "FIXERCOIN" },
+        ];
+        setTokenList(defaultTokens);
+      } else {
+        setTokenList(fallbackTokens);
+      }
+
+      setInitialized(true);
+      return null;
     }
   };
 

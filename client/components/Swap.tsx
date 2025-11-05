@@ -75,32 +75,30 @@ export default function Swap() {
         decimalsIn,
       );
 
-      const routes = await jupiterAPI.getQuote(
+      const quoteResponse = await jupiterAPI.getQuote(
         fromMint,
         toMint,
         parseInt(amountStr),
         5000,
       );
 
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
+      if (!quoteResponse) {
         setQuote(null);
         setStatus("No route found for this pair/amount.");
         return null;
       }
 
-      const best = routes.routesInfos[0];
-      const outAmount = BigInt(best.outAmount ?? 0);
+      const outAmount = BigInt(quoteResponse.outAmount);
       const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
 
       setQuote({
-        routes,
-        best,
+        quoteResponse,
         outHuman,
         outToken: toToken.symbol,
-        hops: best.marketInfos?.length ?? 0,
+        hops: quoteResponse.routePlan?.length ?? 0,
       });
       setStatus("");
-      return { routes, best };
+      return { quoteResponse };
     } catch (err) {
       setStatus("Error: " + (err.message || err));
       console.error(err);

@@ -116,41 +116,29 @@ export default function Swap() {
         return null;
       }
 
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          return null;
-        }
+      if (!quote) {
+        setStatus("Get a quote first");
+        return null;
       }
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
 
-      const decimalsIn = fromMeta.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
+      const routeInfo = quote.best;
 
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
+      const swapRequest = {
+        route: routeInfo,
+        userPublicKey: wallet.publicKey,
+        wrapAndUnwrapSol: true,
+      };
 
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0)
-        throw new Error("No route found");
+      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
-      const routeInfo = routes.routesInfos[0];
+      if (!swapResult || !swapResult.swapTransaction) {
+        throw new Error("Swap transaction generation failed");
+      }
 
-      const { execute } = await jup.exchange({ routeInfo });
-
-      setStatus("Signing and sending transaction…");
-
-      const swapResult = await execute();
-      setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`,
-      );
+      setStatus("Swap transaction prepared. Check your wallet for signing.");
       console.log("Swap result:", swapResult);
       return swapResult;
     } catch (err) {

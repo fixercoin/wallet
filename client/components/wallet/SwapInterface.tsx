@@ -918,7 +918,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         const isFixercoin = toToken?.symbol?.toLowerCase().includes("fixer");
         const isPumpfun = toToken?.mint === TOKEN_MINTS.FIXERCOIN; // pump.fun tokens
         let suggestion =
-          "Unable to find a swap route. Try: (1) Swapping through an intermediate token like USDC, (2) Using a smaller amount, or (3) Checking if both tokens have adequate liquidity.";
+          "Unable to find a swap route. Try: (1) Swapping through SOL first (A → SOL → B), (2) Using a smaller amount, or (3) Checking if both tokens have adequate liquidity.";
         if (isPumpfun) {
           suggestion +=
             " FIXERCOIN is a pump.fun token - try using Raydium DEX directly for better liquidity, or swap to USDC first then bridge manually.";

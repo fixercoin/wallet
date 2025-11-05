@@ -502,20 +502,111 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     setIsLoading(true);
 
     try {
-      // Helper to submit a single-quote swap via Jupiter
-      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
-        if (!wallet || !wallet.publicKey) {
-          throw new Error(
-            "Wallet not available. Please reconnect your wallet.",
-          );
-        }
+// Helper to submit a single-quote swap via Jupiter with retry logic
+const submitQuote = async (
+  q: JupiterQuoteResponse,
+  retryCount: number = 0,
+  maxRetries: number = 2,
+): Promise<string> => {
+  if (!wallet || !wallet.publicKey) {
+    throw new Error("Wallet not available. Please reconnect your wallet.");
+  }
+
+  try {
+    const { swapTransaction } = await jupiter.exchange({
+      quoteResponse: q,
+      userPublicKey: wallet.publicKey,
+      wrapAndUnwrapSol: true,
+    });
+
+    const tx = Transaction.from(Buffer.from(swapTransaction, "base64"));
+    tx.feePayer = wallet.publicKey;
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    const signedTx = await wallet.signTransaction(tx);
+    const txid = await connection.sendRawTransaction(signedTx.serialize(), {
+      skipPreflight: true,
+      maxRetries: 3,
+    });
+
+    await connection.confirmTransaction(txid, "confirmed");
+    return txid;
+  } catch (err: any) {
+    console.error(`Swap failed attempt ${retryCount + 1}:`, err);
+
+    if (retryCount < maxRetries) {
+      return submitQuote(q, retryCount + 1, maxRetries);
+    }
+
+    throw new Error("Swap failed after multiple attempts: " + err?.message);
+  }
+};
 
         const swapRequest = {
           quoteResponse: q,
           userPublicKey: wallet.publicKey,
           wrapAndUnwrapSol: true,
         } as any;
-        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+
+        let swapResponse: any;
+        try {
+          swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+        } catch (err: any) {
+          const errMsg = String(err?.message || err);
+          // Check if error is 1016 (swap simulation failed / stale quote)
+          if (
+            errMsg.includes("1016") ||
+            errMsg.includes("simulation") ||
+            errMsg.includes("stale")
+          ) {
+            if (retryCount < maxRetries) {
+              console.log(
+                `Jupiter error 1016 detected (stale quote). Retrying ${retryCount + 1}/${maxRetries}...`,
+              );
+              // Wait a bit and retry with the same quote
+              await new Promise((r) => setTimeout(r, 500 * (retryCount + 1)));
+              return submitQuote(q, retryCount + 1, maxRetries);
+            } else {
+              console.log(
+                `Max retries reached. Attempting to refresh quote and retry...`,
+              );
+              // Try to refresh the quote and retry once more
+              if (retryCount === maxRetries) {
+                try {
+                  const slippageBps = Math.max(
+                    1,
+                    Math.round(parseFloat(slippage || "0.5") * 100),
+                  );
+                  const amountInt = parseInt(
+                    jupiterAPI.formatSwapAmount(
+                      parseFloat(fromAmount),
+                      fromToken?.decimals || 9,
+                    ),
+                    10,
+                  );
+                  const freshQuote = await jupiterAPI.getQuote(
+                    fromToken?.mint || "",
+                    toToken?.mint || "",
+                    amountInt,
+                    slippageBps,
+                  );
+                  if (freshQuote) {
+                    console.log(
+                      "Fresh quote obtained, retrying swap with new quote",
+                    );
+                    return submitQuote(freshQuote, maxRetries + 1, maxRetries);
+                  }
+                } catch (refreshErr) {
+                  console.warn("Could not refresh quote:", refreshErr);
+                }
+                throw err;
+              }
+              throw err;
+            }
+          }
+          throw err;
+        }
+
         if (!swapResponse || !swapResponse.swapTransaction)
           throw new Error("Failed to get swap transaction");
         const kp = getKeypair();
@@ -614,32 +705,77 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return;
       }
 
-      // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL
-      if (!fromToken || !toToken) throw new Error("Missing tokens");
-      const slippageBps = Math.max(
-        1,
-        Math.round(parseFloat(slippage || "0.5") * 100),
-      );
-      const amountInt = parseInt(
-        jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
-        10,
-      );
-      // Prefer SOL as bridge first. For pump.fun tokens, only try SOL.
-      const isPumpfunToken =
-        toToken?.mint === TOKEN_MINTS.FIXERCOIN ||
-        PUMP_TOKENS.some(
-          (p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint,
-        );
-      const BRIDGES = [TOKEN_MINTS.SOL];
+// If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
+if (!quote && meteoraQuote) {
+  return await submitMeteoraSwap({
+    meteoraQuote,
+    wallet,
+    connection,
+  });
+}
 
-      const bridgeAttempts = [];
-      let lastBridgeError = null;
+// No direct route: attempt bridged two-leg swap via SOL (pump.fun-safe fallback)
+if (!fromToken || !toToken) throw new Error("Missing tokens");
 
-      for (const bridge of BRIDGES) {
-        if (bridge === fromToken.mint || bridge === toToken.mint) continue;
-        const bridgeToken = allTokens.find((t) => t.mint === bridge);
-        const bridgeDecimals =
-          bridgeToken?.decimals ?? (bridge === TOKEN_MINTS.USDT ? 6 : 6);
+const slippageBps = Math.max(
+  1,
+  Math.round(parseFloat(slippage || "0.5") * 100),
+);
+
+// Convert human amount -> raw integer units
+const amountInt = parseInt(
+  jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+  10,
+);
+
+// Detect pump.fun tokens
+const isPumpfunToken =
+  toToken?.mint === TOKEN_MINTS.FIXERCOIN ||
+  PUMP_TOKENS.some(
+    (p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint,
+  );
+
+// For pump.fun: only use SOL as bridge
+const BRIDGES = [TOKEN_MINTS.SOL];
+
+const bridgeAttempts = [];
+let lastBridgeError = null;
+
+for (const bridge of BRIDGES) {
+  if (bridge === fromToken.mint || bridge === toToken.mint) continue;
+
+  const bridgeToken = allTokens.find((t) => t.mint === bridge);
+  const bridgeDecimals = bridgeToken?.decimals ?? 6;
+
+  try {
+    const result = await runTwoLegBridgeSwap({
+      fromToken,
+      toToken,
+      bridgeToken,
+      amountInt,
+      slippageBps,
+      wallet,
+      connection,
+      jupiterAPI,
+    });
+
+    if (result?.txid) {
+      return result.txid;
+    }
+
+    bridgeAttempts.push({ bridge, status: "no-tx" });
+  } catch (err: any) {
+    lastBridgeError = err;
+    bridgeAttempts.push({ bridge, error: err?.message || err });
+  }
+}
+
+// If we failed all bridges:
+throw new Error(
+  `No valid route found (Direct/Jupiter/Meteora/Bridge). Last error: ${
+    lastBridgeError?.message || lastBridgeError
+  }`,
+);
 
         try {
           console.log(

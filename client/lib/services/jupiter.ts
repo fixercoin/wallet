@@ -193,28 +193,48 @@ class JupiterAPI {
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");
-        const errorObj = (() => {
-          try {
-            return JSON.parse(txt);
-          } catch {
-            return { error: txt };
-          }
-        })();
+try {
+  const errorObj = (() => {
+    try {
+      return JSON.parse(txt);
+    } catch {
+      return { error: txt };
+    }
+  })();
 
-        console.error(
-          "Jupiter swap error response:",
-          response.status,
-          errorObj,
-        );
+  console.error("Jupiter swap error response:", response.status, errorObj);
 
-        // Parse the error response to get more details
-        const errorMsg =
-          errorObj?.error || errorObj?.details || txt || "Unknown error";
-        const details = errorObj?.details || "";
+  const errorMsg =
+    errorObj?.error ||
+    errorObj?.message ||
+    errorObj?.details ||
+    txt ||
+    "Unknown error";
 
-        throw new Error(
-          `Jupiter swap failed (${response.status}): ${errorMsg}${details ? ` - ${details}` : ""}`,
-        );
+  // Detect Jupiter error 1016 (swap simulation failed / stale quote)
+  if (
+    errorObj?.code === 1016 ||
+    errorMsg.includes("1016") ||
+    errorMsg.includes("Swap simulation failed") ||
+    errorMsg.includes("simulation")
+  ) {
+    throw new Error(
+      `Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`,
+    );
+  }
+
+  throw new Error(
+    `Jupiter swap failed (${response.status}): ${errorMsg}${
+      errorObj?.details ? ` - ${errorObj.details}` : ""
+    }`,
+  );
+} catch (parseErr: any) {
+  const fallbackMsg =
+    parseErr?.message ||
+    `Jupiter swap failed (${response.status}): ${txt}`;
+  throw new Error(fallbackMsg);
+}
+
       }
 
       const data = await response.json();
@@ -230,7 +250,7 @@ class JupiterAPI {
         "Error getting swap transaction from Jupiter proxy:",
         error,
       );
-      return null;
+      throw error; // Re-throw to let caller handle retry logic
     }
   }
 

@@ -6,7 +6,7 @@ export const onRequest: PagesFunction = async ({ request, env, url }) => {
   if (!inputMint || !outputMint || !amount)
     return Response.json(
       { error: "inputMint, outputMint, amount required" },
-      { status: 400 }
+      { status: 400 },
     );
 
   const headers = { "Content-Type": "application/json" };
@@ -26,8 +26,13 @@ export const onRequest: PagesFunction = async ({ request, env, url }) => {
 
   // 1️⃣ Try Pump.fun if configured
   if (env.PUMPFUN_QUOTE) {
-    const pumpQuote = await fetchQuote(env.PUMPFUN_QUOTE, { inputMint, outputMint, amount });
-    if (pumpQuote) return Response.json({ source: "pumpfun", quote: pumpQuote });
+    const pumpQuote = await fetchQuote(env.PUMPFUN_QUOTE, {
+      inputMint,
+      outputMint,
+      amount,
+    });
+    if (pumpQuote)
+      return Response.json({ source: "pumpfun", quote: pumpQuote });
   }
 
   // 2️⃣ Try Jupiter (public API)
@@ -58,12 +63,17 @@ export const onRequest: PagesFunction = async ({ request, env, url }) => {
         const inLamports = BigInt(amount);
         const inSol = Number(inLamports) / Number(solToLamports);
         // use rough SOL price from DexScreener for SOL token
-        const solDexsResp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent("So11111111111111111111111111111111111111112")}`);
+        const solDexsResp = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent("So11111111111111111111111111111111111111112")}`,
+        );
         const solData = solDexsResp.ok ? await solDexsResp.json() : null;
         const solUsd = Number(solData?.pairs?.[0]?.priceUsd) || 0;
         if (solUsd > 0) {
           const estimatedOut = (inSol * solUsd) / priceUsd;
-          return Response.json({ source: "indicative", quote: { inAmount: Number(inSol), outEstimated: estimatedOut } });
+          return Response.json({
+            source: "indicative",
+            quote: { inAmount: Number(inSol), outEstimated: estimatedOut },
+          });
         }
       }
     }

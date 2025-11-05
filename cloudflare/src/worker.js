@@ -1216,25 +1216,40 @@ export default {
       try {
         const body = await parseJSON(req);
         if (!body || typeof body !== "object") {
-          return json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
         }
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 20000);
         const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
           method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           body: JSON.stringify(body),
           signal: controller.signal,
         });
         clearTimeout(timeout);
         if (!resp.ok) {
           const text = await resp.text().catch(() => "");
-          return json({ error: "Jupiter swap failed", details: text }, { status: resp.status, headers: corsHeaders });
+          return json(
+            { error: "Jupiter swap failed", details: text },
+            { status: resp.status, headers: corsHeaders },
+          );
         }
         const data = await resp.json();
         return json(data, { headers: corsHeaders });
       } catch (e) {
-        return json({ error: "Failed to execute Jupiter swap", details: e?.message || String(e) }, { status: 502, headers: corsHeaders });
+        return json(
+          {
+            error: "Failed to execute Jupiter swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
       }
     }
 

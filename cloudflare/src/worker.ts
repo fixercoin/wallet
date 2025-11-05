@@ -161,7 +161,11 @@ export default {
 
     // Minimal Pump.fun tokens registry (kept in worker for preview/server usage)
     const PUMP_TOKENS = [
-      { symbol: "FIXERCOIN", mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", decimals: 6 },
+      {
+        symbol: "FIXERCOIN",
+        mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+        decimals: 6,
+      },
       { symbol: "LOCKER", mint: "GpumpLockerTokenMintAddress", decimals: 6 },
     ];
 
@@ -1319,7 +1323,10 @@ export default {
           if (jupResp.ok) {
             const jupData = await jupResp.json();
             if (jupData && jupData.outAmount && jupData.outAmount !== "0") {
-              return json({ source: "jupiter", quote: jupData }, { headers: corsHeaders });
+              return json(
+                { source: "jupiter", quote: jupData },
+                { headers: corsHeaders },
+              );
             }
           }
         } catch (e) {

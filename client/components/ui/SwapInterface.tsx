@@ -27,11 +27,83 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
-import { Keypair, VersionedTransaction } from "@solana/web3.js";
+import {
+  Keypair,
+  VersionedTransaction,
+  SystemProgram,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
+
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+const FEE_PERCENTAGE = 0.01;
 
 interface SwapInterfaceProps {
   onBack: () => void;
+}
+
+function addFeeTransferInstruction(
+  tx: VersionedTransaction,
+  fromMint: string,
+  fromAmount: string,
+  decimals: number,
+  userPublicKey: string,
+): VersionedTransaction {
+  const feeAmount = BigInt(
+    Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
+  );
+
+  if (feeAmount === 0n) {
+    return tx;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const userPubkey = new PublicKey(userPublicKey);
+    const fromMintPubkey = new PublicKey(fromMint);
+
+    let feeInstruction: TransactionInstruction;
+
+    if (fromMint === SOL_MINT) {
+      feeInstruction = SystemProgram.transfer({
+        fromPubkey: userPubkey,
+        toPubkey: feeWalletPubkey,
+        lamports: Number(feeAmount),
+      });
+    } else {
+      const userTokenAccount = getAssociatedTokenAddress(
+        fromMintPubkey,
+        userPubkey,
+        false,
+      );
+      const feeTokenAccount = getAssociatedTokenAddress(
+        fromMintPubkey,
+        feeWalletPubkey,
+        false,
+      );
+
+      feeInstruction = createTransferCheckedInstruction(
+        userTokenAccount,
+        fromMintPubkey,
+        feeTokenAccount,
+        userPubkey,
+        Number(feeAmount),
+        decimals,
+      );
+    }
+
+    tx.message.instructions.push(feeInstruction);
+    return tx;
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+    return tx;
+  }
 }
 
 export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
@@ -222,7 +294,21 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!kp) throw new Error("Missing wallet key to sign transaction");
 
       const swapTransactionBuf = bytesFromBase64(swapResponse.swapTransaction);
-      const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+      let tx = VersionedTransaction.deserialize(swapTransactionBuf);
+
+      if (fromToken) {
+        tx = addFeeTransferInstruction(
+          tx,
+          fromToken.mint,
+          jupiterAPI.formatSwapAmount(
+            parseFloat(fromAmount),
+            fromToken.decimals,
+          ),
+          fromToken.decimals,
+          wallet.publicKey,
+        );
+      }
+
       tx.sign([kp]);
       const serialized = tx.serialize();
 

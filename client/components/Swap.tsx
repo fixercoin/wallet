@@ -7,7 +7,6 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 export default function Swap() {
   const { wallet } = useWallet();
-  const [jupiter, setJupiter] = useState(null);
   const [tokenList, setTokenList] = useState([]);
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
@@ -16,62 +15,13 @@ export default function Swap() {
   const [status, setStatus] = useState("");
   const [initialized, setInitialized] = useState(false);
 
-  const initJupiter = async () => {
-    if (initialized && jupiter) return jupiter;
+  const loadTokens = async () => {
+    if (initialized) return;
 
-    if (!wallet) {
-      setStatus("No wallet detected. Please set up a wallet first.");
-      return null;
-    }
-
-    setStatus("Initializing route solver (this may take a few seconds)…");
+    setStatus("Loading tokens...");
 
     try {
-      const { Jupiter } = await import("https://esm.sh/@jup-ag/core@4.3.0");
-
-      const connection = new Connection(RPC, "confirmed");
-
-      const walletPublicKey = new PublicKey(wallet.publicKey);
-
-      const localWalletAdapter = {
-        publicKey: walletPublicKey,
-        signTransaction: async (tx) => {
-          const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
-          }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          tx.sign([keypair]);
-          return tx;
-        },
-        signAllTransactions: async (txs) => {
-          const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
-          }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          return txs.map((tx) => {
-            tx.sign([keypair]);
-            return tx;
-          });
-        },
-        connect: async () => walletPublicKey,
-        disconnect: async () => {},
-      };
-
-      const jup = await Jupiter.load({
-        connection,
-        cluster: "mainnet-beta",
-        user: localWalletAdapter,
-      });
-
-      const tokens = Object.values(jup.tokens);
+      const tokens = await jupiterAPI.getStrictTokenList();
       tokens.sort((a, b) => {
         if (a.address === SOL_MINT) return -1;
         if (b.address === SOL_MINT) return 1;
@@ -80,22 +30,20 @@ export default function Swap() {
         return a.symbol.localeCompare(b.symbol);
       });
 
-      setJupiter(jup);
       setTokenList(tokens);
       setInitialized(true);
       setStatus("");
-      return jup;
     } catch (err) {
-      setStatus("Error initializing Jupiter: " + (err.message || err));
+      setStatus("Error loading tokens: " + (err.message || err));
       console.error(err);
-      throw err;
+      setInitialized(true);
     }
   };
 
   useEffect(() => {
     setInitialized(false);
-    initJupiter().catch((e) => {
-      console.warn("Jupiter init warning:", e);
+    loadTokens().catch((e) => {
+      console.warn("Token load warning:", e);
     });
   }, [wallet]);
 

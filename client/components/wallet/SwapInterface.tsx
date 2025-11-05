@@ -761,7 +761,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       // Prefer SOL as bridge first. For pump.fun tokens, only try SOL.
       const isPumpfunToken =
         toToken?.mint === TOKEN_MINTS.FIXERCOIN ||
-        PUMP_TOKENS.some((p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint);
+        PUMP_TOKENS.some(
+          (p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint,
+        );
       const BRIDGES = isPumpfunToken
         ? [TOKEN_MINTS.SOL]
         : [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];

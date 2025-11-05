@@ -354,7 +354,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         message.includes("Attempted bridges") ||
         message.toLowerCase().includes("no route")
       ) {
-        message = "No route available. Try swapping via USDC or reduce the amount.";
+        message =
+          "No route available. Try swapping via USDC or reduce the amount.";
       }
       toast({
         title: "Swap Failed",
@@ -667,14 +668,27 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   <div className="bg-gray-800/30 border border-gray-600 rounded-lg p-3 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Rate:</span>
-                      <span className="text-white">1 {fromToken.symbol} ≈ {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toToken.symbol}</span>
+                      <span className="text-white">
+                        1 {fromToken.symbol} ≈{" "}
+                        {(
+                          parseFloat(toAmount) / parseFloat(fromAmount)
+                        ).toFixed(6)}{" "}
+                        {toToken.symbol}
+                      </span>
                     </div>
-                    {Array.isArray((quote as any).routePlan) && (quote as any).routePlan.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Route:</span>
-                        <span className="text-white">{(quote as any).routePlan.map((r: any) => r.swapInfo?.label || r.label || "?").join(" → ")}</span>
-                      </div>
-                    )}
+                    {Array.isArray((quote as any).routePlan) &&
+                      (quote as any).routePlan.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Route:</span>
+                          <span className="text-white">
+                            {(quote as any).routePlan
+                              .map(
+                                (r: any) => r.swapInfo?.label || r.label || "?",
+                              )
+                              .join(" → ")}
+                          </span>
+                        </div>
+                      )}
                   </div>
                 )}
 
@@ -710,12 +724,24 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Exchange Rate:</span>
-                      <span className="text-white">1 {fromToken?.symbol} = {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toToken?.symbol}</span>
+                      <span className="text-white">
+                        1 {fromToken?.symbol} ={" "}
+                        {(
+                          parseFloat(toAmount) / parseFloat(fromAmount)
+                        ).toFixed(6)}{" "}
+                        {toToken?.symbol}
+                      </span>
                     </div>
                     {quote && Array.isArray((quote as any).routePlan) && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Route:</span>
-                        <span className="text-white">{(quote as any).routePlan.map((r: any) => r.swapInfo?.label || r.label || "?").join(" → ")}</span>
+                        <span className="text-white">
+                          {(quote as any).routePlan
+                            .map(
+                              (r: any) => r.swapInfo?.label || r.label || "?",
+                            )
+                            .join(" → ")}
+                        </span>
                       </div>
                     )}
                   </div>

@@ -50,8 +50,13 @@ import {
   handleSolanaSendProxy,
   handleSolanaSimulateProxy,
 } from "./routes/swap-proxy";
+import {
+  handleSolanaSend,
+  handleSolanaSimulate,
+} from "./routes/solana-transaction";
 import { handleUnifiedSwapLocal } from "./routes/swap-handler";
 import { handleLocalQuote } from "./routes/quote-handler";
+import { handleSwapQuoteV2, handleSwapExecuteV2 } from "./routes/swap-v2";
 import { requireApiKey } from "./middleware/auth";
 import {
   validateSwapRequest,
@@ -107,6 +112,10 @@ export async function createServer(): Promise<express.Application> {
   // Local quote handler (preferred over external worker)
   app.get("/api/quote", handleLocalQuote);
 
+  // New v2 unified swap endpoints with comprehensive fallback chain
+  app.get("/api/swap/quote", handleSwapQuoteV2);
+  app.post("/api/swap/execute", handleSwapExecuteV2);
+
   // Keep proxy handlers as fallbacks (registered after local handler if needed)
   app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
   app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
@@ -116,13 +125,13 @@ export async function createServer(): Promise<express.Application> {
     "/api/solana-send",
     requireApiKey,
     validateSolanaSend,
-    handleSolanaSendProxy,
+    handleSolanaSend,
   );
   app.post(
     "/api/solana-simulate",
     requireApiKey,
     validateSolanaSend,
-    handleSolanaSimulateProxy,
+    handleSolanaSimulate,
   );
 
   // POST /api/swap/submit - require API key and validate
@@ -225,11 +234,11 @@ export async function createServer(): Promise<express.Application> {
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       // If stablecoins or known symbols, return deterministic prices

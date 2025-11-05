@@ -68,67 +68,107 @@ class JupiterAPI {
     inputMint: string,
     outputMint: string,
     amount: number,
-    slippageBps: number = 50,
+    slippageBps: number = 120,
+    opts?: {
+      includeDexes?: string;
+      excludeDexes?: string;
+      onlyDirectRoutes?: boolean;
+    },
   ): Promise<JupiterQuoteResponse | null> {
-    try {
-      const params = new URLSearchParams({
-        inputMint,
-        outputMint,
-        amount: amount.toString(),
-        slippageBps: slippageBps.toString(),
-      });
+    // Retry logic for transient failures
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const params = new URLSearchParams({
+          inputMint,
+          outputMint,
+          amount: amount.toString(),
+          slippageBps: slippageBps.toString(),
+        });
+        if (opts?.includeDexes) params.set("includeDexes", opts.includeDexes);
+        if (opts?.excludeDexes) params.set("excludeDexes", opts.excludeDexes);
+        if (typeof opts?.onlyDirectRoutes === "boolean")
+          params.set("onlyDirectRoutes", String(opts.onlyDirectRoutes));
 
-      const path = `/api/jupiter/quote?${params.toString()}`;
-      const url = resolveApiUrl(path);
-      console.log("Jupiter quote proxy request:", url);
+        const url = resolveApiUrl(`/api/jupiter/quote?${params.toString()}`);
+        console.log(
+          `Jupiter quote request (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
+        );
 
-      const response = await this.fetchWithTimeout(url, 15000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
-      const txt = await response.text().catch(() => "");
+        const response = await this.fetchWithTimeout(url, 15000).catch(
+          () => new Response("", { status: 0 } as any),
+        );
+        const txt = await response.text().catch(() => "");
 
-      if (!response.ok) {
-        try {
-          const errorData = txt ? JSON.parse(txt) : {};
-          const errorCode = errorData?.code;
+        if (!response.ok) {
+          try {
+            const errorData = txt ? JSON.parse(txt) : {};
+            const errorCode = errorData?.code;
 
-          // If no route found, return null to trigger indicative pricing fallback
-          if (errorCode === "NO_ROUTE_FOUND" || response.status === 404) {
-            console.warn(
-              `No swap route available from Jupiter for ${inputMint} -> ${outputMint}`,
-            );
-            return null;
+            // If no route found, return null (don't retry for this)
+            if (
+              errorCode === "NO_ROUTE_FOUND" ||
+              response.status === 404 ||
+              response.status === 400
+            ) {
+              console.warn(
+                `No route available from Jupiter for ${inputMint} -> ${outputMint} (${response.status})`,
+              );
+              return null;
+            }
+          } catch (parseErr) {
+            console.debug("Could not parse error response:", parseErr);
           }
 
-          // For other client errors (400, etc), also return null
-          if (response.status === 400) {
+          // For server errors or rate limits, retry
+          if (response.status === 429 || response.status >= 500) {
             console.warn(
-              `Invalid parameters for Jupiter quote: ${inputMint} -> ${outputMint}`,
+              `Jupiter API error ${response.status} (attempt ${attempt}/2), retrying...`,
             );
-            return null;
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, attempt * 1000));
+              continue;
+            }
           }
-        } catch (parseErr) {
-          console.debug("Could not parse error response:", parseErr);
+
+          console.warn(
+            "Jupiter quote unavailable (proxy):",
+            response.status,
+            txt.substring(0, 100),
+          );
+          return null;
         }
 
-        console.warn(
-          "Jupiter quote unavailable (proxy):",
-          response.status,
-          txt,
+        try {
+          const quote = JSON.parse(txt);
+          console.log(
+            `✅ Jupiter quote success (attempt ${attempt}): ${quote.outAmount}`,
+          );
+          return quote;
+        } catch (e) {
+          console.warn("Failed to parse Jupiter proxy quote response:", e);
+          return null;
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        if (
+          attempt < 2 &&
+          (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
+        ) {
+          console.warn(
+            `Jupiter transient error (attempt ${attempt}/2), retrying: ${msg}`,
+          );
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+          continue;
+        }
+        console.error(
+          `Error fetching quote from Jupiter (attempt ${attempt}):`,
+          error,
         );
-        return null;
+        if (attempt === 2) return null;
       }
-
-      try {
-        return JSON.parse(txt);
-      } catch (e) {
-        console.warn("Failed to parse Jupiter proxy quote response:", e);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching quote from Jupiter proxy:", error);
-      return null;
     }
+
+    return null;
   }
 
   async getSwapTransaction(
@@ -136,6 +176,13 @@ class JupiterAPI {
   ): Promise<JupiterSwapResponse | null> {
     try {
       const url = resolveApiUrl("/api/jupiter/swap");
+      console.log(
+        "Sending Jupiter swap request for:",
+        swapRequest.quoteResponse?.inputMint,
+        "->",
+        swapRequest.quoteResponse?.outputMint,
+      );
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -146,32 +193,58 @@ class JupiterAPI {
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");
-        try {
-          const errorJson = JSON.parse(txt);
-          const errorMsg = errorJson?.error || errorJson?.message || txt;
-          // Check for Jupiter error 1016 (swap simulation failed)
-          if (
-            errorJson?.code === 1016 ||
-            errorMsg?.includes("1016") ||
-            errorMsg?.includes("Swap simulation failed") ||
-            errorMsg?.includes("simulation")
-          ) {
-            throw new Error(
-              `Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`,
-            );
-          }
-          throw new Error(
-            `Jupiter proxy swap error: ${response.status} ${errorMsg}`,
-          );
-        } catch (parseErr: any) {
-          const detailedMsg =
-            parseErr?.message ||
-            `Jupiter proxy swap error: ${response.status} ${txt}`;
-          throw new Error(detailedMsg);
-        }
+try {
+  const errorObj = (() => {
+    try {
+      return JSON.parse(txt);
+    } catch {
+      return { error: txt };
+    }
+  })();
+
+  console.error("Jupiter swap error response:", response.status, errorObj);
+
+  const errorMsg =
+    errorObj?.error ||
+    errorObj?.message ||
+    errorObj?.details ||
+    txt ||
+    "Unknown error";
+
+  // Detect Jupiter error 1016 (swap simulation failed / stale quote)
+  if (
+    errorObj?.code === 1016 ||
+    errorMsg.includes("1016") ||
+    errorMsg.includes("Swap simulation failed") ||
+    errorMsg.includes("simulation")
+  ) {
+    throw new Error(
+      `Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`,
+    );
+  }
+
+  throw new Error(
+    `Jupiter swap failed (${response.status}): ${errorMsg}${
+      errorObj?.details ? ` - ${errorObj.details}` : ""
+    }`,
+  );
+} catch (parseErr: any) {
+  const fallbackMsg =
+    parseErr?.message ||
+    `Jupiter swap failed (${response.status}): ${txt}`;
+  throw new Error(fallbackMsg);
+}
+
       }
 
-      return await response.json();
+      const data = await response.json();
+      if (!data.swapTransaction) {
+        console.warn(
+          "Jupiter swap response missing swapTransaction field:",
+          Object.keys(data),
+        );
+      }
+      return data;
     } catch (error) {
       console.error(
         "Error getting swap transaction from Jupiter proxy:",

@@ -154,6 +154,11 @@ class BirdeyeAPI {
 
     return prices;
   }
+
+  clearCache(): void {
+    BirdeyeAPI.tokenCache.clear();
+    console.log("[Birdeye] Cache cleared");
+  }
 }
 
 export const birdeyeAPI = new BirdeyeAPI();

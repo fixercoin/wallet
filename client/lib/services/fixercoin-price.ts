@@ -69,7 +69,7 @@ class FixercoinPriceService {
   private getFallbackPrice(): FixercoinPriceData {
     console.log("Using fallback FIXERCOIN price");
     return {
-      price: 0.000089,
+      price: 0.00008139,
       priceChange24h: 0,
       volume24h: 0,
       lastUpdated: new Date(),
@@ -80,7 +80,7 @@ class FixercoinPriceService {
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getFixercoinPrice();
-    return data?.price || 0.000089;
+    return data?.price || 0.00008139;
   }
 
   // Clear cache to force fresh fetch

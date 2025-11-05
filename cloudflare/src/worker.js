@@ -818,6 +818,32 @@ export default {
           if (pump) return json(pump, { headers: corsHeaders });
         }
 
+        // Pump.fun-only for Fixercoin/Locker
+        const FIXER = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const LOCKER = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+        const isPumpMintPair = Boolean(
+          inputMint &&
+            outputMint &&
+            amount &&
+            (inputMint === FIXER ||
+              outputMint === FIXER ||
+              inputMint === LOCKER ||
+              outputMint === LOCKER),
+        );
+        if (isPumpMintPair) {
+          const pfUrl = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+          const pf = await tryFetch(pfUrl, "GET", undefined, 12000);
+          if (pf)
+            return json(
+              { source: "pumpfun", quote: pf },
+              { headers: corsHeaders },
+            );
+          return json(
+            { error: "no_pumpfun_quote" },
+            { status: 404, headers: corsHeaders },
+          );
+        }
+
         if (inputMint && outputMint && amount) {
           const meteoraUrl = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
           const met = await tryFetch(meteoraUrl, "GET", undefined, 12000);
@@ -1209,6 +1235,48 @@ export default {
         { error: "Failed to fetch Jupiter quote", details: lastError },
         { status: 502, headers: corsHeaders },
       );
+    }
+
+    // Jupiter swap: /api/jupiter/swap (POST)
+    if (pathname === "/api/jupiter/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          return json(
+            { error: "Jupiter swap failed", details: text },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to execute Jupiter swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
     }
 
     // Pumpfun quote: /api/pumpfun/quote (POST or GET)

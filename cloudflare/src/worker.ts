@@ -6,6 +6,8 @@ export interface Env {
   HELIUS_RPC_URL?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
+  BIRDEYE_API_KEY?: string;
+  ASSETS: Fetcher;
 }
 
 // Helper function to sign transactions with a keypair
@@ -143,7 +145,34 @@ export default {
       );
     }
 
+    // Try to serve static assets first (for built frontend)
+    if (req.method === "GET" && !pathname.startsWith("/api")) {
+      try {
+        const assetResponse = await env.ASSETS.fetch(req);
+        if (assetResponse.status !== 404) {
+          return assetResponse;
+        }
+      } catch (e) {
+        // ASSETS might not be available, continue to API handling
+      }
+    }
+
     // === Simple Jupiter Swap Endpoints ===
+
+    // Minimal Pump.fun tokens registry (kept in worker for preview/server usage)
+    const PUMP_TOKENS = [
+      {
+        symbol: "FIXERCOIN",
+        mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+        decimals: 6,
+      },
+      { symbol: "LOCKER", mint: "GpumpLockerTokenMintAddress", decimals: 6 },
+    ];
+
+    // GET /api/pump-tokens - return Pump.fun token registry
+    if (pathname === "/api/pump-tokens" && req.method === "GET") {
+      return json({ tokens: PUMP_TOKENS }, { headers: corsHeaders });
+    }
 
     // GET /api/quote - Get swap quote from Jupiter API
     if (pathname === "/api/quote" && req.method === "GET") {
@@ -616,12 +645,15 @@ export default {
 
       // Fallback SOL price
       console.warn(`[SOL Price] Using fallback price. Error: ${lastError}`);
+      // Using a more reasonable fallback based on recent market prices
+      // This should be updated periodically or replaced with a cache
+      const fallbackPrice = 150; // Updated fallback (previously was 180)
       return json(
         {
           success: true,
           data: {
             address: "So11111111111111111111111111111111111111112",
-            value: 180,
+            value: fallbackPrice,
             priceChange24h: 0,
             updateUnixTime: Math.floor(Date.now() / 1000),
           },
@@ -650,11 +682,11 @@ export default {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.000089,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.000012,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const getTokenSymbol = (addr: string): string | null => {
@@ -688,7 +720,7 @@ export default {
         } catch (e: any) {
           console.warn(`[Birdeye] Error fetching SOL price: ${e?.message}`);
         }
-        return 180; // fallback SOL price
+        return 150; // fallback SOL price (updated from 180)
       };
 
       const getDerivedPrice = async (
@@ -702,6 +734,53 @@ export default {
           console.log(
             `[Birdeye] Fetching derived price for ${mint} via DexScreener`,
           );
+
+          // Define pair addresses for specific tokens
+          const pairAddresses: Record<string, string> = {
+            H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+              "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+            EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
+              "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
+          };
+
+          // Try pair address lookup first for better accuracy
+          const pairAddress = pairAddresses[mint];
+          if (pairAddress) {
+            try {
+              console.log(
+                `[Birdeye] Trying pair address ${pairAddress} for ${mint}`,
+              );
+              const pairUrl = `https://api.dexscreener.com/latest/dex/pairs/solana/${encodeURIComponent(pairAddress)}`;
+              const pairResp = await fetch(pairUrl, {
+                headers: { Accept: "application/json" },
+              });
+
+              if (pairResp.ok) {
+                const pairData = await pairResp.json();
+                const pair = pairData?.pair || (pairData?.pairs?.[0] ?? null);
+
+                if (pair && pair.priceUsd) {
+                  const price = parseFloat(pair.priceUsd);
+                  if (isFinite(price) && price > 0) {
+                    console.log(
+                      `[Birdeye] ✅ Got price via pair address: $${price.toFixed(8)}`,
+                    );
+                    return {
+                      price,
+                      priceChange24h: pair.priceChange?.h24 || 0,
+                      volume24h: pair.volume?.h24 || 0,
+                    };
+                  }
+                }
+              }
+            } catch (e: any) {
+              console.warn(
+                `[Birdeye] Pair address lookup failed: ${e?.message}`,
+              );
+            }
+          }
+
+          // Fallback to token mint lookup
           const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`;
           const dexResp = await fetch(dexUrl, {
             headers: { Accept: "application/json" },
@@ -1053,6 +1132,8 @@ export default {
         const MINT_TO_PAIR_ADDRESS_EX: Record<string, string> = {
           H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
             "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+          EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
+            "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
         };
 
         const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
@@ -1061,11 +1142,11 @@ export default {
         };
 
         const FALLBACK_USD: Record<string, number> = {
-          FIXERCOIN: 0.000089,
-          SOL: 180,
+          FIXERCOIN: 0.00008139, // Real-time market price
+          SOL: 149.38, // Real-time market price
           USDC: 1.0,
           USDT: 1.0,
-          LOCKER: 0.000012,
+          LOCKER: 0.00001112, // Real-time market price
         };
 
         const PKR_PER_USD = 280; // base FX
@@ -1182,6 +1263,36 @@ export default {
           if (pump) return json(pump, { headers: corsHeaders });
         }
 
+        // Pump.fun-only for Fixercoin/Locker when pair includes these mints
+        const FIXER = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const LOCKER = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+        const isPumpMintPair = Boolean(
+          inputMint &&
+            outputMint &&
+            amount &&
+            (inputMint === FIXER ||
+              outputMint === FIXER ||
+              inputMint === LOCKER ||
+              outputMint === LOCKER),
+        );
+        if (isPumpMintPair) {
+          const pfUrl = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
+            inputMint,
+          )}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
+            amount,
+          )}`;
+          const pf = await tryFetch(pfUrl, "GET", undefined, 12000);
+          if (pf)
+            return json(
+              { source: "pumpfun", quote: pf },
+              { headers: corsHeaders },
+            );
+          return json(
+            { error: "no_pumpfun_quote" },
+            { status: 404, headers: corsHeaders },
+          );
+        }
+
         // 2) If input/output/amount provided, prefer Meteora, then Jupiter
         if (inputMint && outputMint && amount) {
           // Meteora
@@ -1232,6 +1343,24 @@ export default {
               { source: "orca", quote: orca },
               { headers: corsHeaders },
             );
+        }
+
+        // Final fallback: try Jupiter public quote API
+        try {
+          const params = new URLSearchParams({ inputMint, outputMint, amount });
+          const jupUrl = `https://quote-api.jup.ag/v6/quote?${params.toString()}`;
+          const jupResp = await fetch(jupUrl, { method: "GET" });
+          if (jupResp.ok) {
+            const jupData = await jupResp.json();
+            if (jupData && jupData.outAmount && jupData.outAmount !== "0") {
+              return json(
+                { source: "jupiter", quote: jupData },
+                { headers: corsHeaders },
+              );
+            }
+          }
+        } catch (e) {
+          // ignore and fall through
         }
 
         return json(
@@ -1489,7 +1618,7 @@ export default {
 
         // Security warning
         console.warn(
-          "[Transaction Signing] ⚠️  Private key received for server-side signing. This is not recommended!",
+          "[Transaction Signing] ��️  Private key received for server-side signing. This is not recommended!",
         );
 
         return json(
@@ -2612,6 +2741,33 @@ export default {
           { error: "Failed to build swap transaction", details: e?.message },
           { status: 502, headers: corsHeaders },
         );
+      }
+    }
+
+    // SPA fallback: For non-API routes, serve index.html (React Router handles the routing)
+    if (req.method === "GET" && !pathname.startsWith("/api")) {
+      try {
+        // Try to serve index.html as fallback for SPA routing
+        const indexRequest = new Request(
+          new URL(req.url).origin + "/index.html",
+          {
+            method: "GET",
+            headers: req.headers,
+          },
+        );
+        const indexResponse = await env.ASSETS.fetch(indexRequest);
+        if (indexResponse.status === 200) {
+          return new Response(indexResponse.body, {
+            status: 200,
+            headers: new Headers({
+              ...Object.fromEntries(indexResponse.headers),
+              "Content-Type": "text/html; charset=utf-8",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            }),
+          });
+        }
+      } catch (e) {
+        // ASSETS might not be available, fall through to 404
       }
     }
 

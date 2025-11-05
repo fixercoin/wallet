@@ -244,13 +244,58 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [wallets]);
 
+  // Declare wallet first before using it in useEffect
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
 
+  // Sync wallet with Fixorium provider
   useEffect(() => {
     const provider = providerRef.current ?? ensureFixoriumProvider();
-    if (!provider) return;
-    provider.setDefaultConnection(globalConnection ?? null);
-    provider.setWallet(wallet);
+    if (!provider) {
+      console.warn("[WalletContext] Fixorium provider not available");
+      return;
+    }
+
+    if (!wallet) {
+      provider.setWallet(null);
+      return;
+    }
+
+    // Ensure secretKey is properly formatted as Uint8Array before setting on provider
+    try {
+      let secretKey: Uint8Array;
+
+      if (wallet.secretKey instanceof Uint8Array) {
+        secretKey = wallet.secretKey;
+      } else if (Array.isArray(wallet.secretKey)) {
+        secretKey = Uint8Array.from(wallet.secretKey);
+      } else if (typeof wallet.secretKey === "object") {
+        const vals = Object.values(wallet.secretKey).filter(
+          (v) => typeof v === "number",
+        ) as number[];
+        secretKey = Uint8Array.from(vals);
+      } else {
+        console.error(
+          "[WalletContext] Unsupported secretKey format:",
+          typeof wallet.secretKey,
+        );
+        return;
+      }
+
+      const walletToSet: WalletData = {
+        ...wallet,
+        secretKey,
+      };
+
+      provider.setWallet(walletToSet);
+      console.log(
+        `[WalletContext] Synced wallet with Fixorium provider: ${wallet.publicKey}`,
+      );
+    } catch (e) {
+      console.error(
+        "[WalletContext] Failed to sync wallet with Fixorium provider:",
+        e,
+      );
+    }
   }, [wallet]);
 
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
@@ -435,6 +480,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.warn("[WalletContext] refreshTokens called but wallet is null");
       return;
     }
+
+    // Clear price service caches to force fresh fetches
+    fixercoinPriceService.clearCache();
+    lockerPriceService.clearCache();
+    solPriceService.clearCache();
+    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,

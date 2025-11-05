@@ -172,107 +172,59 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
 
         console.log(
-          `Fetching quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
+          `Fetching unified quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
 
-        let foundQuote = false;
+        // Use unified quote endpoint which tries: Jupiter → Meteora → PumpFun → Bridged
+        const slippageBps = Math.max(
+          1,
+          Math.round(parseFloat(slippage || "0.5") * 100),
+        );
 
-        // Try Meteora first
-        try {
-          const mq = await getMeteoraQuote(
-            fromToken.mint,
-            toToken.mint,
-            amountInt,
-          );
+        const quoteResponse = await fetch(
+          resolveApiUrl(
+            `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}`,
+          ),
+        ).then((res) => res.json());
 
-          if (mq && mq.route) {
-            console.log("Meteora provided a route", mq);
-            setQuote(null);
-            setMeteoraQuote(mq);
+        // Check if unified quote succeeded
+        if (quoteResponse && !quoteResponse.error) {
+          const q = quoteResponse.quote;
+          const outAmount =
+            q?.outAmount ||
+            q?.estimatedOut ||
+            q?.minReceived ||
+            q?.minimum_received ||
+            null;
 
-            const minReceivedRaw =
-              mq.minimumReceived ??
-              mq.minReceived ??
-              mq.minimum_received ??
-              mq.min_received ??
-              mq.estimatedOut ??
-              mq.outAmount ??
-              null;
+          if (outAmount && outAmount !== "0") {
+            console.log(
+              `✅ Quote succeeded via ${quoteResponse.source}: ${outAmount}`,
+            );
 
-            if (minReceivedRaw != null && toToken?.decimals != null) {
-              try {
-                const outHuman =
-                  typeof minReceivedRaw === "string"
-                    ? parseInt(minReceivedRaw, 10) /
-                      Math.pow(10, toToken.decimals)
-                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
-                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-                setQuoteError("");
-                setIndicative(false);
-                foundQuote = true;
-              } catch (e) {
-                console.debug("Failed to parse Meteora minReceived", e);
-              }
-            }
+            // Store the full quote response for execution
+            setQuote(q);
+            setMeteoraQuote(null);
 
-            if (foundQuote) {
-              setIsLoading(false);
-              return;
-            }
+            // Parse and display output amount
+            const outHuman =
+              typeof outAmount === "string"
+                ? parseInt(outAmount, 10) / Math.pow(10, toToken.decimals)
+                : Number(outAmount) / Math.pow(10, toToken.decimals);
+
+            setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+            setQuoteError("");
+            setIndicative(false);
+            setIsLoading(false);
+            return;
           }
-        } catch (e) {
-          console.debug("Meteora quote attempt failed silently:", e);
         }
 
-        try {
-          const mq = await getMeteoraQuote(
-            fromToken.mint,
-            toToken.mint,
-            amountInt,
-          );
-
-          if (mq && mq.route) {
-            console.log("Meteora provided a route", mq);
-            setMeteoraQuote(mq);
-
-            const minReceivedRaw =
-              mq.minimumReceived ??
-              mq.minReceived ??
-              mq.minimum_received ??
-              mq.min_received ??
-              mq.estimatedOut ??
-              mq.outAmount ??
-              null;
-
-            if (minReceivedRaw != null && toToken?.decimals != null) {
-              try {
-                const outHuman =
-                  typeof minReceivedRaw === "string"
-                    ? parseInt(minReceivedRaw, 10) /
-                      Math.pow(10, toToken.decimals)
-                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
-                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-                setQuoteError("");
-                setIndicative(false);
-                foundQuote = true;
-              } catch (e) {
-                console.debug("Failed to parse Meteora minReceived", e);
-              }
-            }
-
-            if (foundQuote) {
-              setIsLoading(false);
-              return;
-            }
-          }
-        } catch (e) {
-          console.debug("Meteora quote attempt failed silently:", e);
-        }
-
-        // Fall back to Birdeye pricing
+        // If unified quote failed, fall back to Birdeye pricing
         console.log(
-          `Falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
+          `Unified quote failed, falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
         );
+
         const [fromBirdeye, toBirdeye] = await Promise.all([
           birdeyeAPI.getTokenByMint(fromToken.mint),
           birdeyeAPI.getTokenByMint(toToken.mint),
@@ -288,6 +240,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
           const estOutHuman = (fromHuman * fromUsd) / toUsd;
           setToAmount(estOutHuman.toFixed(6));
+          setQuote(null); // Clear actual quote, use indicative
           setQuoteError("");
           setIndicative(true);
         } else {
@@ -295,12 +248,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
           );
           setToAmount("");
+          setQuote(null);
           setQuoteError("");
           setIndicative(false);
         }
       } catch (err) {
         console.debug("Quote fetch error:", err);
         setToAmount("");
+        setQuote(null);
         setQuoteError("");
         setIndicative(false);
       } finally {

@@ -157,7 +157,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           !supportedMints.has(toToken.mint))
       ) {
         // Not in Jupiter strict list; still attempt unified quote (Meteora/Pumpfun/Bridged)
-        console.debug("Tokens not in Jupiter strict list, trying other providers...");
+        console.debug(
+          "Tokens not in Jupiter strict list, trying other providers...",
+        );
       }
       setQuoteError("");
 
@@ -203,8 +205,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         const urlParams =
           `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}` +
           (isPumpPair ? `&mint=${encodeURIComponent(pumpMint)}` : "");
-        const quoteResponse = await fetch(resolveApiUrl(urlParams)).then((res) =>
-          res.json(),
+        const quoteResponse = await fetch(resolveApiUrl(urlParams)).then(
+          (res) => res.json(),
         );
 
         // Check if unified quote succeeded
@@ -1033,26 +1035,28 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-              {allTokens.filter((token) => token.logoURI).map((token) => (
-                <SelectItem
-                  key={token.mint}
-                  value={token.mint}
-                  className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                >
-                  <div className="flex items-center gap-2 w-full">
-                    <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                      <AvatarImage src={token.logoURI} alt={token.symbol} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                        {token.symbol.slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">
-                      {token.symbol} ~{" "}
-                      {formatAmount(getTokenBalance(token), token.symbol)}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
+              {allTokens
+                .filter((token) => token.logoURI)
+                .map((token) => (
+                  <SelectItem
+                    key={token.mint}
+                    value={token.mint}
+                    className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                        <AvatarImage src={token.logoURI} alt={token.symbol} />
+                        <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
+                          {token.symbol.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">
+                        {token.symbol} ~{" "}
+                        {formatAmount(getTokenBalance(token), token.symbol)}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -1173,7 +1177,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       onChange={(e) => setFromAmount(e.target.value)}
                       className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-gray-900 placeholder:text-gray-400 focus-visible:ring-0"
                     />
-                    <div className="mt-2 text-[14px] text-gray-900 font-medium" style={{ fontFamily: "Arial, sans-serif" }}>
+                    <div
+                      className="mt-2 text-[14px] text-gray-900 font-medium"
+                      style={{ fontFamily: "Arial, sans-serif" }}
+                    >
                       {(() => {
                         const amt = parseFloat(fromAmount || "0");
                         const price = fromUsdPrice ?? 0;
@@ -1217,34 +1224,36 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
-                        {allTokens.filter((token) => token.logoURI).map((token) => (
-                          <SelectItem
-                            key={token.mint}
-                            value={token.mint}
-                            className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                                <AvatarImage
-                                  src={token.logoURI}
-                                  alt={token.symbol}
-                                />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                                  {token.symbol.slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium text-xs whitespace-nowrap">
-                                {token.symbol} ~{" "}
-                                <span className="text-white">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
+                        {allTokens
+                          .filter((token) => token.logoURI)
+                          .map((token) => (
+                            <SelectItem
+                              key={token.mint}
+                              value={token.mint}
+                              className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2 w-full">
+                                <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-xs whitespace-nowrap">
+                                  {token.symbol} ~{" "}
+                                  <span className="text-white">
+                                    {formatAmount(
+                                      getTokenBalance(token),
+                                      token.symbol,
+                                    )}
+                                  </span>
                                 </span>
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                              </div>
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     {fromToken ? (
@@ -1282,7 +1291,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         ? formatAmount(toAmount, toToken?.symbol)
                         : "0.000"}
                     </div>
-                    <div className="mt-2 text-[14px] text-gray-900 font-medium" style={{ fontFamily: "Arial, sans-serif" }}>
+                    <div
+                      className="mt-2 text-[14px] text-gray-900 font-medium"
+                      style={{ fontFamily: "Arial, sans-serif" }}
+                    >
                       {(() => {
                         const amt = parseFloat(toAmount || "0");
                         const price = toUsdPrice ?? 0;
@@ -1326,34 +1338,36 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
-                        {allTokens.filter((token) => token.logoURI).map((token) => (
-                          <SelectItem
-                            key={token.mint}
-                            value={token.mint}
-                            className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                                <AvatarImage
-                                  src={token.logoURI}
-                                  alt={token.symbol}
-                                />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                                  {token.symbol.slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium text-xs whitespace-nowrap">
-                                {token.symbol} ~{" "}
-                                <span className="text-white">
-                                  {formatAmount(
-                                    getTokenBalance(token),
-                                    token.symbol,
-                                  )}
+                        {allTokens
+                          .filter((token) => token.logoURI)
+                          .map((token) => (
+                            <SelectItem
+                              key={token.mint}
+                              value={token.mint}
+                              className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2 w-full">
+                                <Avatar className="h-5 w-5 ring-1 ring-white/20">
+                                  <AvatarImage
+                                    src={token.logoURI}
+                                    alt={token.symbol}
+                                  />
+                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
+                                    {token.symbol.slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-xs whitespace-nowrap">
+                                  {token.symbol} ~{" "}
+                                  <span className="text-white">
+                                    {formatAmount(
+                                      getTokenBalance(token),
+                                      token.symbol,
+                                    )}
+                                  </span>
                                 </span>
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                              </div>
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     {toToken ? (

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
-import { PublicKey, Connection } from "@solana/web3.js";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { jupiterAPI } from "@/lib/services/jupiter";
 import {
   Select,
   SelectContent,
@@ -27,13 +27,11 @@ import {
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
-const RPC = "https://api.mainnet-beta.solana.com";
 
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { wallet, tokens: userTokens } = useWallet();
   const { toast } = useToast();
 
-  const [jupiter, setJupiter] = useState(null);
   const [tokenList, setTokenList] = useState([]);
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
@@ -51,92 +49,13 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const toTokenBalance =
     userTokens?.find((t) => t.mint === toMint)?.balance || 0;
 
-  const initJupiter = async () => {
-    if (initialized && jupiter) return jupiter;
+  const initTokenList = async () => {
+    if (initialized) return;
 
-    if (!wallet) {
-      setStatus("No wallet detected.");
-      return null;
-    }
-
-    setStatus("Initializing route solver...");
+    setStatus("Loading tokens...");
 
     try {
-      const { Jupiter } = await import("https://esm.sh/@jup-ag/core@4.3.0");
-
-      const connection = new Connection(RPC, "confirmed");
-      const walletPublicKey = new PublicKey(wallet.publicKey);
-
-      const convertSecretKey = (): Uint8Array => {
-        let secretKey = wallet.secretKey;
-
-        if (secretKey instanceof Uint8Array) {
-          return secretKey;
-        } else if (Array.isArray(secretKey)) {
-          return Uint8Array.from(secretKey);
-        } else if (typeof secretKey === "object" && secretKey !== null) {
-          const vals = Object.values(secretKey).filter(
-            (v) => typeof v === "number",
-          ) as number[];
-          if (vals.length > 0) {
-            return Uint8Array.from(vals);
-          }
-        }
-        throw new Error("Invalid secret key format");
-      };
-
-      const localWalletAdapter = {
-        publicKey: walletPublicKey,
-        signTransaction: async (tx) => {
-          const { Keypair } = await import("@solana/web3.js");
-          try {
-            const secretKeyBytes = convertSecretKey();
-            if (secretKeyBytes.length !== 64) {
-              throw new Error(
-                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
-              );
-            }
-            const keypair = Keypair.fromSecretKey(secretKeyBytes);
-            tx.sign([keypair]);
-            return tx;
-          } catch (error) {
-            console.error("[SwapInterface] Sign transaction error:", error);
-            throw error;
-          }
-        },
-        signAllTransactions: async (txs) => {
-          const { Keypair } = await import("@solana/web3.js");
-          try {
-            const secretKeyBytes = convertSecretKey();
-            if (secretKeyBytes.length !== 64) {
-              throw new Error(
-                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
-              );
-            }
-            const keypair = Keypair.fromSecretKey(secretKeyBytes);
-            return txs.map((tx) => {
-              tx.sign([keypair]);
-              return tx;
-            });
-          } catch (error) {
-            console.error(
-              "[SwapInterface] Sign all transactions error:",
-              error,
-            );
-            throw error;
-          }
-        },
-        connect: async () => walletPublicKey,
-        disconnect: async () => {},
-      };
-
-      const jup = await Jupiter.load({
-        connection,
-        cluster: "mainnet-beta",
-        user: localWalletAdapter,
-      });
-
-      const jupiterTokens = Object.values(jup.tokens);
+      const jupiterTokens = await jupiterAPI.getStrictTokenList();
 
       const setupTokenMints = Object.values(TOKEN_MINTS);
       const setupTokens = jupiterTokens.filter((t) =>
@@ -178,12 +97,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setTokenList(combinedTokens);
       }
 
-      setJupiter(jup);
       setInitialized(true);
       setStatus("");
-      return jup;
     } catch (err) {
-      console.error("[SwapInterface] Error initializing Jupiter:", err);
+      console.error("[SwapInterface] Error loading tokens:", err);
       setStatus("Using available tokens...");
 
       const fallbackTokens = (userTokens || []).map((ut) => ({
@@ -209,7 +126,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       setInitialized(true);
-      return null;
     }
   };
 
@@ -228,8 +144,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setTokenList(fallbackTokens);
     }
 
-    initJupiter().catch((e) => {
-      console.warn("Jupiter init warning:", e);
+    initTokenList().catch((e) => {
+      console.warn("Token list init warning:", e);
     });
   }, [wallet, userTokens]);
 
@@ -246,58 +162,53 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       if (!wallet) {
         setStatus("No wallet detected.");
+        setIsLoading(false);
         return null;
-      }
-
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          return null;
-        }
       }
 
       if (!fromMint || !toMint) {
         throw new Error("Select tokens");
       }
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
-      if (!fromMeta || !toMeta) {
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+      if (!fromToken || !toToken) {
         throw new Error("Token metadata not found");
       }
 
-      const decimalsIn = fromMeta.decimals ?? 6;
+      const decimalsIn = fromToken.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
+      const amountStr = jupiterAPI.formatSwapAmount(
+        Number(amountRaw) / Math.pow(10, decimalsIn),
+        decimalsIn,
+      );
 
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
+      const quoteResponse = await jupiterAPI.getQuote(
+        fromMint,
+        toMint,
+        parseInt(amountStr),
+        5000,
+      );
 
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
+      if (!quoteResponse) {
         setQuote(null);
         setStatus("No route found for this pair/amount.");
+        setIsLoading(false);
         return null;
       }
 
-      const best = routes.routesInfos[0];
-      const outAmount = BigInt(best.outAmount) ?? BigInt(0);
-      const outHuman = Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
+      const outAmount = BigInt(quoteResponse.outAmount);
+      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
 
       setQuote({
-        routes,
-        best,
+        quoteResponse,
         outHuman,
-        outToken: toMeta.symbol,
-        hops: best.marketInfos.length,
+        outToken: toToken.symbol,
+        hops: quoteResponse.routePlan?.length ?? 0,
       });
       setStatus("");
       setIsLoading(false);
-      return { routes, best };
+      return { quoteResponse };
     } catch (err) {
       setStatus("Error: " + (err.message || err));
       setIsLoading(false);
@@ -317,73 +228,45 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      if (!wallet.secretKey) {
-        setStatus("No private key found in wallet.");
-        setIsLoading(false);
-        return null;
-      }
-
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          setIsLoading(false);
-          return null;
-        }
-      }
-
       if (!quote) {
         setStatus("Get a quote first");
         setIsLoading(false);
         return null;
       }
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
 
-      if (!fromMeta || !toMeta) {
+      if (!fromToken || !toToken) {
         setStatus("Token metadata not found");
         setIsLoading(false);
         return null;
       }
 
-      const decimalsIn = fromMeta.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
-
-      setStatus("Computing swap routes…");
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
-
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
-        throw new Error("No swap route found for this pair and amount");
-      }
-
-      const routeInfo = routes.routesInfos[0];
       setStatus("Preparing transaction…");
-      const { execute } = await jup.exchange({ routeInfo });
 
-      setStatus("Signing and sending transaction…");
-      console.log("[SwapInterface] Executing swap with route:", routeInfo);
+      const swapRequest = {
+        quoteResponse: quote.quoteResponse,
+        userPublicKey: wallet.publicKey,
+        wrapAndUnwrapSol: true,
+      };
 
-      const swapResult = await execute();
+      console.log(
+        "[SwapInterface] Executing swap with quote:",
+        quote.quoteResponse,
+      );
+      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
-      if (!swapResult) {
-        throw new Error("Swap execution returned no result");
+      if (!swapResult || !swapResult.swapTransaction) {
+        throw new Error("Swap transaction generation failed");
       }
 
-      setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "pending"}`,
-      );
+      setStatus(`Swap submitted. Check your wallet for confirmation.`);
       console.log("[SwapInterface] Swap result:", swapResult);
 
       toast({
         title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromMeta.symbol} for ${quote.outHuman.toFixed(6)} ${toMeta.symbol}`,
+        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`,
       });
 
       setAmount("");

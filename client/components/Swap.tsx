@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useWallet } from "../contexts/WalletContext";
-import { PublicKey, Connection } from "@solana/web3.js";
+import { jupiterAPI } from "../lib/services/jupiter";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
-const RPC = "https://api.mainnet-beta.solana.com";
 
 export default function Swap() {
   const { wallet } = useWallet();
-  const [jupiter, setJupiter] = useState(null);
   const [tokenList, setTokenList] = useState([]);
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
@@ -17,62 +15,13 @@ export default function Swap() {
   const [status, setStatus] = useState("");
   const [initialized, setInitialized] = useState(false);
 
-  const initJupiter = async () => {
-    if (initialized && jupiter) return jupiter;
+  const loadTokens = async () => {
+    if (initialized) return;
 
-    if (!wallet) {
-      setStatus("No wallet detected. Please set up a wallet first.");
-      return null;
-    }
-
-    setStatus("Initializing route solver (this may take a few seconds)…");
+    setStatus("Loading tokens...");
 
     try {
-      const { Jupiter } = await import("https://esm.sh/@jup-ag/core@4.3.0");
-
-      const connection = new Connection(RPC, "confirmed");
-
-      const walletPublicKey = new PublicKey(wallet.publicKey);
-
-      const localWalletAdapter = {
-        publicKey: walletPublicKey,
-        signTransaction: async (tx) => {
-          const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
-          }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          tx.sign([keypair]);
-          return tx;
-        },
-        signAllTransactions: async (txs) => {
-          const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
-          }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          return txs.map((tx) => {
-            tx.sign([keypair]);
-            return tx;
-          });
-        },
-        connect: async () => walletPublicKey,
-        disconnect: async () => {},
-      };
-
-      const jup = await Jupiter.load({
-        connection,
-        cluster: "mainnet-beta",
-        user: localWalletAdapter,
-      });
-
-      const tokens = Object.values(jup.tokens);
+      const tokens = await jupiterAPI.getStrictTokenList();
       tokens.sort((a, b) => {
         if (a.address === SOL_MINT) return -1;
         if (b.address === SOL_MINT) return 1;
@@ -81,22 +30,20 @@ export default function Swap() {
         return a.symbol.localeCompare(b.symbol);
       });
 
-      setJupiter(jup);
       setTokenList(tokens);
       setInitialized(true);
       setStatus("");
-      return jup;
     } catch (err) {
-      setStatus("Error initializing Jupiter: " + (err.message || err));
+      setStatus("Error loading tokens: " + (err.message || err));
       console.error(err);
-      throw err;
+      setInitialized(true);
     }
   };
 
   useEffect(() => {
     setInitialized(false);
-    initJupiter().catch((e) => {
-      console.warn("Jupiter init warning:", e);
+    loadTokens().catch((e) => {
+      console.warn("Token load warning:", e);
     });
   }, [wallet]);
 
@@ -115,50 +62,43 @@ export default function Swap() {
         return null;
       }
 
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          return null;
-        }
-      }
-
       if (!fromMint || !toMint) throw new Error("Select tokens");
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
-      if (!fromMeta || !toMeta) throw new Error("Token metadata not found");
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+      if (!fromToken || !toToken) throw new Error("Token metadata not found");
 
-      const decimalsIn = fromMeta.decimals ?? 6;
+      const decimalsIn = fromToken.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
+      const amountStr = jupiterAPI.formatSwapAmount(
+        Number(amountRaw) / Math.pow(10, decimalsIn),
+        decimalsIn,
+      );
 
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
+      const quoteResponse = await jupiterAPI.getQuote(
+        fromMint,
+        toMint,
+        parseInt(amountStr),
+        5000,
+      );
 
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
+      if (!quoteResponse) {
         setQuote(null);
         setStatus("No route found for this pair/amount.");
         return null;
       }
 
-      const best = routes.routesInfos[0];
-      const outAmount = BigInt(best.outAmount) ?? BigInt(0);
-      const outHuman = Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
+      const outAmount = BigInt(quoteResponse.outAmount);
+      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
 
       setQuote({
-        routes,
-        best,
+        quoteResponse,
         outHuman,
-        outToken: toMeta.symbol,
-        hops: best.marketInfos.length,
+        outToken: toToken.symbol,
+        hops: quoteResponse.routePlan?.length ?? 0,
       });
       setStatus("");
-      return { routes, best };
+      return { quoteResponse };
     } catch (err) {
       setStatus("Error: " + (err.message || err));
       console.error(err);
@@ -174,41 +114,24 @@ export default function Swap() {
         return null;
       }
 
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          return null;
-        }
+      if (!quote) {
+        setStatus("Get a quote first");
+        return null;
       }
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
+      const swapRequest = {
+        quoteResponse: quote.quoteResponse,
+        userPublicKey: wallet.publicKey,
+        wrapAndUnwrapSol: true,
+      };
 
-      const decimalsIn = fromMeta.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
+      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
+      if (!swapResult || !swapResult.swapTransaction) {
+        throw new Error("Swap transaction generation failed");
+      }
 
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0)
-        throw new Error("No route found");
-
-      const routeInfo = routes.routesInfos[0];
-
-      const { execute } = await jup.exchange({ routeInfo });
-
-      setStatus("Signing and sending transaction…");
-
-      const swapResult = await execute();
-      setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`,
-      );
+      setStatus("Swap transaction prepared. Check your wallet for signing.");
       console.log("Swap result:", swapResult);
       return swapResult;
     } catch (err) {

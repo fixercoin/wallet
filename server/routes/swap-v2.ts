@@ -216,6 +216,71 @@ async function getMeteOraQuote(
   return null;
 }
 
+async function getPumpFunQuote(
+  inputMint: string,
+  outputMint: string,
+  amount: string,
+): Promise<any | null> {
+  try {
+    // PumpFun API only handles certain token pairs
+    // Try to get a quote via the PumpFun API
+    const params = new URLSearchParams({
+      input_mint: inputMint,
+      output_mint: outputMint,
+      amount,
+    });
+
+    const url = `https://api.pumpfun.com/api/v1/quote?${params.toString()}`;
+    console.log(
+      `[Swap] Trying PumpFun quote (attempt 1/2): ${inputMint} -> ${outputMint}`,
+    );
+
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 400) {
+        console.warn(
+          `[Swap] PumpFun returned ${response.status} - pair likely not supported`,
+        );
+        return null;
+      }
+
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(
+          `[Swap] PumpFun API error ${response.status}, retrying...`,
+        );
+        await new Promise((r) => setTimeout(r, 1000));
+        const retryResp = await fetchWithTimeout(url);
+        if (!retryResp.ok) {
+          console.warn(`[Swap] PumpFun retry failed with ${retryResp.status}`);
+          return null;
+        }
+        const data = await retryResp.json();
+        if (data?.outAmount && data.outAmount !== "0") {
+          console.log(
+            `[Swap] ✅ PumpFun quote success (retry): ${data.outAmount}`,
+          );
+          return data;
+        }
+        return null;
+      }
+
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data.outAmount || data.outAmount === "0") {
+      console.warn(`[Swap] PumpFun returned zero quote`);
+      return null;
+    }
+
+    console.log(`[Swap] ✅ PumpFun quote success: ${data.outAmount}`);
+    return data;
+  } catch (e: any) {
+    console.warn(`[Swap] PumpFun quote error: ${e?.message || e}`);
+    return null;
+  }
+}
+
 async function getBridgedQuote(
   inputMint: string,
   outputMint: string,
@@ -232,36 +297,69 @@ async function getBridgedQuote(
           `[Swap] Trying bridged route via ${bridge}: ${inputMint} -> ${bridge} -> ${outputMint}`,
         );
 
-        // First leg: inputMint -> bridge
-        const q1 = await getJupiterQuote(
+        // First leg: inputMint -> bridge (try Jupiter, then Meteora)
+        let q1 = await getJupiterQuote(
           inputMint,
           bridge,
           amount,
           slippageBps,
         );
+
         if (!q1 || !q1.outAmount || q1.outAmount === "0") {
+          console.log(
+            `[Swap] Jupiter leg1 failed, trying Meteora for ${inputMint} -> ${bridge}`,
+          );
+          q1 = await getMeteOraQuote(inputMint, bridge, amount);
+        }
+
+        if (!q1 || !q1.outAmount) {
           console.warn(
-            `[Swap] Leg 1 failed for bridge ${bridge}: no quote or zero output`,
+            `[Swap] Leg 1 failed for bridge ${bridge}: no quote from Jupiter or Meteora`,
           );
           continue;
         }
 
-        // Second leg: bridge -> outputMint
-        const q2 = await getJupiterQuote(
+        const outAmount1 = q1.outAmount || q1.estimatedOut || q1.minReceived;
+        if (!outAmount1 || outAmount1 === "0") {
+          console.warn(
+            `[Swap] Leg 1 failed for bridge ${bridge}: zero output`,
+          );
+          continue;
+        }
+
+        // Second leg: bridge -> outputMint (try Jupiter, then Meteora)
+        let q2 = await getJupiterQuote(
           bridge,
           outputMint,
-          q1.outAmount,
+          outAmount1,
           slippageBps,
         );
+
         if (!q2 || !q2.outAmount || q2.outAmount === "0") {
+          console.log(
+            `[Swap] Jupiter leg2 failed, trying Meteora for ${bridge} -> ${outputMint}`,
+          );
+          q2 = await getMeteOraQuote(bridge, outputMint, outAmount1);
+        }
+
+        if (!q2 || (!q2.outAmount && !q2.estimatedOut && !q2.minReceived)) {
           console.warn(
-            `[Swap] Leg 2 failed for bridge ${bridge}: no quote or zero output`,
+            `[Swap] Leg 2 failed for bridge ${bridge}: no quote from Jupiter or Meteora`,
+          );
+          continue;
+        }
+
+        const outAmount2 =
+          q2.outAmount || q2.estimatedOut || q2.minReceived || "0";
+        if (!outAmount2 || outAmount2 === "0") {
+          console.warn(
+            `[Swap] Leg 2 failed for bridge ${bridge}: zero output`,
           );
           continue;
         }
 
         console.log(
-          `[Swap] ✅ Bridged route successful via ${bridge}: ${q1.outAmount} -> ${q2.outAmount}`,
+          `[Swap] ✅ Bridged route successful via ${bridge}: ${outAmount1} -> ${outAmount2}`,
         );
         return { bridge, q1, q2 };
       } catch (e) {

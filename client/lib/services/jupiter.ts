@@ -208,7 +208,8 @@ class JupiterAPI {
         );
 
         // Parse the error response to get more details
-        const errorMsg = errorObj?.error || errorObj?.details || txt || "Unknown error";
+        const errorMsg =
+          errorObj?.error || errorObj?.details || txt || "Unknown error";
         const details = errorObj?.details || "";
 
         throw new Error(

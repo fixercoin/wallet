@@ -352,8 +352,10 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
     const swapRequest = {
       quoteResponse: body.quoteResponse,
       userPublicKey: body.userPublicKey,
-      wrapAndUnwrapSol: body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
-      useSharedAccounts: body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
+      wrapAndUnwrapSol:
+        body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
+      useSharedAccounts:
+        body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
       computeUnitPriceMicroLamports: body.computeUnitPriceMicroLamports,
       prioritizationFeeLamports: body.prioritizationFeeLamports,
       asLegacyTransaction: body.asLegacyTransaction || false,
@@ -389,11 +391,15 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
           // Log detailed error info
           console.error(
             `Jupiter swap API error (attempt ${attempt}): ${response.status}`,
-            { text: text.substring(0, 200) }
+            { text: text.substring(0, 200) },
           );
 
           // If it's a client error or specific errors, don't retry
-          if (response.status === 400 || response.status === 401 || response.status === 403) {
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
             return res.status(response.status).json({
               error: `Swap request failed: ${response.statusText}`,
               details: text,
@@ -402,7 +408,10 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
           }
 
           // For rate limits or server errors on first attempt, retry
-          if ((response.status === 429 || response.status >= 500) && attempt < 2) {
+          if (
+            (response.status === 429 || response.status >= 500) &&
+            attempt < 2
+          ) {
             console.log(`Retrying due to ${response.status} error...`);
             await new Promise((r) => setTimeout(r, attempt * 1000));
             continue;
@@ -422,7 +431,9 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
         return res.json(data);
       } catch (error: any) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.warn(`Jupiter swap fetch error (attempt ${attempt}): ${errorMsg}`);
+        console.warn(
+          `Jupiter swap fetch error (attempt ${attempt}): ${errorMsg}`,
+        );
 
         if (errorMsg.includes("abort") || errorMsg.includes("timeout")) {
           console.log("Timeout or abort, retrying...");

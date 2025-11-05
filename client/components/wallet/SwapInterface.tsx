@@ -550,10 +550,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Swapping...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               "Convert (Swap)"
             )}

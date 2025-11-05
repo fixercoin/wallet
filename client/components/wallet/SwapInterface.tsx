@@ -264,120 +264,139 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <Card className="w-full bg-gray-900 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-white">Fixorium — Convert (Direct)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-center text-gray-400">
-          <p>No wallet detected. Please set up or import a wallet to use the swap feature.</p>
-          <Button onClick={onBack} variant="outline" className="w-full">
-            Back
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-md mx-auto px-4">
+        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+          <div className="space-y-6 p-6 text-center">
+            <h3 className="text-lg font-semibold text-gray-900">Fixorium — Convert (Direct)</h3>
+            <p className="text-gray-600">No wallet detected. Please set up or import a wallet to use the swap feature.</p>
+            <Button
+              onClick={onBack}
+              variant="outline"
+              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase"
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full bg-gradient-to-br from-white to-green-50 border-2 border-green-200 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-green-600 to-green-500 rounded-t-lg">
-        <CardTitle className="text-white text-xl font-bold">Fixorium — Convert (Direct)</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5 p-6">
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-green-700">From</label>
-          <div className="flex gap-3">
+    <div className="w-full max-w-md mx-auto px-4">
+      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+        {isLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
+            <div className="text-gray-900">Processing swap...</div>
+          </div>
+        )}
+
+        <div className="space-y-6 p-6">
+          <div className="font-semibold text-sm text-gray-900 uppercase">Convert Tokens (Direct)</div>
+
+          <div className="space-y-2">
+            <Label htmlFor="from-token" className="text-gray-700 uppercase text-xs font-semibold">
+              From
+            </Label>
+            <div className="flex gap-3">
+              <select
+                value={fromMint}
+                onChange={(e) => setFromMint(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400"
+              >
+                {tokenList.map((t) => (
+                  <option key={t.address} value={t.address}>
+                    {t.symbol}
+                  </option>
+                ))}
+              </select>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="to-token" className="text-gray-700 uppercase text-xs font-semibold">
+              To
+            </Label>
             <select
-              value={fromMint}
-              onChange={(e) => setFromMint(e.target.value)}
-              className="flex-1 bg-white border-2 border-green-200 rounded-lg px-4 py-3 text-gray-800 font-medium focus:outline-none focus:border-green-500 transition-colors"
+              value={toMint}
+              onChange={(e) => setToMint(e.target.value)}
+              className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400"
             >
               {tokenList.map((t) => (
                 <option key={t.address} value={t.address}>
-                  {t.symbol} ({t.address.slice(0, 6)})
+                  {t.symbol}
                 </option>
               ))}
             </select>
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 bg-white border-2 border-green-200 rounded-lg px-4 py-3 text-gray-800 font-medium focus:outline-none focus:border-green-500 transition-colors"
-            />
           </div>
-        </div>
 
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-green-700">To</label>
-          <select
-            value={toMint}
-            onChange={(e) => setToMint(e.target.value)}
-            className="w-full bg-white border-2 border-green-200 rounded-lg px-4 py-3 text-gray-800 font-medium focus:outline-none focus:border-green-500 transition-colors"
+          {quote && (
+            <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Estimated receive:</span>
+                  <span className="font-semibold text-gray-900">{quote.outHuman.toFixed(6)} {quote.outToken}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-500">Route hops:</span>
+                  <span className="text-xs text-gray-600">{quote.hops}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status && (
+            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-4 border-[#a7f3d0] p-3 rounded">
+              {status}
+            </div>
+          )}
+
+          <Button
+            onClick={getQuote}
+            disabled={!amount || isLoading}
+            className="w-full bg-gradient-to-r from-[#5a9f6f] to-[#3d7a52] hover:from-[#4a8f5f] hover:to-[#2d6a42] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
           >
-            {tokenList.map((t) => (
-              <option key={t.address} value={t.address}>
-                {t.symbol} ({t.address.slice(0, 6)})
-              </option>
-            ))}
-          </select>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Computing...
+              </>
+            ) : (
+              "Get Quote"
+            )}
+          </Button>
+
+          <Button
+            onClick={executeSwap}
+            disabled={!amount || !quote || isLoading}
+            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Swapping...
+              </>
+            ) : (
+              "Convert (Swap)"
+            )}
+          </Button>
+
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="w-full border border-gray-700 text-gray-900 hover:bg-[#f0fff4]/50 uppercase font-semibold py-3 rounded-lg transition-all duration-200"
+          >
+            Back
+          </Button>
         </div>
-
-        {quote && (
-          <div className="p-4 bg-gradient-to-r from-green-50 to-white border-2 border-green-200 rounded-lg">
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-green-700">Estimated receive:</span>{" "}
-              <span className="font-bold text-green-600">{quote.outHuman.toFixed(6)}</span>{" "}
-              <span className="text-green-700 font-semibold">{quote.outToken}</span>
-            </p>
-            <p className="text-xs text-gray-500 mt-1">Route hops: {quote.hops}</p>
-          </div>
-        )}
-
-        {status && (
-          <div className="text-sm text-green-700 font-medium bg-green-50 border-l-4 border-green-500 p-3 rounded">
-            {status}
-          </div>
-        )}
-
-        <Button
-          onClick={getQuote}
-          disabled={!amount || isLoading}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 rounded-lg transition-all duration-200"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Computing...
-            </>
-          ) : (
-            "Get Quote"
-          )}
-        </Button>
-
-        <Button
-          onClick={executeSwap}
-          disabled={!amount || !quote || isLoading}
-          className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Swapping...
-            </>
-          ) : (
-            "Convert (Swap)"
-          )}
-        </Button>
-
-        <Button
-          onClick={onBack}
-          variant="outline"
-          className="w-full border-2 border-green-300 text-green-700 hover:bg-green-50 font-semibold py-3 rounded-lg transition-all duration-200"
-        >
-          Back
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

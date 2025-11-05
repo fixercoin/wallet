@@ -823,18 +823,25 @@ export default {
         const LOCKER = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         const isPumpMintPair = Boolean(
           inputMint &&
-          outputMint &&
-          amount &&
-          (inputMint === FIXER ||
-            outputMint === FIXER ||
-            inputMint === LOCKER ||
-            outputMint === LOCKER),
+            outputMint &&
+            amount &&
+            (inputMint === FIXER ||
+              outputMint === FIXER ||
+              inputMint === LOCKER ||
+              outputMint === LOCKER),
         );
         if (isPumpMintPair) {
           const pfUrl = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
           const pf = await tryFetch(pfUrl, "GET", undefined, 12000);
-          if (pf) return json({ source: "pumpfun", quote: pf }, { headers: corsHeaders });
-          return json({ error: "no_pumpfun_quote" }, { status: 404, headers: corsHeaders });
+          if (pf)
+            return json(
+              { source: "pumpfun", quote: pf },
+              { headers: corsHeaders },
+            );
+          return json(
+            { error: "no_pumpfun_quote" },
+            { status: 404, headers: corsHeaders },
+          );
         }
 
         if (inputMint && outputMint && amount) {

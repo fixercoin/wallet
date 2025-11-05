@@ -3,10 +3,7 @@ import { TOKEN_MINTS } from "../../client/lib/constants/token-mints";
 
 const TIMEOUT_MS = 20000;
 const BRIDGE_TOKENS = [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
-const PUMP_MINTS = new Set<string>([
-  TOKEN_MINTS.FIXERCOIN,
-  TOKEN_MINTS.LOCKER,
-]);
+const PUMP_MINTS = new Set<string>([TOKEN_MINTS.FIXERCOIN, TOKEN_MINTS.LOCKER]);
 
 interface SwapQuote {
   inputMint: string;
@@ -415,8 +412,7 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
     }
 
     // If either token is a Pump.fun token (Fixercoin/Locker), only use Pump.fun
-    const isPumpMint =
-      PUMP_MINTS.has(inputMint) || PUMP_MINTS.has(outputMint);
+    const isPumpMint = PUMP_MINTS.has(inputMint) || PUMP_MINTS.has(outputMint);
     if (isPumpMint) {
       console.log(
         `[Swap Quote] Pumpfun-only path for ${inputMint} -> ${outputMint}`,

@@ -1268,12 +1268,12 @@ export default {
         const LOCKER = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
         const isPumpMintPair = Boolean(
           inputMint &&
-          outputMint &&
-          amount &&
-          (inputMint === FIXER ||
-            outputMint === FIXER ||
-            inputMint === LOCKER ||
-            outputMint === LOCKER),
+            outputMint &&
+            amount &&
+            (inputMint === FIXER ||
+              outputMint === FIXER ||
+              inputMint === LOCKER ||
+              outputMint === LOCKER),
         );
         if (isPumpMintPair) {
           const pfUrl = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(

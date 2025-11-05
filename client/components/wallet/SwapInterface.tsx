@@ -794,6 +794,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
 
       const bridgeAttempts = [];
+      let lastBridgeError = null;
+
       for (const bridge of BRIDGES) {
         if (bridge === fromToken.mint || bridge === toToken.mint) continue;
         const bridgeToken = allTokens.find((t) => t.mint === bridge);
@@ -801,6 +803,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           bridgeToken?.decimals ?? (bridge === TOKEN_MINTS.USDT ? 6 : 6);
 
         try {
+          console.log(
+            `Attempting bridged swap via ${bridgeToken?.symbol || bridge}...`,
+          );
+
+          // With improved retry logic on client/server, allow longer timeout for retries
           const q1 = await jupiterAPI.getQuote(
             fromToken.mint,
             bridge,
@@ -808,10 +815,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             slippageBps,
           );
           if (!q1 || !q1.outAmount || q1.outAmount === "0") {
+            const reason = !q1
+              ? "no_quote_leg1"
+              : q1.outAmount === "0"
+                ? "zero_output_leg1"
+                : "empty_outAmount_leg1";
             bridgeAttempts.push({
               bridge: bridgeToken?.symbol || bridge,
-              status: "no_quote_leg1",
+              status: reason,
             });
+            console.warn(
+              `Bridge ${bridgeToken?.symbol} leg1 failed: ${reason}`,
+            );
             continue;
           }
 
@@ -824,14 +839,25 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             slippageBps,
           );
           if (!q2 || !q2.outAmount || q2.outAmount === "0") {
+            const reason = !q2
+              ? "no_quote_leg2"
+              : q2.outAmount === "0"
+                ? "zero_output_leg2"
+                : "empty_outAmount_leg2";
             bridgeAttempts.push({
               bridge: bridgeToken?.symbol || bridge,
-              status: "no_quote_leg2",
+              status: reason,
             });
+            console.warn(
+              `Bridge ${bridgeToken?.symbol} leg2 failed: ${reason}`,
+            );
             continue;
           }
 
           // Execute leg1 then leg2
+          console.log(
+            `Executing bridged swap via ${bridgeToken?.symbol}...`,
+          );
           const sig1 = await submitQuote(q1);
           toast({ title: "Leg 1 submitted", description: sig1 });
           const sig2 = await submitQuote(q2);
@@ -851,11 +877,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           await sendSwapFee();
           return;
         } catch (bridgeErr) {
-          console.warn(`Bridge attempt via ${bridgeToken?.symbol} failed:`, bridgeErr);
+          lastBridgeError = bridgeErr;
+          const errMsg =
+            bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr);
+          console.warn(
+            `Bridge attempt via ${bridgeToken?.symbol} failed:`,
+            bridgeErr,
+          );
           bridgeAttempts.push({
             bridge: bridgeToken?.symbol || bridge,
             status: "error",
-            error: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+            error: errMsg.substring(0, 50),
           });
           continue;
         }
@@ -864,8 +896,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const attemptSummary = bridgeAttempts
         .map((a) => `${a.bridge} (${a.status})`)
         .join(", ");
+      const errorDetail = lastBridgeError
+        ? lastBridgeError instanceof Error
+          ? lastBridgeError.message
+          : String(lastBridgeError)
+        : "Unknown error";
+
       throw new Error(
-        `No executable bridged route found. Attempted bridges: ${attemptSummary || "none"}. Liquidity may be insufficient or tokens may not be supported on Jupiter.`,
+        `No executable bridged route found. Attempted: ${attemptSummary || "none"}. ${errorDetail}`,
       );
     } catch (err: any) {
       console.error("Swap execution error:", err);

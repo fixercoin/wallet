@@ -180,7 +180,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                   <Button
                     onClick={handleShowRecoveryPhrase}
                     variant="outline"
-                    className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    className="w-full bg-white/10 border-black text-white hover:bg-white/20"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Show Recovery Phrase
@@ -197,7 +197,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                         variant="outline"
                         size="sm"
                         onClick={() => setShowRecoveryPhrase(false)}
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                        className="bg-white/10 border-black text-white hover:bg-white/20"
                       >
                         <EyeOff className="h-4 w-4" />
                       </Button>
@@ -205,7 +205,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                         variant="outline"
                         size="sm"
                         onClick={handleCopyRecoveryPhrase}
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                        className="bg-white/10 border-black text-white hover:bg-white/20"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -214,7 +214,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                   <Textarea
                     value={recoveryPhrase}
                     readOnly
-                    className="bg-white/5 border-white/20 text-white font-mono text-sm resize-none min-h-[120px]"
+                    className="bg-white/5 border-black text-white font-mono text-sm resize-none min-h-[120px]"
                     placeholder="Recovery phrase will appear here..."
                   />
                   <Alert className="bg-red-500/20 border-red-400/30 text-red-200">
@@ -237,8 +237,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             <CardContent className="space-y-3">
               <Button
                 onClick={handleLogout}
-                variant="outline"
-                className="w-full flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                variant="default"
+                className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -246,11 +246,11 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
 
               <Button
                 onClick={handleDeleteAccount}
-                variant={confirmDelete ? "destructive" : "outline"}
+                variant="default"
                 className={`w-full flex items-center gap-2 ${
                   confirmDelete
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    ? "bg-green-700 hover:bg-green-800 text-white"
+                    : "bg-green-600 hover:bg-green-700 text-white"
                 }`}
               >
                 <Trash2 className="h-4 w-4" />

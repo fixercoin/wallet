@@ -33,10 +33,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  const fromToken = tokenList.find(t => t.address === fromMint);
-  const toToken = tokenList.find(t => t.address === toMint);
-  const fromTokenBalance = userTokens?.find(t => t.mint === fromMint)?.balance || 0;
-  const toTokenBalance = userTokens?.find(t => t.mint === toMint)?.balance || 0;
+  const fromToken = tokenList.find((t) => t.address === fromMint);
+  const toToken = tokenList.find((t) => t.address === toMint);
+  const fromTokenBalance =
+    userTokens?.find((t) => t.mint === fromMint)?.balance || 0;
+  const toTokenBalance =
+    userTokens?.find((t) => t.mint === toMint)?.balance || 0;
 
   const initJupiter = async () => {
     if (initialized && jupiter) return jupiter;
@@ -49,9 +51,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setStatus("Initializing route solver...");
 
     try {
-      const { Jupiter } = await import(
-        "https://esm.sh/@jup-ag/core@4.3.0"
-      );
+      const { Jupiter } = await import("https://esm.sh/@jup-ag/core@4.3.0");
 
       const connection = new Connection(RPC, "confirmed");
       const walletPublicKey = new PublicKey(wallet.publicKey);
@@ -79,7 +79,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             secretKey = Uint8Array.from(secretKey);
           }
           const keypair = Keypair.fromSecretKey(secretKey);
-          return txs.map(tx => {
+          return txs.map((tx) => {
             tx.sign([keypair]);
             return tx;
           });
@@ -97,24 +97,28 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const jupiterTokens = Object.values(jup.tokens);
 
       const setupTokenMints = Object.values(TOKEN_MINTS);
-      const setupTokens = jupiterTokens.filter(t =>
-        setupTokenMints.includes(t.address)
+      const setupTokens = jupiterTokens.filter((t) =>
+        setupTokenMints.includes(t.address),
       );
 
-      const userTokenMints = (userTokens || []).map(t => t.mint);
-      const userSetupTokens = jupiterTokens.filter(t =>
-        userTokenMints.includes(t.address)
+      const userTokenMints = (userTokens || []).map((t) => t.mint);
+      const userSetupTokens = jupiterTokens.filter((t) =>
+        userTokenMints.includes(t.address),
       );
 
-      const combinedTokens = Array.from(new Map([
-        ...setupTokens.map(t => [t.address, t]),
-        ...userSetupTokens.map(t => [t.address, t]),
-        ...jupiterTokens.map(t => [t.address, t]),
-      ]).values());
+      const combinedTokens = Array.from(
+        new Map([
+          ...setupTokens.map((t) => [t.address, t]),
+          ...userSetupTokens.map((t) => [t.address, t]),
+          ...jupiterTokens.map((t) => [t.address, t]),
+        ]).values(),
+      );
 
       if (combinedTokens.length === 0) {
-        console.warn("[SwapInterface] No tokens found from Jupiter, using user tokens as fallback");
-        const fallbackTokens = (userTokens || []).map(ut => ({
+        console.warn(
+          "[SwapInterface] No tokens found from Jupiter, using user tokens as fallback",
+        );
+        const fallbackTokens = (userTokens || []).map((ut) => ({
           address: ut.mint,
           symbol: ut.symbol,
           decimals: ut.decimals,
@@ -140,7 +144,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       console.error("[SwapInterface] Error initializing Jupiter:", err);
       setStatus("Using available tokens...");
 
-      const fallbackTokens = (userTokens || []).map(ut => ({
+      const fallbackTokens = (userTokens || []).map((ut) => ({
         address: ut.mint,
         symbol: ut.symbol,
         decimals: ut.decimals,
@@ -150,7 +154,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       if (fallbackTokens.length === 0) {
         const defaultTokens = [
           { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
-          { address: FIXER_MINT, symbol: "FIXERCOIN", decimals: 6, name: "FIXERCOIN" },
+          {
+            address: FIXER_MINT,
+            symbol: "FIXERCOIN",
+            decimals: 6,
+            name: "FIXERCOIN",
+          },
         ];
         setTokenList(defaultTokens);
       } else {
@@ -168,7 +177,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setInitialized(false);
 
     if (userTokens && userTokens.length > 0 && tokenList.length === 0) {
-      const fallbackTokens = userTokens.map(ut => ({
+      const fallbackTokens = userTokens.map((ut) => ({
         address: ut.mint,
         symbol: ut.symbol,
         decimals: ut.decimals,
@@ -235,8 +244,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const best = routes.routesInfos[0];
       const outAmount = BigInt(best.outAmount) ?? BigInt(0);
-      const outHuman =
-        Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
+      const outHuman = Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
 
       setQuote({
         routes,
@@ -307,7 +315,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const swapResult = await execute();
 
       setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`
+        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`,
       );
       console.log("Swap result:", swapResult);
 
@@ -350,9 +358,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h3 className="text-lg font-semibold text-gray-900 uppercase">FIXORIUM TRADE</h3>
+              <h3 className="text-lg font-semibold text-gray-900 uppercase">
+                FIXORIUM TRADE
+              </h3>
             </div>
-            <p className="text-gray-600 text-center">No wallet detected. Please set up or import a wallet to use the swap feature.</p>
+            <p className="text-gray-600 text-center">
+              No wallet detected. Please set up or import a wallet to use the
+              swap feature.
+            </p>
             <Button
               onClick={onBack}
               variant="outline"
@@ -386,11 +399,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">FIXORIUM TRADE</div>
+            <div className="font-semibold text-sm text-gray-900 uppercase">
+              FIXORIUM TRADE
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="from-token" className="text-gray-700 uppercase text-xs font-semibold">
+            <Label
+              htmlFor="from-token"
+              className="text-gray-700 uppercase text-xs font-semibold"
+            >
               From
             </Label>
             <div className="flex gap-3">
@@ -398,7 +416,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                   <SelectValue>
                     {fromToken ? (
-                      <span className="text-gray-900 font-medium">{fromToken.symbol}</span>
+                      <span className="text-gray-900 font-medium">
+                        {fromToken.symbol}
+                      </span>
                     ) : (
                       <span className="text-gray-400">Select token</span>
                     )}
@@ -407,11 +427,15 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <SelectContent className="bg-white border border-gray-200 z-50">
                   {tokenList.length > 0 ? (
                     tokenList.map((t) => {
-                      const tokenBalance = userTokens?.find(ut => ut.mint === t.address)?.balance || 0;
+                      const tokenBalance =
+                        userTokens?.find((ut) => ut.mint === t.address)
+                          ?.balance || 0;
                       return (
                         <SelectItem key={t.address} value={t.address}>
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-900 font-medium">{t.symbol}</span>
+                            <span className="text-gray-900 font-medium">
+                              {t.symbol}
+                            </span>
                             <span className="text-gray-500 text-sm">
                               ({(tokenBalance || 0).toFixed(6)})
                             </span>
@@ -420,7 +444,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       );
                     })
                   ) : (
-                    <div className="p-2 text-center text-sm text-gray-500">Loading tokens...</div>
+                    <div className="p-2 text-center text-sm text-gray-500">
+                      Loading tokens...
+                    </div>
                   )}
                 </SelectContent>
               </Select>
@@ -435,14 +461,19 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="to-token" className="text-gray-700 uppercase text-xs font-semibold">
+            <Label
+              htmlFor="to-token"
+              className="text-gray-700 uppercase text-xs font-semibold"
+            >
               To
             </Label>
             <Select value={toMint} onValueChange={setToMint}>
               <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                 <SelectValue>
                   {toToken ? (
-                    <span className="text-gray-900 font-medium">{toToken.symbol}</span>
+                    <span className="text-gray-900 font-medium">
+                      {toToken.symbol}
+                    </span>
                   ) : (
                     <span className="text-gray-400">Select token</span>
                   )}
@@ -451,11 +482,15 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <SelectContent className="bg-white border border-gray-200 z-50">
                 {tokenList.length > 0 ? (
                   tokenList.map((t) => {
-                    const tokenBalance = userTokens?.find(ut => ut.mint === t.address)?.balance || 0;
+                    const tokenBalance =
+                      userTokens?.find((ut) => ut.mint === t.address)
+                        ?.balance || 0;
                     return (
                       <SelectItem key={t.address} value={t.address}>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-900 font-medium">{t.symbol}</span>
+                          <span className="text-gray-900 font-medium">
+                            {t.symbol}
+                          </span>
                           <span className="text-gray-500 text-sm">
                             ({(tokenBalance || 0).toFixed(6)})
                           </span>
@@ -464,7 +499,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     );
                   })
                 ) : (
-                  <div className="p-2 text-center text-sm text-gray-500">Loading tokens...</div>
+                  <div className="p-2 text-center text-sm text-gray-500">
+                    Loading tokens...
+                  </div>
                 )}
               </SelectContent>
             </Select>
@@ -474,8 +511,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Estimated receive:</span>
-                  <span className="font-semibold text-gray-900">{quote.outHuman.toFixed(6)} {quote.outToken}</span>
+                  <span className="text-sm text-gray-600">
+                    Estimated receive:
+                  </span>
+                  <span className="font-semibold text-gray-900">
+                    {quote.outHuman.toFixed(6)} {quote.outToken}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs text-gray-500">Route hops:</span>

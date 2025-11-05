@@ -28,9 +28,7 @@ export default function Swap() {
     setStatus("Initializing route solver (this may take a few seconds)…");
 
     try {
-      const { Jupiter } = await import(
-        "https://esm.sh/@jup-ag/core@4.3.0"
-      );
+      const { Jupiter } = await import("https://esm.sh/@jup-ag/core@4.3.0");
 
       const connection = new Connection(RPC, "confirmed");
 
@@ -59,7 +57,7 @@ export default function Swap() {
             secretKey = Uint8Array.from(secretKey);
           }
           const keypair = Keypair.fromSecretKey(secretKey);
-          return txs.map(tx => {
+          return txs.map((tx) => {
             tx.sign([keypair]);
             return tx;
           });
@@ -150,8 +148,7 @@ export default function Swap() {
 
       const best = routes.routesInfos[0];
       const outAmount = BigInt(best.outAmount) ?? BigInt(0);
-      const outHuman =
-        Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
+      const outHuman = Number(outAmount) / Math.pow(10, toMeta.decimals ?? 6);
 
       setQuote({
         routes,
@@ -210,7 +207,7 @@ export default function Swap() {
 
       const swapResult = await execute();
       setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`
+        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`,
       );
       console.log("Swap result:", swapResult);
       return swapResult;
@@ -234,7 +231,10 @@ export default function Swap() {
         }}
       >
         <h3 style={{ margin: "0 0 8px 0" }}>Fixorium — Convert (Direct)</h3>
-        <p>No wallet detected. Please set up or import a wallet to use the swap feature.</p>
+        <p>
+          No wallet detected. Please set up or import a wallet to use the swap
+          feature.
+        </p>
       </div>
     );
   }
@@ -253,12 +253,21 @@ export default function Swap() {
 
       <div style={{ marginBottom: "8px" }}>
         <span style={{ fontSize: "12px", color: "#999" }}>Wallet:</span>
-        <div style={{ fontSize: "12px", color: "#333", wordBreak: "break-all" }}>
+        <div
+          style={{ fontSize: "12px", color: "#333", wordBreak: "break-all" }}
+        >
           {wallet.publicKey}
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "8px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
+          marginBottom: "8px",
+        }}
+      >
         <div style={{ flex: 1 }}>
           <label style={{ fontSize: "12px", color: "#333" }}>From</label>
           <br />
@@ -304,7 +313,14 @@ export default function Swap() {
         />
       </div>
 
-      <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "8px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
+          marginBottom: "8px",
+        }}
+      >
         <button
           onClick={getQuote}
           style={{ padding: "8px 12px", cursor: "pointer" }}

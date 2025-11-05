@@ -1376,19 +1376,21 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-900">Network fee</span>
-                  <span className="text-gray-900">Included</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-900">Time</span>
-                  <span className="text-gray-900">&lt; 1 min</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-900">Rate includes</span>
-                  <span className="text-gray-900">{slippage}% slippage</span>
-                </div>
-                <div className="text-right text-sm text-[#a855f7]">
-                  More quotes
+                  <span className="text-gray-900">Route</span>
+                  <span className="text-gray-900">
+                    {(() => {
+                      // Build a human-readable route string
+                      if (quote && Array.isArray((quote as any).routePlan)) {
+                        try {
+                          const labels = ((quote as any).routePlan || [])
+                            .map((r: any) => r?.swapInfo?.label)
+                            .filter(Boolean);
+                          if (labels.length) return labels.join(" → ");
+                        } catch {}
+                      }
+                      return (quoteSource || "unknown").toString();
+                    })()}
+                  </span>
                 </div>
               </div>
             ) : null}

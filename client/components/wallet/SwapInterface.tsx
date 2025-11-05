@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { PublicKey, Connection } from "@solana/web3.js";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {

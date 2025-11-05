@@ -14,6 +14,8 @@ import {
   isValidPhoneNumber,
 } from "@/lib/otp-utils";
 import type { OTPSession } from "@/lib/otp-utils";
+import { sendSMS, getMessages } from "@/lib/fake-sms";
+import { useToast } from "@/hooks/use-toast";
 
 interface SendOTPVerificationProps {
   transactionAmount: string;

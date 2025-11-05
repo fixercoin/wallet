@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useWallet } from "../contexts/WalletContext";
-import { PublicKey, Transaction, Connection } from "@solana/web3.js";
-import bs58 from "bs58";
+import { PublicKey, Connection } from "@solana/web3.js";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";

@@ -193,11 +193,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           Math.round(parseFloat(slippage || "0.5") * 100),
         );
 
-        const quoteResponse = await fetch(
-          resolveApiUrl(
-            `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}`,
-          ),
-        ).then((res) => res.json());
+        const isPumpPair =
+          (fromToken.mint === TOKEN_MINTS.SOL &&
+            PUMP_TOKENS.some((p: any) => p.mint === toToken.mint)) ||
+          (toToken.mint === TOKEN_MINTS.SOL &&
+            PUMP_TOKENS.some((p: any) => p.mint === fromToken.mint));
+        const pumpMint =
+          fromToken.mint === TOKEN_MINTS.SOL ? toToken.mint : fromToken.mint;
+        const urlParams =
+          `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}` +
+          (isPumpPair ? `&mint=${encodeURIComponent(pumpMint)}` : "");
+        const quoteResponse = await fetch(resolveApiUrl(urlParams)).then((res) =>
+          res.json(),
+        );
 
         // Check if unified quote succeeded
         if (quoteResponse && !quoteResponse.error) {

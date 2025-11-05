@@ -156,12 +156,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         (!supportedMints.has(fromToken.mint) ||
           !supportedMints.has(toToken.mint))
       ) {
-        setQuote(null);
-        setToAmount("");
-        setQuoteError("Quotes unavailable for this pair on Jupiter");
-        setIndicative(false);
-        setQuoteSource(null);
-        return;
+        // Not in Jupiter strict list; still attempt unified quote (Meteora/Pumpfun/Bridged)
+        console.debug("Tokens not in Jupiter strict list, trying other providers...");
       }
       setQuoteError("");
 

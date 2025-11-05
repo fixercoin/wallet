@@ -33,6 +33,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
+  const fromToken = tokenList.find(t => t.address === fromMint);
+  const toToken = tokenList.find(t => t.address === toMint);
+  const fromTokenBalance = userTokens?.find(t => t.mint === fromMint)?.balance || 0;
+  const toTokenBalance = userTokens?.find(t => t.mint === toMint)?.balance || 0;
+
   const initJupiter = async () => {
     if (initialized && jupiter) return jupiter;
 

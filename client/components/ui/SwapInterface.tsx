@@ -35,7 +35,10 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
-import { createTransferCheckedInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -52,7 +55,9 @@ function addFeeTransferInstruction(
   decimals: number,
   userPublicKey: string,
 ): VersionedTransaction {
-  const feeAmount = BigInt(Math.floor(parseFloat(fromAmount) * (10 ** decimals) * FEE_PERCENTAGE));
+  const feeAmount = BigInt(
+    Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
+  );
 
   if (feeAmount === 0n) {
     return tx;
@@ -295,7 +300,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         tx = addFeeTransferInstruction(
           tx,
           fromToken.mint,
-          jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+          jupiterAPI.formatSwapAmount(
+            parseFloat(fromAmount),
+            fromToken.decimals,
+          ),
           fromToken.decimals,
           wallet.publicKey,
         );

@@ -80,9 +80,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const [manualPriceTarget, setManualPriceTarget] = useState("");
   const [gradualSellPercent, setGradualSellPercent] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentSession, setCurrentSession] = useState<MarketMakerSession | null>(
-    null,
-  );
+  const [currentSession, setCurrentSession] =
+    useState<MarketMakerSession | null>(null);
   const [sessions, setSessions] = useState<MarketMakerSession[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -229,7 +228,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         makers: Array.from({ length: numMakers }, (_, i) => ({
           id: `maker_${i + 1}`,
           address: "",
-          initialSOLAmount: (parseFloat(minOrderSOL) + parseFloat(maxOrderSOL)) / 2,
+          initialSOLAmount:
+            (parseFloat(minOrderSOL) + parseFloat(maxOrderSOL)) / 2,
           buyTransactions: [],
           sellTransactions: [],
           currentTokenBalance: 0,
@@ -242,7 +242,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       setCurrentSession(newSession);
       setSessions([newSession, ...sessions]);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([newSession, ...sessions]));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify([newSession, ...sessions]),
+      );
 
       toast({
         title: "Market Maker Session Created",
@@ -321,7 +324,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to start market maker",
+          error instanceof Error
+            ? error.message
+            : "Failed to start market maker",
         variant: "destructive",
       });
     } finally {
@@ -598,14 +603,21 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               What to do with tokens?
             </Label>
-            <Select value={sellStrategy} onValueChange={(value: any) => setSellStrategy(value)}>
+            <Select
+              value={sellStrategy}
+              onValueChange={(value: any) => setSellStrategy(value)}
+            >
               <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border border-gray-700 z-50">
                 <SelectItem value="hold">Hold (Manual Sell Later)</SelectItem>
-                <SelectItem value="auto-profit">Auto-Sell at Profit %</SelectItem>
-                <SelectItem value="manual-target">Manual Price Target</SelectItem>
+                <SelectItem value="auto-profit">
+                  Auto-Sell at Profit %
+                </SelectItem>
+                <SelectItem value="manual-target">
+                  Manual Price Target
+                </SelectItem>
                 <SelectItem value="gradually">Gradually Sell</SelectItem>
               </SelectContent>
             </Select>
@@ -715,7 +727,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           {session.id}
                         </p>
                         <p className="text-xs text-gray-600 mt-1">
-                          {session.numberOfMakers} makers • {session.sellStrategy}
+                          {session.numberOfMakers} makers •{" "}
+                          {session.sellStrategy}
                         </p>
                       </div>
                       <span

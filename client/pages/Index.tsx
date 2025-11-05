@@ -131,7 +131,6 @@ export default function Index() {
     case "airdrop":
       return <Airdrop onBack={navigateToDashboard} />;
 
-
     case "lock":
       return <TokenLock onBack={navigateToDashboard} />;
 

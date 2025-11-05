@@ -82,8 +82,25 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         user: localWalletAdapter,
       });
 
-      const tokens = Object.values(jup.tokens);
-      tokens.sort((a, b) => {
+      const jupiterTokens = Object.values(jup.tokens);
+
+      const setupTokenMints = Object.values(TOKEN_MINTS);
+      const setupTokens = jupiterTokens.filter(t =>
+        setupTokenMints.includes(t.address)
+      );
+
+      const userTokenMints = (userTokens || []).map(t => t.mint);
+      const userSetupTokens = jupiterTokens.filter(t =>
+        userTokenMints.includes(t.address)
+      );
+
+      const combinedTokens = Array.from(new Map([
+        ...setupTokens.map(t => [t.address, t]),
+        ...userSetupTokens.map(t => [t.address, t]),
+        ...jupiterTokens.map(t => [t.address, t]),
+      ]).values());
+
+      combinedTokens.sort((a, b) => {
         if (a.address === SOL_MINT) return -1;
         if (b.address === SOL_MINT) return 1;
         if (a.address === FIXER_MINT) return -1;
@@ -92,7 +109,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       });
 
       setJupiter(jup);
-      setTokenList(tokens);
+      setTokenList(combinedTokens);
       setInitialized(true);
       setStatus("");
       return jup;

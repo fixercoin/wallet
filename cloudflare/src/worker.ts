@@ -159,6 +159,21 @@ export default {
 
     // === Simple Jupiter Swap Endpoints ===
 
+    // Minimal Pump.fun tokens registry (kept in worker for preview/server usage)
+    const PUMP_TOKENS = [
+      {
+        symbol: "FIXERCOIN",
+        mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+        decimals: 6,
+      },
+      { symbol: "LOCKER", mint: "GpumpLockerTokenMintAddress", decimals: 6 },
+    ];
+
+    // GET /api/pump-tokens - return Pump.fun token registry
+    if (pathname === "/api/pump-tokens" && req.method === "GET") {
+      return json({ tokens: PUMP_TOKENS }, { headers: corsHeaders });
+    }
+
     // GET /api/quote - Get swap quote from Jupiter API
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
@@ -1298,6 +1313,24 @@ export default {
               { source: "orca", quote: orca },
               { headers: corsHeaders },
             );
+        }
+
+        // Final fallback: try Jupiter public quote API
+        try {
+          const params = new URLSearchParams({ inputMint, outputMint, amount });
+          const jupUrl = `https://quote-api.jup.ag/v6/quote?${params.toString()}`;
+          const jupResp = await fetch(jupUrl, { method: "GET" });
+          if (jupResp.ok) {
+            const jupData = await jupResp.json();
+            if (jupData && jupData.outAmount && jupData.outAmount !== "0") {
+              return json(
+                { source: "jupiter", quote: jupData },
+                { headers: corsHeaders },
+              );
+            }
+          }
+        } catch (e) {
+          // ignore and fall through
         }
 
         return json(

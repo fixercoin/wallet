@@ -23,6 +23,7 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { PUMP_TOKENS } from "@/lib/constants/pump-tokens";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 import { birdeyeAPI } from "@/lib/services/birdeye";
@@ -108,8 +109,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         );
 
         const userTokens = tokens || [];
+        const pumpTokens: TokenInfo[] = (PUMP_TOKENS || []).map((p: any) => ({
+          mint: p.mint,
+          symbol: p.symbol,
+          name: p.symbol,
+          decimals: p.decimals,
+          logoURI: undefined,
+        }));
+
         const combined = [
           ...userTokens,
+          ...pumpTokens.filter(
+            (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint),
+          ),
           ...popularTokens.filter(
             (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint),
           ),

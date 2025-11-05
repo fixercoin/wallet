@@ -32,7 +32,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { wallet, tokens: userTokens } = useWallet();
   const { toast } = useToast();
 
-  const [jupiter, setJupiter] = useState(null);
   const [tokenList, setTokenList] = useState([]);
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);

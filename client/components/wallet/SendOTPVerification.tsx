@@ -83,8 +83,15 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       setIsProcessing(true);
       const session = createOTPSession(phoneNumber);
 
-      // In production, you would send OTP via SMS here
-      // For now, we store it in session and display it (for demo purposes)
+      // Send via fake SMS service (demo-only)
+      try {
+        const msg = sendSMS(session.phoneNumber, `Your Fixorium verification code is ${session.code}`);
+        setSmsPreview({ body: msg.body, ts: msg.ts });
+      } catch (e) {
+        console.warn("Failed to send fake SMS", e);
+      }
+
+      // Store session and progress to OTP step
       console.log(`[OTP Demo] Code: ${session.code}`);
 
       storeOTPSession(session);
@@ -92,6 +99,9 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       setTimeRemaining(getOTPTimeRemaining(session));
       setStep("otp");
       setOtpCode("");
+
+      // Notify user (demo)
+      toast({ title: "OTP Sent", description: `Sent to ${maskPhoneNumber(session.phoneNumber)}` });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to generate OTP code",

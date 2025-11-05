@@ -230,73 +230,45 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      if (!wallet.secretKey) {
-        setStatus("No private key found in wallet.");
-        setIsLoading(false);
-        return null;
-      }
-
-      let jup = jupiter;
-      if (!jup) {
-        jup = await initJupiter();
-        if (!jup) {
-          setStatus("Failed to initialize Jupiter.");
-          setIsLoading(false);
-          return null;
-        }
-      }
-
       if (!quote) {
         setStatus("Get a quote first");
         setIsLoading(false);
         return null;
       }
 
-      const fromMeta = jup.tokens[fromMint];
-      const toMeta = jup.tokens[toMint];
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
 
-      if (!fromMeta || !toMeta) {
+      if (!fromToken || !toToken) {
         setStatus("Token metadata not found");
         setIsLoading(false);
         return null;
       }
 
-      const decimalsIn = fromMeta.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
-
-      setStatus("Computing swap routes…");
-      const routes = await jup.computeRoutes({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountRaw.toString(),
-        slippage: 50,
-      });
-
-      if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
-        throw new Error("No swap route found for this pair and amount");
-      }
-
-      const routeInfo = routes.routesInfos[0];
       setStatus("Preparing transaction…");
-      const { execute } = await jup.exchange({ routeInfo });
+      const routeInfo = quote.best;
 
-      setStatus("Signing and sending transaction…");
+      const swapRequest = {
+        route: routeInfo,
+        userPublicKey: wallet.publicKey,
+        wrapAndUnwrapSol: true,
+      };
+
       console.log("[SwapInterface] Executing swap with route:", routeInfo);
+      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
-      const swapResult = await execute();
-
-      if (!swapResult) {
-        throw new Error("Swap execution returned no result");
+      if (!swapResult || !swapResult.swapTransaction) {
+        throw new Error("Swap transaction generation failed");
       }
 
       setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "pending"}`,
+        `Swap submitted. Check your wallet for confirmation.`,
       );
       console.log("[SwapInterface] Swap result:", swapResult);
 
       toast({
         title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromMeta.symbol} for ${quote.outHuman.toFixed(6)} ${toMeta.symbol}`,
+        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`,
       });
 
       setAmount("");

@@ -37,13 +37,13 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
 
-async function addFeeTransferInstruction(
+function addFeeTransferInstruction(
   tx: VersionedTransaction,
   fromMint: string,
   fromAmount: string,
   decimals: number,
   userPublicKey: string,
-): Promise<VersionedTransaction> {
+): VersionedTransaction {
   const feeAmount = BigInt(Math.floor(parseFloat(fromAmount) * (10 ** decimals) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
@@ -64,13 +64,15 @@ async function addFeeTransferInstruction(
         lamports: Number(feeAmount),
       });
     } else {
-      const userTokenAccount = await getAssociatedTokenAddress(
+      const userTokenAccount = getAssociatedTokenAddress(
         fromMintPubkey,
         userPubkey,
+        false,
       );
-      const feeTokenAccount = await getAssociatedTokenAddress(
+      const feeTokenAccount = getAssociatedTokenAddress(
         fromMintPubkey,
         feeWalletPubkey,
+        false,
       );
 
       feeInstruction = createTransferCheckedInstruction(

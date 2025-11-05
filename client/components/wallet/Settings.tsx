@@ -204,7 +204,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-gray-200 font-mono"
+                          className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-black font-mono"
                         >
                           {wallets.map((w) => (
                             <option
@@ -241,7 +241,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   e.target.value as "recovery" | "private",
                                 )
                               }
-                              className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-gray-200 font-mono"
+                              className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-black font-mono"
                             >
                               <option value="recovery">RECOVERY PHRASE</option>
                               <option value="private">PRIVATE KEY</option>
@@ -344,7 +344,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   setShowRecoveryPhrase(false);
                                 }
                               }}
-                              className="bg-transparent text-gray-700 p-1 rounded-md border border-gray-200"
+                              className="bg-transparent text-gray-700 p-1 rounded-md border border-black"
                             >
                               <option value="hidden">Hidden</option>
                               <option value="show">Show</option>
@@ -361,7 +361,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   : ""
                             }
                             readOnly
-                            className="bg-gray-50 border border-gray-200 text-gray-900 font-mono text-sm resize-none min-h-[140px]"
+                            className="bg-gray-50 border border-black text-gray-900 font-mono text-sm resize-none min-h-[140px]"
                             placeholder={
                               showRecoveryPhrase || showPrivateKey
                                 ? ""

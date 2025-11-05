@@ -1177,28 +1177,64 @@ export const onRequest = async ({ request, env }) => {
             "Missing required body: { quoteResponse, userPublicKey, ...options }",
         });
       }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-      const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        return jsonCors(resp.status, {
-          error: `Swap failed: ${resp.statusText}`,
-          details: text,
+
+      let lastErr = "";
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          lastErr = text;
+
+          // Parse error to check for 1016 or simulation failures
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch (_) {}
+
+          const errorMsg =
+            errorData?.error?.message ||
+            errorData?.error ||
+            errorData?.message ||
+            text;
+          const errorCode = errorData?.code || errorData?.error?.code;
+
+          // Log details for debugging
+          console.error(
+            `Jupiter swap error (attempt ${attempt}/2):`,
+            errorCode,
+            errorMsg,
+          );
+
+          // Return error response with code and message for client to handle
+          return jsonCors(resp.status, {
+            error: errorMsg || `Swap failed: ${resp.statusText}`,
+            code: errorCode,
+            message: errorMsg,
+            details: text,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonCors(200, data);
       }
-      const data = await resp.json();
-      return jsonCors(200, data);
+
+      return jsonCors(502, {
+        error: "Swap request failed",
+        details: lastErr,
+      });
     }
 
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)

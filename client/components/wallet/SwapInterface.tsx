@@ -1162,7 +1162,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Button>
             </div>
             {/* FROM row */}
-            <Card className="bg-transparent border border-[#e6f6ec]/10 rounded-xl">
+            <Card className="bg-transparent border border-black rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
@@ -1273,7 +1273,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             </div>
 
             {/* TO row */}
-            <Card className="bg-transparent border border-[#e6f6ec]/10 rounded-xl">
+            <Card className="bg-transparent border border-black rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">

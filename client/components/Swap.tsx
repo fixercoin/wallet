@@ -119,13 +119,8 @@ export default function Swap() {
         return null;
       }
 
-      const fromToken = tokenList.find((t) => t.address === fromMint);
-      const toToken = tokenList.find((t) => t.address === toMint);
-
-      const routeInfo = quote.best;
-
       const swapRequest = {
-        route: routeInfo,
+        quoteResponse: quote.quoteResponse,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       };

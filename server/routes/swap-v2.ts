@@ -134,54 +134,86 @@ async function getMeteOraQuote(
   outputMint: string,
   amount: string,
 ): Promise<any | null> {
-  try {
-    const params = new URLSearchParams({
-      inputMint,
-      outputMint,
-      amount,
-    });
+  // Retry logic for transient failures
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const params = new URLSearchParams({
+        inputMint,
+        outputMint,
+        amount,
+      });
 
-    const url = `https://api.meteora.ag/swap/v3/quote?${params.toString()}`;
-    console.log(`[Swap] Trying Meteora quote: ${inputMint} -> ${outputMint}`);
+      const url = `https://api.meteora.ag/swap/v3/quote?${params.toString()}`;
+      console.log(
+        `[Swap] Trying Meteora quote (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
+      );
 
-    const response = await fetchWithTimeout(url);
-    if (!response.ok) {
-      if (response.status === 404 || response.status === 400) {
+      const response = await fetchWithTimeout(url);
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+
+        // For 404/400, skip retries (token pair not supported)
+        if (response.status === 404 || response.status === 400) {
+          console.warn(
+            `[Swap] Meteora returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+          );
+          return null;
+        }
+
+        // For rate limit or server errors, retry
+        if (response.status === 429 || response.status >= 500) {
+          console.warn(
+            `[Swap] Meteora API error ${response.status} (attempt ${attempt}/2)`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, attempt * 1000));
+            continue;
+          }
+          return null;
+        }
+
         console.warn(
-          `[Swap] Meteora quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+          `[Swap] Meteora quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
         );
         return null;
       }
-      if (response.status === 429 || response.status >= 500) {
+
+      const data = await response.json();
+
+      // Validate Meteora response has expected fields
+      const outAmount = data?.estimatedOut || data?.outAmount || data?.minReceived;
+      if (!data || !outAmount || outAmount === "0") {
         console.warn(
-          `[Swap] Meteora API error ${response.status}, trying fallback`,
+          `[Swap] Meteora returned invalid/empty quote for ${inputMint} -> ${outputMint}`,
         );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+          continue;
+        }
         return null;
       }
-      console.warn(
-        `[Swap] Meteora quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
+
+      console.log(
+        `[Swap] ✅ Meteora quote success (attempt ${attempt}): ${inputMint} -> ${outputMint}: ${outAmount}`,
       );
-      return null;
-    }
-
-    const data = await response.json();
-
-    // Validate Meteora response has expected fields
-    if (!data || (!data.estimatedOut && !data.outAmount && !data.minReceived)) {
+      return data;
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      if (attempt < 2 && (msg.includes("timeout") || msg.includes("ECONNREFUSED"))) {
+        console.warn(
+          `[Swap] Meteora transient error (attempt ${attempt}/2), retrying: ${msg}`,
+        );
+        await new Promise((r) => setTimeout(r, attempt * 500));
+        continue;
+      }
       console.warn(
-        `[Swap] Meteora returned invalid quote for ${inputMint} -> ${outputMint}`,
+        `[Swap] Meteora quote error (attempt ${attempt}): ${msg}`,
       );
-      return null;
+      if (attempt === 2) return null;
     }
-
-    console.log(
-      `[Swap] ✅ Meteora quote success: ${inputMint} -> ${outputMint}`,
-    );
-    return data;
-  } catch (e: any) {
-    console.warn(`[Swap] Meteora quote error: ${e?.message || e}`);
-    return null;
   }
+
+  return null;
 }
 
 async function getBridgedQuote(

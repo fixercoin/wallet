@@ -1,9 +1,7 @@
 // ---------------------------
 // 🔧 Configuration Constants
 // ---------------------------
-export const API_BASE = (import.meta as any).env?.VITE_P2P_URL
-  ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "")
-  : "";
+import { resolveApiUrl } from "./api-client";
 
 export const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 

@@ -251,16 +251,17 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         wrapAndUnwrapSol: true,
       };
 
-      console.log("[SwapInterface] Executing swap with quote:", quote.quoteResponse);
+      console.log(
+        "[SwapInterface] Executing swap with quote:",
+        quote.quoteResponse,
+      );
       const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
       if (!swapResult || !swapResult.swapTransaction) {
         throw new Error("Swap transaction generation failed");
       }
 
-      setStatus(
-        `Swap submitted. Check your wallet for confirmation.`,
-      );
+      setStatus(`Swap submitted. Check your wallet for confirmation.`);
       console.log("[SwapInterface] Swap result:", swapResult);
 
       toast({

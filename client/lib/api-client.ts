@@ -1,6 +1,5 @@
 // Production deployment defaults
-const CLOUDFLARE_WORKER_BASE =
-  "https://fixorium-proxy.khanbabusargodha.workers.dev";
+const CLOUDFLARE_WORKER_BASE = "https://proxy.fixorium.com.pk";
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";
@@ -38,19 +37,13 @@ const determineBase = (): string => {
   }
 
   // Custom domain deployment (fixorium.com.pk):
-  // - If at wallet.fixorium.com.pk (Cloudflare domain with worker route), use local /api
-  // - Otherwise use Cloudflare Worker proxy
+  // Frontend at wallet.fixorium.com.pk uses backend API at proxy.fixorium.com.pk
   if (
     typeof window !== "undefined" &&
     (window.location.hostname.includes("fixorium.com.pk") ||
       window.location.hostname.includes("fixorium.com"))
   ) {
-    // If the app is deployed at wallet.fixorium.com.pk with Cloudflare Worker routing /api/*,
-    // use empty base to hit local /api endpoints (which route to the worker)
-    if (window.location.hostname === "wallet.fixorium.com.pk") {
-      return "";
-    }
-    // For other fixorium subdomains, use the Cloudflare Worker proxy
+    // Always use the proxy backend for fixorium.com.pk domains
     return CLOUDFLARE_WORKER_BASE;
   }
 

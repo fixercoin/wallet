@@ -1173,7 +1173,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                       onChange={(e) => setFromAmount(e.target.value)}
                       className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-gray-900 placeholder:text-gray-400 focus-visible:ring-0"
                     />
-                    <div className="mt-2 text-xl text-gray-900">
+                    <div className="mt-2 text-base text-gray-900 font-medium">
                       {(() => {
                         const amt = parseFloat(fromAmount || "0");
                         const price = fromUsdPrice ?? 0;
@@ -1282,7 +1282,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                         ? formatAmount(toAmount, toToken?.symbol)
                         : "0.000"}
                     </div>
-                    <div className="mt-2 text-xl text-gray-900">
+                    <div className="mt-2 text-base text-gray-900 font-medium">
                       {(() => {
                         const amt = parseFloat(toAmount || "0");
                         const price = toUsdPrice ?? 0;

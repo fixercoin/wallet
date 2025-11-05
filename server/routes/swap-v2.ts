@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { TOKEN_MINTS } from "../../client/lib/constants/token-mints";
 
 const TIMEOUT_MS = 20000;
 const BRIDGE_TOKENS = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
@@ -57,46 +57,76 @@ async function getJupiterQuote(
     ];
 
     for (const url of urls) {
-      try {
-        console.log(
-          `[Swap] Trying Jupiter quote: ${inputMint} -> ${outputMint}`,
-        );
-
-        const response = await fetchWithTimeout(url);
-        if (!response.ok) {
-          if (response.status === 404 || response.status === 400) {
-            console.warn(
-              `[Swap] Jupiter quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
-            );
-            continue;
-          }
-          if (response.status === 429 || response.status >= 500) {
-            console.warn(
-              `[Swap] Jupiter API error ${response.status}, trying next endpoint`,
-            );
-            continue;
-          }
-          return null;
-        }
-
-        const data = await response.json();
-        if (!data.outAmount || data.outAmount === "0") {
-          console.warn(
-            `[Swap] Jupiter returned empty quote for ${inputMint} -> ${outputMint}`,
+      // Retry logic for transient failures
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          console.log(
+            `[Swap] Trying Jupiter quote (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
           );
-          continue;
-        }
 
-        console.log(
-          `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}`,
-        );
-        return data;
-      } catch (e: any) {
-        console.warn(`[Swap] Jupiter endpoint error: ${e?.message || e}`);
-        continue;
+          const response = await fetchWithTimeout(url);
+          if (!response.ok) {
+            const text = await response.text().catch(() => "");
+
+            // For 404/400, skip to next endpoint (may be a token Jupiter doesn't support)
+            if (response.status === 404 || response.status === 400) {
+              console.warn(
+                `[Swap] Jupiter returned ${response.status} - likely unsupported pair or invalid params`,
+                { inputMint, outputMint, text: text.substring(0, 100) },
+              );
+              break; // Move to next URL
+            }
+
+            // For rate limit or server errors, retry
+            if (response.status === 429 || response.status >= 500) {
+              console.warn(
+                `[Swap] Jupiter API error ${response.status}, retrying... (attempt ${attempt}/2)`,
+              );
+              if (attempt < 2) {
+                await new Promise((r) => setTimeout(r, attempt * 1000));
+                continue; // Retry same URL
+              }
+              break; // Move to next URL
+            }
+
+            return null;
+          }
+
+          const data = await response.json();
+          if (!data.outAmount || data.outAmount === "0") {
+            console.warn(
+              `[Swap] Jupiter returned zero/empty quote for ${inputMint} -> ${outputMint}`,
+            );
+            break; // Move to next URL
+          }
+
+          console.log(
+            `[Swap] ✅ Jupiter quote success: ${inputMint} -> ${outputMint}: ${data.outAmount}`,
+          );
+          return data;
+        } catch (e: any) {
+          const msg = e?.message || String(e);
+          if (
+            attempt < 2 &&
+            (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
+          ) {
+            console.warn(
+              `[Swap] Jupiter transient error, retrying... (attempt ${attempt}/2): ${msg}`,
+            );
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+          console.warn(
+            `[Swap] Jupiter endpoint error (attempt ${attempt}/2): ${msg}`,
+          );
+          break;
+        }
       }
     }
 
+    console.warn(
+      `[Swap] All Jupiter endpoints exhausted for ${inputMint} -> ${outputMint}`,
+    );
     return null;
   } catch (e: any) {
     console.warn(`[Swap] Jupiter quote error: ${e?.message || e}`);
@@ -109,52 +139,151 @@ async function getMeteOraQuote(
   outputMint: string,
   amount: string,
 ): Promise<any | null> {
+  // Retry logic for transient failures
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const params = new URLSearchParams({
+        inputMint,
+        outputMint,
+        amount,
+      });
+
+      const url = `https://api.meteora.ag/swap/v3/quote?${params.toString()}`;
+      console.log(
+        `[Swap] Trying Meteora quote (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
+      );
+
+      const response = await fetchWithTimeout(url);
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+
+        // For 404/400, skip retries (token pair not supported)
+        if (response.status === 404 || response.status === 400) {
+          console.warn(
+            `[Swap] Meteora returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+          );
+          return null;
+        }
+
+        // For rate limit or server errors, retry
+        if (response.status === 429 || response.status >= 500) {
+          console.warn(
+            `[Swap] Meteora API error ${response.status} (attempt ${attempt}/2)`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, attempt * 1000));
+            continue;
+          }
+          return null;
+        }
+
+        console.warn(
+          `[Swap] Meteora quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
+        );
+        return null;
+      }
+
+      const data = await response.json();
+
+      // Validate Meteora response has expected fields
+      const outAmount =
+        data?.estimatedOut || data?.outAmount || data?.minReceived;
+      if (!data || !outAmount || outAmount === "0") {
+        console.warn(
+          `[Swap] Meteora returned invalid/empty quote for ${inputMint} -> ${outputMint}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+          continue;
+        }
+        return null;
+      }
+
+      console.log(
+        `[Swap] ✅ Meteora quote success (attempt ${attempt}): ${inputMint} -> ${outputMint}: ${outAmount}`,
+      );
+      return data;
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      if (
+        attempt < 2 &&
+        (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
+      ) {
+        console.warn(
+          `[Swap] Meteora transient error (attempt ${attempt}/2), retrying: ${msg}`,
+        );
+        await new Promise((r) => setTimeout(r, attempt * 500));
+        continue;
+      }
+      console.warn(`[Swap] Meteora quote error (attempt ${attempt}): ${msg}`);
+      if (attempt === 2) return null;
+    }
+  }
+
+  return null;
+}
+
+async function getPumpFunQuote(
+  inputMint: string,
+  outputMint: string,
+  amount: string,
+): Promise<any | null> {
   try {
+    // PumpFun API only handles certain token pairs
+    // Try to get a quote via the PumpFun API
     const params = new URLSearchParams({
-      inputMint,
-      outputMint,
+      input_mint: inputMint,
+      output_mint: outputMint,
       amount,
     });
 
-    const url = `https://api.meteora.ag/swap/v3/quote?${params.toString()}`;
-    console.log(`[Swap] Trying Meteora quote: ${inputMint} -> ${outputMint}`);
+    const url = `https://api.pumpfun.com/api/v1/quote?${params.toString()}`;
+    console.log(
+      `[Swap] Trying PumpFun quote (attempt 1/2): ${inputMint} -> ${outputMint}`,
+    );
 
     const response = await fetchWithTimeout(url);
     if (!response.ok) {
       if (response.status === 404 || response.status === 400) {
         console.warn(
-          `[Swap] Meteora quote returned ${response.status} - no route for ${inputMint} -> ${outputMint}`,
+          `[Swap] PumpFun returned ${response.status} - pair likely not supported`,
         );
         return null;
       }
+
       if (response.status === 429 || response.status >= 500) {
         console.warn(
-          `[Swap] Meteora API error ${response.status}, trying fallback`,
+          `[Swap] PumpFun API error ${response.status}, retrying...`,
         );
+        await new Promise((r) => setTimeout(r, 1000));
+        const retryResp = await fetchWithTimeout(url);
+        if (!retryResp.ok) {
+          console.warn(`[Swap] PumpFun retry failed with ${retryResp.status}`);
+          return null;
+        }
+        const data = await retryResp.json();
+        if (data?.outAmount && data.outAmount !== "0") {
+          console.log(
+            `[Swap] ✅ PumpFun quote success (retry): ${data.outAmount}`,
+          );
+          return data;
+        }
         return null;
       }
-      console.warn(
-        `[Swap] Meteora quote failed with ${response.status} for ${inputMint} -> ${outputMint}`,
-      );
+
       return null;
     }
 
     const data = await response.json();
-
-    // Validate Meteora response has expected fields
-    if (!data || (!data.estimatedOut && !data.outAmount && !data.minReceived)) {
-      console.warn(
-        `[Swap] Meteora returned invalid quote for ${inputMint} -> ${outputMint}`,
-      );
+    if (!data.outAmount || data.outAmount === "0") {
+      console.warn(`[Swap] PumpFun returned zero quote`);
       return null;
     }
 
-    console.log(
-      `[Swap] ✅ Meteora quote success: ${inputMint} -> ${outputMint}`,
-    );
+    console.log(`[Swap] ✅ PumpFun quote success: ${data.outAmount}`);
     return data;
   } catch (e: any) {
-    console.warn(`[Swap] Meteora quote error: ${e?.message || e}`);
+    console.warn(`[Swap] PumpFun quote error: ${e?.message || e}`);
     return null;
   }
 }
@@ -175,31 +304,61 @@ async function getBridgedQuote(
           `[Swap] Trying bridged route via ${bridge}: ${inputMint} -> ${bridge} -> ${outputMint}`,
         );
 
-        // First leg: inputMint -> bridge
-        const q1 = await getJupiterQuote(
-          inputMint,
-          bridge,
-          amount,
-          slippageBps,
-        );
+        // First leg: inputMint -> bridge (try Jupiter, then Meteora)
+        let q1 = await getJupiterQuote(inputMint, bridge, amount, slippageBps);
+
+        if (!q1 || !q1.outAmount || q1.outAmount === "0") {
+          console.log(
+            `[Swap] Jupiter leg1 failed, trying Meteora for ${inputMint} -> ${bridge}`,
+          );
+          q1 = await getMeteOraQuote(inputMint, bridge, amount);
+        }
+
         if (!q1 || !q1.outAmount) {
-          console.warn(`[Swap] Leg 1 failed for bridge ${bridge}`);
+          console.warn(
+            `[Swap] Leg 1 failed for bridge ${bridge}: no quote from Jupiter or Meteora`,
+          );
           continue;
         }
 
-        // Second leg: bridge -> outputMint
-        const q2 = await getJupiterQuote(
+        const outAmount1 = q1.outAmount || q1.estimatedOut || q1.minReceived;
+        if (!outAmount1 || outAmount1 === "0") {
+          console.warn(`[Swap] Leg 1 failed for bridge ${bridge}: zero output`);
+          continue;
+        }
+
+        // Second leg: bridge -> outputMint (try Jupiter, then Meteora)
+        let q2 = await getJupiterQuote(
           bridge,
           outputMint,
-          q1.outAmount,
+          outAmount1,
           slippageBps,
         );
-        if (!q2 || !q2.outAmount) {
-          console.warn(`[Swap] Leg 2 failed for bridge ${bridge}`);
+
+        if (!q2 || !q2.outAmount || q2.outAmount === "0") {
+          console.log(
+            `[Swap] Jupiter leg2 failed, trying Meteora for ${bridge} -> ${outputMint}`,
+          );
+          q2 = await getMeteOraQuote(bridge, outputMint, outAmount1);
+        }
+
+        if (!q2 || (!q2.outAmount && !q2.estimatedOut && !q2.minReceived)) {
+          console.warn(
+            `[Swap] Leg 2 failed for bridge ${bridge}: no quote from Jupiter or Meteora`,
+          );
           continue;
         }
 
-        console.log(`[Swap] ✅ Bridged route successful via ${bridge}`);
+        const outAmount2 =
+          q2.outAmount || q2.estimatedOut || q2.minReceived || "0";
+        if (!outAmount2 || outAmount2 === "0") {
+          console.warn(`[Swap] Leg 2 failed for bridge ${bridge}: zero output`);
+          continue;
+        }
+
+        console.log(
+          `[Swap] ✅ Bridged route successful via ${bridge}: ${outAmount1} -> ${outAmount2}`,
+        );
         return { bridge, q1, q2 };
       } catch (e) {
         console.warn(`[Swap] Bridge ${bridge} error: ${e}`);
@@ -207,7 +366,9 @@ async function getBridgedQuote(
       }
     }
 
-    console.warn(`[Swap] No bridged routes available`);
+    console.warn(
+      `[Swap] No bridged routes available for ${inputMint} -> ${outputMint}`,
+    );
     return null;
   } catch (e: any) {
     console.warn(`[Swap] Bridged quote error: ${e?.message || e}`);
@@ -304,8 +465,29 @@ export const handleSwapQuoteV2: RequestHandler = async (req, res) => {
       reason: "No liquidity or route found",
     });
 
+    // Try PumpFun quote for pump.fun tokens
+    console.log(`[Swap Quote] Meteora failed, trying PumpFun...`);
+    quote = await getPumpFunQuote(inputMint, outputMint, amount);
+    if (quote && quote.outAmount && quote.outAmount !== "0") {
+      attempts.push({ provider: "pumpfun", status: "success" });
+      console.log(`[Swap Quote] ✅ PumpFun route: ${quote.outAmount} output`);
+      return res.json({
+        quote,
+        source: "pumpfun",
+        inputMint,
+        outputMint,
+        amount,
+        attempts,
+      });
+    }
+    attempts.push({
+      provider: "pumpfun",
+      status: "failed",
+      reason: "No liquidity or pair not supported",
+    });
+
     // Try bridged routes as last resort
-    console.log(`[Swap Quote] Meteora failed, trying bridged routes...`);
+    console.log(`[Swap Quote] Direct routes failed, trying bridged routes...`);
     const bridged = await getBridgedQuote(
       inputMint,
       outputMint,

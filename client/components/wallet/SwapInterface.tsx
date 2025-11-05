@@ -172,107 +172,59 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
 
         console.log(
-          `Fetching quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
+          `Fetching unified quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
 
-        let foundQuote = false;
+        // Use unified quote endpoint which tries: Jupiter → Meteora → PumpFun → Bridged
+        const slippageBps = Math.max(
+          1,
+          Math.round(parseFloat(slippage || "0.5") * 100),
+        );
 
-        // Try Meteora first
-        try {
-          const mq = await getMeteoraQuote(
-            fromToken.mint,
-            toToken.mint,
-            amountInt,
-          );
+        const quoteResponse = await fetch(
+          resolveApiUrl(
+            `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}`,
+          ),
+        ).then((res) => res.json());
 
-          if (mq && mq.route) {
-            console.log("Meteora provided a route", mq);
-            setQuote(null);
-            setMeteoraQuote(mq);
+        // Check if unified quote succeeded
+        if (quoteResponse && !quoteResponse.error) {
+          const q = quoteResponse.quote;
+          const outAmount =
+            q?.outAmount ||
+            q?.estimatedOut ||
+            q?.minReceived ||
+            q?.minimum_received ||
+            null;
 
-            const minReceivedRaw =
-              mq.minimumReceived ??
-              mq.minReceived ??
-              mq.minimum_received ??
-              mq.min_received ??
-              mq.estimatedOut ??
-              mq.outAmount ??
-              null;
+          if (outAmount && outAmount !== "0") {
+            console.log(
+              `✅ Quote succeeded via ${quoteResponse.source}: ${outAmount}`,
+            );
 
-            if (minReceivedRaw != null && toToken?.decimals != null) {
-              try {
-                const outHuman =
-                  typeof minReceivedRaw === "string"
-                    ? parseInt(minReceivedRaw, 10) /
-                      Math.pow(10, toToken.decimals)
-                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
-                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-                setQuoteError("");
-                setIndicative(false);
-                foundQuote = true;
-              } catch (e) {
-                console.debug("Failed to parse Meteora minReceived", e);
-              }
-            }
+            // Store the full quote response for execution
+            setQuote(q);
+            setMeteoraQuote(null);
 
-            if (foundQuote) {
-              setIsLoading(false);
-              return;
-            }
+            // Parse and display output amount
+            const outHuman =
+              typeof outAmount === "string"
+                ? parseInt(outAmount, 10) / Math.pow(10, toToken.decimals)
+                : Number(outAmount) / Math.pow(10, toToken.decimals);
+
+            setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
+            setQuoteError("");
+            setIndicative(false);
+            setIsLoading(false);
+            return;
           }
-        } catch (e) {
-          console.debug("Meteora quote attempt failed silently:", e);
         }
 
-        try {
-          const mq = await getMeteoraQuote(
-            fromToken.mint,
-            toToken.mint,
-            amountInt,
-          );
-
-          if (mq && mq.route) {
-            console.log("Meteora provided a route", mq);
-            setMeteoraQuote(mq);
-
-            const minReceivedRaw =
-              mq.minimumReceived ??
-              mq.minReceived ??
-              mq.minimum_received ??
-              mq.min_received ??
-              mq.estimatedOut ??
-              mq.outAmount ??
-              null;
-
-            if (minReceivedRaw != null && toToken?.decimals != null) {
-              try {
-                const outHuman =
-                  typeof minReceivedRaw === "string"
-                    ? parseInt(minReceivedRaw, 10) /
-                      Math.pow(10, toToken.decimals)
-                    : Number(minReceivedRaw) / Math.pow(10, toToken.decimals);
-                setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-                setQuoteError("");
-                setIndicative(false);
-                foundQuote = true;
-              } catch (e) {
-                console.debug("Failed to parse Meteora minReceived", e);
-              }
-            }
-
-            if (foundQuote) {
-              setIsLoading(false);
-              return;
-            }
-          }
-        } catch (e) {
-          console.debug("Meteora quote attempt failed silently:", e);
-        }
-
-        // Fall back to Birdeye pricing
+        // If unified quote failed, fall back to Birdeye pricing
         console.log(
-          `Falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
+          `Unified quote failed, falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
         );
+
         const [fromBirdeye, toBirdeye] = await Promise.all([
           birdeyeAPI.getTokenByMint(fromToken.mint),
           birdeyeAPI.getTokenByMint(toToken.mint),
@@ -288,6 +240,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
           const estOutHuman = (fromHuman * fromUsd) / toUsd;
           setToAmount(estOutHuman.toFixed(6));
+          setQuote(null); // Clear actual quote, use indicative
           setQuoteError("");
           setIndicative(true);
         } else {
@@ -295,12 +248,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
           );
           setToAmount("");
+          setQuote(null);
           setQuoteError("");
           setIndicative(false);
         }
       } catch (err) {
         console.debug("Quote fetch error:", err);
         setToAmount("");
+        setQuote(null);
         setQuoteError("");
         setIndicative(false);
       } finally {
@@ -781,7 +736,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
       }
 
-      // No direct route: attempt bridged two-leg swap via USDC or SOL
+      // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL
       if (!fromToken || !toToken) throw new Error("Missing tokens");
       const slippageBps = Math.max(
         1,
@@ -793,50 +748,115 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
       const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
 
+      const bridgeAttempts = [];
+      let lastBridgeError = null;
+
       for (const bridge of BRIDGES) {
         if (bridge === fromToken.mint || bridge === toToken.mint) continue;
         const bridgeToken = allTokens.find((t) => t.mint === bridge);
         const bridgeDecimals =
-          bridgeToken?.decimals ?? (bridge === BRIDGES[1] ? 9 : 6);
+          bridgeToken?.decimals ?? (bridge === TOKEN_MINTS.USDT ? 6 : 6);
 
-        const q1 = await jupiterAPI.getQuote(
-          fromToken.mint,
-          bridge,
-          amountInt,
-          slippageBps,
-        );
-        if (!q1) continue;
-        const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
-        const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
-        const q2 = await jupiterAPI.getQuote(
-          bridge,
-          toToken.mint,
-          parseInt(amount2, 10),
-          slippageBps,
-        );
-        if (!q2) continue;
+        try {
+          console.log(
+            `Attempting bridged swap via ${bridgeToken?.symbol || bridge}...`,
+          );
 
-        // Execute leg1 then leg2
-        const sig1 = await submitQuote(q1);
-        toast({ title: "Leg 1 submitted", description: sig1 });
-        const sig2 = await submitQuote(q2);
-        setTxSignature(sig2);
-        setToAmount(
-          jupiterAPI.parseSwapAmount(q2.outAmount, toToken.decimals).toFixed(6),
-        );
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Completed!",
-          description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
-        });
-        // Send fee silently after swap completion
-        await sendSwapFee();
-        return;
+          // With improved retry logic on client/server, allow longer timeout for retries
+          const q1 = await jupiterAPI.getQuote(
+            fromToken.mint,
+            bridge,
+            amountInt,
+            slippageBps,
+          );
+          if (!q1 || !q1.outAmount || q1.outAmount === "0") {
+            const reason = !q1
+              ? "no_quote_leg1"
+              : q1.outAmount === "0"
+                ? "zero_output_leg1"
+                : "empty_outAmount_leg1";
+            bridgeAttempts.push({
+              bridge: bridgeToken?.symbol || bridge,
+              status: reason,
+            });
+            console.warn(
+              `Bridge ${bridgeToken?.symbol} leg1 failed: ${reason}`,
+            );
+            continue;
+          }
+
+          const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
+          const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
+          const q2 = await jupiterAPI.getQuote(
+            bridge,
+            toToken.mint,
+            parseInt(amount2, 10),
+            slippageBps,
+          );
+          if (!q2 || !q2.outAmount || q2.outAmount === "0") {
+            const reason = !q2
+              ? "no_quote_leg2"
+              : q2.outAmount === "0"
+                ? "zero_output_leg2"
+                : "empty_outAmount_leg2";
+            bridgeAttempts.push({
+              bridge: bridgeToken?.symbol || bridge,
+              status: reason,
+            });
+            console.warn(
+              `Bridge ${bridgeToken?.symbol} leg2 failed: ${reason}`,
+            );
+            continue;
+          }
+
+          // Execute leg1 then leg2
+          console.log(`Executing bridged swap via ${bridgeToken?.symbol}...`);
+          const sig1 = await submitQuote(q1);
+          toast({ title: "Leg 1 submitted", description: sig1 });
+          const sig2 = await submitQuote(q2);
+          setTxSignature(sig2);
+          setToAmount(
+            jupiterAPI
+              .parseSwapAmount(q2.outAmount, toToken.decimals)
+              .toFixed(6),
+          );
+          setStep("success");
+          setTimeout(() => refreshBalance?.(), 2000);
+          toast({
+            title: "Swap Completed!",
+            description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
+          });
+          // Send fee silently after swap completion
+          await sendSwapFee();
+          return;
+        } catch (bridgeErr) {
+          lastBridgeError = bridgeErr;
+          const errMsg =
+            bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr);
+          console.warn(
+            `Bridge attempt via ${bridgeToken?.symbol} failed:`,
+            bridgeErr,
+          );
+          bridgeAttempts.push({
+            bridge: bridgeToken?.symbol || bridge,
+            status: "error",
+            error: errMsg.substring(0, 50),
+          });
+          continue;
+        }
       }
 
+      const attemptSummary = bridgeAttempts
+        .map((a) => `${a.bridge} (${a.status})`)
+        .join(", ");
+      const errorDetail = lastBridgeError
+        ? lastBridgeError instanceof Error
+          ? lastBridgeError.message
+          : String(lastBridgeError)
+        : "Unknown error";
+
       throw new Error(
-        "No executable bridged route found. Liquidity may be insufficient.",
+        `No executable bridged route found. Attempted: ${attemptSummary || "none"}. ${errorDetail}`,
       );
     } catch (err: any) {
       console.error("Swap execution error:", err);
@@ -859,6 +879,19 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;
       } else if (errorMsg.includes("secret key")) {
         errorMsg = `Wallet signing failed. Your wallet may not be properly configured. Please reconnect your wallet and try again.`;
+      } else if (
+        errorMsg.includes("No executable bridged route found") ||
+        errorMsg.includes("Attempted bridges")
+      ) {
+        const isFixercoin = toToken?.symbol?.toLowerCase().includes("fixer");
+        const isPumpfun = toToken?.mint === TOKEN_MINTS.FIXERCOIN; // pump.fun tokens
+        let suggestion =
+          "Unable to find a swap route. Try: (1) Swapping through an intermediate token like USDC, (2) Using a smaller amount, or (3) Checking if both tokens have adequate liquidity.";
+        if (isPumpfun) {
+          suggestion +=
+            " FIXERCOIN is a pump.fun token - try using Raydium DEX directly for better liquidity, or swap to USDC first then bridge manually.";
+        }
+        errorMsg = suggestion;
       }
 
       toast({

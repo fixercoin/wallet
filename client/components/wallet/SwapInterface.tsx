@@ -358,12 +358,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                 <SelectValue placeholder="Select token" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200">
-                {tokenList.map((t) => (
-                  <SelectItem key={t.address} value={t.address}>
-                    <span className="text-gray-900 font-medium">{t.symbol}</span>
-                  </SelectItem>
-                ))}
+              <SelectContent className="bg-white border border-gray-200 z-50">
+                {tokenList.length > 0 ? (
+                  tokenList.map((t) => (
+                    <SelectItem key={t.address} value={t.address}>
+                      <span className="text-gray-900 font-medium">{t.symbol}</span>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-2 text-center text-sm text-gray-500">Loading tokens...</div>
+                )}
               </SelectContent>
             </Select>
           </div>

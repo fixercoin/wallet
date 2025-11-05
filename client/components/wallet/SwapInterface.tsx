@@ -921,7 +921,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           "Unable to find a swap route. Try: (1) Swapping through SOL first (A → SOL → B), (2) Using a smaller amount, or (3) Checking if both tokens have adequate liquidity.";
         if (isPumpfun) {
           suggestion +=
-            " FIXERCOIN is a pump.fun token - try using Raydium DEX directly for better liquidity, or swap to USDC first then bridge manually.";
+            " FIXERCOIN is a pump.fun token - try using Raydium DEX directly for better liquidity, or swap to SOL first then to the target token.";
         }
         errorMsg = suggestion;
       }

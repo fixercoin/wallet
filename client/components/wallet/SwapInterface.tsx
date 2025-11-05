@@ -67,33 +67,57 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const connection = new Connection(RPC, "confirmed");
       const walletPublicKey = new PublicKey(wallet.publicKey);
 
+      const convertSecretKey = (): Uint8Array => {
+        let secretKey = wallet.secretKey;
+
+        if (secretKey instanceof Uint8Array) {
+          return secretKey;
+        } else if (Array.isArray(secretKey)) {
+          return Uint8Array.from(secretKey);
+        } else if (typeof secretKey === "object" && secretKey !== null) {
+          const vals = Object.values(secretKey).filter(
+            (v) => typeof v === "number",
+          ) as number[];
+          if (vals.length > 0) {
+            return Uint8Array.from(vals);
+          }
+        }
+        throw new Error("Invalid secret key format");
+      };
+
       const localWalletAdapter = {
         publicKey: walletPublicKey,
         signTransaction: async (tx) => {
           const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
+          try {
+            const secretKeyBytes = convertSecretKey();
+            if (secretKeyBytes.length !== 64) {
+              throw new Error(`Invalid secret key length: ${secretKeyBytes.length}, expected 64`);
+            }
+            const keypair = Keypair.fromSecretKey(secretKeyBytes);
+            tx.sign([keypair]);
+            return tx;
+          } catch (error) {
+            console.error("[SwapInterface] Sign transaction error:", error);
+            throw error;
           }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          tx.sign([keypair]);
-          return tx;
         },
         signAllTransactions: async (txs) => {
           const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
+          try {
+            const secretKeyBytes = convertSecretKey();
+            if (secretKeyBytes.length !== 64) {
+              throw new Error(`Invalid secret key length: ${secretKeyBytes.length}, expected 64`);
+            }
+            const keypair = Keypair.fromSecretKey(secretKeyBytes);
+            return txs.map((tx) => {
+              tx.sign([keypair]);
+              return tx;
+            });
+          } catch (error) {
+            console.error("[SwapInterface] Sign all transactions error:", error);
+            throw error;
           }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          return txs.map((tx) => {
-            tx.sign([keypair]);
-            return tx;
-          });
         },
         connect: async () => walletPublicKey,
         disconnect: async () => {},

@@ -52,7 +52,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [toToken, setToToken] = useState<TokenInfo | null>(null);
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
-  const [slippage, setSlippage] = useState("0.5");
+  const [slippage, setSlippage] = useState("1.2");
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
   const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);
@@ -186,97 +186,51 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
 
         console.log(
-          `Fetching unified quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
+          `Fetching Jupiter Pump-only quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
 
-        // Use unified quote endpoint which tries: Jupiter → Meteora → PumpFun → Bridged
         const slippageBps = Math.max(
           1,
-          Math.round(parseFloat(slippage || "0.5") * 100),
+          Math.round(parseFloat(slippage || "1.2") * 100),
         );
 
-        const isPumpPair =
-          (fromToken.mint === TOKEN_MINTS.SOL &&
-            PUMP_TOKENS.some((p: any) => p.mint === toToken.mint)) ||
-          (toToken.mint === TOKEN_MINTS.SOL &&
-            PUMP_TOKENS.some((p: any) => p.mint === fromToken.mint));
-        const pumpMint =
-          fromToken.mint === TOKEN_MINTS.SOL ? toToken.mint : fromToken.mint;
-        const urlParams =
-          `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}` +
-          (isPumpPair ? `&mint=${encodeURIComponent(pumpMint)}` : "");
-        const quoteResponse = await fetch(resolveApiUrl(urlParams)).then(
-          (res) => res.json(),
+        // Request Pump.fun-only liquidity from Jupiter
+        const q = await jupiterAPI.getQuote(
+          fromToken.mint,
+          toToken.mint,
+          amountInt,
+          slippageBps,
+          { includeDexes: "Pump" },
         );
 
-        // Check if unified quote succeeded
-        if (quoteResponse && !quoteResponse.error) {
-          const q = quoteResponse.quote;
-          const outAmount =
-            q?.outAmount ||
-            q?.estimatedOut ||
-            q?.minReceived ||
-            q?.minimum_received ||
-            null;
+        // Validate that all legs are Pump-only; if not, reject
+        const isPumpOnly =
+          !!q && Array.isArray((q as any).routePlan)
+            ? ((q as any).routePlan as any[]).every((rp: any) => {
+                const lbl = rp?.swapInfo?.label || "";
+                return /pump/i.test(String(lbl));
+              })
+            : false;
 
-          if (outAmount && outAmount !== "0") {
-            console.log(
-              `✅ Quote succeeded via ${quoteResponse.source}: ${outAmount}`,
-            );
-
-            // Store the full quote response for execution
-            setQuote(q);
-            setMeteoraQuote(null);
-            setQuoteSource(quoteResponse.source || null);
-
-            // Parse and display output amount
-            const outHuman =
-              typeof outAmount === "string"
-                ? parseInt(outAmount, 10) / Math.pow(10, toToken.decimals)
-                : Number(outAmount) / Math.pow(10, toToken.decimals);
-
-            setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-            setQuoteError("");
-            setIndicative(false);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // If unified quote failed, fall back to Birdeye pricing
-        console.log(
-          `Unified quote failed, falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
-        );
-
-        const [fromBirdeye, toBirdeye] = await Promise.all([
-          birdeyeAPI.getTokenByMint(fromToken.mint),
-          birdeyeAPI.getTokenByMint(toToken.mint),
-        ]);
-        const fromUsd = fromBirdeye?.priceUsd
-          ? parseFloat(String(fromBirdeye.priceUsd))
-          : null;
-        const toUsd = toBirdeye?.priceUsd
-          ? parseFloat(String(toBirdeye.priceUsd))
-          : null;
-
-        if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
-          const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
-          const estOutHuman = (fromHuman * fromUsd) / toUsd;
-          setToAmount(estOutHuman.toFixed(6));
-          setQuote(null); // Clear actual quote, use indicative
-          setQuoteError("");
-          setIndicative(true);
-          setQuoteSource("indicative");
-        } else {
-          console.debug(
-            `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
-          );
-          setToAmount("");
-          setQuote(null);
+        if (q && q.outAmount && q.outAmount !== "0" && isPumpOnly) {
+          setQuote(q);
+          setMeteoraQuote(null);
+          setQuoteSource("jupiter");
+          const outHuman =
+            parseInt(q.outAmount, 10) / Math.pow(10, toToken.decimals);
+          setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
           setQuoteError("");
           setIndicative(false);
-          setQuoteSource(null);
+          setIsLoading(false);
+          return;
         }
+
+        // No Pump.fun route available
+        setQuote(null);
+        setToAmount("");
+        setIndicative(false);
+        setQuoteSource(null);
+        setQuoteError("No Pump.fun route available for this pair/amount.");
       } catch (err) {
         console.debug("Quote fetch error:", err);
         setToAmount("");
@@ -665,101 +619,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           } catch {}
         }
         return;
-      }
-
-      // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
-      if (!quote && meteoraQuote) {
-        try {
-          if (!wallet || !wallet.publicKey) {
-            throw new Error(
-              "Wallet not available for Meteora swap. Please reconnect your wallet.",
-            );
-          }
-
-          const swapTx = await buildMeteoraSwap(
-            meteoraQuote.route,
-            wallet.publicKey,
-          );
-
-          const txBase64 =
-            swapTx?.transaction ||
-            swapTx?.swapTransaction ||
-            swapTx?.transactionBase64 ||
-            swapTx?.base64 ||
-            swapTx;
-          if (!txBase64 || typeof txBase64 !== "string") {
-            throw new Error("Invalid swap transaction returned from Meteora");
-          }
-
-          // Prefer provider-based signing (do NOT use raw secret keys)
-          const provider =
-            (window as any).solana ?? (window as any).fixorium ?? null;
-          if (!provider || typeof provider.signTransaction !== "function") {
-            throw new Error(
-              "Wallet provider does not support signTransaction. Connect a compatible wallet/provider.",
-            );
-          }
-
-          const tx = Transaction.from(Buffer.from(txBase64, "base64"));
-          tx.feePayer = new PublicKey(wallet.publicKey);
-
-          const signedTx = await provider.signTransaction(tx);
-
-          let sig: string;
-          if (
-            connection &&
-            typeof connection.sendRawTransaction === "function"
-          ) {
-            sig = await connection.sendRawTransaction(signedTx.serialize(), {
-              skipPreflight: false,
-            });
-            // confirm
-            const latest = await connection.getLatestBlockhash();
-            await connection.confirmTransaction({
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-              signature: sig,
-            });
-          } else {
-            const signedBase64 = (() => {
-              try {
-                const arr = signedTx.serialize();
-                let bin = "";
-                for (let i = 0; i < arr.length; i++)
-                  bin += String.fromCharCode(arr[i]);
-                return btoa(bin);
-              } catch (e) {
-                return base64FromBytes(signedTx.serialize());
-              }
-            })();
-            const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ signedBase64 }),
-            });
-            if (!sendResp.ok) {
-              const txt = await sendResp.text().catch(() => "");
-              throw new Error(txt || sendResp.statusText || "Send failed");
-            }
-            const jb = await sendResp.json();
-            if (jb.error) throw new Error(jb.error?.message || "Send failed");
-            sig = jb.result as string;
-          }
-
-          setTxSignature(sig);
-          setStep("success");
-          setTimeout(() => refreshBalance?.(), 2000);
-          toast({
-            title: "Swap Completed!",
-            description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
-          });
-          // send fee
-          await sendSwapFee();
-          return;
-        } catch (e) {
-          console.error("Meteora swap failed:", e);
-          // continue to bridged attempts below
-        }
       }
 
       // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL

@@ -43,7 +43,10 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
   const [otpSession, setOtpSession] = useState<OTPSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [smsPreview, setSmsPreview] = useState<{ body: string; ts: number } | null>(null);
+  const [smsPreview, setSmsPreview] = useState<{
+    body: string;
+    ts: number;
+  } | null>(null);
   const { toast } = useToast();
 
   // Countdown timer for OTP expiry
@@ -85,7 +88,10 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
 
       // Send via fake SMS service (demo-only)
       try {
-        const msg = sendSMS(session.phoneNumber, `Your Fixorium verification code is ${session.code}`);
+        const msg = sendSMS(
+          session.phoneNumber,
+          `Your Fixorium verification code is ${session.code}`,
+        );
         setSmsPreview({ body: msg.body, ts: msg.ts });
       } catch (e) {
         console.warn("Failed to send fake SMS", e);
@@ -101,7 +107,10 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       setOtpCode("");
 
       // Notify user (demo)
-      toast({ title: "OTP Sent", description: `Sent to ${maskPhoneNumber(session.phoneNumber)}` });
+      toast({
+        title: "OTP Sent",
+        description: `Sent to ${maskPhoneNumber(session.phoneNumber)}`,
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to generate OTP code",

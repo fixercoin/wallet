@@ -387,12 +387,35 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
 
         if (!response.ok) {
           const text = await response.text().catch(() => "");
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch {}
 
           // Log detailed error info
           console.error(
             `Jupiter swap API error (attempt ${attempt}): ${response.status}`,
-            { text: text.substring(0, 200) },
+            { text: text.substring(0, 200), errorCode: errorData?.code },
           );
+
+          // Check for error 1016 (stale quote / swap simulation failed)
+          if (
+            errorData?.code === 1016 ||
+            text.includes("1016") ||
+            text.includes("Swap simulation failed") ||
+            text.includes("simulation") ||
+            text.includes("stale")
+          ) {
+            console.warn(
+              `Jupiter error 1016 detected (stale quote) on attempt ${attempt}`,
+            );
+            return res.status(530).json({
+              error: `Swap simulation failed - quote may be stale`,
+              details:
+                "Please refresh the quote and try again. Market conditions have changed.",
+              code: 1016,
+            });
+          }
 
           // If it's a client error or specific errors, don't retry
           if (

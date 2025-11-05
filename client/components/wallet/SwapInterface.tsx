@@ -49,92 +49,13 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const toTokenBalance =
     userTokens?.find((t) => t.mint === toMint)?.balance || 0;
 
-  const initJupiter = async () => {
-    if (initialized && jupiter) return jupiter;
+  const initTokenList = async () => {
+    if (initialized) return;
 
-    if (!wallet) {
-      setStatus("No wallet detected.");
-      return null;
-    }
-
-    setStatus("Initializing route solver...");
+    setStatus("Loading tokens...");
 
     try {
-      const { Jupiter } = await import("https://esm.sh/@jup-ag/core@4.3.0");
-
-      const connection = new Connection(RPC, "confirmed");
-      const walletPublicKey = new PublicKey(wallet.publicKey);
-
-      const convertSecretKey = (): Uint8Array => {
-        let secretKey = wallet.secretKey;
-
-        if (secretKey instanceof Uint8Array) {
-          return secretKey;
-        } else if (Array.isArray(secretKey)) {
-          return Uint8Array.from(secretKey);
-        } else if (typeof secretKey === "object" && secretKey !== null) {
-          const vals = Object.values(secretKey).filter(
-            (v) => typeof v === "number",
-          ) as number[];
-          if (vals.length > 0) {
-            return Uint8Array.from(vals);
-          }
-        }
-        throw new Error("Invalid secret key format");
-      };
-
-      const localWalletAdapter = {
-        publicKey: walletPublicKey,
-        signTransaction: async (tx) => {
-          const { Keypair } = await import("@solana/web3.js");
-          try {
-            const secretKeyBytes = convertSecretKey();
-            if (secretKeyBytes.length !== 64) {
-              throw new Error(
-                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
-              );
-            }
-            const keypair = Keypair.fromSecretKey(secretKeyBytes);
-            tx.sign([keypair]);
-            return tx;
-          } catch (error) {
-            console.error("[SwapInterface] Sign transaction error:", error);
-            throw error;
-          }
-        },
-        signAllTransactions: async (txs) => {
-          const { Keypair } = await import("@solana/web3.js");
-          try {
-            const secretKeyBytes = convertSecretKey();
-            if (secretKeyBytes.length !== 64) {
-              throw new Error(
-                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
-              );
-            }
-            const keypair = Keypair.fromSecretKey(secretKeyBytes);
-            return txs.map((tx) => {
-              tx.sign([keypair]);
-              return tx;
-            });
-          } catch (error) {
-            console.error(
-              "[SwapInterface] Sign all transactions error:",
-              error,
-            );
-            throw error;
-          }
-        },
-        connect: async () => walletPublicKey,
-        disconnect: async () => {},
-      };
-
-      const jup = await Jupiter.load({
-        connection,
-        cluster: "mainnet-beta",
-        user: localWalletAdapter,
-      });
-
-      const jupiterTokens = Object.values(jup.tokens);
+      const jupiterTokens = await jupiterAPI.getStrictTokenList();
 
       const setupTokenMints = Object.values(TOKEN_MINTS);
       const setupTokens = jupiterTokens.filter((t) =>
@@ -176,12 +97,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setTokenList(combinedTokens);
       }
 
-      setJupiter(jup);
       setInitialized(true);
       setStatus("");
-      return jup;
     } catch (err) {
-      console.error("[SwapInterface] Error initializing Jupiter:", err);
+      console.error("[SwapInterface] Error loading tokens:", err);
       setStatus("Using available tokens...");
 
       const fallbackTokens = (userTokens || []).map((ut) => ({
@@ -207,7 +126,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       setInitialized(true);
-      return null;
     }
   };
 

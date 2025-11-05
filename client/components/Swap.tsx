@@ -221,6 +221,25 @@ export default function Swap() {
     }
   };
 
+  if (!wallet) {
+    return (
+      <div
+        style={{
+          maxWidth: "520px",
+          padding: "12px",
+          border: "1px solid #eee",
+          borderRadius: "8px",
+          fontFamily: "Arial, sans-serif",
+          textAlign: "center",
+          color: "#666",
+        }}
+      >
+        <h3 style={{ margin: "0 0 8px 0" }}>Fixorium — Convert (Direct)</h3>
+        <p>No wallet detected. Please set up or import a wallet to use the swap feature.</p>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -234,15 +253,10 @@ export default function Swap() {
       <h3 style={{ margin: "0 0 8px 0" }}>Fixorium — Convert (Direct)</h3>
 
       <div style={{ marginBottom: "8px" }}>
-        <button
-          onClick={connectWallet}
-          style={{ padding: "8px 10px", cursor: "pointer" }}
-        >
-          Connect Phantom
-        </button>
-        <span style={{ marginLeft: "10px", color: "#666" }}>
-          {walletAddr || "Not connected"}
-        </span>
+        <span style={{ fontSize: "12px", color: "#999" }}>Wallet:</span>
+        <div style={{ fontSize: "12px", color: "#333", wordBreak: "break-all" }}>
+          {wallet.publicKey}
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "8px" }}>

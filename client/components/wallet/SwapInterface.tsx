@@ -781,7 +781,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
       }
 
-      // No direct route: attempt bridged two-leg swap via USDC or SOL
+      // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL
       if (!fromToken || !toToken) throw new Error("Missing tokens");
       const slippageBps = Math.max(
         1,
@@ -793,50 +793,79 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       );
       const BRIDGES = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
 
+      const bridgeAttempts = [];
       for (const bridge of BRIDGES) {
         if (bridge === fromToken.mint || bridge === toToken.mint) continue;
         const bridgeToken = allTokens.find((t) => t.mint === bridge);
         const bridgeDecimals =
-          bridgeToken?.decimals ?? (bridge === BRIDGES[1] ? 9 : 6);
+          bridgeToken?.decimals ?? (bridge === TOKEN_MINTS.USDT ? 6 : 6);
 
-        const q1 = await jupiterAPI.getQuote(
-          fromToken.mint,
-          bridge,
-          amountInt,
-          slippageBps,
-        );
-        if (!q1) continue;
-        const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
-        const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
-        const q2 = await jupiterAPI.getQuote(
-          bridge,
-          toToken.mint,
-          parseInt(amount2, 10),
-          slippageBps,
-        );
-        if (!q2) continue;
+        try {
+          const q1 = await jupiterAPI.getQuote(
+            fromToken.mint,
+            bridge,
+            amountInt,
+            slippageBps,
+          );
+          if (!q1 || !q1.outAmount || q1.outAmount === "0") {
+            bridgeAttempts.push({
+              bridge: bridgeToken?.symbol || bridge,
+              status: "no_quote_leg1",
+            });
+            continue;
+          }
 
-        // Execute leg1 then leg2
-        const sig1 = await submitQuote(q1);
-        toast({ title: "Leg 1 submitted", description: sig1 });
-        const sig2 = await submitQuote(q2);
-        setTxSignature(sig2);
-        setToAmount(
-          jupiterAPI.parseSwapAmount(q2.outAmount, toToken.decimals).toFixed(6),
-        );
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Completed!",
-          description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
-        });
-        // Send fee silently after swap completion
-        await sendSwapFee();
-        return;
+          const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
+          const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
+          const q2 = await jupiterAPI.getQuote(
+            bridge,
+            toToken.mint,
+            parseInt(amount2, 10),
+            slippageBps,
+          );
+          if (!q2 || !q2.outAmount || q2.outAmount === "0") {
+            bridgeAttempts.push({
+              bridge: bridgeToken?.symbol || bridge,
+              status: "no_quote_leg2",
+            });
+            continue;
+          }
+
+          // Execute leg1 then leg2
+          const sig1 = await submitQuote(q1);
+          toast({ title: "Leg 1 submitted", description: sig1 });
+          const sig2 = await submitQuote(q2);
+          setTxSignature(sig2);
+          setToAmount(
+            jupiterAPI
+              .parseSwapAmount(q2.outAmount, toToken.decimals)
+              .toFixed(6),
+          );
+          setStep("success");
+          setTimeout(() => refreshBalance?.(), 2000);
+          toast({
+            title: "Swap Completed!",
+            description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
+          });
+          // Send fee silently after swap completion
+          await sendSwapFee();
+          return;
+        } catch (bridgeErr) {
+          console.warn(`Bridge attempt via ${bridgeToken?.symbol} failed:`, bridgeErr);
+          bridgeAttempts.push({
+            bridge: bridgeToken?.symbol || bridge,
+            status: "error",
+            error: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+          });
+          continue;
+        }
       }
 
+      const attemptSummary = bridgeAttempts
+        .map((a) => `${a.bridge} (${a.status})`)
+        .join(", ");
       throw new Error(
-        "No executable bridged route found. Liquidity may be insufficient.",
+        `No executable bridged route found. Attempted bridges: ${attemptSummary || "none"}. Liquidity may be insufficient or tokens may not be supported on Jupiter.`,
       );
     } catch (err: any) {
       console.error("Swap execution error:", err);

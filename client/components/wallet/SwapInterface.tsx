@@ -204,12 +204,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         );
 
         // Validate that all legs are Pump-only; if not, reject
-        const isPumpOnly = !!q && Array.isArray((q as any).routePlan)
-          ? ((q as any).routePlan as any[]).every((rp: any) => {
-              const lbl = rp?.swapInfo?.label || "";
-              return /pump/i.test(String(lbl));
-            })
-          : false;
+        const isPumpOnly =
+          !!q && Array.isArray((q as any).routePlan)
+            ? ((q as any).routePlan as any[]).every((rp: any) => {
+                const lbl = rp?.swapInfo?.label || "";
+                return /pump/i.test(String(lbl));
+              })
+            : false;
 
         if (q && q.outAmount && q.outAmount !== "0" && isPumpOnly) {
           setQuote(q);
@@ -619,7 +620,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
         return;
       }
-
 
       // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL
       if (!fromToken || !toToken) throw new Error("Missing tokens");

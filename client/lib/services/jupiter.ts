@@ -69,7 +69,11 @@ class JupiterAPI {
     outputMint: string,
     amount: number,
     slippageBps: number = 120,
-    opts?: { includeDexes?: string; excludeDexes?: string; onlyDirectRoutes?: boolean },
+    opts?: {
+      includeDexes?: string;
+      excludeDexes?: string;
+      onlyDirectRoutes?: boolean;
+    },
   ): Promise<JupiterQuoteResponse | null> {
     // Retry logic for transient failures
     for (let attempt = 1; attempt <= 2; attempt++) {

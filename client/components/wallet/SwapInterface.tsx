@@ -260,6 +260,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setQuote(null); // Clear actual quote, use indicative
           setQuoteError("");
           setIndicative(true);
+          setQuoteSource("indicative");
         } else {
           console.debug(
             `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
@@ -268,6 +269,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           setQuote(null);
           setQuoteError("");
           setIndicative(false);
+          setQuoteSource(null);
         }
       } catch (err) {
         console.debug("Quote fetch error:", err);

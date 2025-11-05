@@ -287,7 +287,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!kp) throw new Error("Missing wallet key to sign transaction");
 
       const swapTransactionBuf = bytesFromBase64(swapResponse.swapTransaction);
-      const tx = VersionedTransaction.deserialize(swapTransactionBuf);
+      let tx = VersionedTransaction.deserialize(swapTransactionBuf);
+
+      if (fromToken) {
+        tx = await addFeeTransferInstruction(
+          tx,
+          fromToken.mint,
+          jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
+          fromToken.decimals,
+          wallet.publicKey,
+        );
+      }
+
       tx.sign([kp]);
       const serialized = tx.serialize();
 

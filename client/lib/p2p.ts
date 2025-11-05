@@ -50,8 +50,8 @@ export async function createOrder(
   },
   adminToken: string,
 ) {
-  const base = API_BASE;
-  const res = await fetch(`${base}/api/orders`, {
+  const url = resolveApiUrl(`/api/orders`);
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",

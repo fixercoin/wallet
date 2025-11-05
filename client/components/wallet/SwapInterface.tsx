@@ -92,7 +92,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           try {
             const secretKeyBytes = convertSecretKey();
             if (secretKeyBytes.length !== 64) {
-              throw new Error(`Invalid secret key length: ${secretKeyBytes.length}, expected 64`);
+              throw new Error(
+                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
+              );
             }
             const keypair = Keypair.fromSecretKey(secretKeyBytes);
             tx.sign([keypair]);
@@ -107,7 +109,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           try {
             const secretKeyBytes = convertSecretKey();
             if (secretKeyBytes.length !== 64) {
-              throw new Error(`Invalid secret key length: ${secretKeyBytes.length}, expected 64`);
+              throw new Error(
+                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
+              );
             }
             const keypair = Keypair.fromSecretKey(secretKeyBytes);
             return txs.map((tx) => {
@@ -115,7 +119,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               return tx;
             });
           } catch (error) {
-            console.error("[SwapInterface] Sign all transactions error:", error);
+            console.error(
+              "[SwapInterface] Sign all transactions error:",
+              error,
+            );
             throw error;
           }
         },
@@ -624,8 +631,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 Confirm Swap
               </AlertDialogTitle>
               <AlertDialogDescription className="text-gray-300">
-                You are about to swap {amount} {fromToken?.symbol} for approximately{" "}
-                {quote?.outHuman.toFixed(6)} {quote?.outToken}
+                You are about to swap {amount} {fromToken?.symbol} for
+                approximately {quote?.outHuman.toFixed(6)} {quote?.outToken}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -538,10 +538,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             className="w-full bg-gradient-to-r from-[#5a9f6f] to-[#3d7a52] hover:from-[#4a8f5f] hover:to-[#2d6a42] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Computing...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               "Get Quote"
             )}

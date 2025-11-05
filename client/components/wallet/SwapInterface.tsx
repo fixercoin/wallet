@@ -274,10 +274,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const executeSwap = async () => {
+  const confirmSwap = async () => {
     try {
       setStatus("Preparing swap…");
       setIsLoading(true);
+      setShowConfirmation(false);
 
       if (!wallet) {
         setStatus("No wallet detected.");
@@ -352,6 +353,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const executeSwap = () => {
+    setShowConfirmation(true);
   };
 
   if (!wallet) {

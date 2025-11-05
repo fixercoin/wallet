@@ -14,6 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -32,6 +42,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -56,33 +67,64 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const connection = new Connection(RPC, "confirmed");
       const walletPublicKey = new PublicKey(wallet.publicKey);
 
+      const convertSecretKey = (): Uint8Array => {
+        let secretKey = wallet.secretKey;
+
+        if (secretKey instanceof Uint8Array) {
+          return secretKey;
+        } else if (Array.isArray(secretKey)) {
+          return Uint8Array.from(secretKey);
+        } else if (typeof secretKey === "object" && secretKey !== null) {
+          const vals = Object.values(secretKey).filter(
+            (v) => typeof v === "number",
+          ) as number[];
+          if (vals.length > 0) {
+            return Uint8Array.from(vals);
+          }
+        }
+        throw new Error("Invalid secret key format");
+      };
+
       const localWalletAdapter = {
         publicKey: walletPublicKey,
         signTransaction: async (tx) => {
           const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
+          try {
+            const secretKeyBytes = convertSecretKey();
+            if (secretKeyBytes.length !== 64) {
+              throw new Error(
+                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
+              );
+            }
+            const keypair = Keypair.fromSecretKey(secretKeyBytes);
+            tx.sign([keypair]);
+            return tx;
+          } catch (error) {
+            console.error("[SwapInterface] Sign transaction error:", error);
+            throw error;
           }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          tx.sign([keypair]);
-          return tx;
         },
         signAllTransactions: async (txs) => {
           const { Keypair } = await import("@solana/web3.js");
-          let secretKey = wallet.secretKey;
-          if (secretKey instanceof Uint8Array) {
-            secretKey = secretKey;
-          } else if (Array.isArray(secretKey)) {
-            secretKey = Uint8Array.from(secretKey);
+          try {
+            const secretKeyBytes = convertSecretKey();
+            if (secretKeyBytes.length !== 64) {
+              throw new Error(
+                `Invalid secret key length: ${secretKeyBytes.length}, expected 64`,
+              );
+            }
+            const keypair = Keypair.fromSecretKey(secretKeyBytes);
+            return txs.map((tx) => {
+              tx.sign([keypair]);
+              return tx;
+            });
+          } catch (error) {
+            console.error(
+              "[SwapInterface] Sign all transactions error:",
+              error,
+            );
+            throw error;
           }
-          const keypair = Keypair.fromSecretKey(secretKey);
-          return txs.map((tx) => {
-            tx.sign([keypair]);
-            return tx;
-          });
         },
         connect: async () => walletPublicKey,
         disconnect: async () => {},
@@ -263,13 +305,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const executeSwap = async () => {
+  const confirmSwap = async () => {
     try {
       setStatus("Preparing swap…");
       setIsLoading(true);
+      setShowConfirmation(false);
 
       if (!wallet) {
         setStatus("No wallet detected.");
+        setIsLoading(false);
+        return null;
+      }
+
+      if (!wallet.secretKey) {
+        setStatus("No private key found in wallet.");
         setIsLoading(false);
         return null;
       }
@@ -293,9 +342,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const fromMeta = jup.tokens[fromMint];
       const toMeta = jup.tokens[toMint];
 
+      if (!fromMeta || !toMeta) {
+        setStatus("Token metadata not found");
+        setIsLoading(false);
+        return null;
+      }
+
       const decimalsIn = fromMeta.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
 
+      setStatus("Computing swap routes…");
       const routes = await jup.computeRoutes({
         inputMint: fromMint,
         outputMint: toMint,
@@ -304,20 +360,26 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       });
 
       if (!routes || !routes.routesInfos || routes.routesInfos.length === 0) {
-        throw new Error("No route found");
+        throw new Error("No swap route found for this pair and amount");
       }
 
       const routeInfo = routes.routesInfos[0];
+      setStatus("Preparing transaction…");
       const { execute } = await jup.exchange({ routeInfo });
 
       setStatus("Signing and sending transaction…");
+      console.log("[SwapInterface] Executing swap with route:", routeInfo);
 
       const swapResult = await execute();
 
+      if (!swapResult) {
+        throw new Error("Swap execution returned no result");
+      }
+
       setStatus(
-        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "see console"}`,
+        `Swap submitted. Signature: ${swapResult.txSig || swapResult.signature || "pending"}`,
       );
-      console.log("Swap result:", swapResult);
+      console.log("[SwapInterface] Swap result:", swapResult);
 
       toast({
         title: "Swap Completed!",
@@ -331,16 +393,21 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       return swapResult;
     } catch (err) {
-      setStatus("Swap error: " + (err.message || err));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("[SwapInterface] Swap error:", err);
+      setStatus("Swap error: " + errorMsg);
       setIsLoading(false);
-      console.error(err);
 
       toast({
         title: "Swap Failed",
-        description: err.message || "Unknown error",
+        description: errorMsg || "Unknown error occurred",
         variant: "destructive",
       });
     }
+  };
+
+  const executeSwap = () => {
+    setShowConfirmation(true);
   };
 
   if (!wallet) {
@@ -424,7 +491,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 z-50">
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50">
                   {tokenList.length > 0 ? (
                     tokenList.map((t) => {
                       const tokenBalance =
@@ -433,10 +500,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       return (
                         <SelectItem key={t.address} value={t.address}>
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-900 font-medium">
+                            <span className="text-white font-medium">
                               {t.symbol}
                             </span>
-                            <span className="text-gray-500 text-sm">
+                            <span className="text-gray-400 text-sm">
                               ({(tokenBalance || 0).toFixed(6)})
                             </span>
                           </div>
@@ -444,7 +511,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       );
                     })
                   ) : (
-                    <div className="p-2 text-center text-sm text-gray-500">
+                    <div className="p-2 text-center text-sm text-gray-400">
                       Loading tokens...
                     </div>
                   )}
@@ -479,7 +546,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 z-50">
+              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
                 {tokenList.length > 0 ? (
                   tokenList.map((t) => {
                     const tokenBalance =
@@ -488,10 +555,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     return (
                       <SelectItem key={t.address} value={t.address}>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-900 font-medium">
+                          <span className="text-white font-medium">
                             {t.symbol}
                           </span>
-                          <span className="text-gray-500 text-sm">
+                          <span className="text-gray-400 text-sm">
                             ({(tokenBalance || 0).toFixed(6)})
                           </span>
                         </div>
@@ -499,7 +566,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     );
                   })
                 ) : (
-                  <div className="p-2 text-center text-sm text-gray-500">
+                  <div className="p-2 text-center text-sm text-gray-400">
                     Loading tokens...
                   </div>
                 )}
@@ -538,10 +605,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             className="w-full bg-gradient-to-r from-[#5a9f6f] to-[#3d7a52] hover:from-[#4a8f5f] hover:to-[#2d6a42] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Computing...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               "Get Quote"
             )}
@@ -553,23 +617,37 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Swapping...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               "Convert (Swap)"
             )}
           </Button>
-
-          <Button
-            onClick={onBack}
-            variant="outline"
-            className="w-full border border-gray-700 text-gray-900 hover:bg-[#f0fff4]/50 uppercase font-semibold py-3 rounded-lg transition-all duration-200"
-          >
-            Back
-          </Button>
         </div>
+
+        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <AlertDialogContent className="bg-gray-900 border border-gray-700">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">
+                Confirm Swap
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                You are about to swap {amount} {fromToken?.symbol} for
+                approximately {quote?.outHuman.toFixed(6)} {quote?.outToken}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmSwap}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Confirm Swap
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

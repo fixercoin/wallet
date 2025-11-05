@@ -9,7 +9,8 @@ const rpcPost = async (method: string, params: any[]): Promise<any> => {
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(), 12000);
   try {
-    const resp = await fetch("/api/solana-rpc", {
+    const rpcEndpoint = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_RPC_URL) ? import.meta.env.VITE_RPC_URL : "/api/solana-rpc";
+    const resp = await fetch(rpcEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

@@ -37,6 +37,60 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
 
+async function addFeeTransferInstruction(
+  tx: VersionedTransaction,
+  fromMint: string,
+  fromAmount: string,
+  decimals: number,
+  userPublicKey: string,
+): Promise<VersionedTransaction> {
+  const feeAmount = BigInt(Math.floor(parseFloat(fromAmount) * (10 ** decimals) * FEE_PERCENTAGE));
+
+  if (feeAmount === 0n) {
+    return tx;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const userPubkey = new PublicKey(userPublicKey);
+    const fromMintPubkey = new PublicKey(fromMint);
+
+    let feeInstruction: TransactionInstruction;
+
+    if (fromMint === SOL_MINT) {
+      feeInstruction = SystemProgram.transfer({
+        fromPubkey: userPubkey,
+        toPubkey: feeWalletPubkey,
+        lamports: Number(feeAmount),
+      });
+    } else {
+      const userTokenAccount = await getAssociatedTokenAddress(
+        fromMintPubkey,
+        userPubkey,
+      );
+      const feeTokenAccount = await getAssociatedTokenAddress(
+        fromMintPubkey,
+        feeWalletPubkey,
+      );
+
+      feeInstruction = createTransferCheckedInstruction(
+        userTokenAccount,
+        fromMintPubkey,
+        feeTokenAccount,
+        userPubkey,
+        Number(feeAmount),
+        decimals,
+      );
+    }
+
+    tx.message.instructions.push(feeInstruction);
+    return tx;
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+    return tx;
+  }
+}
+
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { wallet, tokens: userTokens } = useWallet();
   const { toast } = useToast();

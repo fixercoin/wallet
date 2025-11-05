@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,10 +17,7 @@ import {
   JupiterQuoteResponse,
   JupiterSwapResponse,
 } from "@/lib/services/jupiter";
-import {
-  TokenInfo,
-  recoverWallet,
-} from "@/lib/wallet";
+import { TokenInfo, recoverWallet } from "@/lib/wallet";
 import { resolveApiUrl } from "@/lib/api-client";
 import { VersionedTransaction, Keypair, Connection } from "@solana/web3.js";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
@@ -81,7 +73,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   useEffect(() => {
     const getQuote = async () => {
-      if (!fromAmount || !fromToken || !toToken || parseFloat(fromAmount) <= 0) {
+      if (
+        !fromAmount ||
+        !fromToken ||
+        !toToken ||
+        parseFloat(fromAmount) <= 0
+      ) {
         setQuote(null);
         setToAmount("");
         return;
@@ -121,12 +118,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [fromAmount, fromToken, toToken, slippage]);
 
   const handleSwapTokens = () => {
-    [setFromToken, setFromAmount, setToToken, setToAmount].forEach((setter, i) => {
-      if (i === 0) setFromToken(toToken);
-      if (i === 1) setFromAmount(toAmount);
-      if (i === 2) setToToken(fromToken);
-      if (i === 3) setToAmount(fromAmount);
-    });
+    [setFromToken, setFromAmount, setToToken, setToAmount].forEach(
+      (setter, i) => {
+        if (i === 0) setFromToken(toToken);
+        if (i === 1) setFromAmount(toAmount);
+        if (i === 2) setToToken(fromToken);
+        if (i === 3) setToAmount(fromAmount);
+      },
+    );
   };
 
   const getKeypair = (): Keypair | null => {
@@ -177,8 +176,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         ) {
           toast({
             title: "Quote Expired",
-            description:
-              "The quote expired. Refreshing and retrying...",
+            description: "The quote expired. Refreshing and retrying...",
             variant: "default",
           });
 
@@ -369,7 +367,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         <Button
           onClick={executeSwap}
-          disabled={!fromToken || !toToken || !fromAmount || isLoading || !quote}
+          disabled={
+            !fromToken || !toToken || !fromAmount || isLoading || !quote
+          }
           className="w-full"
         >
           {isLoading ? (

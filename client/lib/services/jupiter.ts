@@ -200,7 +200,11 @@ class JupiterAPI {
           errorObj = { error: txt };
         }
 
-        console.error("Jupiter swap error response:", response.status, errorObj);
+        console.error(
+          "Jupiter swap error response:",
+          response.status,
+          errorObj,
+        );
 
         const errorMsg =
           errorObj?.error ||

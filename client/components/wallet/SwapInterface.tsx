@@ -561,14 +561,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               "Convert (Swap)"
             )}
           </Button>
-
-          <Button
-            onClick={onBack}
-            variant="outline"
-            className="w-full border border-gray-700 text-gray-900 hover:bg-[#f0fff4]/50 uppercase font-semibold py-3 rounded-lg transition-all duration-200"
-          >
-            Back
-          </Button>
         </div>
       </div>
     </div>

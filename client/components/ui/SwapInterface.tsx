@@ -27,8 +27,19 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
-import { Keypair, VersionedTransaction } from "@solana/web3.js";
+import {
+  Keypair,
+  VersionedTransaction,
+  SystemProgram,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+import { createTransferCheckedInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
+
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+const FEE_PERCENTAGE = 0.01;
 
 interface SwapInterfaceProps {
   onBack: () => void;

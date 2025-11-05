@@ -349,6 +349,65 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     } catch (err: any) {
       console.error("Swap execution error:", err);
       let message = err instanceof Error ? err.message : String(err);
+      let isStaleQuote = false;
+
+      if (message.includes("STALE_QUOTE")) {
+        isStaleQuote = true;
+        message = "Quote expired. Refreshing quote and retrying...";
+        toast({
+          title: "Quote Expired",
+          description: message,
+          variant: "default",
+        });
+
+        setIsLoading(false);
+        setStep("form");
+
+        if (quote && fromToken && toToken && fromAmount) {
+          setTimeout(async () => {
+            try {
+              const amount = jupiterAPI.formatSwapAmount(
+                parseFloat(fromAmount),
+                fromToken.decimals,
+              );
+              const freshQuote = await jupiterAPI.getQuote(
+                fromToken.mint,
+                toToken.mint,
+                parseInt(amount),
+                parseInt(slippage) * 100,
+              );
+              if (freshQuote) {
+                setQuote(freshQuote);
+                const out = jupiterAPI.parseSwapAmount(
+                  freshQuote.outAmount,
+                  toToken.decimals,
+                );
+                setToAmount(out.toFixed(6));
+                setStep("confirm");
+                toast({
+                  title: "Quote Refreshed",
+                  description: "New quote is ready. Try swapping again.",
+                });
+              } else {
+                toast({
+                  title: "Quote Refresh Failed",
+                  description: "Could not get a fresh quote. Please try again.",
+                  variant: "destructive",
+                });
+              }
+            } catch (e) {
+              console.error("Error refreshing quote:", e);
+              toast({
+                title: "Quote Refresh Error",
+                description: String(e),
+                variant: "destructive",
+              });
+            }
+          }, 500);
+        }
+        return;
+      }
+
       if (
         message.includes("No executable bridged route found") ||
         message.includes("Attempted bridges") ||
@@ -357,13 +416,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         message =
           "No route available. Try swapping via USDC or reduce the amount.";
       }
+
       toast({
         title: "Swap Failed",
         description: message,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (!isStaleQuote) {
+        setIsLoading(false);
+      }
     }
   };
 

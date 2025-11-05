@@ -1,31 +1,22 @@
 import React, { useState, useEffect } from "react";
+import { useWallet } from "../contexts/WalletContext";
+import { PublicKey, Transaction, Connection } from "@solana/web3.js";
+import bs58 from "bs58";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const RPC = "https://api.mainnet-beta.solana.com";
 
 export default function Swap() {
-  const [provider, setProvider] = useState(null);
+  const { wallet } = useWallet();
   const [jupiter, setJupiter] = useState(null);
   const [tokenList, setTokenList] = useState([]);
-  const [walletAddr, setWalletAddr] = useState("");
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
   const [amount, setAmount] = useState("");
   const [quote, setQuote] = useState(null);
   const [status, setStatus] = useState("");
   const [initialized, setInitialized] = useState(false);
-
-  const connectWallet = async () => {
-    if (!window.solana || !window.solana.isPhantom) {
-      throw new Error("Phantom not found. Install Phantom to proceed.");
-    }
-    const prov = window.solana;
-    await prov.connect();
-    setProvider(prov);
-    setWalletAddr(prov.publicKey.toString());
-    return prov;
-  };
 
   const initJupiter = async () => {
     if (initialized) return jupiter;

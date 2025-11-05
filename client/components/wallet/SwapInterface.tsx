@@ -112,16 +112,27 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         ...jupiterTokens.map(t => [t.address, t]),
       ]).values());
 
-      combinedTokens.sort((a, b) => {
-        if (a.address === SOL_MINT) return -1;
-        if (b.address === SOL_MINT) return 1;
-        if (a.address === FIXER_MINT) return -1;
-        if (b.address === FIXER_MINT) return 1;
-        return a.symbol.localeCompare(b.symbol);
-      });
+      if (combinedTokens.length === 0) {
+        console.warn("[SwapInterface] No tokens found from Jupiter, using user tokens as fallback");
+        const fallbackTokens = (userTokens || []).map(ut => ({
+          address: ut.mint,
+          symbol: ut.symbol,
+          decimals: ut.decimals,
+          name: ut.name,
+        }));
+        setTokenList(fallbackTokens);
+      } else {
+        combinedTokens.sort((a, b) => {
+          if (a.address === SOL_MINT) return -1;
+          if (b.address === SOL_MINT) return 1;
+          if (a.address === FIXER_MINT) return -1;
+          if (b.address === FIXER_MINT) return 1;
+          return a.symbol.localeCompare(b.symbol);
+        });
+        setTokenList(combinedTokens);
+      }
 
       setJupiter(jup);
-      setTokenList(combinedTokens);
       setInitialized(true);
       setStatus("");
       return jup;

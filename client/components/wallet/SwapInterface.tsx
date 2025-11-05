@@ -183,34 +183,32 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         decimalsIn,
       );
 
-      const quote = await jupiterAPI.getQuote(
+      const quoteResponse = await jupiterAPI.getQuote(
         fromMint,
         toMint,
         parseInt(amountStr),
         5000,
       );
 
-      if (!quote || !quote.routesInfos || quote.routesInfos.length === 0) {
+      if (!quoteResponse) {
         setQuote(null);
         setStatus("No route found for this pair/amount.");
         setIsLoading(false);
         return null;
       }
 
-      const best = quote.routesInfos[0];
-      const outAmount = BigInt(best.outAmount ?? 0);
+      const outAmount = BigInt(quoteResponse.outAmount);
       const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
 
       setQuote({
-        routes: quote,
-        best,
+        quoteResponse,
         outHuman,
         outToken: toToken.symbol,
-        hops: best.marketInfos?.length ?? 0,
+        hops: quoteResponse.routePlan?.length ?? 0,
       });
       setStatus("");
       setIsLoading(false);
-      return { routes: quote, best };
+      return { quoteResponse };
     } catch (err) {
       setStatus("Error: " + (err.message || err));
       setIsLoading(false);

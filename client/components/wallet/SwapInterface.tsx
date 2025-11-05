@@ -277,6 +277,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         setQuote(null);
         setQuoteError("");
         setIndicative(false);
+        setQuoteSource(null);
       } finally {
         setIsLoading(false);
       }

@@ -160,6 +160,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         setToAmount("");
         setQuoteError("Quotes unavailable for this pair on Jupiter");
         setIndicative(false);
+        setQuoteSource(null);
         return;
       }
       setQuoteError("");

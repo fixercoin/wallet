@@ -131,7 +131,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         return "Profit target must be >= 0.1%";
     }
 
-    if (sellStrategy === "manually-target") {
+    if (sellStrategy === "manual-target") {
       if (!manualPriceTarget) return "Manual price target is required";
       const target = parseFloat(manualPriceTarget);
       if (isNaN(target) || target <= 0)

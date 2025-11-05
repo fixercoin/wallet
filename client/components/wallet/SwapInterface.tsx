@@ -778,9 +778,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         PUMP_TOKENS.some(
           (p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint,
         );
-      const BRIDGES = isPumpfunToken
-        ? [TOKEN_MINTS.SOL]
-        : [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
+      const BRIDGES = [TOKEN_MINTS.SOL];
 
       const bridgeAttempts = [];
       let lastBridgeError = null;

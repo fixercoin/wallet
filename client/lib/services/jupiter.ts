@@ -68,7 +68,8 @@ class JupiterAPI {
     inputMint: string,
     outputMint: string,
     amount: number,
-    slippageBps: number = 50,
+    slippageBps: number = 120,
+    opts?: { includeDexes?: string; excludeDexes?: string; onlyDirectRoutes?: boolean },
   ): Promise<JupiterQuoteResponse | null> {
     // Retry logic for transient failures
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -79,6 +80,10 @@ class JupiterAPI {
           amount: amount.toString(),
           slippageBps: slippageBps.toString(),
         });
+        if (opts?.includeDexes) params.set("includeDexes", opts.includeDexes);
+        if (opts?.excludeDexes) params.set("excludeDexes", opts.excludeDexes);
+        if (typeof opts?.onlyDirectRoutes === "boolean")
+          params.set("onlyDirectRoutes", String(opts.onlyDirectRoutes));
 
         const url = resolveApiUrl(`/api/jupiter/quote?${params.toString()}`);
         console.log(

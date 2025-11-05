@@ -324,17 +324,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               From
             </Label>
             <div className="flex gap-3">
-              <select
-                value={fromMint}
-                onChange={(e) => setFromMint(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400"
-              >
-                {tokenList.map((t) => (
-                  <option key={t.address} value={t.address}>
-                    {t.symbol}
-                  </option>
-                ))}
-              </select>
+              <Select value={fromMint} onValueChange={setFromMint}>
+                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                  <SelectValue placeholder="Select token" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200">
+                  {tokenList.map((t) => (
+                    <SelectItem key={t.address} value={t.address}>
+                      <span className="text-gray-900 font-medium">{t.symbol}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 type="number"
                 placeholder="0.00"

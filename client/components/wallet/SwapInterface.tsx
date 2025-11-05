@@ -447,11 +447,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 relative z-0">
+    <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
         {isLoading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
-            <div className="text-gray-900">Processing swap...</div>
+            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
           </div>
         )}
 

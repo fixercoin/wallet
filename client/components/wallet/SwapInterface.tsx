@@ -365,7 +365,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         )}
 
         <div className="space-y-6 p-6 relative">
-          <div className="font-semibold text-sm text-gray-900 uppercase">FIXORIUM TRADE</div>
+          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="font-semibold text-sm text-gray-900 uppercase">FIXORIUM TRADE</div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="from-token" className="text-gray-700 uppercase text-xs font-semibold">

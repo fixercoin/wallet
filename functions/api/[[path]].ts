@@ -213,6 +213,37 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
+    // Root and health/status endpoints
+    if (
+      normalizedPath === "/" ||
+      normalizedPath === "/health" ||
+      normalizedPath === "/status"
+    ) {
+      return jsonCors(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Cloudflare)",
+        endpoints: [
+          "/easypaisa/webhook [POST]",
+          "/easypaisa/payments [GET]",
+          "/solana-rpc [POST]",
+          "/forex/rate [GET]",
+          "/exchange-rate [GET]",
+          "/token/price [GET]",
+          "/stable-24h [GET]",
+          "/dexscreener/tokens [GET]",
+          "/dexscreener/search [GET]",
+          "/dexscreener/trending [GET]",
+          "/jupiter/price [GET]",
+          "/jupiter/tokens [GET]",
+          "/jupiter/quote [GET]",
+          "/jupiter/swap [POST]",
+          "/wallet/balance [GET]",
+          "/dextools/price [GET]",
+          "/coinmarketcap/quotes [GET]",
+        ],
+      });
+    }
+
     // Easypaisa webhook ingestion (best-effort schema)
     if (normalizedPath === "/easypaisa/webhook" && request.method === "POST") {
       let body: any = {};

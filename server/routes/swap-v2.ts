@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { TOKEN_MINTS } from "../../client/lib/constants/token-mints";
 
 const TIMEOUT_MS = 20000;
-const BRIDGE_TOKENS = [TOKEN_MINTS.USDC, TOKEN_MINTS.USDT, TOKEN_MINTS.SOL];
+const BRIDGE_TOKENS = [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
 
 interface SwapQuote {
   inputMint: string;

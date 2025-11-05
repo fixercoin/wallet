@@ -7,6 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { PublicKey, Connection } from "@solana/web3.js";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";

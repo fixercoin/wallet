@@ -182,8 +182,10 @@ async function getBridgedQuote(
           amount,
           slippageBps,
         );
-        if (!q1 || !q1.outAmount) {
-          console.warn(`[Swap] Leg 1 failed for bridge ${bridge}`);
+        if (!q1 || !q1.outAmount || q1.outAmount === "0") {
+          console.warn(
+            `[Swap] Leg 1 failed for bridge ${bridge}: no quote or zero output`,
+          );
           continue;
         }
 
@@ -194,12 +196,16 @@ async function getBridgedQuote(
           q1.outAmount,
           slippageBps,
         );
-        if (!q2 || !q2.outAmount) {
-          console.warn(`[Swap] Leg 2 failed for bridge ${bridge}`);
+        if (!q2 || !q2.outAmount || q2.outAmount === "0") {
+          console.warn(
+            `[Swap] Leg 2 failed for bridge ${bridge}: no quote or zero output`,
+          );
           continue;
         }
 
-        console.log(`[Swap] ✅ Bridged route successful via ${bridge}`);
+        console.log(
+          `[Swap] ✅ Bridged route successful via ${bridge}: ${q1.outAmount} -> ${q2.outAmount}`,
+        );
         return { bridge, q1, q2 };
       } catch (e) {
         console.warn(`[Swap] Bridge ${bridge} error: ${e}`);
@@ -207,7 +213,9 @@ async function getBridgedQuote(
       }
     }
 
-    console.warn(`[Swap] No bridged routes available`);
+    console.warn(
+      `[Swap] No bridged routes available for ${inputMint} -> ${outputMint}`,
+    );
     return null;
   } catch (e: any) {
     console.warn(`[Swap] Bridged quote error: ${e?.message || e}`);

@@ -244,15 +244,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       setStatus("Preparing transaction…");
-      const routeInfo = quote.best;
 
       const swapRequest = {
-        route: routeInfo,
+        quoteResponse: quote.quoteResponse,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       };
 
-      console.log("[SwapInterface] Executing swap with route:", routeInfo);
+      console.log("[SwapInterface] Executing swap with quote:", quote.quoteResponse);
       const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
       if (!swapResult || !swapResult.swapTransaction) {

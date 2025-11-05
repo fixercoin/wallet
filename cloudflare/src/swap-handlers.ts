@@ -7,8 +7,6 @@ export interface Env {
 const TIMEOUT_MS = 20000;
 const BRIDGE_TOKENS = [
   "So11111111111111111111111111111111111111112", // SOL
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
 ];
 
 interface SwapAttempt {
@@ -408,7 +406,7 @@ export async function handleSwapQuote(
         attempts,
         suggestions: [
           "Verify token pair has liquidity on supported exchanges",
-          "Try swapping through an intermediate token (e.g., USDC)",
+          "Try swapping through an intermediate token (e.g., SOL)",
           "Check that both tokens are supported on Jupiter/Meteora",
           "Increase slippage tolerance if using low liquidity pair",
         ],

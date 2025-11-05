@@ -13,7 +13,12 @@ import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { ArrowLeft, Bot, Zap, Shield, Clock, Play, Square } from "lucide-react";
-import { Keypair, VersionedTransaction, Transaction, PublicKey } from "@solana/web3.js";
+import {
+  Keypair,
+  VersionedTransaction,
+  Transaction,
+  PublicKey,
+} from "@solana/web3.js";
 
 interface AutoBotProps {
   onBack: () => void;
@@ -281,21 +286,30 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                   });
 
                   // Helper to send generic base64 transaction (versioned or legacy)
-                  const sendSignedTxGeneric = async (txBase64: string): Promise<string> => {
+                  const sendSignedTxGeneric = async (
+                    txBase64: string,
+                  ): Promise<string> => {
                     // Try versioned tx signing first
                     try {
                       // Versioned
                       const buf = bytesFromBase64(txBase64);
                       const vtx = VersionedTransaction.deserialize(buf);
                       const kp = getKeypair();
-                      if (!kp) throw new Error("Missing keypair to sign transaction");
+                      if (!kp)
+                        throw new Error("Missing keypair to sign transaction");
                       vtx.sign([kp]);
                       const signed = vtx.serialize();
                       const signedBase64 = base64FromBytes(signed);
                       // Send
                       const body = {
                         method: "sendRawTransaction",
-                        params: [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }],
+                        params: [
+                          signedBase64,
+                          {
+                            skipPreflight: false,
+                            preflightCommitment: "confirmed",
+                          },
+                        ],
                         id: Date.now(),
                       };
                       const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
@@ -305,10 +319,13 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       });
                       if (!r.ok) {
                         const t = await r.text().catch(() => "");
-                        throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+                        throw new Error(
+                          `RPC ${r.status}: ${t || r.statusText}`,
+                        );
                       }
                       const j = await r.json();
-                      if (j.error) throw new Error(j.error.message || "RPC error");
+                      if (j.error)
+                        throw new Error(j.error.message || "RPC error");
                       return j.result as string;
                     } catch (e) {
                       // Fallback to legacy Transaction signing
@@ -316,30 +333,46 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                         const buf = bytesFromBase64(txBase64);
                         const tx = Transaction.from(buf);
                         const kp = getKeypair();
-                        if (!kp) throw new Error("Missing keypair to sign transaction");
+                        if (!kp)
+                          throw new Error(
+                            "Missing keypair to sign transaction",
+                          );
                         tx.feePayer = kp.publicKey;
                         tx.sign(kp);
                         const signed = tx.serialize();
                         // convert to base64
                         let bin = "";
-                        for (let i = 0; i < signed.length; i++) bin += String.fromCharCode(signed[i]);
+                        for (let i = 0; i < signed.length; i++)
+                          bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
                           method: "sendRawTransaction",
-                          params: [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }],
+                          params: [
+                            signedBase64,
+                            {
+                              skipPreflight: false,
+                              preflightCommitment: "confirmed",
+                            },
+                          ],
                           id: Date.now(),
                         };
-                        const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(body),
-                        });
+                        const r = await fetch(
+                          resolveApiUrl("/api/solana-rpc"),
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                          },
+                        );
                         if (!r.ok) {
                           const t = await r.text().catch(() => "");
-                          throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+                          throw new Error(
+                            `RPC ${r.status}: ${t || r.statusText}`,
+                          );
                         }
                         const j = await r.json();
-                        if (j.error) throw new Error(j.error.message || "RPC error");
+                        if (j.error)
+                          throw new Error(j.error.message || "RPC error");
                         return j.result as string;
                       } catch (e2) {
                         throw e2;
@@ -350,30 +383,40 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                   if (!swap || !swap.swapTransaction) {
                     // Try unified /api/swap fallback (Meteora preferred)
                     try {
-                      const buildResp = await fetch(resolveApiUrl("/api/swap"), {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          provider: "meteora",
-                          inputMint: FIXER_MINT,
-                          outputMint: SOL_MINT,
-                          amount: rawAmount,
-                          wallet: wallet.publicKey,
-                          sign: false,
-                        }),
-                      });
+                      const buildResp = await fetch(
+                        resolveApiUrl("/api/swap"),
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            provider: "meteora",
+                            inputMint: FIXER_MINT,
+                            outputMint: SOL_MINT,
+                            amount: rawAmount,
+                            wallet: wallet.publicKey,
+                            sign: false,
+                          }),
+                        },
+                      );
                       if (buildResp.ok) {
                         const jb = await buildResp.json();
                         const swapData = jb?.swap || jb;
                         const txBase64 =
-                          swapData?.transaction || swapData?.swapTransaction || swapData?.transactionBase64 || swapData?.base64 || null;
+                          swapData?.transaction ||
+                          swapData?.swapTransaction ||
+                          swapData?.transactionBase64 ||
+                          swapData?.base64 ||
+                          null;
                         if (!txBase64) {
                           setLastMessage("Swap tx missing (meteora fallback)");
                         } else {
                           const sig = await sendSignedTxGeneric(txBase64);
                           setLastMessage(`Sold ✔ ${sig.slice(0, 8)}...`);
                           setLastRunAt(Date.now());
-                          toast({ title: "Sold FIXERCOIN", description: `+${profit.toFixed(2)}% to SOL` });
+                          toast({
+                            title: "Sold FIXERCOIN",
+                            description: `+${profit.toFixed(2)}% to SOL`,
+                          });
 
                           // Clear position after selling
                           savePosition(null);
@@ -385,7 +428,9 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                         }
                       } else {
                         const txt = await buildResp.text().catch(() => "");
-                        setLastMessage(`Swap build failed: ${buildResp.status}`);
+                        setLastMessage(
+                          `Swap build failed: ${buildResp.status}`,
+                        );
                         console.warn("Meteora fallback failed:", txt);
                       }
                     } catch (e) {
@@ -474,7 +519,11 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const jb = await buildResp.json();
                       const swapData = jb?.swap || jb;
                       const txBase64 =
-                        swapData?.transaction || swapData?.swapTransaction || swapData?.transactionBase64 || swapData?.base64 || null;
+                        swapData?.transaction ||
+                        swapData?.swapTransaction ||
+                        swapData?.transactionBase64 ||
+                        swapData?.base64 ||
+                        null;
                       if (!txBase64) {
                         setLastMessage("Swap tx missing (meteora fallback)");
                       } else {
@@ -497,7 +546,10 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
 
                         setLastMessage(`Bought ✔ ${sig.slice(0, 8)}...`);
                         setLastRunAt(Date.now());
-                        toast({ title: "Bought FIXERCOIN", description: `${qty.toFixed(6)} FIXERCOIN` });
+                        toast({
+                          title: "Bought FIXERCOIN",
+                          description: `${qty.toFixed(6)} FIXERCOIN`,
+                        });
 
                         setTimeout(() => {
                           refreshBalance();

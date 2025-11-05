@@ -13,7 +13,12 @@ import { TokenInfo } from "@/lib/wallet";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Bot, Zap, Shield, Clock, Play, Square } from "lucide-react";
-import { Keypair, VersionedTransaction, Transaction, PublicKey } from "@solana/web3.js";
+import {
+  Keypair,
+  VersionedTransaction,
+  Transaction,
+  PublicKey,
+} from "@solana/web3.js";
 
 interface AutoBotProps {
   onBack: () => void;
@@ -280,18 +285,27 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     wrapAndUnwrapSol: true,
                   });
 
-                  const sendSignedTxGeneric = async (txBase64: string): Promise<string> => {
+                  const sendSignedTxGeneric = async (
+                    txBase64: string,
+                  ): Promise<string> => {
                     try {
                       const buf = bytesFromBase64(txBase64);
                       const vtx = VersionedTransaction.deserialize(buf);
                       const kp = getKeypair();
-                      if (!kp) throw new Error("Missing keypair to sign transaction");
+                      if (!kp)
+                        throw new Error("Missing keypair to sign transaction");
                       vtx.sign([kp]);
                       const signed = vtx.serialize();
                       const signedBase64 = base64FromBytes(signed);
                       const body = {
                         method: "sendRawTransaction",
-                        params: [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }],
+                        params: [
+                          signedBase64,
+                          {
+                            skipPreflight: false,
+                            preflightCommitment: "confirmed",
+                          },
+                        ],
                         id: Date.now(),
                       };
                       const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
@@ -301,10 +315,13 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       });
                       if (!r.ok) {
                         const t = await r.text().catch(() => "");
-                        throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+                        throw new Error(
+                          `RPC ${r.status}: ${t || r.statusText}`,
+                        );
                       }
                       const j = await r.json();
-                      if (j.error) throw new Error(j.error.message || "RPC error");
+                      if (j.error)
+                        throw new Error(j.error.message || "RPC error");
                       return j.result as string;
                     } catch (e) {
                       // fallback legacy
@@ -312,29 +329,45 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                         const buf = bytesFromBase64(txBase64);
                         const tx = Transaction.from(buf);
                         const kp = getKeypair();
-                        if (!kp) throw new Error("Missing keypair to sign transaction");
+                        if (!kp)
+                          throw new Error(
+                            "Missing keypair to sign transaction",
+                          );
                         tx.feePayer = kp.publicKey;
                         tx.sign(kp);
                         const signed = tx.serialize();
                         let bin = "";
-                        for (let i = 0; i < signed.length; i++) bin += String.fromCharCode(signed[i]);
+                        for (let i = 0; i < signed.length; i++)
+                          bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
                           method: "sendRawTransaction",
-                          params: [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }],
+                          params: [
+                            signedBase64,
+                            {
+                              skipPreflight: false,
+                              preflightCommitment: "confirmed",
+                            },
+                          ],
                           id: Date.now(),
                         };
-                        const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(body),
-                        });
+                        const r = await fetch(
+                          resolveApiUrl("/api/solana-rpc"),
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                          },
+                        );
                         if (!r.ok) {
                           const t = await r.text().catch(() => "");
-                          throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+                          throw new Error(
+                            `RPC ${r.status}: ${t || r.statusText}`,
+                          );
                         }
                         const j = await r.json();
-                        if (j.error) throw new Error(j.error.message || "RPC error");
+                        if (j.error)
+                          throw new Error(j.error.message || "RPC error");
                         return j.result as string;
                       } catch (e2) {
                         throw e2;
@@ -344,35 +377,51 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
 
                   if (!swap || !swap.swapTransaction) {
                     try {
-                      const buildResp = await fetch(resolveApiUrl("/api/swap"), {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          provider: "meteora",
-                          inputMint: FIXER_MINT,
-                          outputMint: SOL_MINT,
-                          amount: rawAmount,
-                          wallet: wallet.publicKey,
-                          sign: false,
-                        }),
-                      });
+                      const buildResp = await fetch(
+                        resolveApiUrl("/api/swap"),
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            provider: "meteora",
+                            inputMint: FIXER_MINT,
+                            outputMint: SOL_MINT,
+                            amount: rawAmount,
+                            wallet: wallet.publicKey,
+                            sign: false,
+                          }),
+                        },
+                      );
                       if (buildResp.ok) {
                         const jb = await buildResp.json();
                         const swapData = jb?.swap || jb;
-                        const txBase64 = swapData?.transaction || swapData?.swapTransaction || swapData?.transactionBase64 || swapData?.base64 || null;
+                        const txBase64 =
+                          swapData?.transaction ||
+                          swapData?.swapTransaction ||
+                          swapData?.transactionBase64 ||
+                          swapData?.base64 ||
+                          null;
                         if (!txBase64) {
                           setLastMessage("Swap tx missing (meteora fallback)");
                         } else {
                           const sig = await sendSignedTxGeneric(txBase64);
                           setLastMessage(`Sold ✔ ${sig.slice(0, 8)}...`);
                           setLastRunAt(Date.now());
-                          toast({ title: "Sold FIXERCOIN", description: `+${profit.toFixed(2)}% to SOL` });
+                          toast({
+                            title: "Sold FIXERCOIN",
+                            description: `+${profit.toFixed(2)}% to SOL`,
+                          });
                           savePosition(null);
-                          setTimeout(() => { refreshBalance(); refreshTokens(); }, 2000);
+                          setTimeout(() => {
+                            refreshBalance();
+                            refreshTokens();
+                          }, 2000);
                         }
                       } else {
                         const txt = await buildResp.text().catch(() => "");
-                        setLastMessage(`Swap build failed: ${buildResp.status}`);
+                        setLastMessage(
+                          `Swap build failed: ${buildResp.status}`,
+                        );
                         console.warn("Meteora fallback failed:", txt);
                       }
                     } catch (e) {
@@ -383,9 +432,15 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     const sig = await sendSignedTx(swap.swapTransaction);
                     setLastMessage(`Sold ✔ ${sig.slice(0, 8)}...`);
                     setLastRunAt(Date.now());
-                    toast({ title: "Sold FIXERCOIN", description: `+${profit.toFixed(2)}% to SOL` });
+                    toast({
+                      title: "Sold FIXERCOIN",
+                      description: `+${profit.toFixed(2)}% to SOL`,
+                    });
                     savePosition(null);
-                    setTimeout(() => { refreshBalance(); refreshTokens(); }, 2000);
+                    setTimeout(() => {
+                      refreshBalance();
+                      refreshTokens();
+                    }, 2000);
                   }
                 }
               }
@@ -449,20 +504,39 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     if (buildResp.ok) {
                       const jb = await buildResp.json();
                       const swapData = jb?.swap || jb;
-                      const txBase64 = swapData?.transaction || swapData?.swapTransaction || swapData?.transactionBase64 || swapData?.base64 || null;
+                      const txBase64 =
+                        swapData?.transaction ||
+                        swapData?.swapTransaction ||
+                        swapData?.transactionBase64 ||
+                        swapData?.base64 ||
+                        null;
                       if (!txBase64) {
                         setLastMessage("Swap tx missing (meteora fallback)");
                       } else {
                         const sig = await sendSignedTxGeneric(txBase64);
-                        const qty = jupiterAPI.parseSwapAmount(quote.outAmount, fixerToken?.decimals || 6);
+                        const qty = jupiterAPI.parseSwapAmount(
+                          quote.outAmount,
+                          fixerToken?.decimals || 6,
+                        );
                         const entryPrice = await getCurrentFixerPriceUsd();
                         if (entryPrice && entryPrice > 0 && qty > 0) {
-                          savePosition({ entryPriceUsd: entryPrice, qty, entrySolSpent: tradeAmount, ts: Date.now() });
+                          savePosition({
+                            entryPriceUsd: entryPrice,
+                            qty,
+                            entrySolSpent: tradeAmount,
+                            ts: Date.now(),
+                          });
                         }
                         setLastMessage(`Bought ✔ ${sig.slice(0, 8)}...`);
                         setLastRunAt(Date.now());
-                        toast({ title: "Bought FIXERCOIN", description: `${qty.toFixed(6)} FIXERCOIN` });
-                        setTimeout(() => { refreshBalance(); refreshTokens(); }, 2000);
+                        toast({
+                          title: "Bought FIXERCOIN",
+                          description: `${qty.toFixed(6)} FIXERCOIN`,
+                        });
+                        setTimeout(() => {
+                          refreshBalance();
+                          refreshTokens();
+                        }, 2000);
                       }
                     } else {
                       const txt = await buildResp.text().catch(() => "");
@@ -475,15 +549,29 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                   }
                 } else {
                   const sig = await sendSignedTx(swap.swapTransaction);
-                  const qty = jupiterAPI.parseSwapAmount(quote.outAmount, fixerToken?.decimals || 6);
+                  const qty = jupiterAPI.parseSwapAmount(
+                    quote.outAmount,
+                    fixerToken?.decimals || 6,
+                  );
                   const entryPrice = await getCurrentFixerPriceUsd();
                   if (entryPrice && entryPrice > 0 && qty > 0) {
-                    savePosition({ entryPriceUsd: entryPrice, qty, entrySolSpent: tradeAmount, ts: Date.now() });
+                    savePosition({
+                      entryPriceUsd: entryPrice,
+                      qty,
+                      entrySolSpent: tradeAmount,
+                      ts: Date.now(),
+                    });
                   }
                   setLastMessage(`Bought ✔ ${sig.slice(0, 8)}...`);
                   setLastRunAt(Date.now());
-                  toast({ title: "Bought FIXERCOIN", description: `${qty.toFixed(6)} FIXERCOIN` });
-                  setTimeout(() => { refreshBalance(); refreshTokens(); }, 2000);
+                  toast({
+                    title: "Bought FIXERCOIN",
+                    description: `${qty.toFixed(6)} FIXERCOIN`,
+                  });
+                  setTimeout(() => {
+                    refreshBalance();
+                    refreshTokens();
+                  }, 2000);
                 }
               }
             }

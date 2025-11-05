@@ -159,6 +159,17 @@ export default {
 
     // === Simple Jupiter Swap Endpoints ===
 
+    // Minimal Pump.fun tokens registry (kept in worker for preview/server usage)
+    const PUMP_TOKENS = [
+      { symbol: "FIXERCOIN", mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", decimals: 6 },
+      { symbol: "LOCKER", mint: "GpumpLockerTokenMintAddress", decimals: 6 },
+    ];
+
+    // GET /api/pump-tokens - return Pump.fun token registry
+    if (pathname === "/api/pump-tokens" && req.method === "GET") {
+      return json({ tokens: PUMP_TOKENS }, { headers: corsHeaders });
+    }
+
     // GET /api/quote - Get swap quote from Jupiter API
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";

@@ -97,10 +97,11 @@ export default function Swap() {
   };
 
   useEffect(() => {
+    setInitialized(false);
     initJupiter().catch((e) => {
       console.warn("Jupiter init warning:", e);
     });
-  }, []);
+  }, [wallet]);
 
   const humanToRaw = (amountStr, decimals) => {
     const amt = Number(amountStr);

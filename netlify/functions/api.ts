@@ -8,9 +8,9 @@ import {
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
-  "https://solana-mainnet.rpc.extrnode.com",
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
+  "https://solana-rpc.publicnode.com",
 ];
 
 async function callRpc(

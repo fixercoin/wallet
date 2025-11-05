@@ -193,48 +193,46 @@ class JupiterAPI {
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");
-try {
-  const errorObj = (() => {
-    try {
-      return JSON.parse(txt);
-    } catch {
-      return { error: txt };
-    }
-  })();
+        let errorObj: any = {};
+        try {
+          errorObj = JSON.parse(txt);
+        } catch {
+          errorObj = { error: txt };
+        }
 
-  console.error("Jupiter swap error response:", response.status, errorObj);
+        console.error(
+          "Jupiter swap error response:",
+          response.status,
+          errorObj,
+        );
 
-  const errorMsg =
-    errorObj?.error ||
-    errorObj?.message ||
-    errorObj?.details ||
-    txt ||
-    "Unknown error";
+        const errorMsg =
+          errorObj?.error ||
+          errorObj?.message ||
+          errorObj?.details ||
+          txt ||
+          "Unknown error";
 
-  // Detect Jupiter error 1016 (swap simulation failed / stale quote)
-  if (
-    errorObj?.code === 1016 ||
-    errorMsg.includes("1016") ||
-    errorMsg.includes("Swap simulation failed") ||
-    errorMsg.includes("simulation")
-  ) {
-    throw new Error(
-      `Jupiter error 1016: Swap simulation failed (stale quote). ${errorMsg}`,
-    );
-  }
+        // Detect Jupiter error 1016 (swap simulation failed / stale quote)
+        const isError1016 =
+          errorObj?.code === 1016 ||
+          errorMsg.includes("1016") ||
+          errorMsg.includes("Swap simulation failed") ||
+          errorMsg.includes("simulation") ||
+          errorMsg.includes("stale") ||
+          response.status === 530;
 
-  throw new Error(
-    `Jupiter swap failed (${response.status}): ${errorMsg}${
-      errorObj?.details ? ` - ${errorObj.details}` : ""
-    }`,
-  );
-} catch (parseErr: any) {
-  const fallbackMsg =
-    parseErr?.message ||
-    `Jupiter swap failed (${response.status}): ${txt}`;
-  throw new Error(fallbackMsg);
-}
+        if (isError1016) {
+          throw new Error(
+            `STALE_QUOTE: The quote expired or changed. Try refreshing the quote and trying again.`,
+          );
+        }
 
+        throw new Error(
+          `Jupiter swap failed (${response.status}): ${errorMsg}${
+            errorObj?.details ? ` - ${errorObj.details}` : ""
+          }`,
+        );
       }
 
       const data = await response.json();

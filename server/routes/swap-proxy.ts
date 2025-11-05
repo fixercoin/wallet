@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 
 const WORKER_BASE =
   process.env.VITE_API_BASE_URL ||
-  "https://fixorium-proxy.khanbabusargodha.workers.dev";
+  "https://proxy.fixorium.com.pk";
 
 async function forwardRequest(path: string, req: any) {
   const url = `${WORKER_BASE.replace(/\/+$/, "")}${path}`;

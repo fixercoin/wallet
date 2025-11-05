@@ -1311,6 +1311,21 @@ export default {
             );
         }
 
+        // Final fallback: try Jupiter public quote API
+        try {
+          const params = new URLSearchParams({ inputMint, outputMint, amount });
+          const jupUrl = `https://quote-api.jup.ag/v6/quote?${params.toString()}`;
+          const jupResp = await fetch(jupUrl, { method: "GET" });
+          if (jupResp.ok) {
+            const jupData = await jupResp.json();
+            if (jupData && jupData.outAmount && jupData.outAmount !== "0") {
+              return json({ source: "jupiter", quote: jupData }, { headers: corsHeaders });
+            }
+          }
+        } catch (e) {
+          // ignore and fall through
+        }
+
         return json(
           { error: "no_quote_available" },
           { status: 502, headers: corsHeaders },

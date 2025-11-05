@@ -486,14 +486,77 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     setIsLoading(true);
 
     try {
-      // Helper to submit a single-quote swap via Jupiter
-      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
+      // Helper to submit a single-quote swap via Jupiter with retry logic
+      const submitQuote = async (
+        q: JupiterQuoteResponse,
+        retryCount: number = 0,
+        maxRetries: number = 2,
+      ): Promise<string> => {
         const swapRequest = {
           quoteResponse: q,
           userPublicKey: wallet.publicKey,
           wrapAndUnwrapSol: true,
         } as any;
-        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+
+        let swapResponse: any;
+        try {
+          swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+        } catch (err: any) {
+          const errMsg = String(err?.message || err);
+          // Check if error is 1016 (swap simulation failed / stale quote)
+          if (
+            errMsg.includes("1016") ||
+            errMsg.includes("simulation") ||
+            errMsg.includes("stale")
+          ) {
+            if (retryCount < maxRetries) {
+              console.log(
+                `Jupiter error 1016 detected (stale quote). Retrying ${retryCount + 1}/${maxRetries}...`,
+              );
+              // Wait a bit and retry with the same quote
+              await new Promise((r) => setTimeout(r, 500 * (retryCount + 1)));
+              return submitQuote(q, retryCount + 1, maxRetries);
+            } else {
+              console.log(
+                `Max retries reached. Attempting to refresh quote and retry...`,
+              );
+              // Try to refresh the quote and retry once more
+              if (retryCount === maxRetries) {
+                try {
+                  const slippageBps = Math.max(
+                    1,
+                    Math.round(parseFloat(slippage || "0.5") * 100),
+                  );
+                  const amountInt = parseInt(
+                    jupiterAPI.formatSwapAmount(
+                      parseFloat(fromAmount),
+                      fromToken?.decimals || 9,
+                    ),
+                    10,
+                  );
+                  const freshQuote = await jupiterAPI.getQuote(
+                    fromToken?.mint || "",
+                    toToken?.mint || "",
+                    amountInt,
+                    slippageBps,
+                  );
+                  if (freshQuote) {
+                    console.log(
+                      "Fresh quote obtained, retrying swap with new quote",
+                    );
+                    return submitQuote(freshQuote, maxRetries + 1, maxRetries);
+                  }
+                } catch (refreshErr) {
+                  console.warn("Could not refresh quote:", refreshErr);
+                }
+                throw err;
+              }
+              throw err;
+            }
+          }
+          throw err;
+        }
+
         if (!swapResponse || !swapResponse.swapTransaction)
           throw new Error("Failed to get swap transaction");
         const kp = getKeypair();
@@ -559,35 +622,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         }
         return jb.result as string;
       };
-
-      // If we have a direct quote, do normal single-leg swap
-      if (quote) {
-        const sig = await submitQuote(quote);
-        setTxSignature(sig);
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Submitted",
-          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-        });
-        if (connection && typeof connection.getLatestBlockhash === "function") {
-          try {
-            const latest = await connection.getLatestBlockhash();
-            await connection.confirmTransaction({
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-              signature: sig,
-            });
-            toast({
-              title: "Swap Confirmed",
-              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-            });
-            // Send fee silently after swap confirmation
-            await sendSwapFee();
-          } catch {}
-        }
-        return;
-      }
 
       // If we have a direct quote, do normal single-leg swap
       if (quote) {

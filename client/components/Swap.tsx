@@ -19,22 +19,60 @@ export default function Swap() {
   const [initialized, setInitialized] = useState(false);
 
   const initJupiter = async () => {
-    if (initialized) return jupiter;
+    if (initialized && jupiter) return jupiter;
+
+    if (!wallet) {
+      setStatus("No wallet detected. Please set up a wallet first.");
+      return null;
+    }
+
     setStatus("Initializing route solver (this may take a few seconds)…");
-    
+
     try {
-      const { Connection, PublicKey } = await import(
-        "https://esm.sh/@solana/web3.js@1.73.0"
-      );
       const { Jupiter } = await import(
         "https://esm.sh/@jup-ag/core@4.3.0"
       );
 
       const connection = new Connection(RPC, "confirmed");
+
+      const walletPublicKey = new PublicKey(wallet.publicKey);
+
+      const localWalletAdapter = {
+        publicKey: walletPublicKey,
+        signTransaction: async (tx) => {
+          const { Keypair } = await import("@solana/web3.js");
+          let secretKey = wallet.secretKey;
+          if (secretKey instanceof Uint8Array) {
+            secretKey = secretKey;
+          } else if (Array.isArray(secretKey)) {
+            secretKey = Uint8Array.from(secretKey);
+          }
+          const keypair = Keypair.fromSecretKey(secretKey);
+          tx.sign([keypair]);
+          return tx;
+        },
+        signAllTransactions: async (txs) => {
+          const { Keypair } = await import("@solana/web3.js");
+          let secretKey = wallet.secretKey;
+          if (secretKey instanceof Uint8Array) {
+            secretKey = secretKey;
+          } else if (Array.isArray(secretKey)) {
+            secretKey = Uint8Array.from(secretKey);
+          }
+          const keypair = Keypair.fromSecretKey(secretKey);
+          return txs.map(tx => {
+            tx.sign([keypair]);
+            return tx;
+          });
+        },
+        connect: async () => walletPublicKey,
+        disconnect: async () => {},
+      };
+
       const jup = await Jupiter.load({
         connection,
         cluster: "mainnet-beta",
-        user: provider ?? null,
+        user: localWalletAdapter,
       });
 
       const tokens = Object.values(jup.tokens);
@@ -53,6 +91,7 @@ export default function Swap() {
       return jup;
     } catch (err) {
       setStatus("Error initializing Jupiter: " + (err.message || err));
+      console.error(err);
       throw err;
     }
   };

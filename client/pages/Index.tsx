@@ -126,7 +126,7 @@ export default function Index() {
       );
 
     case "autobot":
-      return <AutoBot onBack={navigateToDashboard} />;
+      return <MarketMaker onBack={navigateToDashboard} />;
 
     case "airdrop":
       return <Airdrop onBack={navigateToDashboard} />;

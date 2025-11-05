@@ -279,22 +279,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <Card className="w-full bg-gray-900 border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-white">Fixorium — Convert (Direct)</CardTitle>
+    <Card className="w-full bg-gradient-to-br from-white to-green-50 border-2 border-green-200 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-green-600 to-green-500 rounded-t-lg">
+        <CardTitle className="text-white text-xl font-bold">Fixorium — Convert (Direct)</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-xs text-gray-500 break-all">
-          Wallet: {wallet.publicKey}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-400">From</label>
-          <div className="flex gap-2">
+      <CardContent className="space-y-5 p-6">
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-green-700">From</label>
+          <div className="flex gap-3">
             <select
               value={fromMint}
               onChange={(e) => setFromMint(e.target.value)}
-              className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white"
+              className="flex-1 bg-white border-2 border-green-200 rounded-lg px-4 py-3 text-gray-800 font-medium focus:outline-none focus:border-green-500 transition-colors"
             >
               {tokenList.map((t) => (
                 <option key={t.address} value={t.address}>
@@ -304,20 +300,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </select>
             <Input
               type="number"
-              placeholder="Amount"
+              placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 bg-gray-800 border-gray-600"
+              className="flex-1 bg-white border-2 border-green-200 rounded-lg px-4 py-3 text-gray-800 font-medium focus:outline-none focus:border-green-500 transition-colors"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-400">To</label>
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-green-700">To</label>
           <select
             value={toMint}
             onChange={(e) => setToMint(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white"
+            className="w-full bg-white border-2 border-green-200 rounded-lg px-4 py-3 text-gray-800 font-medium focus:outline-none focus:border-green-500 transition-colors"
           >
             {tokenList.map((t) => (
               <option key={t.address} value={t.address}>
@@ -328,21 +324,26 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         {quote && (
-          <div className="p-3 bg-gray-800 rounded text-sm text-gray-300">
-            <strong>Estimated receive:</strong> {quote.outHuman.toFixed(6)}{" "}
-            {quote.outToken} (route hops: {quote.hops})
+          <div className="p-4 bg-gradient-to-r from-green-50 to-white border-2 border-green-200 rounded-lg">
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold text-green-700">Estimated receive:</span>{" "}
+              <span className="font-bold text-green-600">{quote.outHuman.toFixed(6)}</span>{" "}
+              <span className="text-green-700 font-semibold">{quote.outToken}</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Route hops: {quote.hops}</p>
           </div>
         )}
 
         {status && (
-          <div className="text-sm text-gray-400">{status}</div>
+          <div className="text-sm text-green-700 font-medium bg-green-50 border-l-4 border-green-500 p-3 rounded">
+            {status}
+          </div>
         )}
 
         <Button
           onClick={getQuote}
           disabled={!amount || isLoading}
-          variant="outline"
-          className="w-full"
+          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 rounded-lg transition-all duration-200"
         >
           {isLoading ? (
             <>
@@ -357,7 +358,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <Button
           onClick={executeSwap}
           disabled={!amount || !quote || isLoading}
-          className="w-full"
+          className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
@@ -369,7 +370,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           )}
         </Button>
 
-        <Button onClick={onBack} variant="outline" className="w-full">
+        <Button
+          onClick={onBack}
+          variant="outline"
+          className="w-full border-2 border-green-300 text-green-700 hover:bg-green-50 font-semibold py-3 rounded-lg transition-all duration-200"
+        >
           Back
         </Button>
       </CardContent>

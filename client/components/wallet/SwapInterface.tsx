@@ -308,15 +308,15 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4">
-      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+    <div className="w-full max-w-md mx-auto px-4 relative z-0">
+      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
         {isLoading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
             <div className="text-gray-900">Processing swap...</div>
           </div>
         )}
 
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-6 relative">
           <div className="font-semibold text-sm text-gray-900 uppercase">FIXORIUM TRADE</div>
 
           <div className="space-y-2">

@@ -424,7 +424,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 z-50">
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50">
                   {tokenList.length > 0 ? (
                     tokenList.map((t) => {
                       const tokenBalance =
@@ -433,10 +433,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       return (
                         <SelectItem key={t.address} value={t.address}>
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-900 font-medium">
+                            <span className="text-white font-medium">
                               {t.symbol}
                             </span>
-                            <span className="text-gray-500 text-sm">
+                            <span className="text-gray-400 text-sm">
                               ({(tokenBalance || 0).toFixed(6)})
                             </span>
                           </div>
@@ -444,7 +444,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       );
                     })
                   ) : (
-                    <div className="p-2 text-center text-sm text-gray-500">
+                    <div className="p-2 text-center text-sm text-gray-400">
                       Loading tokens...
                     </div>
                   )}

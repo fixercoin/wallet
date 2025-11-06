@@ -136,7 +136,7 @@ export async function pumpSell(
       seller: walletPublicKey,
     };
 
-    const res = await fetch(PUMP_SELL_API, {
+    const res = await fetch(resolveApiUrl(PUMP_SELL_PROXY), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),

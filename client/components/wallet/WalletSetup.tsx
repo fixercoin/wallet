@@ -337,8 +337,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   >
                     <Plus
                       size={20}
-                      className="mr-2"
-                      color="white"
+                      className="mr-2 text-white !text-white"
                       strokeWidth={3}
                     />
                     CREATE NEW WALLET

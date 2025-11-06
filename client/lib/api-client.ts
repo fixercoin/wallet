@@ -20,8 +20,8 @@ const determineBase = (): string => {
   if (envBase) return envBase;
   // Use cached working base if available
   if (workingApiBase) return workingApiBase;
-  // Try Cloudflare Worker first, fall back to localhost in dev
-  return CLOUDFLARE_WORKER_BASE;
+  // Try Fixorium API first (known working), then Cloudflare Worker as fallback
+  return FIXORIUM_API_BASE;
 };
 
 let cachedBase: string | null = null;

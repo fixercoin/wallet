@@ -229,6 +229,7 @@ export const onRequest = async ({ request, env }) => {
           "/forex/rate [GET]",
           "/exchange-rate [GET]",
           "/token/price [GET]",
+          "/sol/price [GET]",
           "/stable-24h [GET]",
           "/dexscreener/tokens [GET]",
           "/dexscreener/search [GET]",
@@ -1015,6 +1016,32 @@ export const onRequest = async ({ request, env }) => {
       });
     }
 
+    // SOL price: /api/sol/price
+    if (normalizedPath === "/sol/price") {
+      try {
+        const SOL_MINT = "So11111111111111111111111111111111111111112";
+        const data = await fetchDexscreenerData(`/tokens/${SOL_MINT}`);
+        const pair = Array.isArray(data?.pairs) && data.pairs.length > 0 ? data.pairs[0] : null;
+        if (!pair) {
+          return jsonCors(404, { error: "SOL price data not found" });
+        }
+        const priceUsd = parseFloat(pair.priceUsd || "0");
+        return jsonCors(200, {
+          token: "SOL",
+          price: priceUsd,
+          priceUsd,
+          priceChange24h: pair.priceChange?.h24 || 0,
+          volume24h: pair.volume?.h24 || 0,
+          marketCap: pair.marketCap || 0,
+        });
+      } catch (e: any) {
+        return jsonCors(502, {
+          error: "Failed to fetch SOL price",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
     // Jupiter: /api/jupiter/price?ids=... (comma-separated mints)
     if (normalizedPath === "/jupiter/price") {
       const ids = url.searchParams.get("ids");
@@ -1334,6 +1361,54 @@ export const onRequest = async ({ request, env }) => {
       return jsonCors(502, {
         error: "Failed to fetch balance",
         details: lastErr || "All RPC endpoints failed",
+      });
+    }
+
+    // Solana RPC proxy: /api/solana-rpc (POST JSON-RPC)
+    if (normalizedPath === "/solana-rpc" && request.method === "POST") {
+      let rpcRequest: any = null;
+      try {
+        rpcRequest = await request.json();
+      } catch {
+        return jsonCors(400, { error: "Invalid JSON body" });
+      }
+      if (!rpcRequest || typeof rpcRequest !== "object" || !rpcRequest.method) {
+        return jsonCors(400, { error: "Missing RPC method" });
+      }
+
+      const endpoints = [
+        env.SOLANA_RPC || "",
+        env.SOLANA_RPC_URL || "",
+        env.HELIUS_RPC_URL || "",
+        env.MORALIS_RPC_URL || "",
+        env.ALCHEMY_RPC_URL || "",
+        "https://api.mainnet-beta.solana.com",
+        "https://rpc.ankr.com/solana",
+        "https://solana.publicnode.com",
+      ].filter(Boolean);
+
+      let lastErr = "";
+      for (const rpcUrl of endpoints) {
+        try {
+          const resp = await fetch(rpcUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rpcRequest),
+          });
+          const text = await resp.text();
+          // Always return upstream status and body to the client
+          return new Response(text, {
+            status: resp.status,
+            headers: applyCors(new Headers({ "Content-Type": "application/json" })),
+          });
+        } catch (e: any) {
+          lastErr = e?.message || String(e);
+          continue;
+        }
+      }
+      return jsonCors(502, {
+        error: "All RPC endpoints failed",
+        details: lastErr || "Unknown error",
       });
     }
 

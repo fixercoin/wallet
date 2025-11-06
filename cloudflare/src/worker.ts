@@ -272,7 +272,7 @@ export default {
         clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
 
-        if (!res.ok) {
+        if (!resp.ok) {
           console.warn(
             `[Pump.fun SELL] API error ${resp.status}:`,
             text.slice(0, 200),

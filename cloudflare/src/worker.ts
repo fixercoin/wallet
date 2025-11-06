@@ -629,42 +629,95 @@ export default {
         });
       }
 
+      // Use configured RPC endpoint if available, with public fallbacks
+      const configuredRPC = (env as any)?.SOLANA_RPC;
       const RPC_ENDPOINTS = [
-        "https://api.mainnet-beta.solana.com",
+        configuredRPC || "https://api.mainnet-beta.solana.com",
         "https://solana.publicnode.com",
         "https://rpc.ankr.com/solana",
-      ];
+        "https://solana-rpc.publicnode.com",
+        "https://api.mainnet-beta.solana.com",
+      ].filter((url, index, self) => self.indexOf(url) === index);
 
       let lastError = "";
-      for (const rpcUrl of RPC_ENDPOINTS) {
+      let lastStatus = 0;
+
+      for (let attempt = 0; attempt < RPC_ENDPOINTS.length; attempt++) {
+        const rpcUrl = RPC_ENDPOINTS[attempt];
+
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
           const resp = await fetch(rpcUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(rpcRequest),
+            signal: controller.signal,
           });
 
+          clearTimeout(timeoutId);
+          lastStatus = resp.status;
+
           const text = await resp.text();
-          return new Response(text, {
-            status: resp.status,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          });
+
+          // If we got a successful response, return it
+          if (resp.status === 200) {
+            return new Response(text, {
+              status: resp.status,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            });
+          }
+
+          // For error responses, try to parse and check for JSON-RPC error
+          try {
+            const json = JSON.parse(text);
+            // If response is valid JSON-RPC (even if status is not 200), return it
+            if (json.result !== undefined || json.error !== undefined) {
+              return new Response(text, {
+                status: 200, // Return 200 for valid JSON-RPC responses
+                headers: {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              });
+            }
+          } catch {
+            // Not JSON, continue
+          }
+
+          lastError = text || resp.statusText;
+
+          // Don't retry on 4xx errors (except maybe 429 rate limit)
+          if (resp.status >= 400 && resp.status < 500 && resp.status !== 429) {
+            break;
+          }
+
+          // Continue to next endpoint for server errors
+          continue;
         } catch (e: any) {
-          lastError = e?.message || String(e);
+          lastError = e?.name === "AbortError"
+            ? "Request timeout"
+            : e?.message || String(e);
+
+          // Continue to next endpoint on timeout/network errors
           continue;
         }
       }
 
+      // All endpoints failed
       return new Response(
         JSON.stringify({
           error: "All RPC endpoints failed",
           details: lastError || "Unknown error",
+          attempted: RPC_ENDPOINTS.length,
+          lastStatus: lastStatus || 502,
         }),
         {
-          status: 502,
+          status: lastStatus || 502,
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",

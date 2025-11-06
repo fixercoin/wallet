@@ -431,7 +431,9 @@ class JupiterAPI {
       } catch {}
     }
 
-    console.debug("Error fetching strict token list from Jupiter: all sources failed");
+    console.debug(
+      "Error fetching strict token list from Jupiter: all sources failed",
+    );
     return [];
   }
 

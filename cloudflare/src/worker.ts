@@ -146,10 +146,10 @@ export default {
     if (pathname === "/api/pumpfun/buy") {
       try {
         const body = await request.json().catch(() => ({}));
-        if (!body.mint || typeof body.amount !== "number" || !body.buyer) {
+        if (!body.mint || body.amount === undefined || !body.buyer) {
           return new Response(
             JSON.stringify({
-              error: "Missing required fields: mint, amount (number), buyer",
+              error: "Missing required fields: mint, amount, buyer",
             }),
             {
               status: 400,
@@ -161,29 +161,39 @@ export default {
           );
         }
 
+        const {
+          mint,
+          amount,
+          buyer,
+          slippageBps = 350,
+          priorityFeeLamports = 10000,
+        } = body;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        // Try primary Pump.fun endpoint first
-        let resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            buyer,
+            slippageBps,
+            priorityFeeLamports,
+            txVersion: "V0",
+            operation: "buy",
+          }),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
 
-        // Log detailed error information for debugging
         if (!resp.ok) {
           console.warn(
-            `[Pump.fun BUY] Primary endpoint failed: ${resp.status}`,
-            {
-              status: resp.status,
-              body: body,
-              response: text.slice(0, 200),
-            },
+            `[Pump.fun BUY] API error ${resp.status}:`,
+            text.slice(0, 200),
           );
         }
 
@@ -218,10 +228,10 @@ export default {
     if (pathname === "/api/pumpfun/sell") {
       try {
         const body = await request.json().catch(() => ({}));
-        if (!body.mint || typeof body.amount !== "number" || !body.seller) {
+        if (!body.mint || body.amount === undefined || !body.seller) {
           return new Response(
             JSON.stringify({
-              error: "Missing required fields: mint, amount (number), seller",
+              error: "Missing required fields: mint, amount, seller",
             }),
             {
               status: 400,
@@ -233,18 +243,42 @@ export default {
           );
         }
 
+        const {
+          mint,
+          amount,
+          seller,
+          slippageBps = 350,
+          priorityFeeLamports = 10000,
+        } = body;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            seller,
+            slippageBps,
+            priorityFeeLamports,
+            txVersion: "V0",
+            operation: "sell",
+          }),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
+
+        if (!res.ok) {
+          console.warn(
+            `[Pump.fun SELL] API error ${resp.status}:`,
+            text.slice(0, 200),
+          );
+        }
+
         return new Response(text, {
           status: resp.status,
           headers: {

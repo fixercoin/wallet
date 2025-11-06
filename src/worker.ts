@@ -526,6 +526,65 @@ async function handlePumpFunSell(request: Request): Promise<Response> {
   }
 }
 
+async function handlePumpFunQuote(
+  request: Request,
+  url: URL,
+  env: Env,
+): Promise<Response> {
+  try {
+    const pumpQuoteUrl = (env && (env as any).PUMPFUN_QUOTE) || PUMPFUN_QUOTE;
+    if (!pumpQuoteUrl) {
+      return new Response(
+        JSON.stringify({
+          error: "PumpFun quote endpoint not configured",
+          code: "UNCONFIGURED",
+        }),
+        { status: 503, headers: CORS_HEADERS },
+      );
+    }
+
+    // Support both GET query params and POST JSON body
+    let body: any = {};
+    const method = request.method?.toUpperCase?.() || "GET";
+
+    if (method === "GET" || method === "HEAD") {
+      const inputMint = url.searchParams.get("inputMint");
+      const outputMint = url.searchParams.get("outputMint");
+      const amount = url.searchParams.get("amount");
+      const mint = url.searchParams.get("mint");
+
+      if (inputMint) body.inputMint = inputMint;
+      if (outputMint) body.outputMint = outputMint;
+      if (amount) body.amount = amount;
+      if (mint) body.mint = mint;
+    } else {
+      body = await request.json().catch(() => ({}));
+    }
+
+    const response = await timeoutFetch(pumpQuoteUrl, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const text = await response.text().catch(() => "");
+    return new Response(text, {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: e?.message?.includes?.("abort")
+          ? "Request timeout"
+          : "Failed to fetch PumpFun quote",
+        details: String(e?.message || e),
+      }),
+      { status: 503, headers: CORS_HEADERS },
+    );
+  }
+}
+
 // Main fetch handler for worker
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -574,6 +633,10 @@ export default {
       }
 
       // Pump.fun routes
+      if (pathname === "/api/pumpfun/quote") {
+        return await handlePumpFunQuote(request, url, env);
+      }
+
       if (
         pathname === "/api/pumpfun/curve" ||
         pathname.startsWith("/api/pumpfun/curve?")

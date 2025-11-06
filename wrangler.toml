@@ -5,10 +5,17 @@ compatibility_flags = ["nodejs_compat"]
 # Cloudflare Pages configuration
 pages_build_output_dir = "dist"
 
-[vars]
+[env.production]
+name = "wallet-c36-production"
+routes = [
+  { pattern = "wallet.fixorium.com.pk/*", zone_name = "fixorium.com.pk" },
+  { pattern = "wallet-c26.pages.dev/*", zone_name = "pages.dev" }
+]
+
+[env.production.vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
 BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
 
-[env.production.vars]
+[vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
 BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"

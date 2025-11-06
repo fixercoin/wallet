@@ -164,7 +164,8 @@ export default {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
+        // Try primary Pump.fun endpoint first
+        let resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -173,6 +174,19 @@ export default {
 
         clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
+
+        // Log detailed error information for debugging
+        if (!resp.ok) {
+          console.warn(
+            `[Pump.fun BUY] Primary endpoint failed: ${resp.status}`,
+            {
+              status: resp.status,
+              body: body,
+              response: text.slice(0, 200),
+            },
+          );
+        }
+
         return new Response(text, {
           status: resp.status,
           headers: {

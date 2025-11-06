@@ -167,6 +167,10 @@ export default function WalletHistory() {
     };
   }, [wallet?.publicKey]);
 
+  const handleRefresh = async () => {
+    await fetchBlockchainTransactions(tokenMap);
+  };
+
   const fetchBlockchainTransactions = async (
     resolvedTokenMap?: Record<string, { symbol: string; decimals: number }>,
   ) => {

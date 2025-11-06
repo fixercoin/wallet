@@ -537,11 +537,14 @@ export default {
         );
       }
 
+      // Use configured RPC endpoint if available, with public fallbacks
+      const configuredRPC = (env as any)?.SOLANA_RPC;
       const RPC_ENDPOINTS = [
-        "https://api.mainnet-beta.solana.com",
+        configuredRPC || "https://api.mainnet-beta.solana.com",
         "https://solana.publicnode.com",
         "https://rpc.ankr.com/solana",
-      ];
+        "https://solana-rpc.publicnode.com",
+      ].filter((url, index, self) => self.indexOf(url) === index);
 
       const rpcBody = {
         jsonrpc: "2.0",
@@ -553,12 +556,17 @@ export default {
       let lastError = "";
       for (const endpoint of RPC_ENDPOINTS) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+
           const resp = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(rpcBody),
+            signal: controller.signal,
           });
 
+          clearTimeout(timeoutId);
           const data = await resp.json();
 
           if (data.error) {
@@ -584,7 +592,9 @@ export default {
             );
           }
         } catch (e: any) {
-          lastError = e?.message || String(e);
+          lastError = e?.name === "AbortError"
+            ? "Request timeout"
+            : e?.message || String(e);
           continue;
         }
       }

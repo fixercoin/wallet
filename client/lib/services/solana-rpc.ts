@@ -101,6 +101,14 @@ export const makeRpcCall = async (
           const fetchError =
             fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
+          // Check if it's a timeout error
+          const isTimeout = fetchError.includes("abort") || fetchError.includes("timeout");
+          if (isTimeout) {
+            console.warn(
+              `[RPC Call] ${method} timed out after ${timeoutMs}ms. Trying direct endpoints...`,
+            );
+          }
+
           // Try calling known public RPC endpoints directly as a fallback
           const directEndpoints = [
             SOLANA_RPC_URL,

@@ -526,12 +526,19 @@ async function handlePumpFunSell(request: Request): Promise<Response> {
   }
 }
 
-async function handlePumpFunQuote(request: Request, url: URL, env: Env): Promise<Response> {
+async function handlePumpFunQuote(
+  request: Request,
+  url: URL,
+  env: Env,
+): Promise<Response> {
   try {
     const pumpQuoteUrl = (env && (env as any).PUMPFUN_QUOTE) || PUMPFUN_QUOTE;
     if (!pumpQuoteUrl) {
       return new Response(
-        JSON.stringify({ error: "PumpFun quote endpoint not configured", code: "UNCONFIGURED" }),
+        JSON.stringify({
+          error: "PumpFun quote endpoint not configured",
+          code: "UNCONFIGURED",
+        }),
         { status: 503, headers: CORS_HEADERS },
       );
     }
@@ -561,11 +568,16 @@ async function handlePumpFunQuote(request: Request, url: URL, env: Env): Promise
     });
 
     const text = await response.text().catch(() => "");
-    return new Response(text, { status: response.status, headers: CORS_HEADERS });
+    return new Response(text, {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
   } catch (e: any) {
     return new Response(
       JSON.stringify({
-        error: e?.message?.includes?.("abort") ? "Request timeout" : "Failed to fetch PumpFun quote",
+        error: e?.message?.includes?.("abort")
+          ? "Request timeout"
+          : "Failed to fetch PumpFun quote",
         details: String(e?.message || e),
       }),
       { status: 503, headers: CORS_HEADERS },

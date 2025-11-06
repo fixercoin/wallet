@@ -8,12 +8,19 @@ export default {
     const pathname = url.pathname || "/";
 
     // Handle Pump.fun quote locally on Cloudflare worker
-    if (pathname === "/api/pumpfun/quote" || pathname.startsWith("/api/pumpfun/quote?")) {
+    if (
+      pathname === "/api/pumpfun/quote" ||
+      pathname.startsWith("/api/pumpfun/quote?")
+    ) {
       try {
-        const pumpQuoteUrl = (env as any)?.PUMPFUN_QUOTE || "https://pumpportal.fun/api/quote";
+        const pumpQuoteUrl =
+          (env as any)?.PUMPFUN_QUOTE || "https://pumpportal.fun/api/quote";
         if (!pumpQuoteUrl) {
           return new Response(
-            JSON.stringify({ error: "PumpFun quote endpoint not configured", code: "UNCONFIGURED" }),
+            JSON.stringify({
+              error: "PumpFun quote endpoint not configured",
+              code: "UNCONFIGURED",
+            }),
             {
               status: 503,
               headers: {
@@ -61,7 +68,9 @@ export default {
       } catch (e: any) {
         return new Response(
           JSON.stringify({
-            error: e?.message?.includes?.("abort") ? "Request timeout" : "Failed to fetch PumpFun quote",
+            error: e?.message?.includes?.("abort")
+              ? "Request timeout"
+              : "Failed to fetch PumpFun quote",
             details: String(e?.message || e),
           }),
           {
@@ -76,30 +85,60 @@ export default {
     }
 
     // Pump.fun and DexScreener support locally on the Cloudflare worker
-    const PUMPFUN_API_BASE = (env as any)?.PUMPFUN_API_BASE || "https://pump.fun/api";
-    const DEXSCREENER_BASE = (env as any)?.DEXSCREENER_BASE || "https://api.dexscreener.com/latest/dex";
+    const PUMPFUN_API_BASE =
+      (env as any)?.PUMPFUN_API_BASE || "https://pump.fun/api";
+    const DEXSCREENER_BASE =
+      (env as any)?.DEXSCREENER_BASE ||
+      "https://api.dexscreener.com/latest/dex";
 
     // Pump.fun curve
-    if (pathname === "/api/pumpfun/curve" || pathname.startsWith("/api/pumpfun/curve?")) {
+    if (
+      pathname === "/api/pumpfun/curve" ||
+      pathname.startsWith("/api/pumpfun/curve?")
+    ) {
       const mint = url.searchParams.get("mint");
       if (!mint) {
-        return new Response(JSON.stringify({ error: "mint parameter required" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-        });
+        return new Response(
+          JSON.stringify({ error: "mint parameter required" }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
       }
       try {
-        const resp = await fetch(`${PUMPFUN_API_BASE}/curve/${encodeURIComponent(mint)}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        const resp = await fetch(
+          `${PUMPFUN_API_BASE}/curve/${encodeURIComponent(mint)}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
         const text = await resp.text().catch(() => "");
-        return new Response(text, { status: resp.status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
-      } catch (e: any) {
-        return new Response(JSON.stringify({ error: "Failed to check curve state", details: String(e?.message || e) }), {
-          status: 502,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        return new Response(text, {
+          status: resp.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
         });
+      } catch (e: any) {
+        return new Response(
+          JSON.stringify({
+            error: "Failed to check curve state",
+            details: String(e?.message || e),
+          }),
+          {
+            status: 502,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
       }
     }
 
@@ -108,10 +147,18 @@ export default {
       try {
         const body = await request.json().catch(() => ({}));
         if (!body.mint || typeof body.amount !== "number" || !body.buyer) {
-          return new Response(JSON.stringify({ error: "Missing required fields: mint, amount (number), buyer" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-          });
+          return new Response(
+            JSON.stringify({
+              error: "Missing required fields: mint, amount (number), buyer",
+            }),
+            {
+              status: 400,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            },
+          );
         }
         const resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
           method: "POST",
@@ -119,12 +166,27 @@ export default {
           body: JSON.stringify(body),
         });
         const text = await resp.text().catch(() => "");
-        return new Response(text, { status: resp.status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
-      } catch (e: any) {
-        return new Response(JSON.stringify({ error: "Failed to request BUY transaction", details: String(e?.message || e) }), {
-          status: 502,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        return new Response(text, {
+          status: resp.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
         });
+      } catch (e: any) {
+        return new Response(
+          JSON.stringify({
+            error: "Failed to request BUY transaction",
+            details: String(e?.message || e),
+          }),
+          {
+            status: 502,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
       }
     }
 
@@ -133,10 +195,18 @@ export default {
       try {
         const body = await request.json().catch(() => ({}));
         if (!body.mint || typeof body.amount !== "number" || !body.seller) {
-          return new Response(JSON.stringify({ error: "Missing required fields: mint, amount (number), seller" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-          });
+          return new Response(
+            JSON.stringify({
+              error: "Missing required fields: mint, amount (number), seller",
+            }),
+            {
+              status: 400,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            },
+          );
         }
         const resp = await fetch(`${PUMPFUN_API_BASE}/sell`, {
           method: "POST",
@@ -144,27 +214,70 @@ export default {
           body: JSON.stringify(body),
         });
         const text = await resp.text().catch(() => "");
-        return new Response(text, { status: resp.status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
-      } catch (e: any) {
-        return new Response(JSON.stringify({ error: "Failed to request SELL transaction", details: String(e?.message || e) }), {
-          status: 502,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        return new Response(text, {
+          status: resp.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
         });
+      } catch (e: any) {
+        return new Response(
+          JSON.stringify({
+            error: "Failed to request SELL transaction",
+            details: String(e?.message || e),
+          }),
+          {
+            status: 502,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
       }
     }
 
     // DexScreener price
-    if (pathname === "/api/price" || pathname === "/price" || pathname.startsWith('/api/price?') ) {
+    if (
+      pathname === "/api/price" ||
+      pathname === "/price" ||
+      pathname.startsWith("/api/price?")
+    ) {
       const mint = url.searchParams.get("mint");
       if (!mint) {
-        return new Response(JSON.stringify({ error: "mint required" }), { status: 400, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+        return new Response(JSON.stringify({ error: "mint required" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
       }
       try {
-        const resp = await fetch(`${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`, { method: "GET", headers: { "Content-Type": "application/json" } });
+        const resp = await fetch(
+          `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`,
+          { method: "GET", headers: { "Content-Type": "application/json" } },
+        );
         const text = await resp.text().catch(() => "");
-        return new Response(text, { status: resp.status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+        return new Response(text, {
+          status: resp.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
       } catch (e: any) {
-        return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 502, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+        return new Response(
+          JSON.stringify({ error: String(e?.message || e) }),
+          {
+            status: 502,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
       }
     }
 

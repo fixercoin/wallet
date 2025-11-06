@@ -174,7 +174,7 @@ class JupiterAPI {
   async getSwapTransaction(
     swapRequest: JupiterSwapRequest,
     retryCount: number = 0,
-    maxRetries: number = 1,
+    maxRetries: number = 2,
   ): Promise<JupiterSwapResponse | null> {
     try {
       const url = resolveApiUrl("/api/jupiter/swap");
@@ -225,10 +225,34 @@ class JupiterAPI {
           response.status === 530;
 
         if (isError1016) {
-          // STALE_QUOTE error - quote may have expired
-          // Always throw to let caller handle quote refresh and retry
+          // Attempt to refresh the quote and retry automatically
+          const qr = swapRequest.quoteResponse;
+          if (retryCount < maxRetries && qr?.inputMint && qr?.outputMint && qr?.inAmount) {
+            console.warn("STALE_QUOTE detected. Refreshing quote and retrying swap...");
+            try {
+              const refreshedQuote = await this.getQuote(
+                qr.inputMint,
+                qr.outputMint,
+                parseInt(qr.inAmount),
+                typeof qr.slippageBps === "number" ? qr.slippageBps : 120,
+              );
+              if (refreshedQuote) {
+                const refreshedReq: JupiterSwapRequest = {
+                  ...swapRequest,
+                  quoteResponse: refreshedQuote,
+                };
+                return this.getSwapTransaction(
+                  refreshedReq,
+                  retryCount + 1,
+                  maxRetries,
+                );
+              }
+            } catch (e) {
+              console.warn("Quote refresh failed after STALE_QUOTE:", e);
+            }
+          }
           throw new Error(
-            `STALE_QUOTE: The quote expired or changed. Try refreshing the quote and trying again.`,
+            "STALE_QUOTE: The quote expired or changed. Try again after requesting a new quote.",
           );
         }
 

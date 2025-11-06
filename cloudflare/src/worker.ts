@@ -239,8 +239,7 @@ export default {
           lastError = e;
           if (
             attempt < 1 &&
-            (e?.message?.includes("timeout") ||
-              e?.message?.includes("network"))
+            (e?.message?.includes("timeout") || e?.message?.includes("network"))
           ) {
             await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
             continue;
@@ -2116,9 +2115,7 @@ export default {
           {
             error: "Failed to fetch Pumpfun quote",
             details:
-              lastError?.message ||
-              lastError?.statusText ||
-              String(lastError),
+              lastError?.message || lastError?.statusText || String(lastError),
             hint: "Pumpfun API may be temporarily unavailable. Try Jupiter instead.",
           },
           { status: 502, headers: corsHeaders },

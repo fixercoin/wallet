@@ -2115,9 +2115,7 @@ export default {
           {
             error: "Failed to fetch Pumpfun quote",
             details:
-              lastError?.message ||
-              lastError?.statusText ||
-              String(lastError),
+              lastError?.message || lastError?.statusText || String(lastError),
             hint: "Pumpfun API may be temporarily unavailable. Try Jupiter instead.",
           },
           { status: 502, headers: corsHeaders },

@@ -443,7 +443,7 @@ class HeliusAPI {
     // Look for token transfer instructions
     if (message.instructions && Array.isArray(message.instructions)) {
       message.instructions.forEach((instr: any) => {
-        // Check for parsed token instructions
+        // Handle SPL token transfers
         if (
           instr.parsed?.type === "transfer" ||
           instr.parsed?.type === "transferChecked"
@@ -481,6 +481,43 @@ class HeliusAPI {
               signature: signature || "",
               blockTime,
               mint,
+            });
+          }
+        }
+
+        // Handle native SOL transfers from System program
+        if (instr.program === "system" && instr.parsed?.type === "transfer") {
+          const info = instr.parsed.info;
+          const lamports = info.lamports || 0;
+          const destination = info.destination;
+          const source = info.source;
+
+          // SOL has 9 decimals
+          const amount = lamports / Math.pow(10, 9);
+          const decimals = 9;
+
+          // Determine if wallet sent or received
+          if (destination === walletAddress) {
+            transfers.push({
+              type: "receive",
+              token: "So11111111111111111111111111111111111111112", // SOL mint
+              amount,
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint: "So11111111111111111111111111111111111111112",
+            });
+          }
+
+          if (source === walletAddress) {
+            transfers.push({
+              type: "send",
+              token: "So11111111111111111111111111111111111111112", // SOL mint
+              amount,
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint: "So11111111111111111111111111111111111111112",
             });
           }
         }

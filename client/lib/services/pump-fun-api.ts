@@ -43,10 +43,7 @@ export async function checkCurveState(mint: string): Promise<boolean> {
     console.log(`[Pump.fun] Token ${mint} curve state: ${data.state}`);
     return isOpen;
   } catch (error) {
-    console.error(
-      `[Pump.fun] Error checking curve state for ${mint}:`,
-      error,
-    );
+    console.error(`[Pump.fun] Error checking curve state for ${mint}:`, error);
     return false;
   }
 }
@@ -87,17 +84,13 @@ export async function pumpBuy(
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      throw new Error(
-        `Pump.fun BUY API error ${res.status}: ${errorText}`,
-      );
+      throw new Error(`Pump.fun BUY API error ${res.status}: ${errorText}`);
     }
 
     const data = await res.json();
 
     if (!data?.transaction) {
-      throw new Error(
-        "Pump.fun BUY failed: No transaction in response",
-      );
+      throw new Error("Pump.fun BUY failed: No transaction in response");
     }
 
     console.log(
@@ -144,17 +137,13 @@ export async function pumpSell(
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      throw new Error(
-        `Pump.fun SELL API error ${res.status}: ${errorText}`,
-      );
+      throw new Error(`Pump.fun SELL API error ${res.status}: ${errorText}`);
     }
 
     const data = await res.json();
 
     if (!data?.transaction) {
-      throw new Error(
-        "Pump.fun SELL failed: No transaction in response",
-      );
+      throw new Error("Pump.fun SELL failed: No transaction in response");
     }
 
     console.log(

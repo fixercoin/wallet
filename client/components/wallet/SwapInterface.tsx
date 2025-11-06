@@ -495,18 +495,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           const rawAmount = Math.floor(
             amountInHuman * Math.pow(10, tokenDecimals),
           );
-          txBase64 = await pumpSell(
-            tokenMint,
-            rawAmount,
-            wallet.publicKey,
-          );
+          txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
         }
 
         // Sign the transaction
         setStatus("Signing transaction…");
-        const tx = VersionedTransaction.deserialize(
-          bytesFromBase64(txBase64),
-        );
+        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
         const keypair = getKeypair(wallet);
         if (!keypair) {

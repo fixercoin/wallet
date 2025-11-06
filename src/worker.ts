@@ -574,7 +574,10 @@ export default {
       }
 
       // Pump.fun routes
-      if (pathname === "/api/pumpfun/curve" || pathname.startsWith("/api/pumpfun/curve?")) {
+      if (
+        pathname === "/api/pumpfun/curve" ||
+        pathname.startsWith("/api/pumpfun/curve?")
+      ) {
         return await handlePumpFunCurve(url);
       }
 

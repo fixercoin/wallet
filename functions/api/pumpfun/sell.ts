@@ -49,7 +49,8 @@ export const onRequest: PagesFunction = async ({ request }) => {
     if (!mint || typeof amount !== "number" || !seller) {
       return new Response(
         JSON.stringify({
-          error: "Missing required fields: mint, amount (number), seller (string)",
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
         }),
         {
           status: 400,

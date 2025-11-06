@@ -282,36 +282,33 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (!quote) throw new Error("Swap quote missing");
 
       // Refresh quote immediately before execution to prevent STALE_QUOTE errors
-      // This is critical because quotes expire in 30-60 seconds
+      // This is critical because quotes expire quickly (30-60 seconds)
       console.log(
         "Refreshing quote before swap execution to prevent stale quote errors...",
       );
       let freshQuote = quote;
-      try {
-        if (fromToken && toToken && fromAmount) {
-          const amount = jupiterAPI.formatSwapAmount(
-            parseFloat(fromAmount),
-            fromToken.decimals,
-          );
-          const refreshedQuote = await jupiterAPI.getQuote(
-            fromToken.mint,
-            toToken.mint,
-            parseInt(amount),
-            parseInt(slippage) * 100,
-          );
-          if (refreshedQuote) {
-            freshQuote = refreshedQuote;
-            console.log(
-              "Quote refreshed successfully, using fresh quote for swap",
-            );
-          }
-        }
-      } catch (refreshErr) {
-        console.warn(
-          "Could not refresh quote before swap, using cached quote:",
-          refreshErr,
+
+      if (fromToken && toToken && fromAmount) {
+        const amount = jupiterAPI.formatSwapAmount(
+          parseFloat(fromAmount),
+          fromToken.decimals,
         );
-        // Continue with cached quote if refresh fails
+        const refreshedQuote = await jupiterAPI.getQuote(
+          fromToken.mint,
+          toToken.mint,
+          parseInt(amount),
+          parseInt(slippage) * 100,
+        );
+        if (refreshedQuote) {
+          freshQuote = refreshedQuote;
+          console.log(
+            "Quote refreshed successfully, using fresh quote for swap",
+          );
+        } else {
+          throw new Error(
+            "Failed to refresh quote. Please go back and request a new quote.",
+          );
+        }
       }
 
       const swapRequest = {
@@ -320,7 +317,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         wrapAndUnwrapSol: true,
       } as any;
       console.debug("Sending swap request to Jupiter proxy:", swapRequest);
-      const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
+      const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest, 0, 2);
       if (!swapResponse || !swapResponse.swapTransaction)
         throw new Error("Failed to get swap transaction");
 

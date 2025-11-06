@@ -573,6 +573,19 @@ export default {
         return await handleJupiterTokens(url);
       }
 
+      // Pump.fun routes
+      if (pathname === "/api/pumpfun/curve" || pathname.startsWith("/api/pumpfun/curve?")) {
+        return await handlePumpFunCurve(url);
+      }
+
+      if (pathname === "/api/pumpfun/buy") {
+        return await handlePumpFunBuy(request);
+      }
+
+      if (pathname === "/api/pumpfun/sell") {
+        return await handlePumpFunSell(request);
+      }
+
       // Default 404
       return new Response(JSON.stringify({ error: "Not found" }), {
         status: 404,

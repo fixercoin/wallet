@@ -415,7 +415,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       if (!quoteResponse) {
         setQuote(null);
-        setStatus("No route found for this pair/amount.");
+        setStatus("No route available. Try a different amount or token pair.");
         setIsLoading(false);
         return null;
       }
@@ -433,9 +433,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setIsLoading(false);
       return { quoteResponse };
     } catch (err) {
-      setStatus("Error: " + (err.message || err));
+      const errorMsg = err.message || String(err);
+      let friendlyMsg = "Failed to get quote. ";
+
+      if (errorMsg.includes("timeout")) {
+        friendlyMsg += "Network timeout. Please try again.";
+      } else if (errorMsg.includes("STALE_QUOTE")) {
+        friendlyMsg += "Quote expired. Please request a new quote.";
+      } else if (errorMsg.includes("simulation")) {
+        friendlyMsg += "Transaction would fail. Try a different amount.";
+      } else if (errorMsg.includes("NO_ROUTE")) {
+        friendlyMsg += "No trading route found for this pair.";
+      } else {
+        friendlyMsg += errorMsg;
+      }
+
+      setStatus(friendlyMsg);
       setIsLoading(false);
-      console.error(err);
+      console.error("[SwapInterface] Quote error:", err);
     }
   };
 

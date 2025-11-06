@@ -70,7 +70,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   const [toUsdPrice, setToUsdPrice] = useState<number | null>(null);
   const [walletReady, setWalletReady] = useState(false);
 
-  // Monitor wallet readiness
   useEffect(() => {
     const isReady = !!(
       wallet &&
@@ -188,7 +187,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           `Fetching unified quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
         );
 
-        // Use unified quote endpoint which tries: Jupiter → Meteora → PumpFun → Bridged
         const slippageBps = Math.max(
           1,
           Math.round(parseFloat(slippage || "0.5") * 100),
@@ -200,7 +198,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           ),
         ).then((res) => res.json());
 
-        // Check if unified quote succeeded
         if (quoteResponse && !quoteResponse.error) {
           const q = quoteResponse.quote;
           const outAmount =
@@ -215,12 +212,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               `✅ Quote succeeded via ${quoteResponse.source}: ${outAmount}`,
             );
 
-            // Store the full quote response for execution
             setQuote(q);
             setQuoteTimestamp(Date.now());
             setMeteoraQuote(null);
 
-            // Parse and display output amount
             const outHuman =
               typeof outAmount === "string"
                 ? parseInt(outAmount, 10) / Math.pow(10, toToken.decimals)
@@ -234,7 +229,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           }
         }
 
-        // If unified quote failed, fall back to Birdeye pricing
         console.log(
           `Unified quote failed, falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
         );
@@ -254,7 +248,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
           const estOutHuman = (fromHuman * fromUsd) / toUsd;
           setToAmount(estOutHuman.toFixed(6));
-          setQuote(null); // Clear actual quote, use indicative
+          setQuote(null);
           setQuoteError("");
           setIndicative(true);
         } else {
@@ -281,7 +275,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     return () => clearTimeout(t);
   }, [fromAmount, fromToken, toToken, slippage]);
 
-  // Load USD prices for selected tokens
   useEffect(() => {
     const loadPrices = async () => {
       if (!fromToken && !toToken) {
@@ -315,7 +308,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       }
     };
     loadPrices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromToken?.mint, toToken?.mint]);
 
   const handleSwapTokens = () => {
@@ -353,12 +345,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     if (parseFloat(fromAmount) > getTokenBalance(fromToken))
       return "Insufficient balance";
 
-    // Check if enough SOL for network fees
     const solToken = availableTokens.find((t) => t.symbol === "SOL");
     if (solToken) {
       const solBalance = getTokenBalance(solToken);
       const swapAmt = parseFloat(fromAmount || "0");
-      // Need swap amount + transaction fee (~0.00025) + small buffer
       const minNeeded = fromToken?.symbol === "SOL" ? swapAmt + 0.0003 : 0.0005;
       if (solBalance < minNeeded) {
         return `Insufficient SOL. Need ${minNeeded.toFixed(6)} SOL, have ${solBalance.toFixed(6)} SOL`;
@@ -439,7 +429,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       const kp = getKeypair();
       if (!kp) return;
 
-      const feeRate = SWAP_FEE_BPS / 10000; // 0.30%
+      const feeRate = SWAP_FEE_BPS / 10000;
       const inputAmt = parseFloat(fromAmount || "0");
       if (!isFinite(inputAmt) || inputAmt <= 0) return;
 
@@ -463,7 +453,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         if (usdValue && solUsd > 0) {
           feeInSol = (usdValue * feeRate) / solUsd;
         } else {
-          return; // cannot price accurately; skip fee silently
+          return;
         }
       }
 
@@ -508,7 +498,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   };
 
   const handleSwap = () => {
-    // Check wallet availability first
     if (!wallet || !wallet.publicKey || !wallet.secretKey) {
       toast({
         title: "Wallet Not Connected",
@@ -543,12 +532,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     setIsLoading(true);
 
     try {
-      // Helper to refresh a quote if it's stale (older than 20 seconds)
       const refreshQuoteIfStale = async (
         q: JupiterQuoteResponse,
         timestamp: number | null,
       ): Promise<JupiterQuoteResponse> => {
-        const QUOTE_TTL_MS = 20000; // 20 seconds (safe margin for 30-60s Jupiter TTL)
+        const QUOTE_TTL_MS = 20000;
         const now = Date.now();
         const quoteAge = timestamp ? now - timestamp : null;
 
@@ -600,7 +588,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return q;
       };
 
-      // Helper to submit a single-quote swap via Jupiter
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
         if (!wallet || !wallet.publicKey) {
           throw new Error(
@@ -647,7 +634,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           }
         })();
 
-        // Simulate
         const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -666,7 +652,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           );
         }
 
-        // Send
         const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -683,9 +668,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         return jb.result as string;
       };
 
-      // If we have a direct quote, do normal single-leg swap
       if (quote) {
-        // Refresh quote if stale to avoid STALE_QUOTE errors from Jupiter
         const freshQuote = await refreshQuoteIfStale(quote, quoteTimestamp);
         const sig = await submitQuote(freshQuote);
         setTxSignature(sig);
@@ -707,14 +690,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               title: "Swap Confirmed",
               description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
             });
-            // Send fee silently after swap confirmation
             await sendSwapFee();
           } catch {}
         }
         return;
       }
 
-      // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
       if (!quote && meteoraQuote) {
         try {
           if (!wallet || !wallet.publicKey) {
@@ -738,7 +719,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             throw new Error("Invalid swap transaction returned from Meteora");
           }
 
-          // Prefer provider-based signing (do NOT use raw secret keys)
           const provider =
             (window as any).solana ?? (window as any).fixorium ?? null;
           if (!provider || typeof provider.signTransaction !== "function") {
@@ -760,7 +740,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             sig = await connection.sendRawTransaction(signedTx.serialize(), {
               skipPreflight: false,
             });
-            // confirm
             const latest = await connection.getLatestBlockhash();
             await connection.confirmTransaction({
               blockhash: latest.blockhash,
@@ -800,16 +779,13 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             title: "Swap Completed!",
             description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
           });
-          // send fee
           await sendSwapFee();
           return;
         } catch (e) {
           console.error("Meteora swap failed:", e);
-          // continue to bridged attempts below
         }
       }
 
-      // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL
       if (!fromToken || !toToken) throw new Error("Missing tokens");
       const slippageBps = Math.max(
         1,
@@ -835,7 +811,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             `Attempting bridged swap via ${bridgeToken?.symbol || bridge}...`,
           );
 
-          // With improved retry logic on client/server, allow longer timeout for retries
           const q1 = await jupiterAPI.getQuote(
             fromToken.mint,
             bridge,
@@ -882,13 +857,10 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             continue;
           }
 
-          // Execute leg1 then leg2
           console.log(`Executing bridged swap via ${bridgeToken?.symbol}...`);
-          const freshQ1 = await refreshQuoteIfStale(q1, Date.now() - 100);
-          const sig1 = await submitQuote(freshQ1);
+          const sig1 = await submitQuote(q1);
           toast({ title: "Leg 1 submitted", description: sig1 });
-          const freshQ2 = await refreshQuoteIfStale(q2, Date.now() - 100);
-          const sig2 = await submitQuote(freshQ2);
+          const sig2 = await submitQuote(q2);
           setTxSignature(sig2);
           setToAmount(
             jupiterAPI
@@ -901,7 +873,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
             title: "Swap Completed!",
             description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
           });
-          // Send fee silently after swap completion
           await sendSwapFee();
           return;
         } catch (bridgeErr) {
@@ -938,7 +909,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       let errorMsg = err instanceof Error ? err.message : String(err);
 
-      // Improve error messages
       if (
         errorMsg.includes("Wallet not available") ||
         errorMsg.includes("Missing wallet") ||
@@ -959,7 +929,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         errorMsg.includes("Attempted bridges")
       ) {
         const isFixercoin = toToken?.symbol?.toLowerCase().includes("fixer");
-        const isPumpfun = toToken?.mint === TOKEN_MINTS.FIXERCOIN; // pump.fun tokens
+        const isPumpfun = toToken?.mint === TOKEN_MINTS.FIXERCOIN;
         let suggestion =
           "Unable to find a swap route. Try: (1) Swapping through an intermediate token like USDC, (2) Using a smaller amount, or (3) Checking if both tokens have adequate liquidity.";
         if (isPumpfun) {
@@ -979,7 +949,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     }
   };
 
-  // Meteora helpers - using proxied endpoints through server
   async function getMeteoraQuote(
     inputMint: string,
     outputMint: string,
@@ -996,7 +965,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   }
 
   async function buildMeteoraSwap(_route: any, userPublicKey: string) {
-    // Use local unified /api/swap endpoint with provider=meteora to build an unsigned transaction.
     if (!fromToken || !toToken || !fromAmount)
       throw new Error("Missing tokens or amount for Meteora build");
     const amountInt = parseInt(
@@ -1179,10 +1147,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
       <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
-        {/* Card */}
         <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#e6f6ec]/20 overflow-hidden text-gray-900 bg-transparent sm:bg-gradient-to-br sm:from-[#ffffff] sm:via-[#f0fff4] sm:to-[#a7f3d0]">
           <div className="p-5 space-y-4">
-            {/* Header with back button */}
             <div className="flex items-center gap-3 -mt-3 -mx-5 px-5 pt-3 pb-2">
               <Button
                 variant="ghost"
@@ -1204,7 +1170,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
-            {/* FROM row */}
             <Card className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -1226,7 +1191,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     </div>
                   </div>
 
-                  {/* Token select pill (from) */}
                   <div className="flex flex-col items-end min-w-[8.5rem]">
                     <Select
                       value={fromToken?.mint || ""}
@@ -1304,7 +1268,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </CardContent>
             </Card>
 
-            {/* swap arrow */}
             <div className="flex items-center justify-center py-1">
               <Button
                 size="icon"
@@ -1315,7 +1278,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </Button>
             </div>
 
-            {/* TO row */}
             <Card className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-xl">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -1335,7 +1297,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                     </div>
                   </div>
 
-                  {/* Token select pill (to) */}
                   <div className="flex flex-col items-end min-w-[8.5rem]">
                     <Select
                       value={toToken?.mint || ""}
@@ -1409,7 +1370,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </CardContent>
             </Card>
 
-            {/* Quote details */}
             {(quote || (indicative && toAmount)) && fromToken && toToken ? (
               <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-gray-900">
                 <div className="flex items-center justify-between">
@@ -1440,14 +1400,12 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               </div>
             ) : null}
 
-            {/* Loading indicator */}
             {isLoading && (
               <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
                 Signing & Connecting - submitting transaction ...
               </Alert>
             )}
 
-            {/* Quick % selector */}
             <div className="grid grid-cols-4 gap-2 mt-2">
               {[25, 50, 75, 100].map((pct) => (
                 <button
@@ -1455,7 +1413,7 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                   type="button"
                   onClick={() => {
                     const bal = getTokenBalance(fromToken || undefined);
-                    const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0; // leave SOL for fees
+                    const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0;
                     const usable = Math.max(0, (bal || 0) - reserve);
                     const amt = usable * (pct / 100);
                     const digits = Math.min(
@@ -1471,7 +1429,6 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               ))}
             </div>
 
-            {/* Submit */}
             {!walletReady && (
               <Alert className="bg-red-500/10 border-red-400/20 text-red-600 mb-2">
                 <AlertDescription>

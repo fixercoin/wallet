@@ -7,7 +7,7 @@ import { ReceiveTransaction } from "@/components/wallet/ReceiveTransaction";
 import { SwapInterface } from "@/components/wallet/SwapInterface";
 import { TokenDetail } from "@/components/wallet/TokenDetail";
 import { Settings } from "@/components/wallet/Settings";
-import { AutoBot } from "@/components/wallet/AutoBot";
+import { MarketMaker } from "@/components/wallet/MarketMaker";
 import { Airdrop } from "@/components/wallet/Airdrop";
 import { Accounts } from "@/components/wallet/Accounts";
 import { TokenLock } from "@/components/wallet/TokenLock";
@@ -126,11 +126,10 @@ export default function Index() {
       );
 
     case "autobot":
-      return <AutoBot onBack={navigateToDashboard} />;
+      return <MarketMaker onBack={navigateToDashboard} />;
 
     case "airdrop":
       return <Airdrop onBack={navigateToDashboard} />;
-
 
     case "lock":
       return <TokenLock onBack={navigateToDashboard} />;

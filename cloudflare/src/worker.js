@@ -48,9 +48,9 @@ function bufferToBase64(buffer) {
 const DEFAULT_RPCS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
-  "https://solana-mainnet.rpc.extrnode.com",
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
+  "https://solana-rpc.publicnode.com",
 ];
 
 function getRpcEndpoints(env) {
@@ -818,6 +818,32 @@ export default {
           if (pump) return json(pump, { headers: corsHeaders });
         }
 
+        // Pump.fun-only for Fixercoin/Locker
+        const FIXER = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const LOCKER = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+        const isPumpMintPair = Boolean(
+          inputMint &&
+            outputMint &&
+            amount &&
+            (inputMint === FIXER ||
+              outputMint === FIXER ||
+              inputMint === LOCKER ||
+              outputMint === LOCKER),
+        );
+        if (isPumpMintPair) {
+          const pfUrl = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+          const pf = await tryFetch(pfUrl, "GET", undefined, 12000);
+          if (pf)
+            return json(
+              { source: "pumpfun", quote: pf },
+              { headers: corsHeaders },
+            );
+          return json(
+            { error: "no_pumpfun_quote" },
+            { status: 404, headers: corsHeaders },
+          );
+        }
+
         if (inputMint && outputMint && amount) {
           const meteoraUrl = `https://api.meteora.ag/swap/v3/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
           const met = await tryFetch(meteoraUrl, "GET", undefined, 12000);
@@ -1167,6 +1193,135 @@ export default {
       }
     }
 
+    // Market maker: start session
+    if (pathname === "/api/market-maker/start" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+        const {
+          sessionId,
+          tokenAddress,
+          numberOfMakers,
+          minOrderSOL,
+          maxOrderSOL,
+          minDelaySeconds,
+          maxDelaySeconds,
+          sellStrategy,
+          profitTargetPercent,
+          manualPriceTarget,
+          gradualSellPercent,
+          userWallet,
+          feeWallet,
+        } = body || {};
+
+        const errors = [];
+        if (!sessionId || typeof sessionId !== "string")
+          errors.push("sessionId is required");
+        if (
+          !tokenAddress ||
+          typeof tokenAddress !== "string" ||
+          tokenAddress.length < 32
+        )
+          errors.push("tokenAddress is invalid");
+        const n = Number(numberOfMakers);
+        if (!Number.isFinite(n) || n < 1 || n > 1000)
+          errors.push("numberOfMakers must be between 1 and 1000");
+        const minSol = Number(minOrderSOL);
+        const maxSol = Number(maxOrderSOL);
+        if (!Number.isFinite(minSol) || minSol <= 0)
+          errors.push("minOrderSOL must be > 0");
+        if (!Number.isFinite(maxSol) || maxSol <= 0)
+          errors.push("maxOrderSOL must be > 0");
+        if (
+          Number.isFinite(minSol) &&
+          Number.isFinite(maxSol) &&
+          minSol >= maxSol
+        )
+          errors.push("minOrderSOL must be less than maxOrderSOL");
+        const minDelay = Number(minDelaySeconds);
+        const maxDelay = Number(maxDelaySeconds);
+        if (!Number.isFinite(minDelay) || minDelay < 0)
+          errors.push("minDelaySeconds must be >= 0");
+        if (!Number.isFinite(maxDelay) || maxDelay < 0)
+          errors.push("maxDelaySeconds must be >= 0");
+        if (
+          Number.isFinite(minDelay) &&
+          Number.isFinite(maxDelay) &&
+          minDelay > maxDelay
+        )
+          errors.push("minDelaySeconds must be <= maxDelaySeconds");
+        if (sellStrategy === "auto-profit") {
+          const p = Number(profitTargetPercent);
+          if (!Number.isFinite(p) || p < 0.1)
+            errors.push("profitTargetPercent must be >= 0.1");
+        }
+        if (sellStrategy === "manual-target") {
+          const t = Number(manualPriceTarget);
+          if (!Number.isFinite(t) || t <= 0)
+            errors.push("manualPriceTarget must be > 0");
+        }
+        if (sellStrategy === "gradually") {
+          const g = Number(gradualSellPercent);
+          if (!Number.isFinite(g) || g <= 0 || g > 100)
+            errors.push("gradualSellPercent must be between 0 and 100");
+        }
+        if (errors.length) {
+          return json(
+            { error: "validation_failed", details: errors },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const avgOrderSOL = (minSol + maxSol) / 2;
+        const makers = Array.from({ length: n }, (_, i) => ({
+          id: `maker_${i + 1}`,
+          address: "",
+          initialSOLAmount: avgOrderSOL,
+          buyTransactions: [],
+          sellTransactions: [],
+          currentTokenBalance: 0,
+          profitUSD: 0,
+          status: "active",
+        }));
+
+        return json(
+          {
+            sessionId,
+            tokenAddress,
+            numberOfMakers: n,
+            minOrderSOL: minSol,
+            maxOrderSOL: maxSol,
+            minDelaySeconds: minDelay,
+            maxDelaySeconds: maxDelay,
+            sellStrategy,
+            profitTargetPercent,
+            manualPriceTarget,
+            gradualSellPercent,
+            userWallet,
+            feeWallet,
+            makers,
+            status: "running",
+            startedAt: Date.now(),
+            note: "Market maker accepted. For live trading, provide per-maker signing keys and a task runner (Durable Object/cron).",
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to start market maker",
+            details: e?.message || String(e),
+          },
+          { status: 500, headers: corsHeaders },
+        );
+      }
+    }
+
     // Jupiter quote (query variant): /api/jupiter/quote
     if (pathname === "/api/jupiter/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";
@@ -1338,6 +1493,139 @@ export default {
         return json(
           {
             error: "Failed to execute Pumpfun swap",
+            details: e?.message || String(e),
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (pathname === "/api/forex/rate" && req.method === "GET") {
+      const base = (searchParams.get("base") || "USD").toUpperCase();
+      const symbols = (searchParams.get("symbols") || "PKR").toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const providers = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const apiJson = await resp.json();
+          const rate = p.parse(apiJson);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return json(
+              { base, symbols: [firstSymbol], rates: { [firstSymbol]: rate } },
+              { headers: corsHeaders },
+            );
+          }
+          lastErr = "invalid response";
+        } catch (e) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return json(
+        { error: "Failed to fetch forex rate", details: lastErr },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (pathname === "/api/stable-24h" && req.method === "GET") {
+      const symbolsParam = (
+        searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
+      const COINGECKO_IDS = {
+        SOL: {
+          id: "solana",
+          mint: "So11111111111111111111111111111111111111112",
+        },
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
+      };
+      const ids = symbols.map((s) => COINGECKO_IDS[s]?.id).filter(Boolean);
+      if (ids.length === 0) {
+        return json(
+          { error: "No supported symbols" },
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      try {
+        const url_str = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids.join(","))}&vs_currencies=usd&include_24hr_change=true`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        const resp = await fetch(url_str, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return json(
+            { error: `Coingecko returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        const out = symbols.map((s) => {
+          const id = COINGECKO_IDS[s]?.id;
+          const price = id ? (data?.[id]?.usd ?? null) : null;
+          const change = id ? (data?.[id]?.usd_24h_change ?? 0) : 0;
+          return { symbol: s, priceUsd: price, change24h: change };
+        });
+        return json({ symbols, data: out }, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to fetch stablecoin prices",
             details: e?.message || String(e),
           },
           { status: 502, headers: corsHeaders },

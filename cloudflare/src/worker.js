@@ -2009,6 +2009,105 @@ export default {
       }
     }
 
+    // Jupiter tokens: /api/jupiter/tokens?type=strict|all
+    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
+      const type = searchParams.get("type") || "strict";
+      const endpoints = [
+        `https://token.jup.ag/${type}`,
+        `https://cache.jup.ag/tokens`,
+      ];
+      let lastError = null;
+
+      for (const url_str of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastError = resp.status;
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          lastError = e?.message || String(e);
+        }
+      }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter tokens",
+          details: lastError,
+        },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Pumpfun quote: /api/pumpfun/quote (POST or GET)
+    if (pathname === "/api/pumpfun/quote") {
+      if (req.method === "POST" || req.method === "GET") {
+        let inputMint = "";
+        let outputMint = "";
+        let amount = "";
+
+        if (req.method === "POST") {
+          const body = await parseJSON(req);
+          inputMint = body?.inputMint || "";
+          outputMint = body?.outputMint || "";
+          amount = body?.amount || "";
+        } else {
+          inputMint = searchParams.get("inputMint") || "";
+          outputMint = searchParams.get("outputMint") || "";
+          amount = searchParams.get("amount") || "";
+        }
+
+        if (!inputMint || !outputMint || !amount) {
+          return json(
+            {
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        try {
+          const url_str = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            return json(
+              { error: "Pumpfun API error" },
+              { status: resp.status, headers: corsHeaders },
+            );
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          return json(
+            {
+              error: "Failed to fetch Pumpfun quote",
+              details: e?.message || String(e),
+            },
+            { status: 502, headers: corsHeaders },
+          );
+        }
+      }
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

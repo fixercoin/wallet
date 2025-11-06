@@ -530,6 +530,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           "No route available. Try swapping via USDC or reduce the amount.";
       }
 
+      // Detect gateway/service errors
+      if (message.includes("502") || message.includes("Bad Gateway")) {
+        message =
+          "Backend service temporarily unavailable. Please wait a moment and try again.";
+      } else if (message.includes("526") || message.includes("Invalid SSL")) {
+        message =
+          "API connection error. The backend is experiencing issues. Please try again shortly.";
+      } else if (message.includes("530") || message.includes("swap")) {
+        message =
+          "Swap service error. This may be due to network congestion. Try again in a moment.";
+      }
+
       toast({
         title: "Swap Failed",
         description: message,

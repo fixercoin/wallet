@@ -360,47 +360,81 @@ class JupiterAPI {
   }
 
   async getAllTokens(): Promise<JupiterToken[]> {
+    // Try proxy first, then fall back to public Jupiter token endpoints
     try {
-      const url = resolveApiUrl("/api/jupiter/tokens?type=all");
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Jupiter Token API error: ${response.status}`);
+      const proxyUrl = resolveApiUrl("/api/jupiter/tokens?type=all");
+      const resp = await this.fetchWithTimeout(proxyUrl, 10000).catch(
+        () => new Response("", { status: 0 } as any),
+      );
+      if (resp.ok) {
+        return (await resp.json()) as JupiterToken[];
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching all tokens from Jupiter:", error);
-      return [];
+    } catch (e) {
+      // ignore and try fallbacks below
     }
+
+    // Direct fallbacks (CORS-enabled by Jupiter)
+    const fallbackEndpoints = [
+      "https://token.jup.ag/all",
+      "https://cache.jup.ag/tokens",
+    ];
+    for (const url of fallbackEndpoints) {
+      try {
+        const r = await this.fetchWithTimeout(url, 10000).catch(
+          () => new Response("", { status: 0 } as any),
+        );
+        if (!r.ok) continue;
+        const data = await r.json();
+        return Array.isArray(data) ? (data as JupiterToken[]) : [];
+      } catch {}
+    }
+
+    console.error("Error fetching all tokens from Jupiter: all sources failed");
+    return [];
   }
 
   async getStrictTokenList(): Promise<JupiterToken[]> {
-    // Try strict, then fallback to all; use small timeout wrapper to avoid hanging
-    const fetchWithTimeout = async (url: string, ms = 10000) => {
-      const timeout = new Promise<Response>((resolve) =>
-        setTimeout(() => resolve(new Response("", { status: 504 })), ms),
-      );
-      return (await Promise.race([fetch(url), timeout])) as Response;
-    };
+    // Prefer proxy. If unavailable (404/5xx), fall back to public endpoints.
     try {
-      let response = await fetchWithTimeout(
-        resolveApiUrl("/api/jupiter/tokens?type=strict"),
+      const strictUrl = resolveApiUrl("/api/jupiter/tokens?type=strict");
+      let resp = await this.fetchWithTimeout(strictUrl, 10000).catch(
+        () => new Response("", { status: 0 } as any),
       );
-      if (!response.ok) {
-        response = await fetchWithTimeout(
-          resolveApiUrl("/api/jupiter/tokens?type=all"),
+      if (!resp.ok) {
+        const allUrl = resolveApiUrl("/api/jupiter/tokens?type=all");
+        resp = await this.fetchWithTimeout(allUrl, 10000).catch(
+          () => new Response("", { status: 0 } as any),
         );
       }
-      if (!response.ok) {
-        return [];
+      if (resp.ok) {
+        const data = await resp.json();
+        return Array.isArray(data) ? (data as JupiterToken[]) : [];
       }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.debug("Error fetching strict token list from Jupiter:", error);
-      return [];
+    } catch {
+      // continue to fallbacks
     }
+
+    // Direct fallbacks: strict first, then all, then cache
+    const directEndpoints = [
+      "https://token.jup.ag/strict",
+      "https://token.jup.ag/all",
+      "https://cache.jup.ag/tokens",
+    ];
+    for (const url of directEndpoints) {
+      try {
+        const r = await this.fetchWithTimeout(url, 10000).catch(
+          () => new Response("", { status: 0 } as any),
+        );
+        if (!r.ok) continue;
+        const data = await r.json();
+        return Array.isArray(data) ? (data as JupiterToken[]) : [];
+      } catch {}
+    }
+
+    console.debug(
+      "Error fetching strict token list from Jupiter: all sources failed",
+    );
+    return [];
   }
 
   formatSwapAmount(amount: number, decimals: number): string {

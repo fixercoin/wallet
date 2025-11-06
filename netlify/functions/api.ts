@@ -190,6 +190,10 @@ export const handler = async (event: any) => {
           "/wallet/balance [GET]",
           "/dextools/price [GET]",
           "/coinmarketcap/quotes [GET]",
+          "/pumpfun/quote [GET, POST]",
+          "/pumpfun/swap [POST]",
+          "/pumpfun/buy [POST]",
+          "/pumpfun/sell [POST]",
         ],
       });
     }

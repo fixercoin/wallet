@@ -1,31 +1,16 @@
 name = "wallet-c36"
-main = "cloudflare/src/worker.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare Pages (beta) configuration
+# Cloudflare Pages configuration
 pages_build_output_dir = "dist"
 
-[build]
-command = "npm install && npm run build"
-cwd = "."
-watch_paths = ["src/**/*.ts", "client/**/*.ts", "client/**/*.tsx"]
-
-[assets]
-directory = "dist"
-binding = "ASSETS"
-
 [env.production]
-name = "wallet-c36-prod"
-routes = [
-  { pattern = "fixorium-proxy.khanbabusargodha.workers.dev/*", zone_name = "workers.dev" },
-  { pattern = "wallet.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" },
-  { pattern = "app.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" }
-]
+name = "wallet-c36-production"
 
-[env.staging]
-name = "wallet-c36-staging"
-route = "wallet-staging.fixorium.com.pk/*"
+[env.production.vars]
+SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
+BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
 
 [vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"

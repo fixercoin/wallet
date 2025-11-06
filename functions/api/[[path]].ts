@@ -213,6 +213,37 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
+    // Root and health/status endpoints
+    if (
+      normalizedPath === "/" ||
+      normalizedPath === "/health" ||
+      normalizedPath === "/status"
+    ) {
+      return jsonCors(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Cloudflare)",
+        endpoints: [
+          "/easypaisa/webhook [POST]",
+          "/easypaisa/payments [GET]",
+          "/solana-rpc [POST]",
+          "/forex/rate [GET]",
+          "/exchange-rate [GET]",
+          "/token/price [GET]",
+          "/stable-24h [GET]",
+          "/dexscreener/tokens [GET]",
+          "/dexscreener/search [GET]",
+          "/dexscreener/trending [GET]",
+          "/jupiter/price [GET]",
+          "/jupiter/tokens [GET]",
+          "/jupiter/quote [GET]",
+          "/jupiter/swap [POST]",
+          "/wallet/balance [GET]",
+          "/dextools/price [GET]",
+          "/coinmarketcap/quotes [GET]",
+        ],
+      });
+    }
+
     // Easypaisa webhook ingestion (best-effort schema)
     if (normalizedPath === "/easypaisa/webhook" && request.method === "POST") {
       let body: any = {};
@@ -1177,28 +1208,64 @@ export const onRequest = async ({ request, env }) => {
             "Missing required body: { quoteResponse, userPublicKey, ...options }",
         });
       }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-      const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        return jsonCors(resp.status, {
-          error: `Swap failed: ${resp.statusText}`,
-          details: text,
+
+      let lastErr = "";
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          lastErr = text;
+
+          // Parse error to check for 1016 or simulation failures
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch (_) {}
+
+          const errorMsg =
+            errorData?.error?.message ||
+            errorData?.error ||
+            errorData?.message ||
+            text;
+          const errorCode = errorData?.code || errorData?.error?.code;
+
+          // Log details for debugging
+          console.error(
+            `Jupiter swap error (attempt ${attempt}/2):`,
+            errorCode,
+            errorMsg,
+          );
+
+          // Return error response with code and message for client to handle
+          return jsonCors(resp.status, {
+            error: errorMsg || `Swap failed: ${resp.statusText}`,
+            code: errorCode,
+            message: errorMsg,
+            details: text,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonCors(200, data);
       }
-      const data = await resp.json();
-      return jsonCors(200, data);
+
+      return jsonCors(502, {
+        error: "Swap request failed",
+        details: lastErr,
+      });
     }
 
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
@@ -1360,6 +1427,159 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(502, {
           error: "Failed to fetch CoinMarketCap prices",
           details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pump.fun BUY endpoint: /api/pumpfun/buy
+    if (normalizedPath === "/pumpfun/buy" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {
+          return jsonCors(400, {
+            error: "Invalid JSON body",
+          });
+        }
+
+        const { mint, amount, buyer } = body;
+
+        if (!mint || typeof amount !== "number" || !buyer) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: mint, amount (number), buyer (string)",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const pumpFunUrl = "https://pump.fun/api/trade";
+        const res = await fetch(pumpFunUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            buyer,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun BUY endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to request BUY transaction",
+          details: message,
+        });
+      }
+    }
+
+    // Pump.fun SELL endpoint: /api/pumpfun/sell
+    if (normalizedPath === "/pumpfun/sell" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {
+          return jsonCors(400, {
+            error: "Invalid JSON body",
+          });
+        }
+
+        const { mint, amount, seller } = body;
+
+        if (!mint || typeof amount !== "number" || !seller) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: mint, amount (number), seller (string)",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const pumpFunUrl = "https://pump.fun/api/sell";
+        const res = await fetch(pumpFunUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            seller,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun SELL endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to request SELL transaction",
+          details: message,
+        });
+      }
+    }
+
+    // Pump.fun CURVE endpoint: /api/pumpfun/curve
+    if (normalizedPath === "/pumpfun/curve" && request.method === "GET") {
+      try {
+        const mint = url.searchParams.get("mint");
+
+        if (!mint) {
+          return jsonCors(400, {
+            error: "Missing required parameter: mint",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const pumpFunUrl = `https://pump.fun/api/curve?mint=${encodeURIComponent(mint)}`;
+        const res = await fetch(pumpFunUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun CURVE endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to check curve state",
+          details: message,
         });
       }
     }

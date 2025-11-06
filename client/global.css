@@ -96,6 +96,14 @@
   }
 }
 
+/* Global icon style override: make all lucide icons monochrome black, line-only */
+.lucide,
+.lucide * {
+  color: #000 !important;
+  stroke: #000 !important;
+  fill: none !important;
+}
+
 @layer base {
   * {
     @apply border-border;

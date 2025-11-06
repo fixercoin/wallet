@@ -328,7 +328,9 @@ export async function createServer(): Promise<express.Application> {
 
       const tradeAction = String(action || "buy").toLowerCase();
       const endpoint =
-        tradeAction === "sell" ? "https://pump.fun/api/sell" : "https://pump.fun/api/trade";
+        tradeAction === "sell"
+          ? "https://pump.fun/api/sell"
+          : "https://pump.fun/api/trade";
       const payloadKey = tradeAction === "sell" ? "seller" : "buyer";
 
       const resp = await fetch(endpoint, {

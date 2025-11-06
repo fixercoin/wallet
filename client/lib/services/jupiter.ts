@@ -373,23 +373,7 @@ class JupiterAPI {
       // ignore and try fallbacks below
     }
 
-    // Direct fallbacks (CORS-enabled by Jupiter)
-    const fallbackEndpoints = [
-      "https://token.jup.ag/all",
-      "https://cache.jup.ag/tokens",
-    ];
-    for (const url of fallbackEndpoints) {
-      try {
-        const r = await this.fetchWithTimeout(url, 10000).catch(
-          () => new Response("", { status: 0 } as any),
-        );
-        if (!r.ok) continue;
-        const data = await r.json();
-        return Array.isArray(data) ? (data as JupiterToken[]) : [];
-      } catch {}
-    }
-
-    console.error("Error fetching all tokens from Jupiter: all sources failed");
+    // No direct external fallbacks; rely on proxy only to avoid DNS/CORS issues
     return [];
   }
 
@@ -414,26 +398,7 @@ class JupiterAPI {
       // continue to fallbacks
     }
 
-    // Direct fallbacks: strict first, then all, then cache
-    const directEndpoints = [
-      "https://token.jup.ag/strict",
-      "https://token.jup.ag/all",
-      "https://cache.jup.ag/tokens",
-    ];
-    for (const url of directEndpoints) {
-      try {
-        const r = await this.fetchWithTimeout(url, 10000).catch(
-          () => new Response("", { status: 0 } as any),
-        );
-        if (!r.ok) continue;
-        const data = await r.json();
-        return Array.isArray(data) ? (data as JupiterToken[]) : [];
-      } catch {}
-    }
-
-    console.debug(
-      "Error fetching strict token list from Jupiter: all sources failed",
-    );
+    // No direct external fallbacks; rely on proxy only to avoid DNS/CORS issues
     return [];
   }
 

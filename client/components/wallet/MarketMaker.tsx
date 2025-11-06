@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,
   SelectContent,
@@ -271,7 +272,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     try {
       const response = await fetch(
-        "https://fixorium-proxy.khanbabusargodha.workers.dev/api/market-maker/start",
+        resolveApiUrl("/api/market-maker/start"),
         {
           method: "POST",
           headers: {

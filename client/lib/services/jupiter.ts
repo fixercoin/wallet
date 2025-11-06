@@ -225,14 +225,14 @@ class JupiterAPI {
           response.status === 530;
 
         if (isError1016) {
-          // If this is a STALE_QUOTE and we haven't exceeded retry limit, indicate we can retry
-          // The caller (executeSwap in SwapInterface) will handle the retry with a fresh quote
+          // STALE_QUOTE error - quote may have expired
+          // Always throw to let caller handle quote refresh and retry
           throw new Error(
             `STALE_QUOTE: The quote expired or changed. Try refreshing the quote and trying again.`,
           );
         }
 
-        // For 502/503 errors (gateway/service unavailable), indicate retryable
+        // For 502/503 errors (gateway/service unavailable), retry with same quote
         if (
           (response.status === 502 || response.status === 503) &&
           retryCount < maxRetries

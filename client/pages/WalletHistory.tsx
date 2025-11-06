@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { heliusAPI } from "@/lib/services/helius";
 import { jupiterAPI } from "@/lib/services/jupiter";

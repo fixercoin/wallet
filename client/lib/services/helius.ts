@@ -595,7 +595,9 @@ class HeliusAPI {
             transfers.push({
               type: delta >= 0 ? "receive" : "send",
               token: mint,
-              amount: Math.abs(delta),
+              amount: Number.isFinite(Math.abs(delta))
+                ? Math.abs(delta)
+                : 0,
               decimals,
               signature: signature || "",
               blockTime,
@@ -622,7 +624,7 @@ class HeliusAPI {
               const amount = Math.abs(dLamports) / 1_000_000_000;
               const mint = "So11111111111111111111111111111111111111112";
               const hasSol = transfers.some((tr) => tr.mint === mint);
-              if (!hasSol) {
+              if (!hasSol && Number.isFinite(amount)) {
                 transfers.push({
                   type: dLamports >= 0 ? "receive" : "send",
                   token: mint,

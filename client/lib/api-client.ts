@@ -97,14 +97,17 @@ export const fetchWithFallback = async (
   } catch (error) {
     // Try fallback endpoint if primary fails
     const fallbackBase =
-      currentBase === FIXORIUM_API_BASE ? CLOUDFLARE_WORKER_BASE : FIXORIUM_API_BASE;
+      currentBase === FIXORIUM_API_BASE
+        ? CLOUDFLARE_WORKER_BASE
+        : FIXORIUM_API_BASE;
 
     if (fallbackBase && fallbackBase !== currentBase) {
       console.warn(
         `[API] Primary endpoint (${currentBase}) failed. Trying fallback: ${fallbackBase}`,
       );
 
-      const fallbackUrl = fallbackBase + (path.startsWith("/") ? "" : "/") + path;
+      const fallbackUrl =
+        fallbackBase + (path.startsWith("/") ? "" : "/") + path;
 
       try {
         const fallbackResponse = await fetch(fallbackUrl, {
@@ -120,7 +123,9 @@ export const fetchWithFallback = async (
       } catch (fallbackError) {
         console.warn(
           "[API] Fallback endpoint also failed:",
-          fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+          fallbackError instanceof Error
+            ? fallbackError.message
+            : String(fallbackError),
         );
       }
     }

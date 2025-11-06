@@ -20,9 +20,7 @@ export interface SwapResult {
  * Check if a token's bonding curve is still open on Pump.fun
  * Returns true if curve is open, false if graduated to pool/closed
  */
-export async function isBondingCurveOpen(
-  tokenMint: string,
-): Promise<boolean> {
+export async function isBondingCurveOpen(tokenMint: string): Promise<boolean> {
   try {
     // Try to fetch bonding curve data from Pump.fun API
     const res = await fetch(
@@ -95,9 +93,7 @@ export async function pumpFunSwap(
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      throw new Error(
-        `Pump.fun API error ${res.status}: ${errorText}`,
-      );
+      throw new Error(`Pump.fun API error ${res.status}: ${errorText}`);
     }
 
     const data = await res.json();
@@ -148,9 +144,7 @@ export async function pumpFunSell(
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      throw new Error(
-        `Pump.fun API error ${res.status}: ${errorText}`,
-      );
+      throw new Error(`Pump.fun API error ${res.status}: ${errorText}`);
     }
 
     const data = await res.json();
@@ -225,7 +219,9 @@ export async function executeSmartSwap(
         console.log(`[Smart Swap] Using Pump.fun for SELL of ${tokenMint}`);
         try {
           const tokenDecimals = 6; // Default to 6, should match actual token decimals
-          const rawAmount = Math.floor(amountInHuman * Math.pow(10, tokenDecimals));
+          const rawAmount = Math.floor(
+            amountInHuman * Math.pow(10, tokenDecimals),
+          );
           const txid = await pumpFunSell(wallet, tokenMint, rawAmount);
           return {
             txid,

@@ -7,10 +7,6 @@ pages_build_output_dir = "dist"
 
 [env.production]
 name = "wallet-c36-production"
-routes = [
-  { pattern = "wallet.fixorium.com.pk/*", zone_name = "fixorium.com.pk" },
-  { pattern = "wallet-c26.pages.dev/*", zone_name = "pages.dev" }
-]
 
 [env.production.vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"

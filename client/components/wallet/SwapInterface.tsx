@@ -552,7 +552,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       setStatus("");
 
-      if (errorMsg.includes("QUOTE_EXPIRED") || errorMsg.includes("STALE_QUOTE")) {
+      if (
+        errorMsg.includes("QUOTE_EXPIRED") ||
+        errorMsg.includes("STALE_QUOTE")
+      ) {
         toast({
           title: "Quote Expired",
           description:

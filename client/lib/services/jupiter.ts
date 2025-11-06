@@ -227,8 +227,15 @@ class JupiterAPI {
         if (isError1016) {
           // Attempt to refresh the quote and retry automatically
           const qr = swapRequest.quoteResponse;
-          if (retryCount < maxRetries && qr?.inputMint && qr?.outputMint && qr?.inAmount) {
-            console.warn("STALE_QUOTE detected. Refreshing quote and retrying swap...");
+          if (
+            retryCount < maxRetries &&
+            qr?.inputMint &&
+            qr?.outputMint &&
+            qr?.inAmount
+          ) {
+            console.warn(
+              "STALE_QUOTE detected. Refreshing quote and retrying swap...",
+            );
             try {
               const refreshedQuote = await this.getQuote(
                 qr.inputMint,

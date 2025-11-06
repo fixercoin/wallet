@@ -96,7 +96,9 @@ export default function WalletHistory() {
     [],
   );
   const [loading, setLoading] = useState(false);
-  const [tokenMap, setTokenMap] = useState<Record<string, { symbol: string; decimals: number }>>({});
+  const [tokenMap, setTokenMap] = useState<
+    Record<string, { symbol: string; decimals: number }>
+  >({});
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -126,12 +128,17 @@ export default function WalletHistory() {
     // Init token map (Jupiter + known)
     (async () => {
       try {
-        const known: Record<string, { symbol: string; decimals: number }> = { ...KNOWN_TOKENS };
+        const known: Record<string, { symbol: string; decimals: number }> = {
+          ...KNOWN_TOKENS,
+        };
         const jupTokens = await jupiterAPI.getStrictTokenList();
         if (Array.isArray(jupTokens) && jupTokens.length > 0) {
           for (const t of jupTokens) {
             if (!t?.address) continue;
-            known[t.address] = { symbol: t.symbol || t.address.slice(0, 6), decimals: t.decimals ?? 6 };
+            known[t.address] = {
+              symbol: t.symbol || t.address.slice(0, 6),
+              decimals: t.decimals ?? 6,
+            };
           }
         }
         setTokenMap(known);
@@ -348,7 +355,8 @@ export default function WalletHistory() {
                           ? mintOrToken.slice(0, 6)
                           : mintOrToken || "TOKEN");
                       // Amount is already in human-readable format from parser (includes meta fallback)
-                      const amount = typeof t.amount === "number" ? t.amount : 0;
+                      const amount =
+                        typeof t.amount === "number" ? t.amount : 0;
                       description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
                     }
 

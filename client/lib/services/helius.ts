@@ -544,10 +544,15 @@ class HeliusAPI {
     try {
       const meta = tx.meta;
       if (meta) {
-        const pre = Array.isArray(meta.preTokenBalances) ? meta.preTokenBalances : [];
-        const post = Array.isArray(meta.postTokenBalances) ? meta.postTokenBalances : [];
+        const pre = Array.isArray(meta.preTokenBalances)
+          ? meta.preTokenBalances
+          : [];
+        const post = Array.isArray(meta.postTokenBalances)
+          ? meta.postTokenBalances
+          : [];
         const seenMints = new Set(transfers.map((tr) => tr.mint || tr.token));
-        const key = (b: any) => `${b?.owner || ""}|${b?.mint || b?.mintId || ""}`;
+        const key = (b: any) =>
+          `${b?.owner || ""}|${b?.mint || b?.mintId || ""}`;
         const preMap = new Map<string, any>();
         pre.forEach((b: any) => preMap.set(key(b), b));
 
@@ -556,17 +561,18 @@ class HeliusAPI {
           const k = key(pb);
           const b0 = preMap.get(k);
           const decimals = pb?.uiTokenAmount?.decimals ?? pb?.decimals ?? 6;
-          const amtPost = typeof pb?.uiTokenAmount?.uiAmount === "number"
-            ? pb.uiTokenAmount.uiAmount
-            : pb?.uiTokenAmount?.amount
-              ? parseFloat(pb.uiTokenAmount.amount) / Math.pow(10, decimals)
-              : 0;
+          const amtPost =
+            typeof pb?.uiTokenAmount?.uiAmount === "number"
+              ? pb.uiTokenAmount.uiAmount
+              : pb?.uiTokenAmount?.amount
+                ? parseFloat(pb.uiTokenAmount.amount) / Math.pow(10, decimals)
+                : 0;
           const amtPre = b0
-            ? (typeof b0?.uiTokenAmount?.uiAmount === "number"
-                ? b0.uiTokenAmount.uiAmount
-                : b0?.uiTokenAmount?.amount
-                  ? parseFloat(b0.uiTokenAmount.amount) / Math.pow(10, decimals)
-                  : 0)
+            ? typeof b0?.uiTokenAmount?.uiAmount === "number"
+              ? b0.uiTokenAmount.uiAmount
+              : b0?.uiTokenAmount?.amount
+                ? parseFloat(b0.uiTokenAmount.amount) / Math.pow(10, decimals)
+                : 0
             : 0;
           const delta = amtPost - amtPre;
           const mint = pb?.mint || pb?.mintId || "";
@@ -584,9 +590,15 @@ class HeliusAPI {
         }
 
         // SOL via preBalances/postBalances
-        if (Array.isArray(meta.preBalances) && Array.isArray(meta.postBalances)) {
+        if (
+          Array.isArray(meta.preBalances) &&
+          Array.isArray(meta.postBalances)
+        ) {
           const keys = message?.accountKeys || [];
-          const idx = keys.findIndex((k: any) => (typeof k === "string" ? k : k?.pubkey) === walletAddress);
+          const idx = keys.findIndex(
+            (k: any) =>
+              (typeof k === "string" ? k : k?.pubkey) === walletAddress,
+          );
           if (idx >= 0) {
             const lamportsPre = meta.preBalances[idx] || 0;
             const lamportsPost = meta.postBalances[idx] || 0;

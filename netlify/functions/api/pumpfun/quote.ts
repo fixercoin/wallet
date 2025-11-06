@@ -61,8 +61,7 @@ export const handler: Handler = async (event) => {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error:
-            "Missing required parameters: inputMint, outputMint, amount",
+          error: "Missing required parameters: inputMint, outputMint, amount",
         }),
       };
     }

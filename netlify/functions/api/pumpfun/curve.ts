@@ -51,7 +51,7 @@ export const handler: Handler = async (event) => {
           Accept: "application/json",
         },
         signal: controller.signal,
-      }
+      },
     );
 
     clearTimeout(timeoutId);

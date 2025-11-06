@@ -8,6 +8,7 @@ export interface Env {
   MORALIS_RPC_URL?: string;
   BIRDEYE_API_KEY?: string;
   ASSETS: Fetcher;
+  WALLET_PAGES_APP?: Fetcher;
 }
 
 // Helper function to sign transactions with a keypair
@@ -143,6 +144,18 @@ export default {
         { status: "ok", timestamp: new Date().toISOString() },
         { headers: corsHeaders },
       );
+    }
+
+    // Forward /api/* requests to Pages Functions binding if available
+    if (pathname.startsWith("/api/")) {
+      try {
+        if ((env as any)?.WALLET_PAGES_APP?.fetch) {
+          return await (env as any).WALLET_PAGES_APP.fetch(req);
+        }
+      } catch (e) {
+        // If binding fails, fall through to worker's internal handlers
+        console.warn("Pages binding WALLET_PAGES_APP failed:", e);
+      }
     }
 
     // Try to serve static assets first (for built frontend)

@@ -390,19 +390,49 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      setStatus("Preparing transaction…");
+      setStatus("Refreshing quote…");
+
+      // Refresh quote immediately before execution to prevent STALE_QUOTE errors
+      // This is critical because quotes expire quickly (30-60 seconds)
+      let freshQuote = quote.quoteResponse;
+      try {
+        const amount = String(
+          Math.floor(parseFloat(amount) * 10 ** fromToken.decimals),
+        );
+        const refreshedQuote = await jupiterAPI.getQuote(
+          fromMint,
+          toMint,
+          parseInt(amount),
+          parseInt(slippage) * 100,
+        );
+        if (refreshedQuote) {
+          freshQuote = refreshedQuote;
+          console.log(
+            "[SwapInterface] Quote refreshed successfully before swap",
+          );
+        } else {
+          throw new Error(
+            "Failed to refresh quote. Please go back and request a new quote.",
+          );
+        }
+      } catch (refreshErr) {
+        console.warn("[SwapInterface] Quote refresh error:", refreshErr);
+        throw refreshErr;
+      }
+
+      setStatus("Preparing transaction���");
 
       const swapRequest = {
-        quoteResponse: quote.quoteResponse,
+        quoteResponse: freshQuote,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       };
 
       console.log(
-        "[SwapInterface] Executing swap with quote:",
-        quote.quoteResponse,
+        "[SwapInterface] Executing swap with fresh quote:",
+        freshQuote,
       );
-      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
+      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest, 0, 1);
 
       if (!swapResult || !swapResult.swapTransaction) {
         throw new Error("Swap transaction generation failed");
@@ -441,6 +471,21 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("[SwapInterface] Swap error:", err);
+
+      // Handle STALE_QUOTE errors
+      if (errorMsg.includes("STALE_QUOTE")) {
+        setStatus("Quote expired. Please request a fresh quote and try again.");
+        setIsLoading(false);
+        setQuote(null);
+        toast({
+          title: "Quote Expired",
+          description:
+            "The quote has expired. Please request a new quote and try again.",
+          variant: "default",
+        });
+        return null;
+      }
+
       setStatus("Swap error: " + errorMsg);
       setIsLoading(false);
 

@@ -132,6 +132,17 @@ export default {
       );
     }
 
+    // Forward /api/* requests to Pages Functions binding if available
+    if (pathname.startsWith("/api/")) {
+      try {
+        if (env?.WALLET_PAGES_APP?.fetch) {
+          return await env.WALLET_PAGES_APP.fetch(req);
+        }
+      } catch (e) {
+        console.warn("Pages binding WALLET_PAGES_APP failed:", e);
+      }
+    }
+
     // Try to serve static assets first (for built frontend)
     if (req.method === "GET" && !pathname.startsWith("/api")) {
       try {

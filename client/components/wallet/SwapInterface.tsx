@@ -543,6 +543,63 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
     setIsLoading(true);
 
     try {
+      // Helper to refresh a quote if it's stale (older than 20 seconds)
+      const refreshQuoteIfStale = async (
+        q: JupiterQuoteResponse,
+        timestamp: number | null,
+      ): Promise<JupiterQuoteResponse> => {
+        const QUOTE_TTL_MS = 20000; // 20 seconds (safe margin for 30-60s Jupiter TTL)
+        const now = Date.now();
+        const quoteAge = timestamp ? now - timestamp : null;
+
+        if (
+          !timestamp ||
+          quoteAge === null ||
+          quoteAge > QUOTE_TTL_MS ||
+          quoteAge < 0
+        ) {
+          console.log(
+            `[Swap] Quote is stale (age: ${quoteAge}ms), refreshing...`,
+          );
+
+          if (!fromToken || !toToken) {
+            throw new Error("Missing tokens for quote refresh");
+          }
+
+          const amountInt = parseInt(
+            jupiterAPI.formatSwapAmount(
+              parseFloat(fromAmount),
+              fromToken.decimals,
+            ),
+            10,
+          );
+
+          const slippageBps = Math.max(
+            1,
+            Math.round(parseFloat(slippage || "0.5") * 100),
+          );
+
+          const freshQuote = await jupiterAPI.getQuote(
+            fromToken.mint,
+            toToken.mint,
+            amountInt,
+            slippageBps,
+          );
+
+          if (!freshQuote) {
+            throw new Error("Failed to refresh quote before swap execution");
+          }
+
+          console.log(`[Swap] ✅ Quote refreshed successfully`);
+          setQuote(freshQuote);
+          setQuoteTimestamp(Date.now());
+          return freshQuote;
+        }
+
+        console.log(`[Swap] Quote is fresh (age: ${quoteAge}ms), using cached`);
+        return q;
+      };
+
       // Helper to submit a single-quote swap via Jupiter
       const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
         if (!wallet || !wallet.publicKey) {

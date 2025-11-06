@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 
 const WORKER_BASE =
   process.env.VITE_API_BASE_URL ||
-  "https://proxy.fixorium.com.pk";
+  "https://fixorium-proxy.khanbabusargodha.workers.dev";
 
 async function forwardRequest(path: string, req: any) {
   const url = `${WORKER_BASE.replace(/\/+$/, "")}${path}`;
@@ -46,12 +46,10 @@ export const handleSwapProxy: RequestHandler = async (req, res) => {
     return res.status(result.status).send(result.body);
   } catch (e: any) {
     console.error("Swap proxy error:", e?.message || e);
-    return res
-      .status(502)
-      .json({
-        error: "Failed to proxy swap request",
-        details: e?.message || String(e),
-      });
+    return res.status(502).json({
+      error: "Failed to proxy swap request",
+      details: e?.message || String(e),
+    });
   }
 };
 
@@ -63,12 +61,10 @@ export const handleQuoteProxy: RequestHandler = async (req, res) => {
     return res.status(result.status).send(result.body);
   } catch (e: any) {
     console.error("Quote proxy error:", e?.message || e);
-    return res
-      .status(502)
-      .json({
-        error: "Failed to proxy quote request",
-        details: e?.message || String(e),
-      });
+    return res.status(502).json({
+      error: "Failed to proxy quote request",
+      details: e?.message || String(e),
+    });
   }
 };
 
@@ -80,12 +76,10 @@ export const handleMeteoraQuoteProxy: RequestHandler = async (req, res) => {
     return res.status(result.status).send(result.body);
   } catch (e: any) {
     console.error("Meteora quote proxy error:", e?.message || e);
-    return res
-      .status(502)
-      .json({
-        error: "Failed to proxy meteora quote",
-        details: e?.message || String(e),
-      });
+    return res.status(502).json({
+      error: "Failed to proxy meteora quote",
+      details: e?.message || String(e),
+    });
   }
 };
 
@@ -96,12 +90,10 @@ export const handleMeteoraSwapProxy: RequestHandler = async (req, res) => {
     return res.status(result.status).send(result.body);
   } catch (e: any) {
     console.error("Meteora swap proxy error:", e?.message || e);
-    return res
-      .status(502)
-      .json({
-        error: "Failed to proxy meteora swap",
-        details: e?.message || String(e),
-      });
+    return res.status(502).json({
+      error: "Failed to proxy meteora swap",
+      details: e?.message || String(e),
+    });
   }
 };
 
@@ -112,12 +104,10 @@ export const handleSolanaSendProxy: RequestHandler = async (req, res) => {
     return res.status(result.status).send(result.body);
   } catch (e: any) {
     console.error("Solana send proxy error:", e?.message || e);
-    return res
-      .status(502)
-      .json({
-        error: "Failed to proxy solana-send",
-        details: e?.message || String(e),
-      });
+    return res.status(502).json({
+      error: "Failed to proxy solana-send",
+      details: e?.message || String(e),
+    });
   }
 };
 
@@ -128,11 +118,9 @@ export const handleSolanaSimulateProxy: RequestHandler = async (req, res) => {
     return res.status(result.status).send(result.body);
   } catch (e: any) {
     console.error("Solana simulate proxy error:", e?.message || e);
-    return res
-      .status(502)
-      .json({
-        error: "Failed to proxy solana-simulate",
-        details: e?.message || String(e),
-      });
+    return res.status(502).json({
+      error: "Failed to proxy solana-simulate",
+      details: e?.message || String(e),
+    });
   }
 };

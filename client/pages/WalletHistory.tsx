@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { heliusAPI } from "@/lib/services/helius";
 import { jupiterAPI } from "@/lib/services/jupiter";
@@ -167,6 +167,10 @@ export default function WalletHistory() {
     };
   }, [wallet?.publicKey]);
 
+  const handleRefresh = async () => {
+    await fetchBlockchainTransactions(tokenMap);
+  };
+
   const fetchBlockchainTransactions = async (
     resolvedTokenMap?: Record<string, { symbol: string; decimals: number }>,
   ) => {
@@ -270,53 +274,36 @@ export default function WalletHistory() {
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-medium">Transactions</h2>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="p-1 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh transactions"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </button>
             </div>
 
-            {/* Combine blockchain txs + completed + pending orders */}
+            {/* Show only confirmed on-chain transactions */}
             {(() => {
-              const appOrders = [
-                ...(completedOrders || []).map((o: any) => ({
-                  ...o,
-                  __status: "completed",
-                  __source: "app",
-                })),
-                ...(pendingOrders || []).map((o: any) => ({
-                  ...o,
-                  __status: "pending",
-                  __source: "app",
-                })),
-              ];
-
-              const allTxs = [
-                ...blockchainTxs.map((t) => ({
+              // Filter to only confirmed on-chain blockchain transactions
+              const confirmedOnChainTxs = blockchainTxs
+                .map((t) => ({
                   ...t,
                   __status: "confirmed",
                   __source: "blockchain",
-                })),
-                ...appOrders,
-              ];
-
-              // Filter and sort by date (newest first)
-              const filteredTxs = allTxs
-                .filter((item: any) => {
-                  const s = JSON.stringify(item).toLowerCase();
-                  return (
-                    /\b(buy|sell|send|receive|received|sent)\b/.test(s) ||
-                    item.__source === "blockchain"
-                  );
-                })
+                }))
                 .sort((a: any, b: any) => {
-                  const timeA =
-                    a.blockTime ||
-                    new Date(a.createdAt || a.timestamp || 0).getTime() / 1000;
-                  const timeB =
-                    b.blockTime ||
-                    new Date(b.createdAt || b.timestamp || 0).getTime() / 1000;
+                  const timeA = a.blockTime || 0;
+                  const timeB = b.blockTime || 0;
                   return timeB - timeA;
                 });
 
-              if (filteredTxs.length === 0) {
+              if (confirmedOnChainTxs.length === 0) {
                 return (
                   <div className="text-sm text-gray-600">
                     {loading
@@ -328,55 +315,19 @@ export default function WalletHistory() {
 
               return (
                 <ul className="space-y-3">
-                  {filteredTxs.map((t: any, idx: number) => {
+                  {confirmedOnChainTxs.map((t: any, idx: number) => {
                     const sigs = findSignaturesInObject(t);
-                    // infer type
-                    let kind = "TX";
-                    if (t.__source === "blockchain") {
-                      kind =
-                        t.type === "send"
-                          ? "SEND"
-                          : t.type === "receive"
-                            ? "RECEIVE"
-                            : "TX";
-                    } else {
-                      const text = (
-                        t.type ||
-                        t.description ||
-                        JSON.stringify(t) ||
-                        ""
-                      )
-                        .toString()
-                        .toLowerCase();
-                      if (/buy/.test(text)) kind = "BUY";
-                      else if (/sell/.test(text)) kind = "SELL";
-                      else if (/receive|received/.test(text)) kind = "RECEIVE";
-                      else if (/send|sent/.test(text)) kind = "SEND";
-                    }
+                    // Determine transaction type
+                    const kind =
+                      t.type === "send"
+                        ? "SEND"
+                        : t.type === "receive"
+                          ? "RECEIVE"
+                          : "TX";
 
-                    const when =
-                      t.createdAt ||
-                      t.timestamp ||
-                      t.time ||
-                      t.date ||
-                      t.txTime ||
-                      (t.blockTime ? t.blockTime * 1000 : null);
+                    // Format date
+                    const when = t.blockTime ? t.blockTime * 1000 : null;
                     const whenStr = when ? new Date(when).toLocaleString() : "";
-
-                    // Get amount and token for blockchain transactions
-                    let description = t.description || "";
-                    if (t.__source === "blockchain" && !description) {
-                      const mintOrToken: string = t.token || "";
-                      const tokenSymbol =
-                        tokenMap[mintOrToken]?.symbol ||
-                        (mintOrToken.length > 40
-                          ? mintOrToken.slice(0, 6)
-                          : mintOrToken || "TOKEN");
-                      // Amount is already in human-readable format from parser (includes meta fallback)
-                      const amount =
-                        typeof t.amount === "number" ? t.amount : 0;
-                      description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
-                    }
 
                     const allSigs = [
                       ...(t.signature ? [t.signature] : []),
@@ -390,25 +341,17 @@ export default function WalletHistory() {
                         className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
+                          <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900 uppercase">
                                 {kind}
                               </span>
-                              <span className="text-xs text-gray-500">
-                                {t.__status}
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                On-chain
                               </span>
-                              {t.__source === "blockchain" && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                  On-chain
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {description || JSON.stringify(t).slice(0, 100)}
                             </div>
                             {whenStr ? (
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-gray-500">
                                 {whenStr}
                               </div>
                             ) : null}

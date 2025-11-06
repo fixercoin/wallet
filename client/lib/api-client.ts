@@ -70,3 +70,38 @@ export const resolveApiUrl = (path: string): string => {
   // Otherwise, append the full normalizedPath
   return `${baseNorm}${normalizedPath}`;
 };
+
+// Fetch wrapper with automatic fallback support
+export const fetchWithFallback = async (
+  path: string,
+  options?: RequestInit,
+): Promise<Response> => {
+  const url = resolveApiUrl(path);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      // Add timeout if not present
+      signal: options?.signal || AbortSignal.timeout?.(30000),
+    });
+
+    // If successful, mark this base as working
+    if (response.ok) {
+      workingApiBase = getApiBaseUrl();
+    }
+
+    return response;
+  } catch (error) {
+    // If Cloudflare Worker is unreachable and not in dev mode, log it
+    const currentBase = getApiBaseUrl();
+    if (currentBase === CLOUDFLARE_WORKER_BASE) {
+      markApiBaseFailed(currentBase);
+      console.warn(
+        "Cloudflare Worker at " + CLOUDFLARE_WORKER_BASE + " appears to be unavailable. " +
+        "Error: " + (error instanceof Error ? error.message : String(error))
+      );
+    }
+
+    throw error;
+  }
+};

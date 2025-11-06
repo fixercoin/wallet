@@ -79,6 +79,7 @@ export const fetchWithFallback = async (
   options?: RequestInit,
 ): Promise<Response> => {
   const url = resolveApiUrl(path);
+  const currentBase = getApiBaseUrl();
 
   try {
     const response = await fetch(url, {
@@ -89,22 +90,39 @@ export const fetchWithFallback = async (
 
     // If successful, mark this base as working
     if (response.ok) {
-      workingApiBase = getApiBaseUrl();
+      workingApiBase = currentBase;
     }
 
     return response;
   } catch (error) {
-    // If Cloudflare Worker is unreachable and not in dev mode, log it
-    const currentBase = getApiBaseUrl();
-    if (currentBase === CLOUDFLARE_WORKER_BASE) {
-      markApiBaseFailed(currentBase);
+    // Try fallback endpoint if primary fails
+    const fallbackBase =
+      currentBase === FIXORIUM_API_BASE ? CLOUDFLARE_WORKER_BASE : FIXORIUM_API_BASE;
+
+    if (fallbackBase && fallbackBase !== currentBase) {
       console.warn(
-        "Cloudflare Worker at " +
-          CLOUDFLARE_WORKER_BASE +
-          " appears to be unavailable. " +
-          "Error: " +
-          (error instanceof Error ? error.message : String(error)),
+        `[API] Primary endpoint (${currentBase}) failed. Trying fallback: ${fallbackBase}`,
       );
+
+      const fallbackUrl = fallbackBase + (path.startsWith("/") ? "" : "/") + path;
+
+      try {
+        const fallbackResponse = await fetch(fallbackUrl, {
+          ...options,
+          signal: options?.signal || AbortSignal.timeout?.(30000),
+        });
+
+        if (fallbackResponse.ok) {
+          workingApiBase = fallbackBase;
+          cachedBase = fallbackBase;
+          return fallbackResponse;
+        }
+      } catch (fallbackError) {
+        console.warn(
+          "[API] Fallback endpoint also failed:",
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        );
+      }
     }
 
     throw error;

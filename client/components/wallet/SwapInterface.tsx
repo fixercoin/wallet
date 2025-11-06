@@ -418,7 +418,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw refreshErr;
       }
 
-      setStatus("Preparing transaction…");
+      setStatus("Preparing transaction���");
 
       const swapRequest = {
         quoteResponse: freshQuote,
@@ -469,6 +469,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("[SwapInterface] Swap error:", err);
+
+      // Handle STALE_QUOTE errors
+      if (errorMsg.includes("STALE_QUOTE")) {
+        setStatus("Quote expired. Please request a fresh quote and try again.");
+        setIsLoading(false);
+        setQuote(null);
+        toast({
+          title: "Quote Expired",
+          description: "The quote has expired. Please request a new quote and try again.",
+          variant: "default",
+        });
+        return null;
+      }
+
       setStatus("Swap error: " + errorMsg);
       setIsLoading(false);
 

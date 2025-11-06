@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { resolveApiUrl } from "@/lib/api-client";
@@ -15,16 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   SystemProgram,
   PublicKey,
@@ -43,6 +33,93 @@ const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
+
+const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+
+  const particles = Array.from({ length: 24 }).map((_, i) => {
+    const angle = (i / 24) * Math.PI * 2;
+    const distance = 180;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    return {
+      tx,
+      ty,
+      id: i,
+      color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][
+        i % 6
+      ],
+    };
+  });
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      <style>{`
+        @keyframes burst {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0);
+          }
+        }
+        @keyframes success-pop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={
+            {
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              width: "12px",
+              height: "12px",
+              backgroundColor: p.color,
+              borderRadius: "50%",
+              marginLeft: "-6px",
+              marginTop: "-6px",
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              animation: `burst 1.2s ease-out forwards`,
+            } as any
+          }
+        />
+      ))}
+
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          marginLeft: "-40px",
+          marginTop: "-40px",
+          animation: "success-pop 0.7s ease-out forwards",
+        }}
+      >
+        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
+          <Check className="w-10 h-10 text-white" strokeWidth={3} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function addFeeTransferInstruction(
   tx: VersionedTransaction,
@@ -187,7 +264,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -367,7 +445,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     try {
       setStatus("Preparing swap…");
       setIsLoading(true);
-      setShowConfirmation(false);
 
       if (!wallet) {
         setStatus("No wallet detected.");
@@ -392,18 +469,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       setStatus("Refreshing quote…");
 
-      // Refresh quote immediately before execution to prevent STALE_QUOTE errors
-      // This is critical because quotes expire quickly (30-60 seconds)
       let freshQuote = quote.quoteResponse;
       try {
-        const amount = String(
+        const amountValue = String(
           Math.floor(parseFloat(amount) * 10 ** fromToken.decimals),
         );
         const refreshedQuote = await jupiterAPI.getQuote(
           fromMint,
           toMint,
-          parseInt(amount),
-          parseInt(slippage) * 100,
+          parseInt(amountValue),
+          5000,
         );
         if (refreshedQuote) {
           freshQuote = refreshedQuote;
@@ -420,7 +495,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw refreshErr;
       }
 
-      setStatus("Preparing transaction���");
+      setStatus("Preparing transaction…");
 
       const swapRequest = {
         quoteResponse: freshQuote,
@@ -453,10 +528,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus(`Swap submitted: ${txSignature.slice(0, 8)}...`);
       console.log("[SwapInterface] Swap transaction signature:", txSignature);
 
-      toast({
-        title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}. Tx: ${txSignature.slice(0, 8)}...`,
-      });
+      setSuccessMsg(
+        `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`,
+      );
+      setShowSuccess(true);
 
       setAmount("");
       setQuote(null);
@@ -464,15 +539,15 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setIsLoading(false);
 
       setTimeout(() => {
+        setShowSuccess(false);
         window.location.reload();
-      }, 2000);
+      }, 3000);
 
       return txSignature;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("[SwapInterface] Swap error:", err);
 
-      // Handle STALE_QUOTE errors
       if (errorMsg.includes("STALE_QUOTE")) {
         setStatus("Quote expired. Please request a fresh quote and try again.");
         setIsLoading(false);
@@ -497,8 +572,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const executeSwap = () => {
-    setShowConfirmation(true);
+  const executeSwap = async () => {
+    if (!quote || !wallet) {
+      toast({
+        title: "Error",
+        description: "Quote or wallet missing",
+        variant: "destructive",
+      });
+      return;
+    }
+    await confirmSwap();
   };
 
   if (!wallet) {
@@ -715,30 +798,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </Button>
         </div>
 
-        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <AlertDialogContent className="bg-gray-900 border border-gray-700">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">
-                Confirm Swap
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-300">
-                You are about to swap {amount} {fromToken?.symbol} for
-                approximately {quote?.outHuman.toFixed(6)} {quote?.outToken}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmSwap}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                Confirm Swap
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <BloomExplosion show={showSuccess} />
+        {showSuccess && (
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-green-400 mt-32">
+                {successMsg}
+              </h2>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

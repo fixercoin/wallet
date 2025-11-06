@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { resolveApiUrl } from "@/lib/api-client";
@@ -15,16 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   SystemProgram,
   PublicKey,
@@ -43,6 +33,149 @@ const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
+
+const ConfettiPaper: React.FC<{ delay: number }> = ({ delay }) => {
+  const randomX = Math.random() * 360;
+  const randomDuration = 2 + Math.random() * 1;
+  const randomSize = 8 + Math.random() * 12;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width: `${randomSize}px`,
+        height: `${randomSize}px`,
+        backgroundColor: ["#22c55e", "#16a34a", "#4ade80", "#86efac"][Math.floor(Math.random() * 4)],
+        borderRadius: "50%",
+        left: "50%",
+        top: "50%",
+        animation: `bloom ${randomDuration}s ease-out ${delay}s forwards`,
+        transformOrigin: "center",
+        pointerEvents: "none",
+      }}
+    />
+  );
+};
+
+const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+
+  const papers = Array.from({ length: 20 }).map((_, i) => (
+    <ConfettiPaper key={i} delay={i * 0.05} />
+  ));
+
+  return (
+    <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
+      <style>{`
+        @keyframes bloom {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(
+              calc(cos(var(--angle)) * 200px),
+              calc(sin(var(--angle)) * 200px)
+            ) scale(0);
+          }
+        }
+        @keyframes pulse-success {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+      {papers.map((paper, i) => {
+        const angle = (i / 20) * Math.PI * 2;
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              width: "12px",
+              height: "12px",
+              backgroundColor: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981"][Math.floor(Math.random() * 5)],
+              borderRadius: "50%",
+              left: "50%",
+              top: "50%",
+              marginLeft: "-6px",
+              marginTop: "-6px",
+              animation: `boom 1.2s ease-out forwards`,
+              "--angle": `${angle}rad`,
+            } as any}
+            onAnimationEnd={() => {}}
+          />
+        );
+      })}
+      <div
+        style={{
+          position: "absolute",
+          animation: "pulse-success 0.6s ease-out",
+        }}
+      >
+        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
+          <Check className="w-10 h-10 text-white" />
+        </div>
+      </div>
+      <style>{`
+        @keyframes boom {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(
+              ${Math.cos(eval('0')) * 180}px,
+              ${Math.sin(eval('0')) * 180}px
+            ) scale(0);
+          }
+        }
+      `}</style>
+      {papers.map((_, i) => {
+        const angle = (i / 20) * Math.PI * 2;
+        const x = Math.cos(angle) * 180;
+        const y = Math.sin(angle) * 180;
+        return (
+          <div
+            key={`paper-${i}`}
+            style={{
+              position: "absolute",
+              width: `${8 + Math.random() * 8}px`,
+              height: `${8 + Math.random() * 8}px`,
+              backgroundColor: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981"][i % 5],
+              borderRadius: "50%",
+              left: "50%",
+              top: "50%",
+              marginLeft: "-6px",
+              marginTop: "-6px",
+              animation: `fly-out 1.2s ease-out forwards`,
+              opacity: 1,
+              filter: "blur(0px)",
+            }}
+            className={`absolute`}
+          />
+        );
+      })}
+      <style>{`
+        @keyframes fly-out {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 function addFeeTransferInstruction(
   tx: VersionedTransaction,
@@ -187,7 +320,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -453,10 +587,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus(`Swap submitted: ${txSignature.slice(0, 8)}...`);
       console.log("[SwapInterface] Swap transaction signature:", txSignature);
 
-      toast({
-        title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}. Tx: ${txSignature.slice(0, 8)}...`,
-      });
+      setSuccessMsg(`Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`);
+      setShowSuccess(true);
 
       setAmount("");
       setQuote(null);
@@ -464,8 +596,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setIsLoading(false);
 
       setTimeout(() => {
+        setShowSuccess(false);
         window.location.reload();
-      }, 2000);
+      }, 3000);
 
       return txSignature;
     } catch (err) {
@@ -497,8 +630,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const executeSwap = () => {
-    setShowConfirmation(true);
+  const executeSwap = async () => {
+    if (!quote || !wallet) {
+      toast({
+        title: "Error",
+        description: "Quote or wallet missing",
+        variant: "destructive",
+      });
+      return;
+    }
+    await confirmSwap();
   };
 
   if (!wallet) {
@@ -715,30 +856,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </Button>
         </div>
 
-        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <AlertDialogContent className="bg-gray-900 border border-gray-700">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">
-                Confirm Swap
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-300">
-                You are about to swap {amount} {fromToken?.symbol} for
-                approximately {quote?.outHuman.toFixed(6)} {quote?.outToken}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmSwap}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                Confirm Swap
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <BloomExplosion show={showSuccess} />
+        {showSuccess && (
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-green-400 mt-32">{successMsg}</h2>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

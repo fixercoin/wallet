@@ -1,5 +1,6 @@
 // Production deployment defaults
-const CLOUDFLARE_WORKER_BASE = "https://wallet.fixorium.com.pk";
+const CLOUDFLARE_WORKER_BASE =
+  "https://fixorium-proxy.khanbabusargodha.workers.dev/api";
 const LOCALHOST_API_BASE = "http://localhost:5173"; // Local fallback
 
 // Track which API base is currently working

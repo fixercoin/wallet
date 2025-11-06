@@ -1921,19 +1921,52 @@ export default {
     if (pathname === "/api/jupiter/swap" && req.method === "POST") {
       try {
         const body = await parseJSON(req);
-        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok) {
-          return json(
-            { error: "Jupiter swap failed" },
-            { status: resp.status, headers: corsHeaders },
-          );
+
+        // Try both Jupiter endpoints for redundancy
+        const swapEndpoints = [
+          "https://quote-api.jup.ag/v6/swap",
+          "https://lite-api.jup.ag/swap/v1/swap",
+        ];
+
+        let lastError: any = null;
+
+        for (const endpoint of swapEndpoints) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!resp.ok) {
+              lastError = { status: resp.status, endpoint };
+              console.warn(`[Jupiter Swap] ${endpoint} returned ${resp.status}`);
+              continue;
+            }
+
+            const data = await resp.json();
+            return json(data, { headers: corsHeaders });
+          } catch (e: any) {
+            lastError = e?.message || String(e);
+            console.warn(`[Jupiter Swap] ${endpoint} failed:`, lastError);
+          }
         }
-        const data = await resp.json();
-        return json(data, { headers: corsHeaders });
+
+        // All endpoints failed
+        return json(
+          {
+            error: "Jupiter swap failed on all endpoints",
+            details: lastError,
+            message: "Quote may have expired. Please request a new quote.",
+          },
+          { status: 530, headers: corsHeaders },
+        );
       } catch (e: any) {
         return json(
           {

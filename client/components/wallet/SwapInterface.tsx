@@ -479,22 +479,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      // Identify the token to check
+      // Identify the token
       const tokenMint = isBuying ? toMint : fromMint;
       const tokenDecimals = (isBuying ? toToken : fromToken).decimals ?? 6;
 
-      // Check if token is on pump.fun bonding curve
-      setStatus("Checking if token is on Pump.fun bonding curve…");
-      const isCurveToken = await checkCurveState(tokenMint);
-
-      if (!isCurveToken) {
-        throw new Error(
-          "Fixorium Wallet only supports Pump.fun bonding curve tokens. This token is not on an active bonding curve.",
-        );
-      }
-
-      // ✅ Token is on Pump.fun curve - use Pump.fun API
-      setStatus("Using Pump.fun for swap…");
+      // ✅ Use Pump.fun API for swap
+      setStatus("Preparing Pump.fun swap…");
 
       let txBase64: string;
 

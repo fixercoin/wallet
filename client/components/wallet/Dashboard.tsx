@@ -299,8 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
         // Health check via reliable ping endpoint
-        const url = resolveApiUrl("/api/ping");
-        const res = await fetch(url, {
+        const res = await fetchWithFallback("/api/ping", {
           method: "GET",
           signal: controller.signal,
           headers: {

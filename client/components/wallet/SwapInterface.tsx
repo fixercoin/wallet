@@ -6,11 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import {
-  checkCurveState,
-  pumpBuy,
-  pumpSell,
-} from "@/lib/services/pump-fun-api";
+import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,
@@ -443,7 +439,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const confirmSwap = async () => {
     try {
-      setStatus("Preparing swap…");
+      setStatus("Preparing swap��");
       setIsLoading(true);
 
       if (!wallet) {

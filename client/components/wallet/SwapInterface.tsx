@@ -42,7 +42,14 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
     const distance = 180;
     const tx = Math.cos(angle) * distance;
     const ty = Math.sin(angle) * distance;
-    return { tx, ty, id: i, color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][i % 6] };
+    return {
+      tx,
+      ty,
+      id: i,
+      color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][
+        i % 6
+      ],
+    };
   });
 
   return (
@@ -77,20 +84,22 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
       {particles.map((p) => (
         <div
           key={p.id}
-          style={{
-            position: "fixed",
-            left: "50%",
-            top: "50%",
-            width: "12px",
-            height: "12px",
-            backgroundColor: p.color,
-            borderRadius: "50%",
-            marginLeft: "-6px",
-            marginTop: "-6px",
-            "--tx": `${p.tx}px`,
-            "--ty": `${p.ty}px`,
-            animation: `burst 1.2s ease-out forwards`,
-          } as any}
+          style={
+            {
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              width: "12px",
+              height: "12px",
+              backgroundColor: p.color,
+              borderRadius: "50%",
+              marginLeft: "-6px",
+              marginTop: "-6px",
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              animation: `burst 1.2s ease-out forwards`,
+            } as any
+          }
         />
       ))}
 
@@ -519,7 +528,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus(`Swap submitted: ${txSignature.slice(0, 8)}...`);
       console.log("[SwapInterface] Swap transaction signature:", txSignature);
 
-      setSuccessMsg(`Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`);
+      setSuccessMsg(
+        `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`,
+      );
       setShowSuccess(true);
 
       setAmount("");
@@ -791,7 +802,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {showSuccess && (
           <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-green-400 mt-32">{successMsg}</h2>
+              <h2 className="text-2xl font-bold text-green-400 mt-32">
+                {successMsg}
+              </h2>
             </div>
           </div>
         )}

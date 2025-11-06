@@ -213,6 +213,37 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
+    // Root and health/status endpoints
+    if (
+      normalizedPath === "/" ||
+      normalizedPath === "/health" ||
+      normalizedPath === "/status"
+    ) {
+      return jsonCors(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Cloudflare)",
+        endpoints: [
+          "/easypaisa/webhook [POST]",
+          "/easypaisa/payments [GET]",
+          "/solana-rpc [POST]",
+          "/forex/rate [GET]",
+          "/exchange-rate [GET]",
+          "/token/price [GET]",
+          "/stable-24h [GET]",
+          "/dexscreener/tokens [GET]",
+          "/dexscreener/search [GET]",
+          "/dexscreener/trending [GET]",
+          "/jupiter/price [GET]",
+          "/jupiter/tokens [GET]",
+          "/jupiter/quote [GET]",
+          "/jupiter/swap [POST]",
+          "/wallet/balance [GET]",
+          "/dextools/price [GET]",
+          "/coinmarketcap/quotes [GET]",
+        ],
+      });
+    }
+
     // Easypaisa webhook ingestion (best-effort schema)
     if (normalizedPath === "/easypaisa/webhook" && request.method === "POST") {
       let body: any = {};
@@ -451,11 +482,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
@@ -599,11 +630,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
@@ -622,10 +653,16 @@ export const onRequest = async ({ request, env }) => {
       }
 
       let priceUsd: number | null = null;
+      let priceChange24h: number = 0;
+      let volume24h: number = 0;
+      let matchingPair: any = null;
+
       try {
         // Stablecoins -> 1
         if (token === "USDC" || token === "USDT") {
           priceUsd = 1.0;
+          priceChange24h = 0;
+          volume24h = 0;
         } else {
           // If we have a mint, try pair lookup and token lookup via DexScreener
           if (!mint && TOKEN_MINTS[token]) mint = TOKEN_MINTS[token];
@@ -643,7 +680,10 @@ export const onRequest = async ({ request, env }) => {
                   pairData.pairs.length > 0 &&
                   pairData.pairs[0]?.priceUsd
                 ) {
-                  priceUsd = Number(pairData.pairs[0].priceUsd);
+                  matchingPair = pairData.pairs[0];
+                  priceUsd = Number(matchingPair.priceUsd);
+                  priceChange24h = matchingPair.priceChange?.h24 || 0;
+                  volume24h = matchingPair.volume?.h24 || 0;
                 }
               } catch (e) {
                 // continue
@@ -655,11 +695,13 @@ export const onRequest = async ({ request, env }) => {
               try {
                 const data = await fetchDexscreenerData(`/tokens/${mint}`);
                 const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-                const p =
-                  pairs.length > 0 && pairs[0]?.priceUsd
-                    ? Number(pairs[0].priceUsd)
-                    : null;
-                if (typeof p === "number" && isFinite(p) && p > 0) priceUsd = p;
+                const p = pairs.length > 0 ? pairs[0] : null;
+                if (p && p.priceUsd) {
+                  matchingPair = p;
+                  priceUsd = Number(p.priceUsd);
+                  priceChange24h = p.priceChange?.h24 || 0;
+                  volume24h = p.volume?.h24 || 0;
+                }
               } catch (e) {
                 // continue
               }
@@ -676,20 +718,24 @@ export const onRequest = async ({ request, env }) => {
                   const searchPairs = Array.isArray(searchData?.pairs)
                     ? searchData.pairs
                     : [];
-                  let matchingPair = searchPairs.find(
+                  let foundPair = searchPairs.find(
                     (p: any) =>
                       p?.baseToken?.address === mint && p?.chainId === "solana",
                   );
-                  if (!matchingPair) {
-                    matchingPair = searchPairs.find(
+                  if (!foundPair) {
+                    foundPair = searchPairs.find(
                       (p: any) =>
                         p?.quoteToken?.address === mint &&
                         p?.chainId === "solana",
                     );
                   }
-                  if (!matchingPair) matchingPair = searchPairs[0];
-                  if (matchingPair && matchingPair.priceUsd)
-                    priceUsd = Number(matchingPair.priceUsd);
+                  if (!foundPair) foundPair = searchPairs[0];
+                  if (foundPair && foundPair.priceUsd) {
+                    matchingPair = foundPair;
+                    priceUsd = Number(foundPair.priceUsd);
+                    priceChange24h = foundPair.priceChange?.h24 || 0;
+                    volume24h = foundPair.volume?.h24 || 0;
+                  }
                 } catch (e) {
                   // continue
                 }
@@ -703,6 +749,8 @@ export const onRequest = async ({ request, env }) => {
 
       if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+        priceChange24h = 0;
+        volume24h = 0;
       }
 
       const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
@@ -714,6 +762,9 @@ export const onRequest = async ({ request, env }) => {
         rate: rateInPKR,
         pkrPerUsd: PKR_PER_USD,
         markup: MARKUP,
+        priceChange24h,
+        volume24h,
+        pair: matchingPair || undefined,
       });
     }
 
@@ -1157,28 +1208,64 @@ export const onRequest = async ({ request, env }) => {
             "Missing required body: { quoteResponse, userPublicKey, ...options }",
         });
       }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-      const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        return jsonCors(resp.status, {
-          error: `Swap failed: ${resp.statusText}`,
-          details: text,
+
+      let lastErr = "";
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          lastErr = text;
+
+          // Parse error to check for 1016 or simulation failures
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch (_) {}
+
+          const errorMsg =
+            errorData?.error?.message ||
+            errorData?.error ||
+            errorData?.message ||
+            text;
+          const errorCode = errorData?.code || errorData?.error?.code;
+
+          // Log details for debugging
+          console.error(
+            `Jupiter swap error (attempt ${attempt}/2):`,
+            errorCode,
+            errorMsg,
+          );
+
+          // Return error response with code and message for client to handle
+          return jsonCors(resp.status, {
+            error: errorMsg || `Swap failed: ${resp.statusText}`,
+            code: errorCode,
+            message: errorMsg,
+            details: text,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonCors(200, data);
       }
-      const data = await resp.json();
-      return jsonCors(200, data);
+
+      return jsonCors(502, {
+        error: "Swap request failed",
+        details: lastErr,
+      });
     }
 
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)

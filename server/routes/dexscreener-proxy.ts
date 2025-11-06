@@ -85,7 +85,7 @@ const tryDexscreenerEndpoints = async (
       console.log(`Trying DexScreener API: ${url}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
 
       const response = await fetch(url, {
         method: "GET",
@@ -108,7 +108,37 @@ const tryDexscreenerEndpoints = async (
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as DexscreenerResponse;
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          console.warn(
+            `Got HTML response from ${endpoint} instead of JSON. Status: ${response.status}`,
+          );
+          throw new Error(
+            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`,
+          );
+        }
+        throw new Error(
+          `Invalid content-type from ${endpoint}: ${contentType}`,
+        );
+      }
+
+      let data: DexscreenerResponse;
+      try {
+        data = (await response.json()) as DexscreenerResponse;
+      } catch (parseError) {
+        const text = await response.text();
+        console.error(`Failed to parse JSON from ${endpoint}:`, parseError);
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          throw new Error(
+            `DexScreener returned HTML instead of JSON (likely a 5xx error). Status: ${response.status}`,
+          );
+        }
+        throw new Error(
+          `Failed to parse JSON response from DexScreener: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        );
+      }
 
       // Success - update current endpoint
       currentEndpointIndex = endpointIndex;
@@ -116,7 +146,7 @@ const tryDexscreenerEndpoints = async (
       return data;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`DexScreener endpoint ${endpoint} failed:`, errorMsg);
+      console.warn(`DexScreener endpoint ${endpoint} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Small delay before trying next endpoint
@@ -131,7 +161,7 @@ const tryDexscreenerEndpoints = async (
   );
 };
 
-const fetchDexscreenerData = async (
+export const fetchDexscreenerData = async (
   path: string,
 ): Promise<DexscreenerResponse> => {
   const cached = cache.get(path);
@@ -180,7 +210,7 @@ const mergePairsByToken = (pairs: DexscreenerToken[]): DexscreenerToken[] => {
 };
 
 // Mint to pair address mapping for pump.fun tokens
-const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
+export const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
@@ -252,10 +282,13 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
       results.push(...data.pairs);
 
-      // Track which mints we found
+      // Track which mints we found (both base and quote tokens)
       data.pairs.forEach((pair) => {
         if (pair.baseToken?.address) {
           foundMintsSet.add(pair.baseToken.address);
+        }
+        if (pair.quoteToken?.address) {
+          foundMintsSet.add(pair.quoteToken.address);
         }
       });
     }
@@ -393,7 +426,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
                 if (matchingPair) {
                   console.log(
-                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
+                    `[DexScreener] �� Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                   );
                   results.push(matchingPair);
                   foundMintsSet.add(mint);

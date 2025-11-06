@@ -231,6 +231,193 @@ async function handlePrice(url: URL): Promise<Response> {
   }
 }
 
+// Jupiter Quote handler
+async function handleJupiterQuote(url: URL): Promise<Response> {
+  const { inputMint, outputMint, amount, slippageBps, asLegacyTransaction } =
+    Object.fromEntries(url.searchParams);
+
+  if (!inputMint || !outputMint || !amount) {
+    return new Response(
+      JSON.stringify({
+        error: "Missing required query params: inputMint, outputMint, amount",
+      }),
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  const params = new URLSearchParams({
+    inputMint,
+    outputMint,
+    amount,
+    slippageBps: slippageBps || "50",
+    onlyDirectRoutes: "false",
+    asLegacyTransaction: asLegacyTransaction || "false",
+  });
+
+  const urls = [
+    `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
+    `https://quote-api.jup.ag/v6/quote?${params.toString()}`,
+  ];
+
+  for (const fetchUrl of urls) {
+    try {
+      const response = await timeoutFetch(fetchUrl, {
+        method: "GET",
+        headers: browserHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+      }
+
+      if (response.status === 404 || response.status === 400) {
+        return new Response(
+          JSON.stringify({
+            error: "No swap route found for this pair",
+            code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+          }),
+          { status: response.status, headers: CORS_HEADERS },
+        );
+      }
+
+      if (response.status === 429 || response.status >= 500) {
+        continue;
+      }
+
+      const text = await response.text().catch(() => "");
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    } catch (e: any) {
+      continue;
+    }
+  }
+
+  return new Response(
+    JSON.stringify({ error: "Quote API error", code: "API_ERROR" }),
+    { status: 500, headers: CORS_HEADERS },
+  );
+}
+
+// Jupiter Swap handler
+async function handleJupiterSwap(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body || !body.quoteResponse || !body.userPublicKey) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing required body: { quoteResponse, userPublicKey, ...options }",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${JUPITER_SWAP_BASE}/swap`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      return new Response(
+        JSON.stringify({
+          error: `Swap failed: ${response.statusText}`,
+          details: text,
+        }),
+        { status: response.status, headers: CORS_HEADERS },
+      );
+    }
+
+    const data = await response.json();
+    return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
+  }
+}
+
+// Jupiter Price handler
+async function handleJupiterPrice(url: URL): Promise<Response> {
+  const ids = url.searchParams.get("ids");
+
+  if (!ids) {
+    return new Response(
+      JSON.stringify({
+        error: "Missing 'ids' parameter. Expected comma-separated token mints.",
+      }),
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  const endpoints = [
+    `${JUPITER_PRICE_BASE}/price?ids=${ids}`,
+    `https://api.jup.ag/price/v2?ids=${ids}`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await timeoutFetch(endpoint, {
+        method: "GET",
+        headers: browserHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+      }
+
+      if (response.status === 429) continue;
+    } catch (e) {
+      continue;
+    }
+  }
+
+  return new Response(JSON.stringify({ error: "Price API error", data: {} }), {
+    status: 500,
+    headers: CORS_HEADERS,
+  });
+}
+
+// Jupiter Tokens handler
+async function handleJupiterTokens(url: URL): Promise<Response> {
+  const type = url.searchParams.get("type") || "strict";
+
+  const endpoints = [
+    `https://token.jup.ag/${type}`,
+    "https://cache.jup.ag/tokens",
+    "https://token.jup.ag/all",
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await timeoutFetch(endpoint, {
+        method: "GET",
+        headers: browserHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+      }
+
+      if (response.status === 429 || response.status >= 500) {
+        continue;
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+
+  return new Response(JSON.stringify({ error: "Tokens API error", data: [] }), {
+    status: 502,
+    headers: CORS_HEADERS,
+  });
+}
+
 // Main fetch handler for worker
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -259,6 +446,23 @@ export default {
 
       if (pathname.startsWith("/api/price") || pathname === "/price") {
         return await handlePrice(url);
+      }
+
+      // Jupiter routes
+      if (pathname.startsWith("/api/jupiter/quote")) {
+        return await handleJupiterQuote(url);
+      }
+
+      if (pathname.startsWith("/api/jupiter/swap")) {
+        return await handleJupiterSwap(request);
+      }
+
+      if (pathname.startsWith("/api/jupiter/price")) {
+        return await handleJupiterPrice(url);
+      }
+
+      if (pathname.startsWith("/api/jupiter/tokens")) {
+        return await handleJupiterTokens(url);
       }
 
       // Default 404

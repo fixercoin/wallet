@@ -5,9 +5,9 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
-import { PriceCard } from "./token-detail/PriceCard";
+import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
+import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -32,7 +32,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     { time: string; price: number; volume: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
   // Find the token from the tokens list
@@ -44,19 +43,16 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     }
   }, [token]);
 
-  // Load live price data from DexScreener for this token
+  // Load live price data from Birdeye for this token
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        const ds = await dexscreenerAPI.getTokenByMint(tokenMint);
-        const price = ds?.priceUsd ? parseFloat(ds.priceUsd) : null;
-        const change =
-          ds?.priceChange?.h24 ??
-          ds?.priceChange?.h6 ??
-          ds?.priceChange?.h1 ??
-          ds?.priceChange?.m5 ??
-          0;
+        const birdeye = await birdeyeAPI.getTokenByMint(tokenMint);
+        const price = birdeye?.priceUsd
+          ? parseFloat(String(birdeye.priceUsd))
+          : null;
+        const change = birdeye?.priceChange?.h24 ?? 0;
         const base = price || 0;
         const data = Array.from({ length: 24 }, (_, i) => {
           // create simple intraday points around the base price using change to simulate trend
@@ -68,7 +64,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           return {
             time: `${i}:00`,
             price: parseFloat((base * factor).toFixed(8)),
-            volume: ds?.volume?.h24 || Math.random() * 100000,
+            volume: birdeye?.volume?.h24 || Math.random() * 100000,
           };
         });
         if (mounted) setPriceData(data);
@@ -87,15 +83,15 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     try {
       await refreshTokens();
       // reload prices
-      const ds = await dexscreenerAPI
+      const birdeye = await birdeyeAPI
         .getTokenByMint(tokenMint)
         .catch(() => null);
-      if (ds?.priceUsd) {
-        const base = parseFloat(ds.priceUsd);
+      if (birdeye?.priceUsd) {
+        const base = parseFloat(String(birdeye.priceUsd));
         const data = Array.from({ length: 24 }, (_, i) => ({
           time: `${i}:00`,
           price: base,
-          volume: ds.volume?.h24 || 0,
+          volume: birdeye.volume?.h24 || 0,
         }));
         setPriceData(data);
       }
@@ -163,21 +159,16 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-500/60 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Price Section (inside single card) */}
-          <PriceCard
-            token={displayToken}
-            priceData={priceData}
-            showBalance={showBalance}
-            onToggleBalance={() => setShowBalance(!showBalance)}
-            withinCard
-            variant="light"
-          />
+          {/* Token Quick Info Card */}
+          <div className="px-4 py-3">
+            <TokenQuickInfoCard token={displayToken} variant="light" />
+          </div>
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
@@ -186,7 +177,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                 Buys vs Sells (5m → 24h)
               </div>
               <div className="p-3">
-                <BuySellLine mint={tokenMint} />
+                <BuySellLine mint={tokenMint} priceData={priceData} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">

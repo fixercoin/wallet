@@ -1,5 +1,5 @@
-import express from "express";
 import cors from "cors";
+import express from "express";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleExchangeRate } from "./routes/exchange-rate";
@@ -8,6 +8,11 @@ import {
   handleDexscreenerSearch,
   handleDexscreenerTrending,
 } from "./routes/dexscreener-proxy";
+import {
+  handleDexscreenerPrice,
+  handleSolPrice,
+  handleTokenPrice,
+} from "./routes/dexscreener-price";
 import {
   handleCoinMarketCapQuotes,
   handleCoinMarketCapSearch,
@@ -36,6 +41,28 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
+import { handleBirdeyePrice } from "./routes/api-birdeye";
+import {
+  handleSwapProxy,
+  handleQuoteProxy,
+  handleMeteoraQuoteProxy,
+  handleMeteoraSwapProxy,
+  handleSolanaSendProxy,
+  handleSolanaSimulateProxy,
+} from "./routes/swap-proxy";
+import {
+  handleSolanaSend,
+  handleSolanaSimulate,
+} from "./routes/solana-transaction";
+import { handleUnifiedSwapLocal } from "./routes/swap-handler";
+import { handleLocalQuote } from "./routes/quote-handler";
+import { handleSwapQuoteV2, handleSwapExecuteV2 } from "./routes/swap-v2";
+import { requireApiKey } from "./middleware/auth";
+import {
+  validateSwapRequest,
+  validateSolanaSend,
+  validateSwapSubmit,
+} from "./middleware/validate";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -48,6 +75,11 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
   app.get("/api/dexscreener/search", handleDexscreenerSearch);
   app.get("/api/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/price", handleDexscreenerPrice);
+
+  // Price routes
+  app.get("/api/sol/price", handleSolPrice);
+  app.get("/api/token/price", handleTokenPrice);
 
   // CoinMarketCap routes
   app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);
@@ -62,11 +94,64 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/jupiter/swap", handleJupiterSwap);
   app.get("/api/jupiter/tokens", handleJupiterTokens);
 
+  // Birdeye routes
+  app.get("/api/birdeye/price", handleBirdeyePrice);
+
   // Solana RPC proxy
   app.post("/api/solana-rpc", handleSolanaRpc);
 
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
+
+  // Unified swap & quote proxies (forward to Fixorium worker or configured API)
+  // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
+
+  // Local unified swap endpoint (build unsigned swap). Validate payload.
+  app.post("/api/swap", validateSwapRequest, handleUnifiedSwapLocal);
+
+  // Local quote handler (preferred over external worker)
+  app.get("/api/quote", handleLocalQuote);
+
+  // New v2 unified swap endpoints with comprehensive fallback chain
+  app.get("/api/swap/quote", handleSwapQuoteV2);
+  app.post("/api/swap/execute", handleSwapExecuteV2);
+
+  // Keep proxy handlers as fallbacks (registered after local handler if needed)
+  app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
+  app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
+
+  // Protect endpoints that accept signed txns or submit to RPC with API key + validation
+  app.post(
+    "/api/solana-send",
+    requireApiKey,
+    validateSolanaSend,
+    handleSolanaSend,
+  );
+  app.post(
+    "/api/solana-simulate",
+    requireApiKey,
+    validateSolanaSend,
+    handleSolanaSimulate,
+  );
+
+  // POST /api/swap/submit - require API key and validate
+  app.post(
+    "/api/swap/submit",
+    requireApiKey,
+    validateSwapSubmit,
+    (req, res) => {
+      // forward to proxy handler which calls RPC; reuse handleSolanaSendProxy logic by adapting body
+      return handleSolanaSendProxy(req, res as any);
+    },
+  );
+
+  // Proxy for /api/swap to worker (fallback) - registered last (protected by API key when forwarding sensitive actions)
+  app.post(
+    "/api/swap/proxy",
+    requireApiKey,
+    validateSwapRequest,
+    handleSwapProxy,
+  );
 
   // Pumpfun proxy (quote & swap)
   app.all(["/api/pumpfun/quote", "/api/pumpfun/swap"], async (req, res) => {
@@ -94,12 +179,9 @@ export async function createServer(): Promise<express.Application> {
         }
 
         if (!inputMint || !outputMint || !amount) {
-          return res
-            .status(400)
-            .json({
-              error:
-                "Missing required parameters: inputMint, outputMint, amount",
-            });
+          return res.status(400).json({
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          });
         }
 
         const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(
@@ -136,12 +218,10 @@ export async function createServer(): Promise<express.Application> {
 
       return res.status(404).json({ error: "Pumpfun proxy path not found" });
     } catch (e: any) {
-      return res
-        .status(502)
-        .json({
-          error: "Failed to proxy Pumpfun request",
-          details: e?.message || String(e),
-        });
+      return res.status(502).json({
+        error: "Failed to proxy Pumpfun request",
+        details: e?.message || String(e),
+      });
     }
   });
 
@@ -154,11 +234,11 @@ export async function createServer(): Promise<express.Application> {
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       // If stablecoins or known symbols, return deterministic prices
@@ -201,12 +281,10 @@ export async function createServer(): Promise<express.Application> {
       // Last resort
       return res.status(404).json({ error: "Token price not available" });
     } catch (e: any) {
-      return res
-        .status(502)
-        .json({
-          error: "Failed to fetch token price",
-          details: e?.message || String(e),
-        });
+      return res.status(502).json({
+        error: "Failed to fetch token price",
+        details: e?.message || String(e),
+      });
     }
   });
 

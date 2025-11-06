@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 
 interface TokenOption {
@@ -69,7 +68,6 @@ export default function BuyCrypto() {
   const navigate = useNavigate();
   const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
-  const { send } = useDurableRoom("global", API_BASE);
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(

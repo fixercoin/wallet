@@ -29,10 +29,20 @@ class SolPriceService {
       const response = await fetch("/api/sol/price");
 
       if (!response.ok) {
+        console.warn(`SOL price API returned ${response.status}`);
         throw new Error(`Failed to fetch SOL price: ${response.status}`);
       }
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error(
+          "Failed to parse SOL price response as JSON:",
+          parseError,
+        );
+        throw parseError;
+      }
 
       // Handle both direct price response and nested structure
       let priceData: SolPriceData;
@@ -41,9 +51,9 @@ class SolPriceService {
         // Direct response format from proxy
         priceData = {
           price: data.price || 0,
-          price_change_24h: data.price_change_24h || 0,
-          market_cap: data.market_cap || 0,
-          volume_24h: data.volume_24h || 0,
+          price_change_24h: data.price_change_24h ?? data.priceChange24h ?? 0,
+          market_cap: data.market_cap ?? data.marketCap ?? 0,
+          volume_24h: data.volume_24h ?? data.volume24h ?? 0,
         };
       } else if (data.solana) {
         // CoinGecko response format

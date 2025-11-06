@@ -406,11 +406,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         decimalsIn,
       );
 
+      // Use 1% slippage tolerance (100 basis points) for more forgiving execution
       const quoteResponse = await jupiterAPI.getQuote(
         fromMint,
         toMint,
         parseInt(amountStr),
-        5000,
+        100,
       );
 
       if (!quoteResponse) {

@@ -1220,34 +1220,61 @@ export default {
         } = body || {};
 
         const errors = [];
-        if (!sessionId || typeof sessionId !== "string") errors.push("sessionId is required");
-        if (!tokenAddress || typeof tokenAddress !== "string" || tokenAddress.length < 32) errors.push("tokenAddress is invalid");
+        if (!sessionId || typeof sessionId !== "string")
+          errors.push("sessionId is required");
+        if (
+          !tokenAddress ||
+          typeof tokenAddress !== "string" ||
+          tokenAddress.length < 32
+        )
+          errors.push("tokenAddress is invalid");
         const n = Number(numberOfMakers);
-        if (!Number.isFinite(n) || n < 1 || n > 1000) errors.push("numberOfMakers must be between 1 and 1000");
+        if (!Number.isFinite(n) || n < 1 || n > 1000)
+          errors.push("numberOfMakers must be between 1 and 1000");
         const minSol = Number(minOrderSOL);
         const maxSol = Number(maxOrderSOL);
-        if (!Number.isFinite(minSol) || minSol <= 0) errors.push("minOrderSOL must be > 0");
-        if (!Number.isFinite(maxSol) || maxSol <= 0) errors.push("maxOrderSOL must be > 0");
-        if (Number.isFinite(minSol) && Number.isFinite(maxSol) && minSol >= maxSol) errors.push("minOrderSOL must be less than maxOrderSOL");
+        if (!Number.isFinite(minSol) || minSol <= 0)
+          errors.push("minOrderSOL must be > 0");
+        if (!Number.isFinite(maxSol) || maxSol <= 0)
+          errors.push("maxOrderSOL must be > 0");
+        if (
+          Number.isFinite(minSol) &&
+          Number.isFinite(maxSol) &&
+          minSol >= maxSol
+        )
+          errors.push("minOrderSOL must be less than maxOrderSOL");
         const minDelay = Number(minDelaySeconds);
         const maxDelay = Number(maxDelaySeconds);
-        if (!Number.isFinite(minDelay) || minDelay < 0) errors.push("minDelaySeconds must be >= 0");
-        if (!Number.isFinite(maxDelay) || maxDelay < 0) errors.push("maxDelaySeconds must be >= 0");
-        if (Number.isFinite(minDelay) && Number.isFinite(maxDelay) && minDelay > maxDelay) errors.push("minDelaySeconds must be <= maxDelaySeconds");
+        if (!Number.isFinite(minDelay) || minDelay < 0)
+          errors.push("minDelaySeconds must be >= 0");
+        if (!Number.isFinite(maxDelay) || maxDelay < 0)
+          errors.push("maxDelaySeconds must be >= 0");
+        if (
+          Number.isFinite(minDelay) &&
+          Number.isFinite(maxDelay) &&
+          minDelay > maxDelay
+        )
+          errors.push("minDelaySeconds must be <= maxDelaySeconds");
         if (sellStrategy === "auto-profit") {
           const p = Number(profitTargetPercent);
-          if (!Number.isFinite(p) || p < 0.1) errors.push("profitTargetPercent must be >= 0.1");
+          if (!Number.isFinite(p) || p < 0.1)
+            errors.push("profitTargetPercent must be >= 0.1");
         }
         if (sellStrategy === "manual-target") {
           const t = Number(manualPriceTarget);
-          if (!Number.isFinite(t) || t <= 0) errors.push("manualPriceTarget must be > 0");
+          if (!Number.isFinite(t) || t <= 0)
+            errors.push("manualPriceTarget must be > 0");
         }
         if (sellStrategy === "gradually") {
           const g = Number(gradualSellPercent);
-          if (!Number.isFinite(g) || g <= 0 || g > 100) errors.push("gradualSellPercent must be between 0 and 100");
+          if (!Number.isFinite(g) || g <= 0 || g > 100)
+            errors.push("gradualSellPercent must be between 0 and 100");
         }
         if (errors.length) {
-          return json({ error: "validation_failed", details: errors }, { status: 400, headers: corsHeaders });
+          return json(
+            { error: "validation_failed", details: errors },
+            { status: 400, headers: corsHeaders },
+          );
         }
 
         const avgOrderSOL = (minSol + maxSol) / 2;
@@ -1286,7 +1313,10 @@ export default {
         );
       } catch (e) {
         return json(
-          { error: "Failed to start market maker", details: e?.message || String(e) },
+          {
+            error: "Failed to start market maker",
+            details: e?.message || String(e),
+          },
           { status: 500, headers: corsHeaders },
         );
       }
@@ -1537,22 +1567,46 @@ export default {
 
     // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
     if (pathname === "/api/stable-24h" && req.method === "GET") {
-      const symbolsParam = (searchParams.get("symbols") || "USDC,USDT").toUpperCase();
-      const symbols = Array.from(new Set(String(symbolsParam).split(",").map((s) => s.trim()).filter(Boolean)));
+      const symbolsParam = (
+        searchParams.get("symbols") || "USDC,USDT"
+      ).toUpperCase();
+      const symbols = Array.from(
+        new Set(
+          String(symbolsParam)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
       const COINGECKO_IDS = {
-        SOL: { id: "solana", mint: "So11111111111111111111111111111111111111112" },
-        USDC: { id: "usd-coin", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
-        USDT: { id: "tether", mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns" },
+        SOL: {
+          id: "solana",
+          mint: "So11111111111111111111111111111111111111112",
+        },
+        USDC: {
+          id: "usd-coin",
+          mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        },
+        USDT: {
+          id: "tether",
+          mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        },
       };
       const ids = symbols.map((s) => COINGECKO_IDS[s]?.id).filter(Boolean);
       if (ids.length === 0) {
-        return json({ error: "No supported symbols" }, { status: 400, headers: corsHeaders });
+        return json(
+          { error: "No supported symbols" },
+          { status: 400, headers: corsHeaders },
+        );
       }
       try {
         const url_str = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids.join(","))}&vs_currencies=usd&include_24hr_change=true`;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 12000);
-        const resp = await fetch(url_str, { headers: { Accept: "application/json" }, signal: controller.signal });
+        const resp = await fetch(url_str, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
         clearTimeout(timeout);
         if (!resp.ok) {
           return json(
@@ -1563,14 +1617,17 @@ export default {
         const data = await resp.json();
         const out = symbols.map((s) => {
           const id = COINGECKO_IDS[s]?.id;
-          const price = id ? data?.[id]?.usd ?? null : null;
-          const change = id ? data?.[id]?.usd_24h_change ?? 0 : 0;
+          const price = id ? (data?.[id]?.usd ?? null) : null;
+          const change = id ? (data?.[id]?.usd_24h_change ?? 0) : 0;
           return { symbol: s, priceUsd: price, change24h: change };
         });
         return json({ symbols, data: out }, { headers: corsHeaders });
       } catch (e) {
         return json(
-          { error: "Failed to fetch stablecoin prices", details: e?.message || String(e) },
+          {
+            error: "Failed to fetch stablecoin prices",
+            details: e?.message || String(e),
+          },
           { status: 502, headers: corsHeaders },
         );
       }

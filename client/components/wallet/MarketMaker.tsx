@@ -271,30 +271,27 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        resolveApiUrl("/api/market-maker/start"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: currentSession.id,
-            tokenAddress: currentSession.tokenAddress,
-            numberOfMakers: currentSession.numberOfMakers,
-            minOrderSOL: currentSession.minOrderSOL,
-            maxOrderSOL: currentSession.maxOrderSOL,
-            minDelaySeconds: currentSession.minDelaySeconds,
-            maxDelaySeconds: currentSession.maxDelaySeconds,
-            sellStrategy: currentSession.sellStrategy,
-            profitTargetPercent: currentSession.profitTargetPercent,
-            manualPriceTarget: currentSession.manualPriceTarget,
-            gradualSellPercent: currentSession.gradualSellPercent,
-            userWallet: wallet?.publicKey,
-            feeWallet: FEE_WALLET,
-          }),
+      const response = await fetch(resolveApiUrl("/api/market-maker/start"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          sessionId: currentSession.id,
+          tokenAddress: currentSession.tokenAddress,
+          numberOfMakers: currentSession.numberOfMakers,
+          minOrderSOL: currentSession.minOrderSOL,
+          maxOrderSOL: currentSession.maxOrderSOL,
+          minDelaySeconds: currentSession.minDelaySeconds,
+          maxDelaySeconds: currentSession.maxDelaySeconds,
+          sellStrategy: currentSession.sellStrategy,
+          profitTargetPercent: currentSession.profitTargetPercent,
+          manualPriceTarget: currentSession.manualPriceTarget,
+          gradualSellPercent: currentSession.gradualSellPercent,
+          userWallet: wallet?.publicKey,
+          feeWallet: FEE_WALLET,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Backend returned ${response.status}`);

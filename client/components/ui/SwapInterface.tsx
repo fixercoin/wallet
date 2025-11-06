@@ -470,7 +470,8 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       if (message.includes("STALE_QUOTE")) {
         isStaleQuote = true;
-        message = "Quote expired. Refreshing quote and retrying...";
+        message = "Quote expired. Refreshing and retrying...";
+        console.log("Detected STALE_QUOTE error, refreshing quote and retrying");
         toast({
           title: "Quote Expired",
           description: message,
@@ -480,13 +481,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         setIsLoading(false);
         setStep("form");
 
-        if (quote && fromToken && toToken && fromAmount) {
+        if (fromToken && toToken && fromAmount) {
           setTimeout(async () => {
             try {
               const amount = jupiterAPI.formatSwapAmount(
                 parseFloat(fromAmount),
                 fromToken.decimals,
               );
+              console.log("Attempting to refresh quote after STALE_QUOTE error");
               const freshQuote = await jupiterAPI.getQuote(
                 fromToken.mint,
                 toToken.mint,
@@ -503,17 +505,17 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 setStep("confirm");
                 toast({
                   title: "Quote Refreshed",
-                  description: "New quote is ready. Try swapping again.",
+                  description: "New quote obtained. Review and try swapping again.",
                 });
               } else {
                 toast({
                   title: "Quote Refresh Failed",
-                  description: "Could not get a fresh quote. Please try again.",
+                  description: "Could not obtain a fresh quote. Please try again.",
                   variant: "destructive",
                 });
               }
             } catch (e) {
-              console.error("Error refreshing quote:", e);
+              console.error("Error refreshing quote after STALE_QUOTE:", e);
               toast({
                 title: "Quote Refresh Error",
                 description: String(e),

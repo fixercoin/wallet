@@ -324,7 +324,8 @@ export default function WalletHistory() {
                     if (t.__source === "blockchain" && !description) {
                       const tokenSymbol =
                         KNOWN_TOKENS[t.token]?.symbol || t.token.slice(0, 6);
-                      const amount = t.amount / Math.pow(10, t.decimals || 6);
+                      // Amount is already in human-readable format from helius API
+                      const amount = typeof t.amount === "number" ? t.amount : 0;
                       description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
                     }
 

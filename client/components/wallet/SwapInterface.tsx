@@ -884,9 +884,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
           // Execute leg1 then leg2
           console.log(`Executing bridged swap via ${bridgeToken?.symbol}...`);
-          const sig1 = await submitQuote(q1);
+          const freshQ1 = await refreshQuoteIfStale(q1, Date.now() - 100);
+          const sig1 = await submitQuote(freshQ1);
           toast({ title: "Leg 1 submitted", description: sig1 });
-          const sig2 = await submitQuote(q2);
+          const freshQ2 = await refreshQuoteIfStale(q2, Date.now() - 100);
+          const sig2 = await submitQuote(freshQ2);
           setTxSignature(sig2);
           setToAmount(
             jupiterAPI

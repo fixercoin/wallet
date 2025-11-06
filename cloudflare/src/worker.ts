@@ -258,6 +258,222 @@ export default {
       }
     }
 
+    // Birdeye price endpoint: /api/birdeye/price?address=...
+    if (pathname === "/api/birdeye/price" && request.method === "GET") {
+      const address = url.searchParams.get("address");
+      if (!address) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Missing 'address' parameter",
+          }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      const BIRDEYE_API_KEY =
+        (env as any)?.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
+      const BIRDEYE_API_URL = "https://public-api.birdeye.so";
+
+      // Known token mints and fallback prices
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.00008139,
+        SOL: 149.38,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.00001112,
+      };
+
+      // Try Birdeye first
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const birdeyeResp = await fetch(
+          `${BIRDEYE_API_URL}/public/price?address=${encodeURIComponent(address)}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "X-API-KEY": BIRDEYE_API_KEY,
+            },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (birdeyeResp.ok) {
+          const data = await birdeyeResp.json();
+          if (data.success && data.data) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                data: {
+                  address: data.data.address,
+                  value: data.data.value,
+                  updateUnixTime: data.data.updateUnixTime,
+                  priceChange24h: data.data.priceChange24h || 0,
+                },
+              }),
+              {
+                status: 200,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              },
+            );
+          }
+        }
+      } catch (e: any) {
+        // Continue to fallback
+      }
+
+      // Fallback 1: Try DexScreener
+      try {
+        const dexResp = await fetch(
+          `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(address)}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+        if (dexResp.ok) {
+          const dexData = await dexResp.json();
+          const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+
+          if (pairs.length > 0) {
+            const pair = pairs.find(
+              (p: any) =>
+                (p?.baseToken?.address === address ||
+                  p?.quoteToken?.address === address) &&
+                p?.priceUsd,
+            );
+
+            if (pair && pair.priceUsd) {
+              const price = parseFloat(pair.priceUsd);
+              if (isFinite(price) && price > 0) {
+                return new Response(
+                  JSON.stringify({
+                    success: true,
+                    data: {
+                      address,
+                      value: price,
+                      updateUnixTime: Math.floor(Date.now() / 1000),
+                      priceChange24h: pair.priceChange?.h24 || 0,
+                    },
+                    _source: "dexscreener",
+                  }),
+                  {
+                    status: 200,
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Access-Control-Allow-Origin": "*",
+                    },
+                  },
+                );
+              }
+            }
+          }
+        }
+      } catch (e: any) {
+        // Continue to fallback
+      }
+
+      // Fallback 2: Try Jupiter
+      try {
+        const jupiterResp = await fetch(
+          `https://api.jup.ag/price?ids=${encodeURIComponent(address)}`,
+          { headers: { Accept: "application/json" } },
+        );
+        if (jupiterResp.ok) {
+          const jupData = await jupiterResp.json();
+          const priceData = jupData?.data?.[address];
+
+          if (priceData?.price) {
+            const price = parseFloat(priceData.price);
+            if (isFinite(price) && price > 0) {
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  data: {
+                    address,
+                    value: price,
+                    updateUnixTime: Math.floor(Date.now() / 1000),
+                    priceChange24h: 0,
+                  },
+                  _source: "jupiter",
+                }),
+                {
+                  status: 200,
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                  },
+                },
+              );
+            }
+          }
+        }
+      } catch (e: any) {
+        // Continue to fallback
+      }
+
+      // Fallback 3: Hardcoded fallback prices
+      for (const [symbol, mint] of Object.entries(TOKEN_MINTS)) {
+        if (mint === address && FALLBACK_USD[symbol]) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              data: {
+                address,
+                value: FALLBACK_USD[symbol],
+                updateUnixTime: Math.floor(Date.now() / 1000),
+                priceChange24h: 0,
+              },
+              _source: "fallback",
+            }),
+            {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            },
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No price data available for this token",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
+
     // DexScreener price
     if (
       pathname === "/api/price" ||

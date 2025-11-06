@@ -468,19 +468,25 @@ class HeliusAPI {
             }
           }
           const decimals = info.tokenAmount?.decimals || 6;
-          const destination = info.destination;
-          const source = info.source;
-          const mint = info.mint || info.token;
+          let destination = info.destination;
+          let source = info.source;
+
+          // Handle both string and object formats for addresses
+          if (typeof destination === "object" && destination?.pubkey) {
+            destination = destination.pubkey;
+          }
+          if (typeof source === "object" && source?.pubkey) {
+            source = source.pubkey;
+          }
+
+          const mint = info.mint || info.token || "UNKNOWN";
 
           // Determine if wallet sent or received
-          if (
-            destination === walletAddress ||
-            destination?.includes(walletAddress)
-          ) {
+          if (destination === walletAddress) {
             transfers.push({
               type: "receive",
-              token: mint || "UNKNOWN",
-              amount,
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
               decimals,
               signature: signature || "",
               blockTime,
@@ -488,11 +494,11 @@ class HeliusAPI {
             });
           }
 
-          if (source === walletAddress || source?.includes(walletAddress)) {
+          if (source === walletAddress) {
             transfers.push({
               type: "send",
-              token: mint || "UNKNOWN",
-              amount,
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
               decimals,
               signature: signature || "",
               blockTime,
@@ -505,35 +511,44 @@ class HeliusAPI {
         if (instr.program === "system" && instr.parsed?.type === "transfer") {
           const info = instr.parsed.info;
           const lamports = info.lamports || 0;
-          const destination = info.destination;
-          const source = info.source;
+          let destination = info.destination;
+          let source = info.source;
+
+          // Handle both string and object formats for addresses
+          if (typeof destination === "object" && destination?.pubkey) {
+            destination = destination.pubkey;
+          }
+          if (typeof source === "object" && source?.pubkey) {
+            source = source.pubkey;
+          }
 
           // SOL has 9 decimals
           const amount = lamports / Math.pow(10, 9);
           const decimals = 9;
+          const mint = "So11111111111111111111111111111111111111112"; // SOL mint
 
           // Determine if wallet sent or received
           if (destination === walletAddress) {
             transfers.push({
               type: "receive",
-              token: "So11111111111111111111111111111111111111112", // SOL mint
-              amount,
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
               decimals,
               signature: signature || "",
               blockTime,
-              mint: "So11111111111111111111111111111111111111112",
+              mint,
             });
           }
 
           if (source === walletAddress) {
             transfers.push({
               type: "send",
-              token: "So11111111111111111111111111111111111111112", // SOL mint
-              amount,
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
               decimals,
               signature: signature || "",
               blockTime,
-              mint: "So11111111111111111111111111111111111111112",
+              mint,
             });
           }
         }

@@ -419,6 +419,113 @@ async function handleJupiterTokens(url: URL): Promise<Response> {
   });
 }
 
+// Pump.fun curve status handler
+async function handlePumpFunCurve(url: URL): Promise<Response> {
+  const mint = url.searchParams.get("mint");
+  if (!mint) {
+    return new Response(JSON.stringify({ error: "mint parameter required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  try {
+    const response = await timeoutFetch(
+      `${PUMPFUN_API_BASE}/curve/${encodeURIComponent(mint)}`,
+      {
+        method: "GET",
+        headers: browserHeaders(),
+      },
+    );
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to check curve state",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+// Pump.fun BUY handler
+async function handlePumpFunBuy(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body.mint || typeof body.amount !== "number" || !body.buyer) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), buyer",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to request BUY transaction",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+// Pump.fun SELL handler
+async function handlePumpFunSell(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body.mint || typeof body.amount !== "number" || !body.seller) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), seller",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/sell`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to request SELL transaction",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
 // Main fetch handler for worker
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

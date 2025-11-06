@@ -399,9 +399,13 @@ class HeliusAPI {
   async getParsedTransaction(signature: string): Promise<any> {
     try {
       console.log(`Fetching parsed transaction: ${signature}`);
-      return await this.makeRpcCall("getParsedTransaction", [
+      return await this.makeRpcCall("getTransaction", [
         signature,
-        "jsonParsed",
+        {
+          encoding: "jsonParsed",
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0,
+        },
       ]);
     } catch (error) {
       console.error("Error fetching parsed transaction:", error);

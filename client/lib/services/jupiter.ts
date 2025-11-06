@@ -173,11 +173,13 @@ class JupiterAPI {
 
   async getSwapTransaction(
     swapRequest: JupiterSwapRequest,
+    retryCount: number = 0,
+    maxRetries: number = 1,
   ): Promise<JupiterSwapResponse | null> {
     try {
       const url = resolveApiUrl("/api/jupiter/swap");
       console.log(
-        "Sending Jupiter swap request for:",
+        `Sending Jupiter swap request (attempt ${retryCount + 1}/${maxRetries + 1}) for:`,
         swapRequest.quoteResponse?.inputMint,
         "->",
         swapRequest.quoteResponse?.outputMint,
@@ -201,7 +203,7 @@ class JupiterAPI {
         }
 
         console.error(
-          "Jupiter swap error response:",
+          `Jupiter swap error response (attempt ${retryCount + 1}):`,
           response.status,
           errorObj,
         );
@@ -223,9 +225,18 @@ class JupiterAPI {
           response.status === 530;
 
         if (isError1016) {
+          // If this is a STALE_QUOTE and we haven't exceeded retry limit, indicate we can retry
+          // The caller (executeSwap in SwapInterface) will handle the retry with a fresh quote
           throw new Error(
             `STALE_QUOTE: The quote expired or changed. Try refreshing the quote and trying again.`,
           );
+        }
+
+        // For 502/503 errors (gateway/service unavailable), indicate retryable
+        if ((response.status === 502 || response.status === 503) && retryCount < maxRetries) {
+          console.log(`Retrying swap after ${response.status} error...`);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          return this.getSwapTransaction(swapRequest, retryCount + 1, maxRetries);
         }
 
         throw new Error(

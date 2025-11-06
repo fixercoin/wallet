@@ -325,21 +325,23 @@ export default function WalletHistory() {
                         key={t.id || t.txid || t.signature || idx}
                         className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-900 uppercase">
-                              {kind}
-                            </span>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                              On-chain
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-gray-900 uppercase">
+                                {kind}
+                              </span>
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                On-chain
+                              </span>
+                            </div>
                             {whenStr ? (
                               <div className="text-xs text-gray-500">
                                 {whenStr}
                               </div>
                             ) : null}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
                             {uniqueSigs.map((s: string) => (
                               <a
                                 key={s}

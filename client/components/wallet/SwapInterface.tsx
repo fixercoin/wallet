@@ -396,7 +396,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       // This is critical because quotes expire quickly (30-60 seconds)
       let freshQuote = quote.quoteResponse;
       try {
-        const amount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
+        const amount = String(
+          Math.floor(parseFloat(amount) * 10 ** fromToken.decimals),
+        );
         const refreshedQuote = await jupiterAPI.getQuote(
           fromMint,
           toMint,
@@ -477,7 +479,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setQuote(null);
         toast({
           title: "Quote Expired",
-          description: "The quote has expired. Please request a new quote and try again.",
+          description:
+            "The quote has expired. Please request a new quote and try again.",
           variant: "default",
         });
         return null;

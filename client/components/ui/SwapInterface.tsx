@@ -317,7 +317,11 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
         wrapAndUnwrapSol: true,
       } as any;
       console.debug("Sending swap request to Jupiter proxy:", swapRequest);
-      const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest, 0, 2);
+      const swapResponse = await jupiterAPI.getSwapTransaction(
+        swapRequest,
+        0,
+        2,
+      );
       if (!swapResponse || !swapResponse.swapTransaction)
         throw new Error("Failed to get swap transaction");
 
@@ -471,7 +475,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       if (message.includes("STALE_QUOTE")) {
         isStaleQuote = true;
         message = "Quote expired. Refreshing and retrying...";
-        console.log("Detected STALE_QUOTE error, refreshing quote and retrying");
+        console.log(
+          "Detected STALE_QUOTE error, refreshing quote and retrying",
+        );
         toast({
           title: "Quote Expired",
           description: message,
@@ -488,7 +494,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 parseFloat(fromAmount),
                 fromToken.decimals,
               );
-              console.log("Attempting to refresh quote after STALE_QUOTE error");
+              console.log(
+                "Attempting to refresh quote after STALE_QUOTE error",
+              );
               const freshQuote = await jupiterAPI.getQuote(
                 fromToken.mint,
                 toToken.mint,
@@ -505,12 +513,14 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
                 setStep("confirm");
                 toast({
                   title: "Quote Refreshed",
-                  description: "New quote obtained. Review and try swapping again.",
+                  description:
+                    "New quote obtained. Review and try swapping again.",
                 });
               } else {
                 toast({
                   title: "Quote Refresh Failed",
-                  description: "Could not obtain a fresh quote. Please try again.",
+                  description:
+                    "Could not obtain a fresh quote. Please try again.",
                   variant: "destructive",
                 });
               }

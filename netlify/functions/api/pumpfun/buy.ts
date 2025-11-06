@@ -42,15 +42,20 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    const { mint, amount, buyer } = body;
+    const {
+      mint,
+      amount,
+      buyer,
+      slippageBps = 350,
+      priorityFeeLamports = 10000,
+    } = body;
 
-    if (!mint || typeof amount !== "number" || !buyer) {
+    if (!mint || amount === undefined || !buyer) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error:
-            "Missing required fields: mint, amount (number), buyer (string)",
+          error: "Missing required fields: mint, amount, buyer",
         }),
       };
     }
@@ -58,14 +63,18 @@ export const handler: Handler = async (event) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    const pumpFunUrl = "https://pump.fun/api/trade";
-    const res = await fetch(pumpFunUrl, {
+    const pumpPortalUrl = "https://pumpportal.fun/api/trade";
+    const res = await fetch(pumpPortalUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         mint,
-        amount,
+        amount: String(amount),
         buyer,
+        slippageBps,
+        priorityFeeLamports,
+        txVersion: "V0",
+        operation: "buy",
       }),
       signal: controller.signal,
     });
@@ -73,17 +82,24 @@ export const handler: Handler = async (event) => {
     clearTimeout(timeoutId);
     const text = await res.text();
 
+    if (!res.ok) {
+      console.error(`[Pump.fun BUY] API error ${res.status}:`, text);
+    }
+
     return {
       statusCode: res.status,
       headers: CORS_HEADERS,
       body: text,
     };
   } catch (error: any) {
-    const message = error?.message || "Unknown error";
+    const isTimeout = error?.name === "AbortError";
+    const message = isTimeout
+      ? "Request timeout - Pump.fun API took too long to respond"
+      : error?.message || "Unknown error";
     console.error("Pump.fun BUY endpoint error:", error);
 
     return {
-      statusCode: 502,
+      statusCode: isTimeout ? 504 : 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         error: "Failed to request BUY transaction",

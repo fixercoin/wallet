@@ -428,6 +428,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         outHuman,
         outToken: toToken.symbol,
         hops: quoteResponse.routePlan?.length ?? 0,
+        quoteTime: Date.now(),
       });
       setStatus("");
       setIsLoading(false);

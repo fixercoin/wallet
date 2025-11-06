@@ -24,7 +24,10 @@ export interface PumpCurveStatus {
  */
 export async function checkCurveState(mint: string): Promise<boolean> {
   try {
-    const res = await fetch(`${PUMP_CURVE_API}/${encodeURIComponent(mint)}`, {
+    const url = new URL(resolveApiUrl(PUMP_CURVE_PROXY));
+    url.searchParams.set("mint", mint);
+
+    const res = await fetch(url.toString(), {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -40,7 +43,10 @@ export async function checkCurveState(mint: string): Promise<boolean> {
     console.log(`[Pump.fun] Token ${mint} curve state: ${data.state}`);
     return isOpen;
   } catch (error) {
-    console.error(`[Pump.fun] Error checking curve state for ${mint}:`, error);
+    console.error(
+      `[Pump.fun] Error checking curve state for ${mint}:`,
+      error,
+    );
     return false;
   }
 }

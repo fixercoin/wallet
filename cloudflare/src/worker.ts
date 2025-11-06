@@ -160,11 +160,18 @@ export default {
             },
           );
         }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         const resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
         return new Response(text, {
           status: resp.status,
@@ -174,13 +181,16 @@ export default {
           },
         });
       } catch (e: any) {
+        const isTimeout = e?.name === "AbortError";
         return new Response(
           JSON.stringify({
             error: "Failed to request BUY transaction",
-            details: String(e?.message || e),
+            details: isTimeout
+              ? "Request timeout - Pump.fun API took too long to respond"
+              : String(e?.message || e),
           }),
           {
-            status: 502,
+            status: isTimeout ? 504 : 502,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",

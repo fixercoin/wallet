@@ -102,6 +102,76 @@ function addFeeTransferInstruction(
   }
 }
 
+function coerceSecretKey(val: unknown): Uint8Array | null {
+  try {
+    if (!val) return null;
+    if (val instanceof Uint8Array) return val;
+    if (Array.isArray(val)) return Uint8Array.from(val as number[]);
+    if (typeof val === "string") {
+      try {
+        const bin = atob(val);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        if (out.length > 0) return out;
+      } catch {}
+      try {
+        const arr = JSON.parse(val);
+        if (Array.isArray(arr)) return Uint8Array.from(arr as number[]);
+      } catch {}
+    }
+    if (typeof val === "object") {
+      const values = Object.values(val as Record<string, unknown>).filter(
+        (x) => typeof x === "number",
+      ) as number[];
+      if (values.length > 0) return Uint8Array.from(values);
+    }
+  } catch {}
+  return null;
+}
+
+function getKeypair(walletData: any): Keypair | null {
+  try {
+    const sk = coerceSecretKey(walletData?.secretKey);
+    if (!sk || sk.length === 0) return null;
+    return Keypair.fromSecretKey(sk);
+  } catch {
+    return null;
+  }
+}
+
+async function sendSignedTx(txBase64: string, keypair: Keypair): Promise<string> {
+  const buf = bytesFromBase64(txBase64);
+  const vtx = VersionedTransaction.deserialize(buf);
+  vtx.sign([keypair]);
+  const signed = vtx.serialize();
+  const signedBase64 = base64FromBytes(signed);
+
+  const body = {
+    method: "sendRawTransaction",
+    params: [
+      signedBase64,
+      { skipPreflight: false, preflightCommitment: "confirmed" },
+    ],
+    id: Date.now(),
+  };
+
+  const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+  }
+
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || "RPC error");
+
+  return j.result as string;
+}
+
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { wallet, tokens: userTokens } = useWallet();
   const { toast } = useToast();

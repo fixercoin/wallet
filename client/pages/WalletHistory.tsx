@@ -125,7 +125,7 @@ export default function WalletHistory() {
       setPendingOrders([]);
     }
 
-    // Init token map (Jupiter + known)
+    // Init token map (Jupiter + known) and then fetch transactions
     (async () => {
       try {
         const known: Record<string, { symbol: string; decimals: number }> = {
@@ -142,13 +142,14 @@ export default function WalletHistory() {
           }
         }
         setTokenMap(known);
+        // Fetch blockchain transactions after tokenMap is ready
+        await fetchBlockchainTransactions();
       } catch (e) {
         setTokenMap({ ...KNOWN_TOKENS });
+        // Still fetch transactions even if token map fails
+        await fetchBlockchainTransactions();
       }
     })();
-
-    // Fetch blockchain transactions
-    fetchBlockchainTransactions();
   }, [wallet?.publicKey]);
 
   const fetchBlockchainTransactions = async () => {

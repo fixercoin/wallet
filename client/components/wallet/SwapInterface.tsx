@@ -139,7 +139,10 @@ function getKeypair(walletData: any): Keypair | null {
   }
 }
 
-async function sendSignedTx(txBase64: string, keypair: Keypair): Promise<string> {
+async function sendSignedTx(
+  txBase64: string,
+  keypair: Keypair,
+): Promise<string> {
   const buf = bytesFromBase64(txBase64);
   const vtx = VersionedTransaction.deserialize(buf);
   vtx.sign([keypair]);

@@ -131,23 +131,32 @@ export default function WalletHistory() {
         const known: Record<string, { symbol: string; decimals: number }> = {
           ...KNOWN_TOKENS,
         };
-        const jupTokens = await jupiterAPI.getStrictTokenList();
-        if (Array.isArray(jupTokens) && jupTokens.length > 0) {
-          for (const t of jupTokens) {
-            if (!t?.address) continue;
-            known[t.address] = {
-              symbol: t.symbol || t.address.slice(0, 6),
-              decimals: t.decimals ?? 6,
-            };
+        try {
+          const jupTokens = await jupiterAPI.getStrictTokenList();
+          if (Array.isArray(jupTokens) && jupTokens.length > 0) {
+            for (const t of jupTokens) {
+              if (!t?.address) continue;
+              known[t.address] = {
+                symbol: t.symbol || t.address.slice(0, 6),
+                decimals: t.decimals ?? 6,
+              };
+            }
           }
+        } catch (jupError) {
+          console.warn("Failed to fetch Jupiter token list:", jupError);
         }
+        // Set token map state first
         setTokenMap(known);
-        // Fetch blockchain transactions after tokenMap is ready
-        await fetchBlockchainTransactions();
+        // Then fetch blockchain transactions with a small delay to ensure state is updated
+        setTimeout(() => {
+          fetchBlockchainTransactions(known);
+        }, 100);
       } catch (e) {
+        console.error("Error initializing token map:", e);
         setTokenMap({ ...KNOWN_TOKENS });
-        // Still fetch transactions even if token map fails
-        await fetchBlockchainTransactions();
+        setTimeout(() => {
+          fetchBlockchainTransactions({ ...KNOWN_TOKENS });
+        }, 100);
       }
     })();
   }, [wallet?.publicKey]);

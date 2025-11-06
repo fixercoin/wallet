@@ -505,6 +505,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       } catch (refreshErr) {
         console.warn("[SwapInterface] Quote refresh error:", refreshErr);
+        const errMsg = refreshErr.message || String(refreshErr);
+        if (errMsg.includes("STALE_QUOTE") || errMsg.includes("530")) {
+          throw new Error(
+            "Quote expired. Please go back and request a fresh quote before swapping.",
+          );
+        }
         throw refreshErr;
       }
 

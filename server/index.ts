@@ -239,8 +239,7 @@ export async function createServer(): Promise<express.Application> {
 
       if (!mint || amount === undefined || !buyer) {
         return res.status(400).json({
-          error:
-            "Missing required fields: mint, amount, buyer",
+          error: "Missing required fields: mint, amount, buyer",
         });
       }
 
@@ -299,8 +298,7 @@ export async function createServer(): Promise<express.Application> {
 
       if (!mint || amount === undefined || !seller) {
         return res.status(400).json({
-          error:
-            "Missing required fields: mint, amount, seller",
+          error: "Missing required fields: mint, amount, seller",
         });
       }
 

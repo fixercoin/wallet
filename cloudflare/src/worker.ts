@@ -640,9 +640,10 @@ export default {
             );
           }
         } catch (e: any) {
-          lastError = e?.name === "AbortError"
-            ? "Request timeout"
-            : e?.message || String(e);
+          lastError =
+            e?.name === "AbortError"
+              ? "Request timeout"
+              : e?.message || String(e);
           continue;
         }
       }
@@ -757,9 +758,10 @@ export default {
           // Continue to next endpoint for server errors
           continue;
         } catch (e: any) {
-          lastError = e?.name === "AbortError"
-            ? "Request timeout"
-            : e?.message || String(e);
+          lastError =
+            e?.name === "AbortError"
+              ? "Request timeout"
+              : e?.message || String(e);
 
           // Continue to next endpoint on timeout/network errors
           continue;

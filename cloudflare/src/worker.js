@@ -1174,6 +1174,845 @@ export default {
       }
     }
 
+    // Pump.fun TRADE handler: /api/pumpfun/trade (POST) - unified trade endpoint
+    if (pathname === "/api/pumpfun/trade" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { mint, amount, type, action, buyer, seller } = body;
+        const tradeType = (type || action || "").toLowerCase();
+        const isBuy = tradeType === "buy";
+        const isSell = tradeType === "sell";
+
+        if (!mint || typeof amount !== "number" || (!isBuy && !isSell)) {
+          return json(
+            {
+              error:
+                "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        if (isBuy && !buyer) {
+          return json(
+            {
+              error: "Missing required field for buy trade: buyer",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        if (isSell && !seller) {
+          return json(
+            {
+              error: "Missing required field for sell trade: seller",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const tradePayload = {
+          mint,
+          amount,
+        };
+
+        if (isBuy) {
+          tradePayload.buyer = buyer;
+        } else if (isSell) {
+          tradePayload.seller = seller;
+        }
+
+        const resp = await fetch("https://pump.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(tradePayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            {
+              error: `Pump.fun API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to execute trade",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun quote: /api/pumpfun/quote (POST or GET)
+    if (pathname === "/api/pumpfun/quote") {
+      if (req.method === "POST" || req.method === "GET") {
+        try {
+          let inputMint = "";
+          let outputMint = "";
+          let amount = "";
+
+          if (req.method === "GET") {
+            inputMint = searchParams.get("inputMint") || "";
+            outputMint = searchParams.get("outputMint") || "";
+            amount = searchParams.get("amount") || "";
+          } else {
+            const body = await parseJSON(req);
+            inputMint = body?.inputMint || "";
+            outputMint = body?.outputMint || "";
+            amount = body?.amount || "";
+          }
+
+          if (!inputMint || !outputMint || !amount) {
+            return json(
+              {
+                error:
+                  "Missing required parameters: inputMint, outputMint, amount",
+              },
+              { status: 400, headers: corsHeaders },
+            );
+          }
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+          const quoteUrl = `https://pumpportal.fun/api/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+
+          const resp = await fetch(quoteUrl, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!resp.ok) {
+            const errorText = await resp.text().catch(() => "");
+            return json(
+              {
+                error: `Pump.fun API returned ${resp.status}`,
+                details: errorText,
+              },
+              { status: resp.status, headers: corsHeaders },
+            );
+          }
+
+          const quoteData = await resp.json();
+          return json(quoteData, { headers: corsHeaders });
+        } catch (e) {
+          return json(
+            {
+              error: "Failed to fetch Pump.fun quote",
+              details: e?.message,
+            },
+            { status: 502, headers: corsHeaders },
+          );
+        }
+      }
+    }
+
+    // Pump.fun swap: /api/pumpfun/swap (POST)
+    if (pathname === "/api/pumpfun/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body;
+
+        if (!mint || !amount) {
+          return json(
+            { error: "Missing required fields: mint, amount" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const swapPayload = {
+          mint,
+          amount: String(amount),
+          decimals: decimals || 6,
+          slippage: slippage || 10,
+          txVersion: txVersion || "V0",
+          priorityFee: priorityFee || 0.0005,
+          wallet: wallet,
+        };
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          return json(
+            {
+              error: `Pump.fun API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          {
+            error: "Failed to execute swap",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Token price endpoint: /api/token/price
+    if (pathname === "/api/token/price" && req.method === "GET") {
+      try {
+        const token = (
+          searchParams.get("token") ||
+          searchParams.get("symbol") ||
+          "FIXERCOIN"
+        ).toUpperCase();
+        const mintParam = searchParams.get("mint") || "";
+
+        const TOKEN_MINTS = {
+          SOL: "So11111111111111111111111111111111111111112",
+          USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+          FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+          LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+        };
+
+        const FALLBACK_USD = {
+          FIXERCOIN: 0.00008139,
+          SOL: 149.38,
+          USDC: 1.0,
+          USDT: 1.0,
+          LOCKER: 0.00001112,
+        };
+
+        const PKR_PER_USD = 280;
+        const MARKUP = 1.0425;
+
+        const priceUsd =
+          FALLBACK_USD[token] || FALLBACK_USD.FIXERCOIN || 0.00008139;
+        const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+
+        return json(
+          {
+            token,
+            priceUsd,
+            priceInPKR: rateInPKR,
+            rate: rateInPKR,
+            pkrPerUsd: PKR_PER_USD,
+            markup: MARKUP,
+            priceChange24h: 0,
+            volume24h: 0,
+            source: "fallback",
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to get token price", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter quote: /api/jupiter/quote
+    if (pathname === "/api/jupiter/quote" && req.method === "GET") {
+      try {
+        const inputMint = searchParams.get("inputMint") || "";
+        const outputMint = searchParams.get("outputMint") || "";
+        const amount = searchParams.get("amount") || "";
+        const slippageBps = searchParams.get("slippageBps") || "50";
+
+        if (!inputMint || !outputMint || !amount) {
+          return json(
+            {
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+
+        const resp = await fetch(quoteUrl, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            {
+              error: `Jupiter API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const quoteData = await resp.json();
+        return json(quoteData, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch Jupiter quote", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter swap: /api/jupiter/swap
+    if (pathname === "/api/jupiter/swap" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { quoteResponse, userPublicKey } = body;
+
+        if (!quoteResponse || !userPublicKey) {
+          return json(
+            {
+              error: "Missing required fields: quoteResponse, userPublicKey",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const swapPayload = {
+          quoteResponse,
+          userPublicKey,
+          wrapAndUnwrapSol: true,
+        };
+
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            {
+              error: `Jupiter API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const swapData = await resp.json();
+
+        if (swapData.error) {
+          return json(
+            { error: swapData.error },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        return json(
+          { swapTransaction: swapData.swapTransaction },
+          { headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to execute Jupiter swap", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter price: /api/jupiter/price
+    if (pathname === "/api/jupiter/price" && req.method === "GET") {
+      try {
+        const ids = searchParams.get("ids") || "";
+
+        if (!ids) {
+          return json(
+            { error: "Missing 'ids' parameter" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(
+          `https://api.jup.ag/price?ids=${encodeURIComponent(ids)}`,
+          {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        }
+
+        return json(
+          { error: "Failed to fetch Jupiter prices" },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch Jupiter prices", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Jupiter tokens: /api/jupiter/tokens
+    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
+      try {
+        const type = searchParams.get("type") || "strict";
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch(
+          `https://token.jup.ag/all?type=${encodeURIComponent(type)}`,
+          {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        }
+
+        return json(
+          { error: "Failed to fetch Jupiter token list" },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch Jupiter token list", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun pool info: /api/pumpfun/pool
+    if (pathname === "/api/pumpfun/pool" && req.method === "GET") {
+      try {
+        const baseMint = searchParams.get("base") || "";
+        const quoteMint = searchParams.get("quote") || "";
+
+        if (!baseMint || !quoteMint) {
+          return json(
+            { error: "Missing required parameters: base, quote" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(
+          `https://api.pumpfun.com/api/v1/pool?baseMint=${encodeURIComponent(baseMint)}&quoteMint=${encodeURIComponent(quoteMint)}`,
+          {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          return json(
+            { error: `Pump.fun pool API returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch pool info", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Swap execute: /api/swap/execute (wrapper for pumpfun)
+    if (pathname === "/api/swap/execute" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body;
+
+        if (!mint || !amount) {
+          return json(
+            { error: "Missing required fields: mint, amount" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const swapPayload = {
+          mint,
+          amount: String(amount),
+          decimals: decimals || 6,
+          slippage: slippage || 10,
+          txVersion: txVersion || "V0",
+          priorityFee: priorityFee || 0.0005,
+          wallet,
+        };
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(swapPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          return json(
+            { error: `API returned ${resp.status}`, details: errorText },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to execute swap", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Solana send: /api/solana-send (broadcast signed transaction)
+    if (pathname === "/api/solana-send" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body) {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { signedBase64, signedTx, tx, skipPreflight } = body;
+        const txBase64 = signedBase64 || signedTx || tx;
+
+        if (!txBase64) {
+          return json(
+            {
+              error:
+                "Missing signed transaction: provide signedBase64, signedTx, or tx",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const endpoints = getRpcEndpoints(env);
+        let lastError = null;
+
+        for (const endpoint of endpoints) {
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: Date.now(),
+                method: "sendTransaction",
+                params: [txBase64, { skipPreflight: skipPreflight || false }],
+              }),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeout);
+
+            if (!resp.ok) {
+              if ([429, 502, 503].includes(resp.status)) continue;
+              const text = await resp.text().catch(() => "");
+              throw new Error(`HTTP ${resp.status}: ${text}`);
+            }
+
+            const data = await resp.text();
+            return new Response(data, {
+              status: 200,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          } catch (e) {
+            lastError = e instanceof Error ? e : new Error(String(e));
+          }
+        }
+
+        return json(
+          { error: "All RPC endpoints failed", details: lastError?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to send transaction", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Solana simulate: /api/solana-simulate (simulate transaction)
+    if (pathname === "/api/solana-simulate" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body) {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { signedBase64, signedTx, tx } = body;
+        const txBase64 = signedBase64 || signedTx || tx;
+
+        if (!txBase64) {
+          return json(
+            {
+              error:
+                "Missing signed transaction: provide signedBase64, signedTx, or tx",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const rpc = await callRpc(
+          env,
+          "simulateTransaction",
+          [txBase64],
+          Date.now(),
+        );
+        const result = JSON.parse(String(rpc?.body || "{}"));
+        return json(result, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to simulate transaction", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Sign transaction: /api/sign/transaction (server-side - use client-side signing when possible)
+    if (pathname === "/api/sign/transaction" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { transaction, signerKeypair } = body;
+
+        if (!transaction) {
+          return json(
+            { error: "Missing 'transaction' in request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        if (!signerKeypair) {
+          return json(
+            {
+              error:
+                "Server-side signing disabled for security. Use client-side wallet signing instead.",
+            },
+            { status: 403, headers: corsHeaders },
+          );
+        }
+
+        return json(
+          {
+            warning:
+              "Server-side signing is not recommended. Use client-side wallet adapter.",
+            transaction,
+          },
+          { status: 403, headers: corsHeaders },
+        );
+      } catch (e) {
+        return json(
+          { error: "Failed to sign transaction", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Get transaction details: /api/transaction
+    if (pathname === "/api/transaction" && req.method === "GET") {
+      try {
+        const signature = searchParams.get("signature") || "";
+
+        if (!signature) {
+          return json(
+            { error: "Missing 'signature' parameter" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const rpc = await callRpc(
+          env,
+          "getTransaction",
+          [signature, { maxSupportedTransactionVersion: 0 }],
+          Date.now(),
+        );
+
+        const result = JSON.parse(String(rpc?.body || "{}"));
+        return json(result, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch transaction", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Get account information: /api/account
+    if (pathname === "/api/account" && req.method === "GET") {
+      try {
+        const publicKey = searchParams.get("publicKey") || "";
+
+        if (!publicKey) {
+          return json(
+            { error: "Missing 'publicKey' parameter" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const rpc = await callRpc(
+          env,
+          "getAccountInfo",
+          [publicKey],
+          Date.now(),
+        );
+
+        const result = JSON.parse(String(rpc?.body || "{}"));
+        return json(result, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch account", details: e?.message },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // Default 404
     return json(
       { error: "Not found", pathname },

@@ -934,6 +934,104 @@ export const handler = async (event: any) => {
       }
     }
 
+    // Pumpfun buy: /api/pumpfun/buy (POST)
+    if (path === "/pumpfun/buy" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, buyer } = body;
+
+      if (!mint || typeof amount !== "number" || !buyer) {
+        return jsonResponse(400, {
+          error: "Missing required fields: mint, amount (number), buyer (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pump.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            buyer,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request BUY transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun sell: /api/pumpfun/sell (POST)
+    if (path === "/pumpfun/sell" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, seller } = body;
+
+      if (!mint || typeof amount !== "number" || !seller) {
+        return jsonResponse(400, {
+          error: "Missing required fields: mint, amount (number), seller (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pump.fun/api/sell", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            seller,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request SELL transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
     // Submit signed transaction aliases: /api/solana-send, /api/swap/submit (POST)
     if (
       (path === "/solana-send" || path === "/swap/submit") &&

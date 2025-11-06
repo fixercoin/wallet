@@ -1194,7 +1194,8 @@ export default {
         if (!mint || typeof amount !== "number" || (!isBuy && !isSell)) {
           return json(
             {
-              error: "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
+              error:
+                "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -1290,7 +1291,8 @@ export default {
           if (!inputMint || !outputMint || !amount) {
             return json(
               {
-                error: "Missing required parameters: inputMint, outputMint, amount",
+                error:
+                  "Missing required parameters: inputMint, outputMint, amount",
               },
               { status: 400, headers: corsHeaders },
             );
@@ -1346,7 +1348,15 @@ export default {
           );
         }
 
-        const { mint, amount, decimals, slippage, txVersion, priorityFee, wallet } = body;
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body;
 
         if (!mint || !amount) {
           return json(
@@ -1407,7 +1417,11 @@ export default {
     // Token price endpoint: /api/token/price
     if (pathname === "/api/token/price" && req.method === "GET") {
       try {
-        const token = (searchParams.get("token") || searchParams.get("symbol") || "FIXERCOIN").toUpperCase();
+        const token = (
+          searchParams.get("token") ||
+          searchParams.get("symbol") ||
+          "FIXERCOIN"
+        ).toUpperCase();
         const mintParam = searchParams.get("mint") || "";
 
         const TOKEN_MINTS = {
@@ -1429,7 +1443,8 @@ export default {
         const PKR_PER_USD = 280;
         const MARKUP = 1.0425;
 
-        const priceUsd = FALLBACK_USD[token] || FALLBACK_USD.FIXERCOIN || 0.00008139;
+        const priceUsd =
+          FALLBACK_USD[token] || FALLBACK_USD.FIXERCOIN || 0.00008139;
         const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
 
         return json(
@@ -1465,7 +1480,8 @@ export default {
         if (!inputMint || !outputMint || !amount) {
           return json(
             {
-              error: "Missing required parameters: inputMint, outputMint, amount",
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -1596,10 +1612,13 @@ export default {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`https://api.jup.ag/price?ids=${encodeURIComponent(ids)}`, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
+        const resp = await fetch(
+          `https://api.jup.ag/price?ids=${encodeURIComponent(ids)}`,
+          {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          },
+        );
 
         clearTimeout(timeoutId);
 
@@ -1628,10 +1647,13 @@ export default {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`https://token.jup.ag/all?type=${encodeURIComponent(type)}`, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
+        const resp = await fetch(
+          `https://token.jup.ag/all?type=${encodeURIComponent(type)}`,
+          {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          },
+        );
 
         clearTimeout(timeoutId);
 
@@ -1673,7 +1695,7 @@ export default {
           {
             headers: { Accept: "application/json" },
             signal: controller.signal,
-          }
+          },
         );
 
         clearTimeout(timeoutId);
@@ -1707,7 +1729,15 @@ export default {
           );
         }
 
-        const { mint, amount, decimals, slippage, txVersion, priorityFee, wallet } = body;
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body;
 
         if (!mint || !amount) {
           return json(
@@ -1777,7 +1807,8 @@ export default {
         if (!txBase64) {
           return json(
             {
-              error: "Missing signed transaction: provide signedBase64, signedTx, or tx",
+              error:
+                "Missing signed transaction: provide signedBase64, signedTx, or tx",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -1854,7 +1885,8 @@ export default {
         if (!txBase64) {
           return json(
             {
-              error: "Missing signed transaction: provide signedBase64, signedTx, or tx",
+              error:
+                "Missing signed transaction: provide signedBase64, signedTx, or tx",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -1900,7 +1932,8 @@ export default {
         if (!signerKeypair) {
           return json(
             {
-              error: "Server-side signing disabled for security. Use client-side wallet signing instead.",
+              error:
+                "Server-side signing disabled for security. Use client-side wallet signing instead.",
             },
             { status: 403, headers: corsHeaders },
           );
@@ -1908,7 +1941,8 @@ export default {
 
         return json(
           {
-            warning: "Server-side signing is not recommended. Use client-side wallet adapter.",
+            warning:
+              "Server-side signing is not recommended. Use client-side wallet adapter.",
             transaction,
           },
           { status: 403, headers: corsHeaders },

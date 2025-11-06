@@ -3138,7 +3138,8 @@ export default {
         if (!mint || typeof amount !== "number" || (!isBuy && !isSell)) {
           return json(
             {
-              error: "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
+              error:
+                "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -3233,7 +3234,7 @@ export default {
           {
             headers: { Accept: "application/json" },
             signal: controller.signal,
-          }
+          },
         );
 
         clearTimeout(timeoutId);
@@ -3267,7 +3268,15 @@ export default {
           );
         }
 
-        const { mint, amount, decimals, slippage, txVersion, priorityFee, wallet } = body as any;
+        const {
+          mint,
+          amount,
+          decimals,
+          slippage,
+          txVersion,
+          priorityFee,
+          wallet,
+        } = body as any;
 
         if (!mint || !amount) {
           return json(
@@ -3337,7 +3346,8 @@ export default {
         if (!txBase64) {
           return json(
             {
-              error: "Missing signed transaction: provide signedBase64, signedTx, or tx",
+              error:
+                "Missing signed transaction: provide signedBase64, signedTx, or tx",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -3414,7 +3424,8 @@ export default {
         if (!txBase64) {
           return json(
             {
-              error: "Missing signed transaction: provide signedBase64, signedTx, or tx",
+              error:
+                "Missing signed transaction: provide signedBase64, signedTx, or tx",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -3460,7 +3471,8 @@ export default {
         if (!signerKeypair) {
           return json(
             {
-              error: "Server-side signing disabled for security. Use client-side wallet signing instead.",
+              error:
+                "Server-side signing disabled for security. Use client-side wallet signing instead.",
             },
             { status: 403, headers: corsHeaders },
           );
@@ -3468,7 +3480,8 @@ export default {
 
         return json(
           {
-            warning: "Server-side signing is not recommended. Use client-side wallet adapter.",
+            warning:
+              "Server-side signing is not recommended. Use client-side wallet adapter.",
             transaction,
           },
           { status: 403, headers: corsHeaders },

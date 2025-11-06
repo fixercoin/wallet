@@ -162,8 +162,7 @@ export const handler = async (event: any) => {
     return jsonResponse(204, "");
   }
 
-  const path =
-    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const path = (event.path || "").replace(/^\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {

@@ -233,10 +233,17 @@ class JupiterAPI {
         }
 
         // For 502/503 errors (gateway/service unavailable), indicate retryable
-        if ((response.status === 502 || response.status === 503) && retryCount < maxRetries) {
+        if (
+          (response.status === 502 || response.status === 503) &&
+          retryCount < maxRetries
+        ) {
           console.log(`Retrying swap after ${response.status} error...`);
           await new Promise((resolve) => setTimeout(resolve, 2000));
-          return this.getSwapTransaction(swapRequest, retryCount + 1, maxRetries);
+          return this.getSwapTransaction(
+            swapRequest,
+            retryCount + 1,
+            maxRetries,
+          );
         }
 
         throw new Error(

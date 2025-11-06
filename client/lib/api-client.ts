@@ -97,8 +97,11 @@ export const fetchWithFallback = async (
     if (currentBase === CLOUDFLARE_WORKER_BASE) {
       markApiBaseFailed(currentBase);
       console.warn(
-        "Cloudflare Worker at " + CLOUDFLARE_WORKER_BASE + " appears to be unavailable. " +
-        "Error: " + (error instanceof Error ? error.message : String(error))
+        "Cloudflare Worker at " +
+          CLOUDFLARE_WORKER_BASE +
+          " appears to be unavailable. " +
+          "Error: " +
+          (error instanceof Error ? error.message : String(error)),
       );
     }
 

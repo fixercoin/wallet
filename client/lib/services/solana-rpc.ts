@@ -102,7 +102,8 @@ export const makeRpcCall = async (
             fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
           // Check if it's a timeout error
-          const isTimeout = fetchError.includes("abort") || fetchError.includes("timeout");
+          const isTimeout =
+            fetchError.includes("abort") || fetchError.includes("timeout");
           if (isTimeout) {
             console.warn(
               `[RPC Call] ${method} timed out after ${timeoutMs}ms. Trying direct endpoints...`,

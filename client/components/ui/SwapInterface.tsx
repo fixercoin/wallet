@@ -283,7 +283,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       // Refresh quote immediately before execution to prevent STALE_QUOTE errors
       // This is critical because quotes expire in 30-60 seconds
-      console.log("Refreshing quote before swap execution to prevent stale quote errors...");
+      console.log(
+        "Refreshing quote before swap execution to prevent stale quote errors...",
+      );
       let freshQuote = quote;
       try {
         if (fromToken && toToken && fromAmount) {
@@ -299,11 +301,16 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
           );
           if (refreshedQuote) {
             freshQuote = refreshedQuote;
-            console.log("Quote refreshed successfully, using fresh quote for swap");
+            console.log(
+              "Quote refreshed successfully, using fresh quote for swap",
+            );
           }
         }
       } catch (refreshErr) {
-        console.warn("Could not refresh quote before swap, using cached quote:", refreshErr);
+        console.warn(
+          "Could not refresh quote before swap, using cached quote:",
+          refreshErr,
+        );
         // Continue with cached quote if refresh fails
       }
 

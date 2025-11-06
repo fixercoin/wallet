@@ -474,9 +474,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const isSelling = toMint === SOL_MINT;
 
       if (!isBuying && !isSelling) {
-        setStatus("Swap must involve SOL");
-        setIsLoading(false);
-        return null;
+        throw new Error(
+          "Swap must involve SOL. Fixorium supports SOL ↔ Pump.fun token swaps.",
+        );
       }
 
       // Identify the token

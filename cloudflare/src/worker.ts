@@ -302,10 +302,7 @@ export default {
     }
 
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
-    if (
-      pathname === "/api/wallet/balance" &&
-      request.method === "GET"
-    ) {
+    if (pathname === "/api/wallet/balance" && request.method === "GET") {
       const publicKey =
         url.searchParams.get("publicKey") ||
         url.searchParams.get("wallet") ||
@@ -397,33 +394,23 @@ export default {
       try {
         rpcRequest = await request.json();
       } catch {
-        return new Response(
-          JSON.stringify({ error: "Invalid JSON body" }),
-          {
-            status: 400,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
+        return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
           },
-        );
+        });
       }
 
-      if (
-        !rpcRequest ||
-        typeof rpcRequest !== "object" ||
-        !rpcRequest.method
-      ) {
-        return new Response(
-          JSON.stringify({ error: "Missing RPC method" }),
-          {
-            status: 400,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
+      if (!rpcRequest || typeof rpcRequest !== "object" || !rpcRequest.method) {
+        return new Response(JSON.stringify({ error: "Missing RPC method" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
           },
-        );
+        });
       }
 
       const RPC_ENDPOINTS = [

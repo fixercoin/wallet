@@ -1,12 +1,14 @@
 /**
  * Pump.fun API Integration
- * Directly implements the Pump.fun bonding curve trading endpoints
- * No Jupiter routing - pure Pump.fun token swapping
+ * Routes through backend proxy endpoints to avoid CORS issues
+ * Proxies to Pump.fun bonding curve trading endpoints
  */
 
-const PUMP_CURVE_API = "https://pump.fun/api/curve";
-const PUMP_BUY_API = "https://pump.fun/api/trade";
-const PUMP_SELL_API = "https://pump.fun/api/sell";
+import { resolveApiUrl } from "@/lib/api-client";
+
+const PUMP_CURVE_PROXY = "/api/pumpfun/curve";
+const PUMP_BUY_PROXY = "/api/pumpfun/buy";
+const PUMP_SELL_PROXY = "/api/pumpfun/sell";
 
 export interface PumpCurveStatus {
   state: "active" | "graduated" | "closed";

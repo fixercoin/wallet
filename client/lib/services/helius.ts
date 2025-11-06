@@ -453,9 +453,22 @@ class HeliusAPI {
           instr.parsed?.type === "transferChecked"
         ) {
           const info = instr.parsed.info;
-          const amount =
-            info.tokenAmount?.uiAmount || info.tokenAmount?.amount || 0;
-          const decimals = info.tokenAmount?.decimals || 0;
+          // Extract amount - uiAmount is already in human-readable format
+          let amount = 0;
+          if (info.tokenAmount) {
+            if (typeof info.tokenAmount.uiAmount === "number") {
+              amount = info.tokenAmount.uiAmount;
+            } else if (typeof info.tokenAmount.uiAmount === "string") {
+              amount = parseFloat(info.tokenAmount.uiAmount);
+            } else if (info.tokenAmount.amount) {
+              // If no uiAmount, use raw amount divided by decimals
+              const decimals = info.tokenAmount.decimals || 6;
+              amount =
+                parseFloat(info.tokenAmount.amount) /
+                Math.pow(10, decimals);
+            }
+          }
+          const decimals = info.tokenAmount?.decimals || 6;
           const destination = info.destination;
           const source = info.source;
           const mint = info.mint || info.token;
@@ -468,7 +481,7 @@ class HeliusAPI {
             transfers.push({
               type: "receive",
               token: mint || "UNKNOWN",
-              amount: parseFloat(String(amount)),
+              amount,
               decimals,
               signature: signature || "",
               blockTime,
@@ -480,7 +493,7 @@ class HeliusAPI {
             transfers.push({
               type: "send",
               token: mint || "UNKNOWN",
-              amount: parseFloat(String(amount)),
+              amount,
               decimals,
               signature: signature || "",
               blockTime,

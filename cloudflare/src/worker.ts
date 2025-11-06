@@ -3118,6 +3118,100 @@ export default {
       }
     }
 
+    // Pump.fun TRADE handler: /api/pumpfun/trade (POST) - unified trade endpoint
+    if (pathname === "/api/pumpfun/trade" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { mint, amount, type, action, buyer, seller } = body as any;
+        const tradeType = (type || action || "").toLowerCase();
+        const isBuy = tradeType === "buy";
+        const isSell = tradeType === "sell";
+
+        if (!mint || typeof amount !== "number" || (!isBuy && !isSell)) {
+          return json(
+            {
+              error: "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        if (isBuy && !buyer) {
+          return json(
+            {
+              error: "Missing required field for buy trade: buyer",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        if (isSell && !seller) {
+          return json(
+            {
+              error: "Missing required field for sell trade: seller",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const tradePayload: any = {
+          mint,
+          amount,
+        };
+
+        if (isBuy) {
+          tradePayload.buyer = buyer;
+        } else if (isSell) {
+          tradePayload.seller = seller;
+        }
+
+        const resp = await fetch("https://pump.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(tradePayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            {
+              error: `Pump.fun API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to execute trade",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

@@ -146,10 +146,10 @@ export default {
     if (pathname === "/api/pumpfun/buy") {
       try {
         const body = await request.json().catch(() => ({}));
-        if (!body.mint || typeof body.amount !== "number" || !body.buyer) {
+        if (!body.mint || body.amount === undefined || !body.buyer) {
           return new Response(
             JSON.stringify({
-              error: "Missing required fields: mint, amount (number), buyer",
+              error: "Missing required fields: mint, amount, buyer",
             }),
             {
               status: 400,
@@ -161,18 +161,42 @@ export default {
           );
         }
 
+        const {
+          mint,
+          amount,
+          buyer,
+          slippageBps = 350,
+          priorityFeeLamports = 10000,
+        } = body;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            buyer,
+            slippageBps,
+            priorityFeeLamports,
+            txVersion: "V0",
+            operation: "buy",
+          }),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
+
+        if (!resp.ok) {
+          console.warn(
+            `[Pump.fun BUY] API error ${resp.status}:`,
+            text.slice(0, 200),
+          );
+        }
+
         return new Response(text, {
           status: resp.status,
           headers: {
@@ -204,10 +228,10 @@ export default {
     if (pathname === "/api/pumpfun/sell") {
       try {
         const body = await request.json().catch(() => ({}));
-        if (!body.mint || typeof body.amount !== "number" || !body.seller) {
+        if (!body.mint || body.amount === undefined || !body.seller) {
           return new Response(
             JSON.stringify({
-              error: "Missing required fields: mint, amount (number), seller",
+              error: "Missing required fields: mint, amount, seller",
             }),
             {
               status: 400,
@@ -219,18 +243,42 @@ export default {
           );
         }
 
+        const {
+          mint,
+          amount,
+          seller,
+          slippageBps = 350,
+          priorityFeeLamports = 10000,
+        } = body;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const resp = await fetch(`${PUMPFUN_API_BASE}/trade`, {
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            seller,
+            slippageBps,
+            priorityFeeLamports,
+            txVersion: "V0",
+            operation: "sell",
+          }),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
+
+        if (!resp.ok) {
+          console.warn(
+            `[Pump.fun SELL] API error ${resp.status}:`,
+            text.slice(0, 200),
+          );
+        }
+
         return new Response(text, {
           status: resp.status,
           headers: {
@@ -256,6 +304,222 @@ export default {
           },
         );
       }
+    }
+
+    // Birdeye price endpoint: /api/birdeye/price?address=...
+    if (pathname === "/api/birdeye/price" && request.method === "GET") {
+      const address = url.searchParams.get("address");
+      if (!address) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Missing 'address' parameter",
+          }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      const BIRDEYE_API_KEY =
+        (env as any)?.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
+      const BIRDEYE_API_URL = "https://public-api.birdeye.so";
+
+      // Known token mints and fallback prices
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.00008139,
+        SOL: 149.38,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.00001112,
+      };
+
+      // Try Birdeye first
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const birdeyeResp = await fetch(
+          `${BIRDEYE_API_URL}/public/price?address=${encodeURIComponent(address)}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "X-API-KEY": BIRDEYE_API_KEY,
+            },
+            signal: controller.signal,
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (birdeyeResp.ok) {
+          const data = await birdeyeResp.json();
+          if (data.success && data.data) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                data: {
+                  address: data.data.address,
+                  value: data.data.value,
+                  updateUnixTime: data.data.updateUnixTime,
+                  priceChange24h: data.data.priceChange24h || 0,
+                },
+              }),
+              {
+                status: 200,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              },
+            );
+          }
+        }
+      } catch (e: any) {
+        // Continue to fallback
+      }
+
+      // Fallback 1: Try DexScreener
+      try {
+        const dexResp = await fetch(
+          `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(address)}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+        if (dexResp.ok) {
+          const dexData = await dexResp.json();
+          const pairs = Array.isArray(dexData?.pairs) ? dexData.pairs : [];
+
+          if (pairs.length > 0) {
+            const pair = pairs.find(
+              (p: any) =>
+                (p?.baseToken?.address === address ||
+                  p?.quoteToken?.address === address) &&
+                p?.priceUsd,
+            );
+
+            if (pair && pair.priceUsd) {
+              const price = parseFloat(pair.priceUsd);
+              if (isFinite(price) && price > 0) {
+                return new Response(
+                  JSON.stringify({
+                    success: true,
+                    data: {
+                      address,
+                      value: price,
+                      updateUnixTime: Math.floor(Date.now() / 1000),
+                      priceChange24h: pair.priceChange?.h24 || 0,
+                    },
+                    _source: "dexscreener",
+                  }),
+                  {
+                    status: 200,
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Access-Control-Allow-Origin": "*",
+                    },
+                  },
+                );
+              }
+            }
+          }
+        }
+      } catch (e: any) {
+        // Continue to fallback
+      }
+
+      // Fallback 2: Try Jupiter
+      try {
+        const jupiterResp = await fetch(
+          `https://api.jup.ag/price?ids=${encodeURIComponent(address)}`,
+          { headers: { Accept: "application/json" } },
+        );
+        if (jupiterResp.ok) {
+          const jupData = await jupiterResp.json();
+          const priceData = jupData?.data?.[address];
+
+          if (priceData?.price) {
+            const price = parseFloat(priceData.price);
+            if (isFinite(price) && price > 0) {
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  data: {
+                    address,
+                    value: price,
+                    updateUnixTime: Math.floor(Date.now() / 1000),
+                    priceChange24h: 0,
+                  },
+                  _source: "jupiter",
+                }),
+                {
+                  status: 200,
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                  },
+                },
+              );
+            }
+          }
+        }
+      } catch (e: any) {
+        // Continue to fallback
+      }
+
+      // Fallback 3: Hardcoded fallback prices
+      for (const [symbol, mint] of Object.entries(TOKEN_MINTS)) {
+        if (mint === address && FALLBACK_USD[symbol]) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              data: {
+                address,
+                value: FALLBACK_USD[symbol],
+                updateUnixTime: Math.floor(Date.now() / 1000),
+                priceChange24h: 0,
+              },
+              _source: "fallback",
+            }),
+            {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            },
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No price data available for this token",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
     }
 
     // DexScreener price
@@ -321,11 +585,14 @@ export default {
         );
       }
 
+      // Use configured RPC endpoint if available, with public fallbacks
+      const configuredRPC = (env as any)?.SOLANA_RPC;
       const RPC_ENDPOINTS = [
-        "https://api.mainnet-beta.solana.com",
+        configuredRPC || "https://api.mainnet-beta.solana.com",
         "https://solana.publicnode.com",
         "https://rpc.ankr.com/solana",
-      ];
+        "https://solana-rpc.publicnode.com",
+      ].filter((url, index, self) => self.indexOf(url) === index);
 
       const rpcBody = {
         jsonrpc: "2.0",
@@ -337,12 +604,17 @@ export default {
       let lastError = "";
       for (const endpoint of RPC_ENDPOINTS) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+
           const resp = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(rpcBody),
+            signal: controller.signal,
           });
 
+          clearTimeout(timeoutId);
           const data = await resp.json();
 
           if (data.error) {
@@ -368,7 +640,10 @@ export default {
             );
           }
         } catch (e: any) {
-          lastError = e?.message || String(e);
+          lastError =
+            e?.name === "AbortError"
+              ? "Request timeout"
+              : e?.message || String(e);
           continue;
         }
       }
@@ -413,42 +688,96 @@ export default {
         });
       }
 
+      // Use configured RPC endpoint if available, with public fallbacks
+      const configuredRPC = (env as any)?.SOLANA_RPC;
       const RPC_ENDPOINTS = [
-        "https://api.mainnet-beta.solana.com",
+        configuredRPC || "https://api.mainnet-beta.solana.com",
         "https://solana.publicnode.com",
         "https://rpc.ankr.com/solana",
-      ];
+        "https://solana-rpc.publicnode.com",
+        "https://api.mainnet-beta.solana.com",
+      ].filter((url, index, self) => self.indexOf(url) === index);
 
       let lastError = "";
-      for (const rpcUrl of RPC_ENDPOINTS) {
+      let lastStatus = 0;
+
+      for (let attempt = 0; attempt < RPC_ENDPOINTS.length; attempt++) {
+        const rpcUrl = RPC_ENDPOINTS[attempt];
+
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
           const resp = await fetch(rpcUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(rpcRequest),
+            signal: controller.signal,
           });
 
+          clearTimeout(timeoutId);
+          lastStatus = resp.status;
+
           const text = await resp.text();
-          return new Response(text, {
-            status: resp.status,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          });
+
+          // If we got a successful response, return it
+          if (resp.status === 200) {
+            return new Response(text, {
+              status: resp.status,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            });
+          }
+
+          // For error responses, try to parse and check for JSON-RPC error
+          try {
+            const json = JSON.parse(text);
+            // If response is valid JSON-RPC (even if status is not 200), return it
+            if (json.result !== undefined || json.error !== undefined) {
+              return new Response(text, {
+                status: 200, // Return 200 for valid JSON-RPC responses
+                headers: {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              });
+            }
+          } catch {
+            // Not JSON, continue
+          }
+
+          lastError = text || resp.statusText;
+
+          // Don't retry on 4xx errors (except maybe 429 rate limit)
+          if (resp.status >= 400 && resp.status < 500 && resp.status !== 429) {
+            break;
+          }
+
+          // Continue to next endpoint for server errors
+          continue;
         } catch (e: any) {
-          lastError = e?.message || String(e);
+          lastError =
+            e?.name === "AbortError"
+              ? "Request timeout"
+              : e?.message || String(e);
+
+          // Continue to next endpoint on timeout/network errors
           continue;
         }
       }
 
+      // All endpoints failed
       return new Response(
         JSON.stringify({
           error: "All RPC endpoints failed",
           details: lastError || "Unknown error",
+          attempted: RPC_ENDPOINTS.length,
+          lastStatus: lastStatus || 502,
         }),
         {
-          status: 502,
+          status: lastStatus || 502,
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",

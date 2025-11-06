@@ -229,22 +229,35 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/pumpfun/buy", async (req, res) => {
     try {
       const body = req.body || {};
-      const { mint, amount, buyer } = body;
+      const {
+        mint,
+        amount,
+        buyer,
+        slippageBps = 350,
+        priorityFeeLamports = 10000,
+      } = body;
 
-      if (!mint || typeof amount !== "number" || !buyer) {
+      if (!mint || amount === undefined || !buyer) {
         return res.status(400).json({
-          error:
-            "Missing required fields: mint, amount (number), buyer (string)",
+          error: "Missing required fields: mint, amount, buyer",
         });
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const resp = await fetch("https://pump.fun/api/trade", {
+      const resp = await fetch("https://pumpportal.fun/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mint, amount, buyer }),
+        body: JSON.stringify({
+          mint,
+          amount: String(amount),
+          buyer,
+          slippageBps,
+          priorityFeeLamports,
+          txVersion: "V0",
+          operation: "buy",
+        }),
         signal: controller.signal,
       });
 
@@ -261,9 +274,12 @@ export async function createServer(): Promise<express.Application> {
       const data = await resp.json();
       return res.json(data);
     } catch (e: any) {
-      return res.status(502).json({
+      const isTimeout = (e as any)?.name === "AbortError";
+      return res.status(isTimeout ? 504 : 502).json({
         error: "Failed to request BUY transaction",
-        details: e?.message || String(e),
+        details: isTimeout
+          ? "Request timeout - Pump.fun API took too long to respond"
+          : e?.message || String(e),
       });
     }
   });
@@ -272,22 +288,35 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/pumpfun/sell", async (req, res) => {
     try {
       const body = req.body || {};
-      const { mint, amount, seller } = body;
+      const {
+        mint,
+        amount,
+        seller,
+        slippageBps = 350,
+        priorityFeeLamports = 10000,
+      } = body;
 
-      if (!mint || typeof amount !== "number" || !seller) {
+      if (!mint || amount === undefined || !seller) {
         return res.status(400).json({
-          error:
-            "Missing required fields: mint, amount (number), seller (string)",
+          error: "Missing required fields: mint, amount, seller",
         });
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const resp = await fetch("https://pump.fun/api/sell", {
+      const resp = await fetch("https://pumpportal.fun/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mint, amount, seller }),
+        body: JSON.stringify({
+          mint,
+          amount: String(amount),
+          seller,
+          slippageBps,
+          priorityFeeLamports,
+          txVersion: "V0",
+          operation: "sell",
+        }),
         signal: controller.signal,
       });
 
@@ -304,9 +333,12 @@ export async function createServer(): Promise<express.Application> {
       const data = await resp.json();
       return res.json(data);
     } catch (e: any) {
-      return res.status(502).json({
+      const isTimeout = (e as any)?.name === "AbortError";
+      return res.status(isTimeout ? 504 : 502).json({
         error: "Failed to request SELL transaction",
-        details: e?.message || String(e),
+        details: isTimeout
+          ? "Request timeout - Pump.fun API took too long to respond"
+          : e?.message || String(e),
       });
     }
   });

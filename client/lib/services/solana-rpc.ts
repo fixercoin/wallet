@@ -78,6 +78,11 @@ export const makeRpcCall = async (
       try {
         let response: Response;
         try {
+          // Add timeout for the proxy RPC call
+          const controller = new AbortController();
+          const timeoutMs = 15000; // 15s timeout for proxy RPC
+          const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
           response = await fetch("/api/solana-rpc", {
             method: "POST",
             headers: {
@@ -88,7 +93,9 @@ export const makeRpcCall = async (
               params,
               id: Date.now(),
             }),
+            signal: controller.signal,
           });
+          clearTimeout(timeout);
         } catch (fetchErr) {
           // Network/connection error (e.g. Dev server not running, middleware not mounted)
           const fetchError =

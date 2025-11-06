@@ -610,10 +610,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const executeSwap = async () => {
-    if (!quote || !wallet) {
+    if (!wallet) {
       toast({
         title: "Error",
-        description: "Quote or wallet missing",
+        description: "Wallet not connected",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast({
+        title: "Error",
+        description: "Enter a valid amount",
         variant: "destructive",
       });
       return;

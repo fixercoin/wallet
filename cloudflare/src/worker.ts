@@ -1643,6 +1643,138 @@ export default {
       }
     }
 
+    // Market maker: start session (validates config and returns maker plan)
+    if (pathname === "/api/market-maker/start" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const {
+          sessionId,
+          tokenAddress,
+          numberOfMakers,
+          minOrderSOL,
+          maxOrderSOL,
+          minDelaySeconds,
+          maxDelaySeconds,
+          sellStrategy,
+          profitTargetPercent,
+          manualPriceTarget,
+          gradualSellPercent,
+          userWallet,
+          feeWallet,
+        } = body as any;
+
+        const errors: string[] = [];
+        if (!sessionId || typeof sessionId !== "string")
+          errors.push("sessionId is required");
+        if (
+          !tokenAddress ||
+          typeof tokenAddress !== "string" ||
+          tokenAddress.length < 32
+        )
+          errors.push("tokenAddress is invalid");
+        const n = Number(numberOfMakers);
+        if (!Number.isFinite(n) || n < 1 || n > 1000)
+          errors.push("numberOfMakers must be between 1 and 1000");
+        const minSol = Number(minOrderSOL);
+        const maxSol = Number(maxOrderSOL);
+        if (!Number.isFinite(minSol) || minSol <= 0)
+          errors.push("minOrderSOL must be > 0");
+        if (!Number.isFinite(maxSol) || maxSol <= 0)
+          errors.push("maxOrderSOL must be > 0");
+        if (
+          Number.isFinite(minSol) &&
+          Number.isFinite(maxSol) &&
+          minSol >= maxSol
+        )
+          errors.push("minOrderSOL must be less than maxOrderSOL");
+        const minDelay = Number(minDelaySeconds);
+        const maxDelay = Number(maxDelaySeconds);
+        if (!Number.isFinite(minDelay) || minDelay < 0)
+          errors.push("minDelaySeconds must be >= 0");
+        if (!Number.isFinite(maxDelay) || maxDelay < 0)
+          errors.push("maxDelaySeconds must be >= 0");
+        if (
+          Number.isFinite(minDelay) &&
+          Number.isFinite(maxDelay) &&
+          minDelay > maxDelay
+        )
+          errors.push("minDelaySeconds must be <= maxDelaySeconds");
+
+        if (sellStrategy === "auto-profit") {
+          const p = Number(profitTargetPercent);
+          if (!Number.isFinite(p) || p < 0.1)
+            errors.push("profitTargetPercent must be >= 0.1");
+        }
+        if (sellStrategy === "manual-target") {
+          const t = Number(manualPriceTarget);
+          if (!Number.isFinite(t) || t <= 0)
+            errors.push("manualPriceTarget must be > 0");
+        }
+        if (sellStrategy === "gradually") {
+          const g = Number(gradualSellPercent);
+          if (!Number.isFinite(g) || g <= 0 || g > 100)
+            errors.push("gradualSellPercent must be between 0 and 100");
+        }
+
+        if (errors.length) {
+          return json(
+            { error: "validation_failed", details: errors },
+            {
+              status: 400,
+              headers: corsHeaders,
+            },
+          );
+        }
+
+        const avgOrderSOL = (minSol + maxSol) / 2;
+        const makers = Array.from({ length: n }, (_, i) => ({
+          id: `maker_${i + 1}`,
+          address: "",
+          initialSOLAmount: avgOrderSOL,
+          buyTransactions: [],
+          sellTransactions: [],
+          currentTokenBalance: 0,
+          profitUSD: 0,
+          status: "active",
+        }));
+
+        return json(
+          {
+            sessionId,
+            tokenAddress,
+            numberOfMakers: n,
+            minOrderSOL: minSol,
+            maxOrderSOL: maxSol,
+            minDelaySeconds: minDelay,
+            maxDelaySeconds: maxDelay,
+            sellStrategy,
+            profitTargetPercent,
+            manualPriceTarget,
+            gradualSellPercent,
+            userWallet,
+            feeWallet,
+            makers,
+            status: "running",
+            startedAt: Date.now(),
+            note: "Market maker accepted. For live trading, provide per-maker signing keys and a task runner (Durable Object/cron).",
+          },
+          { headers: corsHeaders },
+        );
+      } catch (e: any) {
+        return json(
+          { error: "Failed to start market maker", details: e?.message },
+          { status: 500, headers: corsHeaders },
+        );
+      }
+    }
+
     // Jupiter swap quote: /api/swap/jupiter/quote?inputMint=...&outputMint=...&amount=...
     if (pathname === "/api/swap/jupiter/quote" && req.method === "GET") {
       const inputMint = url.searchParams.get("inputMint") || "";

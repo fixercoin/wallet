@@ -484,47 +484,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       setStatus("Preparing transaction…");
 
-      // Use existing quote if it's fresh enough (< 5 seconds old)
-      let freshQuote = quote.quoteResponse;
-      const quoteAge = Date.now() - (quote.quoteTime || 0);
-
-      if (quoteAge > 5000) {
-        setStatus("Refreshing quote…");
-        try {
-          const amountValue = String(
-            Math.floor(parseFloat(amount) * 10 ** fromToken.decimals),
-          );
-          // Use higher slippage to be more forgiving during quote refresh
-          const refreshedQuote = await jupiterAPI.getQuote(
-            fromMint,
-            toMint,
-            parseInt(amountValue),
-            200, // 2% slippage tolerance for faster execution
-          );
-          if (refreshedQuote) {
-            freshQuote = refreshedQuote;
-            console.log(
-              "[SwapInterface] Quote refreshed successfully before swap",
-            );
-          } else {
-            throw new Error(
-              "Failed to refresh quote. Please go back and request a new quote.",
-            );
-          }
-        } catch (refreshErr) {
-          console.warn("[SwapInterface] Quote refresh error:", refreshErr);
-          const errMsg = refreshErr.message || String(refreshErr);
-          if (errMsg.includes("STALE_QUOTE") || errMsg.includes("530")) {
-            throw new Error(
-              "Quote expired. Please go back and request a fresh quote before swapping.",
-            );
-          }
-          throw refreshErr;
-        }
-      }
-
+      // Use the existing quote directly - do NOT refresh during swap execution
+      // Refreshing quotes during execution causes STALE_QUOTE errors
+      // The Jupiter API service layer handles quote validation and retries automatically
       const swapRequest = {
-        quoteResponse: freshQuote,
+        quoteResponse: quote.quoteResponse,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       };

@@ -1470,6 +1470,112 @@ export default {
       }
     }
 
+    // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
+    if (pathname === "/api/forex/rate" && req.method === "GET") {
+      const base = (searchParams.get("base") || "USD").toUpperCase();
+      const symbols = (searchParams.get("symbols") || "PKR").toUpperCase();
+      const firstSymbol = symbols.split(",")[0];
+      const providers = [
+        {
+          url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+          parse: (j) =>
+            j && j.rates && typeof j.rates[firstSymbol] === "number"
+              ? j.rates[firstSymbol]
+              : null,
+        },
+        {
+          url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+          parse: (j) =>
+            j && typeof j[firstSymbol.toLowerCase()] === "number"
+              ? j[firstSymbol.toLowerCase()]
+              : null,
+        },
+      ];
+      let lastErr = "";
+      for (const p of providers) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const resp = await fetch(p.url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastErr = `${resp.status} ${resp.statusText}`;
+            continue;
+          }
+          const apiJson = await resp.json();
+          const rate = p.parse(apiJson);
+          if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            return json(
+              { base, symbols: [firstSymbol], rates: { [firstSymbol]: rate } },
+              { headers: corsHeaders },
+            );
+          }
+          lastErr = "invalid response";
+        } catch (e) {
+          lastErr = e?.message || String(e);
+        }
+      }
+      return json(
+        { error: "Failed to fetch forex rate", details: lastErr },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Stablecoin 24h change: /api/stable-24h?symbols=USDC,USDT
+    if (pathname === "/api/stable-24h" && req.method === "GET") {
+      const symbolsParam = (searchParams.get("symbols") || "USDC,USDT").toUpperCase();
+      const symbols = Array.from(new Set(String(symbolsParam).split(",").map((s) => s.trim()).filter(Boolean)));
+      const COINGECKO_IDS = {
+        SOL: { id: "solana", mint: "So11111111111111111111111111111111111111112" },
+        USDC: { id: "usd-coin", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
+        USDT: { id: "tether", mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns" },
+      };
+      const ids = symbols.map((s) => COINGECKO_IDS[s]?.id).filter(Boolean);
+      if (ids.length === 0) {
+        return json({ error: "No supported symbols" }, { status: 400, headers: corsHeaders });
+      }
+      try {
+        const url_str = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids.join(","))}&vs_currencies=usd&include_24hr_change=true`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        const resp = await fetch(url_str, { headers: { Accept: "application/json" }, signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return json(
+            { error: `Coingecko returned ${resp.status}` },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+        const data = await resp.json();
+        const out = symbols.map((s) => {
+          const id = COINGECKO_IDS[s]?.id;
+          const price = id ? data?.[id]?.usd ?? null : null;
+          const change = id ? data?.[id]?.usd_24h_change ?? 0 : 0;
+          return { symbol: s, priceUsd: price, change24h: change };
+        });
+        return json({ symbols, data: out }, { headers: corsHeaders });
+      } catch (e) {
+        return json(
+          { error: "Failed to fetch stablecoin prices", details: e?.message || String(e) },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // Unified quote endpoint trying providers: /api/quote
     if (pathname === "/api/quote" && req.method === "GET") {
       const inputMint = searchParams.get("inputMint") || "";

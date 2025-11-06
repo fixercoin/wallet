@@ -1,5 +1,10 @@
 // Production deployment defaults
-const CLOUDFLARE_WORKER_BASE = "https://proxy.fixorium.com.pk";
+const CLOUDFLARE_WORKER_BASE = "https://wallet.fixorium.com.pk";
+const LOCALHOST_API_BASE = "http://localhost:5173"; // Local fallback
+
+// Track which API base is currently working
+let workingApiBase: string | null = null;
+let lastFailureTime: Record<string, number> = {};
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";
@@ -11,7 +16,9 @@ const normalizeBase = (value: string | null | undefined): string => {
 const determineBase = (): string => {
   const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
   if (envBase) return envBase;
-  // Always use remote Cloudflare Worker in dev and production
+  // Use cached working base if available
+  if (workingApiBase) return workingApiBase;
+  // Try Cloudflare Worker first, fall back to localhost in dev
   return CLOUDFLARE_WORKER_BASE;
 };
 
@@ -22,6 +29,20 @@ export const getApiBaseUrl = (): string => {
     cachedBase = determineBase();
   }
   return cachedBase;
+};
+
+// Mark an API base as failed for a period
+export const markApiBaseFailed = (base: string): void => {
+  lastFailureTime[base] = Date.now();
+  workingApiBase = null; // Reset working base so we try alternatives
+};
+
+// Check if an API base should be retried
+const canRetryApiBase = (base: string): boolean => {
+  const lastFailure = lastFailureTime[base];
+  if (!lastFailure) return true;
+  // Retry after 30 seconds of being marked as failed
+  return Date.now() - lastFailure > 30000;
 };
 
 export const resolveApiUrl = (path: string): string => {
@@ -48,4 +69,42 @@ export const resolveApiUrl = (path: string): string => {
 
   // Otherwise, append the full normalizedPath
   return `${baseNorm}${normalizedPath}`;
+};
+
+// Fetch wrapper with automatic fallback support
+export const fetchWithFallback = async (
+  path: string,
+  options?: RequestInit,
+): Promise<Response> => {
+  const url = resolveApiUrl(path);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      // Add timeout if not present
+      signal: options?.signal || AbortSignal.timeout?.(30000),
+    });
+
+    // If successful, mark this base as working
+    if (response.ok) {
+      workingApiBase = getApiBaseUrl();
+    }
+
+    return response;
+  } catch (error) {
+    // If Cloudflare Worker is unreachable and not in dev mode, log it
+    const currentBase = getApiBaseUrl();
+    if (currentBase === CLOUDFLARE_WORKER_BASE) {
+      markApiBaseFailed(currentBase);
+      console.warn(
+        "Cloudflare Worker at " +
+          CLOUDFLARE_WORKER_BASE +
+          " appears to be unavailable. " +
+          "Error: " +
+          (error instanceof Error ? error.message : String(error)),
+      );
+    }
+
+    throw error;
+  }
 };

@@ -280,8 +280,42 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
     try {
       if (!quote) throw new Error("Swap quote missing");
+
+      // Refresh quote immediately before execution to prevent STALE_QUOTE errors
+      // This is critical because quotes expire in 30-60 seconds
+      console.log(
+        "Refreshing quote before swap execution to prevent stale quote errors...",
+      );
+      let freshQuote = quote;
+      try {
+        if (fromToken && toToken && fromAmount) {
+          const amount = jupiterAPI.formatSwapAmount(
+            parseFloat(fromAmount),
+            fromToken.decimals,
+          );
+          const refreshedQuote = await jupiterAPI.getQuote(
+            fromToken.mint,
+            toToken.mint,
+            parseInt(amount),
+            parseInt(slippage) * 100,
+          );
+          if (refreshedQuote) {
+            freshQuote = refreshedQuote;
+            console.log(
+              "Quote refreshed successfully, using fresh quote for swap",
+            );
+          }
+        }
+      } catch (refreshErr) {
+        console.warn(
+          "Could not refresh quote before swap, using cached quote:",
+          refreshErr,
+        );
+        // Continue with cached quote if refresh fails
+      }
+
       const swapRequest = {
-        quoteResponse: quote,
+        quoteResponse: freshQuote,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       } as any;
@@ -501,6 +535,18 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
       ) {
         message =
           "No route available. Try swapping via USDC or reduce the amount.";
+      }
+
+      // Detect gateway/service errors
+      if (message.includes("502") || message.includes("Bad Gateway")) {
+        message =
+          "Backend service temporarily unavailable. Please wait a moment and try again.";
+      } else if (message.includes("526") || message.includes("Invalid SSL")) {
+        message =
+          "API connection error. The backend is experiencing issues. Please try again shortly.";
+      } else if (message.includes("530") || message.includes("swap")) {
+        message =
+          "Swap service error. This may be due to network congestion. Try again in a moment.";
       }
 
       toast({

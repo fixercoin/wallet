@@ -323,7 +323,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("");
     } catch (err) {
       console.error("[SwapInterface] Error loading tokens:", err);
-      setStatus("Using available tokens...");
 
       const fallbackTokens = (userTokens || []).map((ut) => ({
         address: ut.mint,
@@ -347,6 +346,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setTokenList(fallbackTokens);
       }
 
+      // Don't show error for token loading - user can still trade with available tokens
+      setStatus("");
       setInitialized(true);
     }
   };

@@ -146,7 +146,10 @@ export default function WalletHistory() {
 
       console.log(`Found ${signatures.length} signatures, fetching details...`);
 
-      const txs: BlockchainTransaction[] = [];
+      const txMap = new Map<
+        string,
+        BlockchainTransaction & { transfers: any[] }
+      >();
 
       // Fetch and parse each transaction
       for (const sig of signatures) {
@@ -162,21 +165,34 @@ export default function WalletHistory() {
             wallet.publicKey,
           );
 
-          for (const transfer of transfers) {
-            txs.push({
-              type: transfer.type,
-              signature: transfer.signature,
-              blockTime: transfer.blockTime,
-              token: transfer.mint || transfer.token,
-              amount: transfer.amount,
-              decimals: transfer.decimals,
-              __source: "blockchain",
-            });
+          // Group all transfers by signature (one entry per transaction, not per transfer)
+          if (transfers.length > 0) {
+            const txKey = sig.signature;
+            if (!txMap.has(txKey)) {
+              // Use the first transfer to initialize, but store all transfers
+              txMap.set(txKey, {
+                type: transfers[0].type,
+                signature: sig.signature,
+                blockTime: sig.blockTime,
+                token: transfers[0].mint || transfers[0].token,
+                amount: transfers[0].amount,
+                decimals: transfers[0].decimals,
+                __source: "blockchain",
+                transfers: transfers,
+              });
+            }
           }
         } catch (e) {
           console.warn(`Error parsing transaction ${sig.signature}:`, e);
         }
       }
+
+      const txs: BlockchainTransaction[] = Array.from(txMap.values()).map(
+        (tx) => {
+          const { transfers, ...rest } = tx;
+          return rest;
+        },
+      );
 
       console.log(`Extracted ${txs.length} token transfers`);
       setBlockchainTxs(txs);
@@ -308,7 +324,9 @@ export default function WalletHistory() {
                     if (t.__source === "blockchain" && !description) {
                       const tokenSymbol =
                         KNOWN_TOKENS[t.token]?.symbol || t.token.slice(0, 6);
-                      const amount = t.amount / Math.pow(10, t.decimals || 6);
+                      // Amount is already in human-readable format from helius API
+                      const amount =
+                        typeof t.amount === "number" ? t.amount : 0;
                       description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
                     }
 

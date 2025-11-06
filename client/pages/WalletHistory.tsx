@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { heliusAPI } from "@/lib/services/helius";
+import { jupiterAPI } from "@/lib/services/jupiter";
 
 const BASE_SOLSCAN_TX = (sig: string) => `https://solscan.io/tx/${sig}`;
 
@@ -95,6 +96,7 @@ export default function WalletHistory() {
     [],
   );
   const [loading, setLoading] = useState(false);
+  const [tokenMap, setTokenMap] = useState<Record<string, { symbol: string; decimals: number }>>({});
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -120,6 +122,23 @@ export default function WalletHistory() {
     } catch (e) {
       setPendingOrders([]);
     }
+
+    // Init token map (Jupiter + known)
+    (async () => {
+      try {
+        const known: Record<string, { symbol: string; decimals: number }> = { ...KNOWN_TOKENS };
+        const jupTokens = await jupiterAPI.getStrictTokenList();
+        if (Array.isArray(jupTokens) && jupTokens.length > 0) {
+          for (const t of jupTokens) {
+            if (!t?.address) continue;
+            known[t.address] = { symbol: t.symbol || t.address.slice(0, 6), decimals: t.decimals ?? 6 };
+          }
+        }
+        setTokenMap(known);
+      } catch (e) {
+        setTokenMap({ ...KNOWN_TOKENS });
+      }
+    })();
 
     // Fetch blockchain transactions
     fetchBlockchainTransactions();
@@ -322,11 +341,14 @@ export default function WalletHistory() {
                     // Get amount and token for blockchain transactions
                     let description = t.description || "";
                     if (t.__source === "blockchain" && !description) {
+                      const mintOrToken: string = t.token || "";
                       const tokenSymbol =
-                        KNOWN_TOKENS[t.token]?.symbol || t.token.slice(0, 6);
-                      // Amount is already in human-readable format from helius API
-                      const amount =
-                        typeof t.amount === "number" ? t.amount : 0;
+                        tokenMap[mintOrToken]?.symbol ||
+                        (mintOrToken.length > 40
+                          ? mintOrToken.slice(0, 6)
+                          : mintOrToken || "TOKEN");
+                      // Amount is already in human-readable format from parser (includes meta fallback)
+                      const amount = typeof t.amount === "number" ? t.amount : 0;
                       description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
                     }
 

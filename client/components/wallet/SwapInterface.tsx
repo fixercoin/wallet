@@ -685,7 +685,9 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
 
       // If we have a direct quote, do normal single-leg swap
       if (quote) {
-        const sig = await submitQuote(quote);
+        // Refresh quote if stale to avoid STALE_QUOTE errors from Jupiter
+        const freshQuote = await refreshQuoteIfStale(quote, quoteTimestamp);
+        const sig = await submitQuote(freshQuote);
         setTxSignature(sig);
         setStep("success");
         setTimeout(() => refreshBalance?.(), 2000);

@@ -11,6 +11,11 @@ import {
   isBondingCurveOpen,
   executeSmartSwap,
 } from "@/lib/services/pump-swap-combined";
+import {
+  checkCurveState,
+  pumpBuy,
+  pumpSell,
+} from "@/lib/services/pump-fun-api";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,

@@ -405,12 +405,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Swap transaction generation failed");
       }
 
-      setStatus(`Swap submitted. Check your wallet for confirmation.`);
-      console.log("[SwapInterface] Swap result:", swapResult);
+      setStatus("Signing transaction…");
+      const keypair = getKeypair(wallet);
+      if (!keypair) {
+        throw new Error("Failed to derive keypair from wallet secret key");
+      }
+
+      setStatus("Submitting to blockchain…");
+      const txSignature = await sendSignedTx(
+        swapResult.swapTransaction,
+        keypair,
+      );
+
+      setStatus(`Swap submitted: ${txSignature.slice(0, 8)}...`);
+      console.log("[SwapInterface] Swap transaction signature:", txSignature);
 
       toast({
         title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`,
+        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}. Tx: ${txSignature.slice(0, 8)}...`,
       });
 
       setAmount("");
@@ -418,7 +430,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("");
       setIsLoading(false);
 
-      return swapResult;
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
+      return txSignature;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("[SwapInterface] Swap error:", err);

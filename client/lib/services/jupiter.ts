@@ -185,13 +185,17 @@ class JupiterAPI {
         swapRequest.quoteResponse?.outputMint,
       );
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(swapRequest),
-      });
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");

@@ -482,13 +482,34 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
+      setStatus("Refreshing quote before execution…");
+
+      // Refresh the quote immediately before execution to prevent STALE_QUOTE errors
+      // This ensures the quote is always valid when sent to Jupiter
+      let freshQuote = quote.quoteResponse;
+      try {
+        const refreshed = await jupiterAPI.getQuote(
+          fromMint,
+          toMint,
+          parseInt(quote.quoteResponse.inAmount),
+          quote.quoteResponse.slippageBps || 100,
+        );
+        if (refreshed) {
+          console.log("✅ Quote refreshed successfully before execution");
+          freshQuote = refreshed;
+        } else {
+          console.warn(
+            "Could not refresh quote, using cached quote - may result in STALE_QUOTE error",
+          );
+        }
+      } catch (refreshErr) {
+        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+      }
+
       setStatus("Preparing transaction…");
 
-      // Use the existing quote directly - do NOT refresh during swap execution
-      // Refreshing quotes during execution causes STALE_QUOTE errors
-      // The Jupiter API service layer handles quote validation and retries automatically
       const swapRequest = {
-        quoteResponse: quote.quoteResponse,
+        quoteResponse: freshQuote,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       };

@@ -949,7 +949,8 @@ export const handler = async (event: any) => {
 
       if (!mint || typeof amount !== "number" || !buyer) {
         return jsonResponse(400, {
-          error: "Missing required fields: mint, amount (number), buyer (string)",
+          error:
+            "Missing required fields: mint, amount (number), buyer (string)",
         });
       }
 
@@ -998,7 +999,8 @@ export const handler = async (event: any) => {
 
       if (!mint || typeof amount !== "number" || !seller) {
         return jsonResponse(400, {
-          error: "Missing required fields: mint, amount (number), seller (string)",
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
         });
       }
 

@@ -126,6 +126,7 @@ export default function WalletHistory() {
     }
 
     // Init token map (Jupiter + known) and then fetch transactions
+    let isMounted = true;
     (async () => {
       try {
         const known: Record<string, { symbol: string; decimals: number }> = {
@@ -145,20 +146,25 @@ export default function WalletHistory() {
         } catch (jupError) {
           console.warn("Failed to fetch Jupiter token list:", jupError);
         }
-        // Set token map state first
-        setTokenMap(known);
-        // Then fetch blockchain transactions with a small delay to ensure state is updated
-        setTimeout(() => {
-          fetchBlockchainTransactions(known);
-        }, 100);
+
+        if (isMounted) {
+          // Set token map state first
+          setTokenMap(known);
+          // Then fetch blockchain transactions
+          await fetchBlockchainTransactions(known);
+        }
       } catch (e) {
         console.error("Error initializing token map:", e);
-        setTokenMap({ ...KNOWN_TOKENS });
-        setTimeout(() => {
-          fetchBlockchainTransactions({ ...KNOWN_TOKENS });
-        }, 100);
+        if (isMounted) {
+          setTokenMap({ ...KNOWN_TOKENS });
+          await fetchBlockchainTransactions({ ...KNOWN_TOKENS });
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [wallet?.publicKey]);
 
   const fetchBlockchainTransactions = async (

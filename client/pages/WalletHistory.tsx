@@ -274,7 +274,18 @@ export default function WalletHistory() {
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-medium">Transactions</h2>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="p-1 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh transactions"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </button>
             </div>
 
             {/* Show only confirmed on-chain transactions */}

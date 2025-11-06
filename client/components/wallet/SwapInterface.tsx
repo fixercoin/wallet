@@ -34,145 +34,80 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
 
-const ConfettiPaper: React.FC<{ delay: number }> = ({ delay }) => {
-  const randomX = Math.random() * 360;
-  const randomDuration = 2 + Math.random() * 1;
-  const randomSize = 8 + Math.random() * 12;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        width: `${randomSize}px`,
-        height: `${randomSize}px`,
-        backgroundColor: ["#22c55e", "#16a34a", "#4ade80", "#86efac"][Math.floor(Math.random() * 4)],
-        borderRadius: "50%",
-        left: "50%",
-        top: "50%",
-        animation: `bloom ${randomDuration}s ease-out ${delay}s forwards`,
-        transformOrigin: "center",
-        pointerEvents: "none",
-      }}
-    />
-  );
-};
-
 const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
   if (!show) return null;
 
-  const papers = Array.from({ length: 20 }).map((_, i) => (
-    <ConfettiPaper key={i} delay={i * 0.05} />
-  ));
+  const particles = Array.from({ length: 24 }).map((_, i) => {
+    const angle = (i / 24) * Math.PI * 2;
+    const distance = 180;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    return { tx, ty, id: i, color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][i % 6] };
+  });
 
   return (
-    <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
+    <div className="fixed inset-0 pointer-events-none z-50">
       <style>{`
-        @keyframes bloom {
+        @keyframes burst {
           0% {
             opacity: 1;
             transform: translate(0, 0) scale(1);
           }
           100% {
             opacity: 0;
-            transform: translate(
-              calc(cos(var(--angle)) * 200px),
-              calc(sin(var(--angle)) * 200px)
-            ) scale(0);
+            transform: translate(var(--tx), var(--ty)) scale(0);
           }
         }
-        @keyframes pulse-success {
-          0% { transform: scale(0.8); opacity: 0; }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes success-pop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
         }
       `}</style>
-      {papers.map((paper, i) => {
-        const angle = (i / 20) * Math.PI * 2;
-        return (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              width: "12px",
-              height: "12px",
-              backgroundColor: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981"][Math.floor(Math.random() * 5)],
-              borderRadius: "50%",
-              left: "50%",
-              top: "50%",
-              marginLeft: "-6px",
-              marginTop: "-6px",
-              animation: `boom 1.2s ease-out forwards`,
-              "--angle": `${angle}rad`,
-            } as any}
-            onAnimationEnd={() => {}}
-          />
-        );
-      })}
+
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            position: "fixed",
+            left: "50%",
+            top: "50%",
+            width: "12px",
+            height: "12px",
+            backgroundColor: p.color,
+            borderRadius: "50%",
+            marginLeft: "-6px",
+            marginTop: "-6px",
+            "--tx": `${p.tx}px`,
+            "--ty": `${p.ty}px`,
+            animation: `burst 1.2s ease-out forwards`,
+          } as any}
+        />
+      ))}
+
       <div
         style={{
-          position: "absolute",
-          animation: "pulse-success 0.6s ease-out",
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          marginLeft: "-40px",
+          marginTop: "-40px",
+          animation: "success-pop 0.7s ease-out forwards",
         }}
       >
-        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
-          <Check className="w-10 h-10 text-white" />
+        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
+          <Check className="w-10 h-10 text-white" strokeWidth={3} />
         </div>
       </div>
-      <style>{`
-        @keyframes boom {
-          0% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(
-              ${Math.cos(eval('0')) * 180}px,
-              ${Math.sin(eval('0')) * 180}px
-            ) scale(0);
-          }
-        }
-      `}</style>
-      {papers.map((_, i) => {
-        const angle = (i / 20) * Math.PI * 2;
-        const x = Math.cos(angle) * 180;
-        const y = Math.sin(angle) * 180;
-        return (
-          <div
-            key={`paper-${i}`}
-            style={{
-              position: "absolute",
-              width: `${8 + Math.random() * 8}px`,
-              height: `${8 + Math.random() * 8}px`,
-              backgroundColor: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981"][i % 5],
-              borderRadius: "50%",
-              left: "50%",
-              top: "50%",
-              marginLeft: "-6px",
-              marginTop: "-6px",
-              animation: `fly-out 1.2s ease-out forwards`,
-              opacity: 1,
-              filter: "blur(0px)",
-            }}
-            className={`absolute`}
-          />
-        );
-      })}
-      <style>{`
-        @keyframes fly-out {
-          0% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1) rotate(0deg);
-          }
-          50% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0;
-            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 };
@@ -501,7 +436,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     try {
       setStatus("Preparing swap…");
       setIsLoading(true);
-      setShowConfirmation(false);
 
       if (!wallet) {
         setStatus("No wallet detected.");
@@ -526,18 +460,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       setStatus("Refreshing quote…");
 
-      // Refresh quote immediately before execution to prevent STALE_QUOTE errors
-      // This is critical because quotes expire quickly (30-60 seconds)
       let freshQuote = quote.quoteResponse;
       try {
-        const amount = String(
+        const amountValue = String(
           Math.floor(parseFloat(amount) * 10 ** fromToken.decimals),
         );
         const refreshedQuote = await jupiterAPI.getQuote(
           fromMint,
           toMint,
-          parseInt(amount),
-          parseInt(slippage) * 100,
+          parseInt(amountValue),
+          5000,
         );
         if (refreshedQuote) {
           freshQuote = refreshedQuote;
@@ -554,7 +486,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw refreshErr;
       }
 
-      setStatus("Preparing transaction���");
+      setStatus("Preparing transaction…");
 
       const swapRequest = {
         quoteResponse: freshQuote,
@@ -605,7 +537,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("[SwapInterface] Swap error:", err);
 
-      // Handle STALE_QUOTE errors
       if (errorMsg.includes("STALE_QUOTE")) {
         setStatus("Quote expired. Please request a fresh quote and try again.");
         setIsLoading(false);
@@ -858,7 +789,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         <BloomExplosion show={showSuccess} />
         {showSuccess && (
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-green-400 mt-32">{successMsg}</h2>
             </div>

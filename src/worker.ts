@@ -12,6 +12,7 @@ const FALLBACK_RPC_ENDPOINTS = [
 ];
 
 // External API endpoints
+const PUMPFUN_API_BASE = "https://pump.fun/api";
 const PUMPFUN_QUOTE = "https://pumpportal.fun/api/quote";
 const PUMPFUN_TRADE = "https://pumpportal.fun/api/trade";
 const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex";

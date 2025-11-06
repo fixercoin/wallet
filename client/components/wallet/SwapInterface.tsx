@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
+import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,
   SelectContent,
@@ -29,11 +30,14 @@ import {
   PublicKey,
   TransactionInstruction,
   VersionedTransaction,
+  Keypair,
+  Transaction,
 } from "@solana/web3.js";
 import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
+import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -96,6 +100,79 @@ function addFeeTransferInstruction(
     console.error("Error adding fee transfer instruction:", error);
     return tx;
   }
+}
+
+function coerceSecretKey(val: unknown): Uint8Array | null {
+  try {
+    if (!val) return null;
+    if (val instanceof Uint8Array) return val;
+    if (Array.isArray(val)) return Uint8Array.from(val as number[]);
+    if (typeof val === "string") {
+      try {
+        const bin = atob(val);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        if (out.length > 0) return out;
+      } catch {}
+      try {
+        const arr = JSON.parse(val);
+        if (Array.isArray(arr)) return Uint8Array.from(arr as number[]);
+      } catch {}
+    }
+    if (typeof val === "object") {
+      const values = Object.values(val as Record<string, unknown>).filter(
+        (x) => typeof x === "number",
+      ) as number[];
+      if (values.length > 0) return Uint8Array.from(values);
+    }
+  } catch {}
+  return null;
+}
+
+function getKeypair(walletData: any): Keypair | null {
+  try {
+    const sk = coerceSecretKey(walletData?.secretKey);
+    if (!sk || sk.length === 0) return null;
+    return Keypair.fromSecretKey(sk);
+  } catch {
+    return null;
+  }
+}
+
+async function sendSignedTx(
+  txBase64: string,
+  keypair: Keypair,
+): Promise<string> {
+  const buf = bytesFromBase64(txBase64);
+  const vtx = VersionedTransaction.deserialize(buf);
+  vtx.sign([keypair]);
+  const signed = vtx.serialize();
+  const signedBase64 = base64FromBytes(signed);
+
+  const body = {
+    method: "sendRawTransaction",
+    params: [
+      signedBase64,
+      { skipPreflight: false, preflightCommitment: "confirmed" },
+    ],
+    id: Date.now(),
+  };
+
+  const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+  }
+
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || "RPC error");
+
+  return j.result as string;
 }
 
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -331,12 +408,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Swap transaction generation failed");
       }
 
-      setStatus(`Swap submitted. Check your wallet for confirmation.`);
-      console.log("[SwapInterface] Swap result:", swapResult);
+      setStatus("Signing transaction…");
+      const keypair = getKeypair(wallet);
+      if (!keypair) {
+        throw new Error("Failed to derive keypair from wallet secret key");
+      }
+
+      setStatus("Submitting to blockchain…");
+      const txSignature = await sendSignedTx(
+        swapResult.swapTransaction,
+        keypair,
+      );
+
+      setStatus(`Swap submitted: ${txSignature.slice(0, 8)}...`);
+      console.log("[SwapInterface] Swap transaction signature:", txSignature);
 
       toast({
         title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}`,
+        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}. Tx: ${txSignature.slice(0, 8)}...`,
       });
 
       setAmount("");
@@ -344,7 +433,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("");
       setIsLoading(false);
 
-      return swapResult;
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
+      return txSignature;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("[SwapInterface] Swap error:", err);

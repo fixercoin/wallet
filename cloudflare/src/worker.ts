@@ -1946,7 +1946,9 @@ export default {
 
             if (!resp.ok) {
               lastError = { status: resp.status, endpoint };
-              console.warn(`[Jupiter Swap] ${endpoint} returned ${resp.status}`);
+              console.warn(
+                `[Jupiter Swap] ${endpoint} returned ${resp.status}`,
+              );
               continue;
             }
 

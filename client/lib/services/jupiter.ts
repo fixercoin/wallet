@@ -58,7 +58,7 @@ export interface JupiterToken {
   tags?: string[];
 }
 
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 
 class JupiterAPI {
   private readonly baseUrl = "https://lite-api.jup.ag/swap/v1";
@@ -89,12 +89,12 @@ class JupiterAPI {
         if (typeof opts?.onlyDirectRoutes === "boolean")
           params.set("onlyDirectRoutes", String(opts.onlyDirectRoutes));
 
-        const url = resolveApiUrl(`/api/jupiter/quote?${params.toString()}`);
+        const path = `/api/jupiter/quote?${params.toString()}`;
         console.log(
           `Jupiter quote request (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
         );
 
-        const response = await this.fetchWithTimeout(url, 15000).catch(
+        const response = await fetchWithFallback(path, { method: "GET" }).catch(
           () => new Response("", { status: 0 } as any),
         );
         const txt = await response.text().catch(() => "");
@@ -397,10 +397,9 @@ class JupiterAPI {
   async getAllTokens(): Promise<JupiterToken[]> {
     // Try proxy first, then fall back to public Jupiter token endpoints
     try {
-      const proxyUrl = resolveApiUrl("/api/jupiter/tokens?type=all");
-      const resp = await this.fetchWithTimeout(proxyUrl, 10000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
+      const resp = await fetchWithFallback("/api/jupiter/tokens?type=all", {
+        method: "GET",
+      }).catch(() => new Response("", { status: 0 } as any));
       if (resp.ok) {
         return (await resp.json()) as JupiterToken[];
       }
@@ -415,8 +414,8 @@ class JupiterAPI {
   async getStrictTokenList(): Promise<JupiterToken[]> {
     // Try multiple endpoints and strategies
     const endpoints = [
-      { url: resolveApiUrl("/api/jupiter/tokens?type=strict"), name: "strict" },
-      { url: resolveApiUrl("/api/jupiter/tokens?type=all"), name: "all" },
+      { url: "/api/jupiter/tokens?type=strict", name: "strict" },
+      { url: "/api/jupiter/tokens?type=all", name: "all" },
       { url: "https://token.jup.ag/strict", name: "direct-strict" },
       { url: "https://token.jup.ag/all", name: "direct-all" },
       { url: "https://cache.jup.ag/tokens", name: "cache" },
@@ -425,9 +424,13 @@ class JupiterAPI {
     for (const endpoint of endpoints) {
       try {
         console.log(`Fetching Jupiter tokens from: ${endpoint.name}`);
-        const resp = await this.fetchWithTimeout(endpoint.url, 10000).catch(
-          () => new Response("", { status: 0 } as any),
-        );
+        const resp = endpoint.url.startsWith("/api/")
+          ? await fetchWithFallback(endpoint.url, { method: "GET" }).catch(
+              () => new Response("", { status: 0 } as any),
+            )
+          : await this.fetchWithTimeout(endpoint.url, 10000).catch(
+              () => new Response("", { status: 0 } as any),
+            );
 
         if (resp.ok) {
           const data = await resp.json();

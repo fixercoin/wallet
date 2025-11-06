@@ -1021,7 +1021,10 @@ export const onRequest = async ({ request, env }) => {
       try {
         const SOL_MINT = "So11111111111111111111111111111111111111112";
         const data = await fetchDexscreenerData(`/tokens/${SOL_MINT}`);
-        const pair = Array.isArray(data?.pairs) && data.pairs.length > 0 ? data.pairs[0] : null;
+        const pair =
+          Array.isArray(data?.pairs) && data.pairs.length > 0
+            ? data.pairs[0]
+            : null;
         if (!pair) {
           return jsonCors(404, { error: "SOL price data not found" });
         }
@@ -1399,7 +1402,9 @@ export const onRequest = async ({ request, env }) => {
           // Always return upstream status and body to the client
           return new Response(text, {
             status: resp.status,
-            headers: applyCors(new Headers({ "Content-Type": "application/json" })),
+            headers: applyCors(
+              new Headers({ "Content-Type": "application/json" }),
+            ),
           });
         } catch (e: any) {
           lastErr = e?.message || String(e);

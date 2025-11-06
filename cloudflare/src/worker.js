@@ -1059,8 +1059,7 @@ export default {
         if (!mint || typeof amount !== "number" || !buyer) {
           return json(
             {
-              error:
-                "Missing required fields: mint, amount (number), buyer",
+              error: "Missing required fields: mint, amount (number), buyer",
             },
             { status: 400, headers: corsHeaders },
           );
@@ -1126,8 +1125,7 @@ export default {
         if (!mint || typeof amount !== "number" || !seller) {
           return json(
             {
-              error:
-                "Missing required fields: mint, amount (number), seller",
+              error: "Missing required fields: mint, amount (number), seller",
             },
             { status: 400, headers: corsHeaders },
           );

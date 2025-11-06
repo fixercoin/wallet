@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
+import { jupiterAPI } from "@/lib/services/jupiter";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,

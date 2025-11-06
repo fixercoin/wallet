@@ -163,7 +163,7 @@ export const handler = async (event: any) => {
   }
 
   const path =
-    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+    (event.path || "").replace(/^\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {

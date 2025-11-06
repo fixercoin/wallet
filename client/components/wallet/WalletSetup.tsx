@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, Plus } from "lucide-react";
+import { Eye, EyeOff, Copy } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -335,12 +335,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     disabled={isLoading}
                     className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-black shadow-lg hover:shadow-2xl transition-all"
                   >
-                    <Plus
-                      size={20}
-                      className="mr-2"
-                      stroke="black"
-                      strokeWidth={3}
-                    />
                     CREATE NEW WALLET
                   </Button>
 

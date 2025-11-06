@@ -190,41 +190,71 @@ export default {
         );
       }
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+      let lastError: any = null;
+      // Retry logic for transient errors
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-        const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+          const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
 
-        const resp = await fetch(quoteUrl, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          const errorText = await resp.text().catch(() => "");
-          return json(
-            {
-              error: `Jupiter API returned ${resp.status}`,
-              details: errorText,
+          const resp = await fetch(quoteUrl, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
             },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
+            signal: controller.signal,
+          });
 
-        const quoteData = await resp.json();
-        return json(quoteData, { headers: corsHeaders });
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch quote from Jupiter", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
+          clearTimeout(timeoutId);
+
+          if (!resp.ok) {
+            const errorText = await resp.text().catch(() => "");
+            lastError = { status: resp.status, text: errorText };
+
+            // Retry on 502/503/504 errors
+            if (
+              attempt < 1 &&
+              (resp.status === 502 ||
+                resp.status === 503 ||
+                resp.status === 504)
+            ) {
+              await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+
+            return json(
+              {
+                error: `Jupiter API returned ${resp.status}`,
+                details: errorText,
+              },
+              { status: resp.status, headers: corsHeaders },
+            );
+          }
+
+          const quoteData = await resp.json();
+          return json(quoteData, { headers: corsHeaders });
+        } catch (e: any) {
+          lastError = e;
+          if (
+            attempt < 1 &&
+            (e?.message?.includes("timeout") ||
+              e?.message?.includes("network"))
+          ) {
+            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+        }
       }
+
+      return json(
+        {
+          error: "Failed to fetch quote from Jupiter",
+          details: lastError?.message || lastError?.text || String(lastError),
+        },
+        { status: 502, headers: corsHeaders },
+      );
     }
 
     // POST /api/swap - Execute swap and return transaction

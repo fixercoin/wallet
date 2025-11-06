@@ -507,9 +507,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       const txBase64 = swapResult.swapTransaction;
-      let tx = VersionedTransaction.deserialize(
-        bytesFromBase64(txBase64),
-      );
+      let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
       const decimals = fromToken.decimals ?? 6;
       tx = addFeeTransferInstruction(
@@ -527,7 +525,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Invalid wallet secret key");
       }
 
-      const txSignature = await sendSignedTx(base64FromBytes(tx.serialize()), keypair);
+      const txSignature = await sendSignedTx(
+        base64FromBytes(tx.serialize()),
+        keypair,
+      );
 
       setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
       setShowSuccess(true);
@@ -547,8 +548,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     } catch (err) {
       setIsLoading(false);
 
-      const errorMsg =
-        err instanceof Error ? err.message : JSON.stringify(err);
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
 
       setStatus("");
 

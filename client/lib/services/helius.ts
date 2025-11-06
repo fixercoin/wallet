@@ -464,8 +464,7 @@ class HeliusAPI {
               // If no uiAmount, use raw amount divided by decimals
               const decimals = info.tokenAmount.decimals || 6;
               amount =
-                parseFloat(info.tokenAmount.amount) /
-                Math.pow(10, decimals);
+                parseFloat(info.tokenAmount.amount) / Math.pow(10, decimals);
             }
           }
           const decimals = info.tokenAmount?.decimals || 6;

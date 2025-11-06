@@ -7,6 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
+import {
+  isBondingCurveOpen,
+  executeSmartSwap,
+} from "@/lib/services/pump-swap-combined";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,

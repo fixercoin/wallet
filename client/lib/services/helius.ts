@@ -595,9 +595,7 @@ class HeliusAPI {
             transfers.push({
               type: delta >= 0 ? "receive" : "send",
               token: mint,
-              amount: Number.isFinite(Math.abs(delta))
-                ? Math.abs(delta)
-                : 0,
+              amount: Number.isFinite(Math.abs(delta)) ? Math.abs(delta) : 0,
               decimals,
               signature: signature || "",
               blockTime,

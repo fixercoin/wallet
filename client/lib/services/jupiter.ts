@@ -443,9 +443,7 @@ class JupiterAPI {
       }
     }
 
-    console.warn(
-      "All Jupiter token endpoints failed, returning empty list",
-    );
+    console.warn("All Jupiter token endpoints failed, returning empty list");
     return [];
   }
 

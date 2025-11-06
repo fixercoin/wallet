@@ -5,6 +5,8 @@
 // function below is a placeholder that returns null and instructs the caller to perform server-side
 // transaction construction with PumpSwap program details.
 
+import { resolveApiUrl } from "@/lib/api-client";
+
 export interface PumpPoolInfo {
   address: string;
   baseMint: string; // token A mint (e.g. SOL or token)
@@ -27,7 +29,8 @@ async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
     "Content-Type": "application/json",
   };
 
-  const res = await fetch(`${PUMP_SWAP_PROXY_BASE}${path}`, {
+  const url = resolveApiUrl(`${PUMP_SWAP_PROXY_BASE}${path}`);
+  const res = await fetch(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,

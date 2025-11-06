@@ -1,16 +1,18 @@
-// Production Cloudflare Worker with complete API routing
 export interface Env {
   SOLANA_RPC?: string;
 }
 
 // RPC endpoints
-const DEFAULT_SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7";
+// Prefer reliable public providers by default
+const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
 const FALLBACK_RPC_ENDPOINTS = [
-  "https://api.mainnet-beta.solana.com",
+  "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
 ];
 
 // External API endpoints
+const PUMPFUN_API_BASE = "https://pump.fun/api";
 const PUMPFUN_QUOTE = "https://pumpportal.fun/api/quote";
 const PUMPFUN_TRADE = "https://pumpportal.fun/api/trade";
 const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex";
@@ -220,599 +222,386 @@ async function handlePrice(url: URL): Promise<Response> {
       method: "GET",
       headers: browserHeaders(),
     });
-    if (!r.ok) {
-      return new Response(
-        JSON.stringify({ error: "dexscreener_error", status: r.status }),
-        { status: 502, headers: CORS_HEADERS },
-      );
-    }
-    const j = await r.json();
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
+    const j = await safeJson(r);
+    return new Response(JSON.stringify({ data: j }), { headers: CORS_HEADERS });
   } catch (e: any) {
-    return new Response(
-      JSON.stringify({
-        error: "dexscreener_error",
-        details: String(e?.message || e).slice(0, 200),
-      }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// Token metadata
-async function handleToken(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
-  if (!mint) {
-    return new Response(JSON.stringify({ error: "mint required" }), {
-      status: 400,
-      headers: CORS_HEADERS,
-    });
-  }
-
-  try {
-    // Try token list first
-    const tokenListResp = await timeoutFetch(SOLANA_TOKENLIST_URL, {
-      method: "GET",
-      headers: browserHeaders(),
-    });
-    if (tokenListResp.ok) {
-      const tokenListJson = await tokenListResp.json();
-      const found = (tokenListJson.tokens || []).find(
-        (t: any) => t.address === mint,
-      );
-      if (found) {
-        return new Response(JSON.stringify({ token: found }), {
-          headers: CORS_HEADERS,
-        });
-      }
-    }
-
-    // Fallback to DexScreener
-    const ds = await timeoutFetch(`${DEXSCREENER_BASE}/tokens/${mint}`, {
-      method: "GET",
-      headers: browserHeaders(),
-    });
-    if (ds.ok) {
-      const j = await safeJson(ds);
-      return new Response(JSON.stringify({ token: j }), {
-        headers: CORS_HEADERS,
-      });
-    }
-
-    return new Response(
-      JSON.stringify({ warning: "token metadata not found" }),
-      { status: 404, headers: CORS_HEADERS },
-    );
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// DexScreener tokens
-async function handleDexscreenerTokens(url: URL): Promise<Response> {
-  const mints = url.searchParams.get("mints");
-  if (!mints) {
-    return new Response(
-      JSON.stringify({ error: "mints required (comma-separated)" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
-  }
-
-  try {
-    const mintList = mints
-      .split(",")
-      .map((m) => m.trim())
-      .slice(0, 20)
-      .join(",");
-    const r = await timeoutFetch(
-      `${DEXSCREENER_BASE}/tokens/${mintList}`,
-      { method: "GET", headers: browserHeaders() },
-      15000,
-    );
-    if (!r.ok) {
-      return new Response(JSON.stringify({ error: `HTTP ${r.status}` }), {
-        status: 502,
-        headers: CORS_HEADERS,
-      });
-    }
-    const j = await r.json();
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// DexScreener search
-async function handleDexscreenerSearch(url: URL): Promise<Response> {
-  const q = url.searchParams.get("q");
-  if (!q) {
-    return new Response(JSON.stringify({ error: "q (query) required" }), {
-      status: 400,
-      headers: CORS_HEADERS,
-    });
-  }
-
-  try {
-    const r = await timeoutFetch(
-      `${DEXSCREENER_BASE}/search?q=${encodeURIComponent(q)}`,
-      { method: "GET", headers: browserHeaders() },
-      10000,
-    );
-    if (!r.ok) {
-      return new Response(JSON.stringify({ pairs: [] }), {
-        headers: CORS_HEADERS,
-      });
-    }
-    const j = await r.json();
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({
-        error: String(e?.message || e).slice(0, 200),
-        pairs: [],
-      }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// DexScreener trending
-async function handleDexscreenerTrending(): Promise<Response> {
-  try {
-    const r = await timeoutFetch(
-      `${DEXSCREENER_BASE}/pairs/solana`,
-      { method: "GET", headers: browserHeaders() },
-      15000,
-    );
-    if (!r.ok) {
-      return new Response(JSON.stringify({ pairs: [] }), {
-        status: 502,
-        headers: CORS_HEADERS,
-      });
-    }
-    const j = await r.json();
-    // Sort by volume and take top 50
-    const trending = (j.pairs || [])
-      .sort((a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
-      .slice(0, 50);
-    return new Response(JSON.stringify({ pairs: trending }), {
-      headers: CORS_HEADERS,
-    });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({
-        error: String(e?.message || e).slice(0, 200),
-        pairs: [],
-      }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// Jupiter price
-async function handleJupiterPrice(url: URL): Promise<Response> {
-  const ids = url.searchParams.get("ids");
-  if (!ids) {
-    return new Response(
-      JSON.stringify({ error: "ids required (comma-separated)" }),
-      { status: 400, headers: CORS_HEADERS },
-    );
-  }
-
-  try {
-    const r = await timeoutFetch(
-      `${JUPITER_PRICE_BASE}/price?ids=${encodeURIComponent(ids)}`,
-      { method: "GET", headers: browserHeaders() },
-      10000,
-    );
-    if (!r.ok) {
-      return new Response(JSON.stringify({ data: {} }), {
-        status: 502,
-        headers: CORS_HEADERS,
-      });
-    }
-    const j = await r.json();
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({
-        error: String(e?.message || e).slice(0, 200),
-        data: {},
-      }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// Jupiter tokens
-async function handleJupiterTokens(url: URL): Promise<Response> {
-  const type = url.searchParams.get("type") || "strict";
-
-  try {
-    const endpoints = [
-      `${JUPITER_TOKENS_BASE}/${type}`,
-      `https://cache.jup.ag/tokens`,
-      `${JUPITER_TOKENS_BASE}/all`,
-    ];
-
-    for (const endpoint of endpoints) {
-      try {
-        const r = await timeoutFetch(endpoint, {
-          method: "GET",
-          headers: browserHeaders(),
-        });
-        if (r.ok) {
-          const j = await r.json();
-          return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
-        }
-      } catch {}
-    }
-
-    return new Response(JSON.stringify([]), {
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 502,
       headers: CORS_HEADERS,
     });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
   }
 }
 
-// Jupiter quote
+// Jupiter Quote handler
 async function handleJupiterQuote(url: URL): Promise<Response> {
-  const inputMint = url.searchParams.get("inputMint");
-  const outputMint = url.searchParams.get("outputMint");
-  const amount = url.searchParams.get("amount");
-  const slippageBps = url.searchParams.get("slippageBps") || "50";
+  const { inputMint, outputMint, amount, slippageBps, asLegacyTransaction } =
+    Object.fromEntries(url.searchParams);
 
   if (!inputMint || !outputMint || !amount) {
     return new Response(
       JSON.stringify({
-        error: "Missing: inputMint, outputMint, amount",
+        error: "Missing required query params: inputMint, outputMint, amount",
       }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
 
-  try {
-    const params = new URLSearchParams({
-      inputMint,
-      outputMint,
-      amount,
-      slippageBps,
-    });
-    const r = await timeoutFetch(
-      `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
-      { method: "GET", headers: browserHeaders() },
-      15000,
-    );
-    if (!r.ok) {
-      const text = await r.text().catch(() => "");
-      return new Response(
-        JSON.stringify({
-          error: `HTTP ${r.status}`,
-          code: r.status === 404 ? "NO_ROUTE_FOUND" : "API_ERROR",
-        }),
-        { status: r.status, headers: CORS_HEADERS },
-      );
+  const params = new URLSearchParams({
+    inputMint,
+    outputMint,
+    amount,
+    slippageBps: slippageBps || "50",
+    onlyDirectRoutes: "false",
+    asLegacyTransaction: asLegacyTransaction || "false",
+  });
+
+  const urls = [
+    `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
+    `https://quote-api.jup.ag/v6/quote?${params.toString()}`,
+  ];
+
+  for (const fetchUrl of urls) {
+    try {
+      const response = await timeoutFetch(fetchUrl, {
+        method: "GET",
+        headers: browserHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+      }
+
+      if (response.status === 404 || response.status === 400) {
+        return new Response(
+          JSON.stringify({
+            error: "No swap route found for this pair",
+            code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+          }),
+          { status: response.status, headers: CORS_HEADERS },
+        );
+      }
+
+      if (response.status === 429 || response.status >= 500) {
+        continue;
+      }
+
+      const text = await response.text().catch(() => "");
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    } catch (e: any) {
+      continue;
     }
-    const j = await r.json();
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
   }
+
+  return new Response(
+    JSON.stringify({ error: "Quote API error", code: "API_ERROR" }),
+    { status: 500, headers: CORS_HEADERS },
+  );
 }
 
-// Jupiter swap
+// Jupiter Swap handler
 async function handleJupiterSwap(request: Request): Promise<Response> {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
+
     if (!body || !body.quoteResponse || !body.userPublicKey) {
       return new Response(
         JSON.stringify({
-          error: "Missing: quoteResponse, userPublicKey",
+          error:
+            "Missing required body: { quoteResponse, userPublicKey, ...options }",
         }),
         { status: 400, headers: CORS_HEADERS },
       );
     }
 
-    const r = await timeoutFetch(`${JUPITER_SWAP_BASE}/swap`, {
+    const response = await timeoutFetch(`${JUPITER_SWAP_BASE}/swap`, {
       method: "POST",
       headers: browserHeaders(),
       body: JSON.stringify(body),
     });
 
-    if (!r.ok) {
-      const text = await r.text().catch(() => "");
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
       return new Response(
-        JSON.stringify({ error: `HTTP ${r.status}`, details: text }),
-        { status: r.status, headers: CORS_HEADERS },
+        JSON.stringify({
+          error: `Swap failed: ${response.statusText}`,
+          details: text,
+        }),
+        { status: response.status, headers: CORS_HEADERS },
       );
     }
-    const j = await r.json();
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
+
+    const data = await response.json();
+    return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
   } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// Pump.fun quote
-async function handlePumpfunQuote(request: Request): Promise<Response> {
-  try {
-    const body = await request.json();
-    const r = await timeoutFetch(PUMPFUN_QUOTE, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(body),
-    });
-
-    const text = await r.text();
-    return new Response(text, {
-      status: r.status,
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 500,
       headers: CORS_HEADERS,
     });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
   }
 }
 
-// Pump.fun trade
-async function handlePumpfunTrade(request: Request): Promise<Response> {
-  try {
-    const body = await request.json();
-    const r = await timeoutFetch(PUMPFUN_TRADE, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(body),
-    });
+// Jupiter Price handler
+async function handleJupiterPrice(url: URL): Promise<Response> {
+  const ids = url.searchParams.get("ids");
 
-    const text = await r.text();
-    return new Response(text, {
-      status: r.status,
-      headers: CORS_HEADERS,
-    });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
-      { status: 502, headers: CORS_HEADERS },
-    );
-  }
-}
-
-// Swap quote aggregator
-async function handleSwapQuote(url: URL): Promise<Response> {
-  const inputMint = url.searchParams.get("inputMint");
-  const outputMint = url.searchParams.get("outputMint");
-  const amount = url.searchParams.get("amount");
-
-  if (!inputMint || !outputMint || !amount) {
+  if (!ids) {
     return new Response(
       JSON.stringify({
-        error: "Missing: inputMint, outputMint, amount",
+        error: "Missing 'ids' parameter. Expected comma-separated token mints.",
       }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
 
-  // Try Jupiter first
-  try {
-    const params = new URLSearchParams({
-      inputMint,
-      outputMint,
-      amount,
-      slippageBps: "50",
-    });
-    const r = await timeoutFetch(
-      `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
-      { method: "GET", headers: browserHeaders() },
-      10000,
-    );
-    if (r.ok) {
-      const j = await r.json();
-      return new Response(JSON.stringify({ source: "jupiter", result: j }), {
-        headers: CORS_HEADERS,
-      });
-    }
-  } catch {}
+  const endpoints = [
+    `${JUPITER_PRICE_BASE}/price?ids=${ids}`,
+    `https://api.jup.ag/price/v2?ids=${ids}`,
+  ];
 
-  // Fallback to Pump.fun
-  try {
-    const r = await timeoutFetch(PUMPFUN_QUOTE, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify({ inputMint, outputMint, amount }),
-    });
-    if (r.ok) {
-      const j = await r.json();
-      return new Response(JSON.stringify({ source: "pumpfun", result: j }), {
-        headers: CORS_HEADERS,
+  for (const endpoint of endpoints) {
+    try {
+      const response = await timeoutFetch(endpoint, {
+        method: "GET",
+        headers: browserHeaders(),
       });
-    }
-  } catch {}
 
-  return new Response(JSON.stringify({ error: "no_quote_available" }), {
+      if (response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+      }
+
+      if (response.status === 429) continue;
+    } catch (e) {
+      continue;
+    }
+  }
+
+  return new Response(JSON.stringify({ error: "Price API error", data: {} }), {
+    status: 500,
+    headers: CORS_HEADERS,
+  });
+}
+
+// Jupiter Tokens handler
+async function handleJupiterTokens(url: URL): Promise<Response> {
+  const type = url.searchParams.get("type") || "strict";
+
+  const endpoints = [
+    `https://token.jup.ag/${type}`,
+    "https://cache.jup.ag/tokens",
+    "https://token.jup.ag/all",
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await timeoutFetch(endpoint, {
+        method: "GET",
+        headers: browserHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+      }
+
+      if (response.status === 429 || response.status >= 500) {
+        continue;
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+
+  return new Response(JSON.stringify({ error: "Tokens API error", data: [] }), {
     status: 502,
     headers: CORS_HEADERS,
   });
 }
 
-// Swap execute (send tx)
-async function handleSwapExecute(
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  try {
-    const payload = await request.json();
-    if (!payload?.tx) {
-      return new Response(
-        JSON.stringify({ error: "tx required (base64 signed)" }),
-        { status: 400, headers: CORS_HEADERS },
-      );
-    }
-
-    const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
-    const rpcBody = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "sendTransaction",
-      params: [payload.tx],
-    };
-
-    const r = await timeoutFetch(SOLANA_RPC, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(rpcBody),
+// Pump.fun curve status handler
+async function handlePumpFunCurve(url: URL): Promise<Response> {
+  const mint = url.searchParams.get("mint");
+  if (!mint) {
+    return new Response(JSON.stringify({ error: "mint parameter required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
     });
+  }
 
-    const j = await safeJson(r);
-    return new Response(JSON.stringify({ rpc: j }), {
-      status: 200,
+  try {
+    const response = await timeoutFetch(
+      `${PUMPFUN_API_BASE}/curve/${encodeURIComponent(mint)}`,
+      {
+        method: "GET",
+        headers: browserHeaders(),
+      },
+    );
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
       headers: CORS_HEADERS,
     });
   } catch (e: any) {
     return new Response(
       JSON.stringify({
-        error: "rpc_send_failed",
-        details: String(e?.message || e).slice(0, 200),
+        error: "Failed to check curve state",
+        details: String(e?.message || e),
       }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
 }
 
-// Solana RPC proxy
-async function handleSolanaRpc(request: Request, env: Env): Promise<Response> {
+// Pump.fun BUY handler
+async function handlePumpFunBuy(request: Request): Promise<Response> {
   try {
-    const body = await request.json();
-    const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
+    const body = await request.json().catch(() => ({}));
 
-    const r = await timeoutFetch(SOLANA_RPC, {
+    if (!body.mint || typeof body.amount !== "number" || !body.buyer) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), buyer",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
       method: "POST",
       headers: browserHeaders(),
       body: JSON.stringify(body),
     });
 
-    const j = await safeJson(r);
-    return new Response(JSON.stringify(j), { headers: CORS_HEADERS });
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
   } catch (e: any) {
     return new Response(
-      JSON.stringify({ error: String(e?.message || e).slice(0, 200) }),
+      JSON.stringify({
+        error: "Failed to request BUY transaction",
+        details: String(e?.message || e),
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
 }
 
-// ============ MAIN HANDLER ============
+// Pump.fun SELL handler
+async function handlePumpFunSell(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const method = request.method.toUpperCase();
-
-    // CORS preflight
-    if (method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    if (!body.mint || typeof body.amount !== "number" || !body.seller) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), seller",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
     }
 
-    // Route matching
-    if (path === "/api/health") {
-      return handleHealth();
-    }
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/sell`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
 
-    if (path === "/api/wallet/balance" && method === "GET") {
-      return handleWalletBalance(url, env);
-    }
-
-    if (path === "/api/wallet/tokens" && method === "GET") {
-      return handleWalletTokens(url, env);
-    }
-
-    if (path === "/api/price" && method === "GET") {
-      return handlePrice(url);
-    }
-
-    if (path === "/api/token" && method === "GET") {
-      return handleToken(url);
-    }
-
-    if (path === "/api/dexscreener/tokens" && method === "GET") {
-      return handleDexscreenerTokens(url);
-    }
-
-    if (path === "/api/dexscreener/search" && method === "GET") {
-      return handleDexscreenerSearch(url);
-    }
-
-    if (path === "/api/dexscreener/trending" && method === "GET") {
-      return handleDexscreenerTrending();
-    }
-
-    if (path === "/api/jupiter/price" && method === "GET") {
-      return handleJupiterPrice(url);
-    }
-
-    if (path === "/api/jupiter/tokens" && method === "GET") {
-      return handleJupiterTokens(url);
-    }
-
-    if (path === "/api/jupiter/quote" && method === "GET") {
-      return handleJupiterQuote(url);
-    }
-
-    if (path === "/api/jupiter/swap" && method === "POST") {
-      return handleJupiterSwap(request);
-    }
-
-    if (path === "/api/pumpfun/quote" && method === "POST") {
-      return handlePumpfunQuote(request);
-    }
-
-    if (path === "/api/pumpfun/trade" && method === "POST") {
-      return handlePumpfunTrade(request);
-    }
-
-    if (path === "/api/swap/quote" && method === "GET") {
-      return handleSwapQuote(url);
-    }
-
-    if (path === "/api/swap/execute" && method === "POST") {
-      return handleSwapExecute(request, env);
-    }
-
-    if (path === "/api/solana-rpc" && method === "POST") {
-      return handleSolanaRpc(request, env);
-    }
-
-    if (path === "/api/rpc" && method === "POST") {
-      return handleSolanaRpc(request, env);
-    }
-
-    // 404
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
     return new Response(
       JSON.stringify({
-        error: "Unknown route",
-        path,
-        method,
+        error: "Failed to request SELL transaction",
+        details: String(e?.message || e),
       }),
-      { status: 404, headers: CORS_HEADERS },
+      { status: 502, headers: CORS_HEADERS },
     );
+  }
+}
+
+// Main fetch handler for worker
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      const url = new URL(request.url);
+      const pathname = url.pathname || "/";
+
+      // Basic routing
+      if (pathname === "/health" || pathname === "/api/health") {
+        return await handleHealth();
+      }
+
+      if (
+        pathname.startsWith("/api/wallet/balance") ||
+        pathname === "/wallet/balance"
+      ) {
+        return await handleWalletBalance(url, env);
+      }
+
+      if (
+        pathname.startsWith("/api/wallet/tokens") ||
+        pathname === "/wallet/tokens"
+      ) {
+        return await handleWalletTokens(url, env);
+      }
+
+      if (pathname.startsWith("/api/price") || pathname === "/price") {
+        return await handlePrice(url);
+      }
+
+      // Jupiter routes
+      if (pathname.startsWith("/api/jupiter/quote")) {
+        return await handleJupiterQuote(url);
+      }
+
+      if (pathname.startsWith("/api/jupiter/swap")) {
+        return await handleJupiterSwap(request);
+      }
+
+      if (pathname.startsWith("/api/jupiter/price")) {
+        return await handleJupiterPrice(url);
+      }
+
+      if (pathname.startsWith("/api/jupiter/tokens")) {
+        return await handleJupiterTokens(url);
+      }
+
+      // Pump.fun routes
+      if (
+        pathname === "/api/pumpfun/curve" ||
+        pathname.startsWith("/api/pumpfun/curve?")
+      ) {
+        return await handlePumpFunCurve(url);
+      }
+
+      if (pathname === "/api/pumpfun/buy") {
+        return await handlePumpFunBuy(request);
+      }
+
+      if (pathname === "/api/pumpfun/sell") {
+        return await handlePumpFunSell(request);
+      }
+
+      // Default 404
+      return new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: CORS_HEADERS,
+      });
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({ error: String(err?.message || err) }),
+        {
+          status: 500,
+          headers: CORS_HEADERS,
+        },
+      );
+    }
   },
 };

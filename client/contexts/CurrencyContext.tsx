@@ -5,7 +5,6 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { useExpressP2P } from "./ExpressP2PContext";
 
 type Fiat = "USD" | "PKR";
 
@@ -27,7 +26,32 @@ const PREFERRED_KEY = "preferred_currency";
 export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { exchangeRate } = useExpressP2P(); // PKR per USD
+  // Manage own exchange rate (PKR per USD) since ExpressP2P provider is removed
+  const EXCHANGE_RATE_KEY = "express-exchange-rate";
+  const DEFAULT_RATE = 292.59;
+  const [exchangeRate, setExchangeRate] = useState<number>(() => {
+    try {
+      const saved =
+        typeof window !== "undefined"
+          ? localStorage.getItem(EXCHANGE_RATE_KEY)
+          : null;
+      const n = saved ? Number(saved) : NaN;
+      return !isNaN(n) && n > 0 ? n : DEFAULT_RATE;
+    } catch {
+      return DEFAULT_RATE;
+    }
+  });
+
+  const updateExchangeRate = (rate: number) => {
+    if (rate > 0 && !isNaN(rate)) {
+      setExchangeRate(rate);
+      try {
+        if (typeof window !== "undefined")
+          localStorage.setItem(EXCHANGE_RATE_KEY, String(rate));
+      } catch {}
+    }
+  };
+
   const [currency, setCurrencyState] = useState<Fiat>(() => {
     try {
       const saved = (localStorage.getItem(PREFERRED_KEY) as Fiat) || "USD";

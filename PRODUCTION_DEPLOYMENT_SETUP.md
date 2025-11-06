@@ -25,10 +25,9 @@ Netlify automatically handles both frontend and serverless functions with zero e
 
 3. **Environment Variables** (if needed)
    - Add to Netlify dashboard:
-     ```
-     COINMARKETCAP_API_KEY=your_key  # Optional
-     SOLANA_RPC=https://...           # Optional, defaults to Shyft
-     ```
+   ```
+   SOLANA_RPC=https://...           # Optional, defaults to Shyft
+   ```
 
 ### How It Works
 
@@ -65,7 +64,7 @@ cd cloudflare
 wrangler deploy --config ./wrangler.toml --env production
 ```
 
-This deploys to: `https://fixorium-proxy.khanbabusargodha.workers.dev`
+This deploys to: `https://proxy.fixorium.com.pk`
 
 ### Step 2: Update Frontend Build Environment
 
@@ -91,14 +90,13 @@ Set on Cloudflare Worker (not in code):
 
 ```bash
 wrangler secret put SOLANA_RPC --config ./cloudflare/wrangler.toml
-wrangler secret put COINMARKETCAP_API_KEY --config ./cloudflare/wrangler.toml
 ```
 
 ### Testing After Deployment
 
 ```bash
 # Test Worker health
-curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
+curl https://proxy.fixorium.com.pk/api/health
 
 # Test from frontend
 # Navigate to your Cloudflare Pages URL and check browser console
@@ -206,7 +204,6 @@ All endpoints are available through both deployment methods:
 ### API returns 500 or timeout
 
 - Check Solana RPC endpoint is working
-- Verify CoinMarketCap API key (if set)
 - Check Cloudflare/Netlify logs
 
 ### CORS errors
@@ -227,7 +224,6 @@ All endpoints are available through both deployment methods:
 
 - Free RPC endpoints: ~100 req/min
 - For production: Use paid RPC (Helius, Alchemy)
-- CoinMarketCap: Set API key for higher limits
 
 ### Timeout Protection
 
@@ -242,7 +238,6 @@ For best reliability and ease of maintenance:
 
 1. **Use Netlify** - Handles both frontend and backend automatically
 2. **Set SOLANA_RPC** to a paid provider (Helius/Alchemy) for better rate limits
-3. **Set COINMARKETCAP_API_KEY** for accurate token prices
-4. **Monitor Netlify logs** for API errors
+3. **Monitor Netlify logs** for API errors
 
 This ensures your app remains stable even under high traffic.

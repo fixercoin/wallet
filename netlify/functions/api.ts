@@ -1,27 +1,16 @@
 // Netlify Functions entry to handle /api/* routes
 
 import {
-  listPosts,
-  getPost,
-  createOrUpdatePost,
-  listTradeMessages,
-  listRecentTradeMessages,
-  addTradeMessage,
-  uploadProof,
   addEasypaisaPayment,
   listEasypaisaPayments,
-  listTradeRooms,
-  getTradeRoom,
-  createTradeRoom,
-  updateTradeRoom,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
-  "https://solana-mainnet.rpc.extrnode.com",
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
+  "https://solana-rpc.publicnode.com",
 ];
 
 async function callRpc(
@@ -168,56 +157,6 @@ async function fetchDexData(path: string) {
   return request;
 }
 
-type BinanceCacheEntry = {
-  expiresAt: number;
-  data: any;
-};
-
-const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
-const BINANCE_P2P_CACHE_TTL = 30000;
-
-function uniqueId() {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function encodeToBase64(value: string): string {
-  const globalObj = globalThis as any;
-  if (typeof globalObj?.btoa === "function") {
-    const bytes = new TextEncoder().encode(value);
-    let binary = "";
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
-    }
-    return globalObj.btoa(binary);
-  }
-  if (globalObj?.Buffer) {
-    return globalObj.Buffer.from(value, "utf-8").toString("base64");
-  }
-  throw new Error("Base64 encoding not supported in this environment");
-}
-
-function buildDeviceInfoPayload(userAgent: string): string {
-  const payload = {
-    deviceName: "Chrome",
-    deviceVersion: "124.0.0.0",
-    osName: "windows",
-    osVersion: "10",
-    platform: "web",
-    screenHeight: 1080,
-    screenWidth: 1920,
-    systemLang: "en-US",
-    timeZone: "UTC",
-    userAgent,
-  };
-  return encodeToBase64(JSON.stringify(payload));
-}
-
 export const handler = async (event: any) => {
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");
@@ -228,219 +167,35 @@ export const handler = async (event: any) => {
   const method = event.httpMethod;
 
   try {
-    // P2P endpoints
-    if (path === "/p2p" || path === "/p2p/" || path === "/p2p/list") {
-      if (method === "GET") {
-        return jsonResponse(200, listPosts());
-      }
-      return jsonResponse(405, { error: "Method Not Allowed" });
-    }
-
-    if (path.startsWith("/p2p/post/") && method === "GET") {
-      const id = path.replace("/p2p/post/", "");
-      const post = getPost(id);
-      if (!post) return jsonResponse(404, { error: "not found" });
-      return jsonResponse(200, { post });
-    }
-
-    if (path === "/p2p/post" && (method === "POST" || method === "PUT")) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const adminHeader =
-        (event.headers?.["x-admin-wallet"] as string) ||
-        body?.adminWallet ||
-        "";
-      const result = createOrUpdatePost(body || {}, adminHeader || "");
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { post: result.post });
-    }
-
-    // P2P Trade Rooms endpoints
-    if (path === "/p2p/rooms" && method === "GET") {
-      const wallet = event.queryStringParameters?.wallet;
-      const result = listTradeRooms(wallet);
-      return jsonResponse(200, result);
-    }
-
-    if (path === "/p2p/rooms" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const result = createTradeRoom({
-        buyer_wallet: body?.buyer_wallet || "",
-        seller_wallet: body?.seller_wallet || "",
-        order_id: body?.order_id || "",
+    // Root and health/status endpoints
+    if (path === "/" || path === "/health" || path === "/status") {
+      return jsonResponse(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Netlify)",
+        endpoints: [
+          "/easypaisa/webhook [POST]",
+          "/easypaisa/payments [GET]",
+          "/solana-rpc [POST]",
+          "/forex/rate [GET]",
+          "/exchange-rate [GET]",
+          "/token/price [GET]",
+          "/stable-24h [GET]",
+          "/dexscreener/tokens [GET]",
+          "/dexscreener/search [GET]",
+          "/dexscreener/trending [GET]",
+          "/jupiter/price [GET]",
+          "/jupiter/tokens [GET]",
+          "/jupiter/quote [GET]",
+          "/jupiter/swap [POST]",
+          "/wallet/balance [GET]",
+          "/dextools/price [GET]",
+          "/coinmarketcap/quotes [GET]",
+          "/pumpfun/quote [GET, POST]",
+          "/pumpfun/swap [POST]",
+          "/pumpfun/buy [POST]",
+          "/pumpfun/sell [POST]",
+        ],
       });
-      if ("error" in result) {
-        return jsonResponse(result.status, { error: result.error });
-      }
-      return jsonResponse(result.status, { room: result.room });
-    }
-
-    if (path.startsWith("/p2p/rooms/") && method === "GET") {
-      const roomId = path.replace("/p2p/rooms/", "");
-      if (!roomId) {
-        return jsonResponse(400, { error: "Room ID required" });
-      }
-      const room = getTradeRoom(roomId);
-      if (!room) {
-        return jsonResponse(404, { error: "Room not found" });
-      }
-      return jsonResponse(200, { room });
-    }
-
-    if (path.startsWith("/p2p/rooms/") && method === "PUT") {
-      const roomId = path.replace("/p2p/rooms/", "");
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      if (!roomId) {
-        return jsonResponse(400, { error: "Room ID required" });
-      }
-      const result = updateTradeRoom(roomId, body || {});
-      if ("error" in result) {
-        return jsonResponse(result.status, { error: result.error });
-      }
-      return jsonResponse(result.status, { room: result.room });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/messages") &&
-      method === "GET"
-    ) {
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/messages$/, "");
-      return jsonResponse(200, listTradeMessages(tradeId));
-    }
-
-    if (
-      path.startsWith("/p2p/rooms/") &&
-      path.endsWith("/messages") &&
-      method === "GET"
-    ) {
-      const roomId = path
-        .replace(/^\/p2p\/rooms\//, "")
-        .replace(/\/messages$/, "");
-      return jsonResponse(200, { messages: listTradeMessages(roomId) });
-    }
-
-    if (
-      path.startsWith("/p2p/rooms/") &&
-      path.endsWith("/messages") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const roomId = path
-        .replace(/^\/p2p\/rooms\//, "")
-        .replace(/\/messages$/, "");
-      const { sender_wallet, message, attachment_url } = body;
-      if (!sender_wallet || !message) {
-        return jsonResponse(400, {
-          error: "Missing required fields: sender_wallet, message",
-        });
-      }
-      const msg = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        room_id: roomId,
-        sender_wallet,
-        message,
-        attachment_url,
-        created_at: Date.now(),
-      };
-      return jsonResponse(201, { message: msg });
-    }
-
-    if (path === "/p2p/trades/recent" && method === "GET") {
-      const since = Number(event.queryStringParameters?.since || 0);
-      const limit = Number(event.queryStringParameters?.limit || 100);
-      const data = (listRecentTradeMessages({ since, limit }) as any) || {
-        messages: [],
-      };
-      return jsonResponse(200, { messages: data.messages || [] });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/message") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/message$/, "");
-      const result = addTradeMessage(
-        tradeId,
-        body?.message || "",
-        body?.from || "unknown",
-      );
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { message: result.message });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/proof") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/proof$/, "");
-      const result = uploadProof(tradeId, body?.proof);
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-
-      // Optional Supabase storage upload if configured
-      const SUPABASE_URL = process.env.SUPABASE_URL;
-      const SUPABASE_KEY =
-        process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
-      let supabaseUrl: string | undefined = undefined;
-      if (
-        SUPABASE_URL &&
-        SUPABASE_KEY &&
-        body?.proof?.data &&
-        body?.proof?.filename
-      ) {
-        try {
-          const base64 = body.proof.data.includes(",")
-            ? body.proof.data.split(",").pop()!
-            : body.proof.data;
-          const binary = Buffer.from(base64, "base64");
-          const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${body.proof.filename}`;
-          const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
-          const resp = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${SUPABASE_KEY}`,
-              "Content-Type": "application/octet-stream",
-              "x-upsert": "true",
-            },
-            body: binary,
-          });
-          if (resp.ok) {
-            supabaseUrl = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;
-          }
-        } catch {}
-      }
-
-      return jsonResponse(result.status, { ok: true, url: supabaseUrl });
     }
 
     // Easypaisa webhook ingestion (best-effort schema)
@@ -615,15 +370,16 @@ export const handler = async (event: any) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
       const MARKUP = 1.0425; // 4.25%
+      const MIN_REALISTIC_PRICE = 0.00001; // minimum realistic price threshold
 
       let priceUsd: number | null = null;
       try {
@@ -636,13 +392,23 @@ export const handler = async (event: any) => {
             pairs.length > 0 && pairs[0]?.priceUsd
               ? Number(pairs[0].priceUsd)
               : null;
-          if (typeof price === "number" && isFinite(price) && price > 0) {
+          // Only use price if it's a realistic value (above minimum threshold)
+          if (
+            typeof price === "number" &&
+            isFinite(price) &&
+            price >= MIN_REALISTIC_PRICE
+          ) {
             priceUsd = price;
           }
         }
       } catch {}
 
-      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+      // Fall back to hardcoded prices if DexScreener data is invalid, zero, or too small
+      if (
+        priceUsd === null ||
+        !isFinite(priceUsd) ||
+        priceUsd < MIN_REALISTIC_PRICE
+      ) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
       }
 
@@ -791,153 +557,6 @@ export const handler = async (event: any) => {
       return jsonResponse(200, {
         schemaVersion: data?.schemaVersion || "1.0.0",
         pairs,
-      });
-    }
-
-    // Binance P2P passthrough: /api/binance-p2p/<path>
-    if (path.startsWith("/binance-p2p/")) {
-      const BINANCE_P2P_ENDPOINTS = [
-        "https://p2p.binance.com",
-        "https://c2c.binance.com",
-        "https://www.binance.com",
-      ];
-      const subPath = path.replace(/^\/binance-p2p\//, "/");
-      const search = event.rawQuery ? `?${event.rawQuery}` : "";
-      const requestBody =
-        event.httpMethod !== "GET" && event.httpMethod !== "HEAD"
-          ? (event.body ?? undefined)
-          : undefined;
-      const cacheKey = `${event.httpMethod}:${subPath}${search}:${requestBody ?? ""}`;
-      const cached = BINANCE_P2P_CACHE.get(cacheKey);
-      if (cached && cached.expiresAt > Date.now()) {
-        return jsonResponse(200, cached.data);
-      }
-
-      const headersLower = event.headers || {};
-      const uaHeader =
-        headersLower["user-agent"] ||
-        headersLower["User-Agent"] ||
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-      const traceId = uniqueId().replace(/-/g, "");
-      const sessionId = uniqueId().replace(/-/g, "");
-      const deviceInfo = buildDeviceInfoPayload(uaHeader);
-
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": uaHeader,
-        clienttype: "web",
-        "cache-control": "no-cache",
-        Origin: "https://p2p.binance.com",
-        Referer: "https://p2p.binance.com/en",
-        lang: "en",
-        platform: "web",
-        "Accept-Language": "en-US,en;q=0.9",
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Trace-Id": traceId,
-        "device-info": deviceInfo,
-        "bnc-uuid": sessionId,
-        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
-        csrftoken: traceId,
-        "X-CSRF-TOKEN": traceId,
-        timezone: "UTC",
-      };
-
-      if (requestBody === undefined) {
-        delete baseHeaders["Content-Type"];
-      }
-
-      let lastErr = "";
-      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
-        const base = BINANCE_P2P_ENDPOINTS[i];
-        const target = `${base}${subPath}${search}`;
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
-          const init: RequestInit = {
-            method: event.httpMethod,
-            headers: baseHeaders,
-            signal: controller.signal,
-          };
-          if (requestBody !== undefined) {
-            init.body = requestBody;
-          }
-          const resp = await fetch(target, init);
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            if ([403, 429, 502, 503].includes(resp.status)) {
-              lastErr = `${resp.status} ${resp.statusText}`;
-              await new Promise((resolve) => setTimeout(resolve, 150));
-              continue;
-            }
-            const t = await resp.text().catch(() => "");
-            return jsonResponse(resp.status, { error: t || resp.statusText });
-          }
-          const contentType = resp.headers.get("content-type") || "";
-          if (contentType.includes("application/json")) {
-            const json = await resp.json();
-            BINANCE_P2P_CACHE.set(cacheKey, {
-              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
-              data: json,
-            });
-            return jsonResponse(200, json);
-          }
-          const text = await resp.text();
-          return jsonResponse(200, text, {
-            "Content-Type": contentType || "text/plain",
-          });
-        } catch (e) {
-          lastErr = e instanceof Error ? e.message : String(e);
-        }
-      }
-      BINANCE_P2P_CACHE.delete(cacheKey);
-      // Graceful fallback: return empty data set so client can fallback without network error noise
-      return jsonResponse(200, {
-        data: [],
-        error: "All Binance P2P endpoints failed",
-        details: lastErr,
-      });
-    }
-
-    // Binance passthrough: /api/binance/<path>
-    if (path.startsWith("/binance/")) {
-      const BINANCE_ENDPOINTS = [
-        "https://api.binance.com",
-        "https://api1.binance.com",
-        "https://api2.binance.com",
-        "https://api3.binance.com",
-      ];
-      const subPath = path.replace(/^\/binance\//, "/");
-      const search = event.rawQuery ? `?${event.rawQuery}` : "";
-      let lastErr = "";
-      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
-        const base = BINANCE_ENDPOINTS[i];
-        const target = `${base}${subPath}${search}`;
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
-          const resp = await fetch(target, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            if ([429, 502, 503].includes(resp.status)) continue;
-            const t = await resp.text().catch(() => "");
-            throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
-          }
-          const text = await resp.text();
-          // Try to return JSON if possible, else text
-          try {
-            const json = JSON.parse(text);
-            return jsonResponse(200, json);
-          } catch {
-            return jsonResponse(200, text, { "Content-Type": "text/plain" });
-          }
-        } catch (e) {
-          lastErr = e instanceof Error ? e.message : String(e);
-        }
-      }
-      return jsonResponse(502, {
-        error: "All Binance endpoints failed",
-        details: lastErr,
       });
     }
 
@@ -1314,6 +933,180 @@ export const handler = async (event: any) => {
       } catch (e: any) {
         return jsonResponse(502, {
           error: "Failed to execute Pumpfun swap",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun buy: /api/pumpfun/buy (POST)
+    if (path === "/pumpfun/buy" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, buyer } = body;
+
+      if (!mint || typeof amount !== "number" || !buyer) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), buyer (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pump.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            buyer,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request BUY transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun sell: /api/pumpfun/sell (POST)
+    if (path === "/pumpfun/sell" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, seller } = body;
+
+      if (!mint || typeof amount !== "number" || !seller) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pump.fun/api/sell", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            seller,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request SELL transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Submit signed transaction aliases: /api/solana-send, /api/swap/submit (POST)
+    if (
+      (path === "/solana-send" || path === "/swap/submit") &&
+      method === "POST"
+    ) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const txBase64 =
+        body?.signedBase64 ||
+        body?.signedTx ||
+        body?.signedTransaction ||
+        body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, {
+          error: "Missing signed transaction (base64)",
+        });
+      }
+
+      try {
+        const rpc = await callRpc("sendTransaction", [txBase64], Date.now());
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to submit signed transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Simulate signed transaction: /api/solana-simulate (POST)
+    if (path === "/solana-simulate" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const txBase64 =
+        body?.signedBase64 ||
+        body?.signedTx ||
+        body?.signedTransaction ||
+        body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, {
+          error: "Missing signed transaction (base64)",
+        });
+      }
+
+      try {
+        const rpc = await callRpc(
+          "simulateTransaction",
+          [
+            txBase64,
+            {
+              encoding: "base64",
+              replaceRecentBlockhash: true,
+              sigVerify: true,
+            },
+          ],
+          Date.now(),
+        );
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to simulate transaction",
           details: e?.message || String(e),
         });
       }

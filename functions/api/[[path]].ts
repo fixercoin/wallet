@@ -189,57 +189,6 @@ function jsonCors(status: number, body: any) {
   });
 }
 
-type BinanceCacheEntry = {
-  expiresAt: number;
-  data: any;
-};
-
-const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
-const BINANCE_P2P_CACHE_TTL = 30000;
-
-function uniqueId() {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function encodeToBase64(value: string): string {
-  if (typeof btoa === "function") {
-    const bytes = new TextEncoder().encode(value);
-    let binary = "";
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
-    }
-    return btoa(binary);
-  }
-  const globalBuffer = (globalThis as any)?.Buffer;
-  if (globalBuffer) {
-    return globalBuffer.from(value, "utf-8").toString("base64");
-  }
-  throw new Error("Base64 encoding not supported in this environment");
-}
-
-function buildDeviceInfoPayload(userAgent: string): string {
-  const payload = {
-    deviceName: "Chrome",
-    deviceVersion: "124.0.0.0",
-    osName: "windows",
-    osVersion: "10",
-    platform: "web",
-    screenHeight: 1080,
-    screenWidth: 1920,
-    systemLang: "en-US",
-    timeZone: "UTC",
-    userAgent,
-  };
-  return encodeToBase64(JSON.stringify(payload));
-}
-
-import p2pHandler from "./p2p";
 import {
   addEasypaisaPayment,
   listEasypaisaPayments,
@@ -264,9 +213,35 @@ export const onRequest = async ({ request, env }) => {
   }
 
   try {
-    // P2P routes passthrough to dedicated handler
-    if (url.pathname.startsWith("/api/p2p")) {
-      return await p2pHandler(request, env);
+    // Root and health/status endpoints
+    if (
+      normalizedPath === "/" ||
+      normalizedPath === "/health" ||
+      normalizedPath === "/status"
+    ) {
+      return jsonCors(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Cloudflare)",
+        endpoints: [
+          "/easypaisa/webhook [POST]",
+          "/easypaisa/payments [GET]",
+          "/solana-rpc [POST]",
+          "/forex/rate [GET]",
+          "/exchange-rate [GET]",
+          "/token/price [GET]",
+          "/stable-24h [GET]",
+          "/dexscreener/tokens [GET]",
+          "/dexscreener/search [GET]",
+          "/dexscreener/trending [GET]",
+          "/jupiter/price [GET]",
+          "/jupiter/tokens [GET]",
+          "/jupiter/quote [GET]",
+          "/jupiter/swap [POST]",
+          "/wallet/balance [GET]",
+          "/dextools/price [GET]",
+          "/coinmarketcap/quotes [GET]",
+        ],
+      });
     }
 
     // Easypaisa webhook ingestion (best-effort schema)
@@ -507,11 +482,11 @@ export const onRequest = async ({ request, env }) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
@@ -626,6 +601,170 @@ export const onRequest = async ({ request, env }) => {
         rate: rateInPKR,
         pkrPerUsd: PKR_PER_USD,
         markup: MARKUP,
+      });
+    }
+
+    // Dedicated token price endpoint: /api/token/price?token=FIXERCOIN or ?token=USDC or ?token=H4qKn... (mint)
+    if (normalizedPath === "/token/price") {
+      const tokenParam = (
+        url.searchParams.get("token") || "FIXERCOIN"
+      ).toUpperCase();
+      // Support providing a mint address via 'mint' query param as well
+      const mintParam = url.searchParams.get("mint") || "";
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const MINT_TO_PAIR_ADDRESS_EX: Record<string, string> = {
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+          "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+      };
+
+      const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+        EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.00001112, // Real-time market price
+      };
+
+      const PKR_PER_USD = 280; // base FX
+      const MARKUP = 1.0425; // 4.25%
+
+      // Determine token symbol and mint to query
+      let token = tokenParam;
+      let mint = mintParam || TOKEN_MINTS[token] || "";
+
+      // If tokenParam looks like a mint (long base58), use it as mint and try to resolve symbol
+      if (!mint && tokenParam && tokenParam.length > 40) {
+        mint = tokenParam;
+        // Try to map mint to known symbol
+        const inv = Object.entries(TOKEN_MINTS).find(([, m]) => m === mint);
+        if (inv) token = inv[0];
+      }
+
+      let priceUsd: number | null = null;
+      let priceChange24h: number = 0;
+      let volume24h: number = 0;
+      let matchingPair: any = null;
+
+      try {
+        // Stablecoins -> 1
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+          priceChange24h = 0;
+          volume24h = 0;
+        } else {
+          // If we have a mint, try pair lookup and token lookup via DexScreener
+          if (!mint && TOKEN_MINTS[token]) mint = TOKEN_MINTS[token];
+
+          if (mint) {
+            // Pair address lookup
+            const pairAddress = MINT_TO_PAIR_ADDRESS_EX[mint];
+            if (pairAddress) {
+              try {
+                const pairData = await fetchDexscreenerData(
+                  `/pairs/solana/${pairAddress}`,
+                );
+                if (
+                  Array.isArray(pairData?.pairs) &&
+                  pairData.pairs.length > 0 &&
+                  pairData.pairs[0]?.priceUsd
+                ) {
+                  matchingPair = pairData.pairs[0];
+                  priceUsd = Number(matchingPair.priceUsd);
+                  priceChange24h = matchingPair.priceChange?.h24 || 0;
+                  volume24h = matchingPair.volume?.h24 || 0;
+                }
+              } catch (e) {
+                // continue
+              }
+            }
+
+            // Mint-based lookup
+            if (!priceUsd || priceUsd <= 0) {
+              try {
+                const data = await fetchDexscreenerData(`/tokens/${mint}`);
+                const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+                const p = pairs.length > 0 ? pairs[0] : null;
+                if (p && p.priceUsd) {
+                  matchingPair = p;
+                  priceUsd = Number(p.priceUsd);
+                  priceChange24h = p.priceChange?.h24 || 0;
+                  volume24h = p.volume?.h24 || 0;
+                }
+              } catch (e) {
+                // continue
+              }
+            }
+
+            // Search fallback
+            if ((!priceUsd || priceUsd <= 0) && mint) {
+              const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+              if (searchSymbol) {
+                try {
+                  const searchData = await fetchDexscreenerData(
+                    `/search/?q=${encodeURIComponent(searchSymbol)}`,
+                  );
+                  const searchPairs = Array.isArray(searchData?.pairs)
+                    ? searchData.pairs
+                    : [];
+                  let foundPair = searchPairs.find(
+                    (p: any) =>
+                      p?.baseToken?.address === mint && p?.chainId === "solana",
+                  );
+                  if (!foundPair) {
+                    foundPair = searchPairs.find(
+                      (p: any) =>
+                        p?.quoteToken?.address === mint &&
+                        p?.chainId === "solana",
+                    );
+                  }
+                  if (!foundPair) foundPair = searchPairs[0];
+                  if (foundPair && foundPair.priceUsd) {
+                    matchingPair = foundPair;
+                    priceUsd = Number(foundPair.priceUsd);
+                    priceChange24h = foundPair.priceChange?.h24 || 0;
+                    volume24h = foundPair.volume?.h24 || 0;
+                  }
+                } catch (e) {
+                  // continue
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+        priceChange24h = 0;
+        volume24h = 0;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+      return jsonCors(200, {
+        token,
+        mint,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+        priceChange24h,
+        volume24h,
+        pair: matchingPair || undefined,
       });
     }
 
@@ -876,182 +1015,6 @@ export const onRequest = async ({ request, env }) => {
       });
     }
 
-    // Binance P2P passthrough: /api/binance-p2p/<path>
-    if (normalizedPath.startsWith("/binance-p2p/")) {
-      const BINANCE_P2P_ENDPOINTS = [
-        "https://p2p.binance.com",
-        "https://c2c.binance.com",
-        "https://www.binance.com",
-      ];
-      const subPath = normalizedPath.replace(/^\/binance-p2p\//, "/");
-      const search = url.search || "";
-      const requestBody =
-        request.method !== "GET" && request.method !== "HEAD"
-          ? await request
-              .clone()
-              .text()
-              .catch(() => undefined)
-          : undefined;
-      const cacheKey = `${request.method}:${subPath}${search}:${requestBody ?? ""}`;
-      const cached = BINANCE_P2P_CACHE.get(cacheKey);
-      if (cached && cached.expiresAt > Date.now()) {
-        return jsonCors(200, cached.data);
-      }
-
-      const uaHeader =
-        request.headers.get("user-agent") ||
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-      const traceId = uniqueId().replace(/-/g, "");
-      const sessionId = uniqueId().replace(/-/g, "");
-      const deviceInfo = buildDeviceInfoPayload(uaHeader);
-
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": uaHeader,
-        clienttype: "web",
-        "cache-control": "no-cache",
-        Origin: "https://p2p.binance.com",
-        Referer: "https://p2p.binance.com/en",
-        lang: "en",
-        platform: "web",
-        "Accept-Language": "en-US,en;q=0.9",
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Trace-Id": traceId,
-        "device-info": deviceInfo,
-        "bnc-uuid": sessionId,
-        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
-        csrftoken: traceId,
-        "X-CSRF-TOKEN": traceId,
-        timezone: "UTC",
-      };
-
-      if (requestBody === undefined) {
-        delete baseHeaders["Content-Type"];
-      }
-
-      let lastErr = "";
-      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
-        const base = BINANCE_P2P_ENDPOINTS[i];
-        const target = `${base}${subPath}${search}`;
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
-          const init: RequestInit = {
-            method: request.method,
-            headers: baseHeaders,
-            signal: controller.signal,
-          };
-          if (requestBody !== undefined) {
-            init.body = requestBody;
-          }
-          const resp = await fetch(target, init);
-          clearTimeout(timeoutId);
-          if (!resp.ok) {
-            if (
-              resp.status === 403 ||
-              resp.status === 429 ||
-              resp.status >= 500
-            ) {
-              lastErr = `${resp.status} ${resp.statusText}`;
-              await new Promise((resolve) => setTimeout(resolve, 150));
-              continue;
-            }
-            const t = await resp.text().catch(() => "");
-            return jsonCors(resp.status, { error: t || resp.statusText });
-          }
-          const contentType = resp.headers.get("content-type") || "";
-          if (contentType.includes("application/json")) {
-            const data = await resp.json();
-            BINANCE_P2P_CACHE.set(cacheKey, {
-              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
-              data,
-            });
-            return jsonCors(200, data);
-          }
-          const text = await resp.text();
-          return new Response(text, {
-            status: 200,
-            headers: applyCors(
-              new Headers({ "Content-Type": contentType || "text/plain" }),
-            ),
-          });
-        } catch (e: any) {
-          lastErr = e?.message || String(e);
-        }
-      }
-      BINANCE_P2P_CACHE.delete(cacheKey);
-      // Graceful fallback: return empty data to allow client-side fallback without 502 network error
-      return jsonCors(200, {
-        data: [],
-        error: "All Binance P2P endpoints failed",
-        details: lastErr,
-      });
-    }
-
-    // Binance passthrough: /api/binance/<path>
-    if (normalizedPath.startsWith("/binance/")) {
-      const BINANCE_ENDPOINTS = [
-        "https://api.binance.com",
-        "https://api1.binance.com",
-        "https://api2.binance.com",
-        "https://api3.binance.com",
-      ];
-      const subPath = normalizedPath.replace(/^\/binance\//, "/");
-      const search = url.search || "";
-      let lastErr = "";
-      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
-        const base = BINANCE_ENDPOINTS[i];
-        const target = `${base}${subPath}${search}`;
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
-          const resp = await fetch(target, {
-            method: request.method,
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-            },
-            body:
-              request.method !== "GET" && request.method !== "HEAD"
-                ? await request
-                    .clone()
-                    .text()
-                    .catch(() => undefined)
-                : undefined,
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          if (!resp.ok) {
-            // try next if rate limited or server error
-            if (resp.status === 429 || resp.status >= 500) continue;
-            const t = await resp.text().catch(() => "");
-            return jsonCors(resp.status, { error: t || resp.statusText });
-          }
-          const contentType = resp.headers.get("content-type") || "";
-          if (contentType.includes("application/json")) {
-            const data = await resp.json();
-            return jsonCors(200, data);
-          }
-          // Non-JSON: return as text
-          const text = await resp.text();
-          return new Response(text, {
-            status: 200,
-            headers: applyCors(
-              new Headers({ "Content-Type": contentType || "text/plain" }),
-            ),
-          });
-        } catch (e: any) {
-          lastErr = e?.message || String(e);
-        }
-      }
-      return jsonCors(502, {
-        error: "All Binance endpoints failed",
-        details: lastErr,
-      });
-    }
-
     // Jupiter: /api/jupiter/price?ids=... (comma-separated mints)
     if (normalizedPath === "/jupiter/price") {
       const ids = url.searchParams.get("ids");
@@ -1245,28 +1208,64 @@ export const onRequest = async ({ request, env }) => {
             "Missing required body: { quoteResponse, userPublicKey, ...options }",
         });
       }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-      const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        return jsonCors(resp.status, {
-          error: `Swap failed: ${resp.statusText}`,
-          details: text,
+
+      let lastErr = "";
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const resp = await fetch("https://lite-api.jup.ag/swap/v1/swap", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          lastErr = text;
+
+          // Parse error to check for 1016 or simulation failures
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch (_) {}
+
+          const errorMsg =
+            errorData?.error?.message ||
+            errorData?.error ||
+            errorData?.message ||
+            text;
+          const errorCode = errorData?.code || errorData?.error?.code;
+
+          // Log details for debugging
+          console.error(
+            `Jupiter swap error (attempt ${attempt}/2):`,
+            errorCode,
+            errorMsg,
+          );
+
+          // Return error response with code and message for client to handle
+          return jsonCors(resp.status, {
+            error: errorMsg || `Swap failed: ${resp.statusText}`,
+            code: errorCode,
+            message: errorMsg,
+            details: text,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonCors(200, data);
       }
-      const data = await resp.json();
-      return jsonCors(200, data);
+
+      return jsonCors(502, {
+        error: "Swap request failed",
+        details: lastErr,
+      });
     }
 
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
@@ -1428,6 +1427,159 @@ export const onRequest = async ({ request, env }) => {
         return jsonCors(502, {
           error: "Failed to fetch CoinMarketCap prices",
           details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pump.fun BUY endpoint: /api/pumpfun/buy
+    if (normalizedPath === "/pumpfun/buy" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {
+          return jsonCors(400, {
+            error: "Invalid JSON body",
+          });
+        }
+
+        const { mint, amount, buyer } = body;
+
+        if (!mint || typeof amount !== "number" || !buyer) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: mint, amount (number), buyer (string)",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const pumpFunUrl = "https://pump.fun/api/trade";
+        const res = await fetch(pumpFunUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            buyer,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun BUY endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to request BUY transaction",
+          details: message,
+        });
+      }
+    }
+
+    // Pump.fun SELL endpoint: /api/pumpfun/sell
+    if (normalizedPath === "/pumpfun/sell" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {
+          return jsonCors(400, {
+            error: "Invalid JSON body",
+          });
+        }
+
+        const { mint, amount, seller } = body;
+
+        if (!mint || typeof amount !== "number" || !seller) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: mint, amount (number), seller (string)",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const pumpFunUrl = "https://pump.fun/api/sell";
+        const res = await fetch(pumpFunUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            seller,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun SELL endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to request SELL transaction",
+          details: message,
+        });
+      }
+    }
+
+    // Pump.fun CURVE endpoint: /api/pumpfun/curve
+    if (normalizedPath === "/pumpfun/curve" && request.method === "GET") {
+      try {
+        const mint = url.searchParams.get("mint");
+
+        if (!mint) {
+          return jsonCors(400, {
+            error: "Missing required parameter: mint",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const pumpFunUrl = `https://pump.fun/api/curve?mint=${encodeURIComponent(mint)}`;
+        const res = await fetch(pumpFunUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun CURVE endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to check curve state",
+          details: message,
         });
       }
     }

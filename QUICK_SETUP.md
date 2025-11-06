@@ -5,13 +5,12 @@
 Your Cloudflare Worker has been updated with complete wallet and swap functionality:
 
 ✅ **Wallet Balance Management** - Fetch balances for FIXERCOIN, SOL, USDC, USDT, LOCKER
-✅ **Token Price Feeds** - DexTools, DexScreener, CoinMarketCap integration
+✅ **Token Price Feeds** - DexScreener integration
 ✅ **Pump.fun Swaps** - Get quotes and execute token swaps
 ✅ **Jupiter Integration** - Support for Jupiter DEX swap quotes
 ✅ **RPC Forwarding** - Direct Solana RPC calls via Shyft
 ✅ **Transaction Lookup** - Get transaction details by signature
 ✅ **Account Info** - Fetch on-chain account information
-✅ **Payment Integration** - Razorpay payment processing with wallet crediting
 
 ## Available Endpoints
 
@@ -27,8 +26,7 @@ GET  /api/health
 
 ```
 GET  /api/dexscreener/price?token={address}
-GET  /api/dextools/price?tokenAddress={address}
-GET  /api/coinmarketcap/quotes?symbols=SOL,USDC
+GET  /api/jupiter/price?ids={mint1},{mint2}
 ```
 
 ### Swap Operations
@@ -47,20 +45,13 @@ GET  /api/transaction?signature={sig}
 GET  /api/account?publicKey={address}
 ```
 
-### Payments
-
-```
-POST /api/payments/create-intent                  (Razorpay)
-POST /api/webhooks/payment                        (Webhook receiver)
-```
-
 ## Environment Setup
 
 ### Production (Cloudflare Worker)
 
 **Current Configuration:**
 
-- Worker Domain: `fixorium-proxy.khanbabusargodha.workers.dev`
+- Worker Domain: `proxy.fixorium.com.pk`
 - Solana RPC: `https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7`
 - Pump.fun APIs: `https://pumpportal.fun/api/`
 - Jupiter: `https://quote-api.jup.ag/v6/`
@@ -75,7 +66,6 @@ This runs:
 
 ```bash
 HELIUS_API_KEY=xxx \
-COINMARKETCAP_API_KEY=yyy \
 CF_ACCOUNT_ID=zzz \
 wrangler publish --config ./cloudflare/wrangler.toml --env production
 ```
@@ -101,7 +91,7 @@ The dev server at `npm run dev` will:
 Create `.env.local`:
 
 ```
-VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
+VITE_API_BASE_URL=https://proxy.fixorium.com.pk
 ```
 
 Or for development:
@@ -137,7 +127,6 @@ const result = await walletApi.executeSwap({
 ### Before Production:
 
 - [ ] Test all endpoints locally with `npm run dev`
-- [ ] Verify Razorpay webhook integration
 - [ ] Configure admin token for `/api/wallet/credit`
 - [ ] Test wallet balance caching in KV
 - [ ] Verify CORS headers work for your domain
@@ -187,12 +176,6 @@ const result = await walletApi.executeSwap({
 - Check Shyft API key is still valid
 - Verify request body format (must be valid JSON-RPC)
 - Some RPC methods may not be supported by Shyft
-
-### "Razorpay payment failed"
-
-- Ensure webhook secret is configured
-- Verify signature validation in handler
-- Check payment amount is in correct currency
 
 ## Performance Optimization
 

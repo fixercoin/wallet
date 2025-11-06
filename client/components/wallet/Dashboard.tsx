@@ -20,7 +20,6 @@ import {
   Gift,
   Flame,
   Lock,
-  Coins,
   Bell,
   X,
   Clock,
@@ -30,7 +29,6 @@ import {
   getPaymentReceivedNotifications,
   saveNotification,
 } from "@/lib/p2p-chat";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -119,7 +117,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     removeToken,
   } = useWallet();
   const { toast } = useToast();
-  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
@@ -262,7 +259,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 10000);
+    const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
 
     return () => {
       cancelled = true;
@@ -291,27 +288,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [wallet?.publicKey]);
 
-  // Persist incoming notifications and update pending badge (admin only)
-  useEffect(() => {
-    if (!wallet?.publicKey) return;
-    const last = events?.[events.length - 1];
-    if (!last || last.kind !== "notification") return;
-    const notif = last.data as any;
-    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
-      return;
-    try {
-      saveNotification(notif);
-    } catch {}
-    if (
-      ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() ===
-        String(ADMIN_WALLET).toLowerCase()
-    ) {
-      const updated = getPaymentReceivedNotifications(wallet.publicKey);
-      setPendingOrdersCount(updated.length);
-    }
-  }, [events, wallet?.publicKey]);
-
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
   useEffect(() => {
@@ -322,18 +298,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
-        // Health check via pumpfun/quote endpoint with minimal valid parameters
-        const res = await fetch("/api/pumpfun/quote", {
-          method: "POST",
+        // Health check via reliable ping endpoint
+        const url = resolveApiUrl("/api/ping");
+        const res = await fetch(url, {
+          method: "GET",
           signal: controller.signal,
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            inputMint: "So11111111111111111111111111111111111111112",
-            outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-            amount: 1000000,
-          }),
         });
         clearTimeout(to);
 
@@ -434,8 +406,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const formatBalance = (amount: number | undefined): string => {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // FIXERCOIN and LOCKER always show exactly 2 decimal places
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
@@ -455,10 +437,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
-    return price.toFixed(6);
+    if (price >= 0.0001) return price.toFixed(6);
+    return price.toFixed(8);
   };
 
   const [usdToPkr, setUsdToPkr] = useState<number>(() => {
@@ -476,7 +459,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        const res = await fetch(
+          resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"),
+        );
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -791,6 +776,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>C-BUILDER</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    onSelect={onAutoBot}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Bot className="h-4 w-4" />
+                    <span>AI BOT</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onSelect={onBurn}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -803,13 +795,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   >
                     <Lock className="h-4 w-4" />
                     <span>LOCK-SPL</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/fixorium/token-listing")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Coins className="h-4 w-4" />
-                    <span>LISTING</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => navigate("/wallet/history")}
@@ -841,18 +826,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
                     // Show both USD and PKR even when zero
-                    const usdZero = `$${(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    const pkrZero = `PKR ${(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    const usdZero = `0.00 USD`;
+                    const pkrZero = `0.00 Pkr`;
                     return (
                       <>
-                        <div className="text-2xl font-bold text-gray-900 leading-tight">
+                        <div className="text-base font-medium text-gray-900 leading-tight">
                           {showBalance ? `${usdZero}` : "****"}
                         </div>
                         <div className="text-sm text-gray-700 mt-1">
                           {showBalance ? `${pkrZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? `+ ${usdZero} (0.00%)` : "24h: ****"}
+                          {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
                         </div>
                       </>
                     );
@@ -888,7 +873,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   return (
                     <>
-                      <div className="text-2xl font-bold text-gray-900 leading-tight">
+                      <div className="text-base font-medium text-gray-900 leading-tight">
                         {showBalance
                           ? `${total.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
@@ -898,52 +883,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                       <div className="text-sm text-gray-700 mt-1">
                         {showBalance
-                          ? `PKR ${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          ? `${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Pkr`
                           : "****"}
                       </div>
                       {showBalance ? (
-                        <>
-                          {hasValidPriceChange && (
-                            <div className="flex items-center justify-center gap-2 mt-1">
-                              {isPositive ? (
-                                <>
-                                  <ArrowUpRight className="h-3 w-3 text-green-400" />
-                                  <span className="text-xs font-medium text-green-400">
-                                    +
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    (+{change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDownLeft className="h-3 w-3 text-red-400" />
-                                  <span className="text-xs font-medium text-red-400">
-                                    -
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    ({change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {!hasValidPriceChange && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data available
-                            </div>
-                          )}
-                        </>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {`${isPositive ? "+" : "-"} ${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${Math.abs(isFinite(change24hPercent) ? change24hPercent : 0).toFixed(2)}%)`}
+                        </div>
                       ) : (
                         <div className="text-xs text-gray-400 mt-1">****</div>
                       )}
@@ -1028,7 +974,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="text-xs text-gray-300">
+                            <span
+                              className={`text-xs text-gray-300 ${
+                                ["SOL", "FIXERCOIN", "LOCKER"].includes(
+                                  (token.symbol || "").toUpperCase(),
+                                )
+                                  ? "animate-price-pulse"
+                                  : ""
+                              }`}
+                            >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
                             {percentChange !== null ? (
@@ -1053,7 +1007,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                       <div className="text-right">
                         <p className="text-sm font-semibold text-white">
-                          {formatBalance(token.balance || 0)}
+                          {formatBalance(token.balance || 0, token.symbol)}
                         </p>
                         <p className="text-xs text-gray-300">
                           {typeof token.price === "number" && token.price > 0

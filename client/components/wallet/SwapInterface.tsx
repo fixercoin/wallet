@@ -580,50 +580,62 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       let txBase64: string;
 
-      if (isBuying) {
-        // BUY: SOL → Token
-        setStatus("Requesting Pump.fun BUY transaction…");
-        txBase64 = await pumpBuy(tokenMint, amountInHuman, wallet.publicKey);
-      } else {
-        // SELL: Token → SOL
-        setStatus("Requesting Pump.fun SELL transaction…");
-        const rawAmount = Math.floor(
-          amountInHuman * Math.pow(10, tokenDecimals),
+      try {
+        if (isBuying) {
+          // BUY: SOL → Token
+          setStatus("Requesting Pump.fun BUY transaction…");
+          txBase64 = await pumpBuy(tokenMint, amountInHuman, wallet.publicKey);
+        } else {
+          // SELL: Token → SOL
+          setStatus("Requesting Pump.fun SELL transaction…");
+          const rawAmount = Math.floor(
+            amountInHuman * Math.pow(10, tokenDecimals),
+          );
+          txBase64 = await pumpSell(
+            tokenMint,
+            rawAmount,
+            wallet.publicKey,
+          );
+        }
+
+        // Sign the transaction
+        setStatus("Signing transaction…");
+        const tx = VersionedTransaction.deserialize(
+          bytesFromBase64(txBase64),
         );
-        txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
+
+        const keypair = getKeypair(wallet);
+        if (!keypair) {
+          throw new Error("Invalid wallet secret key");
+        }
+
+        const txSignature = await sendSignedTx(
+          base64FromBytes(tx.serialize()),
+          keypair,
+        );
+
+        setSuccessMsg(
+          `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
+        );
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 3000);
+
+        toast({
+          title: "Pump.fun Swap Successful",
+          description: `Transaction: ${txSignature}`,
+          variant: "default",
+        });
+
+        setAmount("");
+        setQuote(null);
+      } catch (pumpError) {
+        throw new Error(
+          `Pump.fun swap failed: ${pumpError instanceof Error ? pumpError.message : String(pumpError)}`,
+        );
       }
-
-      // Sign the transaction
-      setStatus("Signing transaction…");
-      const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
-
-      const keypair = getKeypair(wallet);
-      if (!keypair) {
-        throw new Error("Invalid wallet secret key");
-      }
-
-      const txSignature = await sendSignedTx(
-        base64FromBytes(tx.serialize()),
-        keypair,
-      );
-
-      setSuccessMsg(
-        `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
-      );
-      setShowSuccess(true);
-      setStatus("");
-      setIsLoading(false);
-
-      setTimeout(() => setShowSuccess(false), 3000);
-
-      toast({
-        title: "Pump.fun Swap Successful",
-        description: `Transaction: ${txSignature}`,
-        variant: "default",
-      });
-
-      setAmount("");
-      setQuote(null);
     } catch (err) {
       setIsLoading(false);
 

@@ -2009,6 +2009,124 @@ export default {
       }
     }
 
+    // Jupiter tokens: /api/jupiter/tokens?type=strict|all
+    if (pathname === "/api/jupiter/tokens" && req.method === "GET") {
+      const type = searchParams.get("type") || "strict";
+      const endpoints = [
+        `https://token.jup.ag/${type}`,
+        `https://cache.jup.ag/tokens`,
+      ];
+      let lastError = null;
+
+      for (const url_str of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+          const resp = await fetch(url_str, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            lastError = resp.status;
+            continue;
+          }
+          const data = await resp.json();
+          return json(data, { headers: corsHeaders });
+        } catch (e) {
+          lastError = e?.message || String(e);
+        }
+      }
+
+      return json(
+        {
+          error: "Failed to fetch Jupiter tokens",
+          details: lastError,
+        },
+        { status: 502, headers: corsHeaders },
+      );
+    }
+
+    // Pumpfun quote: /api/pumpfun/quote (POST or GET)
+    if (pathname === "/api/pumpfun/quote") {
+      if (req.method === "POST" || req.method === "GET") {
+        let inputMint = "";
+        let outputMint = "";
+        let amount = "";
+
+        if (req.method === "POST") {
+          const body = await parseJSON(req);
+          inputMint = body?.inputMint || "";
+          outputMint = body?.outputMint || "";
+          amount = body?.amount || "";
+        } else {
+          inputMint = searchParams.get("inputMint") || "";
+          outputMint = searchParams.get("outputMint") || "";
+          amount = searchParams.get("amount") || "";
+        }
+
+        if (!inputMint || !outputMint || !amount) {
+          return json(
+            {
+              error:
+                "Missing required parameters: inputMint, outputMint, amount",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        let lastError = null;
+        // Try with retries for SSL/connection issues
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const url_str = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            const resp = await fetch(url_str, {
+              headers: { Accept: "application/json" },
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (!resp.ok) {
+              lastError = { status: resp.status, statusText: resp.statusText };
+              if (attempt < 1 && [502, 503, 504].includes(resp.status)) {
+                // Retry for server errors
+                await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+                continue;
+              }
+              return json(
+                { error: `Pumpfun API error ${resp.status}` },
+                { status: resp.status, headers: corsHeaders },
+              );
+            }
+            const data = await resp.json();
+            return json(data, { headers: corsHeaders });
+          } catch (e) {
+            lastError = e;
+            if (attempt < 1) {
+              // Retry on connection/timeout errors
+              await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+          }
+        }
+
+        return json(
+          {
+            error: "Failed to fetch Pumpfun quote",
+            details:
+              lastError?.message || lastError?.statusText || String(lastError),
+            hint: "Pumpfun API may be temporarily unavailable. Try Jupiter instead.",
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+      return json(
+        { error: "Method not allowed" },
+        { status: 405, headers: corsHeaders },
+      );
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

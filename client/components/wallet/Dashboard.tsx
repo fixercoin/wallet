@@ -298,19 +298,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
-        // Health check via pumpfun/quote endpoint with minimal valid parameters
-        const url = resolveApiUrl("/api/pumpfun/quote");
+        // Health check via reliable ping endpoint
+        const url = resolveApiUrl("/api/ping");
         const res = await fetch(url, {
-          method: "POST",
+          method: "GET",
           signal: controller.signal,
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            inputMint: "So11111111111111111111111111111111111111112",
-            outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-            amount: 1000000,
-          }),
         });
         clearTimeout(to);
 

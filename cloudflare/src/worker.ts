@@ -190,41 +190,70 @@ export default {
         );
       }
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+      let lastError: any = null;
+      // Retry logic for transient errors
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-        const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+          const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
 
-        const resp = await fetch(quoteUrl, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!resp.ok) {
-          const errorText = await resp.text().catch(() => "");
-          return json(
-            {
-              error: `Jupiter API returned ${resp.status}`,
-              details: errorText,
+          const resp = await fetch(quoteUrl, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
             },
-            { status: resp.status, headers: corsHeaders },
-          );
-        }
+            signal: controller.signal,
+          });
 
-        const quoteData = await resp.json();
-        return json(quoteData, { headers: corsHeaders });
-      } catch (e: any) {
-        return json(
-          { error: "Failed to fetch quote from Jupiter", details: e?.message },
-          { status: 502, headers: corsHeaders },
-        );
+          clearTimeout(timeoutId);
+
+          if (!resp.ok) {
+            const errorText = await resp.text().catch(() => "");
+            lastError = { status: resp.status, text: errorText };
+
+            // Retry on 502/503/504 errors
+            if (
+              attempt < 1 &&
+              (resp.status === 502 ||
+                resp.status === 503 ||
+                resp.status === 504)
+            ) {
+              await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+
+            return json(
+              {
+                error: `Jupiter API returned ${resp.status}`,
+                details: errorText,
+              },
+              { status: resp.status, headers: corsHeaders },
+            );
+          }
+
+          const quoteData = await resp.json();
+          return json(quoteData, { headers: corsHeaders });
+        } catch (e: any) {
+          lastError = e;
+          if (
+            attempt < 1 &&
+            (e?.message?.includes("timeout") || e?.message?.includes("network"))
+          ) {
+            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+        }
       }
+
+      return json(
+        {
+          error: "Failed to fetch quote from Jupiter",
+          details: lastError?.message || lastError?.text || String(lastError),
+        },
+        { status: 502, headers: corsHeaders },
+      );
     }
 
     // POST /api/swap - Execute swap and return transaction
@@ -2046,32 +2075,51 @@ export default {
           );
         }
 
-        try {
-          const url_str = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
-          const resp = await fetch(url_str, {
-            headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            return json(
-              { error: "Pumpfun API error" },
-              { status: resp.status, headers: corsHeaders },
-            );
+        let lastError: any = null;
+        // Try with retries for SSL/connection issues
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const url_str = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            const resp = await fetch(url_str, {
+              headers: { Accept: "application/json" },
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (!resp.ok) {
+              lastError = { status: resp.status, statusText: resp.statusText };
+              if (attempt < 1 && [502, 503, 504].includes(resp.status)) {
+                // Retry for server errors
+                await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+                continue;
+              }
+              return json(
+                { error: `Pumpfun API error ${resp.status}` },
+                { status: resp.status, headers: corsHeaders },
+              );
+            }
+            const data = await resp.json();
+            return json(data, { headers: corsHeaders });
+          } catch (e: any) {
+            lastError = e;
+            if (attempt < 1) {
+              // Retry on connection/timeout errors
+              await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
           }
-          const data = await resp.json();
-          return json(data, { headers: corsHeaders });
-        } catch (e: any) {
-          return json(
-            {
-              error: "Failed to fetch Pumpfun quote",
-              details: e?.message || String(e),
-            },
-            { status: 502, headers: corsHeaders },
-          );
         }
+
+        return json(
+          {
+            error: "Failed to fetch Pumpfun quote",
+            details:
+              lastError?.message || lastError?.statusText || String(lastError),
+            hint: "Pumpfun API may be temporarily unavailable. Try Jupiter instead.",
+          },
+          { status: 502, headers: corsHeaders },
+        );
       }
       return json(
         { error: "Method not allowed" },

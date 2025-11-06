@@ -1431,6 +1431,159 @@ export const onRequest = async ({ request, env }) => {
       }
     }
 
+    // Pump.fun BUY endpoint: /api/pumpfun/buy
+    if (normalizedPath === "/pumpfun/buy" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {
+          return jsonCors(400, {
+            error: "Invalid JSON body",
+          });
+        }
+
+        const { mint, amount, buyer } = body;
+
+        if (!mint || typeof amount !== "number" || !buyer) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: mint, amount (number), buyer (string)",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const pumpFunUrl = "https://pump.fun/api/trade";
+        const res = await fetch(pumpFunUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            buyer,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun BUY endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to request BUY transaction",
+          details: message,
+        });
+      }
+    }
+
+    // Pump.fun SELL endpoint: /api/pumpfun/sell
+    if (normalizedPath === "/pumpfun/sell" && request.method === "POST") {
+      try {
+        let body: any = {};
+        try {
+          body = await request.json();
+        } catch {
+          return jsonCors(400, {
+            error: "Invalid JSON body",
+          });
+        }
+
+        const { mint, amount, seller } = body;
+
+        if (!mint || typeof amount !== "number" || !seller) {
+          return jsonCors(400, {
+            error:
+              "Missing required fields: mint, amount (number), seller (string)",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const pumpFunUrl = "https://pump.fun/api/sell";
+        const res = await fetch(pumpFunUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount,
+            seller,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun SELL endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to request SELL transaction",
+          details: message,
+        });
+      }
+    }
+
+    // Pump.fun CURVE endpoint: /api/pumpfun/curve
+    if (normalizedPath === "/pumpfun/curve" && request.method === "GET") {
+      try {
+        const mint = url.searchParams.get("mint");
+
+        if (!mint) {
+          return jsonCors(400, {
+            error: "Missing required parameter: mint",
+          });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const pumpFunUrl = `https://pump.fun/api/curve?mint=${encodeURIComponent(mint)}`;
+        const res = await fetch(pumpFunUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const text = await res.text();
+
+        return new Response(text, {
+          status: res.status,
+          headers: applyCors(
+            new Headers({ "Content-Type": "application/json" }),
+          ),
+        });
+      } catch (error: any) {
+        const message = error?.message || "Unknown error";
+        console.error("Pump.fun CURVE endpoint error:", error);
+
+        return jsonCors(502, {
+          error: "Failed to check curve state",
+          details: message,
+        });
+      }
+    }
+
     return jsonCors(404, { error: `No handler for ${normalizedPath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

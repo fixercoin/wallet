@@ -1,5 +1,6 @@
 import { resolveApiUrl } from "@/lib/api-client";
 import { jupiterAPI } from "@/lib/services/jupiter";
+import { checkCurveState } from "@/lib/services/pump-fun-api";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 
@@ -18,41 +19,10 @@ export interface SwapResult {
 
 /**
  * Check if a token's bonding curve is still open on Pump.fun
- * Returns true if curve is open, false if graduated to pool/closed
+ * Uses proxied checkCurveState to avoid CORS issues
  */
 export async function isBondingCurveOpen(tokenMint: string): Promise<boolean> {
-  try {
-    // Try to fetch bonding curve data from Pump.fun API
-    const res = await fetch(
-      `https://frontend-api.pump.fun/coin/${encodeURIComponent(tokenMint)}`,
-      { method: "GET" },
-    );
-
-    if (!res.ok) {
-      console.warn(
-        `[Bonding Curve] Failed to fetch status for ${tokenMint}: ${res.status}`,
-      );
-      return false;
-    }
-
-    const data = await res.json();
-
-    // If curve progress is undefined or < 100, bonding curve is still open
-    // If progress >= 100 or graduated flag is set, curve is closed
-    const curveProgress = data?.curveProgress ?? data?.curve_progress ?? 0;
-    const isGraduated = data?.graduated ?? data?.is_graduated ?? false;
-    const isClosed = curveProgress >= 100 || isGraduated;
-
-    console.log(
-      `[Bonding Curve] ${tokenMint}: progress=${curveProgress}%, graduated=${isGraduated}, closed=${isClosed}`,
-    );
-
-    return !isClosed;
-  } catch (error) {
-    console.warn(`[Bonding Curve] Error checking ${tokenMint}:`, error);
-    // Default to false (assume curve is closed) on error
-    return false;
-  }
+  return checkCurveState(tokenMint);
 }
 
 /**

@@ -6,11 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { jupiterAPI } from "@/lib/services/jupiter";
-import {
-  isBondingCurveOpen,
-  executeSmartSwap,
-} from "@/lib/services/pump-swap-combined";
+import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,
@@ -281,78 +277,59 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const initTokenList = async () => {
     if (initialized) return;
 
-    setStatus("Loading tokens...");
-
     try {
-      const jupiterTokens = await jupiterAPI.getStrictTokenList();
+      // Build token list from TOKEN_MINTS constants + user tokens
+      const tokenMintEntries = Object.entries(TOKEN_MINTS);
+      const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
+        address: mint,
+        symbol,
+        decimals: symbol === "SOL" ? 9 : 6,
+        name: symbol,
+      }));
 
-      const setupTokenMints = Object.values(TOKEN_MINTS);
-      const setupTokens = jupiterTokens.filter((t) =>
-        setupTokenMints.includes(t.address),
+      // Add user tokens if available (avoid duplicates with standard tokens)
+      const standardMints = new Set(standardTokens.map((t) => t.address));
+      const userTokensNotInStandard = (userTokens || []).filter(
+        (ut) => !standardMints.has(ut.mint),
       );
 
-      const userTokenMints = (userTokens || []).map((t) => t.mint);
-      const userSetupTokens = jupiterTokens.filter((t) =>
-        userTokenMints.includes(t.address),
-      );
-
-      const combinedTokens = Array.from(
-        new Map([
-          ...setupTokens.map((t) => [t.address, t]),
-          ...userSetupTokens.map((t) => [t.address, t]),
-          ...jupiterTokens.map((t) => [t.address, t]),
-        ]).values(),
-      );
-
-      if (!combinedTokens || combinedTokens.length === 0) {
-        const fallbackTokens = (userTokens || []).map((ut) => ({
+      const combinedTokens = [
+        ...standardTokens,
+        ...userTokensNotInStandard.map((ut) => ({
           address: ut.mint,
           symbol: ut.symbol,
           decimals: ut.decimals,
           name: ut.name,
-        }));
-        setTokenList(fallbackTokens);
-      } else {
-        combinedTokens.sort((a, b) => {
-          if (a.address === SOL_MINT) return -1;
-          if (b.address === SOL_MINT) return 1;
-          if (a.address === FIXER_MINT) return -1;
-          if (b.address === FIXER_MINT) return 1;
-          return a.symbol.localeCompare(b.symbol);
-        });
-        setTokenList(combinedTokens);
-      }
+        })),
+      ];
 
+      // Sort: SOL first, then FIXERCOIN, then alphabetical
+      combinedTokens.sort((a, b) => {
+        if (a.address === SOL_MINT) return -1;
+        if (b.address === SOL_MINT) return 1;
+        if (a.address === FIXER_MINT) return -1;
+        if (b.address === FIXER_MINT) return 1;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+      setTokenList(combinedTokens);
       setInitialized(true);
       setStatus("");
     } catch (err) {
       console.error("[SwapInterface] Error loading tokens:", err);
-
-      const fallbackTokens = (userTokens || []).map((ut) => ({
-        address: ut.mint,
-        symbol: ut.symbol,
-        decimals: ut.decimals,
-        name: ut.name,
-      }));
-
-      if (fallbackTokens.length === 0) {
-        const defaultTokens = [
-          { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
-          {
-            address: FIXER_MINT,
-            symbol: "FIXERCOIN",
-            decimals: 6,
-            name: "FIXERCOIN",
-          },
-        ];
-        setTokenList(defaultTokens);
-      } else {
-        setTokenList(fallbackTokens);
-      }
-
-      // Don't show error for token loading - user can still trade with available tokens
-      setStatus("");
+      // Fallback to minimal token list
+      const fallbackTokens = [
+        { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+        {
+          address: FIXER_MINT,
+          symbol: "FIXERCOIN",
+          decimals: 6,
+          name: "FIXERCOIN",
+        },
+      ];
+      setTokenList(fallbackTokens);
       setInitialized(true);
+      setStatus("");
     }
   };
 
@@ -462,7 +439,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const confirmSwap = async () => {
     try {
-      setStatus("Preparing swap…");
+      setStatus("Preparing swap��");
       setIsLoading(true);
 
       if (!wallet) {
@@ -488,50 +465,42 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const amountInHuman = parseFloat(amount);
 
-      // Check which swap source will be used (Pump.fun vs Jupiter)
+      // Determine swap direction
       const isBuying = fromMint === SOL_MINT;
       const isSelling = toMint === SOL_MINT;
 
       if (!isBuying && !isSelling) {
-        setStatus("Swap must involve SOL");
-        setIsLoading(false);
-        return null;
-      }
-
-      const tokenMint = isBuying ? toMint : fromMint;
-      setStatus("Checking bonding curve status…");
-
-      const curveOpen = await isBondingCurveOpen(tokenMint);
-      const swapSource = curveOpen ? "Pump.fun" : "Jupiter";
-      setStatus(`Using ${swapSource} for swap…`);
-
-      // Execute smart swap (auto-routes between Pump.fun and Jupiter)
-      const result = await executeSmartSwap(
-        wallet,
-        fromMint,
-        toMint,
-        amountInHuman,
-      );
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      // If it's a Jupiter swap, we need to handle the transaction signing
-      if (result.source === "jupiter" && result.txid) {
-        setStatus("Signing transaction…");
-
-        const txBase64 = result.txid;
-        let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
-
-        const decimals = fromToken.decimals ?? 6;
-        tx = addFeeTransferInstruction(
-          tx,
-          fromMint,
-          amount,
-          decimals,
-          wallet.publicKey,
+        throw new Error(
+          "Swap must involve SOL. Fixorium supports SOL ↔ Pump.fun token swaps.",
         );
+      }
+
+      // Identify the token
+      const tokenMint = isBuying ? toMint : fromMint;
+      const tokenDecimals = (isBuying ? toToken : fromToken).decimals ?? 6;
+
+      // ✅ Use Pump.fun API for swap
+      setStatus("Preparing Pump.fun swap…");
+
+      let txBase64: string;
+
+      try {
+        if (isBuying) {
+          // BUY: SOL → Token
+          setStatus("Requesting Pump.fun BUY transaction…");
+          txBase64 = await pumpBuy(tokenMint, amountInHuman, wallet.publicKey);
+        } else {
+          // SELL: Token → SOL
+          setStatus("Requesting Pump.fun SELL transaction…");
+          const rawAmount = Math.floor(
+            amountInHuman * Math.pow(10, tokenDecimals),
+          );
+          txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
+        }
+
+        // Sign the transaction
+        setStatus("Signing transaction…");
+        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
         const keypair = getKeypair(wallet);
         if (!keypair) {
@@ -544,26 +513,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         );
 
         setSuccessMsg(
-          `Swap successful via ${swapSource}! Tx: ${txSignature.slice(0, 8)}...`,
-        );
-        setShowSuccess(true);
-        setStatus("");
-        setIsLoading(false);
-
-        setTimeout(() => setShowSuccess(false), 3000);
-
-        toast({
-          title: "Swap Successful",
-          description: `${swapSource} swap completed. Tx: ${txSignature}`,
-          variant: "default",
-        });
-
-        setAmount("");
-        setQuote(null);
-      } else if (result.source === "pump" && result.txid) {
-        // For Pump.fun swaps, the transaction is already signed and sent by Pump.fun API
-        setSuccessMsg(
-          `Swap successful via Pump.fun! Tx: ${result.txid.slice(0, 8)}...`,
+          `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
         );
         setShowSuccess(true);
         setStatus("");
@@ -573,12 +523,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         toast({
           title: "Pump.fun Swap Successful",
-          description: `Transaction: ${result.txid}`,
+          description: `Transaction: ${txSignature}`,
           variant: "default",
         });
 
         setAmount("");
         setQuote(null);
+      } catch (pumpError) {
+        throw new Error(
+          `Pump.fun swap failed: ${pumpError instanceof Error ? pumpError.message : String(pumpError)}`,
+        );
       }
     } catch (err) {
       setIsLoading(false);

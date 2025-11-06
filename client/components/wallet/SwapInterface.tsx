@@ -282,78 +282,59 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const initTokenList = async () => {
     if (initialized) return;
 
-    setStatus("Loading tokens...");
-
     try {
-      const jupiterTokens = await jupiterAPI.getStrictTokenList();
+      // Build token list from TOKEN_MINTS constants + user tokens
+      const tokenMintEntries = Object.entries(TOKEN_MINTS);
+      const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
+        address: mint,
+        symbol,
+        decimals: symbol === "SOL" ? 9 : 6,
+        name: symbol,
+      }));
 
-      const setupTokenMints = Object.values(TOKEN_MINTS);
-      const setupTokens = jupiterTokens.filter((t) =>
-        setupTokenMints.includes(t.address),
+      // Add user tokens if available
+      const userTokenMints = new Set((userTokens || []).map((t) => t.mint));
+      const userTokensNotInStandard = (userTokens || []).filter(
+        (ut) => !userTokenMints.has(ut.mint),
       );
 
-      const userTokenMints = (userTokens || []).map((t) => t.mint);
-      const userSetupTokens = jupiterTokens.filter((t) =>
-        userTokenMints.includes(t.address),
-      );
-
-      const combinedTokens = Array.from(
-        new Map([
-          ...setupTokens.map((t) => [t.address, t]),
-          ...userSetupTokens.map((t) => [t.address, t]),
-          ...jupiterTokens.map((t) => [t.address, t]),
-        ]).values(),
-      );
-
-      if (!combinedTokens || combinedTokens.length === 0) {
-        const fallbackTokens = (userTokens || []).map((ut) => ({
+      const combinedTokens = [
+        ...standardTokens,
+        ...userTokensNotInStandard.map((ut) => ({
           address: ut.mint,
           symbol: ut.symbol,
           decimals: ut.decimals,
           name: ut.name,
-        }));
-        setTokenList(fallbackTokens);
-      } else {
-        combinedTokens.sort((a, b) => {
-          if (a.address === SOL_MINT) return -1;
-          if (b.address === SOL_MINT) return 1;
-          if (a.address === FIXER_MINT) return -1;
-          if (b.address === FIXER_MINT) return 1;
-          return a.symbol.localeCompare(b.symbol);
-        });
-        setTokenList(combinedTokens);
-      }
+        })),
+      ];
 
+      // Sort: SOL first, then FIXERCOIN, then alphabetical
+      combinedTokens.sort((a, b) => {
+        if (a.address === SOL_MINT) return -1;
+        if (b.address === SOL_MINT) return 1;
+        if (a.address === FIXER_MINT) return -1;
+        if (b.address === FIXER_MINT) return 1;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+      setTokenList(combinedTokens);
       setInitialized(true);
       setStatus("");
     } catch (err) {
       console.error("[SwapInterface] Error loading tokens:", err);
-
-      const fallbackTokens = (userTokens || []).map((ut) => ({
-        address: ut.mint,
-        symbol: ut.symbol,
-        decimals: ut.decimals,
-        name: ut.name,
-      }));
-
-      if (fallbackTokens.length === 0) {
-        const defaultTokens = [
-          { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
-          {
-            address: FIXER_MINT,
-            symbol: "FIXERCOIN",
-            decimals: 6,
-            name: "FIXERCOIN",
-          },
-        ];
-        setTokenList(defaultTokens);
-      } else {
-        setTokenList(fallbackTokens);
-      }
-
-      // Don't show error for token loading - user can still trade with available tokens
-      setStatus("");
+      // Fallback to minimal token list
+      const fallbackTokens = [
+        { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+        {
+          address: FIXER_MINT,
+          symbol: "FIXERCOIN",
+          decimals: 6,
+          name: "FIXERCOIN",
+        },
+      ];
+      setTokenList(fallbackTokens);
       setInitialized(true);
+      setStatus("");
     }
   };
 

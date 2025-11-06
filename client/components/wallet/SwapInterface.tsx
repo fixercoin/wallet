@@ -8,10 +8,6 @@ import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import {
-  isBondingCurveOpen,
-  executeSmartSwap,
-} from "@/lib/services/pump-swap-combined";
-import {
   checkCurveState,
   pumpBuy,
   pumpSell,

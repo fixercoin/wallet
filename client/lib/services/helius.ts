@@ -540,6 +540,80 @@ class HeliusAPI {
       });
     }
 
+    // Fallback using meta pre/post balances to compute net deltas
+    try {
+      const meta = tx.meta;
+      if (meta) {
+        const pre = Array.isArray(meta.preTokenBalances) ? meta.preTokenBalances : [];
+        const post = Array.isArray(meta.postTokenBalances) ? meta.postTokenBalances : [];
+        const seenMints = new Set(transfers.map((tr) => tr.mint || tr.token));
+        const key = (b: any) => `${b?.owner || ""}|${b?.mint || b?.mintId || ""}`;
+        const preMap = new Map<string, any>();
+        pre.forEach((b: any) => preMap.set(key(b), b));
+
+        for (const pb of post) {
+          if (!pb?.owner || pb.owner !== walletAddress) continue;
+          const k = key(pb);
+          const b0 = preMap.get(k);
+          const decimals = pb?.uiTokenAmount?.decimals ?? pb?.decimals ?? 6;
+          const amtPost = typeof pb?.uiTokenAmount?.uiAmount === "number"
+            ? pb.uiTokenAmount.uiAmount
+            : pb?.uiTokenAmount?.amount
+              ? parseFloat(pb.uiTokenAmount.amount) / Math.pow(10, decimals)
+              : 0;
+          const amtPre = b0
+            ? (typeof b0?.uiTokenAmount?.uiAmount === "number"
+                ? b0.uiTokenAmount.uiAmount
+                : b0?.uiTokenAmount?.amount
+                  ? parseFloat(b0.uiTokenAmount.amount) / Math.pow(10, decimals)
+                  : 0)
+            : 0;
+          const delta = amtPost - amtPre;
+          const mint = pb?.mint || pb?.mintId || "";
+          if (Math.abs(delta) > 0 && mint && !seenMints.has(mint)) {
+            transfers.push({
+              type: delta >= 0 ? "receive" : "send",
+              token: mint,
+              amount: Math.abs(delta),
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint,
+            });
+          }
+        }
+
+        // SOL via preBalances/postBalances
+        if (Array.isArray(meta.preBalances) && Array.isArray(meta.postBalances)) {
+          const keys = message?.accountKeys || [];
+          const idx = keys.findIndex((k: any) => (typeof k === "string" ? k : k?.pubkey) === walletAddress);
+          if (idx >= 0) {
+            const lamportsPre = meta.preBalances[idx] || 0;
+            const lamportsPost = meta.postBalances[idx] || 0;
+            const dLamports = lamportsPost - lamportsPre;
+            if (dLamports !== 0) {
+              const amount = Math.abs(dLamports) / 1_000_000_000;
+              const mint = "So11111111111111111111111111111111111111112";
+              const hasSol = transfers.some((tr) => tr.mint === mint);
+              if (!hasSol) {
+                transfers.push({
+                  type: dLamports >= 0 ? "receive" : "send",
+                  token: mint,
+                  amount,
+                  decimals: 9,
+                  signature: signature || "",
+                  blockTime,
+                  mint,
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Meta-based transfer parsing failed:", e);
+    }
+
     return transfers;
   }
 }

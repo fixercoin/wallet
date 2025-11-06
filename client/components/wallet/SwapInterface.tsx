@@ -471,8 +471,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      if (!quote) {
-        setStatus("Get a quote first");
+      if (!amount || parseFloat(amount) <= 0) {
+        setStatus("Enter a valid amount");
         setIsLoading(false);
         return null;
       }
@@ -486,83 +486,100 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      setStatus("Refreshing quote before execution…");
+      const amountInHuman = parseFloat(amount);
 
-      // Refresh the quote immediately before execution to prevent STALE_QUOTE errors
-      // This ensures the quote is always valid when sent to Jupiter
-      let freshQuote = quote.quoteResponse;
-      try {
-        const refreshed = await jupiterAPI.getQuote(
-          fromMint,
-          toMint,
-          parseInt(quote.quoteResponse.inAmount),
-          quote.quoteResponse.slippageBps || 100,
-        );
-        if (refreshed) {
-          console.log("✅ Quote refreshed successfully before execution");
-          freshQuote = refreshed;
-        } else {
-          console.warn(
-            "Could not refresh quote, using cached quote - may result in STALE_QUOTE error",
-          );
-        }
-      } catch (refreshErr) {
-        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+      // Check which swap source will be used (Pump.fun vs Jupiter)
+      const isBuying = fromMint === SOL_MINT;
+      const isSelling = toMint === SOL_MINT;
+
+      if (!isBuying && !isSelling) {
+        setStatus("Swap must involve SOL");
+        setIsLoading(false);
+        return null;
       }
 
-      setStatus("Preparing transaction…");
+      const tokenMint = isBuying ? toMint : fromMint;
+      setStatus("Checking bonding curve status…");
 
-      const swapRequest = {
-        quoteResponse: freshQuote,
-        userPublicKey: wallet.publicKey,
-        wrapAndUnwrapSol: true,
-      };
+      const curveOpen = await isBondingCurveOpen(tokenMint);
+      const swapSource = curveOpen ? "Pump.fun" : "Jupiter";
+      setStatus(`Using ${swapSource} for swap…`);
 
-      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
-
-      if (!swapResult || !swapResult.swapTransaction) {
-        throw new Error("Swap transaction generation failed");
-      }
-
-      const txBase64 = swapResult.swapTransaction;
-      let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
-
-      const decimals = fromToken.decimals ?? 6;
-      tx = addFeeTransferInstruction(
-        tx,
+      // Execute smart swap (auto-routes between Pump.fun and Jupiter)
+      const result = await executeSmartSwap(
+        wallet,
         fromMint,
-        amount,
-        decimals,
-        wallet.publicKey,
+        toMint,
+        amountInHuman,
       );
 
-      setStatus("Signing transaction…");
-
-      const keypair = getKeypair(wallet);
-      if (!keypair) {
-        throw new Error("Invalid wallet secret key");
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      const txSignature = await sendSignedTx(
-        base64FromBytes(tx.serialize()),
-        keypair,
-      );
+      // If it's a Jupiter swap, we need to handle the transaction signing
+      if (result.source === "jupiter" && result.txid) {
+        setStatus("Signing transaction…");
 
-      setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
-      setShowSuccess(true);
-      setStatus("");
-      setIsLoading(false);
+        const txBase64 = result.txid;
+        let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
-      setTimeout(() => setShowSuccess(false), 3000);
+        const decimals = fromToken.decimals ?? 6;
+        tx = addFeeTransferInstruction(
+          tx,
+          fromMint,
+          amount,
+          decimals,
+          wallet.publicKey,
+        );
 
-      toast({
-        title: "Swap Successful",
-        description: `Transaction: ${txSignature}`,
-        variant: "default",
-      });
+        const keypair = getKeypair(wallet);
+        if (!keypair) {
+          throw new Error("Invalid wallet secret key");
+        }
 
-      setAmount("");
-      setQuote(null);
+        const txSignature = await sendSignedTx(
+          base64FromBytes(tx.serialize()),
+          keypair,
+        );
+
+        setSuccessMsg(
+          `Swap successful via ${swapSource}! Tx: ${txSignature.slice(0, 8)}...`,
+        );
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 3000);
+
+        toast({
+          title: "Swap Successful",
+          description: `${swapSource} swap completed. Tx: ${txSignature}`,
+          variant: "default",
+        });
+
+        setAmount("");
+        setQuote(null);
+      } else if (result.source === "pump" && result.txid) {
+        // For Pump.fun swaps, the transaction is already signed and sent by Pump.fun API
+        setSuccessMsg(
+          `Swap successful via Pump.fun! Tx: ${result.txid.slice(0, 8)}...`,
+        );
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 3000);
+
+        toast({
+          title: "Pump.fun Swap Successful",
+          description: `Transaction: ${result.txid}`,
+          variant: "default",
+        });
+
+        setAmount("");
+        setQuote(null);
+      }
     } catch (err) {
       setIsLoading(false);
 

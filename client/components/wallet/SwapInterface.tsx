@@ -512,67 +512,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const isCurveToken = await checkCurveState(tokenMint);
 
       if (!isCurveToken) {
-        setStatus(
-          "Token not on Pump.fun bonding curve. Switching to Jupiter...",
+        throw new Error(
+          "Fixorium Wallet only supports Pump.fun bonding curve tokens. This token is not on an active bonding curve.",
         );
-        // Fall back to Jupiter for non-curve tokens
-        const result = await executeSmartSwap(
-          wallet,
-          fromMint,
-          toMint,
-          amountInHuman,
-        );
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        if (result.source === "jupiter" && result.txid) {
-          setStatus("Signing transaction…");
-
-          const txBase64 = result.txid;
-          let tx = VersionedTransaction.deserialize(
-            bytesFromBase64(txBase64),
-          );
-
-          const decimals = fromToken.decimals ?? 6;
-          tx = addFeeTransferInstruction(
-            tx,
-            fromMint,
-            amount,
-            decimals,
-            wallet.publicKey,
-          );
-
-          const keypair = getKeypair(wallet);
-          if (!keypair) {
-            throw new Error("Invalid wallet secret key");
-          }
-
-          const txSignature = await sendSignedTx(
-            base64FromBytes(tx.serialize()),
-            keypair,
-          );
-
-          setSuccessMsg(
-            `Swap successful via Jupiter! Tx: ${txSignature.slice(0, 8)}...`,
-          );
-          setShowSuccess(true);
-          setStatus("");
-          setIsLoading(false);
-
-          setTimeout(() => setShowSuccess(false), 3000);
-
-          toast({
-            title: "Swap Successful",
-            description: `Jupiter swap completed. Tx: ${txSignature}`,
-            variant: "default",
-          });
-
-          setAmount("");
-          setQuote(null);
-        }
-        return;
       }
 
       // ✅ Token is on Pump.fun curve - use Pump.fun API

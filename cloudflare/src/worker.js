@@ -288,11 +288,191 @@ export default {
       }
     }
 
-    // Forward ANY /api/ request to the Pages Functions runtime
+    // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
+    if (
+      pathname === "/api/wallet/balance" &&
+      request.method === "GET"
+    ) {
+      const publicKey =
+        url.searchParams.get("publicKey") ||
+        url.searchParams.get("wallet") ||
+        url.searchParams.get("address");
+
+      if (!publicKey) {
+        return new Response(
+          JSON.stringify({ error: "Missing wallet address parameter" }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      const RPC_ENDPOINTS = [
+        "https://api.mainnet-beta.solana.com",
+        "https://solana.publicnode.com",
+        "https://rpc.ankr.com/solana",
+      ];
+
+      const rpcBody = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [publicKey],
+      };
+
+      let lastError = "";
+      for (const endpoint of RPC_ENDPOINTS) {
+        try {
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rpcBody),
+          });
+
+          const data = await resp.json();
+
+          if (data.error) {
+            lastError = data.error.message || "RPC error";
+            continue;
+          }
+
+          const lamports = data.result;
+          if (typeof lamports === "number" && isFinite(lamports)) {
+            return new Response(
+              JSON.stringify({
+                publicKey,
+                balance: lamports / 1_000_000_000,
+                balanceLamports: lamports,
+              }),
+              {
+                status: 200,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              },
+            );
+          }
+        } catch (e) {
+          lastError = (e && e.message) || String(e);
+          continue;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch balance",
+          details: lastError || "All RPC endpoints failed",
+        }),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
+
+    // Solana RPC proxy: /api/solana-rpc (POST JSON-RPC)
+    if (pathname === "/api/solana-rpc" && request.method === "POST") {
+      let rpcRequest = null;
+      try {
+        rpcRequest = await request.json();
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "Invalid JSON body" }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      if (
+        !rpcRequest ||
+        typeof rpcRequest !== "object" ||
+        !rpcRequest.method
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Missing RPC method" }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      const RPC_ENDPOINTS = [
+        "https://api.mainnet-beta.solana.com",
+        "https://solana.publicnode.com",
+        "https://rpc.ankr.com/solana",
+      ];
+
+      let lastError = "";
+      for (const rpcUrl of RPC_ENDPOINTS) {
+        try {
+          const resp = await fetch(rpcUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rpcRequest),
+          });
+
+          const text = await resp.text();
+          return new Response(text, {
+            status: resp.status,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+        } catch (e) {
+          lastError = (e && e.message) || String(e);
+          continue;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: "All RPC endpoints failed",
+          details: lastError || "Unknown error",
+        }),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
+
+    // Forward OTHER /api/ requests to fallback (if needed)
     if (url.pathname.startsWith("/api/")) {
-      const forwardUrl =
-        "https://wallet-c36.pages.dev" + url.pathname + url.search;
-      return fetch(new Request(forwardUrl, request));
+      // Return 404 for unhandled API routes instead of forwarding to broken endpoint
+      return new Response(
+        JSON.stringify({
+          error: "API endpoint not found",
+          path: url.pathname,
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
     }
 
     // Serve front-end UI

@@ -338,7 +338,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     <Plus
                       size={20}
                       className="mr-2"
-                      stroke="white"
+                      stroke="black"
                       strokeWidth={3}
                     />
                     CREATE NEW WALLET
@@ -647,7 +647,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                       {showMnemonic
                         ? generatedWallet.mnemonic
-                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• •���••••••••"}
+                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��••���••• •••••••••• •••••��•••• •••••••••• •••••••••• •���••••••••"}
                     </p>
                   </div>
                 </div>

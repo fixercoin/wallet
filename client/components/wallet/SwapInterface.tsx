@@ -323,7 +323,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("");
     } catch (err) {
       console.error("[SwapInterface] Error loading tokens:", err);
-      setStatus("Using available tokens...");
 
       const fallbackTokens = (userTokens || []).map((ut) => ({
         address: ut.mint,
@@ -347,6 +346,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setTokenList(fallbackTokens);
       }
 
+      // Don't show error for token loading - user can still trade with available tokens
+      setStatus("");
       setInitialized(true);
     }
   };
@@ -414,7 +415,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       if (!quoteResponse) {
         setQuote(null);
-        setStatus("No route found for this pair/amount.");
+        setStatus("No route available. Try a different amount or token pair.");
         setIsLoading(false);
         return null;
       }
@@ -432,9 +433,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setIsLoading(false);
       return { quoteResponse };
     } catch (err) {
-      setStatus("Error: " + (err.message || err));
+      const errorMsg = err.message || String(err);
+      let friendlyMsg = "Failed to get quote. ";
+
+      if (errorMsg.includes("timeout")) {
+        friendlyMsg += "Network timeout. Please try again.";
+      } else if (errorMsg.includes("STALE_QUOTE")) {
+        friendlyMsg += "Quote expired. Please request a new quote.";
+      } else if (errorMsg.includes("simulation")) {
+        friendlyMsg += "Transaction would fail. Try a different amount.";
+      } else if (errorMsg.includes("NO_ROUTE")) {
+        friendlyMsg += "No trading route found for this pair.";
+      } else {
+        friendlyMsg += errorMsg;
+      }
+
+      setStatus(friendlyMsg);
       setIsLoading(false);
-      console.error(err);
+      console.error("[SwapInterface] Quote error:", err);
     }
   };
 
@@ -489,6 +505,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       } catch (refreshErr) {
         console.warn("[SwapInterface] Quote refresh error:", refreshErr);
+        const errMsg = refreshErr.message || String(refreshErr);
+        if (errMsg.includes("STALE_QUOTE") || errMsg.includes("530")) {
+          throw new Error(
+            "Quote expired. Please go back and request a fresh quote before swapping.",
+          );
+        }
         throw refreshErr;
       }
 

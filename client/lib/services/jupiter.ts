@@ -409,27 +409,41 @@ class JupiterAPI {
   }
 
   async getStrictTokenList(): Promise<JupiterToken[]> {
-    // Prefer proxy. If unavailable (404/5xx), fall back to public endpoints.
-    try {
-      const strictUrl = resolveApiUrl("/api/jupiter/tokens?type=strict");
-      let resp = await this.fetchWithTimeout(strictUrl, 10000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
-      if (!resp.ok) {
-        const allUrl = resolveApiUrl("/api/jupiter/tokens?type=all");
-        resp = await this.fetchWithTimeout(allUrl, 10000).catch(
+    // Try multiple endpoints and strategies
+    const endpoints = [
+      { url: resolveApiUrl("/api/jupiter/tokens?type=strict"), name: "strict" },
+      { url: resolveApiUrl("/api/jupiter/tokens?type=all"), name: "all" },
+      { url: "https://token.jup.ag/strict", name: "direct-strict" },
+      { url: "https://token.jup.ag/all", name: "direct-all" },
+      { url: "https://cache.jup.ag/tokens", name: "cache" },
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Fetching Jupiter tokens from: ${endpoint.name}`);
+        const resp = await this.fetchWithTimeout(endpoint.url, 10000).catch(
           () => new Response("", { status: 0 } as any),
         );
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (Array.isArray(data) && data.length > 0) {
+            console.log(
+              `✅ Successfully loaded ${data.length} tokens from ${endpoint.name}`,
+            );
+            return data as JupiterToken[];
+          }
+        }
+      } catch (e) {
+        console.warn(
+          `Failed to fetch from ${endpoint.name}:`,
+          e instanceof Error ? e.message : String(e),
+        );
+        // Continue to next endpoint
       }
-      if (resp.ok) {
-        const data = await resp.json();
-        return Array.isArray(data) ? (data as JupiterToken[]) : [];
-      }
-    } catch {
-      // continue to fallbacks
     }
 
-    // No direct external fallbacks; rely on proxy only to avoid DNS/CORS issues
+    console.warn("All Jupiter token endpoints failed, returning empty list");
     return [];
   }
 

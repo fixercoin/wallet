@@ -125,33 +125,51 @@ export default function WalletHistory() {
       setPendingOrders([]);
     }
 
-    // Init token map (Jupiter + known)
+    // Init token map (Jupiter + known) and then fetch transactions
+    let isMounted = true;
     (async () => {
       try {
         const known: Record<string, { symbol: string; decimals: number }> = {
           ...KNOWN_TOKENS,
         };
-        const jupTokens = await jupiterAPI.getStrictTokenList();
-        if (Array.isArray(jupTokens) && jupTokens.length > 0) {
-          for (const t of jupTokens) {
-            if (!t?.address) continue;
-            known[t.address] = {
-              symbol: t.symbol || t.address.slice(0, 6),
-              decimals: t.decimals ?? 6,
-            };
+        try {
+          const jupTokens = await jupiterAPI.getStrictTokenList();
+          if (Array.isArray(jupTokens) && jupTokens.length > 0) {
+            for (const t of jupTokens) {
+              if (!t?.address) continue;
+              known[t.address] = {
+                symbol: t.symbol || t.address.slice(0, 6),
+                decimals: t.decimals ?? 6,
+              };
+            }
           }
+        } catch (jupError) {
+          console.warn("Failed to fetch Jupiter token list:", jupError);
         }
-        setTokenMap(known);
+
+        if (isMounted) {
+          // Set token map state first
+          setTokenMap(known);
+          // Then fetch blockchain transactions
+          await fetchBlockchainTransactions(known);
+        }
       } catch (e) {
-        setTokenMap({ ...KNOWN_TOKENS });
+        console.error("Error initializing token map:", e);
+        if (isMounted) {
+          setTokenMap({ ...KNOWN_TOKENS });
+          await fetchBlockchainTransactions({ ...KNOWN_TOKENS });
+        }
       }
     })();
 
-    // Fetch blockchain transactions
-    fetchBlockchainTransactions();
+    return () => {
+      isMounted = false;
+    };
   }, [wallet?.publicKey]);
 
-  const fetchBlockchainTransactions = async () => {
+  const fetchBlockchainTransactions = async (
+    resolvedTokenMap?: Record<string, { symbol: string; decimals: number }>,
+  ) => {
     if (!wallet?.publicKey) return;
 
     setLoading(true);

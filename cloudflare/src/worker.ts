@@ -2986,6 +2986,140 @@ export default {
       }
     }
 
+    // Pump.fun BUY handler: /api/pumpfun/buy (POST)
+    if (pathname === "/api/pumpfun/buy" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { mint, amount, buyer } = body as any;
+
+        if (!mint || typeof amount !== "number" || !buyer) {
+          return json(
+            {
+              error:
+                "Missing required fields: mint, amount (number), buyer",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pump.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            mint,
+            amount,
+            buyer,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            {
+              error: `Pump.fun API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to request BUY transaction",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
+    // Pump.fun SELL handler: /api/pumpfun/sell (POST)
+    if (pathname === "/api/pumpfun/sell" && req.method === "POST") {
+      try {
+        const body = await parseJSON(req);
+
+        if (!body || typeof body !== "object") {
+          return json(
+            { error: "Invalid request body" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const { mint, amount, seller } = body as any;
+
+        if (!mint || typeof amount !== "number" || !seller) {
+          return json(
+            {
+              error:
+                "Missing required fields: mint, amount (number), seller",
+            },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pump.fun/api/trade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            mint,
+            amount,
+            seller,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return json(
+            {
+              error: `Pump.fun API returned ${resp.status}`,
+              details: errorText,
+            },
+            { status: resp.status, headers: corsHeaders },
+          );
+        }
+
+        const data = await resp.json();
+        return json(data, { headers: corsHeaders });
+      } catch (e: any) {
+        return json(
+          {
+            error: "Failed to request SELL transaction",
+            details: e?.message,
+          },
+          { status: 502, headers: corsHeaders },
+        );
+      }
+    }
+
     // 404 for unknown routes
     return json(
       { error: "API endpoint not found", path: pathname },

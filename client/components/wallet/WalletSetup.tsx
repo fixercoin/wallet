@@ -441,7 +441,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         onClick={() => setShowPrivateKeyInput((s) => !s)}
                         className="text-white hover:bg-[#16a34a]/10"
                       >
-                        <span className="text-lg leading-none">*</span>
+                        {showPrivateKeyInput ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     )}
                   </div>

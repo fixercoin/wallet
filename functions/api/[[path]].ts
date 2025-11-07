@@ -1009,4 +1009,4 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export default handler;
+export const onRequest = handler;

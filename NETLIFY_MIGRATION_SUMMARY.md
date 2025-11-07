@@ -32,7 +32,7 @@ All Cloudflare-specific files and configurations have been removed:
 - Simplified project structure documentation
 - Added troubleshooting guide for Cloudflare Pages
 
-**`netlify.toml`** - Already properly configured
+**`wrangler.toml`** - Already properly configured
 
 - Build command: `pnpm build`
 - Functions directory: `netlify/functions`
@@ -154,7 +154,7 @@ Cloudflare Pages Serverless Functions
 | **Build**            | Git-based or manual        | Git-based (auto)           |
 | **Environment**      | Global edge locations      | Serverless Lambda (US)     |
 | **API Handler**      | `cloudflare/src/worker.ts` | `netlify/functions/api.ts` |
-| **Configuration**    | `wrangler.toml`            | `netlify.toml`             |
+| **Configuration**    | `wrangler.toml`            | `wrangler.toml`             |
 
 ## Benefits of Cloudflare Pages
 
@@ -175,7 +175,7 @@ Cloudflare Pages Serverless Functions
 
 ### API calls failing
 
-- Ensure `netlify.toml` redirects are configured
+- Ensure `wrangler.toml` redirects are configured
 - Check that functions have access to environment variables
 - Verify RPC endpoint is accessible from Cloudflare Pages
 

@@ -98,7 +98,8 @@ export default function Swap() {
 
       try {
         const outAmount = BigInt(quoteResponse.outAmount);
-        const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+        const outHuman =
+          Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
 
         setQuote({
           quoteResponse,
@@ -111,7 +112,11 @@ export default function Swap() {
       } catch (bigintErr) {
         setQuote(null);
         setStatus("Invalid quote amount format. Please try again.");
-        console.error("[Swap] BigInt conversion error:", bigintErr, quoteResponse);
+        console.error(
+          "[Swap] BigInt conversion error:",
+          bigintErr,
+          quoteResponse,
+        );
         return null;
       }
     } catch (err) {

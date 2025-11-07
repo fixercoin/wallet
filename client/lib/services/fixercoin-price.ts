@@ -18,7 +18,11 @@ class FixercoinPriceService {
   async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
     try {
       // Check if we have valid cached data (only from live prices, not fallbacks)
-      if (this.cachedData && this.lastFetchTime && this.cachedData.derivationMethod !== "fallback") {
+      if (
+        this.cachedData &&
+        this.lastFetchTime &&
+        this.cachedData.derivationMethod !== "fallback"
+      ) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
           console.log("Returning cached FIXERCOIN price data");
@@ -49,7 +53,11 @@ class FixercoinPriceService {
       };
 
       // Only cache if we got valid, live price data (not fallback)
-      if (priceData.price > 0 && isFinite(priceData.price) && pairingData.derivedPrice > 0) {
+      if (
+        priceData.price > 0 &&
+        isFinite(priceData.price) &&
+        pairingData.derivedPrice > 0
+      ) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(
@@ -57,7 +65,9 @@ class FixercoinPriceService {
         );
         return priceData;
       } else {
-        console.warn("Invalid price data from derivation, using fallback (not cached)");
+        console.warn(
+          "Invalid price data from derivation, using fallback (not cached)",
+        );
         // Don't cache fallback prices so they retry on next call
         return this.getFallbackPrice();
       }

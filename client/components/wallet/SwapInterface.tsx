@@ -407,13 +407,17 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setQuote(null);
         setStatus("Invalid quote response. Please try again.");
         setIsLoading(false);
-        console.error("[SwapInterface] Quote missing outAmount:", quoteResponse);
+        console.error(
+          "[SwapInterface] Quote missing outAmount:",
+          quoteResponse,
+        );
         return null;
       }
 
       try {
         const outAmount = BigInt(quoteResponse.outAmount);
-        const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+        const outHuman =
+          Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
         const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
 
         setQuote({
@@ -431,7 +435,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setQuote(null);
         setStatus("Invalid quote amount format. Please try again.");
         setIsLoading(false);
-        console.error("[SwapInterface] BigInt conversion error:", bigintErr, quoteResponse);
+        console.error(
+          "[SwapInterface] BigInt conversion error:",
+          bigintErr,
+          quoteResponse,
+        );
         return null;
       }
     } catch (err) {

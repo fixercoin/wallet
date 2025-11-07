@@ -127,7 +127,12 @@ class TokenPairPricingService {
 
         // Calculate how many tokens per 1 SOL
         // If token is $0.001 and SOL is $176, then 1 SOL = 176,000 tokens
-        if (priceUsd > 0 && isFinite(priceUsd) && solPrice > 0 && isFinite(solPrice)) {
+        if (
+          priceUsd > 0 &&
+          isFinite(priceUsd) &&
+          solPrice > 0 &&
+          isFinite(solPrice)
+        ) {
           const tokensPerSol = solPrice / priceUsd;
           console.log(
             `${tokenMint}: 1 SOL = ${tokensPerSol.toFixed(2)} tokens`,

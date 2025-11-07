@@ -587,7 +587,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             lockerPriceService.getLockerPrice(),
           ]);
 
-          if (fixercoinData && fixercoinData.price > 0 && isFinite(fixercoinData.price)) {
+          if (
+            fixercoinData &&
+            fixercoinData.price > 0 &&
+            isFinite(fixercoinData.price)
+          ) {
             prices[fixercoinMint] = fixercoinData.price;
             changeMap[fixercoinMint] = fixercoinData.priceChange24h;
             console.log(
@@ -600,7 +604,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           }
 
-          if (lockerData && lockerData.price > 0 && isFinite(lockerData.price)) {
+          if (
+            lockerData &&
+            lockerData.price > 0 &&
+            isFinite(lockerData.price)
+          ) {
             prices[lockerMint] = lockerData.price;
             changeMap[lockerMint] = lockerData.priceChange24h;
             console.log(

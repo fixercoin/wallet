@@ -4,8 +4,7 @@ export async function handleSwapQuoteV2(req, res) {
 
     if (!inputMint || !outputMint || !amount) {
       return res.status(400).json({
-        error:
-          'Missing required parameters: inputMint, outputMint, amount',
+        error: "Missing required parameters: inputMint, outputMint, amount",
       });
     }
 
@@ -13,12 +12,12 @@ export async function handleSwapQuoteV2(req, res) {
       inputMint,
       outputMint,
       inAmount: String(amount),
-      outAmount: '0',
-      priceImpactPct: '0',
+      outAmount: "0",
+      priceImpactPct: "0",
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Quote failed',
+      error: "Quote failed",
       details: error.message,
     });
   }
@@ -31,17 +30,17 @@ export async function handleSwapExecuteV2(req, res) {
 
     if (!quoteResponse) {
       return res.status(400).json({
-        error: 'Missing quoteResponse',
+        error: "Missing quoteResponse",
       });
     }
 
     res.json({
-      swapTransaction: '',
+      swapTransaction: "",
       lastValidBlockHeight: 0,
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Swap execution failed',
+      error: "Swap execution failed",
       details: error.message,
     });
   }

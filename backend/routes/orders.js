@@ -1,5 +1,5 @@
 const ordersStore = new Map();
-const ADMIN_PASSWORD = 'Pakistan##123';
+const ADMIN_PASSWORD = "Pakistan##123";
 
 const generateId = (prefix) => {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -15,7 +15,7 @@ export async function handleListOrders(req, res) {
 
     let filtered = Array.from(ordersStore.values());
 
-    if (roomId && typeof roomId === 'string') {
+    if (roomId && typeof roomId === "string") {
       filtered = filtered.filter((o) => o.roomId === roomId);
     }
 
@@ -23,8 +23,8 @@ export async function handleListOrders(req, res) {
 
     res.json({ orders: filtered });
   } catch (error) {
-    console.error('List orders error:', error);
-    res.status(500).json({ error: 'Failed to list orders' });
+    console.error("List orders error:", error);
+    res.status(500).json({ error: "Failed to list orders" });
   }
 }
 
@@ -36,7 +36,7 @@ export async function handleCreateOrder(req, res) {
       quoteAsset,
       pricePKRPerQuote,
       paymentMethod,
-      roomId = 'global',
+      roomId = "global",
       createdBy,
       accountName,
       accountNumber,
@@ -52,11 +52,11 @@ export async function handleCreateOrder(req, res) {
     ) {
       return res.status(400).json({
         error:
-          'Missing required fields: side, amountPKR, quoteAsset, pricePKRPerQuote, paymentMethod',
+          "Missing required fields: side, amountPKR, quoteAsset, pricePKRPerQuote, paymentMethod",
       });
     }
 
-    const orderId = generateId('ORDER');
+    const orderId = generateId("ORDER");
     const order = {
       id: orderId,
       side,
@@ -75,8 +75,8 @@ export async function handleCreateOrder(req, res) {
     ordersStore.set(orderId, order);
     res.status(201).json(order);
   } catch (error) {
-    console.error('Create order error:', error);
-    res.status(500).json({ error: 'Failed to create order' });
+    console.error("Create order error:", error);
+    res.status(500).json({ error: "Failed to create order" });
   }
 }
 
@@ -86,13 +86,13 @@ export async function handleGetOrder(req, res) {
     const order = ordersStore.get(orderId);
 
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ error: "Order not found" });
     }
 
     res.json(order);
   } catch (error) {
-    console.error('Get order error:', error);
-    res.status(500).json({ error: 'Failed to get order' });
+    console.error("Get order error:", error);
+    res.status(500).json({ error: "Failed to get order" });
   }
 }
 
@@ -103,7 +103,7 @@ export async function handleUpdateOrder(req, res) {
 
     const order = ordersStore.get(orderId);
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ error: "Order not found" });
     }
 
     order.status = status;
@@ -111,8 +111,8 @@ export async function handleUpdateOrder(req, res) {
 
     res.json(order);
   } catch (error) {
-    console.error('Update order error:', error);
-    res.status(500).json({ error: 'Failed to update order' });
+    console.error("Update order error:", error);
+    res.status(500).json({ error: "Failed to update order" });
   }
 }
 
@@ -121,13 +121,13 @@ export async function handleDeleteOrder(req, res) {
     const { orderId } = req.params;
 
     if (!ordersStore.has(orderId)) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ error: "Order not found" });
     }
 
     ordersStore.delete(orderId);
     res.json({ success: true });
   } catch (error) {
-    console.error('Delete order error:', error);
-    res.status(500).json({ error: 'Failed to delete order' });
+    console.error("Delete order error:", error);
+    res.status(500).json({ error: "Failed to delete order" });
   }
 }

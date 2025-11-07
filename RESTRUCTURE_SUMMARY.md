@@ -5,6 +5,7 @@
 Your project has been successfully restructured to separate frontend and backend deployments:
 
 ### Frontend (Netlify)
+
 - ✅ Created `/frontend` folder with dedicated React SPA setup
 - ✅ Configured Vite for static site building
 - ✅ Added `frontend/package.json` with all dependencies
@@ -14,6 +15,7 @@ Your project has been successfully restructured to separate frontend and backend
 - ✅ Frontend build output: `frontend/dist/`
 
 ### Backend (Render)
+
 - ✅ Created `/backend` folder with standalone Express.js server
 - ✅ Converted all serverless API functions to Express routes
 - ✅ Created `backend/package.json` with minimal dependencies
@@ -25,6 +27,7 @@ Your project has been successfully restructured to separate frontend and backend
 - ✅ Ready for Render deployment (no serverless functions needed)
 
 ### Documentation
+
 - ✅ Created comprehensive `DEPLOYMENT_SETUP.md` with step-by-step deployment guide
 - ✅ Created `backend/README.md` with API documentation and Render setup
 - ✅ All environment variables documented in `.env.example` files
@@ -70,6 +73,7 @@ project/
 ## 🚀 Quick Start: Deploy Your App
 
 ### Minute 1: Push Code to GitHub
+
 ```bash
 git add .
 git commit -m "Restructure: separate frontend and backend"
@@ -77,6 +81,7 @@ git push origin main
 ```
 
 ### Minute 2-5: Deploy Frontend to Netlify
+
 1. Go to https://netlify.com
 2. Click "Add new site" → "Import an existing project"
 3. Connect GitHub repository
@@ -85,6 +90,7 @@ git push origin main
 **Your frontend will be live at**: `https://your-site.netlify.app`
 
 ### Minute 5-10: Deploy Backend to Render
+
 1. Go to https://render.com
 2. Click "New+" → "Web Service"
 3. Connect GitHub repository
@@ -94,6 +100,7 @@ git push origin main
 **Your backend will be at**: `https://fixorium-api.onrender.com`
 
 ### Minute 10-15: Connect Frontend to Backend
+
 1. In Netlify dashboard → Environment variables
 2. Add: `VITE_API_URL=https://your-backend-service.onrender.com`
 3. Click "Trigger deploy"
@@ -104,11 +111,13 @@ git push origin main
 ## 🔧 Environment Variables
 
 ### Frontend (.env on Netlify)
+
 ```
 VITE_API_URL=https://your-render-backend.onrender.com
 ```
 
 ### Backend (.env on Render)
+
 ```
 PORT=10000
 NODE_ENV=production
@@ -136,20 +145,21 @@ Netlify (Frontend)
 
 ## ✨ Key Features After Restructure
 
-| Feature | Before | After |
-|---------|--------|-------|
-| Frontend | Part of monorepo | **Standalone in `/frontend`** |
-| Frontend hosting | Serverless functions | **Static site on Netlify** |
-| Build output | `/dist` | **`/frontend/dist`** |
-| Backend | Serverless functions | **Express.js in `/backend`** |
-| Backend server | Netlify Functions | **Render Web Service** |
-| Port | Auto-managed | **Configurable (10000 default)** |
-| Deployment | Single click | **Two separate platforms** |
-| Scalability | Auto (serverless) | **Manual (can scale Render) ** |
+| Feature          | Before               | After                            |
+| ---------------- | -------------------- | -------------------------------- |
+| Frontend         | Part of monorepo     | **Standalone in `/frontend`**    |
+| Frontend hosting | Serverless functions | **Static site on Netlify**       |
+| Build output     | `/dist`              | **`/frontend/dist`**             |
+| Backend          | Serverless functions | **Express.js in `/backend`**     |
+| Backend server   | Netlify Functions    | **Render Web Service**           |
+| Port             | Auto-managed         | **Configurable (10000 default)** |
+| Deployment       | Single click         | **Two separate platforms**       |
+| Scalability      | Auto (serverless)    | **Manual (can scale Render) **   |
 
 ## 📝 Important Notes
 
 ### Frontend
+
 - All routing is handled by React Router (client-side)
 - Single entry point: `index.html`
 - Environment variable: `VITE_API_URL` points to backend
@@ -157,6 +167,7 @@ Netlify (Frontend)
 - Start command: `npm run dev` for local development
 
 ### Backend
+
 - **No serverless functions needed** - standard Node.js app
 - **No Vercel/Netlify function wrappers** - pure Express.js
 - Listens on `process.env.PORT || 10000`
@@ -165,7 +176,9 @@ Netlify (Frontend)
 - Can be run locally: `npm start` in `/backend`
 
 ### API Proxy (Development)
+
 When running locally with `npm run dev` in `/frontend`:
+
 - Frontend dev server on `http://localhost:5173`
 - Proxies `/api/*` to `http://localhost:10000`
 - Requires backend running on port 10000
@@ -179,15 +192,16 @@ When running locally with `npm run dev` in `/frontend`:
 3. Import and register in `backend/index.js`
 
 Example:
+
 ```javascript
 // backend/routes/my-feature.js
 export async function handleMyFeature(req, res) {
-  res.json({ status: 'ok' });
+  res.json({ status: "ok" });
 }
 
 // backend/index.js
-import { handleMyFeature } from './routes/my-feature.js';
-app.get('/api/my-feature', handleMyFeature);
+import { handleMyFeature } from "./routes/my-feature.js";
+app.get("/api/my-feature", handleMyFeature);
 ```
 
 ### Update Frontend Environment Variable
@@ -223,24 +237,29 @@ npm run dev
 ## 🐛 Troubleshooting
 
 ### Frontend shows CORS error
+
 - Check `CORS_ORIGIN` on Render backend
 - Must match Netlify domain exactly (including https://)
 
 ### API calls return 404
+
 - Verify backend is running
 - Check `VITE_API_URL` in frontend environment variables
 - Backend routes must start with `/api`
 
 ### Render service sleeps after 15 minutes
+
 - Free tier: services spin down after 15 minutes
 - Solution: upgrade to Starter+ ($12/month) or use external monitoring
 
 ### Build fails on Netlify
+
 - Check logs: Netlify dashboard → Deploys → Click failed deploy
 - Run `npm run build` locally to debug
 - Ensure all dependencies are in `frontend/package.json`
 
 ### Build fails on Render
+
 - Check logs: Render dashboard → Service → Logs
 - Verify Node version is 18+
 - Ensure `backend/package.json` has all required dependencies

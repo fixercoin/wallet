@@ -2,7 +2,7 @@ export async function handleDexscreenerPrice(req, res) {
   try {
     const { token } = req.query;
     if (!token) {
-      return res.status(400).json({ error: 'Missing token parameter' });
+      return res.status(400).json({ error: "Missing token parameter" });
     }
 
     const url = `https://api.dexscreener.com/latest/dex/tokens/${token}`;
@@ -11,7 +11,7 @@ export async function handleDexscreenerPrice(req, res) {
     res.json(data);
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to fetch price',
+      error: "Failed to fetch price",
       details: error.message,
     });
   }
@@ -19,9 +19,9 @@ export async function handleDexscreenerPrice(req, res) {
 
 export async function handleSolPrice(req, res) {
   res.json({
-    symbol: 'SOL',
+    symbol: "SOL",
     priceUsd: 149.38,
-    priceNative: '1',
+    priceNative: "1",
   });
 }
 
@@ -30,7 +30,7 @@ export async function handleTokenPrice(req, res) {
     const { mint, token } = req.query;
     if (!mint && !token) {
       return res.status(400).json({
-        error: 'Missing mint or token parameter',
+        error: "Missing mint or token parameter",
       });
     }
 
@@ -41,7 +41,7 @@ export async function handleTokenPrice(req, res) {
     res.json(data);
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to fetch token price',
+      error: "Failed to fetch token price",
       details: error.message,
     });
   }

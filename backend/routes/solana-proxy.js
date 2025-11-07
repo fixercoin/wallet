@@ -1,15 +1,15 @@
 const RPC_ENDPOINTS = [
-  process.env.SOLANA_RPC_URL || '',
-  process.env.ALCHEMY_RPC_URL || '',
-  process.env.HELIUS_RPC_URL || '',
-  process.env.MORALIS_RPC_URL || '',
+  process.env.SOLANA_RPC_URL || "",
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : '',
-  'https://solana.publicnode.com',
-  'https://rpc.ankr.com/solana',
-  'https://api.mainnet-beta.solana.com',
-  'https://solana-rpc.publicnode.com',
+    : "",
+  "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-rpc.publicnode.com",
 ].filter(Boolean);
 
 const rateLimitedEndpoints = new Map();
@@ -59,11 +59,11 @@ export async function handleSolanaRpc(req, res) {
 
     if (!body) {
       return res.status(400).json({
-        error: 'Missing request body',
+        error: "Missing request body",
       });
     }
 
-    const method = body.method || 'unknown';
+    const method = body.method || "unknown";
 
     const availableEndpoints = RPC_ENDPOINTS.filter(
       (ep) => !isEndpointRateLimited(ep),
@@ -76,9 +76,9 @@ export async function handleSolanaRpc(req, res) {
         `[RPC Proxy] ${method} - All ${totalEndpoints} endpoints currently rate limited, returning 429`,
       );
       return res.status(429).json({
-        error: 'All RPC endpoints are currently rate limited',
+        error: "All RPC endpoints are currently rate limited",
         message:
-          'Please retry after a moment. The service is experiencing high load.',
+          "Please retry after a moment. The service is experiencing high load.",
         allEndpointsRateLimited: true,
         totalEndpoints: totalEndpoints,
       });
@@ -103,8 +103,8 @@ export async function handleSolanaRpc(req, res) {
         const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
           signal: controller.signal,
         });
@@ -167,7 +167,7 @@ export async function handleSolanaRpc(req, res) {
         console.log(
           `[RPC Proxy] ${method} - SUCCESS with endpoint ${i + 1}/${workingEndpoints} (status: ${response.status})`,
         );
-        res.set('Content-Type', 'application/json');
+        res.set("Content-Type", "application/json");
         return res.status(response.status).send(data);
       } catch (e) {
         lastError = e instanceof Error ? e : new Error(String(e));
@@ -191,17 +191,17 @@ export async function handleSolanaRpc(req, res) {
     return res.status(statusCode).json({
       error:
         lastError?.message ||
-        'All RPC endpoints failed - no Solana RPC available',
-      details: `Last error: ${lastErrorStatus || 'unknown'}`,
+        "All RPC endpoints failed - no Solana RPC available",
+      details: `Last error: ${lastErrorStatus || "unknown"}`,
       rpcErrorDetails: lastErrorData?.error || null,
       configuredEndpoints: totalEndpoints,
       availableEndpoints: workingEndpoints,
       rateLimitingActive: statusCode === 429,
     });
   } catch (error) {
-    console.error('[RPC Proxy] Handler error:', error);
+    console.error("[RPC Proxy] Handler error:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Internal server error',
+      error: error instanceof Error ? error.message : "Internal server error",
     });
   }
 }

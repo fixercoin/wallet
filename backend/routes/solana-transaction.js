@@ -9,19 +9,19 @@ export async function handleSolanaSend(req, res) {
       body.serializedTx ||
       body.serializedTransaction;
 
-    if (!tx || typeof tx !== 'string') {
+    if (!tx || typeof tx !== "string") {
       return res
         .status(400)
-        .json({ error: 'Missing signed transaction (base64)' });
+        .json({ error: "Missing signed transaction (base64)" });
     }
 
     res.json({
-      transactionHash: 'simulated-hash-' + Date.now(),
-      status: 'submitted',
+      transactionHash: "simulated-hash-" + Date.now(),
+      status: "submitted",
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to send transaction',
+      error: "Failed to send transaction",
       details: error.message,
     });
   }
@@ -31,15 +31,10 @@ export async function handleSolanaSimulate(req, res) {
   try {
     const body = req.body || {};
     const tx =
-      body.signedBase64 ||
-      body.signedTx ||
-      body.tx ||
-      body.signedTransaction;
+      body.signedBase64 || body.signedTx || body.tx || body.signedTransaction;
 
-    if (!tx || typeof tx !== 'string') {
-      return res
-        .status(400)
-        .json({ error: 'Missing signed transaction' });
+    if (!tx || typeof tx !== "string") {
+      return res.status(400).json({ error: "Missing signed transaction" });
     }
 
     res.json({
@@ -51,7 +46,7 @@ export async function handleSolanaSimulate(req, res) {
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to simulate transaction',
+      error: "Failed to simulate transaction",
       details: error.message,
     });
   }

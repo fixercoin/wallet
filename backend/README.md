@@ -29,6 +29,7 @@ cp .env.example .env
 ```
 
 Key variables:
+
 - `PORT`: Server port (default: 10000)
 - `NODE_ENV`: Environment (development/production)
 - `SOLANA_RPC_URL`: Primary Solana RPC endpoint
@@ -38,22 +39,26 @@ Key variables:
 ## API Endpoints
 
 ### Wallet Operations
+
 - `GET /api/wallet/balance?publicKey=<address>` - Get wallet SOL balance
 - `GET /api/balance?publicKey=<address>` - Alias for wallet balance
 
 ### Pricing
+
 - `GET /api/dexscreener/tokens?tokens=<mint1>,<mint2>` - Get token prices from DexScreener
 - `GET /api/exchange-rate?token=FIXERCOIN` - Get exchange rate with markup
 - `GET /api/sol/price` - Get SOL price
 - `GET /api/token/price?mint=<mint>` - Get any token price
 
 ### Swaps & Quotes
+
 - `GET /api/quote?inputMint=<mint>&outputMint=<mint>&amount=<amount>` - Get swap quote
 - `POST /api/swap` - Build unsigned swap transaction
 - `GET /api/swap/quote` - V2 quote endpoint
 - `POST /api/swap/execute` - V2 swap execution
 
 ### Orders
+
 - `GET /api/orders` - List all orders
 - `POST /api/orders` - Create new order
 - `GET /api/orders/:orderId` - Get order details
@@ -61,6 +66,7 @@ Key variables:
 - `DELETE /api/orders/:orderId` - Delete order
 
 ### Trading Rooms (P2P)
+
 - `GET /api/p2p/rooms` - List all trading rooms
 - `POST /api/p2p/rooms` - Create new room
 - `GET /api/p2p/rooms/:roomId` - Get room details
@@ -68,9 +74,11 @@ Key variables:
 - `POST /api/p2p/rooms/:roomId/messages` - Send message
 
 ### Solana RPC
+
 - `POST /api/solana-rpc` - Proxy Solana JSON-RPC calls
 
 ### Health & Status
+
 - `GET /api/ping` - Simple ping endpoint
 - `GET /api/health` - Health check
 - `GET /api` - API info
@@ -185,6 +193,7 @@ Protected endpoints require either:
 ## Support
 
 For issues or questions, check:
+
 - Render logs: Dashboard → Service → Logs
 - API health: `GET https://your-service.onrender.com/api/health`
 - Error details in response JSON

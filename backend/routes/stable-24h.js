@@ -16,7 +16,7 @@ export async function handleStable24h(req, res) {
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to fetch stable coin data',
+      error: "Failed to fetch stable coin data",
       details: error.message,
     });
   }

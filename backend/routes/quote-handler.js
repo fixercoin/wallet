@@ -4,8 +4,7 @@ export async function handleLocalQuote(req, res) {
 
     if (!inputMint || !outputMint || !amount) {
       return res.status(400).json({
-        error:
-          'Missing required parameters: inputMint, outputMint, amount',
+        error: "Missing required parameters: inputMint, outputMint, amount",
       });
     }
 
@@ -13,13 +12,13 @@ export async function handleLocalQuote(req, res) {
       inputMint,
       outputMint,
       inAmount: String(amount),
-      outAmount: '0',
-      swapMode: 'ExactIn',
+      outAmount: "0",
+      swapMode: "ExactIn",
       slippageBps: 50,
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to get quote',
+      error: "Failed to get quote",
       details: error.message,
     });
   }

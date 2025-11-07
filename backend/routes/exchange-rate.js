@@ -1,9 +1,9 @@
 const TOKEN_MINTS = {
-  SOL: 'So11111111111111111111111111111111111111112',
-  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns',
-  FIXERCOIN: 'H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump',
-  LOCKER: 'EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump',
+  SOL: "So11111111111111111111111111111111111111112",
+  USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+  FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+  LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
 };
 
 const FALLBACK_RATES = {
@@ -18,15 +18,15 @@ const PKR_PER_USD = 280;
 const MARKUP = 1.0425;
 
 const MINT_TO_PAIR_ADDRESS = {
-  'H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump':
-    '5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy',
-  'EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump':
-    '7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK',
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
+    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
 };
 
 const MINT_TO_SEARCH_SYMBOL = {
-  'H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump': 'FIXERCOIN',
-  'EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump': 'LOCKER',
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
 };
 
 async function fetchTokenPriceFromDexScreener(mint) {
@@ -44,8 +44,8 @@ async function fetchTokenPriceFromDexScreener(mint) {
       const response = await fetch(pairUrl, {
         signal: controller.signal,
         headers: {
-          Accept: 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; SolanaWallet/1.0)',
+          Accept: "application/json",
+          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
         },
       });
       clearTimeout(timeoutId);
@@ -81,8 +81,8 @@ async function fetchTokenPriceFromDexScreener(mint) {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; SolanaWallet/1.0)',
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
       },
     });
     clearTimeout(timeoutId);
@@ -125,8 +125,8 @@ async function fetchTokenPriceFromDexScreener(mint) {
         const searchResponse = await fetch(searchUrl, {
           signal: searchController.signal,
           headers: {
-            Accept: 'application/json',
-            'User-Agent': 'Mozilla/5.0 (compatible; SolanaWallet/1.0)',
+            Accept: "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
           },
         });
         clearTimeout(searchTimeoutId);
@@ -135,16 +135,12 @@ async function fetchTokenPriceFromDexScreener(mint) {
           const searchData = await searchResponse.json();
           if (searchData.pairs && searchData.pairs.length > 0) {
             let matchingPair = searchData.pairs.find(
-              (p) =>
-                p.baseToken?.address === mint &&
-                (p).chainId === 'solana',
+              (p) => p.baseToken?.address === mint && p.chainId === "solana",
             );
 
             if (!matchingPair) {
               matchingPair = searchData.pairs.find(
-                (p) =>
-                  (p).quoteToken?.address === mint &&
-                  (p).chainId === 'solana',
+                (p) => p.quoteToken?.address === mint && p.chainId === "solana",
               );
             }
 
@@ -156,7 +152,7 @@ async function fetchTokenPriceFromDexScreener(mint) {
 
             if (!matchingPair) {
               matchingPair = searchData.pairs.find(
-                (p) => (p).quoteToken?.address === mint,
+                (p) => p.quoteToken?.address === mint,
               );
             }
 
@@ -194,17 +190,17 @@ async function fetchTokenPriceFromDexScreener(mint) {
 
 export async function handleExchangeRate(req, res) {
   try {
-    const token = (req.query.token) || 'FIXERCOIN';
+    const token = req.query.token || "FIXERCOIN";
 
     let priceUsd = null;
 
-    if (token === 'FIXERCOIN') {
+    if (token === "FIXERCOIN") {
       priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.FIXERCOIN);
-    } else if (token === 'SOL') {
+    } else if (token === "SOL") {
       priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.SOL);
-    } else if (token === 'USDC' || token === 'USDT') {
+    } else if (token === "USDC" || token === "USDT") {
       priceUsd = 1.0;
-    } else if (token === 'LOCKER') {
+    } else if (token === "LOCKER") {
       priceUsd = await fetchTokenPriceFromDexScreener(TOKEN_MINTS.LOCKER);
     }
 
@@ -234,9 +230,9 @@ export async function handleExchangeRate(req, res) {
       markup: MARKUP,
     });
   } catch (error) {
-    console.error('[ExchangeRate] Error:', error);
+    console.error("[ExchangeRate] Error:", error);
     res.status(500).json({
-      error: 'Failed to fetch exchange rate',
+      error: "Failed to fetch exchange rate",
       message: error instanceof Error ? error.message : String(error),
     });
   }

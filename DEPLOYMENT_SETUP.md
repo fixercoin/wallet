@@ -1,6 +1,7 @@
 # Complete Deployment Guide: Netlify Frontend + Render Backend
 
 This guide explains how to deploy your Fixorium Wallet application with:
+
 - **Frontend**: Netlify (static site hosting)
 - **Backend**: Render (Node.js hosting)
 
@@ -76,6 +77,7 @@ npm start
 ### Option A: Using Netlify UI (Recommended for First-Time Users)
 
 1. **Push code to GitHub**
+
    ```bash
    git add .
    git commit -m "Setup for Netlify and Render deployment"
@@ -102,6 +104,7 @@ npm start
 The project includes `frontend/netlify.toml` which is automatically detected by Netlify.
 
 Simply connect your repository and it will use the config from `netlify.toml`:
+
 - Build command: `npm run build`
 - Publish directory: `dist`
 
@@ -121,6 +124,7 @@ Simply connect your repository and it will use the config from `netlify.toml`:
 
 3. **Set Environment Variables**
    Click "Advanced" and add these variables:
+
    ```
    PORT=10000
    NODE_ENV=production
@@ -159,6 +163,7 @@ After Render deployment completes:
 ## Step 5: Verify Deployment
 
 ### Test Frontend
+
 ```bash
 # Visit your Netlify site
 https://your-site.netlify.app
@@ -170,6 +175,7 @@ https://your-site.netlify.app
 ```
 
 ### Test Backend
+
 ```bash
 # Check service is running
 curl https://your-backend-service.onrender.com/api/health
@@ -179,6 +185,7 @@ curl https://your-backend-service.onrender.com/api/health
 ```
 
 ### Test Full Integration
+
 1. Go to your frontend
 2. Click any button that calls an API (e.g., wallet balance)
 3. Should see successful responses in Network tab
@@ -186,12 +193,14 @@ curl https://your-backend-service.onrender.com/api/health
 ## Step 6: Custom Domain (Optional)
 
 ### For Frontend (Netlify)
+
 1. In Netlify: Site settings → Domain management → Custom domains
 2. Add your domain (e.g., `fixorium.com`)
 3. Update DNS records per Netlify instructions
 4. Enable HTTPS (automatic)
 
 ### For Backend (Render)
+
 1. In Render: Service settings → Custom domain
 2. Add your domain (e.g., `api.fixorium.com`)
 3. Update DNS records
@@ -204,6 +213,7 @@ curl https://your-backend-service.onrender.com/api/health
 **Problem**: CORS errors or "API is unreachable"
 
 **Solutions**:
+
 1. Verify `VITE_API_URL` in Netlify environment variables
 2. Check Render service URL is correct
 3. In browser console, test: `fetch('https://backend-url.onrender.com/api/ping')`
@@ -212,6 +222,7 @@ curl https://your-backend-service.onrender.com/api/health
 ### Backend Service Sleeps After 15 Minutes (Free Plan)
 
 On Render's free plan, services spin down after 15 minutes of inactivity.
+
 - Solution: Upgrade to Starter+ plan, or
 - Keep a simple health check monitoring service active
 
@@ -220,6 +231,7 @@ On Render's free plan, services spin down after 15 minutes of inactivity.
 **Check logs**: Site settings → Deploy → Deploys → Click failed deploy
 
 Common issues:
+
 - Missing dependencies: Check `frontend/package.json`
 - Build errors: Check `npm run build` locally first
 - Wrong build directory: Should be `frontend/dist`
@@ -229,6 +241,7 @@ Common issues:
 **Check logs**: Service → Logs tab
 
 Common issues:
+
 - Wrong Node version: Ensure 18+
 - Missing environment variables: All `.env` vars must be set
 - TypeScript errors: All JS files should be syntax correct
@@ -245,21 +258,25 @@ git push origin main
 ```
 
 ### Redeploy Frontend
+
 - Netlify automatically rebuilds on each push
 - Or manually trigger: Site settings → Deploys → Trigger deploy
 
 ### Redeploy Backend
+
 - Render automatically rebuilds on each push
 - Or manually trigger: Service → Manual Deploy
 
 ## Environment Variables Reference
 
 ### Frontend (.env in Netlify)
+
 ```
 VITE_API_URL=https://your-backend-service.onrender.com
 ```
 
 ### Backend (.env on Render)
+
 ```
 PORT=10000
 NODE_ENV=production
@@ -281,11 +298,13 @@ CORS_ORIGIN=https://your-netlify-app.netlify.app
 ## Production Optimization
 
 ### Frontend
+
 - Build output is minified automatically
 - Cloudflare CDN speeds up delivery
 - Enable analytics in Netlify dashboard
 
 ### Backend
+
 - Upgrade from Free to Starter+ plan
 - Use environment-specific RPC endpoints
 - Monitor API usage and response times
@@ -309,9 +328,9 @@ CORS_ORIGIN=https://your-netlify-app.netlify.app
 
 ## Quick Reference
 
-| Service | URL | Dashboard | Status |
-|---------|-----|-----------|--------|
-| Frontend | https://your-site.netlify.app | https://app.netlify.com | ��� |
-| Backend | https://your-api.onrender.com | https://dashboard.render.com | ✓ |
-| API Health | /api/health | Check logs | ✓ |
-| Ping Test | GET /api/ping | Response code 200 | ✓ |
+| Service    | URL                           | Dashboard                    | Status |
+| ---------- | ----------------------------- | ---------------------------- | ------ |
+| Frontend   | https://your-site.netlify.app | https://app.netlify.com      | ���    |
+| Backend    | https://your-api.onrender.com | https://dashboard.render.com | ✓      |
+| API Health | /api/health                   | Check logs                   | ✓      |
+| Ping Test  | GET /api/ping                 | Response code 200            | ✓      |

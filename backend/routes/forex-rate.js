@@ -1,6 +1,6 @@
 export async function handleForexRate(req, res) {
   try {
-    const { from = 'USD', to = 'PKR' } = req.query;
+    const { from = "USD", to = "PKR" } = req.query;
 
     const rates = {
       USD: { PKR: 280, EUR: 0.92 },
@@ -19,7 +19,7 @@ export async function handleForexRate(req, res) {
     });
   } catch (error) {
     res.status(502).json({
-      error: 'Failed to fetch forex rate',
+      error: "Failed to fetch forex rate",
       details: error.message,
     });
   }

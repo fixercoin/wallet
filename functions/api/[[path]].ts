@@ -476,30 +476,67 @@ async function handleJupiterTokens(url: URL): Promise<Response> {
     "https://token.jup.ag/all",
   ];
 
-  for (const endpoint of endpoints) {
-    try {
-      const response = await timeoutFetch(endpoint, {
-        method: "GET",
-        headers: browserHeaders(),
-      });
+  let lastError = "";
 
-      if (response.ok) {
-        const data = await response.json();
-        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
-      }
+  for (let idx = 0; idx < endpoints.length; idx++) {
+    const endpoint = endpoints[idx];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[Jupiter Tokens] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+        );
 
-      if (response.status === 429 || response.status >= 500) {
-        continue;
+        const response = await timeoutFetch(endpoint, {
+          method: "GET",
+          headers: browserHeaders(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Jupiter Tokens] Success on attempt ${attempt}`);
+          return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+        }
+
+        lastError = `HTTP ${response.status}`;
+
+        if (response.status === 429 || response.status >= 500) {
+          console.warn(
+            `[Jupiter Tokens] Retryable error (${response.status}), trying next endpoint`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+
+        console.warn(
+          `[Jupiter Tokens] Non-OK response (${response.status}), trying next endpoint`,
+        );
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.error(
+          `[Jupiter Tokens] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+          continue;
+        }
       }
-    } catch (e) {
-      continue;
     }
   }
 
-  return new Response(JSON.stringify({ error: "Tokens API error", data: [] }), {
-    status: 502,
-    headers: CORS_HEADERS,
-  });
+  console.error(
+    `[Jupiter Tokens] All endpoints failed. Last error: ${lastError}`,
+  );
+  return new Response(
+    JSON.stringify({
+      error: "Tokens API error",
+      data: [],
+      details: lastError,
+    }),
+    { status: 502, headers: CORS_HEADERS },
+  );
 }
 
 async function handlePumpFunCurve(url: URL): Promise<Response> {

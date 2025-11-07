@@ -1,13 +1,13 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 };
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -16,69 +16,49 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "GET") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: "Method not allowed. Use GET.",
-      }),
-    };
-  }
-
   try {
-    const params = new URLSearchParams(event.rawUrl.split("?")[1] || "");
-    const mint = params.get("mint");
+    const mint = event.queryStringParameters?.mint;
 
     if (!mint) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "mint parameter required",
+          error: "Missing required parameter: mint",
         }),
       };
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     const response = await fetch(
-      `https://pump.fun/api/curve/${encodeURIComponent(mint)}`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        signal: controller.signal,
-      },
+      `https://pumpportal.fun/api/curve/${mint}`,
     );
 
-    clearTimeout(timeoutId);
+    const data = await response.text();
 
-    const text = await response.text();
-    let data: any = {};
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { text };
+    if (!response.ok) {
+      console.error(`Pumpfun curve error: ${response.status}`);
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Pumpfun curve API error",
+          status: response.status,
+        }),
+      };
     }
 
     return {
-      statusCode: response.status,
+      statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify(data),
+      body: data,
     };
-  } catch (error: any) {
-    const message = error?.message || "Unknown error";
-    console.error("Pump.fun CURVE endpoint error:", error);
-
+  } catch (error) {
+    console.error("[Pumpfun Curve] Error:", error);
     return {
-      statusCode: 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Failed to check curve state",
-        details: message,
+        error: error instanceof Error ? error.message : "Internal server error",
       }),
     };
   }

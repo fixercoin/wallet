@@ -1,0 +1,21 @@
+name = "fixorium-api"
+compatibility_date = "2025-01-01"
+# Fill in your Cloudflare account id when deploying
+# account_id = ""
+# Type can be 'javascript' or 'webpack'
+type = "javascript"
+
+# Entrypoint - point to the worker module that exports `onRequest` or default fetch handler
+main = "functions/api/[[path]].ts"
+
+# Bind this Worker to your custom domain route
+route = "api.fixorium.com.pk/*"
+
+[build]
+command = "pnpm build"
+
+# Environment variables for wrangler can be added here or set via `wrangler secret put`
+[vars]
+VITE_API_URL = "https://api.fixorium.com.pk"
+VITE_API_BASE_URL = "https://api.fixorium.com.pk"
+# SOLANA_RPC = "https://solana.publicnode.com"

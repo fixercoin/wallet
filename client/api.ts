@@ -1,4 +1,4 @@
-import { resolveApiUrl } from "@/client/lib/api-client";
+import { resolveApiUrl } from "@/lib/api-client";
 
 export async function callSolanaRpc(payload: any) {
   const res = await fetch(resolveApiUrl("/api/solana-rpc"), {

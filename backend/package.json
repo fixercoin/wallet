@@ -1,0 +1,22 @@
+{
+  "name": "fixorium-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Express.js backend for Fixorium Wallet API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "@noble/hashes": "^1.4.0",
+    "@scure/bip39": "^2.0.1",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "bs58": "^6.0.0",
+    "buffer": "^6.0.3",
+    "tweetnacl": "^1.0.3"
+  }
+}

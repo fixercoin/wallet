@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(new URL(".", import.meta.url).pathname, "client"),
+      "@": path.resolve(new URL(".", import.meta.url).pathname, "../client"),
     },
   },
   build: {
@@ -14,16 +14,22 @@ export default defineConfig({
     assetsDir: "assets",
     sourcemap: false,
     minify: "terser",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+        },
+      },
+    },
   },
   server: {
     host: true,
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://api.fixorium.com.pk",
+        target: process.env.VITE_API_URL || "http://localhost:10000",
         changeOrigin: true,
         rewrite: (path) => path,
-        secure: true,
       },
     },
   },

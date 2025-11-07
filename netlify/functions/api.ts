@@ -68,24 +68,53 @@ export const handler: Handler = async (
     };
   }
 
-  // Extract the path from the event
-  // The path should be the original request path like /api/jupiter/quote
-  // Netlify passes the original path before rewrite in event.path
-  let rawPath = event.path || event.rawPath || "";
+  // Extract the path from multiple possible sources
+  // Netlify might pass it in different ways depending on configuration
+  let rawPath = "";
 
-  // Debug log the raw path
+  // Try event.path first (original request path)
+  if (event.path) {
+    rawPath = event.path;
+  }
+  // Try event.rawPath (alternative name)
+  else if (event.rawPath) {
+    rawPath = event.rawPath;
+  }
+  // Parse from rawUrl
+  else if (event.rawUrl) {
+    try {
+      const url = new URL(event.rawUrl, "http://localhost");
+      rawPath = url.pathname;
+    } catch {
+      rawPath = event.rawUrl.split("?")[0].split("#")[0];
+    }
+  }
+
+  // Check if path was passed as query parameter (fallback for some Netlify configs)
+  const queryPath = event.queryStringParameters?.path;
+  if (!rawPath && queryPath) {
+    rawPath = "/" + queryPath;
+  }
+
+  // Debug log the raw path and event details
   console.log(
-    `[API Router] Raw path: ${rawPath}, Method: ${event.httpMethod}, URL path: ${event.rawUrl || "N/A"}`,
+    `[API Router] Event: path=${rawPath}, method=${event.httpMethod}, url=${event.rawUrl || "N/A"}`,
   );
 
+  // Normalize path - handle multiple prefixes
+  let normalizedPath = rawPath;
+
   // Remove /.netlify/functions/api prefix if present (from rewrite)
-  if (rawPath.startsWith("/.netlify/functions/api")) {
-    rawPath = rawPath.replace(/^\/.netlify\/functions\/api/, "/api");
+  if (normalizedPath.startsWith("/.netlify/functions/api")) {
+    normalizedPath = normalizedPath.replace(
+      /^\/.netlify\/functions\/api/,
+      "/api",
+    );
   }
 
   // Remove /api prefix and query parameters
-  const pathWithoutPrefix = rawPath.replace(/^\/+api\/?/, "");
-  const path = pathWithoutPrefix.replace(/\?.*/, "");
+  const pathWithoutPrefix = normalizedPath.replace(/^\/+api\/?/, "");
+  const path = pathWithoutPrefix.replace(/\?.*$/, "").split("#")[0].trim();
 
   console.log(
     `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`,
@@ -94,7 +123,7 @@ export const handler: Handler = async (
   // Find and execute matching handler
   if (path && handlers[path]) {
     try {
-      console.log(`[API Router] Routing to: ${path}`);
+      console.log(`[API Router] Routing to handler: ${path}`);
       return await handlers[path](event);
     } catch (error: any) {
       console.error(`[API Router] Error in handler for ${path}:`, error);
@@ -110,10 +139,24 @@ export const handler: Handler = async (
     }
   }
 
+  // Handle root API path
+  if (!path || path === "") {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        message: "API Server is running",
+        availableEndpoints: Object.keys(handlers).map((p) => `/api/${p}`),
+      }),
+    };
+  }
+
   // Fallback for unmapped endpoints
   const availableEndpoints = Object.keys(handlers).map((p) => `/api/${p}`);
 
-  console.warn(`[API Router] No handler found for path: ${path}`);
+  console.warn(
+    `[API Router] No handler found for path: ${path} (rawPath was: ${rawPath})`,
+  );
 
   return {
     statusCode: 404,
@@ -122,6 +165,7 @@ export const handler: Handler = async (
       error: "API endpoint not found",
       hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, /api/jupiter/quote, etc.",
       requestedPath: path || "/",
+      rawPath: rawPath,
       availableEndpoints: availableEndpoints,
     }),
   };

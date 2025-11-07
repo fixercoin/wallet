@@ -32,13 +32,16 @@ const CORS_HEADERS = {
 function timeoutFetch(
   resource: string,
   options: RequestInit = {},
-  ms = 20000,
+  ms = 30000,
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   const init = { ...options, signal: controller.signal };
   return fetch(resource, init)
-    .finally(() => clearTimeout(timer))
+    .then((response) => {
+      clearTimeout(timer);
+      return response;
+    })
     .catch((e) => {
       clearTimeout(timer);
       throw e;

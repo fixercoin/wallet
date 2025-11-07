@@ -550,12 +550,112 @@ async function handlePumpFunQuote(
   }
 }
 
+async function handlePumpFunTrade(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (
+      !body.mint ||
+      typeof body.amount !== "number" ||
+      !body.trader ||
+      !body.action
+    ) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing required fields: mint, amount (number), trader, action (buy/sell)",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const action = String(body.action).toLowerCase();
+    if (!["buy", "sell"].includes(action)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Action must be "buy" or "sell"',
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const tradeBody = {
+      mint: body.mint,
+      amount: body.amount,
+      [action === "buy" ? "buyer" : "seller"]: body.trader,
+      slippageBps: body.slippageBps || 350,
+      priorityFeeLamports: body.priorityFeeLamports || 10000,
+    };
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(tradeBody),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to execute trade",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handlePumpFunSwap(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body.mint || !body.amount) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to execute swap",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
 async function handleDexscreenerPrice(url: URL): Promise<Response> {
-  const tokenAddress = url.searchParams.get("tokenAddress");
+  const tokenAddress =
+    url.searchParams.get("tokenAddress") ||
+    url.searchParams.get("mint") ||
+    url.searchParams.get("token");
 
   if (!tokenAddress) {
     return new Response(
-      JSON.stringify({ error: "tokenAddress parameter required" }),
+      JSON.stringify({
+        error: "tokenAddress (or mint/token) parameter required",
+        example: "/api/dexscreener/price?tokenAddress=<mint>",
+      }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
@@ -784,6 +884,17 @@ async function handler(request: Request): Promise<Response> {
       return await handleTokenPrice(url);
     }
 
+    if (pathname === "/api/dexscreener" || pathname === "/api/dexscreener/") {
+      return new Response(
+        JSON.stringify({
+          status: "ok",
+          message: "DexScreener API Proxy",
+          endpoints: ["/api/dexscreener/price?tokenAddress=<mint>"],
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
     if (pathname.startsWith("/api/dexscreener/price")) {
       return await handleDexscreenerPrice(url);
     }
@@ -808,6 +919,13 @@ async function handler(request: Request): Promise<Response> {
       return await handleJupiterTokens(url);
     }
 
+    if (
+      pathname === "/api/jupiter/token" ||
+      pathname === "/api/jupiter/token/"
+    ) {
+      return await handleJupiterTokens(url);
+    }
+
     if (pathname === "/api/pumpfun/quote") {
       return await handlePumpFunQuote(request, url);
     }
@@ -825,6 +943,14 @@ async function handler(request: Request): Promise<Response> {
 
     if (pathname === "/api/pumpfun/sell") {
       return await handlePumpFunSell(request);
+    }
+
+    if (pathname === "/api/pumpfun/trade") {
+      return await handlePumpFunTrade(request);
+    }
+
+    if (pathname === "/api/pumpfun/swap") {
+      return await handlePumpFunSwap(request);
     }
 
     return new Response(

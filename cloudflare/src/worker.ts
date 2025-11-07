@@ -4,7 +4,24 @@ export interface Env {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
+    let url: URL;
+    try {
+      url = new URL(request.url);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request URL",
+          details: String(e?.message || e),
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
     const pathname = url.pathname || "/";
 
     // Handle Pump.fun quote locally on Cloudflare worker

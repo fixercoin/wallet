@@ -1,25 +1,13 @@
 import type { Handler, HandlerEvent } from "@netlify/functions";
 
-const RPC_ENDPOINTS = [
-  process.env.SOLANA_RPC_URL || "",
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
-  "https://solana.publicnode.com",
-  "https://rpc.ankr.com/solana",
-  "https://api.mainnet-beta.solana.com",
-].filter(Boolean);
-
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
+
+const RPC_URL = "https://solana.publicnode.com";
 
 export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
@@ -30,83 +18,87 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  try {
-    const publicKey =
-      (event.queryStringParameters?.publicKey as string) ||
-      (event.queryStringParameters?.wallet as string) ||
-      (event.queryStringParameters?.address as string);
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
 
-    if (!publicKey || typeof publicKey !== "string") {
+  try {
+    // Support multiple parameter names for flexibility
+    const publicKey =
+      event.queryStringParameters?.publicKey ||
+      event.queryStringParameters?.wallet ||
+      event.queryStringParameters?.address ||
+      event.queryStringParameters?.walletAddress ||
+      "";
+
+    if (!publicKey) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "Missing or invalid wallet address parameter",
+          error:
+            "Missing publicKey parameter (also accepts: wallet, address, walletAddress)",
         }),
       };
     }
 
-    const body = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getBalance",
-      params: [publicKey],
-    };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    let lastError: Error | null = null;
+    try {
+      const response = await fetch(RPC_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getBalance",
+          params: [publicKey],
+        }),
+        signal: controller.signal,
+      });
 
-    for (const endpoint of RPC_ENDPOINTS) {
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
+      const data = await response.json();
 
-        const data = await response.json();
-
-        if (data.error) {
-          console.warn(`RPC ${endpoint} returned error:`, data.error);
-          lastError = new Error(data.error.message || "RPC error");
-          continue;
-        }
-
-        const balanceLamports = data.result;
-        const balanceSOL = balanceLamports / 1_000_000_000;
-
+      if (data.error) {
         return {
-          statusCode: 200,
+          statusCode: 400,
           headers: CORS_HEADERS,
           body: JSON.stringify({
-            publicKey,
-            balance: balanceSOL,
-            balanceLamports,
+            error: data.error.message || "Failed to get balance",
           }),
         };
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
-        continue;
       }
-    }
 
-    console.error("All RPC endpoints failed for wallet balance");
+      const balanceLamports = data.result || 0;
+      const balanceSol = balanceLamports / 1_000_000_000;
+
+      return {
+        statusCode: 200,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          publicKey,
+          lamports: balanceLamports,
+          sol: balanceSol,
+        }),
+      };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  } catch (error: any) {
+    console.error("[Wallet Balance] Error:", error);
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error:
-          lastError?.message ||
-          "Failed to fetch balance - all RPC endpoints failed",
-      }),
-    };
-  } catch (error) {
-    console.error("Wallet balance error:", error);
-    return {
-      statusCode: 500,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Internal server error",
+        error: "Failed to fetch balance",
+        details: error?.message || String(error),
       }),
     };
   }

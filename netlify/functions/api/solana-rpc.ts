@@ -1,23 +1,21 @@
 import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const RPC_ENDPOINTS = [
-  process.env.SOLANA_RPC_URL || "",
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
   "https://solana-rpc.publicnode.com",
-].filter(Boolean);
+];
 
-const rateLimitedEndpoints = new Map<
-  string,
-  { until: number; count: number }
->();
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Content-Type": "application/json",
+};
+
+let lastEndpointIndex = 0;
+const rateLimitedEndpoints = new Map<string, number>();
 
 function getEndpointKey(endpoint: string): string {
   try {
@@ -30,43 +28,53 @@ function getEndpointKey(endpoint: string): string {
 
 function isEndpointRateLimited(endpoint: string): boolean {
   const key = getEndpointKey(endpoint);
-  const entry = rateLimitedEndpoints.get(key);
-  if (!entry) return false;
-
-  const now = Date.now();
-  if (now > entry.until) {
+  const until = rateLimitedEndpoints.get(key);
+  if (!until) return false;
+  if (Date.now() > until) {
     rateLimitedEndpoints.delete(key);
     return false;
   }
-
   return true;
 }
 
-function markEndpointRateLimited(endpoint: string, delayMs: number): void {
+function markEndpointRateLimited(
+  endpoint: string,
+  durationMs: number = 30000,
+): void {
   const key = getEndpointKey(endpoint);
-  const entry = rateLimitedEndpoints.get(key) || { count: 0, until: 0 };
+  rateLimitedEndpoints.set(key, Date.now() + durationMs);
+}
 
-  const backoffMultiplier = Math.min(entry.count + 1, 5);
-  const cooldownMs = delayMs * backoffMultiplier;
+async function makeRpcCall(body: any, endpoint: string): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  entry.count = backoffMultiplier;
-  entry.until = Date.now() + cooldownMs;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
 
-  rateLimitedEndpoints.set(key, entry);
-  console.log(
-    `[RPC Proxy] Endpoint rate limited for ${cooldownMs / 1000}s: ${key}`,
-  );
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        markEndpointRateLimited(endpoint);
+      }
+      throw new Error(`RPC error ${response.status}`);
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export const handler: Handler = async (event: HandlerEvent) => {
-  const CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-    "Access-Control-Allow-Headers":
-      "Content-Type, Authorization, X-Requested-With",
-    "Content-Type": "application/json",
-  };
-
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -75,166 +83,84 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  try {
-    const body =
-      typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
 
-    if (!body) {
+  try {
+    const body = event.body ? JSON.parse(event.body) : null;
+
+    if (!body || !body.jsonrpc) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Missing request body" }),
+        body: JSON.stringify({ error: "Invalid JSON-RPC request" }),
       };
     }
 
-    const method = body.method || "unknown";
     const availableEndpoints = RPC_ENDPOINTS.filter(
       (ep) => !isEndpointRateLimited(ep),
     );
-    const totalEndpoints = RPC_ENDPOINTS.length;
-    const workingEndpoints = availableEndpoints.length;
 
-    if (workingEndpoints === 0) {
+    if (availableEndpoints.length === 0) {
       return {
         statusCode: 429,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "All RPC endpoints are currently rate limited",
-          message:
-            "Please retry after a moment. The service is experiencing high load.",
-          allEndpointsRateLimited: true,
-          totalEndpoints: totalEndpoints,
+          error: "All RPC endpoints are rate limited",
+          message: "Please retry after a moment",
         }),
       };
     }
 
-    console.log(
-      `[RPC Proxy] ${method} request - ${workingEndpoints}/${totalEndpoints} endpoints available`,
-    );
-
-    let lastError: Error | null = null;
-    let lastErrorStatus: number | null = null;
-    let lastErrorData: any = null;
+    let lastError: any;
 
     for (let i = 0; i < availableEndpoints.length; i++) {
-      const endpoint = availableEndpoints[i];
+      const endpointIndex = (lastEndpointIndex + i) % availableEndpoints.length;
+      const endpoint = availableEndpoints[endpointIndex];
+
       try {
-        console.log(
-          `[RPC Proxy] ${method} - Attempting endpoint ${i + 1}/${workingEndpoints}`,
-        );
+        const result = await makeRpcCall(body, endpoint);
+        lastEndpointIndex = endpointIndex;
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const data = await response.text();
-        let parsedData: any = null;
-        try {
-          parsedData = JSON.parse(data);
-        } catch {}
-
-        if (parsedData?.error) {
-          const errorCode = parsedData.error.code;
-          const errorMsg = parsedData.error.message;
-          console.warn(
-            `[RPC Proxy] ${method} - Endpoint returned RPC error code ${errorCode}`,
-          );
-          lastErrorData = parsedData;
-          lastError = new Error(`RPC error (${errorCode}): ${errorMsg}`);
-
-          if (i < availableEndpoints.length - 1) {
-            continue;
-          }
-        }
-
-        if (response.status === 403) {
-          console.warn(
-            `[RPC Proxy] ${method} - Endpoint returned 403, trying next...`,
-          );
-          lastErrorStatus = 403;
-          lastError = new Error(`Endpoint blocked: ${endpoint}`);
-          continue;
-        }
-
-        if (response.status === 429) {
-          console.warn(`[RPC Proxy] ${method} - Endpoint rate limited (429)`);
-          markEndpointRateLimited(endpoint, 10000);
-          lastErrorStatus = 429;
-          lastError = new Error(`Rate limited: ${endpoint}`);
-
-          if (i < availableEndpoints.length - 1) {
-            continue;
-          }
-
-          break;
-        }
-
-        if (!response.ok && response.status >= 500) {
-          console.warn(
-            `[RPC Proxy] ${method} - Endpoint returned ${response.status}`,
-          );
-          lastErrorStatus = response.status;
-          lastError = new Error(`Server error: ${response.status}`);
-          continue;
-        }
-
-        console.log(
-          `[RPC Proxy] ${method} - SUCCESS (status: ${response.status})`,
-        );
         return {
-          statusCode: response.status,
+          statusCode: 200,
           headers: CORS_HEADERS,
-          body: data,
+          body: JSON.stringify(result),
         };
-      } catch (e: any) {
-        lastError = e instanceof Error ? e : new Error(String(e));
+      } catch (error: any) {
+        lastError = error;
         console.warn(
-          `[RPC Proxy] ${method} - Endpoint error:`,
-          lastError.message,
+          `[RPC] ${getEndpointKey(endpoint)} failed:`,
+          error.message,
         );
-        if (i < availableEndpoints.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 300));
+
+        if (error.message.includes("429")) {
+          markEndpointRateLimited(endpoint);
         }
-        continue;
       }
     }
 
-    console.error(`[RPC Proxy] ${method} - All endpoints exhausted`);
-
-    const statusCode = lastErrorStatus === 429 ? 429 : lastErrorStatus || 503;
-
     return {
-      statusCode: statusCode,
+      statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error:
-          lastError?.message ||
-          "All RPC endpoints failed - no Solana RPC available",
-        details: `Last error: ${lastErrorStatus || "unknown"}`,
-        rpcErrorDetails: lastErrorData?.error || null,
-        configuredEndpoints: totalEndpoints,
-        availableEndpoints: workingEndpoints,
-        rateLimitingActive: statusCode === 429,
+        error: "RPC request failed",
+        details: lastError?.message || "All endpoints failed",
       }),
     };
-  } catch (error) {
-    console.error("[RPC Proxy] Handler error:", error);
+  } catch (error: any) {
+    console.error("[RPC] Error:", error);
     return {
       statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Internal server error",
+        error: "Internal server error",
+        details: error?.message || String(error),
       }),
     };
   }

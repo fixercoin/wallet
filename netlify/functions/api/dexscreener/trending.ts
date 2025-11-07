@@ -58,49 +58,25 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const tokenAddress = event.queryStringParameters?.tokenAddress || "";
+    const chainId = event.queryStringParameters?.chainId || "solana";
+    const limit = event.queryStringParameters?.limit || "20";
 
-    if (!tokenAddress) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Missing tokenAddress parameter" }),
-      };
-    }
-
-    const data = await fetchFromDexScreener(`/tokens/${tokenAddress}`);
-
-    if (!data.pairs || data.pairs.length === 0) {
-      return {
-        statusCode: 404,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Token not found on DexScreener" }),
-      };
-    }
-
-    const pair = data.pairs[0];
-    const price = parseFloat(pair.priceUsd || "0");
+    const data = await fetchFromDexScreener(
+      `/trendingPairs/${chainId}?limit=${limit}`,
+    );
 
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify({
-        address: tokenAddress,
-        price: price,
-        priceUsd: price,
-        priceChange24h: parseFloat(pair.priceChange?.h24 || "0") || 0,
-        volume24h: parseFloat(pair.volume?.h24 || "0") || 0,
-        marketCap: parseFloat(pair.marketCap || "0") || 0,
-        liquidity: parseFloat(pair.liquidity?.usd || "0") || 0,
-      }),
+      body: JSON.stringify(data),
     };
   } catch (error: any) {
-    console.error("[DexScreener Price] Error:", error);
+    console.error("[DexScreener Trending] Error:", error);
     return {
       statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Failed to fetch price",
+        error: "Failed to fetch trending pairs",
         details: error?.message || String(error),
       }),
     };

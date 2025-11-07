@@ -2,12 +2,12 @@ import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
 
-const JUPITER_API = "https://quote-api.jup.ag/v6";
+const JUPITER_API = "https://token.jup.ag";
 
 export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
@@ -18,7 +18,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  if (event.httpMethod !== "POST") {
+  if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,
       headers: CORS_HEADERS,
@@ -27,40 +27,29 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const body = event.body ? JSON.parse(event.body) : null;
-
-    if (!body) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Missing request body" }),
-      };
-    }
-
-    const url = `${JUPITER_API}/swap`;
+    const type = event.queryStringParameters?.type || "all";
+    const url = `${JUPITER_API}/${type}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch(url, {
-        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
         signal: controller.signal,
       });
-
-      const data = await response.json();
 
       if (!response.ok) {
         return {
           statusCode: response.status,
           headers: CORS_HEADERS,
-          body: JSON.stringify(data || { error: "Jupiter swap error" }),
+          body: JSON.stringify({ error: "Failed to fetch token list" }),
         };
       }
+
+      const data = await response.json();
 
       return {
         statusCode: 200,
@@ -71,12 +60,12 @@ export const handler: Handler = async (event: HandlerEvent) => {
       clearTimeout(timeoutId);
     }
   } catch (error: any) {
-    console.error("[Jupiter Swap] Error:", error);
+    console.error("[Jupiter Tokens] Error:", error);
     return {
       statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Failed to execute swap",
+        error: "Failed to fetch tokens",
         details: error?.message || String(error),
       }),
     };

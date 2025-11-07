@@ -2,8 +2,8 @@ import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
 
@@ -16,45 +16,65 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
+
   try {
-    const ids = event.queryStringParameters?.ids;
+    const ids = event.queryStringParameters?.ids || "";
 
     if (!ids) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Missing required parameter: ids",
-        }),
+        body: JSON.stringify({ error: "Missing ids parameter" }),
       };
     }
 
-    const response = await fetch(
-      `https://api.jup.ag/price?ids=${encodeURIComponent(ids)}`,
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
+    try {
+      const response = await fetch(
+        `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        },
+      );
+
+      if (!response.ok) {
+        return {
+          statusCode: response.status,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({ error: "Jupiter API error" }),
+        };
+      }
+
+      const data = await response.json();
+
       return {
-        statusCode: response.status,
+        statusCode: 200,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Failed to fetch Jupiter prices" }),
+        body: JSON.stringify(data),
       };
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json();
-
-    return {
-      statusCode: 200,
-      headers: CORS_HEADERS,
-      body: JSON.stringify(data),
-    };
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Jupiter Price] Error:", error);
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Internal server error",
+        error: "Failed to fetch prices",
+        details: error?.message || String(error),
       }),
     };
   }

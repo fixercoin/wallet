@@ -1,30 +1,23 @@
-// API router for Netlify functions
-// Routes requests to the appropriate nested handlers based on the path
 import type {
   Handler,
   HandlerEvent,
   HandlerResponse,
 } from "@netlify/functions";
 
-// Import all handlers (named exports)
+// Import all individual handlers
+import { handler as solPriceHandler } from "./api/sol/price";
 import { handler as jupiterQuoteHandler } from "./api/jupiter/quote";
 import { handler as jupiterSwapHandler } from "./api/jupiter/swap";
+import { handler as jupiterTokensHandler } from "./api/jupiter/tokens";
 import { handler as jupiterPriceHandler } from "./api/jupiter/price";
-import { handler as solPriceHandler } from "./api/sol/price";
-import { handler as tokenPriceHandler } from "./api/token/price";
-import { handler as walletBalanceHandler } from "./api/wallet/balance";
-import { handler as solanRpcHandler } from "./api/solana-rpc";
-import { handler as healthHandler } from "./api/health";
-import { handler as pingHandler } from "./api/ping";
-import { handler as dexscreenerPriceHandler } from "./api/dexscreener/price";
 import { handler as dexscreenerTokensHandler } from "./api/dexscreener/tokens";
-import { handler as birdeeyePriceHandler } from "./api/birdeye/price";
-import { handler as pumpfunQuoteHandler } from "./api/pumpfun/quote";
-import { handler as pumpfunBuyHandler } from "./api/pumpfun/buy";
-import { handler as pumpfunSellHandler } from "./api/pumpfun/sell";
-import { handler as pumpfunTradeHandler } from "./api/pumpfun/trade";
-import { handler as pumpfunCurveHandler } from "./api/pumpfun/curve";
-import { handler as forexRateHandler } from "./api/forex/rate";
+import { handler as dexscreenerPriceHandler } from "./api/dexscreener/price";
+import { handler as dexscreenerTrendingHandler } from "./api/dexscreener/trending";
+import { handler as dexscreenerSearchHandler } from "./api/dexscreener/search";
+import { handler as birdeyePriceHandler } from "./api/birdeye/price";
+import { handler as walletBalanceHandler } from "./api/wallet/balance";
+import { handler as solanaRpcHandler } from "./api/solana-rpc";
+import { handler as tokenPriceHandler } from "./api/token/price";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -34,26 +27,20 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-// Map of paths to handlers
-const handlers: Record<string, Handler> = {
+const HANDLERS: Record<string, Handler> = {
+  "sol/price": solPriceHandler,
   "jupiter/quote": jupiterQuoteHandler,
   "jupiter/swap": jupiterSwapHandler,
+  "jupiter/tokens": jupiterTokensHandler,
   "jupiter/price": jupiterPriceHandler,
-  "sol/price": solPriceHandler,
-  "token/price": tokenPriceHandler,
-  "wallet/balance": walletBalanceHandler,
-  "solana-rpc": solanRpcHandler,
-  health: healthHandler,
-  ping: pingHandler,
-  "dexscreener/price": dexscreenerPriceHandler,
   "dexscreener/tokens": dexscreenerTokensHandler,
-  "birdeye/price": birdeeyePriceHandler,
-  "pumpfun/quote": pumpfunQuoteHandler,
-  "pumpfun/buy": pumpfunBuyHandler,
-  "pumpfun/sell": pumpfunSellHandler,
-  "pumpfun/trade": pumpfunTradeHandler,
-  "pumpfun/curve": pumpfunCurveHandler,
-  "forex/rate": forexRateHandler,
+  "dexscreener/price": dexscreenerPriceHandler,
+  "dexscreener/trending": dexscreenerTrendingHandler,
+  "dexscreener/search": dexscreenerSearchHandler,
+  "birdeye/price": birdeyePriceHandler,
+  "wallet/balance": walletBalanceHandler,
+  "solana-rpc": solanaRpcHandler,
+  "token/price": tokenPriceHandler,
 };
 
 export const handler: Handler = async (
@@ -68,105 +55,112 @@ export const handler: Handler = async (
     };
   }
 
-  // Extract the path from multiple possible sources
-  // Netlify might pass it in different ways depending on configuration
-  let rawPath = "";
+  // Extract path from the query parameter (set by netlify.toml rewrite rule)
+  const queryPath = event.queryStringParameters?.path;
 
-  // Try event.path first (original request path)
-  if (event.path) {
-    rawPath = event.path;
-  }
-  // Try event.rawPath (alternative name)
-  else if (event.rawPath) {
-    rawPath = event.rawPath;
-  }
-  // Parse from rawUrl
-  else if (event.rawUrl) {
-    try {
-      const url = new URL(event.rawUrl, "http://localhost");
-      rawPath = url.pathname;
-    } catch {
-      rawPath = event.rawUrl.split("?")[0].split("#")[0];
+  let apiPath = "";
+
+  if (queryPath) {
+    apiPath = queryPath.trim();
+  } else {
+    // Fallback: try to extract from other sources
+    let rawPath = event.path || event.rawPath || "";
+
+    if (!rawPath && event.rawUrl) {
+      try {
+        const url = new URL(event.rawUrl, "http://localhost");
+        rawPath = url.pathname;
+      } catch {
+        rawPath = event.rawUrl.split("?")[0].split("#")[0];
+      }
+    }
+
+    if (rawPath) {
+      apiPath = rawPath.replace(/^\/+api\/?/, "").trim();
     }
   }
 
-  // Check if path was passed as query parameter (fallback for some Netlify configs)
-  const queryPath = event.queryStringParameters?.path;
-  if (!rawPath && queryPath) {
-    rawPath = "/" + queryPath;
+  console.log(`[API Router] Path: ${apiPath}, Method: ${event.httpMethod}`);
+
+  // Handle local health checks
+  if (apiPath === "health") {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        status: "healthy",
+        service: "Fixorium Wallet API",
+        timestamp: new Date().toISOString(),
+      }),
+    };
   }
 
-  // Debug log the raw path and event details
-  console.log(
-    `[API Router] Event: path=${rawPath}, method=${event.httpMethod}, url=${event.rawUrl || "N/A"}`,
-  );
-
-  // Normalize path - handle multiple prefixes
-  let normalizedPath = rawPath;
-
-  // Remove /.netlify/functions/api prefix if present (from rewrite)
-  if (normalizedPath.startsWith("/.netlify/functions/api")) {
-    normalizedPath = normalizedPath.replace(
-      /^\/.netlify\/functions\/api/,
-      "/api",
-    );
+  if (apiPath === "ping") {
+    return {
+      statusCode: 200,
+      headers: {
+        ...CORS_HEADERS,
+        "Content-Type": "text/plain",
+      },
+      body: "pong",
+    };
   }
 
-  // Remove /api prefix and query parameters
-  const pathWithoutPrefix = normalizedPath.replace(/^\/+api\/?/, "");
-  const path = pathWithoutPrefix.replace(/\?.*$/, "").split("#")[0].trim();
+  if (apiPath === "status") {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        status: "operational",
+        service: "Fixorium Wallet API",
+        timestamp: new Date().toISOString(),
+      }),
+    };
+  }
 
-  console.log(
-    `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`,
-  );
+  // Handle root API path
+  if (!apiPath || apiPath === "") {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        message: "Fixorium Wallet API (Netlify)",
+        status: "operational",
+        availableEndpoints: Object.keys(HANDLERS).map((p) => `/api/${p}`),
+      }),
+    };
+  }
 
-  // Find and execute matching handler
-  if (path && handlers[path]) {
+  // Route to specific handlers
+  if (HANDLERS[apiPath]) {
     try {
-      console.log(`[API Router] Routing to handler: ${path}`);
-      return await handlers[path](event);
+      console.log(`[API Router] Routing to handler: ${apiPath}`);
+      return await HANDLERS[apiPath](event);
     } catch (error: any) {
-      console.error(`[API Router] Error in handler for ${path}:`, error);
+      console.error(`[API Router] Error in handler for ${apiPath}:`, error);
       return {
         statusCode: 500,
         headers: CORS_HEADERS,
         body: JSON.stringify({
           error: "Handler execution error",
           details: error?.message || String(error),
-          path: path,
+          path: apiPath,
         }),
       };
     }
   }
 
-  // Handle root API path
-  if (!path || path === "") {
-    return {
-      statusCode: 200,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        message: "API Server is running",
-        availableEndpoints: Object.keys(handlers).map((p) => `/api/${p}`),
-      }),
-    };
-  }
-
   // Fallback for unmapped endpoints
-  const availableEndpoints = Object.keys(handlers).map((p) => `/api/${p}`);
-
-  console.warn(
-    `[API Router] No handler found for path: ${path} (rawPath was: ${rawPath})`,
-  );
+  console.warn(`[API Router] No handler found for path: ${apiPath}`);
 
   return {
     statusCode: 404,
     headers: CORS_HEADERS,
     body: JSON.stringify({
       error: "API endpoint not found",
-      hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, /api/jupiter/quote, etc.",
-      requestedPath: path || "/",
-      rawPath: rawPath,
-      availableEndpoints: availableEndpoints,
+      requestedPath: apiPath || "/",
+      hint: "Check available endpoints in the API response",
+      availableEndpoints: Object.keys(HANDLERS).map((p) => `/api/${p}`),
     }),
   };
 };

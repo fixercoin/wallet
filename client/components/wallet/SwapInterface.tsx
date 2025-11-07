@@ -362,7 +362,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const getQuote = async () => {
     try {
-      setStatus("Computing routes…");
+      setStatus("Computing Jupiter routes…");
       setIsLoading(true);
 
       if (!wallet) {
@@ -405,12 +405,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const outAmount = BigInt(quoteResponse.outAmount);
       const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+      const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
 
       setQuote({
         quoteResponse,
         outHuman,
         outToken: toToken.symbol,
         hops: quoteResponse.routePlan?.length ?? 0,
+        priceImpact,
         quoteTime: Date.now(),
       });
       setStatus("");

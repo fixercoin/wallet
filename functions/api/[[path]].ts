@@ -395,30 +395,76 @@ async function handleJupiterPrice(url: URL): Promise<Response> {
   const endpoints = [
     `${JUPITER_PRICE_BASE}/price?ids=${ids}`,
     `https://api.jup.ag/price/v2?ids=${ids}`,
+    `https://public-api.birdeye.so/public/token/price?list_address=${ids}`,
   ];
 
-  for (const endpoint of endpoints) {
-    try {
-      const response = await timeoutFetch(endpoint, {
-        method: "GET",
-        headers: browserHeaders(),
-      });
+  let lastError = "";
 
-      if (response.ok) {
-        const data = await response.json();
-        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+  for (let idx = 0; idx < endpoints.length; idx++) {
+    const endpoint = endpoints[idx];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[Jupiter Price] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+        );
+
+        const response = await timeoutFetch(endpoint, {
+          method: "GET",
+          headers: browserHeaders(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Jupiter Price] Success on attempt ${attempt}`);
+          return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+        }
+
+        lastError = `HTTP ${response.status}`;
+
+        if (response.status === 429) {
+          console.warn(`[Jupiter Price] Rate limited (429)`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+
+        if (response.status >= 500) {
+          console.warn(`[Jupiter Price] Server error (${response.status})`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+
+        console.warn(
+          `[Jupiter Price] Non-OK response (${response.status}), trying next endpoint`,
+        );
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.error(
+          `[Jupiter Price] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+          continue;
+        }
       }
-
-      if (response.status === 429) continue;
-    } catch (e) {
-      continue;
     }
   }
 
-  return new Response(JSON.stringify({ error: "Price API error", data: {} }), {
-    status: 500,
-    headers: CORS_HEADERS,
-  });
+  console.error(
+    `[Jupiter Price] All endpoints failed. Last error: ${lastError}`,
+  );
+  return new Response(
+    JSON.stringify({
+      error: "Price API error",
+      data: {},
+      details: lastError,
+    }),
+    { status: 502, headers: CORS_HEADERS },
+  );
 }
 
 async function handleJupiterTokens(url: URL): Promise<Response> {

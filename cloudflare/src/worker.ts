@@ -4,7 +4,24 @@ export interface Env {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
+    let url: URL;
+    try {
+      url = new URL(request.url);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request URL",
+          details: String(e?.message || e),
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
     const pathname = url.pathname || "/";
 
     // Handle Pump.fun quote locally on Cloudflare worker
@@ -801,56 +818,21 @@ export default {
       });
     }
 
-    // Forward OTHER /api/ requests to the backend API server (Netlify Functions)
+    // Return 404 for unhandled API routes
     if (url.pathname.startsWith("/api/")) {
-      const backendUrl = "https://wallet.fixorium.com.pk" + url.pathname;
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
-
-        const response = await fetch(backendUrl, {
-          method: request.method,
-          headers: request.headers,
-          body: request.body,
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeout);
-
-        // Add CORS headers to the response
-        const newHeaders = new Headers(response.headers);
-        newHeaders.set("Access-Control-Allow-Origin", "*");
-        newHeaders.set(
-          "Access-Control-Allow-Methods",
-          "GET, POST, PUT, DELETE, OPTIONS",
-        );
-        newHeaders.set(
-          "Access-Control-Allow-Headers",
-          "Content-Type, Authorization, X-Admin-Wallet",
-        );
-
-        return new Response(response.body, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: newHeaders,
-        });
-      } catch (e: any) {
-        const isTimeout = e?.name === "AbortError";
-        return new Response(
-          JSON.stringify({
-            error: isTimeout ? "Request timeout" : "Backend API error",
-            path: url.pathname,
-            details: String(e?.message || e),
-          }),
-          {
-            status: isTimeout ? 504 : 502,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
+      return new Response(
+        JSON.stringify({
+          error: "API endpoint not found",
+          path: url.pathname,
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
           },
-        );
-      }
+        },
+      );
     }
 
     // Serve front-end UI

@@ -290,20 +290,10 @@ export const handler = async (event: any) => {
 
     // Solana RPC
     if (path === "/solana-rpc" && method === "POST") {
-      let body: any = {};
-      try {
-        if (event.body) {
-          if (typeof event.body === "string") {
-            body = JSON.parse(event.body);
-          } else {
-            body = event.body;
-          }
-        }
-      } catch (e) {
-        console.error("[Solana RPC] Failed to parse request body:", e);
+      const body = parseRequestBody(event);
+      if (body === null) {
         return jsonResponse(400, {
           error: "Invalid JSON in request body",
-          details: (e as any)?.message,
         });
       }
 

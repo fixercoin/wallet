@@ -644,11 +644,17 @@ async function handlePumpFunSwap(request: Request): Promise<Response> {
 }
 
 async function handleDexscreenerPrice(url: URL): Promise<Response> {
-  const tokenAddress = url.searchParams.get("tokenAddress");
+  const tokenAddress =
+    url.searchParams.get("tokenAddress") ||
+    url.searchParams.get("mint") ||
+    url.searchParams.get("token");
 
   if (!tokenAddress) {
     return new Response(
-      JSON.stringify({ error: "tokenAddress parameter required" }),
+      JSON.stringify({
+        error: "tokenAddress (or mint/token) parameter required",
+        example: "/api/dexscreener/price?tokenAddress=<mint>",
+      }),
       { status: 400, headers: CORS_HEADERS },
     );
   }

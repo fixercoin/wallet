@@ -78,6 +78,11 @@ export const makeRpcCall = async (
       try {
         let response: Response;
         try {
+          // Add timeout for the proxy RPC call
+          const controller = new AbortController();
+          const timeoutMs = 15000; // 15s timeout for proxy RPC
+          const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
           response = await fetch("/api/solana-rpc", {
             method: "POST",
             headers: {
@@ -88,11 +93,74 @@ export const makeRpcCall = async (
               params,
               id: Date.now(),
             }),
+            signal: controller.signal,
           });
+          clearTimeout(timeout);
         } catch (fetchErr) {
           // Network/connection error (e.g. Dev server not running, middleware not mounted)
           const fetchError =
             fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+
+          // Check if it's a timeout error
+          const isTimeout =
+            fetchError.includes("abort") || fetchError.includes("timeout");
+          if (isTimeout) {
+            console.warn(
+              `[RPC Call] ${method} timed out after ${timeoutMs}ms. Trying direct endpoints...`,
+            );
+          }
+
+          // Try calling known public RPC endpoints directly as a fallback
+          const directEndpoints = [
+            SOLANA_RPC_URL,
+            "https://rpc.ankr.com/solana",
+            "https://api.mainnet-beta.solana.com",
+            "https://solana.publicnode.com",
+          ].filter(Boolean);
+
+          for (const endpoint of directEndpoints) {
+            try {
+              const controller2 = new AbortController();
+              const timeout2 = setTimeout(() => controller2.abort(), 10000);
+              const resp2 = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: Date.now(),
+                  method,
+                  params,
+                }),
+                signal: controller2.signal,
+              });
+              clearTimeout(timeout2);
+
+              if (!resp2.ok) {
+                const t = await resp2.text().catch(() => "");
+                console.warn(
+                  `Direct RPC ${endpoint} returned ${resp2.status}: ${t}`,
+                );
+                continue;
+              }
+
+              const txt2 = await resp2.text().catch(() => "");
+              try {
+                const parsed = txt2 ? JSON.parse(txt2) : null;
+                if (parsed && parsed.error) {
+                  throw new Error(parsed.error.message || "RPC error");
+                }
+                return parsed?.result ?? parsed ?? txt2;
+              } catch (e) {
+                return txt2;
+              }
+            } catch (e) {
+              console.warn(
+                `Direct RPC endpoint ${endpoint} failed:`,
+                e instanceof Error ? e.message : String(e),
+              );
+              continue;
+            }
+          }
 
           // Health check to provide better guidance
           try {

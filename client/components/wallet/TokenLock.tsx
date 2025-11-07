@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { formatTokenAmount } from "@/lib/utils";
 import { shortenAddress } from "@/lib/wallet";
 import type { TokenInfo } from "@/lib/wallet";
 import {
@@ -353,7 +354,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       // keep the spinner visible briefly so users see activity
       setTimeout(() => setIsRefreshing(false), 500);
     }
-  }, [wallet]);
+  }, [wallet?.publicKey]);
 
   useEffect(() => {
     if (!wallet) return;
@@ -371,7 +372,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       console.error("Failed to read token locks", error);
       setLocks([]);
     }
-  }, [wallet]);
+  }, [wallet?.publicKey]);
 
   // Auto-refresh locks from localStorage every 20 seconds
   useEffect(() => {
@@ -380,7 +381,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       refreshLocksFromStorage();
     }, 20000);
     return () => clearInterval(interval);
-  }, [wallet, refreshLocksFromStorage]);
+  }, [wallet?.publicKey, refreshLocksFromStorage]);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -533,7 +534,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               : item,
           ),
         );
-        // Persist withdraw event to Cloudflare (best-effort)
+        // Persist withdraw event (best-effort)
         try {
           await fetch(resolveApiUrl(`/api/locks/${lock.id}/withdraw`), {
             method: "POST",
@@ -676,7 +677,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         ),
       );
 
-      // Persist lock record to Cloudflare (best-effort)
+      // Persist lock record (best-effort)
       try {
         await fetch(resolveApiUrl("/api/locks"), {
           method: "POST",
@@ -747,9 +748,17 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label="Back"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft
+                className="h-4 w-4 text-black"
+                fill="none"
+                strokeWidth={2}
+              />
             </Button>
-            <LockIcon className="h-5 w-5 text-purple-500" />
+            <LockIcon
+              className="h-5 w-5 text-black"
+              fill="none"
+              strokeWidth={2}
+            />
             <span className="text-sm font-semibold text-gray-900">
               Create new lock
             </span>
@@ -777,7 +786,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           {token.symbol || token.name || token.mint.slice(0, 6)}
                         </span>
                         <span className="text-[10px] text-gray-300 uppercase">
-                          Balance: {(token.balance || 0).toLocaleString()}
+                          Balance:{" "}
+                          {formatTokenAmount(token.balance || 0, token.symbol)}
                         </span>
                       </div>
                     </SelectItem>
@@ -797,7 +807,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
-                  Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
+                  Available:{" "}
+                  {formatTokenAmount(
+                    selectedToken.balance || 0,
+                    selectedToken.symbol,
+                  )}{" "}
                   {selectedToken.symbol}
                 </p>
               ) : null}
@@ -834,12 +848,20 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             >
               {isSubmitting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <RefreshCw
+                    className="h-4 w-4 mr-2 animate-spin text-black"
+                    fill="none"
+                    strokeWidth={2}
+                  />
                   Locking tokens...
                 </>
               ) : (
                 <>
-                  <LockIcon className="h-4 w-4 mr-2" />
+                  <LockIcon
+                    className="h-4 w-4 mr-2 text-black"
+                    fill="none"
+                    strokeWidth={2}
+                  />
                   Lock tokens
                 </>
               )}
@@ -850,7 +872,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-purple-500" />
+              <Clock
+                className="h-5 w-5 text-black"
+                fill="none"
+                strokeWidth={2}
+              />
               <span className="text-sm font-semibold text-white">
                 Active locks
               </span>
@@ -869,7 +895,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 title="Refresh locks"
               >
                 <RefreshCw
-                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  className={`h-4 w-4 text-black ${isRefreshing ? "animate-spin" : ""}`}
+                  fill="none"
+                  strokeWidth={2}
                 />
               </Button>
             </div>
@@ -992,11 +1020,23 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                         disabled={!canWithdraw}
                       >
                         {lock.status === "withdrawing" ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <RefreshCw
+                            className="h-4 w-4 animate-spin text-black"
+                            fill="none"
+                            strokeWidth={2}
+                          />
                         ) : isWithdrawn ? (
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2
+                            className="h-4 w-4 text-black"
+                            fill="none"
+                            strokeWidth={2}
+                          />
                         ) : (
-                          <LockIcon className="h-4 w-4" />
+                          <LockIcon
+                            className="h-4 w-4 text-black"
+                            fill="none"
+                            strokeWidth={2}
+                          />
                         )}
                         <span className="ml-2">
                           {isWithdrawn
@@ -1010,7 +1050,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
                     {lock.error ? (
                       <div className="flex items-center gap-2 text-[11px] text-red-500 bg-red-50/70 border border-red-100 rounded-lg px-3 py-2">
-                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTriangle
+                          className="h-4 w-4 text-black"
+                          fill="none"
+                          strokeWidth={2}
+                        />
                         <div>
                           <div className="font-medium">Last attempt failed</div>
                           <div className="opacity-80">{lock.error}</div>

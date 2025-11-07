@@ -49,8 +49,8 @@ class BirdeyeAPI {
       const response = await fetch(url);
 
       if (!response.ok) {
-        console.warn(
-          `[Birdeye] Price request failed with status ${response.status}`,
+        console.debug(
+          `[Birdeye] Price request failed with status ${response.status} for ${mint} (will use fallback)`,
         );
         return null;
       }
@@ -58,7 +58,9 @@ class BirdeyeAPI {
       const data: BirdeyePriceResponse = await response.json();
 
       if (!data.success || !data.data) {
-        console.warn(`[Birdeye] Price API returned no data for ${mint}`);
+        console.debug(
+          `[Birdeye] Price API returned no data for ${mint} (will use fallback)`,
+        );
         return null;
       }
 
@@ -78,9 +80,8 @@ class BirdeyeAPI {
       );
       return token;
     } catch (error) {
-      console.warn(
-        `[Birdeye] Error fetching price for ${mint}:`,
-        error instanceof Error ? error.message : String(error),
+      console.debug(
+        `[Birdeye] Error fetching price for ${mint}: ${error instanceof Error ? error.message : String(error)} (will use fallback)`,
       );
       return null;
     }
@@ -153,6 +154,11 @@ class BirdeyeAPI {
     });
 
     return prices;
+  }
+
+  clearCache(): void {
+    BirdeyeAPI.tokenCache.clear();
+    console.log("[Birdeye] Cache cleared");
   }
 }
 

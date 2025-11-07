@@ -85,7 +85,7 @@ const tryDexscreenerEndpoints = async (
       console.log(`Trying DexScreener API: ${url}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
 
       const response = await fetch(url, {
         method: "GET",
@@ -108,7 +108,37 @@ const tryDexscreenerEndpoints = async (
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as DexscreenerResponse;
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          console.warn(
+            `Got HTML response from ${endpoint} instead of JSON. Status: ${response.status}`,
+          );
+          throw new Error(
+            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`,
+          );
+        }
+        throw new Error(
+          `Invalid content-type from ${endpoint}: ${contentType}`,
+        );
+      }
+
+      let data: DexscreenerResponse;
+      try {
+        data = (await response.json()) as DexscreenerResponse;
+      } catch (parseError) {
+        const text = await response.text();
+        console.error(`Failed to parse JSON from ${endpoint}:`, parseError);
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          throw new Error(
+            `DexScreener returned HTML instead of JSON (likely a 5xx error). Status: ${response.status}`,
+          );
+        }
+        throw new Error(
+          `Failed to parse JSON response from DexScreener: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        );
+      }
 
       // Success - update current endpoint
       currentEndpointIndex = endpointIndex;
@@ -116,7 +146,7 @@ const tryDexscreenerEndpoints = async (
       return data;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`DexScreener endpoint ${endpoint} failed:`, errorMsg);
+      console.warn(`DexScreener endpoint ${endpoint} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Small delay before trying next endpoint
@@ -191,6 +221,14 @@ export const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+};
+
+// Fallback prices for tokens when DexScreener returns nothing
+const FALLBACK_USD: Record<string, number> = {
+  FIXERCOIN: 0.005,
+  LOCKER: 0.1,
+  USDC: 1.0,
+  USDT: 1.0,
 };
 
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
@@ -388,7 +426,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
                 if (matchingPair) {
                   console.log(
-                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
+                    `[DexScreener] �� Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                   );
                   results.push(matchingPair);
                   foundMintsSet.add(mint);
@@ -406,6 +444,60 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
                   : String(searchErr),
               );
             }
+          }
+        }
+
+        // If still not found, add synthetic fallback for known tokens (stablecoins, FIXERCOIN, LOCKER)
+        if (!found) {
+          try {
+            const STABLE_MINTS: Record<string, string> = {
+              EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: "USDC",
+              Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: "USDT",
+            };
+
+            const symbol =
+              STABLE_MINTS[mint] || MINT_TO_SEARCH_SYMBOL[mint] || undefined;
+            const fallbackPrice = symbol
+              ? (FALLBACK_USD[symbol] ?? FALLBACK_USD.FIXERCOIN)
+              : undefined;
+
+            if (symbol && typeof fallbackPrice === "number") {
+              console.log(
+                `[DexScreener] Adding synthetic fallback for ${mint} -> ${symbol} price=${fallbackPrice}`,
+              );
+              const synthetic: any = {
+                chainId: "solana",
+                dexId: "fallback",
+                url: "",
+                pairAddress: "",
+                baseToken: {
+                  address: mint,
+                  name: symbol,
+                  symbol,
+                },
+                quoteToken: {
+                  address: "USD",
+                  name: "USD",
+                  symbol: "USD",
+                },
+                priceNative: "0",
+                priceUsd: String(fallbackPrice),
+                txns: {
+                  m5: { buys: 0, sells: 0 },
+                  h1: { buys: 0, sells: 0 },
+                  h6: { buys: 0, sells: 0 },
+                  h24: { buys: 0, sells: 0 },
+                },
+                volume: { h24: 0, h6: 0, h1: 0, m5: 0 },
+                priceChange: { m5: 0, h1: 0, h6: 0, h24: 0 },
+                liquidity: { usd: 0 },
+              };
+              results.push(synthetic);
+              foundMintsSet.add(mint);
+              found = true;
+            }
+          } catch (e) {
+            // ignore synthetic fallback failures
           }
         }
       }

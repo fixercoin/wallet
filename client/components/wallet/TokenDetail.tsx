@@ -5,7 +5,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenBadge } from "./TokenBadge";
-import { PriceCard } from "./token-detail/PriceCard";
+import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
 
@@ -32,7 +32,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     { time: string; price: number; volume: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
   // Find the token from the tokens list
@@ -160,21 +159,16 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-500/60 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Price Section (inside single card) */}
-          <PriceCard
-            token={displayToken}
-            priceData={priceData}
-            showBalance={showBalance}
-            onToggleBalance={() => setShowBalance(!showBalance)}
-            withinCard
-            variant="light"
-          />
+          {/* Token Quick Info Card */}
+          <div className="px-4 py-3">
+            <TokenQuickInfoCard token={displayToken} variant="light" />
+          </div>
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
@@ -183,7 +177,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                 Buys vs Sells (5m → 24h)
               </div>
               <div className="p-3">
-                <BuySellLine mint={tokenMint} />
+                <BuySellLine mint={tokenMint} priceData={priceData} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">

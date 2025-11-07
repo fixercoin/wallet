@@ -146,10 +146,18 @@ class JupiterAPI {
           }
 
           try {
-            const quote = JSON.parse(txt);
+            const raw = JSON.parse(txt);
+            const quote =
+              raw && typeof raw === "object" && "quote" in raw
+                ? raw.quote
+                : raw;
             console.log(
-              `✅ Jupiter quote success (attempt ${attempt}): ${quote.outAmount}`,
+              `✅ Jupiter quote success (attempt ${attempt}): ${quote?.outAmount}`,
             );
+            if (!quote || !quote.outAmount || quote.outAmount === "0") {
+              console.warn("Parsed Jupiter quote has no outAmount:", raw);
+              return null;
+            }
             return quote;
           } catch (e) {
             console.warn("Failed to parse Jupiter proxy quote response:", e);

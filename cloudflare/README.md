@@ -5,7 +5,7 @@ Suggested setup:
 1. Configure Cloudflare Pages for the frontend
    - Build command: pnpm build
    - Build output directory: dist
-   - Set environment variable VITE_API_URL to your Worker domain (e.g. https://api.fixorium.com.pk)
+   - Set environment variable VITE_API_URL to your Worker domain (e.g. https://fixorium-api.khanbabusargodha.workers.dev)
 
 2. Deploy Worker using wrangler
    - Install wrangler: npm i -g wrangler
@@ -17,10 +17,10 @@ Suggested setup:
    - Use: wrangler secret put FIXORIUM_API_KEY
 
 4. DNS / Custom domain
-   - In Cloudflare dashboard, map api.fixorium.com.pk to the Worker (Workers → Add route) or configure a custom domain
+   - In Cloudflare dashboard, map your desired custom domain to the Worker (Workers → Add route) or configure a custom domain. If using the workers.dev deployment, the worker URL is https://fixorium-api.khanbabusargodha.workers.dev
    - For Pages, add your frontend domain in Pages settings
 
 Testing:
 
-- curl https://api.fixorium.com.pk/api/health
+- curl https://fixorium-api.khanbabusargodha.workers.dev/api/health
 - From browser: fetch(`${import.meta.env.VITE_API_URL}/api/health`).then(r=>r.json()).then(console.log)

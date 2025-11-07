@@ -97,8 +97,20 @@ class JupiterV6API {
         return null;
       }
 
-      const data: JupiterQuoteResponse = await response.json();
-      return data;
+      const rawData: any = await response.json();
+
+      // Some proxies return { source: 'jupiter', quote: {...} }
+      const data =
+        rawData && typeof rawData === "object" && "quote" in rawData
+          ? rawData.quote
+          : rawData;
+
+      if (!data || !data.outAmount || data.outAmount === "0") {
+        console.warn("Jupiter quote returned no outAmount:", rawData);
+        return null;
+      }
+
+      return data as JupiterQuoteResponse;
     } catch (error) {
       console.error("Jupiter getQuote error:", error);
       throw error;

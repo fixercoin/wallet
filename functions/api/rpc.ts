@@ -116,7 +116,6 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     });
   }
 
-  const SOLANA_RPC = DEFAULT_SOLANA_RPC;
   const payload = {
     jsonrpc: "2.0",
     id: 1,
@@ -124,27 +123,63 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     params: [publicKey],
   };
 
-  try {
-    const rpcRes = await timeoutFetch(SOLANA_RPC, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const rpcJson = await rpcRes.json();
-    const lamports = rpcJson?.result?.value ?? 0;
-    const sol = lamports / 1_000_000_000;
-    return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-      headers: CORS_HEADERS,
-    });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({
-        error: "rpc_error",
-        details: String(e?.message || e).slice(0, 200),
-      }),
-      { status: 502, headers: CORS_HEADERS },
-    );
+  const endpoints = Array.from(
+    new Set([DEFAULT_SOLANA_RPC, ...(FALLBACK_RPC_ENDPOINTS || [])]),
+  );
+
+  let lastError = "";
+  let lastStatus = 502;
+
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const resp = await timeoutFetch(endpoint, {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        });
+
+        lastStatus = resp.status;
+
+        if (resp.ok) {
+          const rpcJson = await resp.json().catch(() => ({}));
+          const lamports = rpcJson?.result?.value ?? 0;
+          const sol = lamports / 1_000_000_000;
+          return new Response(JSON.stringify({ lamports, sol, publicKey }), {
+            headers: CORS_HEADERS,
+          });
+        }
+
+        const text = await resp.text().catch(() => "");
+        lastError = `HTTP ${resp.status}: ${text}`;
+
+        if (resp.status >= 500) {
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+            continue;
+          }
+        }
+
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 300 * attempt));
+          continue;
+        }
+      }
+    }
   }
+
+  return new Response(
+    JSON.stringify({
+      error: "rpc_error",
+      details: lastError,
+      status: lastStatus,
+    }),
+    { status: 502, headers: CORS_HEADERS },
+  );
 }
 
 async function handleWalletTokens(url: URL): Promise<Response> {

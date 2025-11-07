@@ -402,21 +402,38 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      const outAmount = BigInt(quoteResponse.outAmount);
-      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
-      const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
+      // Validate quote response has required fields
+      if (!quoteResponse.outAmount) {
+        setQuote(null);
+        setStatus("Invalid quote response. Please try again.");
+        setIsLoading(false);
+        console.error("[SwapInterface] Quote missing outAmount:", quoteResponse);
+        return null;
+      }
 
-      setQuote({
-        quoteResponse,
-        outHuman,
-        outToken: toToken.symbol,
-        hops: quoteResponse.routePlan?.length ?? 0,
-        priceImpact,
-        quoteTime: Date.now(),
-      });
-      setStatus("");
-      setIsLoading(false);
-      return { quoteResponse };
+      try {
+        const outAmount = BigInt(quoteResponse.outAmount);
+        const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+        const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
+
+        setQuote({
+          quoteResponse,
+          outHuman,
+          outToken: toToken.symbol,
+          hops: quoteResponse.routePlan?.length ?? 0,
+          priceImpact,
+          quoteTime: Date.now(),
+        });
+        setStatus("");
+        setIsLoading(false);
+        return { quoteResponse };
+      } catch (bigintErr) {
+        setQuote(null);
+        setStatus("Invalid quote amount format. Please try again.");
+        setIsLoading(false);
+        console.error("[SwapInterface] BigInt conversion error:", bigintErr, quoteResponse);
+        return null;
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       let friendlyMsg = "Failed to get quote. ";

@@ -366,6 +366,8 @@ class JupiterAPI {
   }
 
   async getTokenPrices(tokenMints: string[]): Promise<Record<string, number>> {
+    if (tokenMints.length === 0) return {};
+
     try {
       const ids = tokenMints.join(",");
 
@@ -374,37 +376,48 @@ class JupiterAPI {
       );
 
       const url = resolveApiUrl(`/api/jupiter/price?ids=${ids}`);
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }).catch(() => new Response("", { status: 0 } as any));
 
-      if (!response.ok) {
-        throw new Error(`Jupiter Price API error: ${response.status}`);
-      }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const data = await response.json();
-      const prices: Record<string, number> = {};
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
 
-      if (data.data) {
-        for (const [mint, priceData] of Object.entries(data.data || {})) {
-          if (
-            priceData &&
-            typeof priceData === "object" &&
-            "price" in priceData
-          ) {
-            prices[mint] = (priceData as any).price;
+        if (!response.ok) {
+          throw new Error(`Jupiter Price API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const prices: Record<string, number> = {};
+
+        if (data.data) {
+          for (const [mint, priceData] of Object.entries(data.data || {})) {
+            if (
+              priceData &&
+              typeof priceData === "object" &&
+              "price" in priceData
+            ) {
+              prices[mint] = (priceData as any).price;
+            }
           }
         }
-      }
 
-      console.log(
-        `Successfully fetched ${Object.keys(prices).length} prices from Jupiter`,
-      );
-      return prices;
+        console.log(
+          `Successfully fetched ${Object.keys(prices).length} prices from Jupiter`,
+        );
+        return prices;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
+      }
     } catch (error) {
       console.error("Error fetching token prices from Jupiter:", error);
       // Return empty object - let callers handle fallback to other providers

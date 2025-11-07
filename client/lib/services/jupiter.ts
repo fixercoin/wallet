@@ -58,7 +58,7 @@ export interface JupiterToken {
   tags?: string[];
 }
 
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 
 class JupiterAPI {
   private readonly baseUrl = "https://lite-api.jup.ag/swap/v1";
@@ -89,12 +89,12 @@ class JupiterAPI {
         if (typeof opts?.onlyDirectRoutes === "boolean")
           params.set("onlyDirectRoutes", String(opts.onlyDirectRoutes));
 
-        const url = resolveApiUrl(`/api/jupiter/quote?${params.toString()}`);
+        const path = `/api/jupiter/quote?${params.toString()}`;
         console.log(
           `Jupiter quote request (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
         );
 
-        const response = await this.fetchWithTimeout(url, 15000).catch(
+        const response = await fetchWithFallback(path, { method: "GET" }).catch(
           () => new Response("", { status: 0 } as any),
         );
         const txt = await response.text().catch(() => "");
@@ -174,7 +174,7 @@ class JupiterAPI {
   async getSwapTransaction(
     swapRequest: JupiterSwapRequest,
     retryCount: number = 0,
-    maxRetries: number = 1,
+    maxRetries: number = 2,
   ): Promise<JupiterSwapResponse | null> {
     try {
       const url = resolveApiUrl("/api/jupiter/swap");
@@ -185,13 +185,17 @@ class JupiterAPI {
         swapRequest.quoteResponse?.outputMint,
       );
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(swapRequest),
-      });
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!response.ok) {
         const txt = await response.text().catch(() => "");
@@ -225,10 +229,41 @@ class JupiterAPI {
           response.status === 530;
 
         if (isError1016) {
-          // STALE_QUOTE error - quote may have expired
-          // Always throw to let caller handle quote refresh and retry
+          // Attempt to refresh the quote and retry automatically
+          const qr = swapRequest.quoteResponse;
+          if (
+            retryCount < maxRetries &&
+            qr?.inputMint &&
+            qr?.outputMint &&
+            qr?.inAmount
+          ) {
+            console.warn(
+              "STALE_QUOTE detected. Refreshing quote and retrying swap...",
+            );
+            try {
+              const refreshedQuote = await this.getQuote(
+                qr.inputMint,
+                qr.outputMint,
+                parseInt(qr.inAmount),
+                typeof qr.slippageBps === "number" ? qr.slippageBps : 120,
+              );
+              if (refreshedQuote) {
+                const refreshedReq: JupiterSwapRequest = {
+                  ...swapRequest,
+                  quoteResponse: refreshedQuote,
+                };
+                return this.getSwapTransaction(
+                  refreshedReq,
+                  retryCount + 1,
+                  maxRetries,
+                );
+              }
+            } catch (e) {
+              console.warn("Quote refresh failed after STALE_QUOTE:", e);
+            }
+          }
           throw new Error(
-            `STALE_QUOTE: The quote expired or changed. Try refreshing the quote and trying again.`,
+            "STALE_QUOTE: The quote expired or changed. Try again after requesting a new quote.",
           );
         }
 
@@ -362,10 +397,9 @@ class JupiterAPI {
   async getAllTokens(): Promise<JupiterToken[]> {
     // Try proxy first, then fall back to public Jupiter token endpoints
     try {
-      const proxyUrl = resolveApiUrl("/api/jupiter/tokens?type=all");
-      const resp = await this.fetchWithTimeout(proxyUrl, 10000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
+      const resp = await fetchWithFallback("/api/jupiter/tokens?type=all", {
+        method: "GET",
+      }).catch(() => new Response("", { status: 0 } as any));
       if (resp.ok) {
         return (await resp.json()) as JupiterToken[];
       }
@@ -378,27 +412,45 @@ class JupiterAPI {
   }
 
   async getStrictTokenList(): Promise<JupiterToken[]> {
-    // Prefer proxy. If unavailable (404/5xx), fall back to public endpoints.
-    try {
-      const strictUrl = resolveApiUrl("/api/jupiter/tokens?type=strict");
-      let resp = await this.fetchWithTimeout(strictUrl, 10000).catch(
-        () => new Response("", { status: 0 } as any),
-      );
-      if (!resp.ok) {
-        const allUrl = resolveApiUrl("/api/jupiter/tokens?type=all");
-        resp = await this.fetchWithTimeout(allUrl, 10000).catch(
-          () => new Response("", { status: 0 } as any),
+    // Try multiple endpoints and strategies
+    const endpoints = [
+      { url: "/api/jupiter/tokens?type=strict", name: "strict" },
+      { url: "/api/jupiter/tokens?type=all", name: "all" },
+      { url: "https://token.jup.ag/strict", name: "direct-strict" },
+      { url: "https://token.jup.ag/all", name: "direct-all" },
+      { url: "https://cache.jup.ag/tokens", name: "cache" },
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Fetching Jupiter tokens from: ${endpoint.name}`);
+        const resp = endpoint.url.startsWith("/api/")
+          ? await fetchWithFallback(endpoint.url, { method: "GET" }).catch(
+              () => new Response("", { status: 0 } as any),
+            )
+          : await this.fetchWithTimeout(endpoint.url, 10000).catch(
+              () => new Response("", { status: 0 } as any),
+            );
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (Array.isArray(data) && data.length > 0) {
+            console.log(
+              `✅ Successfully loaded ${data.length} tokens from ${endpoint.name}`,
+            );
+            return data as JupiterToken[];
+          }
+        }
+      } catch (e) {
+        console.warn(
+          `Failed to fetch from ${endpoint.name}:`,
+          e instanceof Error ? e.message : String(e),
         );
+        // Continue to next endpoint
       }
-      if (resp.ok) {
-        const data = await resp.json();
-        return Array.isArray(data) ? (data as JupiterToken[]) : [];
-      }
-    } catch {
-      // continue to fallbacks
     }
 
-    // No direct external fallbacks; rely on proxy only to avoid DNS/CORS issues
+    console.warn("All Jupiter token endpoints failed, returning empty list");
     return [];
   }
 

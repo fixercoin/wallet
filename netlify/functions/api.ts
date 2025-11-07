@@ -157,13 +157,52 @@ async function fetchDexData(path: string) {
   return request;
 }
 
+/**
+ * Helper to safely parse request body from Netlify event
+ * Handles both JSON and base64-encoded bodies
+ */
+function parseRequestBody(event: any): any {
+  try {
+    let body = event.body;
+
+    if (!body) {
+      return {};
+    }
+
+    // Decode base64 if needed
+    if (event.isBase64Encoded && typeof body === "string") {
+      try {
+        // Use standard base64 decode (atob is available in all JS runtimes)
+        // For Node.js, Buffer.from is preferred but we can use atob for compatibility
+        if (typeof Buffer !== "undefined") {
+          body = Buffer.from(body, "base64").toString("utf8");
+        } else {
+          body = atob(body);
+        }
+      } catch (decodeError) {
+        console.warn("[Netlify] Base64 decode failed, treating as plain text");
+        // Continue with the original body as-is
+      }
+    }
+
+    // Parse JSON
+    if (typeof body === "string" && body.trim()) {
+      return JSON.parse(body);
+    }
+
+    return {};
+  } catch (e) {
+    console.error("[Netlify] Failed to parse request body:", e);
+    return null; // Return null to indicate parse error
+  }
+}
+
 export const handler = async (event: any) => {
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");
   }
 
-  const path =
-    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const path = (event.path || "").replace(/^\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {
@@ -172,34 +211,53 @@ export const handler = async (event: any) => {
       return jsonResponse(200, {
         ok: true,
         service: "Fixorium Wallet API (Netlify)",
-        endpoints: [
-          "/easypaisa/webhook [POST]",
-          "/easypaisa/payments [GET]",
-          "/solana-rpc [POST]",
-          "/forex/rate [GET]",
-          "/exchange-rate [GET]",
-          "/token/price [GET]",
-          "/stable-24h [GET]",
-          "/dexscreener/tokens [GET]",
-          "/dexscreener/search [GET]",
-          "/dexscreener/trending [GET]",
-          "/jupiter/price [GET]",
-          "/jupiter/tokens [GET]",
-          "/jupiter/quote [GET]",
-          "/jupiter/swap [POST]",
-          "/wallet/balance [GET]",
-          "/dextools/price [GET]",
-          "/coinmarketcap/quotes [GET]",
-        ],
+        status: "operational",
+        timestamp: new Date().toISOString(),
+        endpoints: {
+          health: "/api/health",
+          status: "/api/status",
+          ping: "/api/ping",
+          wallet: {
+            balance: "/api/wallet/balance?publicKey=<address>",
+            tokens: "/api/wallet/tokens?publicKey=<address>",
+          },
+          pricing: {
+            "sol-price": "/api/sol/price",
+            "birdeye-price": "/api/birdeye/price?address=<mint>",
+            "dexscreener-price": "/api/dexscreener/price?token=<mint>",
+            "token-price": "/api/token/price?token=<symbol>&mint=<mint>",
+          },
+          dexscreener: {
+            tokens: "/api/dexscreener/tokens",
+            search: "/api/dexscreener/search",
+            trending: "/api/dexscreener/trending",
+          },
+          jupiter: {
+            price: "/api/jupiter/price?ids=<mint>",
+            tokens: "/api/jupiter/tokens",
+            quote: "/api/jupiter/quote",
+            swap: "/api/jupiter/swap [POST]",
+          },
+          pumpfun: {
+            quote: "/api/pumpfun/quote",
+            buy: "/api/pumpfun/buy [POST]",
+            sell: "/api/pumpfun/sell [POST]",
+            swap: "/api/pumpfun/swap [POST]",
+          },
+          utilities: {
+            "forex-rate": "/api/forex/rate",
+            "exchange-rate": "/api/exchange-rate",
+            "stable-24h": "/api/stable-24h",
+            "dextools-price": "/api/dextools/price",
+            "rpc-proxy": "/api/solana-rpc [POST]",
+          },
+        },
       });
     }
 
     // Easypaisa webhook ingestion (best-effort schema)
     if (path === "/easypaisa/webhook" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
       const providedSecret =
@@ -262,10 +320,12 @@ export const handler = async (event: any) => {
 
     // Solana RPC
     if (path === "/solana-rpc" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event);
+      if (body === null) {
+        return jsonResponse(400, {
+          error: "Invalid JSON in request body",
+        });
+      }
 
       const methodName = body?.method;
       const params = body?.params ?? [];
@@ -275,8 +335,17 @@ export const handler = async (event: any) => {
         return jsonResponse(400, { error: "Missing RPC method" });
       }
 
-      const result = await callRpc(methodName, params, id);
-      return jsonResponse(200, result.body);
+      try {
+        const result = await callRpc(methodName, params, id);
+        return jsonResponse(200, result.body);
+      } catch (e: any) {
+        console.error("[Solana RPC] Handler error:", e);
+        return jsonResponse(502, {
+          error: "Failed to call Solana RPC",
+          details: e?.message || String(e),
+          method: methodName,
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
@@ -628,6 +697,264 @@ export const handler = async (event: any) => {
       });
     }
 
+    // SOL price: /api/sol/price
+    if (path === "/sol/price" && method === "GET") {
+      try {
+        const SOL_MINT = "So11111111111111111111111111111111111111112";
+        const data = await fetchDexData(`/tokens/${SOL_MINT}`);
+        const pair = Array.isArray(data?.pairs) ? data.pairs[0] : null;
+
+        if (!pair || !pair.priceUsd) {
+          return jsonResponse(200, {
+            price: 149.38, // Fallback SOL price
+            price_change_24h: 0,
+            market_cap: 0,
+            volume_24h: 0,
+          });
+        }
+
+        return jsonResponse(200, {
+          price: parseFloat(pair.priceUsd || "149.38"),
+          priceUsd: pair.priceUsd,
+          price_change_24h: pair.priceChange?.h24 || 0,
+          market_cap: pair.marketCap || 0,
+          volume_24h: pair.volume?.h24 || 0,
+          data: pair,
+        });
+      } catch (e: any) {
+        return jsonResponse(200, {
+          price: 149.38, // Fallback SOL price on error
+          price_change_24h: 0,
+          market_cap: 0,
+          volume_24h: 0,
+          error: "Using fallback price due to API error",
+        });
+      }
+    }
+
+    // Birdeye price: /api/birdeye/price?address=...
+    if (path === "/birdeye/price" && method === "GET") {
+      const address = event.queryStringParameters?.address || "";
+      if (!address) {
+        return jsonResponse(400, { error: "Missing 'address' parameter" });
+      }
+
+      try {
+        // Use DexScreener as the primary data source for token prices
+        const data = await fetchDexData(`/tokens/${address}`);
+        const pair = Array.isArray(data?.pairs)
+          ? data.pairs.find((p: any) => p?.chainId === "solana") ||
+            data.pairs[0]
+          : null;
+
+        if (!pair || !pair.priceUsd) {
+          return jsonResponse(404, {
+            success: false,
+            error: "Token not found",
+          });
+        }
+
+        return jsonResponse(200, {
+          success: true,
+          data: {
+            address,
+            value: parseFloat(pair.priceUsd || "0"),
+            updateUnixTime: Math.floor(Date.now() / 1000),
+            priceChange24h: pair.priceChange?.h24 || 0,
+          },
+        });
+      } catch (e: any) {
+        return jsonResponse(502, {
+          success: false,
+          error: "Failed to fetch token price from Birdeye",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // DexScreener price: /api/dexscreener/price?token=...
+    if (path === "/dexscreener/price" && method === "GET") {
+      const token = event.queryStringParameters?.token || "";
+      if (!token) {
+        return jsonResponse(400, { error: "Missing 'token' parameter" });
+      }
+
+      try {
+        const data = await fetchDexData(`/tokens/${token}`);
+        const pair = Array.isArray(data?.pairs) ? data.pairs[0] : null;
+
+        if (!pair) {
+          return jsonResponse(404, { error: "Token not found on DexScreener" });
+        }
+
+        return jsonResponse(200, {
+          token,
+          price: parseFloat(pair.priceUsd || "0"),
+          priceUsd: pair.priceUsd,
+          data: pair,
+        });
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch token price from DexScreener",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Token price with PKR conversion: /api/token/price?token=...&mint=...
+    if (path === "/token/price" && method === "GET") {
+      const tokenParam = (
+        (event.queryStringParameters?.token as string) ||
+        (event.queryStringParameters?.symbol as string) ||
+        "FIXERCOIN"
+      ).toUpperCase();
+      const mintParam = (event.queryStringParameters?.mint as string) || "";
+
+      const TOKEN_MINTS: Record<string, string> = {
+        SOL: "So11111111111111111111111111111111111111112",
+        USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+        FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+      };
+
+      const FALLBACK_USD: Record<string, number> = {
+        FIXERCOIN: 0.00008139,
+        SOL: 149.38,
+        USDC: 1.0,
+        USDT: 1.0,
+        LOCKER: 0.00001112,
+      };
+
+      const PKR_PER_USD = 280;
+      const MARKUP = 1.0425;
+      const MIN_REALISTIC_PRICE = 0.00001;
+
+      let token = tokenParam;
+      let mint = mintParam || TOKEN_MINTS[token] || "";
+
+      if (!mint && tokenParam && tokenParam.length > 40) {
+        mint = tokenParam;
+        const inv = Object.entries(TOKEN_MINTS).find(([, m]) => m === mint);
+        if (inv) token = inv[0];
+      }
+
+      let priceUsd: number | null = null;
+      let priceChange24h = 0;
+      let volume24h = 0;
+      let matchingPair: any = null;
+
+      try {
+        if (token === "USDC" || token === "USDT") {
+          priceUsd = 1.0;
+          priceChange24h = 0;
+          volume24h = 0;
+        } else if (mint) {
+          try {
+            const data = await fetchDexData(`/tokens/${mint}`);
+            const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+
+            if (pairs.length > 0) {
+              matchingPair = pairs.find(
+                (p: any) =>
+                  p?.baseToken?.address === mint && p?.chainId === "solana",
+              );
+
+              if (!matchingPair) {
+                matchingPair = pairs.find(
+                  (p: any) =>
+                    p?.quoteToken?.address === mint && p?.chainId === "solana",
+                );
+              }
+
+              if (!matchingPair) {
+                matchingPair = pairs[0];
+              }
+
+              if (matchingPair && matchingPair.priceUsd) {
+                priceUsd = parseFloat(matchingPair.priceUsd);
+                priceChange24h = matchingPair.priceChange?.h24 || 0;
+                volume24h = matchingPair.volume?.h24 || 0;
+              }
+            }
+          } catch (e) {
+            console.warn(`[Token Price] Token lookup failed for ${token}:`, e);
+          }
+        }
+      } catch (e) {
+        console.warn(`[Token Price] Price lookup error:`, e);
+      }
+
+      if (
+        priceUsd === null ||
+        !isFinite(priceUsd) ||
+        priceUsd < MIN_REALISTIC_PRICE
+      ) {
+        priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
+        priceChange24h = 0;
+        volume24h = 0;
+      }
+
+      const rateInPKR = priceUsd * PKR_PER_USD * MARKUP;
+
+      return jsonResponse(200, {
+        token,
+        priceUsd,
+        priceInPKR: rateInPKR,
+        rate: rateInPKR,
+        pkrPerUsd: PKR_PER_USD,
+        markup: MARKUP,
+        priceChange24h,
+        volume24h,
+        pair: matchingPair || undefined,
+      });
+    }
+
+    // Wallet tokens: /api/wallet/tokens?publicKey=...
+    if (path === "/wallet/tokens" && method === "GET") {
+      const pk = (
+        event.queryStringParameters?.publicKey ||
+        event.queryStringParameters?.wallet ||
+        event.queryStringParameters?.address ||
+        ""
+      ).trim();
+      if (!pk)
+        return jsonResponse(400, { error: "Missing 'publicKey' parameter" });
+
+      try {
+        const rpc = await callRpc(
+          "getTokenAccountsByOwner",
+          [
+            pk,
+            { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+            { encoding: "jsonParsed" },
+          ],
+          Date.now(),
+        );
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        const accounts = parsed?.result?.value || [];
+
+        const tokens = accounts.map((account: any) => ({
+          mint: account?.account?.data?.parsed?.info?.mint,
+          tokenAccount: account?.pubkey,
+          amount: account?.account?.data?.parsed?.info?.tokenAmount?.amount,
+          decimals: account?.account?.data?.parsed?.info?.tokenAmount?.decimals,
+          uiAmount: account?.account?.data?.parsed?.info?.tokenAmount?.uiAmount,
+        }));
+
+        return jsonResponse(200, {
+          publicKey: pk,
+          tokens,
+          totalTokenAccounts: tokens.length,
+        });
+      } catch (e) {
+        return jsonResponse(502, {
+          error: "Failed to fetch wallet tokens",
+          details: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
     if (path === "/wallet/balance" && method === "GET") {
       const pk = (
@@ -694,7 +1021,7 @@ export const handler = async (event: any) => {
       const inputMint = event.queryStringParameters?.inputMint || "";
       const outputMint = event.queryStringParameters?.outputMint || "";
       const amount = event.queryStringParameters?.amount || "";
-      const slippageBps = event.queryStringParameters?.slippageBps || "50";
+      const slippageBps = event.queryStringParameters?.slippageBps || "100";
 
       if (!inputMint || !outputMint || !amount) {
         return jsonResponse(400, {
@@ -726,10 +1053,11 @@ export const handler = async (event: any) => {
 
     // Jupiter swap: /api/jupiter/swap (POST)
     if (path === "/jupiter/swap" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
+
+      if (!body || typeof body !== "object") {
+        return jsonResponse(400, { error: "Invalid request body" });
+      }
 
       try {
         const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
@@ -738,7 +1066,11 @@ export const handler = async (event: any) => {
           body: JSON.stringify(body),
         });
         if (!resp.ok) {
-          return jsonResponse(resp.status, { error: "Jupiter swap failed" });
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Jupiter swap failed",
+            details: errorText,
+          });
         }
         const data = await resp.json();
         return jsonResponse(200, data);
@@ -861,10 +1193,7 @@ export const handler = async (event: any) => {
         let amount = "";
 
         if (method === "POST") {
-          let body: any = {};
-          try {
-            body = event.body ? JSON.parse(event.body) : {};
-          } catch {}
+          const body = parseRequestBody(event) || {};
           inputMint = body?.inputMint || "";
           outputMint = body?.outputMint || "";
           amount = body?.amount || "";
@@ -906,10 +1235,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun swap: /api/pumpfun/swap (POST)
     if (path === "/pumpfun/swap" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       if (!body || typeof body !== "object") {
         return jsonResponse(400, { error: "Invalid request body" });
@@ -934,15 +1260,114 @@ export const handler = async (event: any) => {
       }
     }
 
+    // Pumpfun buy: /api/pumpfun/buy (POST)
+    if (path === "/pumpfun/buy" && method === "POST") {
+      const body = parseRequestBody(event) || {};
+
+      const { mint, amount, buyer } = body;
+
+      if (!mint || typeof amount !== "number" || !buyer) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), buyer (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            buyer,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "buy",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request BUY transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun sell: /api/pumpfun/sell (POST)
+    if (path === "/pumpfun/sell" && method === "POST") {
+      const body = parseRequestBody(event) || {};
+
+      const { mint, amount, seller } = body;
+
+      if (!mint || typeof amount !== "number" || !seller) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            seller,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "sell",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request SELL transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
     // Submit signed transaction aliases: /api/solana-send, /api/swap/submit (POST)
     if (
       (path === "/solana-send" || path === "/swap/submit") &&
       method === "POST"
     ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const txBase64 =
         body?.signedBase64 ||
@@ -969,10 +1394,7 @@ export const handler = async (event: any) => {
 
     // Simulate signed transaction: /api/solana-simulate (POST)
     if (path === "/solana-simulate" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const txBase64 =
         body?.signedBase64 ||

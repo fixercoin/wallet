@@ -366,7 +366,7 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         console.log(
           `Jupiter swap attempt ${attempt}/2 for ${body.quoteResponse.inputMint} -> ${body.quoteResponse.outputMint}`,

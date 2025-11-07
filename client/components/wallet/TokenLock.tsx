@@ -534,7 +534,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               : item,
           ),
         );
-        // Persist withdraw event to Cloudflare (best-effort)
+        // Persist withdraw event (best-effort)
         try {
           await fetch(resolveApiUrl(`/api/locks/${lock.id}/withdraw`), {
             method: "POST",
@@ -677,7 +677,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         ),
       );
 
-      // Persist lock record to Cloudflare (best-effort)
+      // Persist lock record (best-effort)
       try {
         await fetch(resolveApiUrl("/api/locks"), {
           method: "POST",

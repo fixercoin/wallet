@@ -7,24 +7,24 @@ import type {
 } from "@netlify/functions";
 
 // Import all handlers (named exports)
-import { handler as jupiterQuoteHandler } from "./jupiter/quote";
-import { handler as jupiterSwapHandler } from "./jupiter/swap";
-import { handler as jupiterPriceHandler } from "./jupiter/price";
-import { handler as solPriceHandler } from "./sol/price";
-import { handler as tokenPriceHandler } from "./token/price";
-import { handler as walletBalanceHandler } from "./wallet/balance";
-import { handler as solanRpcHandler } from "./solana-rpc";
-import { handler as healthHandler } from "./health";
-import { handler as pingHandler } from "./ping";
-import { handler as dexscreenerPriceHandler } from "./dexscreener/price";
-import { handler as dexscreenerTokensHandler } from "./dexscreener/tokens";
-import { handler as birdeeyePriceHandler } from "./birdeye/price";
-import { handler as pumpfunQuoteHandler } from "./pumpfun/quote";
-import { handler as pumpfunBuyHandler } from "./pumpfun/buy";
-import { handler as pumpfunSellHandler } from "./pumpfun/sell";
-import { handler as pumpfunTradeHandler } from "./pumpfun/trade";
-import { handler as pumpfunCurveHandler } from "./pumpfun/curve";
-import { handler as forexRateHandler } from "./forex/rate";
+import { handler as jupiterQuoteHandler } from "./api/jupiter/quote";
+import { handler as jupiterSwapHandler } from "./api/jupiter/swap";
+import { handler as jupiterPriceHandler } from "./api/jupiter/price";
+import { handler as solPriceHandler } from "./api/sol/price";
+import { handler as tokenPriceHandler } from "./api/token/price";
+import { handler as walletBalanceHandler } from "./api/wallet/balance";
+import { handler as solanRpcHandler } from "./api/solana-rpc";
+import { handler as healthHandler } from "./api/health";
+import { handler as pingHandler } from "./api/ping";
+import { handler as dexscreenerPriceHandler } from "./api/dexscreener/price";
+import { handler as dexscreenerTokensHandler } from "./api/dexscreener/tokens";
+import { handler as birdeeyePriceHandler } from "./api/birdeye/price";
+import { handler as pumpfunQuoteHandler } from "./api/pumpfun/quote";
+import { handler as pumpfunBuyHandler } from "./api/pumpfun/buy";
+import { handler as pumpfunSellHandler } from "./api/pumpfun/sell";
+import { handler as pumpfunTradeHandler } from "./api/pumpfun/trade";
+import { handler as pumpfunCurveHandler } from "./api/pumpfun/curve";
+import { handler as forexRateHandler } from "./api/forex/rate";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",

@@ -693,6 +693,81 @@ export const handler = async (event: any) => {
       });
     }
 
+    // SOL price: /api/sol/price
+    if (path === "/sol/price" && method === "GET") {
+      try {
+        const SOL_MINT = "So11111111111111111111111111111111111111112";
+        const data = await fetchDexData(`/tokens/${SOL_MINT}`);
+        const pair = Array.isArray(data?.pairs) ? data.pairs[0] : null;
+
+        if (!pair || !pair.priceUsd) {
+          return jsonResponse(200, {
+            price: 149.38, // Fallback SOL price
+            price_change_24h: 0,
+            market_cap: 0,
+            volume_24h: 0,
+          });
+        }
+
+        return jsonResponse(200, {
+          price: parseFloat(pair.priceUsd || "149.38"),
+          priceUsd: pair.priceUsd,
+          price_change_24h: pair.priceChange?.h24 || 0,
+          market_cap: pair.marketCap || 0,
+          volume_24h: pair.volume?.h24 || 0,
+          data: pair,
+        });
+      } catch (e: any) {
+        return jsonResponse(200, {
+          price: 149.38, // Fallback SOL price on error
+          price_change_24h: 0,
+          market_cap: 0,
+          volume_24h: 0,
+          error: "Using fallback price due to API error",
+        });
+      }
+    }
+
+    // Birdeye price: /api/birdeye/price?address=...
+    if (path === "/birdeye/price" && method === "GET") {
+      const address = event.queryStringParameters?.address || "";
+      if (!address) {
+        return jsonResponse(400, { error: "Missing 'address' parameter" });
+      }
+
+      try {
+        // Use DexScreener as the primary data source for token prices
+        const data = await fetchDexData(`/tokens/${address}`);
+        const pair = Array.isArray(data?.pairs)
+          ? data.pairs.find((p: any) => p?.chainId === "solana") ||
+            data.pairs[0]
+          : null;
+
+        if (!pair || !pair.priceUsd) {
+          return jsonResponse(404, {
+            success: false,
+            error: "Token not found",
+          });
+        }
+
+        return jsonResponse(200, {
+          success: true,
+          data: {
+            address,
+            value: parseFloat(pair.priceUsd || "0"),
+            updateUnixTime: Math.floor(Date.now() / 1000),
+            priceChange24h: pair.priceChange?.h24 || 0,
+          },
+        });
+      } catch (e: any) {
+        return jsonResponse(502, {
+          success: false,
+          error: "Failed to fetch token price from Birdeye",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
     // DexScreener price: /api/dexscreener/price?token=...
     if (path === "/dexscreener/price" && method === "GET") {
       const token = event.queryStringParameters?.token || "";

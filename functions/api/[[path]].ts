@@ -821,6 +821,10 @@ async function handler(request: Request): Promise<Response> {
       return await handleJupiterTokens(url);
     }
 
+    if (pathname === "/api/jupiter/token" || pathname === "/api/jupiter/token/") {
+      return await handleJupiterTokens(url);
+    }
+
     if (pathname === "/api/pumpfun/quote") {
       return await handlePumpFunQuote(request, url);
     }

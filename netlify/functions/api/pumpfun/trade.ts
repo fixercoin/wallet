@@ -1,13 +1,13 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 };
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -16,108 +16,53 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: "Method not allowed. Use POST.",
-      }),
-    };
-  }
-
   try {
-    let body: any = {};
-    if (event.body) {
-      try {
-        body = JSON.parse(event.body);
-      } catch {
-        return {
-          statusCode: 400,
-          headers: CORS_HEADERS,
-          body: JSON.stringify({
-            error: "Invalid JSON body",
-          }),
-        };
-      }
-    }
-
-    const { mint, amount, type, action, buyer, seller } = body;
-    const tradeType = (type || action || "").toLowerCase();
-    const isBuy = tradeType === "buy";
-    const isSell = tradeType === "sell";
-
-    if (!mint || typeof amount !== "number" || (!isBuy && !isSell)) {
+    if (!event.body) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error:
-            "Missing or invalid required fields: mint, amount (number), type/action (buy|sell)",
+          error: "Missing request body",
         }),
       };
     }
 
-    if (isBuy && !buyer) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Missing required field for buy trade: buyer",
-        }),
-      };
-    }
+    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
 
-    if (isSell && !seller) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Missing required field for sell trade: seller",
-        }),
-      };
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    const tradePayload: any = {
-      mint,
-      amount,
-    };
-
-    if (isBuy) {
-      tradePayload.buyer = buyer;
-    } else if (isSell) {
-      tradePayload.seller = seller;
-    }
-
-    const pumpFunUrl = "https://pump.fun/api/trade";
-    const res = await fetch(pumpFunUrl, {
+    const response = await fetch("https://pumpportal.fun/api/trade", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tradePayload),
-      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    clearTimeout(timeoutId);
-    const text = await res.text();
+    const data = await response.text();
+
+    if (!response.ok) {
+      console.error(`Pumpfun trade error: ${response.status}`);
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Pumpfun trade API error",
+          status: response.status,
+        }),
+      };
+    }
 
     return {
-      statusCode: res.status,
+      statusCode: 200,
       headers: CORS_HEADERS,
-      body: text,
+      body: data,
     };
-  } catch (error: any) {
-    const message = error?.message || "Unknown error";
-    console.error("Pump.fun TRADE endpoint error:", error);
-
+  } catch (error) {
+    console.error("[Pumpfun Trade] Error:", error);
     return {
-      statusCode: 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Failed to execute trade",
-        details: message,
+        error: error instanceof Error ? error.message : "Internal server error",
       }),
     };
   }

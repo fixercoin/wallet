@@ -3,12 +3,7 @@ command = "pnpm build"
 publish = "dist"
 functions = "netlify/functions"
 
-[functions]
-
-[functions.timeout]
-external_node_modules = []
-
-# Rewrite API requests to the functions
+# Route all API requests to the api.ts handler
 [[rewrites]]
 from = "/api/*"
 to = "/.netlify/functions/api"

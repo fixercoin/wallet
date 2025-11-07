@@ -38,7 +38,23 @@ async function tryDexEndpoints(path: string) {
       if (!resp.ok) {
         if (resp.status === 429) continue;
         const t = await resp.text().catch(() => "");
-        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+        const contentType = resp.headers.get("content-type") || "";
+        console.error(
+          `[SOL Price] DexScreener error - Status: ${resp.status}, Content-Type: ${contentType}, Response preview: ${t.substring(0, 200)}`,
+        );
+        throw new Error(
+          `HTTP ${resp.status}: ${resp.statusText}. Content-Type: ${contentType}`,
+        );
+      }
+      const contentType = resp.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const t = await resp.text().catch(() => "");
+        console.error(
+          `[SOL Price] Invalid content-type: ${contentType}. Response preview: ${t.substring(0, 200)}`,
+        );
+        throw new Error(
+          `Invalid content-type: ${contentType}. Expected application/json`,
+        );
       }
       const data = await resp.json();
       currentDexIdx = idx;

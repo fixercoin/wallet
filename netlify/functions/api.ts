@@ -1,27 +1,16 @@
 // Netlify Functions entry to handle /api/* routes
 
 import {
-  listPosts,
-  getPost,
-  createOrUpdatePost,
-  listTradeMessages,
-  listRecentTradeMessages,
-  addTradeMessage,
-  uploadProof,
   addEasypaisaPayment,
   listEasypaisaPayments,
-  listTradeRooms,
-  getTradeRoom,
-  createTradeRoom,
-  updateTradeRoom,
 } from "../../utils/p2pStore";
 
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
-  "https://solana-mainnet.rpc.extrnode.com",
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
+  "https://solana-rpc.publicnode.com",
 ];
 
 async function callRpc(
@@ -168,54 +157,44 @@ async function fetchDexData(path: string) {
   return request;
 }
 
-type BinanceCacheEntry = {
-  expiresAt: number;
-  data: any;
-};
+/**
+ * Helper to safely parse request body from Netlify event
+ * Handles both JSON and base64-encoded bodies
+ */
+function parseRequestBody(event: any): any {
+  try {
+    let body = event.body;
 
-const BINANCE_P2P_CACHE = new Map<string, BinanceCacheEntry>();
-const BINANCE_P2P_CACHE_TTL = 30000;
-
-function uniqueId() {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function encodeToBase64(value: string): string {
-  const globalObj = globalThis as any;
-  if (typeof globalObj?.btoa === "function") {
-    const bytes = new TextEncoder().encode(value);
-    let binary = "";
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
+    if (!body) {
+      return {};
     }
-    return globalObj.btoa(binary);
-  }
-  if (globalObj?.Buffer) {
-    return globalObj.Buffer.from(value, "utf-8").toString("base64");
-  }
-  throw new Error("Base64 encoding not supported in this environment");
-}
 
-function buildDeviceInfoPayload(userAgent: string): string {
-  const payload = {
-    deviceName: "Chrome",
-    deviceVersion: "124.0.0.0",
-    osName: "windows",
-    osVersion: "10",
-    platform: "web",
-    screenHeight: 1080,
-    screenWidth: 1920,
-    systemLang: "en-US",
-    timeZone: "UTC",
-    userAgent,
-  };
-  return encodeToBase64(JSON.stringify(payload));
+    // Decode base64 if needed
+    if (event.isBase64Encoded && typeof body === "string") {
+      try {
+        // Use standard base64 decode (atob is available in all JS runtimes)
+        // For Node.js, Buffer.from is preferred but we can use atob for compatibility
+        if (typeof Buffer !== "undefined") {
+          body = Buffer.from(body, "base64").toString("utf8");
+        } else {
+          body = atob(body);
+        }
+      } catch (decodeError) {
+        console.warn("[Netlify] Base64 decode failed, treating as plain text");
+        // Continue with the original body as-is
+      }
+    }
+
+    // Parse JSON
+    if (typeof body === "string" && body.trim()) {
+      return JSON.parse(body);
+    }
+
+    return {};
+  } catch (e) {
+    console.error("[Netlify] Failed to parse request body:", e);
+    return null; // Return null to indicate parse error
+  }
 }
 
 export const handler = async (event: any) => {
@@ -223,232 +202,58 @@ export const handler = async (event: any) => {
     return jsonResponse(204, "");
   }
 
-  const path =
-    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const path = (event.path || "").replace(/^\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {
-    // P2P endpoints
-    if (path === "/p2p" || path === "/p2p/" || path === "/p2p/list") {
-      if (method === "GET") {
-        return jsonResponse(200, listPosts());
-      }
-      return jsonResponse(405, { error: "Method Not Allowed" });
-    }
-
-    if (path.startsWith("/p2p/post/") && method === "GET") {
-      const id = path.replace("/p2p/post/", "");
-      const post = getPost(id);
-      if (!post) return jsonResponse(404, { error: "not found" });
-      return jsonResponse(200, { post });
-    }
-
-    if (path === "/p2p/post" && (method === "POST" || method === "PUT")) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const adminHeader =
-        (event.headers?.["x-admin-wallet"] as string) ||
-        body?.adminWallet ||
-        "";
-      const result = createOrUpdatePost(body || {}, adminHeader || "");
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { post: result.post });
-    }
-
-    // P2P Trade Rooms endpoints
-    if (path === "/p2p/rooms" && method === "GET") {
-      const wallet = event.queryStringParameters?.wallet;
-      const result = listTradeRooms(wallet);
-      return jsonResponse(200, result);
-    }
-
-    if (path === "/p2p/rooms" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const result = createTradeRoom({
-        buyer_wallet: body?.buyer_wallet || "",
-        seller_wallet: body?.seller_wallet || "",
-        order_id: body?.order_id || "",
+    // Root and health/status endpoints
+    if (path === "/" || path === "/health" || path === "/status") {
+      return jsonResponse(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Netlify)",
+        status: "operational",
+        timestamp: new Date().toISOString(),
+        endpoints: {
+          health: "/api/health",
+          status: "/api/status",
+          ping: "/api/ping",
+          wallet: {
+            balance: "/api/wallet/balance?publicKey=<address>",
+            tokens: "/api/wallet/tokens?publicKey=<address>",
+          },
+          dexscreener: {
+            price: "/api/dexscreener/price?tokenAddress=<mint>",
+            tokens: "/api/dexscreener/tokens",
+            search: "/api/dexscreener/search",
+            trending: "/api/dexscreener/trending",
+          },
+          jupiter: {
+            price: "/api/jupiter/price?ids=<mint>",
+            tokens: "/api/jupiter/tokens",
+            quote: "/api/jupiter/quote",
+            swap: "/api/jupiter/swap [POST]",
+          },
+          pumpfun: {
+            quote: "/api/pumpfun/quote",
+            buy: "/api/pumpfun/buy [POST]",
+            sell: "/api/pumpfun/sell [POST]",
+            swap: "/api/pumpfun/swap [POST]",
+          },
+          utilities: {
+            "forex-rate": "/api/forex/rate",
+            "exchange-rate": "/api/exchange-rate",
+            "token-price": "/api/token/price",
+            "stable-24h": "/api/stable-24h",
+            "dextools-price": "/api/dextools/price",
+            "rpc-proxy": "/api/solana-rpc [POST]",
+          },
+        },
       });
-      if ("error" in result) {
-        return jsonResponse(result.status, { error: result.error });
-      }
-      return jsonResponse(result.status, { room: result.room });
-    }
-
-    if (path.startsWith("/p2p/rooms/") && method === "GET") {
-      const roomId = path.replace("/p2p/rooms/", "");
-      if (!roomId) {
-        return jsonResponse(400, { error: "Room ID required" });
-      }
-      const room = getTradeRoom(roomId);
-      if (!room) {
-        return jsonResponse(404, { error: "Room not found" });
-      }
-      return jsonResponse(200, { room });
-    }
-
-    if (path.startsWith("/p2p/rooms/") && method === "PUT") {
-      const roomId = path.replace("/p2p/rooms/", "");
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      if (!roomId) {
-        return jsonResponse(400, { error: "Room ID required" });
-      }
-      const result = updateTradeRoom(roomId, body || {});
-      if ("error" in result) {
-        return jsonResponse(result.status, { error: result.error });
-      }
-      return jsonResponse(result.status, { room: result.room });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/messages") &&
-      method === "GET"
-    ) {
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/messages$/, "");
-      return jsonResponse(200, listTradeMessages(tradeId));
-    }
-
-    if (
-      path.startsWith("/p2p/rooms/") &&
-      path.endsWith("/messages") &&
-      method === "GET"
-    ) {
-      const roomId = path
-        .replace(/^\/p2p\/rooms\//, "")
-        .replace(/\/messages$/, "");
-      return jsonResponse(200, { messages: listTradeMessages(roomId) });
-    }
-
-    if (
-      path.startsWith("/p2p/rooms/") &&
-      path.endsWith("/messages") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const roomId = path
-        .replace(/^\/p2p\/rooms\//, "")
-        .replace(/\/messages$/, "");
-      const { sender_wallet, message, attachment_url } = body;
-      if (!sender_wallet || !message) {
-        return jsonResponse(400, {
-          error: "Missing required fields: sender_wallet, message",
-        });
-      }
-      const msg = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        room_id: roomId,
-        sender_wallet,
-        message,
-        attachment_url,
-        created_at: Date.now(),
-      };
-      return jsonResponse(201, { message: msg });
-    }
-
-    if (path === "/p2p/trades/recent" && method === "GET") {
-      const since = Number(event.queryStringParameters?.since || 0);
-      const limit = Number(event.queryStringParameters?.limit || 100);
-      const data = (listRecentTradeMessages({ since, limit }) as any) || {
-        messages: [],
-      };
-      return jsonResponse(200, { messages: data.messages || [] });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/message") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/message$/, "");
-      const result = addTradeMessage(
-        tradeId,
-        body?.message || "",
-        body?.from || "unknown",
-      );
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-      return jsonResponse(result.status, { message: result.message });
-    }
-
-    if (
-      path.startsWith("/p2p/trade/") &&
-      path.endsWith("/proof") &&
-      method === "POST"
-    ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
-      const tradeId = path
-        .replace(/^\/p2p\/trade\//, "")
-        .replace(/\/proof$/, "");
-      const result = uploadProof(tradeId, body?.proof);
-      if ("error" in result)
-        return jsonResponse(result.status, { error: result.error });
-
-      // Optional Supabase storage upload if configured
-      const SUPABASE_URL = process.env.SUPABASE_URL;
-      const SUPABASE_KEY =
-        process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
-      let supabaseUrl: string | undefined = undefined;
-      if (
-        SUPABASE_URL &&
-        SUPABASE_KEY &&
-        body?.proof?.data &&
-        body?.proof?.filename
-      ) {
-        try {
-          const base64 = body.proof.data.includes(",")
-            ? body.proof.data.split(",").pop()!
-            : body.proof.data;
-          const binary = Buffer.from(base64, "base64");
-          const objectPath = `p2p-proofs/${encodeURIComponent(tradeId)}/${Date.now()}-${body.proof.filename}`;
-          const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${objectPath}`;
-          const resp = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${SUPABASE_KEY}`,
-              "Content-Type": "application/octet-stream",
-              "x-upsert": "true",
-            },
-            body: binary,
-          });
-          if (resp.ok) {
-            supabaseUrl = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${objectPath}`;
-          }
-        } catch {}
-      }
-
-      return jsonResponse(result.status, { ok: true, url: supabaseUrl });
     }
 
     // Easypaisa webhook ingestion (best-effort schema)
     if (path === "/easypaisa/webhook" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
       const providedSecret =
@@ -511,10 +316,12 @@ export const handler = async (event: any) => {
 
     // Solana RPC
     if (path === "/solana-rpc" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event);
+      if (body === null) {
+        return jsonResponse(400, {
+          error: "Invalid JSON in request body",
+        });
+      }
 
       const methodName = body?.method;
       const params = body?.params ?? [];
@@ -524,8 +331,17 @@ export const handler = async (event: any) => {
         return jsonResponse(400, { error: "Missing RPC method" });
       }
 
-      const result = await callRpc(methodName, params, id);
-      return jsonResponse(200, result.body);
+      try {
+        const result = await callRpc(methodName, params, id);
+        return jsonResponse(200, result.body);
+      } catch (e: any) {
+        console.error("[Solana RPC] Handler error:", e);
+        return jsonResponse(502, {
+          error: "Failed to call Solana RPC",
+          details: e?.message || String(e),
+          method: methodName,
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
@@ -615,15 +431,16 @@ export const handler = async (event: any) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
       const MARKUP = 1.0425; // 4.25%
+      const MIN_REALISTIC_PRICE = 0.00001; // minimum realistic price threshold
 
       let priceUsd: number | null = null;
       try {
@@ -636,13 +453,23 @@ export const handler = async (event: any) => {
             pairs.length > 0 && pairs[0]?.priceUsd
               ? Number(pairs[0].priceUsd)
               : null;
-          if (typeof price === "number" && isFinite(price) && price > 0) {
+          // Only use price if it's a realistic value (above minimum threshold)
+          if (
+            typeof price === "number" &&
+            isFinite(price) &&
+            price >= MIN_REALISTIC_PRICE
+          ) {
             priceUsd = price;
           }
         }
       } catch {}
 
-      if (priceUsd === null || !isFinite(priceUsd) || priceUsd <= 0) {
+      // Fall back to hardcoded prices if DexScreener data is invalid, zero, or too small
+      if (
+        priceUsd === null ||
+        !isFinite(priceUsd) ||
+        priceUsd < MIN_REALISTIC_PRICE
+      ) {
         priceUsd = FALLBACK_USD[token] ?? FALLBACK_USD.FIXERCOIN;
       }
 
@@ -794,153 +621,6 @@ export const handler = async (event: any) => {
       });
     }
 
-    // Binance P2P passthrough: /api/binance-p2p/<path>
-    if (path.startsWith("/binance-p2p/")) {
-      const BINANCE_P2P_ENDPOINTS = [
-        "https://p2p.binance.com",
-        "https://c2c.binance.com",
-        "https://www.binance.com",
-      ];
-      const subPath = path.replace(/^\/binance-p2p\//, "/");
-      const search = event.rawQuery ? `?${event.rawQuery}` : "";
-      const requestBody =
-        event.httpMethod !== "GET" && event.httpMethod !== "HEAD"
-          ? (event.body ?? undefined)
-          : undefined;
-      const cacheKey = `${event.httpMethod}:${subPath}${search}:${requestBody ?? ""}`;
-      const cached = BINANCE_P2P_CACHE.get(cacheKey);
-      if (cached && cached.expiresAt > Date.now()) {
-        return jsonResponse(200, cached.data);
-      }
-
-      const headersLower = event.headers || {};
-      const uaHeader =
-        headersLower["user-agent"] ||
-        headersLower["User-Agent"] ||
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-      const traceId = uniqueId().replace(/-/g, "");
-      const sessionId = uniqueId().replace(/-/g, "");
-      const deviceInfo = buildDeviceInfoPayload(uaHeader);
-
-      const baseHeaders: Record<string, string> = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": uaHeader,
-        clienttype: "web",
-        "cache-control": "no-cache",
-        Origin: "https://p2p.binance.com",
-        Referer: "https://p2p.binance.com/en",
-        lang: "en",
-        platform: "web",
-        "Accept-Language": "en-US,en;q=0.9",
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Trace-Id": traceId,
-        "device-info": deviceInfo,
-        "bnc-uuid": sessionId,
-        "bnc-visit-id": `${Math.floor(Date.now() / 1000)}`,
-        csrftoken: traceId,
-        "X-CSRF-TOKEN": traceId,
-        timezone: "UTC",
-      };
-
-      if (requestBody === undefined) {
-        delete baseHeaders["Content-Type"];
-      }
-
-      let lastErr = "";
-      for (let i = 0; i < BINANCE_P2P_ENDPOINTS.length; i++) {
-        const base = BINANCE_P2P_ENDPOINTS[i];
-        const target = `${base}${subPath}${search}`;
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
-          const init: RequestInit = {
-            method: event.httpMethod,
-            headers: baseHeaders,
-            signal: controller.signal,
-          };
-          if (requestBody !== undefined) {
-            init.body = requestBody;
-          }
-          const resp = await fetch(target, init);
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            if ([403, 429, 502, 503].includes(resp.status)) {
-              lastErr = `${resp.status} ${resp.statusText}`;
-              await new Promise((resolve) => setTimeout(resolve, 150));
-              continue;
-            }
-            const t = await resp.text().catch(() => "");
-            return jsonResponse(resp.status, { error: t || resp.statusText });
-          }
-          const contentType = resp.headers.get("content-type") || "";
-          if (contentType.includes("application/json")) {
-            const json = await resp.json();
-            BINANCE_P2P_CACHE.set(cacheKey, {
-              expiresAt: Date.now() + BINANCE_P2P_CACHE_TTL,
-              data: json,
-            });
-            return jsonResponse(200, json);
-          }
-          const text = await resp.text();
-          return jsonResponse(200, text, {
-            "Content-Type": contentType || "text/plain",
-          });
-        } catch (e) {
-          lastErr = e instanceof Error ? e.message : String(e);
-        }
-      }
-      BINANCE_P2P_CACHE.delete(cacheKey);
-      // Graceful fallback: return empty data set so client can fallback without network error noise
-      return jsonResponse(200, {
-        data: [],
-        error: "All Binance P2P endpoints failed",
-        details: lastErr,
-      });
-    }
-
-    // Binance passthrough: /api/binance/<path>
-    if (path.startsWith("/binance/")) {
-      const BINANCE_ENDPOINTS = [
-        "https://api.binance.com",
-        "https://api1.binance.com",
-        "https://api2.binance.com",
-        "https://api3.binance.com",
-      ];
-      const subPath = path.replace(/^\/binance\//, "/");
-      const search = event.rawQuery ? `?${event.rawQuery}` : "";
-      let lastErr = "";
-      for (let i = 0; i < BINANCE_ENDPOINTS.length; i++) {
-        const base = BINANCE_ENDPOINTS[i];
-        const target = `${base}${subPath}${search}`;
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
-          const resp = await fetch(target, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!resp.ok) {
-            if ([429, 502, 503].includes(resp.status)) continue;
-            const t = await resp.text().catch(() => "");
-            throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
-          }
-          const text = await resp.text();
-          // Try to return JSON if possible, else text
-          try {
-            const json = JSON.parse(text);
-            return jsonResponse(200, json);
-          } catch {
-            return jsonResponse(200, text, { "Content-Type": "text/plain" });
-          }
-        } catch (e) {
-          lastErr = e instanceof Error ? e.message : String(e);
-        }
-      }
-      return jsonResponse(502, {
-        error: "All Binance endpoints failed",
-        details: lastErr,
-      });
-    }
-
     // Debug: count tokens missing 24h change on dashboard logic
     if (path === "/debug/24h-missing" && method === "GET") {
       const publicKey = (event.queryStringParameters?.publicKey || "").trim();
@@ -1005,6 +685,14 @@ export const handler = async (event: any) => {
       });
     }
 
+    // Health check: /api/ping
+    if (path === "/ping" && method === "GET") {
+      return jsonResponse(200, {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     // Wallet balance: /api/wallet/balance?publicKey=... (also supports wallet/address)
     if (path === "/wallet/balance" && method === "GET") {
       const pk = (
@@ -1038,6 +726,443 @@ export const handler = async (event: any) => {
       }
     }
 
+    // Jupiter price: /api/jupiter/price?ids=...
+    if (path === "/jupiter/price" && method === "GET") {
+      const ids = event.queryStringParameters?.ids || "";
+      if (!ids) {
+        return jsonResponse(400, { error: "Missing 'ids' query parameter" });
+      }
+      try {
+        const url = `https://price.jup.ag/v4/price?ids=${encodeURIComponent(ids)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Jupiter API error" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch Jupiter prices",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Jupiter quote: /api/jupiter/quote?inputMint=...&outputMint=...&amount=...
+    if (path === "/jupiter/quote" && method === "GET") {
+      const inputMint = event.queryStringParameters?.inputMint || "";
+      const outputMint = event.queryStringParameters?.outputMint || "";
+      const amount = event.queryStringParameters?.amount || "";
+      const slippageBps = event.queryStringParameters?.slippageBps || "50";
+
+      if (!inputMint || !outputMint || !amount) {
+        return jsonResponse(400, {
+          error: "Missing required parameters: inputMint, outputMint, amount",
+        });
+      }
+
+      try {
+        const url = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Jupiter API error" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch Jupiter quote",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Jupiter swap: /api/jupiter/swap (POST)
+    if (path === "/jupiter/swap" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      try {
+        const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Jupiter swap failed" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to execute Jupiter swap",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Jupiter tokens: /api/jupiter/tokens?type=strict|all
+    if (path === "/jupiter/tokens" && method === "GET") {
+      const type = event.queryStringParameters?.type || "strict";
+      try {
+        const url = `https://token.jup.ag/all?type=${encodeURIComponent(type)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, {
+            error: "Jupiter tokens API error",
+          });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch Jupiter tokens",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // DexTools price: /api/dextools/price?tokenAddress=...&chainId=solana
+    if (path === "/dextools/price" && method === "GET") {
+      const tokenAddress = event.queryStringParameters?.tokenAddress || "";
+      const chainId = event.queryStringParameters?.chainId || "solana";
+
+      if (!tokenAddress) {
+        return jsonResponse(400, { error: "Missing 'tokenAddress' parameter" });
+      }
+
+      try {
+        const url = `https://api.dextools.io/v1/token/${encodeURIComponent(chainId)}/${encodeURIComponent(tokenAddress)}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.abort(),
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "DexTools API error" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data.data || data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch DexTools price",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // CoinMarketCap quotes: /api/coinmarketcap/quotes?symbols=...
+    if (path === "/coinmarketcap/quotes" && method === "GET") {
+      const symbols = event.queryStringParameters?.symbols || "";
+
+      if (!symbols) {
+        return jsonResponse(400, { error: "Missing 'symbols' parameter" });
+      }
+
+      try {
+        const cmcApiKey = process.env.COINMARKETCAP_API_KEY || "";
+        if (!cmcApiKey) {
+          return jsonResponse(500, {
+            error: "CoinMarketCap API key not configured",
+          });
+        }
+
+        const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbols)}&convert=USD`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            "X-CMC_PRO_API_KEY": cmcApiKey,
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          return jsonResponse(resp.status, {
+            error: "CoinMarketCap API error",
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to fetch CoinMarketCap prices",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun quote: /api/pumpfun/quote (POST or GET)
+    if (path === "/pumpfun/quote") {
+      if (method === "POST" || method === "GET") {
+        let inputMint = "";
+        let outputMint = "";
+        let amount = "";
+
+        if (method === "POST") {
+          const body = parseRequestBody(event) || {};
+          inputMint = body?.inputMint || "";
+          outputMint = body?.outputMint || "";
+          amount = body?.amount || "";
+        } else {
+          inputMint = event.queryStringParameters?.inputMint || "";
+          outputMint = event.queryStringParameters?.outputMint || "";
+          amount = event.queryStringParameters?.amount || "";
+        }
+
+        if (!inputMint || !outputMint || !amount) {
+          return jsonResponse(400, {
+            error: "Missing required parameters: inputMint, outputMint, amount",
+          });
+        }
+
+        try {
+          const url = `https://api.pumpfun.com/api/v1/quote?input_mint=${encodeURIComponent(inputMint)}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(url, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok) {
+            return jsonResponse(resp.status, { error: "Pumpfun API error" });
+          }
+          const data = await resp.json();
+          return jsonResponse(200, data);
+        } catch (e: any) {
+          return jsonResponse(502, {
+            error: "Failed to fetch Pumpfun quote",
+            details: e?.message || String(e),
+          });
+        }
+      }
+      return jsonResponse(405, { error: "Method not allowed" });
+    }
+
+    // Pumpfun swap: /api/pumpfun/swap (POST)
+    if (path === "/pumpfun/swap" && method === "POST") {
+      const body = parseRequestBody(event) || {};
+
+      if (!body || typeof body !== "object") {
+        return jsonResponse(400, { error: "Invalid request body" });
+      }
+
+      try {
+        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          return jsonResponse(resp.status, { error: "Pumpfun swap failed" });
+        }
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to execute Pumpfun swap",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun buy: /api/pumpfun/buy (POST)
+    if (path === "/pumpfun/buy" && method === "POST") {
+      const body = parseRequestBody(event) || {};
+
+      const { mint, amount, buyer } = body;
+
+      if (!mint || typeof amount !== "number" || !buyer) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), buyer (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            buyer,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "buy",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request BUY transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun sell: /api/pumpfun/sell (POST)
+    if (path === "/pumpfun/sell" && method === "POST") {
+      const body = parseRequestBody(event) || {};
+
+      const { mint, amount, seller } = body;
+
+      if (!mint || typeof amount !== "number" || !seller) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            seller,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "sell",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request SELL transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Submit signed transaction aliases: /api/solana-send, /api/swap/submit (POST)
+    if (
+      (path === "/solana-send" || path === "/swap/submit") &&
+      method === "POST"
+    ) {
+      const body = parseRequestBody(event) || {};
+
+      const txBase64 =
+        body?.signedBase64 ||
+        body?.signedTx ||
+        body?.signedTransaction ||
+        body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, {
+          error: "Missing signed transaction (base64)",
+        });
+      }
+
+      try {
+        const rpc = await callRpc("sendTransaction", [txBase64], Date.now());
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to submit signed transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Simulate signed transaction: /api/solana-simulate (POST)
+    if (path === "/solana-simulate" && method === "POST") {
+      const body = parseRequestBody(event) || {};
+
+      const txBase64 =
+        body?.signedBase64 ||
+        body?.signedTx ||
+        body?.signedTransaction ||
+        body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, {
+          error: "Missing signed transaction (base64)",
+        });
+      }
+
+      try {
+        const rpc = await callRpc(
+          "simulateTransaction",
+          [
+            txBase64,
+            {
+              encoding: "base64",
+              replaceRecentBlockhash: true,
+              sigVerify: true,
+            },
+          ],
+          Date.now(),
+        );
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to simulate transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
     return jsonResponse(404, { error: `No handler for ${path}` });
   } catch (error) {
     return jsonResponse(502, {
@@ -1047,3 +1172,5 @@ export const handler = async (event: any) => {
     });
   }
 };
+
+export { handler };

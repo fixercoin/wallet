@@ -72,11 +72,17 @@ export const makeRpcCall = async (
 
   const requestPromise = (async () => {
     let lastError: Error | null = null;
+    let lastErrorStatus: number | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         let response: Response;
         try {
+          // Add timeout for the proxy RPC call
+          const controller = new AbortController();
+          const timeoutMs = 15000; // 15s timeout for proxy RPC
+          const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
           response = await fetch("/api/solana-rpc", {
             method: "POST",
             headers: {
@@ -87,11 +93,74 @@ export const makeRpcCall = async (
               params,
               id: Date.now(),
             }),
+            signal: controller.signal,
           });
+          clearTimeout(timeout);
         } catch (fetchErr) {
           // Network/connection error (e.g. Dev server not running, middleware not mounted)
           const fetchError =
             fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+
+          // Check if it's a timeout error
+          const isTimeout =
+            fetchError.includes("abort") || fetchError.includes("timeout");
+          if (isTimeout) {
+            console.warn(
+              `[RPC Call] ${method} timed out after ${timeoutMs}ms. Trying direct endpoints...`,
+            );
+          }
+
+          // Try calling known public RPC endpoints directly as a fallback
+          const directEndpoints = [
+            SOLANA_RPC_URL,
+            "https://rpc.ankr.com/solana",
+            "https://api.mainnet-beta.solana.com",
+            "https://solana.publicnode.com",
+          ].filter(Boolean);
+
+          for (const endpoint of directEndpoints) {
+            try {
+              const controller2 = new AbortController();
+              const timeout2 = setTimeout(() => controller2.abort(), 10000);
+              const resp2 = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: Date.now(),
+                  method,
+                  params,
+                }),
+                signal: controller2.signal,
+              });
+              clearTimeout(timeout2);
+
+              if (!resp2.ok) {
+                const t = await resp2.text().catch(() => "");
+                console.warn(
+                  `Direct RPC ${endpoint} returned ${resp2.status}: ${t}`,
+                );
+                continue;
+              }
+
+              const txt2 = await resp2.text().catch(() => "");
+              try {
+                const parsed = txt2 ? JSON.parse(txt2) : null;
+                if (parsed && parsed.error) {
+                  throw new Error(parsed.error.message || "RPC error");
+                }
+                return parsed?.result ?? parsed ?? txt2;
+              } catch (e) {
+                return txt2;
+              }
+            } catch (e) {
+              console.warn(
+                `Direct RPC endpoint ${endpoint} failed:`,
+                e instanceof Error ? e.message : String(e),
+              );
+              continue;
+            }
+          }
 
           // Health check to provide better guidance
           try {
@@ -136,6 +205,15 @@ export const makeRpcCall = async (
           const diagSuffix = serverDiag
             ? ` Server diagnostics: ${serverDiag}`
             : "";
+
+          // Special handling for rate limiting - use longer backoff
+          if (response.status === 429) {
+            lastErrorStatus = 429;
+            throw new Error(
+              `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
+            );
+          }
+
           throw new Error(
             `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
           );
@@ -161,9 +239,17 @@ export const makeRpcCall = async (
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < retries) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * (attempt + 1)),
+          // Use exponential backoff, with extra delay for rate limiting
+          const isRateLimited = lastErrorStatus === 429;
+          const baseDelay = isRateLimited ? 3000 : 1000; // 3s base for 429, 1s for others
+          const delayMs = baseDelay * Math.pow(2, attempt); // Exponential: 3s, 6s, 12s for 429
+
+          console.warn(
+            `[RPC Call] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms:`,
+            lastError.message,
           );
+
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
     }
@@ -234,6 +320,9 @@ export const getTokenAccounts = async (publicKey: string) => {
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value) && value.length >= 0) {
+      console.log(
+        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+      );
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;
@@ -256,69 +345,50 @@ export const getTokenAccounts = async (publicKey: string) => {
     }
   } catch (error) {
     console.warn(
-      "Proxy RPC getTokenAccountsByOwner failed, attempting fallback RPC endpoints:",
+      "[Token Accounts] Proxy RPC getTokenAccountsByOwner failed, attempting direct web3.js fallback:",
       error,
     );
   }
 
-  // Fallback RPC endpoints with better support for token queries
-  const fallbackRPCs = [
-    SOLANA_RPC_URL,
-    "https://rpc.ankr.com/solana",
-    "https://solana.publicnode.com",
-    "https://api.mainnet-beta.solana.com",
-  ].filter((url, idx, arr) => arr.indexOf(url) === idx); // Remove duplicates
+  // Fallback: Try direct web3.js Connection via SOLANA_RPC_URL
+  try {
+    console.log("[Token Accounts] Attempting direct web3.js fallback...");
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const accounts = await conn.getParsedTokenAccountsByOwner(
+      new PublicKey(publicKey),
+      { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+    );
 
-  for (const rpcUrl of fallbackRPCs) {
-    try {
-      console.log(`[Token Accounts] Trying RPC endpoint: ${rpcUrl}`);
-      const conn = new Connection(rpcUrl, { commitment: "confirmed" });
-      const owner = new PublicKey(publicKey);
-      const programId = new PublicKey(TOKEN_PROGRAM_ID);
+    console.log(
+      `[Token Accounts] Got ${accounts.value.length} token accounts from web3.js fallback`,
+    );
 
-      const resp = await Promise.race([
-        conn.getParsedTokenAccountsByOwner(owner, { programId }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("RPC timeout")), 10000),
-        ),
-      ]);
+    return accounts.value.map((account: any) => {
+      const parsedInfo = account.account.data.parsed.info;
+      const mint = parsedInfo.mint;
+      const balance = parsedInfo.tokenAmount.uiAmount || 0;
+      const decimals = parsedInfo.tokenAmount.decimals;
 
-      console.log(
-        `[Token Accounts] Successfully fetched from ${rpcUrl}: ${resp.value.length} token accounts`,
-      );
+      const metadata = KNOWN_TOKENS[mint] || {
+        mint,
+        symbol: "UNKNOWN",
+        name: "Unknown Token",
+        decimals,
+      };
 
-      return resp.value.map((account) => {
-        const parsedInfo: any = (account.account.data as any).parsed.info;
-        const mint: string = parsedInfo.mint;
-        const balance: number = parsedInfo.tokenAmount.uiAmount || 0;
-        const decimals: number = parsedInfo.tokenAmount.decimals;
-
-        const metadata = KNOWN_TOKENS[mint] || {
-          mint,
-          symbol: "UNKNOWN",
-          name: "Unknown Token",
-          decimals,
-        };
-
-        return {
-          ...metadata,
-          balance,
-          decimals: decimals || metadata.decimals,
-        };
-      });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Token Accounts] Failed with ${rpcUrl}: ${errorMsg}. Trying next endpoint...`,
-      );
-      continue;
-    }
+      return {
+        ...metadata,
+        balance,
+        decimals: decimals || metadata.decimals,
+      };
+    });
+  } catch (webError) {
+    console.error(
+      "[Token Accounts] Direct web3.js fallback also failed:",
+      webError,
+    );
+    return [];
   }
-
-  console.error(
-    "[Token Accounts] All RPC endpoints failed to fetch token accounts, returning empty list",
-  );
-  return [];
 };
 
 /**

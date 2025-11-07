@@ -70,7 +70,18 @@ export const handler: Handler = async (
 
   // Extract the path from the event
   // The path should be the original request path like /api/jupiter/quote
-  const rawPath = event.path || event.rawPath || "";
+  // Netlify passes the original path before rewrite in event.path
+  let rawPath = event.path || event.rawPath || "";
+
+  // Debug log the raw path
+  console.log(
+    `[API Router] Raw path: ${rawPath}, Method: ${event.httpMethod}, URL path: ${event.rawUrl || "N/A"}`,
+  );
+
+  // Remove /.netlify/functions/api prefix if present (from rewrite)
+  if (rawPath.startsWith("/.netlify/functions/api")) {
+    rawPath = rawPath.replace(/^\/.netlify\/functions\/api/, "/api");
+  }
 
   // Remove /api prefix and query parameters
   const pathWithoutPrefix = rawPath.replace(/^\/+api\/?/, "");

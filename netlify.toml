@@ -3,16 +3,8 @@ command = "pnpm build"
 publish = "dist"
 functions = "netlify/functions"
 
-[functions]
-
-[functions.timeout]
-external_node_modules = []
-
-# Rewrite API requests to the functions
-[[rewrites]]
-from = "/api/*"
-to = "/.netlify/functions/api"
-status = 200
+[functions."netlify/functions/api"]
+node_bundler = "esbuild"
 
 # SPA fallback for client-side routing (must be last)
 [[redirects]]

@@ -1,6 +1,6 @@
 [build]
 command = "pnpm build"
-publish = "dist/spa"
+publish = "dist"
 functions = "netlify/functions"
 
 # Proxy SPA API calls to the Netlify function, preserving path via :splat

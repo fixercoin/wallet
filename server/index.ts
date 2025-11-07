@@ -711,4 +711,4 @@ export async function createServer(): Promise<express.Application> {
 }
 
 // Export handler for Netlify serverless functions
-export const handler = createApp();
+export const handler = createServer();

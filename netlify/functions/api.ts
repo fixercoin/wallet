@@ -1,57 +1,32 @@
+// This file serves as a fallback for the /api base path
+// Specific API endpoints are handled by nested function files in the api/ directory
+// For example: api/solana-rpc.ts, api/wallet/balance.ts, etc.
+
 import type { Handler } from "@netlify/functions";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-      },
+      headers: CORS_HEADERS,
       body: "",
     };
   }
 
+  // This shouldn't be reached for specific endpoints as Netlify should route to nested functions
   return {
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Content-Type": "application/json",
-    },
+    statusCode: 404,
+    headers: CORS_HEADERS,
     body: JSON.stringify({
-      ok: true,
-      service: "Fixorium Wallet API (Netlify)",
-      status: "operational",
-      timestamp: new Date().toISOString(),
-      endpoints: {
-        health: "/api/health",
-        status: "/api/status",
-        ping: "/api/ping",
-        wallet: {
-          balance: "/api/wallet/balance?publicKey=<address>",
-        },
-        pricing: {
-          "sol-price": "/api/sol/price",
-          "birdeye-price": "/api/birdeye/price?address=<mint>",
-          "dexscreener-price": "/api/dexscreener/price?token=<mint>",
-          "token-price": "/api/token/price?token=<symbol>&mint=<mint>",
-        },
-        jupiter: {
-          price: "/api/jupiter/price?ids=<mint>",
-          quote: "/api/jupiter/quote",
-          swap: "/api/jupiter/swap [POST]",
-        },
-        pumpfun: {
-          quote: "/api/pumpfun/quote",
-          buy: "/api/pumpfun/buy [POST]",
-          sell: "/api/pumpfun/sell [POST]",
-        },
-        utilities: {
-          "forex-rate": "/api/forex/rate",
-          ping: "/api/ping",
-        },
-      },
+      error: "API endpoint not found",
+      hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, etc.",
     }),
   };
 };

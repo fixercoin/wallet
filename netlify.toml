@@ -3,7 +3,15 @@ command = "pnpm build"
 publish = "dist"
 functions = "netlify/functions"
 
-# Proxy SPA API calls to the Netlify function, preserving path via :splat
+# Status endpoint
+[[redirects]]
+from = "/api/status"
+to = "/.netlify/functions/status"
+status = 200
+force = true
+
+# Proxy SPA API calls to the Netlify functions, preserving path via :splat
+# This will be handled by nested functions in netlify/functions/api/ directory
 [[redirects]]
 from = "/api/*"
 to = "/.netlify/functions/api/:splat"

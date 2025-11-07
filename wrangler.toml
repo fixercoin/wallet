@@ -9,7 +9,7 @@ type = "javascript"
 main = "functions/api/[[path]].ts"
 
 # Bind this Worker to your custom domain route
-route = "api.fixorium.com.pk/*"
+route = "fixorium-api.khanbabusargodha.workers.dev/*"
 
 [build]
 command = "pnpm build"

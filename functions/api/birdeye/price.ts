@@ -286,4 +286,4 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export default handler;
+export const onRequest = async ({ request }: { request: Request }) => handler(request);

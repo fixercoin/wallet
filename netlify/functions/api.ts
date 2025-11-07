@@ -106,7 +106,10 @@ export const handler: Handler = async (
 
   // Remove /.netlify/functions/api prefix if present (from rewrite)
   if (normalizedPath.startsWith("/.netlify/functions/api")) {
-    normalizedPath = normalizedPath.replace(/^\/.netlify\/functions\/api/, "/api");
+    normalizedPath = normalizedPath.replace(
+      /^\/.netlify\/functions\/api/,
+      "/api",
+    );
   }
 
   // Remove /api prefix and query parameters

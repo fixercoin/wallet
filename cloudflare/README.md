@@ -17,7 +17,7 @@ Suggested setup:
    - Use: wrangler secret put FIXORIUM_API_KEY
 
 4. DNS / Custom domain
-   - In Cloudflare dashboard, map api.fixorium.com.pk to the Worker (Workers → Add route) or configure a custom domain
+   - In Cloudflare dashboard, map your desired custom domain to the Worker (Workers → Add route) or configure a custom domain. If using the workers.dev deployment, the worker URL is https://fixorium-api.khanbabusargodha.workers.dev
    - For Pages, add your frontend domain in Pages settings
 
 Testing:

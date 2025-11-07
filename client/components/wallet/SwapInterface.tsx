@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
-import { jupiterAPI } from "@/lib/services/jupiter";
+import { jupiterV6API } from "@/lib/services/jupiter-v6";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,
@@ -383,16 +383,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const decimalsIn = fromToken.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
-      const amountStr = jupiterAPI.formatSwapAmount(
+      const amountStr = jupiterV6API.formatSwapAmount(
         Number(amountRaw) / Math.pow(10, decimalsIn),
         decimalsIn,
       );
 
       // Use 1% slippage tolerance (100 basis points) for more forgiving execution
-      const quoteResponse = await jupiterAPI.getQuote(
+      const quoteResponse = await jupiterV6API.getQuote(
         fromMint,
         toMint,
-        parseInt(amountStr),
+        amountStr,
         100,
       );
 
@@ -417,7 +417,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setIsLoading(false);
       return { quoteResponse };
     } catch (err) {
-      const errorMsg = err.message || String(err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
       let friendlyMsg = "Failed to get quote. ";
 
       if (errorMsg.includes("timeout")) {

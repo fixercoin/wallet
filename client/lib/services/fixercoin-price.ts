@@ -49,7 +49,7 @@ class FixercoinPriceService {
       };
 
       // Only cache if we got valid price data
-      if (priceData.price > 0) {
+      if (priceData.price > 0 && isFinite(priceData.price)) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(

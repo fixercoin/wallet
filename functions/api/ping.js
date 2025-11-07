@@ -9,11 +9,18 @@ export const onRequest = async ({request}) => {
       }
     });
   }
-  return new Response(JSON.stringify({message: 'ping'}), {
-    status:200,
+  return new Response(JSON.stringify({
+    status: 'ok',
+    message: 'ping',
+    timestamp: new Date().toISOString(),
+    service: 'Fixorium Wallet API'
+  }), {
+    status: 200,
     headers: {
-      'Content-Type':'application/json',
-      'Access-Control-Allow-Origin':'*'
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     }
   });
 };

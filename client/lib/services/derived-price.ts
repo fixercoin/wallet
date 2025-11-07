@@ -118,9 +118,11 @@ async function getUsdFromServer(token: SupportedToken): Promise<number | null> {
 
 async function getUsdFromDexscreener(
   token: SupportedToken,
+  mint?: string,
 ): Promise<number | null> {
   try {
-    const data = await dexscreenerAPI.getTokenByMint(TOKEN_MINTS[token]);
+    const lookupMint = mint || TOKEN_MINTS[token];
+    const data = await dexscreenerAPI.getTokenByMint(lookupMint);
     const p = data?.priceUsd ? parseFloat(data.priceUsd) : NaN;
     return Number.isFinite(p) && p > 0 ? p : null;
   } catch {

@@ -76,7 +76,7 @@ class JupiterAPI {
     },
   ): Promise<JupiterQuoteResponse | null> {
     // Retry logic for transient failures
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const params = new URLSearchParams({
           inputMint,
@@ -91,80 +91,95 @@ class JupiterAPI {
 
         const path = `/api/jupiter/quote?${params.toString()}`;
         console.log(
-          `Jupiter quote request (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
+          `Jupiter quote request (attempt ${attempt}/3): ${inputMint} -> ${outputMint}`,
         );
 
-        const response = await fetchWithFallback(path, { method: "GET" }).catch(
-          () => new Response("", { status: 0 } as any),
-        );
-        const txt = await response.text().catch(() => "");
-
-        if (!response.ok) {
-          try {
-            const errorData = txt ? JSON.parse(txt) : {};
-            const errorCode = errorData?.code;
-
-            // If no route found, return null (don't retry for this)
-            if (
-              errorCode === "NO_ROUTE_FOUND" ||
-              response.status === 404 ||
-              response.status === 400
-            ) {
-              console.warn(
-                `No route available from Jupiter for ${inputMint} -> ${outputMint} (${response.status})`,
-              );
-              return null;
-            }
-          } catch (parseErr) {
-            console.debug("Could not parse error response:", parseErr);
-          }
-
-          // For server errors or rate limits, retry
-          if (response.status === 429 || response.status >= 500) {
-            console.warn(
-              `Jupiter API error ${response.status} (attempt ${attempt}/2), retrying...`,
-            );
-            if (attempt < 2) {
-              await new Promise((r) => setTimeout(r, attempt * 1000));
-              continue;
-            }
-          }
-
-          console.warn(
-            "Jupiter quote unavailable (proxy):",
-            response.status,
-            txt.substring(0, 100),
-          );
-          return null;
-        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         try {
-          const quote = JSON.parse(txt);
-          console.log(
-            `✅ Jupiter quote success (attempt ${attempt}): ${quote.outAmount}`,
-          );
-          return quote;
-        } catch (e) {
-          console.warn("Failed to parse Jupiter proxy quote response:", e);
-          return null;
+          const response = await fetch(path, {
+            method: "GET",
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          const txt = await response.text().catch(() => "");
+
+          if (!response.ok) {
+            try {
+              const errorData = txt ? JSON.parse(txt) : {};
+              const errorCode = errorData?.code;
+
+              // If no route found, return null (don't retry for this)
+              if (
+                errorCode === "NO_ROUTE_FOUND" ||
+                response.status === 404 ||
+                response.status === 400
+              ) {
+                console.warn(
+                  `No route available from Jupiter for ${inputMint} -> ${outputMint} (${response.status})`,
+                );
+                return null;
+              }
+            } catch (parseErr) {
+              console.debug("Could not parse error response:", parseErr);
+            }
+
+            // For server errors or rate limits, retry
+            if (response.status === 429 || response.status >= 500) {
+              console.warn(
+                `Jupiter API error ${response.status} (attempt ${attempt}/3), retrying...`,
+              );
+              if (attempt < 3) {
+                await new Promise((r) => setTimeout(r, attempt * 1500));
+                continue;
+              }
+            }
+
+            console.warn(
+              "Jupiter quote unavailable (proxy):",
+              response.status,
+              txt.substring(0, 100),
+            );
+            return null;
+          }
+
+          try {
+            const quote = JSON.parse(txt);
+            console.log(
+              `✅ Jupiter quote success (attempt ${attempt}): ${quote.outAmount}`,
+            );
+            return quote;
+          } catch (e) {
+            console.warn("Failed to parse Jupiter proxy quote response:", e);
+            return null;
+          }
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          throw fetchError;
         }
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        if (
-          attempt < 2 &&
-          (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
-        ) {
+        const isNetworkError =
+          msg.includes("Failed to fetch") ||
+          msg.includes("timeout") ||
+          msg.includes("ECONNREFUSED") ||
+          msg.includes("NetworkError") ||
+          msg.includes("abort");
+
+        if (attempt < 3 && isNetworkError) {
           console.warn(
-            `Jupiter transient error (attempt ${attempt}/2), retrying: ${msg}`,
+            `Jupiter transient error (attempt ${attempt}/3), retrying: ${msg}`,
           );
-          await new Promise((r) => setTimeout(r, attempt * 1000));
+          await new Promise((r) => setTimeout(r, attempt * 1500));
           continue;
         }
         console.error(
           `Error fetching quote from Jupiter (attempt ${attempt}):`,
           error,
         );
-        if (attempt === 2) return null;
+        if (attempt === 3) return null;
       }
     }
 

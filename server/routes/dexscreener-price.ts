@@ -165,40 +165,60 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
 };
 
 export const handleSolPrice: RequestHandler = async (req, res) => {
-  try {
-    const SOL_MINT = "So11111111111111111111111111111111111111112";
-    console.log(`[SOL Price] Fetching price for SOL`);
+  const SOL_MINT = "So11111111111111111111111111111111111111112";
+  const FALLBACK_SOL_PRICE = 149.38;
 
+  console.log(`[SOL Price] Fetching price for SOL`);
+
+  try {
     try {
       const data = await fetchDexscreenerData(`/tokens/${SOL_MINT}`);
       const pair = data?.pairs?.[0];
 
-      if (!pair) {
-        return res.status(404).json({ error: "SOL price data not found" });
+      if (pair && pair.priceUsd) {
+        const priceUsd = parseFloat(pair.priceUsd);
+
+        if (isFinite(priceUsd) && priceUsd > 0) {
+          console.log(`[SOL Price] ✅ Successfully fetched SOL price: $${priceUsd}`);
+          return res.json({
+            token: "SOL",
+            price: priceUsd,
+            priceUsd,
+            priceChange24h: pair.priceChange?.h24 || 0,
+            volume24h: pair.volume?.h24 || 0,
+            marketCap: pair.marketCap || 0,
+            source: "dexscreener",
+          });
+        }
       }
 
-      const priceUsd = parseFloat(pair.priceUsd || "0");
-
-      return res.json({
-        token: "SOL",
-        price: priceUsd,
-        priceUsd,
-        priceChange24h: pair.priceChange?.h24 || 0,
-        volume24h: pair.volume?.h24 || 0,
-        marketCap: pair.marketCap || 0,
-      });
+      console.warn(`[SOL Price] Invalid or missing price data, using fallback`);
     } catch (error) {
-      console.error(`[SOL Price] DexScreener fetch error:`, error);
-      return res.status(502).json({
-        error: "Failed to fetch SOL price",
-        details: error instanceof Error ? error.message : String(error),
-      });
+      console.warn(`[SOL Price] DexScreener fetch failed:`, error instanceof Error ? error.message : String(error));
     }
+
+    // Fallback response with status 200 (not 502) to ensure client receives valid JSON
+    console.log(`[SOL Price] Returning fallback price: $${FALLBACK_SOL_PRICE}`);
+    return res.json({
+      token: "SOL",
+      price: FALLBACK_SOL_PRICE,
+      priceUsd: FALLBACK_SOL_PRICE,
+      priceChange24h: 0,
+      volume24h: 0,
+      marketCap: 0,
+      source: "fallback",
+    });
   } catch (error) {
+    // Last-resort fallback - always return valid JSON
     console.error(`[SOL Price] Handler error:`, error);
-    return res.status(500).json({
-      error: "Failed to fetch SOL price",
-      details: error instanceof Error ? error.message : String(error),
+    return res.json({
+      token: "SOL",
+      price: FALLBACK_SOL_PRICE,
+      priceUsd: FALLBACK_SOL_PRICE,
+      priceChange24h: 0,
+      volume24h: 0,
+      marketCap: 0,
+      source: "fallback",
     });
   }
 };

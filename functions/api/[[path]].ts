@@ -245,44 +245,97 @@ async function handleJupiterQuote(url: URL): Promise<Response> {
   const urls = [
     `${JUPITER_V6_SWAP_BASE}/quote?${params.toString()}`,
     `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
+    `https://api.jup.ag/quote/v1?${params.toString()}`,
   ];
 
-  for (const fetchUrl of urls) {
-    try {
-      const response = await timeoutFetch(fetchUrl, {
-        method: "GET",
-        headers: browserHeaders(),
-      });
+  let lastError: string = "";
+  let lastStatus: number = 500;
 
-      if (response.ok) {
-        const data = await response.json();
-        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
-      }
-
-      if (response.status === 404 || response.status === 400) {
-        return new Response(
-          JSON.stringify({
-            error: "No swap route found for this pair",
-            code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
-          }),
-          { status: response.status, headers: CORS_HEADERS },
+  for (let urlIdx = 0; urlIdx < urls.length; urlIdx++) {
+    const fetchUrl = urls[urlIdx];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[Jupiter Quote] Attempt ${attempt}/2 for URL ${urlIdx + 1}/${urls.length}: ${fetchUrl.split("?")[0]}`,
         );
-      }
 
-      if (response.status === 429 || response.status >= 500) {
-        continue;
-      }
+        const response = await timeoutFetch(fetchUrl, {
+          method: "GET",
+          headers: browserHeaders(),
+        });
 
-      const text = await response.text().catch(() => "");
-      throw new Error(`HTTP ${response.status}: ${text}`);
-    } catch (e: any) {
-      continue;
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Jupiter Quote] Success on attempt ${attempt}`);
+          return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+        }
+
+        lastStatus = response.status;
+
+        if (response.status === 404 || response.status === 400) {
+          const text = await response.text().catch(() => "");
+          lastError = `HTTP ${response.status}: ${text}`;
+          console.warn(
+            `[Jupiter Quote] No route or invalid params (${response.status}): ${text}`,
+          );
+          return new Response(
+            JSON.stringify({
+              error: "No swap route found for this pair",
+              code:
+                response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            }),
+            { status: response.status, headers: CORS_HEADERS },
+          );
+        }
+
+        if (response.status === 429) {
+          lastError = "Rate limited";
+          console.warn(`[Jupiter Quote] Rate limited (429)`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+          break;
+        }
+
+        if (response.status >= 500) {
+          lastError = `Server error ${response.status}`;
+          console.warn(`[Jupiter Quote] Server error (${response.status})`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+          break;
+        }
+
+        const text = await response.text().catch(() => "");
+        lastError = `HTTP ${response.status}: ${text}`;
+        console.warn(`[Jupiter Quote] Unexpected status ${response.status}`);
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.error(
+          `[Jupiter Quote] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+          continue;
+        }
+      }
     }
   }
 
+  console.error(
+    `[Jupiter Quote] All attempts failed. Last error: ${lastError}`,
+  );
   return new Response(
-    JSON.stringify({ error: "Quote API error", code: "API_ERROR" }),
-    { status: 500, headers: CORS_HEADERS },
+    JSON.stringify({
+      error: "Quote API error",
+      code: "API_ERROR",
+      details: lastError,
+      statusCode: lastStatus,
+    }),
+    { status: 502, headers: CORS_HEADERS },
   );
 }
 

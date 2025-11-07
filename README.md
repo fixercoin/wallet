@@ -1,6 +1,6 @@
 # Wallet-c36 Netlify Serverless Setup
 
-This project is configured for Netlify with serverless functions. 
+This project is configured for Netlify with serverless functions.
 Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 
 ## Key endpoints
@@ -32,7 +32,7 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
    - Functions directory: `netlify/functions`
 
 3. Set environment variables in Netlify dashboard:
-   
+
    **Required:**
    - `SOLANA_RPC` - Solana RPC endpoint (e.g., https://api.mainnet-beta.solana.com)
      - Or use Helius: https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
@@ -66,11 +66,13 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 ## How it works
 
 **Local Development:**
+
 - Frontend runs on http://localhost:5173 (Vite)
 - Backend runs on http://localhost:3000 (Express)
 - Frontend proxies `/api/*` to backend via vite.config.mjs
 
 **Production (Netlify):**
+
 - Frontend builds to `dist/` directory
 - API requests to `/api/*` are redirected to `/.netlify/functions/api/:splat`
 - Netlify serverless functions handle all API requests
@@ -79,16 +81,19 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 ## Troubleshooting
 
 **API requests failing locally:**
+
 - Make sure `npm run dev` is running (both frontend and backend)
 - Check that backend is on port 3000
 - Check vite.config.mjs proxy configuration
 
 **Build failing:**
+
 - Run `pnpm build` locally to test
 - Check that `dist` directory is created
 - Verify all TypeScript errors are fixed
 
 **Functions not working in production:**
+
 - Check Netlify function logs in dashboard
 - Verify environment variables are set in Netlify settings
 - Ensure RPC endpoint is accessible from Netlify servers

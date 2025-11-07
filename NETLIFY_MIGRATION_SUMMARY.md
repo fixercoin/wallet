@@ -9,7 +9,7 @@ All Cloudflare-specific files and configurations have been removed:
 - ❌ `scripts/deploy-cloudflare.sh` - Cloudflare deployment script
 - ❌ `scripts/deploy-cloudflare-pages.sh` - Cloudflare Pages deployment script
 - ❌ `utils/p2pStoreCf.ts` - Cloudflare D1 database implementation
-- ❌ All Cloudflare documentation files (CLOUDFLARE_*.md)
+- ❌ All Cloudflare documentation files (CLOUDFLARE\_\*.md)
 - ❌ Cloudflare-specific deployment guides
 
 ## What was updated
@@ -17,74 +17,92 @@ All Cloudflare-specific files and configurations have been removed:
 ### Configuration Files
 
 **`.env`** - Updated to use Netlify endpoints
+
 - Removed Cloudflare Worker URL references
 - VITE_API_BASE_URL now empty (uses relative /api paths)
 - Added Easypaisa webhook configuration comments
 
 **`package.json`** - Removed Cloudflare deployment script
+
 - ❌ Removed `deploy:cloudflare` script
 
 **`README.md`** - Complete rewrite for Netlify
+
 - Updated with Netlify deployment instructions
 - Simplified project structure documentation
 - Added troubleshooting guide for Netlify
 
 **`netlify.toml`** - Already properly configured
+
 - Build command: `pnpm build`
 - Functions directory: `netlify/functions`
 - API redirect: `/api/*` → `/.netlify/functions/api/:splat`
 - SPA fallback for client-side routing
 
 **`functions/README.md`** - Updated to reference Netlify
+
 - Points users to `netlify/functions/` for actual functions
 - Explains local development with Express server
 
 ### Code Files
 
 **`client/lib/wallet-proxy.ts`**
+
 - Removed comment about "Cloudflare worker shape"
 - Updated to generic "Alternative shape" comment
 
 **`client/lib/services/sol-price.ts`**
+
 - Removed comment about "routed through Cloudflare Worker"
 
 **`client/lib/services/pumpswap.ts`**
+
 - Removed comments about "Cloudflare Worker handles pool discovery"
 
 **`client/lib/services/coinmarketcap.ts`**
+
 - Removed comment about "server-side with API key configured on Cloudflare"
 
 **`client/components/wallet/TokenLock.tsx`**
+
 - Removed comments about "Persist to Cloudflare"
 
 **`server/index.ts`**
+
 - Changed export from Cloudflare Workers compatibility to simple handler export
 - Now exports handler for Node.js/Netlify compatibility
 
 **`functions/api/[[path]].ts`**
+
 - Updated service name from "Cloudflare Pages" to "Netlify"
 
 **`utils/p2pStore.ts`**
+
 - Updated comment about file system operations
 - Now mentions Netlify serverless functions instead of Cloudflare Workers
 
 ## How to Deploy to Netlify
 
 ### Step 1: Connect Your Repository
+
 1. Go to https://netlify.com
 2. Click "New site from Git"
 3. Select your GitHub/GitLab/Bitbucket repository
 
 ### Step 2: Configure Build Settings
+
 Netlify should auto-detect these, but verify:
+
 - **Build command:** `pnpm build`
 - **Publish directory:** `dist`
 - **Functions directory:** `netlify/functions`
 
 ### Step 3: Set Environment Variables
+
 In Netlify dashboard, go to **Site settings** → **Build & deploy** → **Environment**
 
 Add these environment variables:
+
 ```
 SOLANA_RPC=https://api.mainnet-beta.solana.com
 # Optional:
@@ -95,6 +113,7 @@ EASYPAY_MSISDN=your_number
 ```
 
 ### Step 4: Deploy
+
 - Push your code to the connected repository
 - Netlify will automatically build and deploy
 - Or use Netlify CLI: `netlify deploy --prod`
@@ -102,8 +121,9 @@ EASYPAY_MSISDN=your_number
 ## How It Works
 
 ### Local Development
+
 ```
-Browser (5173) 
+Browser (5173)
     ↓
 Vite Dev Server
     ↓
@@ -113,6 +133,7 @@ Express API Server (3000)
 ```
 
 ### Production (Netlify)
+
 ```
 Browser
     ↓
@@ -125,15 +146,15 @@ Netlify Serverless Functions
 
 ## Key Differences from Cloudflare
 
-| Aspect | Cloudflare | Netlify |
-|--------|-----------|---------|
-| **Deployment Model** | Edge Workers | Serverless Functions |
-| **Language** | JavaScript/WebAssembly | Node.js |
-| **Database** | Cloudflare KV / D1 | Any (SQL/NoSQL) |
-| **Build** | Git-based or manual | Git-based (auto) |
-| **Environment** | Global edge locations | Serverless Lambda (US) |
-| **API Handler** | `cloudflare/src/worker.ts` | `netlify/functions/api.ts` |
-| **Configuration** | `wrangler.toml` | `netlify.toml` |
+| Aspect               | Cloudflare                 | Netlify                    |
+| -------------------- | -------------------------- | -------------------------- |
+| **Deployment Model** | Edge Workers               | Serverless Functions       |
+| **Language**         | JavaScript/WebAssembly     | Node.js                    |
+| **Database**         | Cloudflare KV / D1         | Any (SQL/NoSQL)            |
+| **Build**            | Git-based or manual        | Git-based (auto)           |
+| **Environment**      | Global edge locations      | Serverless Lambda (US)     |
+| **API Handler**      | `cloudflare/src/worker.ts` | `netlify/functions/api.ts` |
+| **Configuration**    | `wrangler.toml`            | `netlify.toml`             |
 
 ## Benefits of Netlify
 
@@ -147,16 +168,19 @@ Netlify Serverless Functions
 ## Troubleshooting
 
 ### Functions not deploying
+
 - Check `netlify/functions/` directory exists
 - Verify TypeScript compiles: `npx tsc --noEmit`
 - Check Netlify deploy logs in dashboard
 
 ### API calls failing
+
 - Ensure `netlify.toml` redirects are configured
 - Check that functions have access to environment variables
 - Verify RPC endpoint is accessible from Netlify
 
 ### Build failing
+
 - Run `pnpm build` locally to debug
 - Check `dist/` directory is created
 - Verify no TypeScript errors

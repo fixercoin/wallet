@@ -331,11 +331,7 @@ class JupiterAPI {
           `Jupiter swap transient error (attempt ${retryCount + 1}/${maxRetries + 1}), retrying: ${msg}`,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        return this.getSwapTransaction(
-          swapRequest,
-          retryCount + 1,
-          maxRetries,
-        );
+        return this.getSwapTransaction(swapRequest, retryCount + 1, maxRetries);
       }
 
       console.error(
@@ -502,9 +498,7 @@ class JupiterAPI {
               return data as JupiterToken[];
             }
           } else {
-            console.warn(
-              `[${endpoint.name}] HTTP ${resp.status}, retrying...`,
-            );
+            console.warn(`[${endpoint.name}] HTTP ${resp.status}, retrying...`);
             if (attempt < 2) {
               await new Promise((r) => setTimeout(r, 1500));
               continue;
@@ -512,8 +506,7 @@ class JupiterAPI {
           }
           break;
         } catch (e) {
-          const msg =
-            e instanceof Error ? e.message : String(e);
+          const msg = e instanceof Error ? e.message : String(e);
           console.warn(
             `[${endpoint.name}] Failed (attempt ${attempt}/2): ${msg}`,
           );

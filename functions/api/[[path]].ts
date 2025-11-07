@@ -380,7 +380,9 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
           if (response.ok) {
             const data = await response.json();
             console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
-            return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+            return new Response(JSON.stringify(data), {
+              headers: CORS_HEADERS,
+            });
           }
 
           const text = await response.text().catch(() => "");

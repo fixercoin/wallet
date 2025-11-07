@@ -990,6 +990,123 @@ async function handleTokenPrice(url: URL): Promise<Response> {
   }
 }
 
+async function handleForexRate(url: URL): Promise<Response> {
+  try {
+    const base = (url.searchParams.get("base") || "USD").toUpperCase();
+    const symbols = (url.searchParams.get("symbols") || "PKR").toUpperCase();
+    const firstSymbol = symbols.split(",")[0];
+    const PROVIDER_TIMEOUT_MS = 5000;
+
+    const providers: Array<{
+      name: string;
+      url: string;
+      parse: (j: any) => number | null;
+    }> = [
+      {
+        name: "exchangerate.host",
+        url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+        parse: (j) =>
+          j && j.rates && typeof j.rates[firstSymbol] === "number"
+            ? j.rates[firstSymbol]
+            : null,
+      },
+      {
+        name: "frankfurter",
+        url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+        parse: (j) =>
+          j && j.rates && typeof j.rates[firstSymbol] === "number"
+            ? j.rates[firstSymbol]
+            : null,
+      },
+      {
+        name: "er-api",
+        url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+        parse: (j) =>
+          j && j.rates && typeof j.rates[firstSymbol] === "number"
+            ? j.rates[firstSymbol]
+            : null,
+      },
+      {
+        name: "fawazahmed-cdn",
+        url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+        parse: (j) =>
+          j && typeof j[firstSymbol.toLowerCase()] === "number"
+            ? j[firstSymbol.toLowerCase()]
+            : null,
+      },
+    ];
+
+    const fetchProvider = async (
+      provider: (typeof providers)[number],
+    ): Promise<{ rate: number; provider: string }> => {
+      try {
+        const resp = await timeoutFetch(
+          provider.url,
+          { method: "GET", headers: browserHeaders() },
+          PROVIDER_TIMEOUT_MS,
+        );
+        if (!resp.ok) {
+          const reason = `${resp.status} ${resp.statusText}`.trim();
+          throw new Error(reason || "non-ok response");
+        }
+        const json = await resp.json();
+        const rate = provider.parse(json);
+        if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+          return { rate, provider: provider.name };
+        }
+        throw new Error("invalid response payload");
+      } catch (error: any) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`[${provider.name}] ${message}`);
+      }
+    };
+
+    const runProviders = async (): Promise<{ rate: number; provider: string }> => {
+      const attempts = providers.map((p) => fetchProvider(p));
+      if (typeof (Promise as any).any === "function") {
+        return (Promise as any).any(attempts);
+      }
+      return new Promise((resolve, reject) => {
+        const errors: string[] = [];
+        let remaining = attempts.length;
+        attempts.forEach((attempt) => {
+          (attempt as Promise<any>)
+            .then(resolve)
+            .catch((err) => {
+              errors.push(err instanceof Error ? err.message : String(err));
+              remaining -= 1;
+              if (remaining === 0) reject(new Error(errors.join("; ")));
+            });
+        });
+      });
+    };
+
+    try {
+      const { rate, provider } = await runProviders();
+      return new Response(
+        JSON.stringify({
+          base,
+          symbols: [firstSymbol],
+          rates: { [firstSymbol]: rate },
+          provider,
+        }),
+        { headers: CORS_HEADERS },
+      );
+    } catch (error: any) {
+      const msg = error instanceof Error ? error.message : String(error);
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch forex rate", details: msg }),
+        { status: 502, headers: CORS_HEADERS },
+      );
+    }
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: "Unexpected error" }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
+  }
+}
+
 async function handleSolanaRpc(request: Request): Promise<Response> {
   try {
     const body = await request.json().catch(() => ({}));
@@ -1067,6 +1184,7 @@ async function handler(request: Request): Promise<Response> {
             "/api/jupiter/price?ids=<mint> - Get Jupiter price",
             "/api/jupiter/quote - Get swap quote",
             "/api/pumpfun/quote - Get PumpFun quote",
+            "/api/forex/rate?base=USD&symbols=PKR - Forex rate",
             "/api/solana-rpc - Proxy RPC calls",
           ],
         }),
@@ -1122,6 +1240,13 @@ async function handler(request: Request): Promise<Response> {
 
     if (pathname.startsWith("/api/dexscreener/price")) {
       return await handleDexscreenerPrice(url);
+    }
+
+    if (
+      pathname.startsWith("/api/forex/rate") ||
+      pathname === "/forex/rate"
+    ) {
+      return await handleForexRate(url);
     }
 
     if (pathname === "/api/solana-rpc" || pathname === "/api/solana-rpc/") {

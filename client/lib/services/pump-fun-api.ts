@@ -4,7 +4,7 @@
  * Proxies to Pump.fun bonding curve trading endpoints
  */
 
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 
 const PUMP_CURVE_PROXY = "/api/pumpfun/curve";
 const PUMP_BUY_PROXY = "/api/pumpfun/buy";
@@ -27,7 +27,7 @@ export async function checkCurveState(mint: string): Promise<boolean> {
     const url = new URL(resolveApiUrl(PUMP_CURVE_PROXY));
     url.searchParams.set("mint", mint);
 
-    const res = await fetch(url.toString(), {
+    const res = await fetchWithFallback(`${PUMP_CURVE_PROXY}?mint=${encodeURIComponent(mint)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -84,7 +84,7 @@ export async function pumpBuy(
       priorityFeeLamports,
     };
 
-    const res = await fetch(resolveApiUrl(PUMP_BUY_PROXY), {
+    const res = await fetchWithFallback(PUMP_BUY_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
@@ -145,7 +145,7 @@ export async function pumpSell(
       priorityFeeLamports,
     };
 
-    const res = await fetch(resolveApiUrl(PUMP_SELL_PROXY), {
+    const res = await fetchWithFallback(PUMP_SELL_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),

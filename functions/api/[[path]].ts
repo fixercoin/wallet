@@ -1535,14 +1535,18 @@ export const onRequest = async ({ request, env }) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const pumpFunUrl = "https://pump.fun/api/trade";
-        const res = await fetch(pumpFunUrl, {
+        const portalUrl = "https://pumpportal.fun/api/trade";
+        const res = await fetch(portalUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mint,
-            amount,
+            amount: String(amount),
             buyer,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "buy",
           }),
           signal: controller.signal,
         });
@@ -1591,14 +1595,18 @@ export const onRequest = async ({ request, env }) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const pumpFunUrl = "https://pump.fun/api/sell";
-        const res = await fetch(pumpFunUrl, {
+        const portalUrl = "https://pumpportal.fun/api/trade";
+        const res = await fetch(portalUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mint,
-            amount,
+            amount: String(amount),
             seller,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "sell",
           }),
           signal: controller.signal,
         });

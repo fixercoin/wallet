@@ -1,8 +1,4 @@
-// Production deployment defaults
-const FIXORIUM_API_BASE = "https://wallet.fixorium.com.pk/api";
-const CLOUDFLARE_WORKER_BASE =
-  "https://fixorium-proxy.khanbabusargodha.workers.dev/api";
-const LOCALHOST_API_BASE = "http://localhost:5173"; // Local fallback
+// API base resolution is via VITE_API_BASE_URL; otherwise same-origin /api
 
 // Track which API base is currently working
 let workingApiBase: string | null = null;
@@ -18,10 +14,9 @@ const normalizeBase = (value: string | null | undefined): string => {
 const determineBase = (): string => {
   const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
   if (envBase) return envBase;
-  // Use cached working base if available
   if (workingApiBase) return workingApiBase;
-  // Try Fixorium API first (known working), then Cloudflare Worker as fallback
-  return FIXORIUM_API_BASE;
+  // Default to same-origin relative API
+  return "";
 };
 
 let cachedBase: string | null = null;
@@ -95,41 +90,7 @@ export const fetchWithFallback = async (
 
     return response;
   } catch (error) {
-    // Try fallback endpoint if primary fails
-    const fallbackBase =
-      currentBase === FIXORIUM_API_BASE
-        ? CLOUDFLARE_WORKER_BASE
-        : FIXORIUM_API_BASE;
-
-    if (fallbackBase && fallbackBase !== currentBase) {
-      console.warn(
-        `[API] Primary endpoint (${currentBase}) failed. Trying fallback: ${fallbackBase}`,
-      );
-
-      const fallbackUrl =
-        fallbackBase + (path.startsWith("/") ? "" : "/") + path;
-
-      try {
-        const fallbackResponse = await fetch(fallbackUrl, {
-          ...options,
-          signal: options?.signal || AbortSignal.timeout?.(30000),
-        });
-
-        if (fallbackResponse.ok) {
-          workingApiBase = fallbackBase;
-          cachedBase = fallbackBase;
-          return fallbackResponse;
-        }
-      } catch (fallbackError) {
-        console.warn(
-          "[API] Fallback endpoint also failed:",
-          fallbackError instanceof Error
-            ? fallbackError.message
-            : String(fallbackError),
-        );
-      }
-    }
-
-    throw error;
+    // No external fallback; surface the error to caller
+    throw error as any;
   }
 };

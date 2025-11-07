@@ -562,7 +562,8 @@ async function handlePumpFunTrade(request: Request): Promise<Response> {
     ) {
       return new Response(
         JSON.stringify({
-          error: "Missing required fields: mint, amount (number), trader, action (buy/sell)",
+          error:
+            "Missing required fields: mint, amount (number), trader, action (buy/sell)",
         }),
         { status: 400, headers: CORS_HEADERS },
       );
@@ -888,9 +889,7 @@ async function handler(request: Request): Promise<Response> {
         JSON.stringify({
           status: "ok",
           message: "DexScreener API Proxy",
-          endpoints: [
-            "/api/dexscreener/price?tokenAddress=<mint>",
-          ],
+          endpoints: ["/api/dexscreener/price?tokenAddress=<mint>"],
         }),
         { headers: CORS_HEADERS },
       );
@@ -920,7 +919,10 @@ async function handler(request: Request): Promise<Response> {
       return await handleJupiterTokens(url);
     }
 
-    if (pathname === "/api/jupiter/token" || pathname === "/api/jupiter/token/") {
+    if (
+      pathname === "/api/jupiter/token" ||
+      pathname === "/api/jupiter/token/"
+    ) {
       return await handleJupiterTokens(url);
     }
 

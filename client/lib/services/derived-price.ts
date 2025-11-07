@@ -83,7 +83,7 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
     // If Jupiter failed, try DexScreener price-based estimation using any candidate mint
     for (const candidateMint of uniqCandidates) {
       try {
-        const dexData = await getUsdFromDexscreener(token);
+        const dexData = await getUsdFromDexscreener(token, candidateMint);
         if (dexData && dexData > 0) {
           // derive tokensPerSol from SOL USD price and token USD price
           const solUsd = await getSolUsd();

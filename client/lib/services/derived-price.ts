@@ -43,25 +43,61 @@ async function getSolUsd(): Promise<number> {
 async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
   try {
     const solMint = TOKEN_MINTS.SOL;
-    const tokenMint = TOKEN_MINTS[token];
+    const tokenMintOrig = TOKEN_MINTS[token];
 
-    // Use Jupiter API to get 1 SOL quote
+    // Build candidate mint variants to handle accidental suffixes like "pump" or "ixpump"
+    const candidates = [tokenMintOrig];
+    if (tokenMintOrig.endsWith("ixpump")) {
+      candidates.push(tokenMintOrig.slice(0, -6));
+    }
+    if (tokenMintOrig.endsWith("pump")) {
+      candidates.push(tokenMintOrig.slice(0, -4));
+    }
+
+    // Ensure unique
+    const uniqCandidates = Array.from(new Set(candidates.filter(Boolean)));
+
+    // Try Jupiter for each candidate mint
     const rawAmt = jupiterAPI.formatSwapAmount(1, DECIMALS.SOL);
-    const q = await jupiterAPI.getQuote(solMint, tokenMint, rawAmt as any);
+    for (const candidateMint of uniqCandidates) {
+      try {
+        const q = await jupiterAPI.getQuote(solMint, candidateMint, rawAmt as any);
+        if (!q || !q.outAmount || q.outAmount === "0") {
+          console.warn(`No Jupiter quote for candidate ${candidateMint}`);
+          continue;
+        }
 
-    if (!q) {
-      console.warn(`No Jupiter quote for ${token}`);
-      return null;
+        const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
+        if (!Number.isFinite(out) || out <= 0) {
+          console.warn(`Invalid quote output for candidate ${candidateMint}: ${out}`);
+          continue;
+        }
+
+        console.log(`${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter, mint=${candidateMint})`);
+        return out;
+      } catch (err) {
+        console.warn(`Jupiter error for candidate ${candidateMint}:`, err);
+      }
     }
 
-    const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
-    if (!Number.isFinite(out) || out <= 0) {
-      console.warn(`Invalid quote output for ${token}: ${out}`);
-      return null;
+    // If Jupiter failed, try DexScreener price-based estimation using any candidate mint
+    for (const candidateMint of uniqCandidates) {
+      try {
+        const dexData = await getUsdFromDexscreener(token);
+        if (dexData && dexData > 0) {
+          // derive tokensPerSol from SOL USD price and token USD price
+          const solUsd = await getSolUsd();
+          const tokensPerSol = solUsd / dexData;
+          console.log(`${token}: estimated 1 SOL = ${tokensPerSol.toFixed(2)} tokens (from DexScreener, mint=${candidateMint})`);
+          return tokensPerSol;
+        }
+      } catch (err) {
+        console.warn(`DexScreener fallback failed for ${candidateMint}:`, err);
+      }
     }
 
-    console.log(`${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter)`);
-    return out;
+    console.warn(`No quote found for ${token} (candidates: ${uniqCandidates.join(',')})`);
+    return null;
   } catch (error) {
     console.warn(`Error getting ${token} from Jupiter:`, error);
     return null;

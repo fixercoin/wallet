@@ -854,7 +854,36 @@ async function handler(request: Request): Promise<Response> {
 
     console.log(`[API Handler] ${request.method} ${pathname}`);
 
-    if (pathname === "/health" || pathname === "/api/health") {
+    // Root API endpoint
+    if (pathname === "/" || pathname === "/api" || pathname === "/api/") {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          service: "Fixorium Wallet API (Cloudflare Pages)",
+          status: "operational",
+          timestamp: new Date().toISOString(),
+          endpoints: [
+            "/api/health - Health check endpoint",
+            "/api/ping - Simple ping endpoint",
+            "/api/wallet/balance?publicKey=<address> - Get SOL balance",
+            "/api/wallet/tokens?publicKey=<address> - Get token accounts",
+            "/api/dexscreener/price?tokenAddress=<mint> - Get token price",
+            "/api/jupiter/price?ids=<mint> - Get Jupiter price",
+            "/api/jupiter/quote - Get swap quote",
+            "/api/pumpfun/quote - Get PumpFun quote",
+            "/api/solana-rpc - Proxy RPC calls",
+          ],
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
+    if (
+      pathname === "/health" ||
+      pathname === "/api/health" ||
+      pathname === "/status" ||
+      pathname === "/api/status"
+    ) {
       return await handleHealth();
     }
 
@@ -980,4 +1009,4 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export default handler;
+export const onRequest = handler;

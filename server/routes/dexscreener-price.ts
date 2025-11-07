@@ -440,9 +440,29 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
     });
   } catch (error) {
     console.error(`[Token Price] Handler error:`, error);
-    return res.status(500).json({
-      error: "Failed to get token price",
-      details: error instanceof Error ? error.message : String(error),
+    const tokenParam = (
+      (req.query.token as string) ||
+      (req.query.symbol as string) ||
+      "FIXERCOIN"
+    ).toUpperCase();
+    const PKR_PER_USD = 280;
+    const MARKUP = 1.0425;
+    const fallbackPrice = FALLBACK_USD[tokenParam] ?? FALLBACK_USD.FIXERCOIN;
+    const rateInPKR = fallbackPrice * PKR_PER_USD * MARKUP;
+
+    // Always return valid JSON with fallback price, not 500 error
+    return res.json({
+      token: tokenParam,
+      priceUsd: fallbackPrice,
+      priceInPKR: rateInPKR,
+      rate: rateInPKR,
+      pkrPerUsd: PKR_PER_USD,
+      markup: MARKUP,
+      priceChange24h: 0,
+      volume24h: 0,
+      pair: undefined,
+      pricingMethod: "fallback",
+      source: "fallback",
     });
   }
 };

@@ -23,7 +23,8 @@ const COINGECKO_BASE = "https://api.coingecko.com/api/v3";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Requested-With",
   "Access-Control-Max-Age": "86400",
   "Content-Type": "application/json",
 };
@@ -503,7 +504,10 @@ async function handlePumpFunSell(request: Request): Promise<Response> {
   }
 }
 
-async function handlePumpFunQuote(request: Request, url: URL): Promise<Response> {
+async function handlePumpFunQuote(
+  request: Request,
+  url: URL,
+): Promise<Response> {
   try {
     let body: any = {};
     const method = request.method?.toUpperCase?.() || "GET";
@@ -548,7 +552,7 @@ async function handlePumpFunQuote(request: Request, url: URL): Promise<Response>
 
 async function handleDexscreenerPrice(url: URL): Promise<Response> {
   const tokenAddress = url.searchParams.get("tokenAddress");
-  
+
   if (!tokenAddress) {
     return new Response(
       JSON.stringify({ error: "tokenAddress parameter required" }),
@@ -583,7 +587,7 @@ async function handleDexscreenerPrice(url: URL): Promise<Response> {
 
 async function handleSolPrice(): Promise<Response> {
   const SOL_MINT = "So11111111111111111111111111111111111111112";
-  
+
   try {
     const response = await timeoutFetch(
       `${JUPITER_PRICE_BASE}/price?ids=${SOL_MINT}`,

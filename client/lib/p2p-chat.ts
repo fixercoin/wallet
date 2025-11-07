@@ -1,5 +1,3 @@
-import { useDurableRoom } from "@/hooks/useDurableRoom";
-
 export interface ChatMessage {
   id: string;
   roomId: string;

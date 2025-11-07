@@ -10,11 +10,11 @@ const TOKEN_MINTS = {
 } as const;
 
 const FALLBACK_RATES: Record<string, number> = {
-  FIXERCOIN: 0.005, // $0.005 per FIXERCOIN
-  SOL: 180, // $180 per SOL
+  FIXERCOIN: 0.00008139, // Real-time market price
+  SOL: 149.38, // Real-time market price
   USDC: 1.0, // $1 USDC
   USDT: 1.0, // $1 USDT
-  LOCKER: 0.1, // $0.1 per LOCKER
+  LOCKER: 0.00001112, // Real-time market price
 };
 
 const PKR_PER_USD = 280; // Approximate conversion rate
@@ -27,9 +27,64 @@ interface DexscreenerResponse {
   }>;
 }
 
+const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
+    "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
+    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
+};
+
+const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+};
+
 async function fetchTokenPriceFromDexScreener(
   mint: string,
 ): Promise<number | null> {
+  // First, try pair address lookup if available
+  const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
+  if (pairAddress) {
+    try {
+      const pairUrl = `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`;
+      console.log(
+        `[DexScreener] Trying pair address lookup for ${mint}: ${pairUrl}`,
+      );
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(pairUrl, {
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = (await response.json()) as DexscreenerResponse;
+        if (data.pairs && data.pairs.length > 0) {
+          const priceUsd = data.pairs[0].priceUsd;
+          if (priceUsd) {
+            const price = parseFloat(priceUsd);
+            console.log(
+              `[DexScreener] ✅ Got price for ${mint} via pair address: $${price}`,
+            );
+            return price;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `[DexScreener] ⚠️ Pair address lookup failed:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  // Fallback: try mint-based lookup
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${mint}`;
     console.log(`[DexScreener] Fetching price for ${mint} from: ${url}`);
@@ -65,6 +120,85 @@ async function fetchTokenPriceFromDexScreener(
         const price = parseFloat(priceUsd);
         console.log(`[DexScreener] ✅ Got price for ${mint}: $${price}`);
         return price;
+      }
+    }
+
+    // Fallback: try search-based lookup for specific tokens
+    const searchSymbol = MINT_TO_SEARCH_SYMBOL[mint];
+    if (searchSymbol) {
+      console.log(
+        `[DexScreener] No pairs found, trying search fallback for ${searchSymbol}`,
+      );
+      try {
+        const searchUrl = `https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(searchSymbol)}`;
+        const searchController = new AbortController();
+        const searchTimeoutId = setTimeout(
+          () => searchController.abort(),
+          8000,
+        );
+
+        const searchResponse = await fetch(searchUrl, {
+          signal: searchController.signal,
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+        });
+        clearTimeout(searchTimeoutId);
+
+        if (searchResponse.ok) {
+          const searchData =
+            (await searchResponse.json()) as DexscreenerResponse;
+          if (searchData.pairs && searchData.pairs.length > 0) {
+            // Look for pairs where this token is the base on Solana
+            let matchingPair = searchData.pairs.find(
+              (p) =>
+                p.baseToken?.address === mint &&
+                (p as any).chainId === "solana",
+            );
+
+            // If not found as base on Solana, try as quote token on Solana
+            if (!matchingPair) {
+              matchingPair = searchData.pairs.find(
+                (p) =>
+                  (p as any).quoteToken?.address === mint &&
+                  (p as any).chainId === "solana",
+              );
+            }
+
+            // If still not found on Solana, try any chain as base
+            if (!matchingPair) {
+              matchingPair = searchData.pairs.find(
+                (p) => p.baseToken?.address === mint,
+              );
+            }
+
+            // If still not found, try as quote on any chain
+            if (!matchingPair) {
+              matchingPair = searchData.pairs.find(
+                (p) => (p as any).quoteToken?.address === mint,
+              );
+            }
+
+            // Last resort: just take the first result
+            if (!matchingPair) {
+              matchingPair = searchData.pairs[0];
+            }
+
+            if (matchingPair && matchingPair.priceUsd) {
+              const price = parseFloat(matchingPair.priceUsd);
+              console.log(
+                `[DexScreener] ✅ Got price for ${mint} via search: $${price}`,
+              );
+              return price;
+            }
+          }
+        }
+      } catch (searchErr) {
+        console.warn(
+          `[DexScreener] Search fallback failed:`,
+          searchErr instanceof Error ? searchErr.message : String(searchErr),
+        );
       }
     }
 

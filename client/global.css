@@ -96,6 +96,14 @@
   }
 }
 
+/* Global icon style override: make all lucide icons monochrome black, line-only */
+.lucide,
+.lucide * {
+  color: #000 !important;
+  stroke: #000 !important;
+  fill: none !important;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -170,6 +178,40 @@
   .express-p2p-page select,
   .express-p2p-page div {
     color: white !important;
+  }
+
+  /* Light-theme override for express-p2p pages (white background with dark text) */
+  .express-p2p-page.light-theme p,
+  .express-p2p-page.light-theme span,
+  .express-p2p-page.light-theme a,
+  .express-p2p-page.light-theme li,
+  .express-p2p-page.light-theme label,
+  .express-p2p-page.light-theme small,
+  .express-p2p-page.light-theme strong,
+  .express-p2p-page.light-theme em,
+  .express-p2p-page.light-theme h1,
+  .express-p2p-page.light-theme h2,
+  .express-p2p-page.light-theme h3,
+  .express-p2p-page.light-theme h4,
+  .express-p2p-page.light-theme h5,
+  .express-p2p-page.light-theme h6,
+  .express-p2p-page.light-theme input,
+  .express-p2p-page.light-theme textarea,
+  .express-p2p-page.light-theme select,
+  .express-p2p-page.light-theme div,
+  .express-p2p-page.light-theme svg {
+    color: hsl(var(--foreground)) !important;
+    fill: currentColor !important;
+  }
+
+  /* Decorative bottom wave for light theme (SVG is added in markup) */
+  .express-p2p-page .bottom-wave {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 220px;
+    pointer-events: none;
   }
 
   /* Dropdown menu text override */

@@ -475,13 +475,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
       <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
-        <div className="rounded-2xl border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 p-6 overflow-hidden">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button
               variant="ghost"
@@ -492,7 +492,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-medium text-sm">AIRDROP DISTRIBUTION</div>
+            <div className="font-medium text-sm text-gray-900">
+              AIRDROP DISTRIBUTION
+            </div>
           </div>
           <div className="space-y-4">
             <div>
@@ -500,13 +502,18 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 Select Token (only available here)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-[#2d1b47]/50 text-white placeholder:text-gray-300 mt-2">
+                <SelectTrigger className="w-full bg-gray-300 text-gray-900 placeholder:text-gray-500 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-[hsl(var(--card))] text-[hsl(var(--foreground))]">
+                <SelectContent className="bg-gray-300 text-gray-900">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
-                      {t.symbol} {t.balance ? ` �� ${t.balance}` : ""}
+                      {t.symbol} ~{" "}
+                      {t.balance
+                        ? t.balance.toLocaleString(undefined, {
+                            maximumFractionDigits: 8,
+                          })
+                        : "0"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -522,7 +529,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder:text-gray-300"
+                  className="flex-1 bg-white/50 border border-black text-gray-900 placeholder:text-gray-500"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}
@@ -539,7 +546,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 semicolons)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-[#1a2540]/50 text-white rounded-md h-40 font-mono text-sm border border-[#FF7A5C]/30 placeholder:text-gray-300"
+                className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-black placeholder:text-gray-500"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"

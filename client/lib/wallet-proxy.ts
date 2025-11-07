@@ -143,18 +143,68 @@ export const recoverWallet = (mnemonicInput: string): WalletData => {
 };
 
 export const getBalance = async (publicKey: string): Promise<number> => {
-  // Try our REST endpoint first
-  try {
-    const url = `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`;
-    const { ok, json } = await fetchJsonWithTimeout(url, 10000);
-    if (ok && json && typeof json.balance === "number") {
-      console.log(`✅ Wallet balance endpoint successful: ${json.balance} SOL`);
-      return json.balance;
+  // Try our REST endpoint(s) first — support different deployed backends (publicKey or wallet param)
+  const endpoints = [
+    `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
+    `/api/wallet/balance?wallet=${encodeURIComponent(publicKey)}`,
+    `/api/wallet/balance?address=${encodeURIComponent(publicKey)}`,
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const { ok, json } = await fetchJsonWithTimeout(url, 10000);
+      if (!ok || !json) continue;
+
+      // Compatible shapes:
+      // 1) { balance: number }
+      if (typeof json.balance === "number") {
+        console.log(
+          `✅ Wallet balance endpoint successful (${url}): ${json.balance} SOL`,
+        );
+        return json.balance;
+      }
+
+      // 2) Alternative shape: { walletAddress, balances: { SOL: number, ... } }
+      if (json.balances && typeof json.balances === "object") {
+        const sol =
+          json.balances.SOL ?? json.balances.sol ?? json.balances.SOLANA;
+        if (typeof sol === "number") {
+          console.log(
+            `✅ Wallet balance endpoint (balances) successful (${url}): ${sol} SOL`,
+          );
+          return sol;
+        }
+      }
+
+      // 3) Older proxy RPC response shape: { result: { value: <lamports> } } or { result: <number> }
+      if (json.result !== undefined) {
+        // result may be an object with value or a number (lamports)
+        if (typeof json.result === "number") {
+          // assume lamports
+          const lamports = json.result as number;
+          const sol = lamports / 1_000_000_000;
+          console.log(`✅ Wallet proxy returned lamports (${url}): ${sol} SOL`);
+          return sol;
+        }
+        if (
+          json.result?.value !== undefined &&
+          typeof json.result.value === "number"
+        ) {
+          const lamports = json.result.value as number;
+          const sol = lamports / 1_000_000_000;
+          console.log(
+            `✅ Wallet proxy returned result.value (${url}): ${sol} SOL`,
+          );
+          return sol;
+        }
+      }
+    } catch (err) {
+      // Silently continue to next endpoint
+      continue;
     }
-  } catch (err) {
-    // Silently fail and try fallback
   }
-  // Fallback to RPC service
+
+  // Final fallback to direct Solana RPC
   try {
     console.log(`Fetching balance via Solana RPC for: ${publicKey}`);
     const balance = await getSolanaBalance(publicKey);

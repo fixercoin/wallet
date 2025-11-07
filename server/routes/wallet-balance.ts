@@ -1,12 +1,35 @@
 import { RequestHandler } from "express";
 
+// Helius, Moralis, and Alchemy are RPC providers for Solana blockchain calls
+// They fetch wallet balance and token account data - NOT for token price fetching
+// Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
+const RPC_ENDPOINTS = [
+  // Prefer environment-configured RPC first
+  process.env.SOLANA_RPC_URL || "",
+  // Provider-specific overrides
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
+  process.env.HELIUS_API_KEY
+    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
+    : "",
+  // Fallback public endpoints (prefer publicnode and ankr first)
+  "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
+].filter(Boolean);
+
 export const handleWalletBalance: RequestHandler = async (req, res) => {
   try {
-    const { publicKey } = req.query;
+    // Accept multiple parameter names: publicKey, wallet, or address
+    const publicKey =
+      (req.query.publicKey as string) ||
+      (req.query.wallet as string) ||
+      (req.query.address as string);
 
     if (!publicKey || typeof publicKey !== "string") {
       return res.status(400).json({
-        error: "Missing or invalid 'publicKey' parameter",
+        error: "Missing or invalid wallet address parameter",
       });
     }
 
@@ -17,31 +40,44 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       params: [publicKey],
     };
 
-    const response = await fetch(
-      "https://solana-mainnet.g.alchemy.com/v2/3Z99FYWB1tFEBqYSyV60t-x7FsFCSEjX",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
+    let lastError: Error | null = null;
 
-    const data = await response.json();
+    for (const endpoint of RPC_ENDPOINTS) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
-    if (data.error) {
-      console.error("Solana RPC error:", data.error);
-      return res.status(500).json({
-        error: data.error.message || "Failed to fetch balance",
-      });
+        const data = await response.json();
+
+        if (data.error) {
+          console.warn(`RPC ${endpoint} returned error:`, data.error);
+          lastError = new Error(data.error.message || "RPC error");
+          continue;
+        }
+
+        const balanceLamports = data.result;
+        const balanceSOL = balanceLamports / 1_000_000_000;
+
+        return res.json({
+          publicKey,
+          balance: balanceSOL,
+          balanceLamports,
+        });
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
+        continue;
+      }
     }
 
-    const balanceLamports = data.result;
-    const balanceSOL = balanceLamports / 1_000_000_000;
-
-    res.json({
-      publicKey,
-      balance: balanceSOL,
-      balanceLamports,
+    console.error("All RPC endpoints failed for wallet balance");
+    return res.status(500).json({
+      error:
+        lastError?.message ||
+        "Failed to fetch balance - all RPC endpoints failed",
     });
   } catch (error) {
     console.error("Wallet balance error:", error);

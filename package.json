@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"tsx server/node-build.ts\"",
+    "dev:frontend": "vite",
+    "dev:backend": "tsx server/node-build.ts",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -64,11 +66,14 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
+    "@netlify/functions": "^5.1.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
     "tailwindcss-animate": "^1.0.7",
+    "terser": "^5.27.0",
     "typescript": "^5.9.3",
     "vite": "^5.4.20",
     "ws": "^8.18.3"

@@ -21,5 +21,6 @@ Suggested setup:
    - For Pages, add your frontend domain in Pages settings
 
 Testing:
+
 - curl https://api.fixorium.com.pk/api/health
 - From browser: fetch(`${import.meta.env.VITE_API_URL}/api/health`).then(r=>r.json()).then(console.log)

@@ -145,16 +145,16 @@ Cloudflare Pages (Frontend)
 
 ## ✨ Key Features After Restructure
 
-| Feature          | Before               | After                            |
-| ---------------- | -------------------- | -------------------------------- |
-| Frontend         | Part of monorepo     | **Standalone in `/frontend`**    |
-| Frontend hosting | Serverless functions | **Static site on Cloudflare Pages**       |
-| Build output     | `/dist`              | **`/frontend/dist`**             |
-| Backend          | Serverless functions | **Express.js in `/backend`**     |
-| Backend server   | Cloudflare Pages Functions    | **Render Web Service**           |
-| Port             | Auto-managed         | **Configurable (10000 default)** |
-| Deployment       | Single click         | **Two separate platforms**       |
-| Scalability      | Auto (serverless)    | **Manual (can scale Render) **   |
+| Feature          | Before                     | After                               |
+| ---------------- | -------------------------- | ----------------------------------- |
+| Frontend         | Part of monorepo           | **Standalone in `/frontend`**       |
+| Frontend hosting | Serverless functions       | **Static site on Cloudflare Pages** |
+| Build output     | `/dist`                    | **`/frontend/dist`**                |
+| Backend          | Serverless functions       | **Express.js in `/backend`**        |
+| Backend server   | Cloudflare Pages Functions | **Render Web Service**              |
+| Port             | Auto-managed               | **Configurable (10000 default)**    |
+| Deployment       | Single click               | **Two separate platforms**          |
+| Scalability      | Auto (serverless)          | **Manual (can scale Render) **      |
 
 ## 📝 Important Notes
 

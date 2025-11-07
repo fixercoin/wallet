@@ -146,7 +146,7 @@ Cloudflare Pages Serverless Functions
 
 ## Key Differences from Cloudflare
 
-| Aspect               | Cloudflare                 | Cloudflare Pages                    |
+| Aspect               | Cloudflare                 | Cloudflare Pages           |
 | -------------------- | -------------------------- | -------------------------- |
 | **Deployment Model** | Edge Workers               | Serverless Functions       |
 | **Language**         | JavaScript/WebAssembly     | Node.js                    |
@@ -154,7 +154,7 @@ Cloudflare Pages Serverless Functions
 | **Build**            | Git-based or manual        | Git-based (auto)           |
 | **Environment**      | Global edge locations      | Serverless Lambda (US)     |
 | **API Handler**      | `cloudflare/src/worker.ts` | `netlify/functions/api.ts` |
-| **Configuration**    | `wrangler.toml`            | `wrangler.toml`             |
+| **Configuration**    | `wrangler.toml`            | `wrangler.toml`            |
 
 ## Benefits of Cloudflare Pages
 

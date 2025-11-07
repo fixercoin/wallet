@@ -22,5 +22,5 @@ Suggested setup:
 
 Testing:
 
-- curl https://api.fixorium.com.pk/api/health
+- curl https://fixorium-api.khanbabusargodha.workers.dev/api/health
 - From browser: fetch(`${import.meta.env.VITE_API_URL}/api/health`).then(r=>r.json()).then(console.log)

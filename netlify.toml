@@ -3,8 +3,11 @@ command = "pnpm build"
 publish = "dist"
 functions = "netlify/functions"
 
-[functions."netlify/functions/api"]
-node_bundler = "esbuild"
+# Route all API requests to the api.ts handler
+[[rewrites]]
+from = "/api/*"
+to = "/.netlify/functions/api"
+status = 200
 
 # SPA fallback for client-side routing (must be last)
 [[redirects]]

@@ -1,15 +1,13 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 };
 
-const JUPITER_V6_API = "https://quote-api.jup.ag/v6/quote";
-
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -18,54 +16,8 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "GET" && event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: "Method not allowed. Use GET or POST.",
-      }),
-    };
-  }
-
   try {
-    let inputMint = "";
-    let outputMint = "";
-    let amount = "";
-    let slippageBps = "100";
-    let onlyDirectRoutes = "false";
-    let asLegacyTransaction = "false";
-
-    if (event.httpMethod === "GET") {
-      const queryParams = event.queryStringParameters || {};
-      inputMint = queryParams.inputMint || "";
-      outputMint = queryParams.outputMint || "";
-      amount = queryParams.amount || "";
-      slippageBps = queryParams.slippageBps || "100";
-      onlyDirectRoutes = queryParams.onlyDirectRoutes || "false";
-      asLegacyTransaction = queryParams.asLegacyTransaction || "false";
-    } else {
-      let body: any = {};
-      if (event.body) {
-        try {
-          body = JSON.parse(event.body);
-        } catch {
-          return {
-            statusCode: 400,
-            headers: CORS_HEADERS,
-            body: JSON.stringify({
-              error: "Invalid JSON body",
-            }),
-          };
-        }
-      }
-      inputMint = body?.inputMint || "";
-      outputMint = body?.outputMint || "";
-      amount = body?.amount || "";
-      slippageBps = body?.slippageBps || "100";
-      onlyDirectRoutes = String(body?.onlyDirectRoutes || false);
-      asLegacyTransaction = String(body?.asLegacyTransaction || false);
-    }
+    const { inputMint, outputMint, amount } = event.queryStringParameters || {};
 
     if (!inputMint || !outputMint || !amount) {
       return {
@@ -77,25 +29,25 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-    const jupiterParams = new URLSearchParams({
-      inputMint,
-      outputMint,
-      amount: String(amount),
-      slippageBps,
-      onlyDirectRoutes,
-      asLegacyTransaction,
+    const params = new URLSearchParams({
+      inputMint: inputMint,
+      outputMint: outputMint,
+      amount: amount,
+      ...(event.queryStringParameters?.slippageBps && {
+        slippageBps: event.queryStringParameters.slippageBps,
+      }),
     });
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const response = await fetch(
-      `${JUPITER_V6_API}?${jupiterParams.toString()}`,
+      `https://api.jup.ag/quote?${params.toString()}`,
       {
         method: "GET",
         headers: {
-          Accept: "application/json",
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         signal: controller.signal,
       },
@@ -103,52 +55,44 @@ export const handler: Handler = async (event) => {
 
     clearTimeout(timeoutId);
 
-    if (response.status === 404 || response.status === 400) {
-      const errorText = await response.text().catch(() => "");
-      return {
-        statusCode: response.status,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "No swap route found for this pair",
-          code: "NO_ROUTE_FOUND",
-          details: errorText.slice(0, 200),
-        }),
-      };
-    }
+    const data = await response.text();
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
+      console.error(`Jupiter API error: ${response.status}`, data);
       return {
         statusCode: response.status,
         headers: CORS_HEADERS,
         body: JSON.stringify({
           error: "Jupiter API error",
           status: response.status,
-          details: errorText.slice(0, 200),
         }),
       };
     }
 
-    const data = await response.json();
     return {
       statusCode: 200,
-      headers: {
-        ...CORS_HEADERS,
-        "Cache-Control": "public, max-age=5",
-      },
-      body: JSON.stringify(data),
+      headers: CORS_HEADERS,
+      body: data,
     };
   } catch (error: any) {
-    const isTimeout =
-      error?.name === "AbortError" || error?.message?.includes("timeout");
-    console.error("Jupiter QUOTE endpoint error:", error);
+    console.error("[Jupiter Quote] Error:", error);
+
+    if (error.name === "AbortError") {
+      return {
+        statusCode: 504,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Jupiter API request timeout",
+          message: "The request took too long to complete",
+        }),
+      };
+    }
 
     return {
-      statusCode: isTimeout ? 504 : 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: isTimeout ? "Request timeout" : "Failed to fetch quote",
-        details: error?.message || String(error),
+        error: error.message || "Internal server error",
       }),
     };
   }

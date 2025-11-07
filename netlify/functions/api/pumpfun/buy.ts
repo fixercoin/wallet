@@ -1,13 +1,13 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 };
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -16,94 +16,54 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: "Method not allowed. Use POST.",
-      }),
-    };
-  }
-
   try {
-    let body: any = {};
-    if (event.body) {
-      try {
-        body = JSON.parse(event.body);
-      } catch {
-        return {
-          statusCode: 400,
-          headers: CORS_HEADERS,
-          body: JSON.stringify({
-            error: "Invalid JSON body",
-          }),
-        };
-      }
-    }
-
-    const {
-      mint,
-      amount,
-      buyer,
-      slippageBps = 350,
-      priorityFeeLamports = 10000,
-    } = body;
-
-    if (!mint || amount === undefined || !buyer) {
+    if (!event.body) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "Missing required fields: mint, amount, buyer",
+          error: "Missing request body",
         }),
       };
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const body =
+      typeof event.body === "string" ? JSON.parse(event.body) : event.body;
 
-    const pumpPortalUrl = "https://pumpportal.fun/api/trade";
-    const res = await fetch(pumpPortalUrl, {
+    const response = await fetch("https://pumpportal.fun/api/buy", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mint,
-        amount: String(amount),
-        buyer,
-        slippageBps,
-        priorityFeeLamports,
-        txVersion: "V0",
-        operation: "buy",
-      }),
-      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    clearTimeout(timeoutId);
-    const text = await res.text();
+    const data = await response.text();
 
-    if (!res.ok) {
-      console.error(`[Pump.fun BUY] API error ${res.status}:`, text);
+    if (!response.ok) {
+      console.error(`Pumpfun buy error: ${response.status}`);
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Pumpfun buy API error",
+          status: response.status,
+        }),
+      };
     }
 
     return {
-      statusCode: res.status,
+      statusCode: 200,
       headers: CORS_HEADERS,
-      body: text,
+      body: data,
     };
-  } catch (error: any) {
-    const isTimeout = error?.name === "AbortError";
-    const message = isTimeout
-      ? "Request timeout - Pump.fun API took too long to respond"
-      : error?.message || "Unknown error";
-    console.error("Pump.fun BUY endpoint error:", error);
-
+  } catch (error) {
+    console.error("[Pumpfun Buy] Error:", error);
     return {
-      statusCode: isTimeout ? 504 : 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Failed to request BUY transaction",
-        details: message,
+        error: error instanceof Error ? error.message : "Internal server error",
       }),
     };
   }

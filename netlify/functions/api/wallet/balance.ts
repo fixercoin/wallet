@@ -1,65 +1,27 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler, HandlerEvent } from "@netlify/functions";
+
+const RPC_ENDPOINTS = [
+  process.env.SOLANA_RPC_URL || "",
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
+  process.env.HELIUS_API_KEY
+    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
+    : "",
+  "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
+].filter(Boolean);
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Requested-With",
   "Content-Type": "application/json",
 };
 
-const RPC_ENDPOINTS = [
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-  "https://solana.blockpi.network/v1/rpc/public",
-  "https://solana.publicnode.com",
-  "https://solana-rpc.publicnode.com",
-];
-
-async function callRpc(
-  method: string,
-  params: any[] = [],
-  id: number | string = Date.now(),
-) {
-  let lastError: Error | null = null;
-  const payload = {
-    jsonrpc: "2.0",
-    id,
-    method,
-    params,
-  };
-
-  for (const endpoint of RPC_ENDPOINTS) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-
-      if (!resp.ok) {
-        if ([429, 502, 503].includes(resp.status)) continue;
-        const t = await resp.text().catch(() => "");
-        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
-      }
-
-      const data = await resp.text();
-      return { ok: true, body: data } as const;
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-    }
-  }
-
-  throw new Error(lastError?.message || "All RPC endpoints failed");
-}
-
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -68,68 +30,83 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "GET") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: "Method not allowed. Use GET.",
-      }),
-    };
-  }
-
   try {
-    const pk = (
-      event.queryStringParameters?.publicKey ||
-      event.queryStringParameters?.wallet ||
-      event.queryStringParameters?.address ||
-      ""
-    ).trim();
+    const publicKey =
+      (event.queryStringParameters?.publicKey as string) ||
+      (event.queryStringParameters?.wallet as string) ||
+      (event.queryStringParameters?.address as string);
 
-    if (!pk) {
+    if (!publicKey || typeof publicKey !== "string") {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "Missing 'publicKey' parameter",
+          error: "Missing or invalid wallet address parameter",
         }),
       };
     }
 
-    const rpc = await callRpc("getBalance", [pk], Date.now());
-    const j = JSON.parse(String(rpc?.body || "{}"));
-    const lamports =
-      typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
+    const body = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBalance",
+      params: [publicKey],
+    };
 
-    if (typeof lamports === "number" && isFinite(lamports)) {
-      const balance = lamports / 1_000_000_000;
-      return {
-        statusCode: 200,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          publicKey: pk,
-          balance,
-          balanceLamports: lamports,
-        }),
-      };
+    let lastError: Error | null = null;
+
+    for (const endpoint of RPC_ENDPOINTS) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          console.warn(`RPC ${endpoint} returned error:`, data.error);
+          lastError = new Error(data.error.message || "RPC error");
+          continue;
+        }
+
+        const balanceLamports = data.result;
+        const balanceSOL = balanceLamports / 1_000_000_000;
+
+        return {
+          statusCode: 200,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({
+            publicKey,
+            balance: balanceSOL,
+            balanceLamports,
+          }),
+        };
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
+        continue;
+      }
     }
 
+    console.error("All RPC endpoints failed for wallet balance");
     return {
-      statusCode: 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Invalid RPC response",
+        error:
+          lastError?.message ||
+          "Failed to fetch balance - all RPC endpoints failed",
       }),
     };
-  } catch (error: any) {
-    console.error("Wallet BALANCE endpoint error:", error);
-
+  } catch (error) {
+    console.error("Wallet balance error:", error);
     return {
-      statusCode: 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "Failed to fetch balance",
-        details: error?.message || String(error),
+        error: error instanceof Error ? error.message : "Internal server error",
       }),
     };
   }

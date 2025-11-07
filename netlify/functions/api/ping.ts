@@ -1,16 +1,16 @@
 import type { Handler } from "@netlify/functions";
 
-export const handler: Handler = async (event) => {
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Content-Type": "application/json",
+};
+
+export const handler: Handler = async () => {
   return {
     statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-    }),
+    headers: CORS_HEADERS,
+    body: JSON.stringify({ message: "pong" }),
   };
 };

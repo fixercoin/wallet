@@ -1053,10 +1053,11 @@ export const handler = async (event: any) => {
 
     // Jupiter swap: /api/jupiter/swap (POST)
     if (path === "/jupiter/swap" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
+
+      if (!body || typeof body !== "object") {
+        return jsonResponse(400, { error: "Invalid request body" });
+      }
 
       try {
         const resp = await fetch("https://quote-api.jup.ag/v6/swap", {
@@ -1065,7 +1066,11 @@ export const handler = async (event: any) => {
           body: JSON.stringify(body),
         });
         if (!resp.ok) {
-          return jsonResponse(resp.status, { error: "Jupiter swap failed" });
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Jupiter swap failed",
+            details: errorText,
+          });
         }
         const data = await resp.json();
         return jsonResponse(200, data);

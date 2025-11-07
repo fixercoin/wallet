@@ -1020,10 +1020,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun sell: /api/pumpfun/sell (POST)
     if (path === "/pumpfun/sell" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const { mint, amount, seller } = body;
 

@@ -50,12 +50,20 @@ async function getDerivedTokenPrice(
   tokenSymbol: string,
 ): Promise<{ price: number; pairRatio: number } | null> {
   try {
-    // Get SOL price
-    const solData = await fetchDexscreenerData(`/tokens/${TOKEN_MINTS.SOL}`);
-    const solPair = solData?.pairs?.[0];
-    const solPrice = solPair?.priceUsd
-      ? parseFloat(solPair.priceUsd)
-      : FALLBACK_USD.SOL;
+    // Try to get SOL price first
+    let solPrice = FALLBACK_USD.SOL;
+    try {
+      const solData = await fetchDexscreenerData(`/tokens/${TOKEN_MINTS.SOL}`);
+      const solPair = solData?.pairs?.[0];
+      if (solPair?.priceUsd) {
+        const parsedPrice = parseFloat(solPair.priceUsd);
+        if (isFinite(parsedPrice) && parsedPrice > 0) {
+          solPrice = parsedPrice;
+        }
+      }
+    } catch (e) {
+      console.warn(`[Derived Price] Could not fetch SOL price, using fallback:`, e);
+    }
 
     // Try to get token price via pair address first for better accuracy
     let tokenPrice: number | null = null;
@@ -88,17 +96,26 @@ async function getDerivedTokenPrice(
 
     // Fallback to token mint lookup if pair address didn't work
     if (tokenPrice === null) {
-      const tokenData = await fetchDexscreenerData(`/tokens/${tokenMint}`);
-      const tokenPair = tokenData?.pairs?.[0];
+      try {
+        const tokenData = await fetchDexscreenerData(`/tokens/${tokenMint}`);
+        const tokenPair = tokenData?.pairs?.[0];
 
-      if (tokenPair && tokenPair.priceUsd) {
-        tokenPrice = parseFloat(tokenPair.priceUsd);
-        if (!isFinite(tokenPrice) || tokenPrice <= 0) {
-          return null;
+        if (tokenPair && tokenPair.priceUsd) {
+          tokenPrice = parseFloat(tokenPair.priceUsd);
+          if (!isFinite(tokenPrice) || tokenPrice <= 0) {
+            tokenPrice = null;
+          }
         }
-      } else {
-        return null;
+      } catch (e) {
+        console.warn(`[Derived Price] Token mint lookup failed:`, e);
+        tokenPrice = null;
       }
+    }
+
+    // If we still don't have a price, return null
+    if (tokenPrice === null || !isFinite(tokenPrice) || tokenPrice <= 0) {
+      console.warn(`[Derived Price] Could not determine price for ${tokenSymbol}`);
+      return null;
     }
 
     // Calculate how many tokens per 1 SOL

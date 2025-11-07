@@ -1,15 +1,13 @@
 name = "wallet-c36"
-main = "src/worker.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
-[build]
-command = "npm run build"
-cwd = "./"
-watch_paths = ["src/**/*.ts", "client/**/*"]
+# Cloudflare Pages configuration
+pages_build_output_dir = "dist"
 
-[build.upload]
-format = "service-worker"
+[build]
+command = "pnpm build"
+watch_paths = ["client/**/*", "functions/**/*"]
 
 [env.production]
 name = "wallet-c36-production"

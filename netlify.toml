@@ -3,22 +3,11 @@ command = "pnpm build"
 publish = "dist"
 functions = "netlify/functions"
 
-# Status endpoint
-[[redirects]]
-from = "/api/status"
-to = "/.netlify/functions/status"
-status = 200
-force = true
+# Timeout for long-running functions (in seconds)
+[functions]
+  timeout = 30
 
-# Proxy SPA API calls to the Netlify functions, preserving path via :splat
-# This will be handled by nested functions in netlify/functions/api/ directory
-[[redirects]]
-from = "/api/*"
-to = "/.netlify/functions/api/:splat"
-status = 200
-force = true
-
-# SPA fallback for client-side routing
+# SPA fallback for client-side routing (must be last)
 [[redirects]]
 from = "/*"
 to = "/index.html"

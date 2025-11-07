@@ -1,7 +1,115 @@
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
+    let url;
+    try {
+      url = new URL(request.url);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request URL",
+          details: String(e?.message || e),
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
     const pathname = url.pathname || "/";
+
+    // Health check endpoint
+    if (pathname === "/health" || pathname === "/api/health") {
+      try {
+        const upstream = {};
+        const tests = [
+          [
+            "dexscreener",
+            "https://api.dexscreener.com/latest/dex/pairs/solana",
+          ],
+          [
+            "jupiter",
+            "https://price.jup.ag/v4/price?ids=So11111111111111111111111111111111111111112",
+          ],
+          ["pumpfun", "https://pumpportal.fun/api/quote"],
+        ];
+
+        await Promise.allSettled(
+          tests.map(async ([name, endpoint]) => {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+              const r = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  "User-Agent": "Mozilla/5.0",
+                },
+                signal: controller.signal,
+              });
+
+              clearTimeout(timeoutId);
+              upstream[name] = r.ok ? "ok" : `fail:${r.status}`;
+            } catch (e) {
+              upstream[name] = `fail:${String(e?.message || e).slice(0, 50)}`;
+            }
+          }),
+        );
+
+        return new Response(
+          JSON.stringify({
+            status: "ok",
+            message: "health check",
+            upstream,
+            timestamp: new Date().toISOString(),
+            service: "Fixorium Wallet API",
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      } catch (e) {
+        return new Response(
+          JSON.stringify({
+            error: "Health check failed",
+            details: String(e?.message || e),
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+    }
+
+    // Ping endpoint
+    if (pathname === "/api/ping") {
+      return new Response(
+        JSON.stringify({
+          status: "ok",
+          message: "ping",
+          timestamp: new Date().toISOString(),
+          service: "Fixorium Wallet API",
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
 
     // Handle Pump.fun quote locally on Cloudflare worker
     if (
@@ -83,6 +191,22 @@ export default {
       (env && env.PUMPFUN_API_BASE) || "https://pump.fun/api";
     const DEXSCREENER_BASE =
       (env && env.DEXSCREENER_BASE) || "https://api.dexscreener.com/latest/dex";
+
+    if (!DEXSCREENER_BASE || !PUMPFUN_API_BASE) {
+      return new Response(
+        JSON.stringify({
+          error: "API configuration error",
+          details: "Required API endpoints not configured",
+        }),
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
 
     // Pump.fun curve
     if (
@@ -265,26 +389,44 @@ export default {
         });
       }
       try {
-        const resp = await fetch(
-          `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`,
-          { method: "GET", headers: { "Content-Type": "application/json" } },
-        );
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const fetchUrl = `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`;
+        const resp = await fetch(fetchUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
+
         return new Response(text, {
           status: resp.status,
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "public, max-age=10",
           },
         });
       } catch (e) {
-        return new Response(JSON.stringify({ error: String(e) }), {
-          status: 502,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+        const isTimeout =
+          e?.name === "AbortError" || String(e).includes("timeout");
+        return new Response(
+          JSON.stringify({
+            error: isTimeout ? "Request timeout" : "Failed to fetch price data",
+            details: String(e?.message || e),
+            mint,
+          }),
+          {
+            status: isTimeout ? 504 : 502,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
           },
-        });
+        );
       }
     }
 
@@ -442,6 +584,21 @@ export default {
           },
         },
       );
+    }
+
+    // Handle CORS preflight for all /api/ requests
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers":
+            "Content-Type, Authorization, X-Admin-Wallet",
+          "Access-Control-Max-Age": "86400",
+        },
+      });
     }
 
     // Forward OTHER /api/ requests to fallback (if needed)

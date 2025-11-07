@@ -108,6 +108,22 @@ export default {
       (env as any)?.DEXSCREENER_BASE ||
       "https://api.dexscreener.com/latest/dex";
 
+    if (!DEXSCREENER_BASE || !PUMPFUN_API_BASE) {
+      return new Response(
+        JSON.stringify({
+          error: "API configuration error",
+          details: "Required API endpoints not configured",
+        }),
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
+
     // Pump.fun curve
     if (
       pathname === "/api/pumpfun/curve" ||
@@ -556,23 +572,38 @@ export default {
         });
       }
       try {
-        const resp = await fetch(
-          `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`,
-          { method: "GET", headers: { "Content-Type": "application/json" } },
-        );
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const fetchUrl = `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`;
+        const resp = await fetch(fetchUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
         const text = await resp.text().catch(() => "");
+
         return new Response(text, {
           status: resp.status,
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "public, max-age=10",
           },
         });
       } catch (e: any) {
+        const isTimeout =
+          e?.name === "AbortError" || e?.message?.includes("timeout");
         return new Response(
-          JSON.stringify({ error: String(e?.message || e) }),
+          JSON.stringify({
+            error: isTimeout ? "Request timeout" : "Failed to fetch price data",
+            details: String(e?.message || e),
+            mint,
+          }),
           {
-            status: 502,
+            status: isTimeout ? 504 : 502,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",

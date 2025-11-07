@@ -29,8 +29,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const params = new URLSearchParams(event.rawUrl.split("?")[1] || "");
-    const ids = params.get("ids");
+    const ids = event.queryStringParameters?.ids;
 
     if (!ids) {
       return {

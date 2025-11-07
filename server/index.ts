@@ -225,6 +225,177 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Pumpfun buy: /api/pumpfun/buy (POST)
+  app.post("/api/pumpfun/buy", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const {
+        mint,
+        amount,
+        buyer,
+        slippageBps = 350,
+        priorityFeeLamports = 10000,
+      } = body;
+
+      if (!mint || amount === undefined || !buyer) {
+        return res.status(400).json({
+          error: "Missing required fields: mint, amount, buyer",
+        });
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const resp = await fetch("https://pumpportal.fun/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mint,
+          amount: String(amount),
+          buyer,
+          slippageBps,
+          priorityFeeLamports,
+          txVersion: "V0",
+          operation: "buy",
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
+        return res.status(resp.status).json({
+          error: "Pump.fun API error",
+          details: errorText,
+        });
+      }
+
+      const data = await resp.json();
+      return res.json(data);
+    } catch (e: any) {
+      const isTimeout = (e as any)?.name === "AbortError";
+      return res.status(isTimeout ? 504 : 502).json({
+        error: "Failed to request BUY transaction",
+        details: isTimeout
+          ? "Request timeout - Pump.fun API took too long to respond"
+          : e?.message || String(e),
+      });
+    }
+  });
+
+  // Pumpfun sell: /api/pumpfun/sell (POST)
+  app.post("/api/pumpfun/sell", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const {
+        mint,
+        amount,
+        seller,
+        slippageBps = 350,
+        priorityFeeLamports = 10000,
+      } = body;
+
+      if (!mint || amount === undefined || !seller) {
+        return res.status(400).json({
+          error: "Missing required fields: mint, amount, seller",
+        });
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const resp = await fetch("https://pumpportal.fun/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mint,
+          amount: String(amount),
+          seller,
+          slippageBps,
+          priorityFeeLamports,
+          txVersion: "V0",
+          operation: "sell",
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
+        return res.status(resp.status).json({
+          error: "Pump.fun API error",
+          details: errorText,
+        });
+      }
+
+      const data = await resp.json();
+      return res.json(data);
+    } catch (e: any) {
+      const isTimeout = (e as any)?.name === "AbortError";
+      return res.status(isTimeout ? 504 : 502).json({
+        error: "Failed to request SELL transaction",
+        details: isTimeout
+          ? "Request timeout - Pump.fun API took too long to respond"
+          : e?.message || String(e),
+      });
+    }
+  });
+
+  // Pumpfun trade: /api/pumpfun/trade (POST) - unified trade endpoint
+  app.post("/api/pumpfun/trade", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const { mint, amount, trader, action } = body;
+
+      if (!mint || typeof amount !== "number" || !trader) {
+        return res.status(400).json({
+          error: "Missing required fields: mint, amount (number), trader",
+        });
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const tradeAction = String(action || "buy").toLowerCase();
+      const endpoint =
+        tradeAction === "sell"
+          ? "https://pump.fun/api/sell"
+          : "https://pump.fun/api/trade";
+      const payloadKey = tradeAction === "sell" ? "seller" : "buyer";
+
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mint,
+          amount,
+          [payloadKey]: trader,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
+        return res.status(resp.status).json({
+          error: "Pump.fun API error",
+          details: errorText,
+        });
+      }
+
+      const data = await resp.json();
+      return res.json(data);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "Failed to execute trade transaction",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // Token price endpoint (simple, robust fallback + stablecoins)
   app.get("/api/token/price", async (req, res) => {
     try {

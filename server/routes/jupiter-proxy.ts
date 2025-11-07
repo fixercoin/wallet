@@ -366,7 +366,7 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         console.log(
           `Jupiter swap attempt ${attempt}/2 for ${body.quoteResponse.inputMint} -> ${body.quoteResponse.outputMint}`,
@@ -410,9 +410,10 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
               `Jupiter error 1016 detected (stale quote) on attempt ${attempt}`,
             );
             return res.status(530).json({
-              error: `Swap simulation failed - quote may be stale`,
+              error: "STALE_QUOTE",
+              message: `Swap simulation failed - quote may be stale`,
               details:
-                "Please refresh the quote and try again. Market conditions have changed.",
+                "The quote has expired or market conditions have changed significantly. Please refresh the quote and try again.",
               code: 1016,
             });
           }

@@ -4,9 +4,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { jupiterAPI } from "@/lib/services/jupiter";
+import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
+import { jupiterV6API } from "@/lib/services/jupiter-v6";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
   Select,
@@ -15,16 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   SystemProgram,
   PublicKey,
@@ -43,6 +34,93 @@ const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
+
+const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+
+  const particles = Array.from({ length: 24 }).map((_, i) => {
+    const angle = (i / 24) * Math.PI * 2;
+    const distance = 180;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    return {
+      tx,
+      ty,
+      id: i,
+      color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][
+        i % 6
+      ],
+    };
+  });
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      <style>{`
+        @keyframes burst {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0);
+          }
+        }
+        @keyframes success-pop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={
+            {
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              width: "12px",
+              height: "12px",
+              backgroundColor: p.color,
+              borderRadius: "50%",
+              marginLeft: "-6px",
+              marginTop: "-6px",
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              animation: `burst 1.2s ease-out forwards`,
+            } as any
+          }
+        />
+      ))}
+
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          marginLeft: "-40px",
+          marginTop: "-40px",
+          animation: "success-pop 0.7s ease-out forwards",
+        }}
+      >
+        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
+          <Check className="w-10 h-10 text-white" strokeWidth={3} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function addFeeTransferInstruction(
   tx: VersionedTransaction,
@@ -187,7 +265,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -199,80 +278,59 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const initTokenList = async () => {
     if (initialized) return;
 
-    setStatus("Loading tokens...");
-
     try {
-      const jupiterTokens = await jupiterAPI.getStrictTokenList();
+      // Build token list from TOKEN_MINTS constants + user tokens
+      const tokenMintEntries = Object.entries(TOKEN_MINTS);
+      const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
+        address: mint,
+        symbol,
+        decimals: symbol === "SOL" ? 9 : 6,
+        name: symbol,
+      }));
 
-      const setupTokenMints = Object.values(TOKEN_MINTS);
-      const setupTokens = jupiterTokens.filter((t) =>
-        setupTokenMints.includes(t.address),
+      // Add user tokens if available (avoid duplicates with standard tokens)
+      const standardMints = new Set(standardTokens.map((t) => t.address));
+      const userTokensNotInStandard = (userTokens || []).filter(
+        (ut) => !standardMints.has(ut.mint),
       );
 
-      const userTokenMints = (userTokens || []).map((t) => t.mint);
-      const userSetupTokens = jupiterTokens.filter((t) =>
-        userTokenMints.includes(t.address),
-      );
-
-      const combinedTokens = Array.from(
-        new Map([
-          ...setupTokens.map((t) => [t.address, t]),
-          ...userSetupTokens.map((t) => [t.address, t]),
-          ...jupiterTokens.map((t) => [t.address, t]),
-        ]).values(),
-      );
-
-      if (combinedTokens.length === 0) {
-        console.warn(
-          "[SwapInterface] No tokens found from Jupiter, using user tokens as fallback",
-        );
-        const fallbackTokens = (userTokens || []).map((ut) => ({
+      const combinedTokens = [
+        ...standardTokens,
+        ...userTokensNotInStandard.map((ut) => ({
           address: ut.mint,
           symbol: ut.symbol,
           decimals: ut.decimals,
           name: ut.name,
-        }));
-        setTokenList(fallbackTokens);
-      } else {
-        combinedTokens.sort((a, b) => {
-          if (a.address === SOL_MINT) return -1;
-          if (b.address === SOL_MINT) return 1;
-          if (a.address === FIXER_MINT) return -1;
-          if (b.address === FIXER_MINT) return 1;
-          return a.symbol.localeCompare(b.symbol);
-        });
-        setTokenList(combinedTokens);
-      }
+        })),
+      ];
 
+      // Sort: SOL first, then FIXERCOIN, then alphabetical
+      combinedTokens.sort((a, b) => {
+        if (a.address === SOL_MINT) return -1;
+        if (b.address === SOL_MINT) return 1;
+        if (a.address === FIXER_MINT) return -1;
+        if (b.address === FIXER_MINT) return 1;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+      setTokenList(combinedTokens);
       setInitialized(true);
       setStatus("");
     } catch (err) {
       console.error("[SwapInterface] Error loading tokens:", err);
-      setStatus("Using available tokens...");
-
-      const fallbackTokens = (userTokens || []).map((ut) => ({
-        address: ut.mint,
-        symbol: ut.symbol,
-        decimals: ut.decimals,
-        name: ut.name,
-      }));
-
-      if (fallbackTokens.length === 0) {
-        const defaultTokens = [
-          { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
-          {
-            address: FIXER_MINT,
-            symbol: "FIXERCOIN",
-            decimals: 6,
-            name: "FIXERCOIN",
-          },
-        ];
-        setTokenList(defaultTokens);
-      } else {
-        setTokenList(fallbackTokens);
-      }
-
+      // Fallback to minimal token list
+      const fallbackTokens = [
+        { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+        {
+          address: FIXER_MINT,
+          symbol: "FIXERCOIN",
+          decimals: 6,
+          name: "FIXERCOIN",
+        },
+      ];
+      setTokenList(fallbackTokens);
       setInitialized(true);
+      setStatus("");
     }
   };
 
@@ -325,21 +383,22 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const decimalsIn = fromToken.decimals ?? 6;
       const amountRaw = humanToRaw(amount || "0", decimalsIn);
-      const amountStr = jupiterAPI.formatSwapAmount(
+      const amountStr = jupiterV6API.formatSwapAmount(
         Number(amountRaw) / Math.pow(10, decimalsIn),
         decimalsIn,
       );
 
-      const quoteResponse = await jupiterAPI.getQuote(
+      // Use 1% slippage tolerance (100 basis points) for more forgiving execution
+      const quoteResponse = await jupiterV6API.getQuote(
         fromMint,
         toMint,
-        parseInt(amountStr),
-        5000,
+        amountStr,
+        100,
       );
 
       if (!quoteResponse) {
         setQuote(null);
-        setStatus("No route found for this pair/amount.");
+        setStatus("No route available. Try a different amount or token pair.");
         setIsLoading(false);
         return null;
       }
@@ -352,22 +411,37 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         outHuman,
         outToken: toToken.symbol,
         hops: quoteResponse.routePlan?.length ?? 0,
+        quoteTime: Date.now(),
       });
       setStatus("");
       setIsLoading(false);
       return { quoteResponse };
     } catch (err) {
-      setStatus("Error: " + (err.message || err));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      let friendlyMsg = "Failed to get quote. ";
+
+      if (errorMsg.includes("timeout")) {
+        friendlyMsg += "Network timeout. Please try again.";
+      } else if (errorMsg.includes("STALE_QUOTE")) {
+        friendlyMsg += "Quote expired. Please request a new quote.";
+      } else if (errorMsg.includes("simulation")) {
+        friendlyMsg += "Transaction would fail. Try a different amount.";
+      } else if (errorMsg.includes("NO_ROUTE")) {
+        friendlyMsg += "No trading route found for this pair.";
+      } else {
+        friendlyMsg += errorMsg;
+      }
+
+      setStatus(friendlyMsg);
       setIsLoading(false);
-      console.error(err);
+      console.error("[SwapInterface] Quote error:", err);
     }
   };
 
   const confirmSwap = async () => {
     try {
-      setStatus("Preparing swap…");
+      setStatus("Preparing swap��");
       setIsLoading(true);
-      setShowConfirmation(false);
 
       if (!wallet) {
         setStatus("No wallet detected.");
@@ -375,8 +449,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      if (!quote) {
-        setStatus("Get a quote first");
+      if (!amount || parseFloat(amount) <= 0) {
+        setStatus("Enter a valid amount");
         setIsLoading(false);
         return null;
       }
@@ -390,59 +464,97 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      setStatus("Preparing transaction…");
+      const amountInHuman = parseFloat(amount);
 
-      const swapRequest = {
-        quoteResponse: quote.quoteResponse,
-        userPublicKey: wallet.publicKey,
-        wrapAndUnwrapSol: true,
-      };
+      // Determine swap direction
+      const isBuying = fromMint === SOL_MINT;
+      const isSelling = toMint === SOL_MINT;
 
-      console.log(
-        "[SwapInterface] Executing swap with quote:",
-        quote.quoteResponse,
-      );
-      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
-
-      if (!swapResult || !swapResult.swapTransaction) {
-        throw new Error("Swap transaction generation failed");
+      if (!isBuying && !isSelling) {
+        throw new Error(
+          "Swap must involve SOL. Fixorium supports SOL ↔ Pump.fun token swaps.",
+        );
       }
 
-      setStatus("Signing transaction…");
-      const keypair = getKeypair(wallet);
-      if (!keypair) {
-        throw new Error("Failed to derive keypair from wallet secret key");
+      // Identify the token
+      const tokenMint = isBuying ? toMint : fromMint;
+      const tokenDecimals = (isBuying ? toToken : fromToken).decimals ?? 6;
+
+      // ✅ Use Pump.fun API for swap
+      setStatus("Preparing Pump.fun swap…");
+
+      let txBase64: string;
+
+      try {
+        if (isBuying) {
+          // BUY: SOL → Token
+          setStatus("Requesting Pump.fun BUY transaction…");
+          txBase64 = await pumpBuy(tokenMint, amountInHuman, wallet.publicKey);
+        } else {
+          // SELL: Token → SOL
+          setStatus("Requesting Pump.fun SELL transaction…");
+          const rawAmount = Math.floor(
+            amountInHuman * Math.pow(10, tokenDecimals),
+          );
+          txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
+        }
+
+        // Sign the transaction
+        setStatus("Signing transaction…");
+        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+
+        const keypair = getKeypair(wallet);
+        if (!keypair) {
+          throw new Error("Invalid wallet secret key");
+        }
+
+        const txSignature = await sendSignedTx(
+          base64FromBytes(tx.serialize()),
+          keypair,
+        );
+
+        setSuccessMsg(
+          `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
+        );
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 3000);
+
+        toast({
+          title: "Pump.fun Swap Successful",
+          description: `Transaction: ${txSignature}`,
+          variant: "default",
+        });
+
+        setAmount("");
+        setQuote(null);
+      } catch (pumpError) {
+        throw new Error(
+          `Pump.fun swap failed: ${pumpError instanceof Error ? pumpError.message : String(pumpError)}`,
+        );
       }
-
-      setStatus("Submitting to blockchain…");
-      const txSignature = await sendSignedTx(
-        swapResult.swapTransaction,
-        keypair,
-      );
-
-      setStatus(`Swap submitted: ${txSignature.slice(0, 8)}...`);
-      console.log("[SwapInterface] Swap transaction signature:", txSignature);
-
-      toast({
-        title: "Swap Completed!",
-        description: `Successfully swapped ${amount} ${fromToken.symbol} for ${quote.outHuman.toFixed(6)} ${toToken.symbol}. Tx: ${txSignature.slice(0, 8)}...`,
-      });
-
-      setAmount("");
-      setQuote(null);
-      setStatus("");
-      setIsLoading(false);
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-
-      return txSignature;
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error("[SwapInterface] Swap error:", err);
-      setStatus("Swap error: " + errorMsg);
       setIsLoading(false);
+
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+
+      setStatus("");
+
+      if (
+        errorMsg.includes("QUOTE_EXPIRED") ||
+        errorMsg.includes("STALE_QUOTE") ||
+        errorMsg.includes("expired")
+      ) {
+        toast({
+          title: "Quote Expired",
+          description:
+            "The quote expired or changed. Please request a new quote and try again.",
+          variant: "default",
+        });
+        return null;
+      }
 
       toast({
         title: "Swap Failed",
@@ -452,8 +564,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const executeSwap = () => {
-    setShowConfirmation(true);
+  const executeSwap = async () => {
+    if (!wallet) {
+      toast({
+        title: "Error",
+        description: "Wallet not connected",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast({
+        title: "Error",
+        description: "Enter a valid amount",
+        variant: "destructive",
+      });
+      return;
+    }
+    await confirmSwap();
   };
 
   if (!wallet) {
@@ -653,47 +781,33 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "Get Quote"
+              "Get Quote (Optional)"
             )}
           </Button>
 
           <Button
             onClick={executeSwap}
-            disabled={!amount || !quote || isLoading}
+            disabled={!amount || isLoading}
             className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "Convert (Swap)"
+              "Swap (Smart Route)"
             )}
           </Button>
         </div>
 
-        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <AlertDialogContent className="bg-gray-900 border border-gray-700">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">
-                Confirm Swap
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-300">
-                You are about to swap {amount} {fromToken?.symbol} for
-                approximately {quote?.outHuman.toFixed(6)} {quote?.outToken}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmSwap}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                Confirm Swap
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <BloomExplosion show={showSuccess} />
+        {showSuccess && (
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-green-400 mt-32">
+                {successMsg}
+              </h2>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

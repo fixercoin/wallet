@@ -162,8 +162,7 @@ export const handler = async (event: any) => {
     return jsonResponse(204, "");
   }
 
-  const path =
-    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const path = (event.path || "").replace(/^\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {
@@ -190,6 +189,10 @@ export const handler = async (event: any) => {
           "/wallet/balance [GET]",
           "/dextools/price [GET]",
           "/coinmarketcap/quotes [GET]",
+          "/pumpfun/quote [GET, POST]",
+          "/pumpfun/swap [POST]",
+          "/pumpfun/buy [POST]",
+          "/pumpfun/sell [POST]",
         ],
       });
     }
@@ -929,6 +932,114 @@ export const handler = async (event: any) => {
       } catch (e: any) {
         return jsonResponse(502, {
           error: "Failed to execute Pumpfun swap",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun buy: /api/pumpfun/buy (POST)
+    if (path === "/pumpfun/buy" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, buyer } = body;
+
+      if (!mint || typeof amount !== "number" || !buyer) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), buyer (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            buyer,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "buy",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request BUY transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun sell: /api/pumpfun/sell (POST)
+    if (path === "/pumpfun/sell" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, seller } = body;
+
+      if (!mint || typeof amount !== "number" || !seller) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            seller,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "sell",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request SELL transaction",
           details: e?.message || String(e),
         });
       }

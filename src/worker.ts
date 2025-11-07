@@ -12,6 +12,7 @@ const FALLBACK_RPC_ENDPOINTS = [
 ];
 
 // External API endpoints
+const PUMPFUN_API_BASE = "https://pump.fun/api";
 const PUMPFUN_QUOTE = "https://pumpportal.fun/api/quote";
 const PUMPFUN_TRADE = "https://pumpportal.fun/api/trade";
 const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex";
@@ -418,6 +419,172 @@ async function handleJupiterTokens(url: URL): Promise<Response> {
   });
 }
 
+// Pump.fun curve status handler
+async function handlePumpFunCurve(url: URL): Promise<Response> {
+  const mint = url.searchParams.get("mint");
+  if (!mint) {
+    return new Response(JSON.stringify({ error: "mint parameter required" }), {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  try {
+    const response = await timeoutFetch(
+      `${PUMPFUN_API_BASE}/curve/${encodeURIComponent(mint)}`,
+      {
+        method: "GET",
+        headers: browserHeaders(),
+      },
+    );
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to check curve state",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+// Pump.fun BUY handler
+async function handlePumpFunBuy(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body.mint || typeof body.amount !== "number" || !body.buyer) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), buyer",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to request BUY transaction",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+// Pump.fun SELL handler
+async function handlePumpFunSell(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body.mint || typeof body.amount !== "number" || !body.seller) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), seller",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/sell`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to request SELL transaction",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handlePumpFunQuote(
+  request: Request,
+  url: URL,
+  env: Env,
+): Promise<Response> {
+  try {
+    const pumpQuoteUrl = (env && (env as any).PUMPFUN_QUOTE) || PUMPFUN_QUOTE;
+    if (!pumpQuoteUrl) {
+      return new Response(
+        JSON.stringify({
+          error: "PumpFun quote endpoint not configured",
+          code: "UNCONFIGURED",
+        }),
+        { status: 503, headers: CORS_HEADERS },
+      );
+    }
+
+    // Support both GET query params and POST JSON body
+    let body: any = {};
+    const method = request.method?.toUpperCase?.() || "GET";
+
+    if (method === "GET" || method === "HEAD") {
+      const inputMint = url.searchParams.get("inputMint");
+      const outputMint = url.searchParams.get("outputMint");
+      const amount = url.searchParams.get("amount");
+      const mint = url.searchParams.get("mint");
+
+      if (inputMint) body.inputMint = inputMint;
+      if (outputMint) body.outputMint = outputMint;
+      if (amount) body.amount = amount;
+      if (mint) body.mint = mint;
+    } else {
+      body = await request.json().catch(() => ({}));
+    }
+
+    const response = await timeoutFetch(pumpQuoteUrl, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const text = await response.text().catch(() => "");
+    return new Response(text, {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: e?.message?.includes?.("abort")
+          ? "Request timeout"
+          : "Failed to fetch PumpFun quote",
+        details: String(e?.message || e),
+      }),
+      { status: 503, headers: CORS_HEADERS },
+    );
+  }
+}
+
 // Main fetch handler for worker
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -463,6 +630,26 @@ export default {
 
       if (pathname.startsWith("/api/jupiter/tokens")) {
         return await handleJupiterTokens(url);
+      }
+
+      // Pump.fun routes
+      if (pathname === "/api/pumpfun/quote") {
+        return await handlePumpFunQuote(request, url, env);
+      }
+
+      if (
+        pathname === "/api/pumpfun/curve" ||
+        pathname.startsWith("/api/pumpfun/curve?")
+      ) {
+        return await handlePumpFunCurve(url);
+      }
+
+      if (pathname === "/api/pumpfun/buy") {
+        return await handlePumpFunBuy(request);
+      }
+
+      if (pathname === "/api/pumpfun/sell") {
+        return await handlePumpFunSell(request);
       }
 
       // Default 404

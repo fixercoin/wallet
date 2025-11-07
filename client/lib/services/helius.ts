@@ -93,8 +93,8 @@ class HeliusAPI {
   constructor(apiKey: string) {
     this.apiKey = apiKey;
     // Use proxy endpoint instead of direct Helius API
-    // The Cloudflare Worker will handle the actual RPC call
-    this.baseUrl = "/api/rpc";
+    // The Solana RPC proxy will handle the actual RPC call
+    this.baseUrl = "/api/solana-rpc";
   }
 
   /**
@@ -399,9 +399,13 @@ class HeliusAPI {
   async getParsedTransaction(signature: string): Promise<any> {
     try {
       console.log(`Fetching parsed transaction: ${signature}`);
-      return await this.makeRpcCall("getParsedTransaction", [
+      return await this.makeRpcCall("getTransaction", [
         signature,
-        "jsonParsed",
+        {
+          encoding: "jsonParsed",
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0,
+        },
       ]);
     } catch (error) {
       console.error("Error fetching parsed transaction:", error);
@@ -443,28 +447,46 @@ class HeliusAPI {
     // Look for token transfer instructions
     if (message.instructions && Array.isArray(message.instructions)) {
       message.instructions.forEach((instr: any) => {
-        // Check for parsed token instructions
+        // Handle SPL token transfers
         if (
           instr.parsed?.type === "transfer" ||
           instr.parsed?.type === "transferChecked"
         ) {
           const info = instr.parsed.info;
-          const amount =
-            info.tokenAmount?.uiAmount || info.tokenAmount?.amount || 0;
-          const decimals = info.tokenAmount?.decimals || 0;
-          const destination = info.destination;
-          const source = info.source;
-          const mint = info.mint || info.token;
+          // Extract amount - uiAmount is already in human-readable format
+          let amount = 0;
+          if (info.tokenAmount) {
+            if (typeof info.tokenAmount.uiAmount === "number") {
+              amount = info.tokenAmount.uiAmount;
+            } else if (typeof info.tokenAmount.uiAmount === "string") {
+              amount = parseFloat(info.tokenAmount.uiAmount);
+            } else if (info.tokenAmount.amount) {
+              // If no uiAmount, use raw amount divided by decimals
+              const decimals = info.tokenAmount.decimals || 6;
+              amount =
+                parseFloat(info.tokenAmount.amount) / Math.pow(10, decimals);
+            }
+          }
+          const decimals = info.tokenAmount?.decimals || 6;
+          let destination = info.destination;
+          let source = info.source;
+
+          // Handle both string and object formats for addresses
+          if (typeof destination === "object" && destination?.pubkey) {
+            destination = destination.pubkey;
+          }
+          if (typeof source === "object" && source?.pubkey) {
+            source = source.pubkey;
+          }
+
+          const mint = info.mint || info.token || "UNKNOWN";
 
           // Determine if wallet sent or received
-          if (
-            destination === walletAddress ||
-            destination?.includes(walletAddress)
-          ) {
+          if (destination === walletAddress) {
             transfers.push({
               type: "receive",
-              token: mint || "UNKNOWN",
-              amount: parseFloat(String(amount)),
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
               decimals,
               signature: signature || "",
               blockTime,
@@ -472,11 +494,57 @@ class HeliusAPI {
             });
           }
 
-          if (source === walletAddress || source?.includes(walletAddress)) {
+          if (source === walletAddress) {
             transfers.push({
               type: "send",
-              token: mint || "UNKNOWN",
-              amount: parseFloat(String(amount)),
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint,
+            });
+          }
+        }
+
+        // Handle native SOL transfers from System program
+        if (instr.program === "system" && instr.parsed?.type === "transfer") {
+          const info = instr.parsed.info;
+          const lamports = info.lamports || 0;
+          let destination = info.destination;
+          let source = info.source;
+
+          // Handle both string and object formats for addresses
+          if (typeof destination === "object" && destination?.pubkey) {
+            destination = destination.pubkey;
+          }
+          if (typeof source === "object" && source?.pubkey) {
+            source = source.pubkey;
+          }
+
+          // SOL has 9 decimals
+          const amount = lamports / Math.pow(10, 9);
+          const decimals = 9;
+          const mint = "So11111111111111111111111111111111111111112"; // SOL mint
+
+          // Determine if wallet sent or received
+          if (destination === walletAddress) {
+            transfers.push({
+              type: "receive",
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint,
+            });
+          }
+
+          if (source === walletAddress) {
+            transfers.push({
+              type: "send",
+              token: mint,
+              amount: Number.isFinite(amount) ? amount : 0,
               decimals,
               signature: signature || "",
               blockTime,
@@ -485,6 +553,92 @@ class HeliusAPI {
           }
         }
       });
+    }
+
+    // Fallback using meta pre/post balances to compute net deltas
+    try {
+      const meta = tx.meta;
+      if (meta) {
+        const pre = Array.isArray(meta.preTokenBalances)
+          ? meta.preTokenBalances
+          : [];
+        const post = Array.isArray(meta.postTokenBalances)
+          ? meta.postTokenBalances
+          : [];
+        const seenMints = new Set(transfers.map((tr) => tr.mint || tr.token));
+        const key = (b: any) =>
+          `${b?.owner || ""}|${b?.mint || b?.mintId || ""}`;
+        const preMap = new Map<string, any>();
+        pre.forEach((b: any) => preMap.set(key(b), b));
+
+        for (const pb of post) {
+          if (!pb?.owner || pb.owner !== walletAddress) continue;
+          const k = key(pb);
+          const b0 = preMap.get(k);
+          const decimals = pb?.uiTokenAmount?.decimals ?? pb?.decimals ?? 6;
+          const amtPost =
+            typeof pb?.uiTokenAmount?.uiAmount === "number"
+              ? pb.uiTokenAmount.uiAmount
+              : pb?.uiTokenAmount?.amount
+                ? parseFloat(pb.uiTokenAmount.amount) / Math.pow(10, decimals)
+                : 0;
+          const amtPre = b0
+            ? typeof b0?.uiTokenAmount?.uiAmount === "number"
+              ? b0.uiTokenAmount.uiAmount
+              : b0?.uiTokenAmount?.amount
+                ? parseFloat(b0.uiTokenAmount.amount) / Math.pow(10, decimals)
+                : 0
+            : 0;
+          const delta = amtPost - amtPre;
+          const mint = pb?.mint || pb?.mintId || "";
+          if (Math.abs(delta) > 0 && mint && !seenMints.has(mint)) {
+            transfers.push({
+              type: delta >= 0 ? "receive" : "send",
+              token: mint,
+              amount: Number.isFinite(Math.abs(delta)) ? Math.abs(delta) : 0,
+              decimals,
+              signature: signature || "",
+              blockTime,
+              mint,
+            });
+          }
+        }
+
+        // SOL via preBalances/postBalances
+        if (
+          Array.isArray(meta.preBalances) &&
+          Array.isArray(meta.postBalances)
+        ) {
+          const keys = message?.accountKeys || [];
+          const idx = keys.findIndex(
+            (k: any) =>
+              (typeof k === "string" ? k : k?.pubkey) === walletAddress,
+          );
+          if (idx >= 0) {
+            const lamportsPre = meta.preBalances[idx] || 0;
+            const lamportsPost = meta.postBalances[idx] || 0;
+            const dLamports = lamportsPost - lamportsPre;
+            if (dLamports !== 0) {
+              const amount = Math.abs(dLamports) / 1_000_000_000;
+              const mint = "So11111111111111111111111111111111111111112";
+              const hasSol = transfers.some((tr) => tr.mint === mint);
+              if (!hasSol && Number.isFinite(amount)) {
+                transfers.push({
+                  type: dLamports >= 0 ? "receive" : "send",
+                  token: mint,
+                  amount,
+                  decimals: 9,
+                  signature: signature || "",
+                  blockTime,
+                  mint,
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Meta-based transfer parsing failed:", e);
     }
 
     return transfers;

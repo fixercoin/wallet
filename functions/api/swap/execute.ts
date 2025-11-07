@@ -67,7 +67,9 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
       // Forward upstream response
       return new Response(text, {
         status: resp.status,
-        headers: corsHeaders(new Headers({ "Content-Type": "application/json" })),
+        headers: corsHeaders(
+          new Headers({ "Content-Type": "application/json" }),
+        ),
       });
     } catch (e: any) {
       lastErr = e?.message || String(e);
@@ -77,7 +79,10 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
   }
 
   return new Response(
-    JSON.stringify({ error: "rpc_send_failed", details: lastErr || "All RPC endpoints failed" }),
+    JSON.stringify({
+      error: "rpc_send_failed",
+      details: lastErr || "All RPC endpoints failed",
+    }),
     { status: 502, headers: corsHeaders() },
   );
 

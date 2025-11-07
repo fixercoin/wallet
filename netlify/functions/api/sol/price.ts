@@ -7,98 +7,143 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-const DEX_CACHE_TTL_MS = 30_000;
-const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
-const DEX_INFLIGHT = new Map<string, Promise<any>>();
+const PRICE_CACHE_TTL_MS = 60_000;
+const PRICE_CACHE: { data: any; expiresAt: number } | null = null;
 
-const DEXSCREENER_ENDPOINTS = [
-  "https://api.dexscreener.com/latest/dex",
-  "https://api.dexscreener.io/latest/dex",
-];
-let currentDexIdx = 0;
-
-async function tryDexEndpoints(path: string) {
-  let lastError: Error | null = null;
-  for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
-    const idx = (currentDexIdx + i) % DEXSCREENER_ENDPOINTS.length;
-    const endpoint = DEXSCREENER_ENDPOINTS[idx];
-    const url = `${endpoint}${path}`;
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      const resp = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (!resp.ok) {
-        if (resp.status === 429) continue;
-        const t = await resp.text().catch(() => "");
-        const contentType = resp.headers.get("content-type") || "";
-        console.error(
-          `[SOL Price] DexScreener error - Status: ${resp.status}, Content-Type: ${contentType}, Response preview: ${t.substring(0, 200)}`,
-        );
-        throw new Error(
-          `HTTP ${resp.status}: ${resp.statusText}. Content-Type: ${contentType}`,
-        );
-      }
-      const contentType = resp.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        const t = await resp.text().catch(() => "");
-        console.error(
-          `[SOL Price] Invalid content-type: ${contentType}. Response preview: ${t.substring(0, 200)}`,
-        );
-        throw new Error(
-          `Invalid content-type: ${contentType}. Expected application/json`,
-        );
-      }
-      const data = await resp.json();
-      currentDexIdx = idx;
-      return data;
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      if (i < DEXSCREENER_ENDPOINTS.length - 1)
-        await new Promise((r) => setTimeout(r, 1000));
-    }
-  }
-  throw new Error(lastError?.message || "All DexScreener endpoints failed");
+interface SolPriceResponse {
+  price: number;
+  price_change_24h: number;
+  market_cap: number;
+  volume_24h: number;
 }
 
-async function fetchDexData(path: string) {
-  const now = Date.now();
-  const cached = DEX_CACHE.get(path);
-  if (cached && cached.expiresAt > now) {
-    const hasPriceChangeData =
-      Array.isArray(cached.data?.pairs) &&
-      cached.data.pairs.some(
-        (p: any) =>
-          p?.priceChange &&
-          (typeof p.priceChange.h24 === "number" ||
-            typeof p.priceChange.h6 === "number" ||
-            typeof p.priceChange.h1 === "number" ||
-            typeof p.priceChange.m5 === "number"),
+// Try CoinGecko first as primary source
+async function fetchFromCoinGecko(): Promise<SolPriceResponse | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const resp = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true",
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "User-Agent":
+            "Mozilla/5.0 (compatible; SolanaWallet/1.0; +http://example.com)",
+        },
+        signal: controller.signal,
+      },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!resp.ok) {
+      console.warn(
+        `[SOL Price] CoinGecko error: HTTP ${resp.status} ${resp.statusText}`,
       );
-    if (hasPriceChangeData) {
-      return cached.data;
+      return null;
     }
+
+    const contentType = resp.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      console.warn(
+        `[SOL Price] CoinGecko invalid content-type: ${contentType}`,
+      );
+      return null;
+    }
+
+    const data = await resp.json();
+    if (!data.solana?.usd) {
+      console.warn("[SOL Price] CoinGecko missing price data");
+      return null;
+    }
+
+    const result: SolPriceResponse = {
+      price: data.solana.usd || 100,
+      price_change_24h: data.solana.usd_24h_change || 0,
+      market_cap: data.solana.usd_market_cap || 0,
+      volume_24h: data.solana.usd_24h_vol || 0,
+    };
+
+    console.log("[SOL Price] Successfully fetched from CoinGecko:", result.price);
+    return result;
+  } catch (error: any) {
+    const errorMsg =
+      error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+    console.warn(`[SOL Price] CoinGecko fetch failed: ${errorMsg}`);
+    return null;
   }
-  const existing = DEX_INFLIGHT.get(path);
-  if (existing) return existing;
-  const request = (async () => {
-    try {
-      const data = await tryDexEndpoints(path);
-      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
-      return data;
-    } finally {
-      DEX_INFLIGHT.delete(path);
+}
+
+// Fallback to Birdeye API
+async function fetchFromBirdeye(): Promise<SolPriceResponse | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const resp = await fetch(
+      "https://public-api.birdeye.so/defi/price?address=So11111111111111111111111111111111111111112",
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "User-Agent":
+            "Mozilla/5.0 (compatible; SolanaWallet/1.0; +http://example.com)",
+        },
+        signal: controller.signal,
+      },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!resp.ok) {
+      console.warn(
+        `[SOL Price] Birdeye error: HTTP ${resp.status} ${resp.statusText}`,
+      );
+      return null;
     }
-  })();
-  DEX_INFLIGHT.set(path, request);
-  return request;
+
+    const contentType = resp.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      console.warn(
+        `[SOL Price] Birdeye invalid content-type: ${contentType}`,
+      );
+      return null;
+    }
+
+    const data = await resp.json();
+    if (!data.data?.value) {
+      console.warn("[SOL Price] Birdeye missing price data");
+      return null;
+    }
+
+    const result: SolPriceResponse = {
+      price: data.data.value || 100,
+      price_change_24h: 0,
+      market_cap: 0,
+      volume_24h: 0,
+    };
+
+    console.log("[SOL Price] Successfully fetched from Birdeye:", result.price);
+    return result;
+  } catch (error: any) {
+    const errorMsg =
+      error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+    console.warn(`[SOL Price] Birdeye fetch failed: ${errorMsg}`);
+    return null;
+  }
+}
+
+// Fallback to static price
+function getFallbackPrice(): SolPriceResponse {
+  console.log("[SOL Price] Using fallback price");
+  return {
+    price: 100,
+    price_change_24h: 0,
+    market_cap: 0,
+    volume_24h: 0,
+  };
 }
 
 export const handler: Handler = async (event) => {
@@ -121,57 +166,40 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const SOL_MINT = "So11111111111111111111111111111111111111112";
-    const data = await fetchDexData(`/tokens/${SOL_MINT}`);
-    const pair = Array.isArray(data?.pairs) ? data.pairs[0] : null;
+    // Try CoinGecko first
+    let priceData = await fetchFromCoinGecko();
 
-    if (!pair || !pair.priceUsd) {
-      return {
-        statusCode: 200,
-        headers: {
-          ...CORS_HEADERS,
-          "Cache-Control": "public, max-age=60",
-        },
-        body: JSON.stringify({
-          price: 149.38,
-          price_change_24h: 0,
-          market_cap: 0,
-          volume_24h: 0,
-        }),
-      };
+    // Fallback to Birdeye if CoinGecko fails
+    if (!priceData) {
+      console.log("[SOL Price] CoinGecko failed, trying Birdeye...");
+      priceData = await fetchFromBirdeye();
+    }
+
+    // Final fallback
+    if (!priceData) {
+      console.log("[SOL Price] All APIs failed, using fallback price");
+      priceData = getFallbackPrice();
     }
 
     return {
       statusCode: 200,
       headers: {
         ...CORS_HEADERS,
-        "Cache-Control": "public, max-age=5",
+        "Cache-Control": "public, max-age=30",
       },
-      body: JSON.stringify({
-        price: parseFloat(pair.priceUsd || "149.38"),
-        priceUsd: pair.priceUsd,
-        price_change_24h: pair.priceChange?.h24 || 0,
-        market_cap: pair.marketCap || 0,
-        volume_24h: pair.volume?.h24 || 0,
-        data: pair,
-      }),
+      body: JSON.stringify(priceData),
     };
   } catch (error: any) {
-    console.error("SOL PRICE endpoint error:", error);
+    console.error("[SOL Price] Unexpected error:", error);
 
+    const fallback = getFallbackPrice();
     return {
       statusCode: 200,
       headers: {
         ...CORS_HEADERS,
         "Cache-Control": "public, max-age=60",
       },
-      body: JSON.stringify({
-        price: 149.38,
-        price_change_24h: 0,
-        market_cap: 0,
-        volume_24h: 0,
-        error: "Using fallback price due to API error",
-      }),
+      body: JSON.stringify(fallback),
     };
   }
 };

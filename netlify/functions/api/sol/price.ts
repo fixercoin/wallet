@@ -66,11 +66,16 @@ async function fetchFromCoinGecko(): Promise<SolPriceResponse | null> {
       volume_24h: data.solana.usd_24h_vol || 0,
     };
 
-    console.log("[SOL Price] Successfully fetched from CoinGecko:", result.price);
+    console.log(
+      "[SOL Price] Successfully fetched from CoinGecko:",
+      result.price,
+    );
     return result;
   } catch (error: any) {
     const errorMsg =
-      error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+      error?.name === "AbortError"
+        ? "timeout"
+        : error?.message || String(error);
     console.warn(`[SOL Price] CoinGecko fetch failed: ${errorMsg}`);
     return null;
   }
@@ -106,9 +111,7 @@ async function fetchFromBirdeye(): Promise<SolPriceResponse | null> {
 
     const contentType = resp.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      console.warn(
-        `[SOL Price] Birdeye invalid content-type: ${contentType}`,
-      );
+      console.warn(`[SOL Price] Birdeye invalid content-type: ${contentType}`);
       return null;
     }
 
@@ -129,7 +132,9 @@ async function fetchFromBirdeye(): Promise<SolPriceResponse | null> {
     return result;
   } catch (error: any) {
     const errorMsg =
-      error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+      error?.name === "AbortError"
+        ? "timeout"
+        : error?.message || String(error);
     console.warn(`[SOL Price] Birdeye fetch failed: ${errorMsg}`);
     return null;
   }

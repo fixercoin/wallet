@@ -190,9 +190,7 @@ class JupiterV6API {
         }
 
         throw new Error(
-          errorData.error ||
-          errorData.message ||
-          "Failed to create swap"
+          errorData.error || errorData.message || "Failed to create swap",
         );
       }
 

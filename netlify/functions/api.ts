@@ -224,10 +224,7 @@ export const handler = async (event: any) => {
 
     // Easypaisa webhook ingestion (best-effort schema)
     if (path === "/easypaisa/webhook" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
       const providedSecret =

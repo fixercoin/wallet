@@ -112,8 +112,10 @@ async function handleHealth(): Promise<Response> {
   return new Response(
     JSON.stringify({
       status: "ok",
+      message: "health check",
       upstream,
       timestamp: new Date().toISOString(),
+      service: "Fixorium Wallet API",
     }),
     { headers: CORS_HEADERS },
   );

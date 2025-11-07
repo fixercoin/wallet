@@ -1,8 +1,4 @@
-// Production deployment defaults
-const FIXORIUM_API_BASE = "https://wallet.fixorium.com.pk/api";
-const CLOUDFLARE_WORKER_BASE =
-  "https://fixorium-proxy.khanbabusargodha.workers.dev/api";
-const LOCALHOST_API_BASE = "http://localhost:5173"; // Local fallback
+// API base resolution is via VITE_API_BASE_URL; otherwise same-origin /api
 
 // Track which API base is currently working
 let workingApiBase: string | null = null;

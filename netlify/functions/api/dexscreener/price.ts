@@ -30,23 +30,53 @@ async function tryDexEndpoints(path: string) {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          "User-Agent":
+            "Mozilla/5.0 (compatible; SolanaWallet/1.0; +http://example.com)",
         },
         signal: controller.signal,
       });
       clearTimeout(timeout);
+
       if (!resp.ok) {
-        if (resp.status === 429) continue;
-        const t = await resp.text().catch(() => "");
-        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
+        if (resp.status === 429) {
+          console.warn(
+            `[DexScreener] Rate limited on ${endpoint}, trying next endpoint`,
+          );
+          continue;
+        }
+        const preview = await resp.text().catch(() => "");
+        const contentType = resp.headers.get("content-type") || "";
+        console.error(
+          `[DexScreener] HTTP ${resp.status}: ${contentType} | ${preview.substring(0, 100)}`,
+        );
+        throw new Error(
+          `HTTP ${resp.status}: ${resp.statusText}. Content-Type: ${contentType}`,
+        );
       }
+
+      const contentType = resp.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const preview = await resp.text().catch(() => "");
+        console.error(
+          `[DexScreener] Invalid content-type: ${contentType}. Response: ${preview.substring(0, 100)}`,
+        );
+        throw new Error(
+          `Invalid content-type: ${contentType}. Expected application/json`,
+        );
+      }
+
       const data = await resp.json();
       currentDexIdx = idx;
+      console.log(
+        `[DexScreener] Successfully fetched from ${endpoint} for path: ${path}`,
+      );
       return data;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
-      if (i < DEXSCREENER_ENDPOINTS.length - 1)
+      if (i < DEXSCREENER_ENDPOINTS.length - 1) {
+        console.log(`[DexScreener] Retrying next endpoint...`);
         await new Promise((r) => setTimeout(r, 1000));
+      }
     }
   }
   throw new Error(lastError?.message || "All DexScreener endpoints failed");
@@ -67,11 +97,15 @@ async function fetchDexData(path: string) {
             typeof p.priceChange.m5 === "number"),
       );
     if (hasPriceChangeData) {
+      console.log(`[DexScreener] Cache hit for ${path}`);
       return cached.data;
     }
   }
   const existing = DEX_INFLIGHT.get(path);
-  if (existing) return existing;
+  if (existing) {
+    console.log(`[DexScreener] Reusing in-flight request for ${path}`);
+    return existing;
+  }
   const request = (async () => {
     try {
       const data = await tryDexEndpoints(path);
@@ -141,7 +175,7 @@ export const handler: Handler = async (event) => {
     }
 
     // Fallback: return zero price for unknown token
-    console.warn(`DexScreener PRICE: No valid price found for ${token}`);
+    console.warn(`[DexScreener] No valid price found for ${token}`);
     return {
       statusCode: 200,
       headers: {
@@ -157,7 +191,10 @@ export const handler: Handler = async (event) => {
       }),
     };
   } catch (error: any) {
-    console.error("DexScreener PRICE endpoint error:", error);
+    console.error(
+      `[DexScreener] Endpoint error for token ${token}:`,
+      error?.message || String(error),
+    );
 
     // Always return 200 with valid JSON, not error status
     return {

@@ -827,6 +827,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <span className="text-xs text-gray-500">Route hops:</span>
                   <span className="text-xs text-gray-600">{quote.hops}</span>
                 </div>
+                {quote.priceImpact !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-500">Price impact:</span>
+                    <span className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}>
+                      {quote.priceImpact.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

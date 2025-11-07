@@ -2,10 +2,43 @@ import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
+
+const DEXSCREENER_ENDPOINTS = [
+  "https://api.dexscreener.com/latest/dex",
+  "https://api.dexscreener.io/latest/dex",
+];
+
+async function fetchFromDexScreener(path: string): Promise<any> {
+  for (const baseUrl of DEXSCREENER_ENDPOINTS) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(`${baseUrl}${path}`, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; WalletApp/1.0)",
+          },
+          signal: controller.signal,
+        });
+
+        if (response.ok) {
+          return await response.json();
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch (error) {
+      console.warn(`[DexScreener] Endpoint failed:`, error);
+    }
+  }
+
+  throw new Error("All DexScreener endpoints failed");
+}
 
 export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
@@ -16,33 +49,40 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  try {
-    const response = await fetch(
-      "https://api.dexscreener.com/latest/dex/tokens",
-    );
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
 
-    if (!response.ok) {
+  try {
+    const mints = event.queryStringParameters?.mints || "";
+
+    if (!mints) {
       return {
-        statusCode: response.status,
+        statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: "Failed to fetch DexScreener tokens" }),
+        body: JSON.stringify({ error: "Missing mints parameter" }),
       };
     }
 
-    const data = await response.json();
+    const data = await fetchFromDexScreener(`/tokens/${mints}`);
 
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify(data),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("[DexScreener Tokens] Error:", error);
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Internal server error",
+        error: "Failed to fetch tokens",
+        details: error?.message || String(error),
       }),
     };
   }

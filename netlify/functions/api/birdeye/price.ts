@@ -118,8 +118,7 @@ export const handler: Handler = async (event) => {
 
     const data = await fetchDexData(`/tokens/${address}`);
     const pair = Array.isArray(data?.pairs)
-      ? data.pairs.find((p: any) => p?.chainId === "solana") ||
-        data.pairs[0]
+      ? data.pairs.find((p: any) => p?.chainId === "solana") || data.pairs[0]
       : null;
 
     if (!pair || !pair.priceUsd) {

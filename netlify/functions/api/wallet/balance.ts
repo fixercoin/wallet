@@ -99,7 +99,7 @@ export const handler: Handler = async (event) => {
     const rpc = await callRpc("getBalance", [pk], Date.now());
     const j = JSON.parse(String(rpc?.body || "{}"));
     const lamports =
-      typeof j.result === "number" ? j.result : j?.result?.value ?? null;
+      typeof j.result === "number" ? j.result : (j?.result?.value ?? null);
 
     if (typeof lamports === "number" && isFinite(lamports)) {
       const balance = lamports / 1_000_000_000;

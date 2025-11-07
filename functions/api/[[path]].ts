@@ -353,30 +353,85 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       );
     }
 
-    const response = await timeoutFetch(`${JUPITER_V6_SWAP_BASE}/swap`, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(body),
-    });
+    const endpoints = [
+      `${JUPITER_V6_SWAP_BASE}/swap`,
+      `${JUPITER_SWAP_BASE}/swap`,
+    ];
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      return new Response(
-        JSON.stringify({
-          error: `Swap failed: ${response.statusText}`,
-          details: text,
-        }),
-        { status: response.status, headers: CORS_HEADERS },
-      );
+    let lastError = "";
+    let lastStatus = 500;
+
+    for (let idx = 0; idx < endpoints.length; idx++) {
+      const endpoint = endpoints[idx];
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          console.log(
+            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+          );
+
+          const response = await timeoutFetch(endpoint, {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(body),
+          });
+
+          lastStatus = response.status;
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
+            return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+          }
+
+          const text = await response.text().catch(() => "");
+          lastError = text;
+
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(
+              `[Jupiter Swap] Retryable error (${response.status}), retrying...`,
+            );
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, 1000 * attempt));
+              continue;
+            }
+          }
+
+          console.warn(
+            `[Jupiter Swap] Non-retryable error (${response.status}), trying next endpoint`,
+          );
+          break;
+        } catch (e: any) {
+          lastError = String(e?.message || e);
+          console.error(
+            `[Jupiter Swap] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+            continue;
+          }
+        }
+      }
     }
 
-    const data = await response.json();
-    return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+    console.error(
+      `[Jupiter Swap] All endpoints failed. Last error: ${lastError}`,
+    );
+    return new Response(
+      JSON.stringify({
+        error: `Swap failed: ${lastError}`,
+        details: lastError,
+        statusCode: lastStatus,
+      }),
+      { status: lastStatus >= 400 ? lastStatus : 502, headers: CORS_HEADERS },
+    );
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
-      status: 500,
-      headers: CORS_HEADERS,
-    });
+    console.error(`[Jupiter Swap] Exception: ${e?.message || e}`);
+    return new Response(
+      JSON.stringify({
+        error: String(e?.message || e),
+      }),
+      { status: 500, headers: CORS_HEADERS },
+    );
   }
 }
 

@@ -181,7 +181,11 @@ async function handleWalletBalance(url: URL): Promise<Response> {
 
   // All endpoints failed
   return new Response(
-    JSON.stringify({ error: "rpc_error", details: lastError, status: lastStatus }),
+    JSON.stringify({
+      error: "rpc_error",
+      details: lastError,
+      status: lastStatus,
+    }),
     { status: 502, headers: CORS_HEADERS },
   );
 }
@@ -1097,7 +1101,10 @@ async function handleForexRate(url: URL): Promise<Response> {
       }
     };
 
-    const runProviders = async (): Promise<{ rate: number; provider: string }> => {
+    const runProviders = async (): Promise<{
+      rate: number;
+      provider: string;
+    }> => {
       const attempts = providers.map((p) => fetchProvider(p));
       if (typeof (Promise as any).any === "function") {
         return (Promise as any).any(attempts);
@@ -1106,13 +1113,11 @@ async function handleForexRate(url: URL): Promise<Response> {
         const errors: string[] = [];
         let remaining = attempts.length;
         attempts.forEach((attempt) => {
-          (attempt as Promise<any>)
-            .then(resolve)
-            .catch((err) => {
-              errors.push(err instanceof Error ? err.message : String(err));
-              remaining -= 1;
-              if (remaining === 0) reject(new Error(errors.join("; ")));
-            });
+          (attempt as Promise<any>).then(resolve).catch((err) => {
+            errors.push(err instanceof Error ? err.message : String(err));
+            remaining -= 1;
+            if (remaining === 0) reject(new Error(errors.join("; ")));
+          });
         });
       });
     };
@@ -1278,10 +1283,7 @@ async function handler(request: Request): Promise<Response> {
       return await handleDexscreenerPrice(url);
     }
 
-    if (
-      pathname.startsWith("/api/forex/rate") ||
-      pathname === "/forex/rate"
-    ) {
+    if (pathname.startsWith("/api/forex/rate") || pathname === "/forex/rate") {
       return await handleForexRate(url);
     }
 

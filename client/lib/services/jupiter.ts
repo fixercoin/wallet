@@ -147,7 +147,10 @@ class JupiterAPI {
 
           try {
             const raw = JSON.parse(txt);
-            const quote = raw && typeof raw === "object" && "quote" in raw ? raw.quote : raw;
+            const quote =
+              raw && typeof raw === "object" && "quote" in raw
+                ? raw.quote
+                : raw;
             console.log(
               `✅ Jupiter quote success (attempt ${attempt}): ${quote?.outAmount}`,
             );

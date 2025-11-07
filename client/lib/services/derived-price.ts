@@ -61,7 +61,11 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
     const rawAmt = jupiterAPI.formatSwapAmount(1, DECIMALS.SOL);
     for (const candidateMint of uniqCandidates) {
       try {
-        const q = await jupiterAPI.getQuote(solMint, candidateMint, rawAmt as any);
+        const q = await jupiterAPI.getQuote(
+          solMint,
+          candidateMint,
+          rawAmt as any,
+        );
         if (!q || !q.outAmount || q.outAmount === "0") {
           console.warn(`No Jupiter quote for candidate ${candidateMint}`);
           continue;
@@ -69,11 +73,15 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
 
         const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
         if (!Number.isFinite(out) || out <= 0) {
-          console.warn(`Invalid quote output for candidate ${candidateMint}: ${out}`);
+          console.warn(
+            `Invalid quote output for candidate ${candidateMint}: ${out}`,
+          );
           continue;
         }
 
-        console.log(`${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter, mint=${candidateMint})`);
+        console.log(
+          `${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter, mint=${candidateMint})`,
+        );
         return out;
       } catch (err) {
         console.warn(`Jupiter error for candidate ${candidateMint}:`, err);
@@ -88,7 +96,9 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
           // derive tokensPerSol from SOL USD price and token USD price
           const solUsd = await getSolUsd();
           const tokensPerSol = solUsd / dexData;
-          console.log(`${token}: estimated 1 SOL = ${tokensPerSol.toFixed(2)} tokens (from DexScreener, mint=${candidateMint})`);
+          console.log(
+            `${token}: estimated 1 SOL = ${tokensPerSol.toFixed(2)} tokens (from DexScreener, mint=${candidateMint})`,
+          );
           return tokensPerSol;
         }
       } catch (err) {
@@ -96,7 +106,9 @@ async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
       }
     }
 
-    console.warn(`No quote found for ${token} (candidates: ${uniqCandidates.join(',')})`);
+    console.warn(
+      `No quote found for ${token} (candidates: ${uniqCandidates.join(",")})`,
+    );
     return null;
   } catch (error) {
     console.warn(`Error getting ${token} from Jupiter:`, error);

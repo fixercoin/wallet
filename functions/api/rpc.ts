@@ -173,7 +173,11 @@ async function handleWalletBalance(url: URL): Promise<Response> {
   }
 
   return new Response(
-    JSON.stringify({ error: "rpc_error", details: lastError, status: lastStatus }),
+    JSON.stringify({
+      error: "rpc_error",
+      details: lastError,
+      status: lastStatus,
+    }),
     { status: 502, headers: CORS_HEADERS },
   );
 }

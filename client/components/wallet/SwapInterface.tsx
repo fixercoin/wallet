@@ -261,7 +261,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
   const [amount, setAmount] = useState("");
-  const [quote, setQuote] = useState(null);
+  const [quote, setQuote] = useState<any>(null);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -362,7 +362,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const getQuote = async () => {
     try {
-      setStatus("Computing routes…");
+      setStatus("Computing Jupiter routes…");
       setIsLoading(true);
 
       if (!wallet) {
@@ -405,12 +405,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const outAmount = BigInt(quoteResponse.outAmount);
       const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+      const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
 
       setQuote({
         quoteResponse,
         outHuman,
         outToken: toToken.symbol,
         hops: quoteResponse.routePlan?.length ?? 0,
+        priceImpact,
         quoteTime: Date.now(),
       });
       setStatus("");
@@ -469,70 +471,141 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       // Determine swap direction
       const isBuying = fromMint === SOL_MINT;
       const isSelling = toMint === SOL_MINT;
+      const isPumpfunToken =
+        toMint.endsWith("pump") || fromMint.endsWith("pump");
 
-      if (!isBuying && !isSelling) {
-        throw new Error(
-          "Swap must involve SOL. Fixorium supports SOL ↔ Pump.fun token swaps.",
-        );
-      }
+      // Check if we should use Pump.fun or Jupiter
+      const usePumpfun = (isBuying || isSelling) && isPumpfunToken;
 
       // Identify the token
-      const tokenMint = isBuying ? toMint : fromMint;
+      const tokenMint = isBuying ? toMint : isSelling ? fromMint : null;
       const tokenDecimals = (isBuying ? toToken : fromToken).decimals ?? 6;
-
-      // ✅ Use Pump.fun API for swap
-      setStatus("Preparing Pump.fun swap…");
 
       let txBase64: string;
 
       try {
-        if (isBuying) {
-          // BUY: SOL → Token
-          setStatus("Requesting Pump.fun BUY transaction…");
-          txBase64 = await pumpBuy(tokenMint, amountInHuman, wallet.publicKey);
+        if (usePumpfun && tokenMint) {
+          // ✅ Use Pump.fun API for pump.fun tokens
+          setStatus("Preparing Pump.fun swap…");
+
+          try {
+            if (isBuying) {
+              // BUY: SOL → Token
+              setStatus("Requesting Pump.fun BUY transaction…");
+              txBase64 = await pumpBuy(
+                tokenMint,
+                amountInHuman,
+                wallet.publicKey,
+              );
+            } else {
+              // SELL: Token → SOL
+              setStatus("Requesting Pump.fun SELL transaction…");
+              const rawAmount = Math.floor(
+                amountInHuman * Math.pow(10, tokenDecimals),
+              );
+              txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
+            }
+
+            // Sign the transaction
+            setStatus("Signing transaction…");
+            const tx = VersionedTransaction.deserialize(
+              bytesFromBase64(txBase64),
+            );
+
+            const keypair = getKeypair(wallet);
+            if (!keypair) {
+              throw new Error("Invalid wallet secret key");
+            }
+
+            const txSignature = await sendSignedTx(
+              base64FromBytes(tx.serialize()),
+              keypair,
+            );
+
+            setSuccessMsg(
+              `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
+            );
+            setShowSuccess(true);
+            setStatus("");
+            setIsLoading(false);
+
+            setTimeout(() => setShowSuccess(false), 3000);
+
+            toast({
+              title: "Pump.fun Swap Successful",
+              description: `Transaction: ${txSignature}`,
+              variant: "default",
+            });
+
+            setAmount("");
+            setQuote(null);
+          } catch (pumpError) {
+            throw new Error(
+              `Pump.fun swap failed: ${pumpError instanceof Error ? pumpError.message : String(pumpError)}`,
+            );
+          }
         } else {
-          // SELL: Token → SOL
-          setStatus("Requesting Pump.fun SELL transaction…");
-          const rawAmount = Math.floor(
-            amountInHuman * Math.pow(10, tokenDecimals),
+          // ✅ Use Jupiter V6 for general token-to-token swaps
+          setStatus("Preparing Jupiter swap…");
+
+          if (!quote || !quote.quoteResponse) {
+            throw new Error("Please get a quote first by clicking 'Get Quote'");
+          }
+
+          // Request swap transaction from Jupiter
+          setStatus("Creating swap transaction…");
+          const swapResponse = await jupiterV6API.createSwap(
+            quote.quoteResponse,
+            wallet.publicKey,
+            {
+              wrapAndUnwrapSol: true,
+              useSharedAccounts: true,
+            },
           );
-          txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
+
+          if (!swapResponse || !swapResponse.swapTransaction) {
+            throw new Error("Failed to create swap transaction");
+          }
+
+          txBase64 = swapResponse.swapTransaction;
+
+          // Sign the transaction
+          setStatus("Signing transaction…");
+          const tx = VersionedTransaction.deserialize(
+            bytesFromBase64(txBase64),
+          );
+
+          const keypair = getKeypair(wallet);
+          if (!keypair) {
+            throw new Error("Invalid wallet secret key");
+          }
+
+          const txSignature = await sendSignedTx(
+            base64FromBytes(tx.serialize()),
+            keypair,
+          );
+
+          setSuccessMsg(
+            `Jupiter swap successful! Tx: ${txSignature.slice(0, 8)}...`,
+          );
+          setShowSuccess(true);
+          setStatus("");
+          setIsLoading(false);
+
+          setTimeout(() => setShowSuccess(false), 3000);
+
+          toast({
+            title: "Jupiter Swap Successful",
+            description: `Transaction: ${txSignature}`,
+            variant: "default",
+          });
+
+          setAmount("");
+          setQuote(null);
         }
-
-        // Sign the transaction
-        setStatus("Signing transaction…");
-        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
-
-        const keypair = getKeypair(wallet);
-        if (!keypair) {
-          throw new Error("Invalid wallet secret key");
-        }
-
-        const txSignature = await sendSignedTx(
-          base64FromBytes(tx.serialize()),
-          keypair,
-        );
-
-        setSuccessMsg(
-          `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
-        );
-        setShowSuccess(true);
-        setStatus("");
-        setIsLoading(false);
-
-        setTimeout(() => setShowSuccess(false), 3000);
-
-        toast({
-          title: "Pump.fun Swap Successful",
-          description: `Transaction: ${txSignature}`,
-          variant: "default",
-        });
-
-        setAmount("");
-        setQuote(null);
-      } catch (pumpError) {
+      } catch (swapError) {
         throw new Error(
-          `Pump.fun swap failed: ${pumpError instanceof Error ? pumpError.message : String(pumpError)}`,
+          `Swap failed: ${swapError instanceof Error ? swapError.message : String(swapError)}`,
         );
       }
     } catch (err) {
@@ -763,6 +836,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <span className="text-xs text-gray-500">Route hops:</span>
                   <span className="text-xs text-gray-600">{quote.hops}</span>
                 </div>
+                {quote.priceImpact !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-500">Price impact:</span>
+                    <span
+                      className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}
+                    >
+                      {quote.priceImpact.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

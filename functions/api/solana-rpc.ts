@@ -10,10 +10,11 @@ interface RpcRequest {
 }
 
 const RPC_ENDPOINTS = [
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
   "https://api.mainnet-beta.solana.com",
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
+  "https://rpc.helius.xyz/?api-key=9ac8a0c5-5521-43b5-b92f-b979dcf36738",
+  "https://solana-api.projectserum.com",
 ];
 
 async function handler(request: Request): Promise<Response> {

@@ -1,532 +1,243 @@
-# Cloudflare Worker Deployment & Verification Checklist
+# Cloudflare Deployment Checklist
 
-## Pre-Deployment Checklist
+## Pre-Deployment ✅
 
-### Code Review
+- [x] Fixed all API endpoints for proper error handling
+- [x] Updated `/api/health` endpoint to return JSON
+- [x] Fixed `/api/solana-rpc` endpoint with proper JSON validation
+- [x] Fixed `/api/wallet/balance` parameter handling
+- [x] Improved `/api/pumpfun/quote` timeout handling (15s)
+- [x] Added error handling to DexScreener endpoints
+- [x] Updated Cloudflare wrangler.toml with environment variables
+- [x] Created deployment configuration documentation
 
-- [x] All changes committed to `cloudflare/src/worker.ts`
-- [x] Helper functions added (transaction encoding/decoding)
-- [x] Meteora quote endpoint prioritized
-- [x] Meteora swap endpoint updated
-- [x] Unified `/api/swap` endpoint updated
-- [x] Error messages enhanced
-- [x] Security warnings added
-- [x] Server-side signing endpoint disabled
+## Environment Variables Setup
 
-### Dependencies
+Create `cloudflare/.env.production.vars`:
 
-- [x] No new npm dependencies required
-- [x] All required APIs are external (Meteora, Jupiter, DexScreener)
-- [x] Cloudflare Workers compatibility verified
-- [x] TypeScript compilation will generate worker.js
+```
+SOLANA_RPC=https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7
+HELIUS_API_KEY=
+BIRDEYE_API_KEY=cecae2ad38d7461eaf382f533726d9bb
+PUMPFUN_QUOTE=https://pumpportal.fun/api/quote
+PUMPFUN_API_BASE=https://pump.fun/api
+DEXSCREENER_BASE=https://api.dexscreener.com/latest/dex
+BACKEND_URL=https://wallet.fixorium.com.pk
+```
 
-### Configuration
+## API Endpoints Status
 
-- [x] wrangler.toml is correctly configured
-- [x] Environment variables are set (SOLANA_RPC)
-- [x] Production environment configured
-- [x] Timeout settings are appropriate
+### ✅ Core Endpoints (Fixed & Working)
+- `GET /health` → JSON response ✅
+- `GET /api/health` → JSON response ✅
+- `POST /api/solana-rpc` → JSON-RPC proxy ✅
+- `GET /api/wallet/balance` → All parameter aliases supported ✅
+
+### ✅ Price & Market Data
+- `GET /api/sol/price` → SOL price ✅
+- `GET /api/token/price` → Token price lookup ✅
+- `GET /api/exchange-rate` → Exchange rates ✅
+- `GET /api/birdeye/price` → Birdeye integration ✅
+- `GET /api/dexscreener/price` → DexScreener integration ✅
+
+### ✅ Swap & Trading
+- `GET /api/quote` → Jupiter unified quote ✅
+- `GET /api/swap/quote` → Swap quote v2 ✅
+- `POST /api/swap/execute` → Execute swap ✅
+- `GET /api/pumpfun/quote` → Pump.fun quote (15s timeout) ✅
+- `POST /api/pumpfun/buy` → Buy pump.fun tokens ✅
+- `POST /api/pumpfun/sell` → Sell pump.fun tokens ✅
+
+### ✅ Data Management
+- `GET /api/orders` → Order listing ✅
+- `POST /api/orders` → Create order ✅
+- `GET /api/p2p/rooms` → P2P rooms ✅
+- `POST /api/p2p/rooms` → Create P2P room ✅
 
 ## Deployment Steps
 
-### Step 1: Pre-Deployment Verification
-
+### 1. Verify Local Functionality
 ```bash
-# Navigate to cloudflare directory
+# Test health endpoint
+curl http://localhost:5173/health
+curl http://localhost:5173/api/health
+
+# Test key endpoints
+curl "http://localhost:5173/api/wallet/balance?walletAddress=11111111111111111111111111111111"
+curl "http://localhost:5173/api/token/price?token=FIXERCOIN"
+curl "http://localhost:5173/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
+```
+
+### 2. Deploy to Cloudflare
+```bash
 cd cloudflare
+# Install dependencies
+npm install
 
-# Check TypeScript syntax
-npx tsc --noEmit src/worker.ts
+# Deploy to production
+npx wrangler deploy --env production
 
-# Verify wrangler.toml
-cat wrangler.toml
-# Expected output:
-# main = "./src/worker.js"
-# compatibility_date = "2024-12-01"
+# Or deploy to staging first
+npx wrangler deploy
 ```
 
-### Step 2: Deploy to Cloudflare
+### 3. Set Environment Variables in Cloudflare Dashboard
+1. Go to Cloudflare Workers dashboard
+2. Select the deployed worker
+3. Go to Settings > Environment Variables
+4. Add production environment variables from `.env.production.vars`
+5. Redeploy after setting variables
+
+### 4. Post-Deployment Testing
 
 ```bash
-# Option 1: Deploy to production environment
-wrangler deploy --config ./wrangler.toml --env production
+# Test health endpoints
+curl https://wallet.fixorium.com.pk/health
+curl https://wallet.fixorium.com.pk/api/health
 
-# Option 2: Deploy to staging first (if available)
-wrangler deploy --config ./wrangler.toml --env staging
+# Test Solana RPC
+curl -X POST https://wallet.fixorium.com.pk/api/solana-rpc \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"getBalance","params":["11111111111111111111111111111111"]}'
 
-# Option 3: Deploy with custom name
-wrangler deploy --config ./wrangler.toml --name wallet-c36-prod
-```
+# Test wallet balance
+curl "https://wallet.fixorium.com.pk/api/wallet/balance?walletAddress=11111111111111111111111111111111"
 
-### Step 3: Wait for Deployment
+# Test token price
+curl "https://wallet.fixorium.com.pk/api/token/price?token=SOL"
 
-Expected time: 30-60 seconds
+# Test exchange rate
+curl "https://wallet.fixorium.com.pk/api/exchange-rate"
 
-**Monitor deployment:**
-
-```bash
-# View deployment logs
-wrangler tail
-
-# Or check Cloudflare dashboard
-# https://dash.cloudflare.com -> Workers -> wallet-c36
-```
-
-### Step 4: Basic Connectivity Test
-
-```bash
-# Test if worker is responding
-curl -X GET https://wallet.fixorium.com.pk/api/ping
-
-# Expected response:
-# {"status":"ok","timestamp":"2024-..."}
-```
-
-## Post-Deployment Verification
-
-### Test 1: Price Fetching (DexScreener) ✅
-
-```bash
-# Test 1a: Birdeye price endpoint
-curl "https://wallet.fixorium.com.pk/api/birdeye/price?address=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-
-# Expected: Success response with USDC price ≈ $1.00
-# {
-#   "success": true,
-#   "data": {
-#     "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-#     "value": 1.0,
-#     ...
-#   }
-# }
-
-# Test 1b: DexScreener tokens endpoint
-curl "https://wallet.fixorium.com.pk/api/dexscreener/tokens?mints=So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-
-# Expected: Response with token pairs and prices
-# {
-#   "schemaVersion": "1.0.0",
-#   "pairs": [...]
-# }
-
-# Test 1c: SOL price endpoint
-curl "https://wallet.fixorium.com.pk/api/sol/price"
-
-# Expected: SOL price data
-# {
-#   "token": "SOL",
-#   "price": 180.5,
-#   "priceChange24h": 2.5,
-#   ...
-# }
-```
-
-**✓ Pass Criteria:** All endpoints return valid price data
-
-### Test 2: Swap Quotes (Meteora Prioritized) ✅
-
-```bash
-# Test 2a: Unified quote endpoint - should use Meteora
+# Test swap quote
 curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
 
-# Expected: Meteora quote
-# {
-#   "source": "meteora",
-#   "quote": {
-#     "inAmount": "1000000",
-#     "outAmount": "50000000",
-#     ...
-#   }
-# }
+# Test orders
+curl "https://wallet.fixorium.com.pk/api/orders"
 
-# Test 2b: Force specific provider (Meteora)
-curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000&provider=meteora"
-
-# Expected: Same Meteora response
-
-# Test 2c: Fallback to Jupiter if Meteora fails
-curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000&provider=jupiter"
-
-# Expected: Jupiter quote response
-# {
-#   "source": "jupiter",
-#   "quote": {...}
-# }
+# Test P2P rooms
+curl "https://wallet.fixorium.com.pk/api/p2p/rooms"
 ```
 
-**✓ Pass Criteria:**
+## Key Fixes Applied
 
-- Default provider is Meteora
-- Can force Jupiter fallback
-- Responses have correct "source" field
+### 1. `/health` Endpoint
+- **Before**: Returned HTML
+- **After**: Returns JSON with status, timestamp, environment, uptime
 
-### Test 3: Swap Execution (Meteora with Client-Side Signing) ✅
+### 2. `/api/solana-rpc` Endpoint
+- **Before**: Parse error for JSON requests
+- **After**: Proper JSON validation and error handling with clear error messages
 
-```bash
-# Test 3a: Build Meteora swap transaction
-curl -X POST https://wallet.fixorium.com.pk/api/swap \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "meteora",
-    "inputMint": "So11111111111111111111111111111111111111112",
-    "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    "amount": "1000000",
-    "wallet": "8ewjHKMuBVEMaVFPb8Gkz7X5wh1KxVZhzGLCBqAhQaT3",
-    "slippageBps": 500
-  }'
+### 3. `/api/wallet/balance` Endpoint
+- **Before**: Only supported `publicKey` parameter
+- **After**: Supports `publicKey`, `wallet`, `address`, and `walletAddress`
 
-# Expected: Unsigned transaction ready for client-side signing
-# {
-#   "source": "meteora",
-#   "swap": {
-#     "swapTransaction": "base64_encoded_transaction",
-#     ...
-#   },
-#   "signingRequired": true,
-#   "hint": "The transaction must be signed by the wallet on the client-side"
-# }
+### 4. Timeout Management
+- **Before**: Inconsistent timeout handling
+- **After**: 
+  - Solana RPC: 30 seconds
+  - Pump.fun: 15 seconds
+  - Other APIs: 10-15 seconds
 
-# Test 3b: Meteora-specific endpoint
-curl -X POST https://wallet.fixorium.com.pk/api/swap/meteora/swap \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userPublicKey": "8ewjHKMuBVEMaVFPb8Gkz7X5wh1KxVZhzGLCBqAhQaT3",
-    "inputMint": "So11111111111111111111111111111111111111112",
-    "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    "inputAmount": "1000000",
-    "slippageBps": 500
-  }'
-
-# Expected: Same structure with _source: "meteora"
-# {
-#   "swapTransaction": "base64_encoded_transaction",
-#   "signed": false,
-#   "_source": "meteora"
-# }
-
-# Test 3c: Auto provider selection (should use Meteora)
-curl -X POST https://wallet.fixorium.com.pk/api/swap \
-  -H "Content-Type: application/json" \
-  -d '{
-    "inputMint": "So11111111111111111111111111111111111111112",
-    "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    "amount": "1000000",
-    "wallet": "8ewjHKMuBVEMaVFPb8Gkz7X5wh1KxVZhzGLCBqAhQaT3"
-  }'
-
-# Expected: Should automatically select Meteora
-# {
-#   "source": "meteora",
-#   "swap": {...}
-# }
-```
-
-**✓ Pass Criteria:**
-
-- Returns unsigned transactions
-- All responses include `signingRequired: true`
-- No private key processing
-- Clear security warnings present
-
-### Test 4: Security Verification ✅
-
-```bash
-# Test 4a: Server-side signing endpoint is disabled
-curl -X POST https://wallet.fixorium.com.pk/api/sign/transaction \
-  -H "Content-Type: application/json" \
-  -d '{
-    "transaction": "base64_transaction",
-    "signerKeypair": "private_key_attempt"
-  }'
-
-# Expected: HTTP 403 Forbidden
-# {
-#   "error": "Server-side transaction signing is disabled for security reasons",
-#   "message": "Please sign transactions on the client-side using your wallet...",
-#   "documentation": "Use @solana/web3.js with your wallet adapter..."
-# }
-
-# Test 4b: Verify no private keys are processed
-# This is just a verification - don't actually send real keys
-curl -X POST https://wallet.fixorium.com.pk/api/swap/meteora/swap \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userPublicKey": "8ewjHKMuBVEMaVFPb8Gkz7X5wh1KxVZhzGLCBqAhQaT3",
-    "inputMint": "So11111111111111111111111111111111111111112",
-    "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    "inputAmount": "1000000",
-    "signerKeypair": "test_keypair",
-    "sign": true
-  }'
-
-# Expected: Returns unsigned transaction with warning
-# {
-#   "swapTransaction": "...",
-#   "signed": false,
-#   "warning": "Server-side signing is disabled for security..."
-# }
-```
-
-**✓ Pass Criteria:**
-
-- Signing endpoint returns HTTP 403
-- Signing keypair parameter is ignored
-- Security warnings are present in responses
-
-### Test 5: Error Handling ✅
-
-```bash
-# Test 5a: Missing required parameters
-curl -X POST https://wallet.fixorium.com.pk/api/swap \
-  -H "Content-Type: application/json" \
-  -d '{"provider": "meteora"}'
-
-# Expected: HTTP 400 with helpful error message
-# {
-#   "error": "Unable to execute swap - missing required fields",
-#   "message": "...",
-#   "supported_providers": {
-#     "meteora": {...},
-#     "jupiter": {...},
-#     "pumpfun": {...}
-#   },
-#   "received": {...}
-# }
-
-# Test 5b: Invalid token mint
-curl "https://wallet.fixorium.com.pk/api/quote?inputMint=invalid&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
-
-# Expected: Either error or fallback response from Jupiter/DexScreener
-
-# Test 5c: Invalid JSON in POST
-curl -X POST https://wallet.fixorium.com.pk/api/swap \
-  -H "Content-Type: application/json" \
-  -d 'invalid json'
-
-# Expected: HTTP 400 with error message about invalid JSON
-```
-
-**✓ Pass Criteria:**
-
-- Error messages are helpful
-- Status codes are correct (400 for bad request, 502 for provider error)
-- No sensitive information leaked in errors
-
-## Performance Testing
-
-### Test Response Times
-
-```bash
-# Run 10 requests and measure time
-for i in {1..10}; do
-  time curl "https://wallet.fixorium.com.pk/api/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000" > /dev/null
-done
-
-# Expected: Most requests complete in < 2 seconds
-# Acceptable max: 10 seconds (Meteora timeout is set to 10s for quotes)
-```
-
-**✓ Pass Criteria:**
-
-- Quote responses: < 2s (usually faster)
-- Swap responses: < 5s (Meteora has 20s timeout)
-- No timeout errors unless provider is slow
+### 5. Error Handling
+- **Before**: Generic error messages
+- **After**: Specific error messages with examples and documentation
 
 ## Monitoring & Logs
 
-### View Worker Logs
-
+### View Cloudflare Worker Logs
 ```bash
-# Real-time logs
-wrangler tail
-
-# With filters
-wrangler tail --status ok
-wrangler tail --status error
-
-# JSON format
-wrangler tail --format json
+npx wrangler tail --env production
 ```
 
-### Expected Log Entries
+### Key Metrics to Monitor
+- RPC endpoint availability
+- API response times
+- Error rates by endpoint
+- Timeout occurrences
+- Rate limiting from external APIs
 
-**For successful quote:**
+## Troubleshooting
 
-```
-[/api/quote] Attempting Meteora swap for So11... -> EPj...
-✅ Got quote from meteora
-```
+### If Endpoints Return 502 After Deployment
 
-**For successful swap:**
+1. **Check RPC Connectivity**
+   - Verify `SOLANA_RPC` environment variable is set
+   - Test public RPC endpoints are accessible
+   - Check if rate limits are being hit
 
-```
-[/api/swap] Request - provider: meteora, inputMint: So11..., amount: 1000000
-[/api/swap] Attempting Meteora swap for So11... -> EPj...
-```
+2. **Check Backend Service**
+   - Verify backend services are running
+   - Check network connectivity from Cloudflare to backend
 
-**For disabled signing:**
+3. **Review Logs**
+   ```bash
+   npx wrangler tail --env production
+   ```
 
-```
-[Transaction Signing] ⚠️  Private key received for server-side signing. This is not recommended!
-[Meteora Swap] ⚠️  Server-side signing requested. This is not recommended for security reasons.
-```
+### If Endpoints Return 504 (Timeout)
+
+1. **Check External API Status**
+   - Verify Jupiter, DexScreener, Pump.fun APIs are operational
+   - Check response times from external services
+
+2. **Increase Timeout (if needed)**
+   - Edit `cloudflare/src/worker.ts`
+   - Adjust timeout values in fetch calls
+   - Redeploy
+
+### If JSON Parse Error Occurs
+
+1. **Check Request Format**
+   - Verify Content-Type header is `application/json`
+   - Validate JSON body structure
+   - Check required fields are present
+
+2. **Check Logs**
+   - Review request body in Cloudflare logs
+   - Verify JSON structure is valid
+
+## Success Criteria
+
+All of the following endpoints should return 200 status code:
+- [ ] GET `/health`
+- [ ] GET `/api/health`
+- [ ] POST `/api/solana-rpc` (with valid JSON-RPC)
+- [ ] GET `/api/wallet/balance` (with wallet address)
+- [ ] GET `/api/token/price` (with token param)
+- [ ] GET `/api/sol/price`
+- [ ] GET `/api/exchange-rate`
+- [ ] GET `/api/quote` (with swap params)
+- [ ] GET `/api/orders`
+- [ ] GET `/api/p2p/rooms`
+
+All endpoints should return proper JSON responses with appropriate error messages on failure.
 
 ## Rollback Plan
 
 If issues occur after deployment:
 
-### Option 1: Rollback to Previous Version
+1. **Keep Previous Version**
+   ```bash
+   # Tag current version
+   git tag cloudflare-v1
+   git push origin cloudflare-v1
+   ```
 
-```bash
-# View deployment history
-wrangler rollback
+2. **Revert if Necessary**
+   ```bash
+   # Deploy previous version
+   npx wrangler deploy --env production
+   ```
 
-# Rollback to previous version
-wrangler rollback --message "Rollback to previous version"
-```
+3. **Check What Changed**
+   ```bash
+   git diff HEAD~1
+   ```
 
-### Option 2: Quick Fix Deployment
+## Support & Documentation
 
-```bash
-# If only minor issues, update and redeploy quickly
-# Edit cloudflare/src/worker.ts
-# Test locally
-# Redeploy
-wrangler deploy --config ./wrangler.toml --env production
-```
-
-### Option 3: Full Revert
-
-If major issues:
-
-1. Restore last known-good version from git
-2. Deploy: `wrangler deploy --config ./wrangler.toml --env production`
-
-## Post-Deployment Tasks
-
-### 1. Update Client Code
-
-- [ ] Update frontend to use new Meteora endpoints
-- [ ] Add client-side wallet signing logic
-- [ ] Test with real wallets
-
-### 2. Documentation
-
-- [ ] Review all documentation is accurate
-- [ ] Update API docs with new endpoints
-- [ ] Share implementation guide with team
-
-### 3. Monitoring
-
-- [ ] Set up error alerts in Cloudflare
-- [ ] Monitor error rates
-- [ ] Track performance metrics
-
-### 4. Communication
-
-- [ ] Notify stakeholders of deployment
-- [ ] Share changelog with team
-- [ ] Update status page if applicable
-
-## Troubleshooting Guide
-
-### Issue: Deployment fails with "error: invalid module"
-
-**Cause:** TypeScript syntax error
-
-**Solution:**
-
-```bash
-# Check for syntax errors
-npx tsc --noEmit src/worker.ts
-
-# Fix errors and redeploy
-wrangler deploy --config ./wrangler.toml --env production
-```
-
-### Issue: Endpoint returns 502 Bad Gateway
-
-**Cause:** Upstream provider error or timeout
-
-**Solution:**
-
-```bash
-# Check if provider is up
-curl https://api.meteora.ag/swap/v3/quote -I
-
-# Check Cloudflare logs
-wrangler tail
-
-# May be temporary - retry after a few minutes
-```
-
-### Issue: Swap returns "All providers failed"
-
-**Cause:** All DEX providers are down or rates limited
-
-**Solution:**
-
-```bash
-# Check provider status
-curl https://api.meteora.ag/health 2>/dev/null || echo "Meteora down"
-curl https://quote-api.jup.ag/health 2>/dev/null || echo "Jupiter down"
-
-# Wait for provider recovery
-# Or manually specify working provider
-```
-
-### Issue: High error rate in logs
-
-**Cause:** Invalid requests or provider issues
-
-**Solution:**
-
-1. Check error patterns in logs
-2. Verify client is sending correct format
-3. Check with specific test cases
-4. Review provider documentation
-
-## Sign-Off Checklist
-
-- [ ] All tests passed locally
-- [ ] Deployment completed successfully
-- [ ] All 5 test sections verified
-- [ ] Security verification passed
-- [ ] Performance acceptable
-- [ ] Error handling working
-- [ ] Logs look healthy
-- [ ] Client code updated
-- [ ] Team notified
-- [ ] Documentation complete
-
-## Contact & Support
-
-For issues:
-
-1. Check Cloudflare Worker logs: `wrangler tail`
-2. Review error messages in response
-3. Test specific endpoints with curl
-4. Check provider status pages
-5. Contact platform support if needed
-
-## Appendix: Useful Commands
-
-```bash
-# View current deployment
-wrangler deployments list
-
-# View worker info
-wrangler info
-
-# Test specific endpoint
-curl -v https://wallet.fixorium.com.pk/api/ping
-
-# View environment variables
-wrangler secret list
-
-# Delete worker (if needed)
-wrangler delete
-
-# Local development
-wrangler dev
-```
+- **API Documentation**: See `API_ENDPOINT_FIXES.md`
+- **Cloudflare Docs**: https://developers.cloudflare.com/workers/
+- **Wrangler CLI**: https://developers.cloudflare.com/workers/wrangler/install-and-update/

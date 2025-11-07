@@ -153,21 +153,12 @@ export async function createServer(): Promise<express.Application> {
     handleSolanaRpc(req, res);
   });
 
-  // Wallet routes
+  // Wallet routes - also supports walletAddress alias
   app.get("/api/wallet/balance", (req, res) => {
-    const walletAddress =
-      req.query.walletAddress ||
-      req.query.wallet ||
-      req.query.address ||
-      req.query.publicKey;
-
-    if (!walletAddress) {
-      return res.status(400).json({
-        error: "Missing or invalid wallet address parameter",
-        message: "Provide ?walletAddress=<pubkey> or ?wallet=<pubkey>",
-      });
+    // Support walletAddress as an alias for publicKey
+    if (req.query.walletAddress && !req.query.publicKey) {
+      req.query.publicKey = req.query.walletAddress;
     }
-
     handleWalletBalance(req, res);
   });
 

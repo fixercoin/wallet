@@ -820,12 +820,13 @@ export default {
         // Add CORS headers to the response
         const newHeaders = new Headers(response.headers);
         newHeaders.set("Access-Control-Allow-Origin", "*");
-        newHeaders.set("Access-Control-Allow-Methods",
-          "GET, POST, PUT, DELETE, OPTIONS"
+        newHeaders.set(
+          "Access-Control-Allow-Methods",
+          "GET, POST, PUT, DELETE, OPTIONS",
         );
         newHeaders.set(
           "Access-Control-Allow-Headers",
-          "Content-Type, Authorization, X-Admin-Wallet"
+          "Content-Type, Authorization, X-Admin-Wallet",
         );
 
         return new Response(response.body, {

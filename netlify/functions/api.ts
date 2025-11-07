@@ -68,56 +68,36 @@ export const handler: Handler = async (
     };
   }
 
-  // Extract the path from multiple possible sources
-  // Netlify might pass it in different ways depending on configuration
-  let rawPath = "";
+  // Extract path from the query parameter (set by netlify.toml rewrite rule)
+  // The rewrite rule passes it as: to = "/.netlify/functions/api?path=:splat"
+  const queryPath = event.queryStringParameters?.path;
 
-  // Try event.path first (original request path)
-  if (event.path) {
-    rawPath = event.path;
-  }
-  // Try event.rawPath (alternative name)
-  else if (event.rawPath) {
-    rawPath = event.rawPath;
-  }
-  // Parse from rawUrl
-  else if (event.rawUrl) {
-    try {
-      const url = new URL(event.rawUrl, "http://localhost");
-      rawPath = url.pathname;
-    } catch {
-      rawPath = event.rawUrl.split("?")[0].split("#")[0];
+  let path = "";
+
+  if (queryPath) {
+    // Path from query parameter is already normalized (e.g., "sol/price", "jupiter/quote")
+    path = queryPath.trim();
+  } else {
+    // Fallback: try to extract from other sources
+    let rawPath = event.path || event.rawPath || "";
+
+    if (!rawPath && event.rawUrl) {
+      try {
+        const url = new URL(event.rawUrl, "http://localhost");
+        rawPath = url.pathname;
+      } catch {
+        rawPath = event.rawUrl.split("?")[0].split("#")[0];
+      }
+    }
+
+    // Remove /api prefix and any leading/trailing slashes
+    if (rawPath) {
+      path = rawPath.replace(/^\/+api\/?/, "").trim();
     }
   }
 
-  // Check if path was passed as query parameter (fallback for some Netlify configs)
-  const queryPath = event.queryStringParameters?.path;
-  if (!rawPath && queryPath) {
-    rawPath = "/" + queryPath;
-  }
-
-  // Debug log the raw path and event details
   console.log(
-    `[API Router] Event: path=${rawPath}, method=${event.httpMethod}, url=${event.rawUrl || "N/A"}`,
-  );
-
-  // Normalize path - handle multiple prefixes
-  let normalizedPath = rawPath;
-
-  // Remove /.netlify/functions/api prefix if present (from rewrite)
-  if (normalizedPath.startsWith("/.netlify/functions/api")) {
-    normalizedPath = normalizedPath.replace(
-      /^\/.netlify\/functions\/api/,
-      "/api",
-    );
-  }
-
-  // Remove /api prefix and query parameters
-  const pathWithoutPrefix = normalizedPath.replace(/^\/+api\/?/, "");
-  const path = pathWithoutPrefix.replace(/\?.*$/, "").split("#")[0].trim();
-
-  console.log(
-    `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`,
+    `[API Router] Path: ${path}, Method: ${event.httpMethod}, Raw URL: ${event.rawUrl || "N/A"}`,
   );
 
   // Find and execute matching handler
@@ -155,7 +135,7 @@ export const handler: Handler = async (
   const availableEndpoints = Object.keys(handlers).map((p) => `/api/${p}`);
 
   console.warn(
-    `[API Router] No handler found for path: ${path} (rawPath was: ${rawPath})`,
+    `[API Router] No handler found for path: ${path}`,
   );
 
   return {
@@ -165,7 +145,6 @@ export const handler: Handler = async (
       error: "API endpoint not found",
       hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, /api/jupiter/quote, etc.",
       requestedPath: path || "/",
-      rawPath: rawPath,
       availableEndpoints: availableEndpoints,
     }),
   };

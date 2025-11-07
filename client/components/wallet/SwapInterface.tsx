@@ -261,7 +261,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
   const [amount, setAmount] = useState("");
-  const [quote, setQuote] = useState(null);
+  const [quote, setQuote] = useState<any>(null);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);

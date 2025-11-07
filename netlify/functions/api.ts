@@ -969,10 +969,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun buy: /api/pumpfun/buy (POST)
     if (path === "/pumpfun/buy" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const { mint, amount, buyer } = body;
 

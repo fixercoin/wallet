@@ -1,6 +1,26 @@
 // API router for Netlify functions
-// This handler routes requests to the appropriate nested handlers based on the path
+// Routes requests to the appropriate nested handlers based on the path
 import type { Handler, HandlerEvent, HandlerResponse } from "@netlify/functions";
+
+// Import all handlers
+import jupiterQuote from "./jupiter/quote.ts";
+import jupiterSwap from "./jupiter/swap.ts";
+import jupiterPrice from "./jupiter/price.ts";
+import solPrice from "./sol/price.ts";
+import tokenPrice from "./token/price.ts";
+import walletBalance from "./wallet/balance.ts";
+import solanRpc from "./solana-rpc.ts";
+import health from "./health.ts";
+import ping from "./ping.ts";
+import dexscreenerPrice from "./dexscreener/price.ts";
+import dexscreenerTokens from "./dexscreener/tokens.ts";
+import birdeyePrice from "./birdeye/price.ts";
+import pumpfunQuote from "./pumpfun/quote.ts";
+import pumpfunBuy from "./pumpfun/buy.ts";
+import pumpfunSell from "./pumpfun/sell.ts";
+import pumpfunTrade from "./pumpfun/trade.ts";
+import pumpfunCurve from "./pumpfun/curve.ts";
+import forexRate from "./forex/rate.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -9,26 +29,26 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-// Available handlers mapping
-const AVAILABLE_HANDLERS: Record<string, string> = {
-  "jupiter/quote": "jupiter/quote",
-  "jupiter/swap": "jupiter/swap",
-  "jupiter/price": "jupiter/price",
-  "sol/price": "sol/price",
-  "token/price": "token/price",
-  "wallet/balance": "wallet/balance",
-  "solana-rpc": "solana-rpc",
-  "health": "health",
-  "ping": "ping",
-  "dexscreener/price": "dexscreener/price",
-  "dexscreener/tokens": "dexscreener/tokens",
-  "birdeye/price": "birdeye/price",
-  "pumpfun/quote": "pumpfun/quote",
-  "pumpfun/buy": "pumpfun/buy",
-  "pumpfun/sell": "pumpfun/sell",
-  "pumpfun/trade": "pumpfun/trade",
-  "pumpfun/curve": "pumpfun/curve",
-  "forex/rate": "forex/rate",
+// Map of paths to handlers
+const handlers: Record<string, Handler> = {
+  "jupiter/quote": jupiterQuote,
+  "jupiter/swap": jupiterSwap,
+  "jupiter/price": jupiterPrice,
+  "sol/price": solPrice,
+  "token/price": tokenPrice,
+  "wallet/balance": walletBalance,
+  "solana-rpc": solanRpc,
+  "health": health,
+  "ping": ping,
+  "dexscreener/price": dexscreenerPrice,
+  "dexscreener/tokens": dexscreenerTokens,
+  "birdeye/price": birdeyePrice,
+  "pumpfun/quote": pumpfunQuote,
+  "pumpfun/buy": pumpfunBuy,
+  "pumpfun/sell": pumpfunSell,
+  "pumpfun/trade": pumpfunTrade,
+  "pumpfun/curve": pumpfunCurve,
+  "forex/rate": forexRate,
 };
 
 export const handler: Handler = async (
@@ -46,32 +66,22 @@ export const handler: Handler = async (
   // Extract the path from the event
   // The path should be the original request path like /api/jupiter/quote
   const rawPath = event.path || event.rawPath || "";
-  
+
   // Remove /api prefix and query parameters
   const pathWithoutPrefix = rawPath.replace(/^\/+api\/?/, "");
   const path = pathWithoutPrefix.replace(/\?.*/, "");
 
   console.log(
-    `[API Router] Raw path: ${rawPath}, Extracted path: ${path}, Method: ${event.httpMethod}`
+    `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`
   );
 
-  // Find a matching handler
-  if (path && AVAILABLE_HANDLERS[path]) {
-    const handlerPath = AVAILABLE_HANDLERS[path];
+  // Find and execute matching handler
+  if (path && handlers[path]) {
     try {
-      // Dynamically import the handler module
-      const module = await import(`./${handlerPath}.ts`);
-      if (module && typeof module.handler === "function") {
-        console.log(`[API Router] Routing to handler: ${handlerPath}`);
-        return await module.handler(event);
-      } else {
-        console.error(`[API Router] Handler not found for path: ${handlerPath}`);
-      }
+      console.log(`[API Router] Routing to: ${path}`);
+      return await handlers[path](event);
     } catch (error: any) {
-      console.error(
-        `[API Router] Error loading handler for ${handlerPath}:`,
-        error
-      );
+      console.error(`[API Router] Error in handler for ${path}:`, error);
       return {
         statusCode: 500,
         headers: CORS_HEADERS,
@@ -84,37 +94,18 @@ export const handler: Handler = async (
     }
   }
 
-  // Also try with .js extension (for compiled code)
-  if (path && AVAILABLE_HANDLERS[path]) {
-    const handlerPath = AVAILABLE_HANDLERS[path];
-    try {
-      const module = await import(`./${handlerPath}.js`);
-      if (module && typeof module.handler === "function") {
-        console.log(`[API Router] Routing to compiled handler: ${handlerPath}`);
-        return await module.handler(event);
-      }
-    } catch (error: any) {
-      // Silently continue to fallback
-    }
-  }
-
-  // Log available endpoints for debugging
-  const availableEndpoints = Object.keys(AVAILABLE_HANDLERS).map(
-    (p) => `/api/${p}`
-  );
-
-  console.warn(
-    `[API Router] No handler found for path: ${path}. Available: ${availableEndpoints.join(", ")}`
-  );
-
   // Fallback for unmapped endpoints
+  const availableEndpoints = Object.keys(handlers).map((p) => `/api/${p}`);
+
+  console.warn(`[API Router] No handler found for path: ${path}`);
+
   return {
     statusCode: 404,
     headers: CORS_HEADERS,
     body: JSON.stringify({
       error: "API endpoint not found",
       hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, /api/jupiter/quote, etc.",
-      requestedPath: path,
+      requestedPath: path || "/",
       availableEndpoints: availableEndpoints,
     }),
   };

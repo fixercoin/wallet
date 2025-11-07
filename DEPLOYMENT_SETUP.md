@@ -1,8 +1,8 @@
-# Complete Deployment Guide: Netlify Frontend + Render Backend
+# Complete Deployment Guide: Cloudflare Pages Frontend + Render Backend
 
 This guide explains how to deploy your Fixorium Wallet application with:
 
-- **Frontend**: Netlify (static site hosting)
+- **Frontend**: Cloudflare Pages (static site hosting)
 - **Backend**: Render (Node.js hosting)
 
 ## Overview
@@ -13,7 +13,7 @@ This guide explains how to deploy your Fixorium Wallet application with:
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────────────┐         ┌────────────────────┐   │
-│  │  Frontend (Netlify)  │         │  Backend (Render)  │   │
+│  │  Frontend (Cloudflare Pages)  │         │  Backend (Render)  │   │
 │  │  - React SPA         │◄───────►│  - Express.js      │   │
 │  │  - Static build      │  /api   │  - Node.js         │   │
 │  │  - CDN hosted        │  calls  │  - Solana APIs     │   │
@@ -30,7 +30,7 @@ This guide explains how to deploy your Fixorium Wallet application with:
 ## Prerequisites
 
 - GitHub account (to push code)
-- Netlify account (free at https://netlify.com)
+- Cloudflare Pages account (free at https://netlify.com)
 - Render account (free at https://render.com)
 - Node.js 18+ locally (for testing)
 
@@ -40,10 +40,10 @@ Your project is already structured with separate frontend and backend folders:
 
 ```
 project/
-├── frontend/              # Netlify deployment
+├── frontend/              # Cloudflare Pages deployment
 │   ├── package.json
 │   ├── vite.config.mjs
-│   ├── netlify.toml       # Netlify build config
+│   ├── wrangler.toml       # Cloudflare Pages build config
 │   ├── .env.example
 │   └── index.html
 ├── backend/               # Render deployment
@@ -72,19 +72,19 @@ npm start
 # Should listen on port 10000
 ```
 
-## Step 2: Deploy Frontend to Netlify
+## Step 2: Deploy Frontend to Cloudflare Pages
 
-### Option A: Using Netlify UI (Recommended for First-Time Users)
+### Option A: Using Cloudflare Pages UI (Recommended for First-Time Users)
 
 1. **Push code to GitHub**
 
    ```bash
    git add .
-   git commit -m "Setup for Netlify and Render deployment"
+   git commit -m "Setup for Cloudflare Pages and Render deployment"
    git push origin main
    ```
 
-2. **Go to [Netlify](https://netlify.com)**
+2. **Go to [Cloudflare Pages](https://netlify.com)**
    - Click "Add new site" → "Import an existing project"
    - Connect your GitHub repository
    - Choose your GitHub account and repository
@@ -95,15 +95,15 @@ npm start
    - Click "Deploy site"
 
 4. **Set Environment Variables**
-   - In Netlify dashboard: Site settings → Build & deploy → Environment
+   - In Cloudflare Pages dashboard: Site settings → Build & deploy → Environment
    - Add variable: `VITE_API_URL` = `https://your-backend-service.onrender.com`
    - Trigger redeploy
 
-### Option B: Using netlify.toml (Automatic)
+### Option B: Using wrangler.toml (Automatic)
 
-The project includes `frontend/netlify.toml` which is automatically detected by Netlify.
+The project includes `frontend/wrangler.toml` which is automatically detected by Cloudflare Pages.
 
-Simply connect your repository and it will use the config from `netlify.toml`:
+Simply connect your repository and it will use the config from `wrangler.toml`:
 
 - Build command: `npm run build`
 - Publish directory: `dist`
@@ -134,7 +134,7 @@ Simply connect your repository and it will use the config from `netlify.toml`:
    ```
 
    Replace:
-   - `your-netlify-frontend.netlify.app` with your actual Netlify domain
+   - `your-netlify-frontend.netlify.app` with your actual Cloudflare Pages domain
    - `your-super-secret-api-key-here` with a secure key
 
 4. **Deploy**
@@ -149,8 +149,8 @@ After Render deployment completes:
 1. **Get your Render service URL**
    - In Render dashboard, find your service URL (usually `https://fixorium-api.onrender.com`)
 
-2. **Update Netlify environment variable**
-   - Go to Netlify dashboard → Site settings → Build & deploy → Environment
+2. **Update Cloudflare Pages environment variable**
+   - Go to Cloudflare Pages dashboard → Site settings → Build & deploy → Environment
    - Update `VITE_API_URL` to your Render service URL
    - Click "Trigger deploy" to rebuild
 
@@ -165,7 +165,7 @@ After Render deployment completes:
 ### Test Frontend
 
 ```bash
-# Visit your Netlify site
+# Visit your Cloudflare Pages site
 https://your-site.netlify.app
 
 # Check in browser console:
@@ -192,11 +192,11 @@ curl https://your-backend-service.onrender.com/api/health
 
 ## Step 6: Custom Domain (Optional)
 
-### For Frontend (Netlify)
+### For Frontend (Cloudflare Pages)
 
-1. In Netlify: Site settings → Domain management → Custom domains
+1. In Cloudflare Pages: Site settings → Domain management → Custom domains
 2. Add your domain (e.g., `fixorium.com`)
-3. Update DNS records per Netlify instructions
+3. Update DNS records per Cloudflare Pages instructions
 4. Enable HTTPS (automatic)
 
 ### For Backend (Render)
@@ -214,10 +214,10 @@ curl https://your-backend-service.onrender.com/api/health
 
 **Solutions**:
 
-1. Verify `VITE_API_URL` in Netlify environment variables
+1. Verify `VITE_API_URL` in Cloudflare Pages environment variables
 2. Check Render service URL is correct
 3. In browser console, test: `fetch('https://backend-url.onrender.com/api/ping')`
-4. Verify `CORS_ORIGIN` in Render matches your Netlify domain exactly
+4. Verify `CORS_ORIGIN` in Render matches your Cloudflare Pages domain exactly
 
 ### Backend Service Sleeps After 15 Minutes (Free Plan)
 
@@ -226,7 +226,7 @@ On Render's free plan, services spin down after 15 minutes of inactivity.
 - Solution: Upgrade to Starter+ plan, or
 - Keep a simple health check monitoring service active
 
-### Build Failures on Netlify
+### Build Failures on Cloudflare Pages
 
 **Check logs**: Site settings → Deploy → Deploys → Click failed deploy
 
@@ -259,7 +259,7 @@ git push origin main
 
 ### Redeploy Frontend
 
-- Netlify automatically rebuilds on each push
+- Cloudflare Pages automatically rebuilds on each push
 - Or manually trigger: Site settings → Deploys → Trigger deploy
 
 ### Redeploy Backend
@@ -269,7 +269,7 @@ git push origin main
 
 ## Environment Variables Reference
 
-### Frontend (.env in Netlify)
+### Frontend (.env in Cloudflare Pages)
 
 ```
 VITE_API_URL=https://your-backend-service.onrender.com
@@ -290,7 +290,7 @@ CORS_ORIGIN=https://your-netlify-app.netlify.app
 - [ ] Set strong `FIXORIUM_API_KEY` (use random string generator)
 - [ ] Ensure `CORS_ORIGIN` is exact match (no trailing slash)
 - [ ] Don't commit `.env` files (use `.env.example` instead)
-- [ ] Use HTTPS everywhere (Netlify and Render handle this)
+- [ ] Use HTTPS everywhere (Cloudflare Pages and Render handle this)
 - [ ] Regularly update dependencies: `npm audit fix`
 - [ ] Monitor logs for errors: Check dashboards weekly
 - [ ] Set up Render monitoring for uptime alerts
@@ -301,7 +301,7 @@ CORS_ORIGIN=https://your-netlify-app.netlify.app
 
 - Build output is minified automatically
 - Cloudflare CDN speeds up delivery
-- Enable analytics in Netlify dashboard
+- Enable analytics in Cloudflare Pages dashboard
 
 ### Backend
 
@@ -320,7 +320,7 @@ CORS_ORIGIN=https://your-netlify-app.netlify.app
 
 ## Support Resources
 
-- **Netlify Docs**: https://docs.netlify.com/
+- **Cloudflare Pages Docs**: https://docs.netlify.com/
 - **Render Docs**: https://render.com/docs
 - **Express.js Docs**: https://expressjs.com/
 - **Vite Docs**: https://vitejs.dev/

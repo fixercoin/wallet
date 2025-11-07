@@ -165,9 +165,24 @@ function parseRequestBody(event: any): any {
   try {
     let body = event.body;
 
+    if (!body) {
+      return {};
+    }
+
     // Decode base64 if needed
-    if (event.isBase64Encoded && body) {
-      body = Buffer.from(body, "base64").toString("utf8");
+    if (event.isBase64Encoded && typeof body === "string") {
+      try {
+        // Use standard base64 decode (atob is available in all JS runtimes)
+        // For Node.js, Buffer.from is preferred but we can use atob for compatibility
+        if (typeof Buffer !== "undefined") {
+          body = Buffer.from(body, "base64").toString("utf8");
+        } else {
+          body = atob(body);
+        }
+      } catch (decodeError) {
+        console.warn("[Netlify] Base64 decode failed, treating as plain text");
+        // Continue with the original body as-is
+      }
     }
 
     // Parse JSON

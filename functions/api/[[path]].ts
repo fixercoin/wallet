@@ -550,6 +550,99 @@ async function handlePumpFunQuote(
   }
 }
 
+async function handlePumpFunTrade(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (
+      !body.mint ||
+      typeof body.amount !== "number" ||
+      !body.trader ||
+      !body.action
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount (number), trader, action (buy/sell)",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const action = String(body.action).toLowerCase();
+    if (!["buy", "sell"].includes(action)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Action must be "buy" or "sell"',
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const tradeBody = {
+      mint: body.mint,
+      amount: body.amount,
+      [action === "buy" ? "buyer" : "seller"]: body.trader,
+      slippageBps: body.slippageBps || 350,
+      priorityFeeLamports: body.priorityFeeLamports || 10000,
+    };
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(tradeBody),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to execute trade",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handlePumpFunSwap(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body.mint || !body.amount) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields: mint, amount",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const response = await timeoutFetch(`${PUMPFUN_API_BASE}/trade`, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const data = await safeJson(response);
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to execute swap",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
 async function handleDexscreenerPrice(url: URL): Promise<Response> {
   const tokenAddress = url.searchParams.get("tokenAddress");
 

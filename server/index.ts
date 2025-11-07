@@ -72,9 +72,41 @@ export async function createServer(): Promise<express.Application> {
   app.use(express.json());
 
   // DexScreener routes
-  app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
-  app.get("/api/dexscreener/search", handleDexscreenerSearch);
-  app.get("/api/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/tokens", async (req, res) => {
+    try {
+      return await handleDexscreenerTokens(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener API error",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  app.get("/api/dexscreener/search", async (req, res) => {
+    try {
+      return await handleDexscreenerSearch(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener search failed",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  app.get("/api/dexscreener/trending", async (req, res) => {
+    try {
+      return await handleDexscreenerTrending(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener trending failed",
+        details: e?.message || String(e),
+        message:
+          "Try using /api/quote endpoint instead with specific mints",
+      });
+    }
+  });
+
   app.get("/api/dexscreener/price", handleDexscreenerPrice);
 
   // Price routes

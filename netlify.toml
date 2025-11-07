@@ -10,10 +10,9 @@ from = "/api/*"
 to = "/.netlify/functions/api?path=:splat"
 status = 200
 
-# SPA fallback for client-side routing (must be last)
-# Use redirect for SPA fallback (not rewrite) so it only applies to real 404s
+# SPA fallback for client-side routing
+# This redirect catches all URLs and rewrites to index.html for client-side routing
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
-conditions = { Role = "404" }

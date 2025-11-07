@@ -104,53 +104,75 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  try {
-    const token = event.queryStringParameters?.token || "";
-    if (!token) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Missing 'token' parameter",
-        }),
-      };
-    }
+  const token = event.queryStringParameters?.token || "";
 
+  if (!token) {
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Missing 'token' parameter",
+      }),
+    };
+  }
+
+  try {
     const data = await fetchDexData(`/tokens/${token}`);
     const pair = Array.isArray(data?.pairs) ? data.pairs[0] : null;
 
-    if (!pair) {
-      return {
-        statusCode: 404,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Token not found on DexScreener",
-        }),
-      };
+    if (pair && pair.priceUsd) {
+      const price = parseFloat(pair.priceUsd);
+      if (isFinite(price) && price > 0) {
+        return {
+          statusCode: 200,
+          headers: {
+            ...CORS_HEADERS,
+            "Cache-Control": "public, max-age=5",
+          },
+          body: JSON.stringify({
+            token,
+            price,
+            priceUsd: pair.priceUsd,
+            data: pair,
+            source: "dexscreener",
+          }),
+        };
+      }
     }
 
+    // Fallback: return zero price for unknown token
+    console.warn(`DexScreener PRICE: No valid price found for ${token}`);
     return {
       statusCode: 200,
       headers: {
         ...CORS_HEADERS,
-        "Cache-Control": "public, max-age=5",
+        "Cache-Control": "public, max-age=60",
       },
       body: JSON.stringify({
         token,
-        price: parseFloat(pair.priceUsd || "0"),
-        priceUsd: pair.priceUsd,
-        data: pair,
+        price: 0,
+        priceUsd: "0",
+        data: null,
+        source: "fallback",
       }),
     };
   } catch (error: any) {
     console.error("DexScreener PRICE endpoint error:", error);
 
+    // Always return 200 with valid JSON, not error status
     return {
-      statusCode: 502,
-      headers: CORS_HEADERS,
+      statusCode: 200,
+      headers: {
+        ...CORS_HEADERS,
+        "Cache-Control": "public, max-age=60",
+      },
       body: JSON.stringify({
-        error: "Failed to fetch token price from DexScreener",
-        details: error?.message || String(error),
+        token,
+        price: 0,
+        priceUsd: "0",
+        data: null,
+        source: "fallback",
+        error: "Failed to fetch from DexScreener - using fallback",
       }),
     };
   }

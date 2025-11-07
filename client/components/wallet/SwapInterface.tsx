@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
 import { jupiterV6API } from "@/lib/services/jupiter-v6";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
@@ -468,141 +467,62 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const amountInHuman = parseFloat(amount);
 
-      // Determine swap direction
-      const isBuying = fromMint === SOL_MINT;
-      const isSelling = toMint === SOL_MINT;
-      const isPumpfunToken =
-        toMint.endsWith("pump") || fromMint.endsWith("pump");
+      // ✅ Use Jupiter V6 for all token-to-token swaps
+      setStatus("Preparing Jupiter swap…");
 
-      // Check if we should use Pump.fun or Jupiter
-      const usePumpfun = (isBuying || isSelling) && isPumpfunToken;
+      if (!quote || !quote.quoteResponse) {
+        throw new Error("Please get a quote first by clicking 'Get Quote'");
+      }
 
-      // Identify the token
-      const tokenMint = isBuying ? toMint : isSelling ? fromMint : null;
-      const tokenDecimals = (isBuying ? toToken : fromToken).decimals ?? 6;
+      // Request swap transaction from Jupiter
+      setStatus("Creating swap transaction…");
+      const swapResponse = await jupiterV6API.createSwap(
+        quote.quoteResponse,
+        wallet.publicKey,
+        {
+          wrapAndUnwrapSol: true,
+          useSharedAccounts: true,
+        },
+      );
 
-      let txBase64: string;
+      if (!swapResponse || !swapResponse.swapTransaction) {
+        throw new Error("Failed to create swap transaction");
+      }
+
+      const txBase64 = swapResponse.swapTransaction;
 
       try {
-        if (usePumpfun && tokenMint) {
-          // ✅ Use Pump.fun API for pump.fun tokens
-          setStatus("Preparing Pump.fun swap…");
+        // Sign the transaction with local wallet
+        setStatus("Signing transaction…");
+        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
-          try {
-            if (isBuying) {
-              // BUY: SOL → Token
-              setStatus("Requesting Pump.fun BUY transaction…");
-              txBase64 = await pumpBuy(
-                tokenMint,
-                amountInHuman,
-                wallet.publicKey,
-              );
-            } else {
-              // SELL: Token → SOL
-              setStatus("Requesting Pump.fun SELL transaction…");
-              const rawAmount = Math.floor(
-                amountInHuman * Math.pow(10, tokenDecimals),
-              );
-              txBase64 = await pumpSell(tokenMint, rawAmount, wallet.publicKey);
-            }
-
-            // Sign the transaction
-            setStatus("Signing transaction…");
-            const tx = VersionedTransaction.deserialize(
-              bytesFromBase64(txBase64),
-            );
-
-            const keypair = getKeypair(wallet);
-            if (!keypair) {
-              throw new Error("Invalid wallet secret key");
-            }
-
-            const txSignature = await sendSignedTx(
-              base64FromBytes(tx.serialize()),
-              keypair,
-            );
-
-            setSuccessMsg(
-              `Pump.fun swap successful! Tx: ${txSignature.slice(0, 8)}...`,
-            );
-            setShowSuccess(true);
-            setStatus("");
-            setIsLoading(false);
-
-            setTimeout(() => setShowSuccess(false), 3000);
-
-            toast({
-              title: "Pump.fun Swap Successful",
-              description: `Transaction: ${txSignature}`,
-              variant: "default",
-            });
-
-            setAmount("");
-            setQuote(null);
-          } catch (pumpError) {
-            throw new Error(
-              `Pump.fun swap failed: ${pumpError instanceof Error ? pumpError.message : String(pumpError)}`,
-            );
-          }
-        } else {
-          // ✅ Use Jupiter V6 for general token-to-token swaps
-          setStatus("Preparing Jupiter swap…");
-
-          if (!quote || !quote.quoteResponse) {
-            throw new Error("Please get a quote first by clicking 'Get Quote'");
-          }
-
-          // Request swap transaction from Jupiter
-          setStatus("Creating swap transaction…");
-          const swapResponse = await jupiterV6API.createSwap(
-            quote.quoteResponse,
-            wallet.publicKey,
-            {
-              wrapAndUnwrapSol: true,
-              useSharedAccounts: true,
-            },
-          );
-
-          if (!swapResponse || !swapResponse.swapTransaction) {
-            throw new Error("Failed to create swap transaction");
-          }
-
-          txBase64 = swapResponse.swapTransaction;
-
-          // Sign the transaction
-          setStatus("Signing transaction…");
-          const tx = VersionedTransaction.deserialize(
-            bytesFromBase64(txBase64),
-          );
-
-          const keypair = getKeypair(wallet);
-          if (!keypair) {
-            throw new Error("Invalid wallet secret key");
-          }
-
-          const txSignature = await sendSignedTx(
-            base64FromBytes(tx.serialize()),
-            keypair,
-          );
-
-          setSuccessMsg(
-            `Jupiter swap successful! Tx: ${txSignature.slice(0, 8)}...`,
-          );
-          setShowSuccess(true);
-          setStatus("");
-          setIsLoading(false);
-
-          setTimeout(() => setShowSuccess(false), 3000);
-
-          toast({
-            title: "Jupiter Swap Successful",
-            description: `Transaction: ${txSignature}`,
-            variant: "default",
-          });
-
-          setAmount("");
-          setQuote(null);
+        const keypair = getKeypair(wallet);
+        if (!keypair) {
+          throw new Error("Invalid wallet secret key");
         }
+
+        // Submit signed transaction
+        setStatus("Submitting transaction…");
+        const txSignature = await sendSignedTx(
+          base64FromBytes(tx.serialize()),
+          keypair,
+        );
+
+        setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 3000);
+
+        toast({
+          title: "Swap Successful",
+          description: `Transaction: ${txSignature}`,
+          variant: "default",
+        });
+
+        setAmount("");
+        setQuote(null);
       } catch (swapError) {
         throw new Error(
           `Swap failed: ${swapError instanceof Error ? swapError.message : String(swapError)}`,

@@ -16,8 +16,8 @@ class LockerPriceService {
 
   async getLockerPrice(): Promise<LockerPriceData | null> {
     try {
-      // Check if we have valid cached data
-      if (this.cachedData && this.lastFetchTime) {
+      // Check if we have valid cached data (only from live prices, not fallbacks)
+      if (this.cachedData && this.lastFetchTime && this.cachedData.derivationMethod !== "fallback") {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
           console.log("Returning cached LOCKER price data");
@@ -47,20 +47,22 @@ class LockerPriceService {
         derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} LOCKER)`,
       };
 
-      // Only cache if we got valid price data
-      if (priceData.price > 0 && isFinite(priceData.price)) {
+      // Only cache if we got valid, live price data (not fallback)
+      if (priceData.price > 0 && isFinite(priceData.price) && pairingData.derivedPrice > 0) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(
-          `LOCKER price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
+          `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
         return priceData;
       } else {
-        console.warn("Invalid price data from derivation, using fallback");
+        console.warn("Invalid price data from derivation, using fallback (not cached)");
+        // Don't cache fallback prices so they retry on next call
         return this.getFallbackPrice();
       }
     } catch (error) {
       console.error("Error fetching LOCKER price:", error);
+      // Don't cache fallback prices - force retry next time
       return this.getFallbackPrice();
     }
   }

@@ -70,24 +70,35 @@ export const handler: Handler = async (
 
   // Extract the path from multiple possible sources
   // Netlify might pass it in different ways depending on configuration
-  let rawPath =
-    event.path ||
-    event.rawPath ||
-    new URL(event.rawUrl || "", "http://localhost").pathname ||
-    "";
+  let rawPath = "";
 
-  // Also check the raw URL for the full path
-  const urlPath = new URL(event.rawUrl || "http://localhost", "http://localhost").pathname;
-  if (!rawPath && urlPath) {
-    rawPath = urlPath;
+  // Try event.path first (original request path)
+  if (event.path) {
+    rawPath = event.path;
+  }
+  // Try event.rawPath (alternative name)
+  else if (event.rawPath) {
+    rawPath = event.rawPath;
+  }
+  // Parse from rawUrl
+  else if (event.rawUrl) {
+    try {
+      const url = new URL(event.rawUrl, "http://localhost");
+      rawPath = url.pathname;
+    } catch {
+      rawPath = event.rawUrl.split("?")[0].split("#")[0];
+    }
+  }
+
+  // Check if path was passed as query parameter (fallback for some Netlify configs)
+  const queryPath = event.queryStringParameters?.path;
+  if (!rawPath && queryPath) {
+    rawPath = "/" + queryPath;
   }
 
   // Debug log the raw path and event details
   console.log(
-    `[API Router] Event path: ${rawPath}, Method: ${event.httpMethod}, Raw URL: ${event.rawUrl || "N/A"}`,
-  );
-  console.log(
-    `[API Router] Full event object keys: ${Object.keys(event).join(", ")}`,
+    `[API Router] Event: path=${rawPath}, method=${event.httpMethod}, url=${event.rawUrl || "N/A"}`,
   );
 
   // Normalize path - handle multiple prefixes
@@ -100,7 +111,7 @@ export const handler: Handler = async (
 
   // Remove /api prefix and query parameters
   const pathWithoutPrefix = normalizedPath.replace(/^\/+api\/?/, "");
-  const path = pathWithoutPrefix.replace(/\?.*$/, "").split("#")[0];
+  const path = pathWithoutPrefix.replace(/\?.*$/, "").split("#")[0].trim();
 
   console.log(
     `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`,

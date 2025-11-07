@@ -546,6 +546,20 @@ export default {
       );
     }
 
+    // Handle CORS preflight for all /api/ requests
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Wallet",
+          "Access-Control-Max-Age": "86400",
+        },
+      });
+    }
+
     // Forward OTHER /api/ requests to fallback (if needed)
     if (url.pathname.startsWith("/api/")) {
       // Return 404 for unhandled API routes instead of forwarding to broken endpoint

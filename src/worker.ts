@@ -682,6 +682,20 @@ export default {
         return await handlePumpFunSell(request);
       }
 
+      // Handle CORS preflight for all /api/ requests
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers":
+              "Content-Type, Authorization, X-Admin-Wallet",
+            "Access-Control-Max-Age": "86400",
+          },
+        });
+      }
+
       // Default 404
       return new Response(JSON.stringify({ error: "Not found" }), {
         status: 404,
@@ -689,7 +703,10 @@ export default {
       });
     } catch (err: any) {
       return new Response(
-        JSON.stringify({ error: String(err?.message || err) }),
+        JSON.stringify({
+          error: "Internal server error",
+          details: String(err?.message || err),
+        }),
         {
           status: 500,
           headers: CORS_HEADERS,

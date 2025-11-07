@@ -589,7 +589,23 @@ async function handlePumpFunQuote(
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
-      const url = new URL(request.url);
+      let url: URL;
+      try {
+        url = new URL(request.url);
+      } catch (e) {
+        return new Response(
+          JSON.stringify({
+            error: "Invalid request URL",
+            details: String(e?.message || e),
+          }),
+          {
+            status: 400,
+            headers: {
+              ...CORS_HEADERS,
+            },
+          },
+        );
+      }
       const pathname = url.pathname || "/";
 
       // Basic routing

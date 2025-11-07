@@ -1,7 +1,9 @@
 import { RequestHandler } from "express";
 
 const WORKER_BASE = (
-  process.env.PROXY_BASE_URL || process.env.VITE_API_BASE_URL || ""
+  process.env.PROXY_BASE_URL ||
+  process.env.VITE_API_BASE_URL ||
+  ""
 ).trim();
 
 async function forwardRequest(path: string, req: any) {

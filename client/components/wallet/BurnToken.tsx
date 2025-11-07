@@ -150,8 +150,20 @@ const toBaseUnits = (value: string, decimals: number): bigint => {
   return wholePart * pow + fractionPart;
 };
 
-const formatNumber = (value: number | undefined, decimals: number): string => {
-  if (typeof value !== "number" || !isFinite(value)) return "0";
+const formatNumber = (
+  value: number | undefined,
+  decimals: number,
+  symbol?: string,
+): string => {
+  if (typeof value !== "number" || !isFinite(value)) return "0.00";
+  // FIXERCOIN and LOCKER always show exactly 2 decimal places
+  if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+    return value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: false,
+    });
+  }
   const safeDecimals = Math.max(0, Math.min(decimals, 9));
   return value.toLocaleString("en-US", {
     minimumFractionDigits: 0,
@@ -544,7 +556,11 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           </span>
                           <span className="text-[10px] text-gray-600 uppercase">
                             Balance:{" "}
-                            {formatNumber(token.balance, token.decimals ?? 0)}
+                            {formatNumber(
+                              token.balance,
+                              token.decimals ?? 0,
+                              token.symbol,
+                            )}
                           </span>
                         </div>
                       </SelectItem>
@@ -572,6 +588,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                         {formatNumber(
                           selectedToken.balance,
                           selectedToken.decimals ?? 0,
+                          selectedToken.symbol,
                         )}
                       </p>
                     </div>
@@ -622,6 +639,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                       {formatNumber(
                         selectedToken.balance,
                         selectedToken.decimals ?? 0,
+                        selectedToken.symbol,
                       )}{" "}
                       {selectedToken.symbol || selectedToken.mint.slice(0, 6)}
                     </span>

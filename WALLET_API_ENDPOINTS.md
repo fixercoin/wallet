@@ -2,7 +2,7 @@
 
 ## Base URL
 
-- **Production:** `https://fixorium-proxy.khanbabusargodha.workers.dev`
+- **Production:** `https://proxy.fixorium.com.pk`
 - **Frontend:** `https://wallet-c36.fixorium.com.pk/api`
 
 ---

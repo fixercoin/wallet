@@ -51,7 +51,7 @@ GET  /api/account?publicKey={address}
 
 **Current Configuration:**
 
-- Worker Domain: `fixorium-proxy.khanbabusargodha.workers.dev`
+- Worker Domain: `proxy.fixorium.com.pk`
 - Solana RPC: `https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7`
 - Pump.fun APIs: `https://pumpportal.fun/api/`
 - Jupiter: `https://quote-api.jup.ag/v6/`
@@ -91,7 +91,7 @@ The dev server at `npm run dev` will:
 Create `.env.local`:
 
 ```
-VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
+VITE_API_BASE_URL=https://proxy.fixorium.com.pk
 ```
 
 Or for development:

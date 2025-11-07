@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { formatTokenAmount } from "@/lib/utils";
 import { shortenAddress } from "@/lib/wallet";
 import type { TokenInfo } from "@/lib/wallet";
 import {
@@ -533,7 +534,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               : item,
           ),
         );
-        // Persist withdraw event to Cloudflare (best-effort)
+        // Persist withdraw event (best-effort)
         try {
           await fetch(resolveApiUrl(`/api/locks/${lock.id}/withdraw`), {
             method: "POST",
@@ -676,7 +677,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         ),
       );
 
-      // Persist lock record to Cloudflare (best-effort)
+      // Persist lock record (best-effort)
       try {
         await fetch(resolveApiUrl("/api/locks"), {
           method: "POST",
@@ -785,7 +786,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           {token.symbol || token.name || token.mint.slice(0, 6)}
                         </span>
                         <span className="text-[10px] text-gray-300 uppercase">
-                          Balance: {(token.balance || 0).toLocaleString()}
+                          Balance:{" "}
+                          {formatTokenAmount(token.balance || 0, token.symbol)}
                         </span>
                       </div>
                     </SelectItem>
@@ -805,7 +807,11 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
-                  Available: {(selectedToken.balance || 0).toLocaleString()}{" "}
+                  Available:{" "}
+                  {formatTokenAmount(
+                    selectedToken.balance || 0,
+                    selectedToken.symbol,
+                  )}{" "}
                   {selectedToken.symbol}
                 </p>
               ) : null}

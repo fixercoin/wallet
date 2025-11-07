@@ -15,7 +15,7 @@
 
 ✅ **API Client Fixed** - Points to correct Cloudflare Worker URL:
 
-- Production: `https://fixorium-proxy.khanbabusargodha.workers.dev`
+- Production: `https://proxy.fixorium.com.pk`
 - Development: Uses local Express backend
 
 ✅ **Environment Configuration** - Set up for both dev and production
@@ -35,14 +35,14 @@ cd cloudflare
 wrangler publish --config ./wrangler.toml --env production
 ```
 
-The worker will be deployed to: `https://fixorium-proxy.khanbabusargodha.workers.dev`
+The worker will be deployed to: `https://proxy.fixorium.com.pk`
 
 ### Step 2: Verify Cloudflare Deployment
 
 Test the health endpoint:
 
 ```bash
-curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
+curl https://proxy.fixorium.com.pk/api/health
 ```
 
 Expected response:
@@ -64,25 +64,25 @@ Expected response:
 #### Test Wallet Balance (requires a valid wallet address):
 
 ```bash
-curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/wallet/balance?publicKey=YOUR_WALLET_ADDRESS"
+curl "https://proxy.fixorium.com.pk/api/wallet/balance?publicKey=YOUR_WALLET_ADDRESS"
 ```
 
 #### Test Token Price:
 
 ```bash
-curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/dexscreener/tokens?mints=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+curl "https://proxy.fixorium.com.pk/api/dexscreener/tokens?mints=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 ```
 
 #### Test Jupiter Price:
 
 ```bash
-curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/jupiter/price?ids=So11111111111111111111111111111111111111112"
+curl "https://proxy.fixorium.com.pk/api/jupiter/price?ids=So11111111111111111111111111111111111111112"
 ```
 
 #### Test Swap Quote:
 
 ```bash
-curl "https://fixorium-proxy.khanbabusargodha.workers.dev/api/swap/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000"
+curl "https://proxy.fixorium.com.pk/api/swap/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000"
 ```
 
 ### Step 4: Update Environment Variables (if needed)
@@ -104,7 +104,7 @@ Available secrets:
 The `.env` file already points to the correct Cloudflare Worker:
 
 ```
-VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
+VITE_API_BASE_URL=https://proxy.fixorium.com.pk
 ```
 
 For local development, use `.env.local`:

@@ -937,6 +937,14 @@ async function handler(request: Request): Promise<Response> {
       return await handlePumpFunSell(request);
     }
 
+    if (pathname === "/api/pumpfun/trade") {
+      return await handlePumpFunTrade(request);
+    }
+
+    if (pathname === "/api/pumpfun/swap") {
+      return await handlePumpFunSwap(request);
+    }
+
     return new Response(
       JSON.stringify({
         error: "API endpoint not found",

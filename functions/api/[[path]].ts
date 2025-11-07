@@ -784,6 +784,10 @@ async function handler(request: Request): Promise<Response> {
       return await handleDexscreenerPrice(url);
     }
 
+    if (pathname === "/api/solana-rpc" || pathname === "/api/solana-rpc/") {
+      return await handleSolanaRpc(request);
+    }
+
     if (pathname.startsWith("/api/jupiter/quote")) {
       return await handleJupiterQuote(url);
     }

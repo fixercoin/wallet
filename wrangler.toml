@@ -1,14 +1,32 @@
 name = "wallet-c36"
+type = "javascript"
+account_id = ""
+workers_dev = true
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 # Cloudflare Pages configuration
+main = "src/worker.ts"
 pages_build_output_dir = "dist"
+
+[env.production]
+name = "wallet-c36-production"
+
+[env.production.vars]
+SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
+BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
 
 [vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
 BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
 
-[env.production.vars]
-SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
-BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
+# Build configuration
+[build]
+command = "npm run build"
+cwd = "."
+watch_paths = ["client/**/*.tsx", "client/**/*.ts"]
+
+[build.upload]
+format = "modules"
+dir = "dist"
+main = "index.js"

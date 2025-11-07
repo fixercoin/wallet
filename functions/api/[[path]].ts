@@ -784,6 +784,19 @@ async function handler(request: Request): Promise<Response> {
       return await handleTokenPrice(url);
     }
 
+    if (pathname === "/api/dexscreener" || pathname === "/api/dexscreener/") {
+      return new Response(
+        JSON.stringify({
+          status: "ok",
+          message: "DexScreener API Proxy",
+          endpoints: [
+            "/api/dexscreener/price?tokenAddress=<mint>",
+          ],
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
     if (pathname.startsWith("/api/dexscreener/price")) {
       return await handleDexscreenerPrice(url);
     }

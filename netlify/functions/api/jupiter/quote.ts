@@ -37,13 +37,13 @@ export const handler: Handler = async (event) => {
     let asLegacyTransaction = "false";
 
     if (event.httpMethod === "GET") {
-      const params = new URLSearchParams(event.rawUrl.split("?")[1] || "");
-      inputMint = params.get("inputMint") || "";
-      outputMint = params.get("outputMint") || "";
-      amount = params.get("amount") || "";
-      slippageBps = params.get("slippageBps") || "100";
-      onlyDirectRoutes = params.get("onlyDirectRoutes") || "false";
-      asLegacyTransaction = params.get("asLegacyTransaction") || "false";
+      const queryParams = event.queryStringParameters || {};
+      inputMint = queryParams.inputMint || "";
+      outputMint = queryParams.outputMint || "";
+      amount = queryParams.amount || "";
+      slippageBps = queryParams.slippageBps || "100";
+      onlyDirectRoutes = queryParams.onlyDirectRoutes || "false";
+      asLegacyTransaction = queryParams.asLegacyTransaction || "false";
     } else {
       let body: any = {};
       if (event.body) {

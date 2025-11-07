@@ -190,7 +190,10 @@ export const handler: Handler = async (
   // If no query path, try to extract from pathname
   if (!apiPath) {
     const pathname = event.path || event.rawPath || "";
-    apiPath = pathname.replace(/^\/+\.netlify\/functions\/api\/?/, "").replace(/^\/+api\/?/, "").trim();
+    apiPath = pathname
+      .replace(/^\/+\.netlify\/functions\/api\/?/, "")
+      .replace(/^\/+api\/?/, "")
+      .trim();
   }
 
   console.log(`[API] Route: ${apiPath}, Method: ${event.httpMethod}`);

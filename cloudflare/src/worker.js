@@ -1,7 +1,109 @@
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
+    let url;
+    try {
+      url = new URL(request.url);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request URL",
+          details: String(e?.message || e),
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
     const pathname = url.pathname || "/";
+
+    // Health check endpoint
+    if (pathname === "/health" || pathname === "/api/health") {
+      try {
+        const upstream = {};
+        const tests = [
+          ["dexscreener", "https://api.dexscreener.com/latest/dex/pairs/solana"],
+          ["jupiter", "https://price.jup.ag/v4/price?ids=So11111111111111111111111111111111111111112"],
+          ["pumpfun", "https://pumpportal.fun/api/quote"],
+        ];
+
+        await Promise.allSettled(
+          tests.map(async ([name, endpoint]) => {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+              const r = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  "User-Agent": "Mozilla/5.0",
+                },
+                signal: controller.signal,
+              });
+
+              clearTimeout(timeoutId);
+              upstream[name] = r.ok ? "ok" : `fail:${r.status}`;
+            } catch (e) {
+              upstream[name] = `fail:${String(e?.message || e).slice(0, 50)}`;
+            }
+          }),
+        );
+
+        return new Response(
+          JSON.stringify({
+            status: "ok",
+            message: "health check",
+            upstream,
+            timestamp: new Date().toISOString(),
+            service: "Fixorium Wallet API",
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      } catch (e) {
+        return new Response(
+          JSON.stringify({
+            error: "Health check failed",
+            details: String(e?.message || e),
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+    }
+
+    // Ping endpoint
+    if (pathname === "/api/ping") {
+      return new Response(
+        JSON.stringify({
+          status: "ok",
+          message: "ping",
+          timestamp: new Date().toISOString(),
+          service: "Fixorium Wallet API",
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
 
     // Handle Pump.fun quote locally on Cloudflare worker
     if (

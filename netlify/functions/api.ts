@@ -77,6 +77,36 @@ export const handler: Handler = async (
     headers["Content-Type"] = event.headers["content-type"];
   }
 
+  // Handle health/status checks locally if backend is unavailable
+  if (apiPath === "/api/health" || apiPath === "/api/ping" || apiPath === "/api/status") {
+    const isHealth = apiPath === "/api/health";
+    const isPing = apiPath === "/api/ping";
+
+    if (isPing) {
+      return {
+        statusCode: 200,
+        headers: {
+          ...CORS_HEADERS,
+          "Content-Type": "text/plain",
+        },
+        body: "pong",
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        ...CORS_HEADERS,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        status: isHealth ? "healthy" : "operational",
+        service: "Fixorium Wallet API",
+        timestamp: new Date().toISOString(),
+      }),
+    };
+  }
+
   console.log(
     `[API Proxy] Forwarding ${event.httpMethod} ${apiPath} to ${fullUrl.toString()}`,
   );

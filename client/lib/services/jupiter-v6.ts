@@ -82,8 +82,18 @@ class JupiterV6API {
       );
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error("Jupiter quote error:", error);
+        const errorText = await response.text().catch(() => "");
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("Jupiter quote error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
         return null;
       }
 

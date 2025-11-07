@@ -8,6 +8,7 @@
     "dev:frontend": "vite",
     "dev:backend": "tsx server/node-build.ts",
     "build": "vite build",
+    "build:functions": "tsc --project tsconfig.functions.json",
     "preview": "vite preview",
     "deploy:cloudflare": "bash scripts/deploy-cloudflare.sh"
   },

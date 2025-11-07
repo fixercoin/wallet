@@ -5,6 +5,10 @@ compatibility_flags = ["nodejs_compat"]
 # Cloudflare Pages configuration
 pages_build_output_dir = "dist"
 
+[build]
+command = "pnpm build"
+watch_paths = ["client/**/*", "functions/**/*"]
+
 [env.production]
 name = "wallet-c36-production"
 

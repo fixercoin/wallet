@@ -2,10 +2,12 @@ import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
+
+const JUPITER_API = "https://quote-api.jup.ag/v6";
 
 export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
@@ -16,83 +18,55 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
+
   try {
-    const { inputMint, outputMint, amount } = event.queryStringParameters || {};
-
-    if (!inputMint || !outputMint || !amount) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Missing required parameters: inputMint, outputMint, amount",
-        }),
-      };
-    }
-
-    const params = new URLSearchParams({
-      inputMint: inputMint,
-      outputMint: outputMint,
-      amount: amount,
-      ...(event.queryStringParameters?.slippageBps && {
-        slippageBps: event.queryStringParameters.slippageBps,
-      }),
-    });
+    const queryString = event.rawUrl?.split("?")[1] || "";
+    const url = `${JUPITER_API}/quote?${queryString}`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(
-      `https://api.jup.ag/quote?${params.toString()}`,
-      {
-        method: "GET",
+    try {
+      const response = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
         signal: controller.signal,
-      },
-    );
+      });
 
-    clearTimeout(timeoutId);
+      const data = await response.json();
 
-    const data = await response.text();
+      if (!response.ok) {
+        return {
+          statusCode: response.status,
+          headers: CORS_HEADERS,
+          body: JSON.stringify(data || { error: "Jupiter API error" }),
+        };
+      }
 
-    if (!response.ok) {
-      console.error(`Jupiter API error: ${response.status}`, data);
       return {
-        statusCode: response.status,
+        statusCode: 200,
         headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Jupiter API error",
-          status: response.status,
-        }),
+        body: JSON.stringify(data),
       };
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return {
-      statusCode: 200,
-      headers: CORS_HEADERS,
-      body: data,
-    };
   } catch (error: any) {
     console.error("[Jupiter Quote] Error:", error);
-
-    if (error.name === "AbortError") {
-      return {
-        statusCode: 504,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Jupiter API request timeout",
-          message: "The request took too long to complete",
-        }),
-      };
-    }
-
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: error.message || "Internal server error",
+        error: "Failed to fetch quote",
+        details: error?.message || String(error),
       }),
     };
   }

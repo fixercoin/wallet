@@ -97,8 +97,29 @@ export async function createServer(): Promise<express.Application> {
   // Birdeye routes
   app.get("/api/birdeye/price", handleBirdeyePrice);
 
-  // Solana RPC proxy
-  app.post("/api/solana-rpc", handleSolanaRpc);
+  // Solana RPC proxy - with proper error handling
+  app.post("/api/solana-rpc", (req, res) => {
+    // Ensure body is parsed JSON
+    if (
+      !req.body ||
+      typeof req.body !== "object" ||
+      !req.body.method ||
+      !req.body.params
+    ) {
+      return res.status(400).json({
+        error: "Invalid JSON-RPC request",
+        message: "Provide method and params in JSON body",
+        example: {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getBalance",
+          params: ["11111111111111111111111111111111"],
+        },
+      });
+    }
+
+    handleSolanaRpc(req, res);
+  });
 
   // Wallet routes
   app.get("/api/wallet/balance", (req, res) => {

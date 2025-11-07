@@ -58,7 +58,9 @@ class BirdeyeAPI {
       const data: BirdeyePriceResponse = await response.json();
 
       if (!data.success || !data.data) {
-        console.debug(`[Birdeye] Price API returned no data for ${mint} (will use fallback)`);
+        console.debug(
+          `[Birdeye] Price API returned no data for ${mint} (will use fallback)`,
+        );
         return null;
       }
 

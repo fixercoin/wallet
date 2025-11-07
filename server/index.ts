@@ -225,31 +225,62 @@ export async function createServer(): Promise<express.Application> {
         )}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok)
-          return res.status(resp.status).json({ error: "Pumpfun API error" });
-        const data = await resp.json();
-        return res.json(data);
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+          const resp = await fetch(url, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok)
+            return res.status(resp.status).json({
+              error: "Pumpfun API error",
+              status: resp.status,
+            });
+          const data = await resp.json();
+          return res.json(data);
+        } catch (err: any) {
+          clearTimeout(timeout);
+          if (err?.name === "AbortError") {
+            return res.status(504).json({
+              error: "Pumpfun API timeout",
+              message: "Request took too long to complete",
+            });
+          }
+          throw err;
+        }
       }
 
       if (path === "//swap" || path === "/swap") {
         if (req.method !== "POST")
           return res.status(405).json({ error: "Method not allowed" });
         const body = req.body || {};
-        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok)
-          return res.status(resp.status).json({ error: "Pumpfun swap failed" });
-        const data = await resp.json();
-        return res.json(data);
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        try {
+          const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok)
+            return res.status(resp.status).json({ error: "Pumpfun swap failed" });
+          const data = await resp.json();
+          return res.json(data);
+        } catch (err: any) {
+          clearTimeout(timeout);
+          if (err?.name === "AbortError") {
+            return res.status(504).json({
+              error: "Pumpfun API timeout",
+              message: "Request took too long to complete",
+            });
+          }
+          throw err;
+        }
       }
 
       return res.status(404).json({ error: "Pumpfun proxy path not found" });

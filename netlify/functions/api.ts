@@ -4,14 +4,38 @@ import type {
   HandlerResponse,
 } from "@netlify/functions";
 
+// Import all individual handlers
+import { handler as solPriceHandler } from "./api/sol/price";
+import { handler as jupiterQuoteHandler } from "./api/jupiter/quote";
+import { handler as jupiterSwapHandler } from "./api/jupiter/swap";
+import { handler as jupiterTokensHandler } from "./api/jupiter/tokens";
+import { handler as dexscreenerTokensHandler } from "./api/dexscreener/tokens";
+import { handler as dexscreenerPriceHandler } from "./api/dexscreener/price";
+import { handler as birdeyePriceHandler } from "./api/birdeye/price";
+import { handler as walletBalanceHandler } from "./api/wallet/balance";
+import { handler as solanaRpcHandler } from "./api/solana-rpc";
+import { handler as tokenPriceHandler } from "./api/token/price";
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, X-Requested-With",
+  "Content-Type": "application/json",
 };
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
+const HANDLERS: Record<string, Handler> = {
+  "sol/price": solPriceHandler,
+  "jupiter/quote": jupiterQuoteHandler,
+  "jupiter/swap": jupiterSwapHandler,
+  "jupiter/tokens": jupiterTokensHandler,
+  "dexscreener/tokens": dexscreenerTokensHandler,
+  "dexscreener/price": dexscreenerPriceHandler,
+  "birdeye/price": birdeyePriceHandler,
+  "wallet/balance": walletBalanceHandler,
+  "solana-rpc": solanaRpcHandler,
+  "token/price": tokenPriceHandler,
+};
 
 export const handler: Handler = async (
   event: HandlerEvent,
@@ -26,13 +50,12 @@ export const handler: Handler = async (
   }
 
   // Extract path from the query parameter (set by netlify.toml rewrite rule)
-  // The rewrite rule passes it as: to = "/.netlify/functions/api?path=:splat"
   const queryPath = event.queryStringParameters?.path;
 
   let apiPath = "";
 
   if (queryPath) {
-    apiPath = "/" + queryPath.trim();
+    apiPath = queryPath.trim();
   } else {
     // Fallback: try to extract from other sources
     let rawPath = event.path || event.rawPath || "";
@@ -47,101 +70,95 @@ export const handler: Handler = async (
     }
 
     if (rawPath) {
-      apiPath = rawPath.startsWith("/api") ? rawPath : "/api" + rawPath;
+      apiPath = rawPath.replace(/^\/+api\/?/, "").trim();
     }
   }
 
-  // Ensure path starts with /api
-  if (!apiPath.startsWith("/api")) {
-    apiPath = "/api" + apiPath;
-  }
+  console.log(
+    `[API Router] Path: ${apiPath}, Method: ${event.httpMethod}`,
+  );
 
-  // Build query string if present
-  const queryString = event.rawUrl?.includes("?")
-    ? event.rawUrl.split("?")[1]
-    : "";
-  const fullUrl = new URL(apiPath, BACKEND_URL);
-  if (queryString) {
-    fullUrl.search = queryString;
-  }
-
-  const headers: Record<string, string> = {
-    ...CORS_HEADERS,
-  };
-
-  // Forward relevant headers
-  if (event.headers.authorization) {
-    headers["Authorization"] = event.headers.authorization;
-  }
-  if (event.headers["content-type"]) {
-    headers["Content-Type"] = event.headers["content-type"];
-  }
-
-  // Handle health/status checks locally if backend is unavailable
-  if (apiPath === "/api/health" || apiPath === "/api/ping" || apiPath === "/api/status") {
-    const isHealth = apiPath === "/api/health";
-    const isPing = apiPath === "/api/ping";
-
-    if (isPing) {
-      return {
-        statusCode: 200,
-        headers: {
-          ...CORS_HEADERS,
-          "Content-Type": "text/plain",
-        },
-        body: "pong",
-      };
-    }
-
+  // Handle local health checks
+  if (apiPath === "health") {
     return {
       statusCode: 200,
-      headers: {
-        ...CORS_HEADERS,
-        "Content-Type": "application/json",
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
-        status: isHealth ? "healthy" : "operational",
+        status: "healthy",
         service: "Fixorium Wallet API",
         timestamp: new Date().toISOString(),
       }),
     };
   }
 
-  console.log(
-    `[API Proxy] Forwarding ${event.httpMethod} ${apiPath} to ${fullUrl.toString()}`,
-  );
-
-  try {
-    const proxyResponse = await fetch(fullUrl.toString(), {
-      method: event.httpMethod,
-      headers,
-      body: event.body ? (event.isBase64Encoded ? Buffer.from(event.body, "base64").toString() : event.body) : undefined,
-    });
-
-    const contentType = proxyResponse.headers.get("content-type") || "application/json";
-    const responseBody = await proxyResponse.text();
-
+  if (apiPath === "ping") {
     return {
-      statusCode: proxyResponse.status,
+      statusCode: 200,
       headers: {
         ...CORS_HEADERS,
-        "Content-Type": contentType,
+        "Content-Type": "text/plain",
       },
-      body: responseBody,
+      body: "pong",
     };
-  } catch (error) {
-    console.error("[API Proxy] Error:", error);
+  }
+
+  if (apiPath === "status") {
     return {
-      statusCode: 502,
-      headers: {
-        ...CORS_HEADERS,
-        "Content-Type": "application/json",
-      },
+      statusCode: 200,
+      headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: "API proxy error",
-        details: error instanceof Error ? error.message : String(error),
-        hint: "Ensure BACKEND_URL environment variable is set on Netlify",
+        status: "operational",
+        service: "Fixorium Wallet API",
+        timestamp: new Date().toISOString(),
       }),
     };
   }
+
+  // Handle root API path
+  if (!apiPath || apiPath === "") {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        message: "Fixorium Wallet API (Netlify)",
+        status: "operational",
+        availableEndpoints: Object.keys(HANDLERS).map((p) => `/api/${p}`),
+      }),
+    };
+  }
+
+  // Route to specific handlers
+  if (HANDLERS[apiPath]) {
+    try {
+      console.log(`[API Router] Routing to handler: ${apiPath}`);
+      return await HANDLERS[apiPath](event);
+    } catch (error: any) {
+      console.error(`[API Router] Error in handler for ${apiPath}:`, error);
+      return {
+        statusCode: 500,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Handler execution error",
+          details: error?.message || String(error),
+          path: apiPath,
+        }),
+      };
+    }
+  }
+
+  // Fallback for unmapped endpoints
+  console.warn(
+    `[API Router] No handler found for path: ${apiPath}`,
+  );
+
+  return {
+    statusCode: 404,
+    headers: CORS_HEADERS,
+    body: JSON.stringify({
+      error: "API endpoint not found",
+      requestedPath: apiPath || "/",
+      hint: "Check available endpoints in the API response",
+      availableEndpoints: Object.keys(HANDLERS).map((p) => `/api/${p}`),
+    }),
+  };
 };

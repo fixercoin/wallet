@@ -3,32 +3,39 @@
 ## Issues Fixed
 
 ### 1. **URL Parsing Error in Cloudflare Worker.js**
+
 **Problem**: `/api/health` was returning `{"error":"Internal server error","details":"Invalid URL string."}`
 **Cause**: Missing try-catch error handling around `new URL(request.url)` in `cloudflare/src/worker.js`
 **Fix Applied**: Added proper URL parsing error handling with descriptive error messages
 
 ### 2. **Missing Health Check Endpoint**
+
 **Problem**: `/api/health` endpoint was not implemented in `cloudflare/src/worker.js`
 **Fix Applied**: Added complete health check endpoint that:
+
 - Tests upstream services (dexscreener, jupiter, pumpfun)
 - Returns service status with timestamp
 - Includes proper error handling with 5-second timeouts
 
 ### 3. **Missing Ping Endpoint**
+
 **Problem**: `/api/ping` endpoint was missing from `src/worker.ts`
 **Fix Applied**: Added ping endpoint returning `{"status":"ok","message":"ping",...}`
 
 ### 4. **Missing CORS Preflight Handling**
+
 **Problem**: OPTIONS requests were not handled, causing browser CORS errors
 **Fix Applied**: Added CORS preflight response handler for all /api/ requests
 
 ### 5. **Inconsistent Error Messages**
+
 **Problem**: Different error messages across different worker versions
 **Fix Applied**: Standardized error responses with proper error details
 
 ## Files Modified
 
 ### cloudflare/src/worker.js
+
 - Added try-catch wrapper around URL parsing
 - Added complete `/health` endpoint implementation
 - Added `/api/ping` endpoint
@@ -36,6 +43,7 @@
 - Fixed error handling in pumpfun endpoints
 
 ### src/worker.ts
+
 - Updated health check response to include service name and message
 - Added `/api/ping` endpoint
 - Added CORS OPTIONS preflight handler

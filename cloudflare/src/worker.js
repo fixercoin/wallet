@@ -25,8 +25,14 @@ export default {
       try {
         const upstream = {};
         const tests = [
-          ["dexscreener", "https://api.dexscreener.com/latest/dex/pairs/solana"],
-          ["jupiter", "https://price.jup.ag/v4/price?ids=So11111111111111111111111111111111111111112"],
+          [
+            "dexscreener",
+            "https://api.dexscreener.com/latest/dex/pairs/solana",
+          ],
+          [
+            "jupiter",
+            "https://price.jup.ag/v4/price?ids=So11111111111111111111111111111111111111112",
+          ],
           ["pumpfun", "https://pumpportal.fun/api/quote"],
         ];
 
@@ -405,7 +411,8 @@ export default {
           },
         });
       } catch (e) {
-        const isTimeout = e?.name === "AbortError" || String(e).includes("timeout");
+        const isTimeout =
+          e?.name === "AbortError" || String(e).includes("timeout");
         return new Response(
           JSON.stringify({
             error: isTimeout ? "Request timeout" : "Failed to fetch price data",
@@ -587,7 +594,8 @@ export default {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Wallet",
+          "Access-Control-Allow-Headers":
+            "Content-Type, Authorization, X-Admin-Wallet",
           "Access-Control-Max-Age": "86400",
         },
       });

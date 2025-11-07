@@ -859,7 +859,7 @@ async function handler(request: Request): Promise<Response> {
       return new Response(
         JSON.stringify({
           ok: true,
-          service: "Fixorium Wallet API (Cloudflare Pages)",
+          service: "Fixorium Wallet API (Netlify)",
           status: "operational",
           timestamp: new Date().toISOString(),
           endpoints: [

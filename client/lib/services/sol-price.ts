@@ -14,7 +14,7 @@ class SolPriceService {
   private readonly CACHE_DURATION = 60000; // 1 minute cache
 
   /**
-   * Fetch SOL price via proxy endpoint (routed through Cloudflare Worker)
+   * Fetch SOL price via proxy endpoint
    */
   async getSolPrice(): Promise<SolPriceData | null> {
     // Check cache first

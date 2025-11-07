@@ -1020,6 +1020,51 @@ export const onRequest = async ({ request, env }) => {
     if (normalizedPath === "/sol/price") {
       try {
         const SOL_MINT = "So11111111111111111111111111111111111111112";
+
+        // Try Jupiter first for most accurate SOL price
+        const JUPITER_PRICE_ENDPOINTS = [
+          "https://price.jup.ag/v4",
+          "https://api.jup.ag/price/v2",
+        ];
+        const params = new URLSearchParams({ ids: SOL_MINT });
+        let jupiterPrice: number | null = null;
+        for (const base of JUPITER_PRICE_ENDPOINTS) {
+          const apiUrl = `${base}/price?${params.toString()}`;
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const resp = await fetch(apiUrl, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+              },
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            const p = data?.data?.[SOL_MINT]?.price;
+            if (typeof p === "number" && isFinite(p) && p > 0) {
+              jupiterPrice = p;
+              break;
+            }
+          } catch (_) {}
+        }
+        if (jupiterPrice) {
+          return jsonCors(200, {
+            token: "SOL",
+            price: jupiterPrice,
+            priceUsd: jupiterPrice,
+            priceChange24h: 0,
+            volume24h: 0,
+            marketCap: 0,
+            _source: "jupiter",
+          });
+        }
+
+        // Fallback to DexScreener
         const data = await fetchDexscreenerData(`/tokens/${SOL_MINT}`);
         const pair =
           Array.isArray(data?.pairs) && data.pairs.length > 0
@@ -1036,6 +1081,7 @@ export const onRequest = async ({ request, env }) => {
           priceChange24h: pair.priceChange?.h24 || 0,
           volume24h: pair.volume?.h24 || 0,
           marketCap: pair.marketCap || 0,
+          _source: "dexscreener",
         });
       } catch (e: any) {
         return jsonCors(502, {

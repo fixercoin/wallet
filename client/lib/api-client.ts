@@ -14,9 +14,29 @@ const normalizeBase = (value: string | null | undefined): string => {
 
 const determineBase = (): string => {
   const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBasePrimary) return envBasePrimary;
+  if (envBasePrimary) {
+    // If env explicitly points to the old worker subdomain that we want to avoid,
+    // prefer using relative /api paths to prevent console errors from unreachable domains.
+    if (
+      envBasePrimary.includes("api.fixorium.com.pk") ||
+      envBasePrimary.includes("wallet.fixorium.com.pk")
+    ) {
+      return "";
+    }
+    return envBasePrimary;
+  }
+
   const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
-  if (envBaseAlt) return envBaseAlt;
+  if (envBaseAlt) {
+    if (
+      envBaseAlt.includes("api.fixorium.com.pk") ||
+      envBaseAlt.includes("wallet.fixorium.com.pk")
+    ) {
+      return "";
+    }
+    return envBaseAlt;
+  }
+
   if (workingApiBase) return workingApiBase;
   // Default to relative /api (served by the same origin)
   return "";

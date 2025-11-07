@@ -13,6 +13,7 @@ import { handler as jupiterPriceHandler } from "./api/jupiter/price";
 import { handler as dexscreenerTokensHandler } from "./api/dexscreener/tokens";
 import { handler as dexscreenerPriceHandler } from "./api/dexscreener/price";
 import { handler as dexscreenerTrendingHandler } from "./api/dexscreener/trending";
+import { handler as dexscreenerSearchHandler } from "./api/dexscreener/search";
 import { handler as birdeyePriceHandler } from "./api/birdeye/price";
 import { handler as walletBalanceHandler } from "./api/wallet/balance";
 import { handler as solanaRpcHandler } from "./api/solana-rpc";
@@ -25,8 +26,6 @@ const CORS_HEADERS = {
     "Content-Type, Authorization, X-Requested-With",
   "Content-Type": "application/json",
 };
-
-import { handler as dexscreenerSearchHandler } from "./api/dexscreener/search";
 
 const HANDLERS: Record<string, Handler> = {
   "sol/price": solPriceHandler,

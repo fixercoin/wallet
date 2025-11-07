@@ -18,78 +18,88 @@ const FALLBACK_PRICE = {
 };
 
 async function fetchFromDexScreener(): Promise<any> {
-  const response = await fetch(
-    "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
-    {
-      timeout: 5000,
-    },
-  );
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!response.ok) {
-    throw new Error(
-      `DexScreener returned status ${response.status}`,
+  try {
+    const response = await fetch(
+      "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112",
+      { signal: controller.signal },
     );
+
+    if (!response.ok) {
+      throw new Error(
+        `DexScreener returned status ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+
+    if (!data.pairs || data.pairs.length === 0) {
+      throw new Error("No SOL pair data found");
+    }
+
+    const pair = data.pairs[0];
+    const price = parseFloat(pair.priceUsd || "0");
+
+    if (!isFinite(price) || price <= 0) {
+      throw new Error("Invalid price from DexScreener");
+    }
+
+    return {
+      symbol: "SOL",
+      price: price,
+      priceUsd: price,
+      priceChange24h: parseFloat(pair.priceChange24h || "0") || 0,
+      volume24h: parseFloat(pair.volume?.h24 || "0") || 0,
+      marketCap: parseFloat(pair.marketCap || "0") || 0,
+      liquidity: parseFloat(pair.liquidity?.usd || "0") || 0,
+    };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-
-  if (!data.pairs || data.pairs.length === 0) {
-    throw new Error("No SOL pair data found");
-  }
-
-  const pair = data.pairs[0];
-  const price = parseFloat(pair.priceUsd || "0");
-
-  if (!isFinite(price) || price <= 0) {
-    throw new Error("Invalid price from DexScreener");
-  }
-
-  return {
-    symbol: "SOL",
-    price: price,
-    priceUsd: price,
-    priceChange24h: parseFloat(pair.priceChange24h || "0") || 0,
-    volume24h: parseFloat(pair.volume?.h24 || "0") || 0,
-    marketCap: parseFloat(pair.marketCap || "0") || 0,
-    liquidity: parseFloat(pair.liquidity?.usd || "0") || 0,
-  };
 }
 
 async function fetchFromCoinGecko(): Promise<any> {
-  const response = await fetch(
-    "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true",
-    {
-      timeout: 5000,
-    },
-  );
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!response.ok) {
-    throw new Error(
-      `CoinGecko returned status ${response.status}`,
+  try {
+    const response = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true",
+      { signal: controller.signal },
     );
+
+    if (!response.ok) {
+      throw new Error(
+        `CoinGecko returned status ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+
+    if (!data.solana || !data.solana.usd) {
+      throw new Error("No SOL price data from CoinGecko");
+    }
+
+    const price = parseFloat(data.solana.usd || "0");
+
+    if (!isFinite(price) || price <= 0) {
+      throw new Error("Invalid price from CoinGecko");
+    }
+
+    return {
+      symbol: "SOL",
+      price: price,
+      priceUsd: price,
+      priceChange24h: data.solana.usd_24h_change || 0,
+      volume24h: data.solana.usd_24h_vol || 0,
+      marketCap: data.solana.usd_market_cap || 0,
+      liquidity: 0,
+    };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-
-  if (!data.solana || !data.solana.usd) {
-    throw new Error("No SOL price data from CoinGecko");
-  }
-
-  const price = parseFloat(data.solana.usd || "0");
-
-  if (!isFinite(price) || price <= 0) {
-    throw new Error("Invalid price from CoinGecko");
-  }
-
-  return {
-    symbol: "SOL",
-    price: price,
-    priceUsd: price,
-    priceChange24h: data.solana.usd_24h_change || 0,
-    volume24h: data.solana.usd_24h_vol || 0,
-    marketCap: data.solana.usd_market_cap || 0,
-    liquidity: 0,
-  };
 }
 
 export const handler: Handler = async (event: HandlerEvent) => {

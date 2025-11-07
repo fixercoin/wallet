@@ -1,33 +1,27 @@
-import type { Handler, HandlerEvent } from "@netlify/functions";
+import type { Handler } from "@netlify/functions";
 
-const startTime = Date.now();
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Content-Type": "application/json",
-};
-
-export const handler: Handler = async (event: HandlerEvent) => {
+export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
-      headers: CORS_HEADERS,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      },
       body: "",
     };
   }
 
-  const uptime = Math.floor((Date.now() - startTime) / 1000);
-
   return {
     statusCode: 200,
-    headers: CORS_HEADERS,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      status: "ok",
+      status: "healthy",
+      service: "Fixorium Wallet API",
       timestamp: new Date().toISOString(),
-      environment: "netlify",
-      uptime: uptime,
     }),
   };
 };

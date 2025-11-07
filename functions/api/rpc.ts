@@ -714,11 +714,26 @@ async function handleSolPrice(): Promise<Response> {
       );
     }
 
+    const price = Number(solPrice);
+    const priceChange24h = data?.data?.[SOL_MINT]?.priceChange24h ?? data?.data?.[SOL_MINT]?.price_change_24h ?? null;
+    const marketCap = data?.data?.[SOL_MINT]?.marketCap ?? data?.data?.[SOL_MINT]?.market_cap ?? null;
+    const volume24h = data?.data?.[SOL_MINT]?.volume24h ?? data?.data?.[SOL_MINT]?.volume_24h ?? null;
+
     return new Response(
       JSON.stringify({
+        price,
+        price_change_24h: priceChange24h,
+        market_cap: marketCap,
+        volume_24h: volume24h,
         token: "SOL",
         mint: SOL_MINT,
-        priceUsd: solPrice,
+        priceUsd: price,
+        solana: {
+          usd: price,
+          usd_24h_change: priceChange24h,
+          usd_market_cap: marketCap,
+          usd_24h_vol: volume24h,
+        },
         timestamp: new Date().toISOString(),
       }),
       { headers: CORS_HEADERS },

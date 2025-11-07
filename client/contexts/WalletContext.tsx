@@ -604,11 +604,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             prices[lockerMint] = lockerData.price;
             changeMap[lockerMint] = lockerData.priceChange24h;
             console.log(
-              `[WalletContext] LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%)`,
+              `[WalletContext] ✅ LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%) via ${lockerData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
+              lockerData,
             );
           }
         } catch (e) {
-          console.warn("Failed to fetch FIXERCOIN/LOCKER prices:", e);
+          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER prices:", e);
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint

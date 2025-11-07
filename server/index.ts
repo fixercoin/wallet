@@ -101,7 +101,22 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/solana-rpc", handleSolanaRpc);
 
   // Wallet routes
-  app.get("/api/wallet/balance", handleWalletBalance);
+  app.get("/api/wallet/balance", (req, res) => {
+    const walletAddress =
+      req.query.walletAddress ||
+      req.query.wallet ||
+      req.query.address ||
+      req.query.publicKey;
+
+    if (!walletAddress) {
+      return res.status(400).json({
+        error: "Missing or invalid wallet address parameter",
+        message: "Provide ?walletAddress=<pubkey> or ?wallet=<pubkey>",
+      });
+    }
+
+    handleWalletBalance(req, res);
+  });
 
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
@@ -512,7 +527,21 @@ export async function createServer(): Promise<express.Application> {
 
   // Health check
   app.get("/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      environment: "server",
+      uptime: process.uptime(),
+    });
+  });
+
+  app.get("/api/health", (req, res) => {
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      environment: "server",
+      uptime: process.uptime(),
+    });
   });
 
   // 404 handler

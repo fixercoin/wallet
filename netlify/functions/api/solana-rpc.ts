@@ -100,7 +100,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
         headers: CORS_HEADERS,
         body: JSON.stringify({
           error: "All RPC endpoints are currently rate limited",
-          message: "Please retry after a moment. The service is experiencing high load.",
+          message:
+            "Please retry after a moment. The service is experiencing high load.",
           allEndpointsRateLimited: true,
           totalEndpoints: totalEndpoints,
         }),
@@ -164,9 +165,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
         }
 
         if (response.status === 429) {
-          console.warn(
-            `[RPC Proxy] ${method} - Endpoint rate limited (429)`,
-          );
+          console.warn(`[RPC Proxy] ${method} - Endpoint rate limited (429)`);
           markEndpointRateLimited(endpoint, 10000);
           lastErrorStatus = 429;
           lastError = new Error(`Rate limited: ${endpoint}`);
@@ -197,7 +196,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
         };
       } catch (e: any) {
         lastError = e instanceof Error ? e : new Error(String(e));
-        console.warn(`[RPC Proxy] ${method} - Endpoint error:`, lastError.message);
+        console.warn(
+          `[RPC Proxy] ${method} - Endpoint error:`,
+          lastError.message,
+        );
         if (i < availableEndpoints.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 300));
         }

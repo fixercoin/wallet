@@ -27,7 +27,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+    const body =
+      typeof event.body === "string" ? JSON.parse(event.body) : event.body;
 
     const response = await fetch("https://pumpportal.fun/api/buy", {
       method: "POST",

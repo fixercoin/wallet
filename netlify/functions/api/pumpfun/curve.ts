@@ -29,9 +29,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    const response = await fetch(
-      `https://pumpportal.fun/api/curve/${mint}`,
-    );
+    const response = await fetch(`https://pumpportal.fun/api/curve/${mint}`);
 
     const data = await response.text();
 

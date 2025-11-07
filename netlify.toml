@@ -8,6 +8,12 @@ functions = "netlify/functions"
 [functions.timeout]
 external_node_modules = []
 
+# Rewrite API requests to the functions
+[[rewrites]]
+from = "/api/*"
+to = "/.netlify/functions/api"
+status = 200
+
 # SPA fallback for client-side routing (must be last)
 [[redirects]]
 from = "/*"

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { pumpBuy, pumpSell } from "@/lib/services/pump-fun-api";
 import { jupiterV6API } from "@/lib/services/jupiter-v6";
 import { resolveApiUrl } from "@/lib/api-client";
 import {

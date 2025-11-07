@@ -8,4 +8,21 @@ workers_dev = true
 name = "wallet-c36-prod"
 
 [vars]
+# Solana RPC Configuration
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
+HELIUS_RPC_URL = ""
+MORALIS_RPC_URL = ""
+ALCHEMY_RPC_URL = ""
+
+# API Endpoints
+PUMPFUN_QUOTE = "https://pumpportal.fun/api/quote"
+PUMPFUN_API_BASE = "https://pump.fun/api"
+DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex"
+
+# API Keys
+BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
+HELIUS_API_KEY = ""
+JUPITER_API_KEY = ""
+
+# Backend URL for fallback
+BACKEND_URL = "https://wallet.fixorium.com.pk"

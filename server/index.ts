@@ -72,9 +72,40 @@ export async function createServer(): Promise<express.Application> {
   app.use(express.json());
 
   // DexScreener routes
-  app.get("/api/dexscreener/tokens", handleDexscreenerTokens);
-  app.get("/api/dexscreener/search", handleDexscreenerSearch);
-  app.get("/api/dexscreener/trending", handleDexscreenerTrending);
+  app.get("/api/dexscreener/tokens", async (req, res) => {
+    try {
+      return await handleDexscreenerTokens(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener API error",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  app.get("/api/dexscreener/search", async (req, res) => {
+    try {
+      return await handleDexscreenerSearch(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener search failed",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  app.get("/api/dexscreener/trending", async (req, res) => {
+    try {
+      return await handleDexscreenerTrending(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener trending failed",
+        details: e?.message || String(e),
+        message: "Try using /api/quote endpoint instead with specific mints",
+      });
+    }
+  });
+
   app.get("/api/dexscreener/price", handleDexscreenerPrice);
 
   // Price routes
@@ -97,11 +128,62 @@ export async function createServer(): Promise<express.Application> {
   // Birdeye routes
   app.get("/api/birdeye/price", handleBirdeyePrice);
 
-  // Solana RPC proxy
-  app.post("/api/solana-rpc", handleSolanaRpc);
+  // Solana RPC proxy - with proper error handling
+  app.post("/api/solana-rpc", (req, res) => {
+    // Ensure body is parsed JSON
+    if (
+      !req.body ||
+      typeof req.body !== "object" ||
+      !req.body.method ||
+      !req.body.params
+    ) {
+      return res.status(400).json({
+        error: "Invalid JSON-RPC request",
+        message: "Provide method and params in JSON body",
+        example: {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getBalance",
+          params: ["11111111111111111111111111111111"],
+        },
+      });
+    }
 
-  // Wallet routes
-  app.get("/api/wallet/balance", handleWalletBalance);
+    handleSolanaRpc(req, res);
+  });
+
+  // Wallet routes - also supports walletAddress alias
+  app.get("/api/wallet/balance", async (req, res) => {
+    try {
+      // Support walletAddress as an alias for publicKey
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "?publicKey=...",
+            "?wallet=...",
+            "?address=...",
+            "?walletAddress=...",
+          ],
+        });
+      }
+
+      // Create a modified request object
+      const modifiedReq = { ...req, query: { publicKey } };
+      handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
 
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
@@ -189,31 +271,64 @@ export async function createServer(): Promise<express.Application> {
         )}&output_mint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}`;
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const resp = await fetch(url, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!resp.ok)
-          return res.status(resp.status).json({ error: "Pumpfun API error" });
-        const data = await resp.json();
-        return res.json(data);
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+          const resp = await fetch(url, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok)
+            return res.status(resp.status).json({
+              error: "Pumpfun API error",
+              status: resp.status,
+            });
+          const data = await resp.json();
+          return res.json(data);
+        } catch (err: any) {
+          clearTimeout(timeout);
+          if (err?.name === "AbortError") {
+            return res.status(504).json({
+              error: "Pumpfun API timeout",
+              message: "Request took too long to complete",
+            });
+          }
+          throw err;
+        }
       }
 
       if (path === "//swap" || path === "/swap") {
         if (req.method !== "POST")
           return res.status(405).json({ error: "Method not allowed" });
         const body = req.body || {};
-        const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!resp.ok)
-          return res.status(resp.status).json({ error: "Pumpfun swap failed" });
-        const data = await resp.json();
-        return res.json(data);
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        try {
+          const resp = await fetch("https://api.pumpfun.com/api/v1/swap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (!resp.ok)
+            return res
+              .status(resp.status)
+              .json({ error: "Pumpfun swap failed" });
+          const data = await resp.json();
+          return res.json(data);
+        } catch (err: any) {
+          clearTimeout(timeout);
+          if (err?.name === "AbortError") {
+            return res.status(504).json({
+              error: "Pumpfun API timeout",
+              message: "Request took too long to complete",
+            });
+          }
+          throw err;
+        }
       }
 
       return res.status(404).json({ error: "Pumpfun proxy path not found" });
@@ -512,7 +627,21 @@ export async function createServer(): Promise<express.Application> {
 
   // Health check
   app.get("/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      environment: "server",
+      uptime: process.uptime(),
+    });
+  });
+
+  app.get("/api/health", (req, res) => {
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      environment: "server",
+      uptime: process.uptime(),
+    });
   });
 
   // 404 handler

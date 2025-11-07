@@ -1,4 +1,8 @@
-import type { Handler, HandlerEvent, HandlerResponse } from "@netlify/functions";
+import type {
+  Handler,
+  HandlerEvent,
+  HandlerResponse,
+} from "@netlify/functions";
 
 // Import all handlers
 import { handler as jupiterQuoteHandler } from "./jupiter/quote";
@@ -23,7 +27,8 @@ import { handler as forexRateHandler } from "./forex/rate";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Requested-With",
   "Content-Type": "application/json",
 };
 
@@ -64,12 +69,14 @@ export const handler: Handler = async (
   // Extract the path from the event
   // Netlify's [...path].ts passes the matched path in event.path
   const rawPath = event.path || "";
-  
+
   // Remove /api/ prefix and clean up
   const pathWithoutPrefix = rawPath.replace(/^\/+api\/?/, "");
   const path = pathWithoutPrefix.replace(/\?.*/, "").replace(/\/$/, "");
 
-  console.log(`[API Router] Processing path: ${path}, Method: ${event.httpMethod}`);
+  console.log(
+    `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`,
+  );
 
   // Find matching handler
   if (path && handlers[path]) {

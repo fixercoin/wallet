@@ -94,41 +94,7 @@ export const fetchWithFallback = async (
 
     return response;
   } catch (error) {
-    // Try fallback endpoint if primary fails
-    const fallbackBase =
-      currentBase === FIXORIUM_API_BASE
-        ? CLOUDFLARE_WORKER_BASE
-        : FIXORIUM_API_BASE;
-
-    if (fallbackBase && fallbackBase !== currentBase) {
-      console.warn(
-        `[API] Primary endpoint (${currentBase}) failed. Trying fallback: ${fallbackBase}`,
-      );
-
-      const fallbackUrl =
-        fallbackBase + (path.startsWith("/") ? "" : "/") + path;
-
-      try {
-        const fallbackResponse = await fetch(fallbackUrl, {
-          ...options,
-          signal: options?.signal || AbortSignal.timeout?.(30000),
-        });
-
-        if (fallbackResponse.ok) {
-          workingApiBase = fallbackBase;
-          cachedBase = fallbackBase;
-          return fallbackResponse;
-        }
-      } catch (fallbackError) {
-        console.warn(
-          "[API] Fallback endpoint also failed:",
-          fallbackError instanceof Error
-            ? fallbackError.message
-            : String(fallbackError),
-        );
-      }
-    }
-
-    throw error;
+    // No external fallback; surface the error to caller
+    throw error as any;
   }
 };

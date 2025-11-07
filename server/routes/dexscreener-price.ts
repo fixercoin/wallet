@@ -123,43 +123,60 @@ async function getDerivedTokenPrice(
 }
 
 export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
+  const { token } = req.query;
+
+  if (!token || typeof token !== "string") {
+    return res.status(400).json({ error: "Missing 'token' parameter" });
+  }
+
+  console.log(`[DexScreener Price] Fetching price for token: ${token}`);
+
   try {
-    const { token } = req.query;
-
-    if (!token || typeof token !== "string") {
-      return res.status(400).json({ error: "Missing 'token' parameter" });
-    }
-
-    console.log(`[DexScreener Price] Fetching price for token: ${token}`);
-
     try {
       const data = await fetchDexscreenerData(`/tokens/${token}`);
       const pair = data?.pairs?.[0];
 
-      if (!pair) {
-        return res
-          .status(404)
-          .json({ error: "Token not found on DexScreener" });
+      if (pair && pair.priceUsd) {
+        const price = parseFloat(pair.priceUsd);
+        if (isFinite(price) && price > 0) {
+          console.log(`[DexScreener Price] ✅ Successfully fetched price: $${price}`);
+          return res.json({
+            token,
+            price,
+            priceUsd: pair.priceUsd,
+            data: pair,
+            source: "dexscreener",
+          });
+        }
       }
 
-      return res.json({
-        token,
-        price: parseFloat(pair.priceUsd || "0"),
-        priceUsd: pair.priceUsd,
-        data: pair,
-      });
+      console.warn(`[DexScreener Price] Invalid or missing price data for ${token}`);
     } catch (error) {
-      console.error(`[DexScreener Price] Fetch error:`, error);
-      return res.status(502).json({
-        error: "Failed to fetch token price from DexScreener",
-        details: error instanceof Error ? error.message : String(error),
-      });
+      console.warn(
+        `[DexScreener Price] Fetch failed:`,
+        error instanceof Error ? error.message : String(error),
+      );
     }
+
+    // Fallback response - return zero price but valid JSON
+    console.log(`[DexScreener Price] Returning zero price fallback for ${token}`);
+    return res.json({
+      token,
+      price: 0,
+      priceUsd: "0",
+      data: null,
+      source: "fallback",
+      error: "Token price not available from DexScreener",
+    });
   } catch (error) {
     console.error(`[DexScreener Price] Handler error:`, error);
-    return res.status(500).json({
-      error: "Failed to process price request",
-      details: error instanceof Error ? error.message : String(error),
+    return res.json({
+      token,
+      price: 0,
+      priceUsd: "0",
+      data: null,
+      source: "fallback",
+      error: "Failed to fetch token price",
     });
   }
 };

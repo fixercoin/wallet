@@ -3,9 +3,10 @@ command = "pnpm build"
 publish = "dist"
 functions = "netlify/functions"
 
-# Timeout for long-running functions (in seconds)
 [functions]
-  timeout = 30
+
+[functions.timeout]
+external_node_modules = []
 
 # SPA fallback for client-side routing (must be last)
 [[redirects]]

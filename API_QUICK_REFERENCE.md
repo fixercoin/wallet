@@ -1,6 +1,7 @@
 # API Quick Reference Guide
 
 ## Base URL
+
 ```
 https://wallet.fixorium.com.pk
 ```
@@ -8,6 +9,7 @@ https://wallet.fixorium.com.pk
 ## Health & Status Endpoints
 
 ### Health Check
+
 ```bash
 GET /health
 GET /api/health
@@ -24,6 +26,7 @@ GET /api/health
 ## Wallet Endpoints
 
 ### Get Wallet Balance
+
 ```bash
 GET /api/wallet/balance?walletAddress=<pubkey>
 # OR
@@ -42,6 +45,7 @@ GET /api/wallet/balance?address=<pubkey>
 ## Price & Market Data Endpoints
 
 ### Get Token Price
+
 ```bash
 GET /api/token/price?token=FIXERCOIN
 GET /api/token/price?token=SOL
@@ -58,6 +62,7 @@ GET /api/token/price?token=USDC
 ```
 
 ### Get SOL Price
+
 ```bash
 GET /api/sol/price
 
@@ -72,6 +77,7 @@ GET /api/sol/price
 ```
 
 ### Get Exchange Rate
+
 ```bash
 GET /api/exchange-rate
 
@@ -87,6 +93,7 @@ GET /api/exchange-rate
 ```
 
 ### Get Token Price (Birdeye)
+
 ```bash
 GET /api/birdeye/price?address=<mint>
 
@@ -105,6 +112,7 @@ GET /api/birdeye/price?address=<mint>
 ## Swap & Trading Endpoints
 
 ### Get Swap Quote (Unified)
+
 ```bash
 GET /api/quote?inputMint=<mint>&outputMint=<mint>&amount=<lamports>
 
@@ -123,6 +131,7 @@ GET /api/quote?inputMint=<mint>&outputMint=<mint>&amount=<lamports>
 ```
 
 ### Get Swap Quote v2
+
 ```bash
 GET /api/swap/quote?inputMint=<mint>&outputMint=<mint>&amount=<lamports>
 
@@ -130,6 +139,7 @@ GET /api/swap/quote?inputMint=<mint>&outputMint=<mint>&amount=<lamports>
 ```
 
 ### Execute Swap
+
 ```bash
 POST /api/swap/execute
 
@@ -156,6 +166,7 @@ POST /api/swap/execute
 ## Pump.fun Endpoints
 
 ### Get Pump.fun Quote
+
 ```bash
 GET /api/pumpfun/quote?inputMint=<mint>&outputMint=<mint>&amount=<lamports>
 POST /api/pumpfun/quote
@@ -170,6 +181,7 @@ POST /api/pumpfun/quote
 ```
 
 ### Buy Pump.fun Token
+
 ```bash
 POST /api/pumpfun/buy
 
@@ -190,6 +202,7 @@ POST /api/pumpfun/buy
 ```
 
 ### Sell Pump.fun Token
+
 ```bash
 POST /api/pumpfun/sell
 
@@ -212,6 +225,7 @@ POST /api/pumpfun/sell
 ## Solana RPC Proxy
 
 ### Call Solana RPC
+
 ```bash
 POST /api/solana-rpc
 
@@ -240,6 +254,7 @@ POST /api/solana-rpc
 ## Order Management Endpoints
 
 ### List Orders
+
 ```bash
 GET /api/orders
 
@@ -250,6 +265,7 @@ GET /api/orders
 ```
 
 ### Create Order
+
 ```bash
 POST /api/orders
 
@@ -275,6 +291,7 @@ POST /api/orders
 ```
 
 ### Get Order
+
 ```bash
 GET /api/orders/<orderId>
 
@@ -291,6 +308,7 @@ GET /api/orders/<orderId>
 ```
 
 ### Update Order
+
 ```bash
 PUT /api/orders/<orderId>
 
@@ -304,6 +322,7 @@ PUT /api/orders/<orderId>
 ```
 
 ### Delete Order
+
 ```bash
 DELETE /api/orders/<orderId>
 
@@ -317,6 +336,7 @@ DELETE /api/orders/<orderId>
 ## P2P Trading Endpoints
 
 ### List P2P Rooms
+
 ```bash
 GET /api/p2p/rooms
 
@@ -327,6 +347,7 @@ GET /api/p2p/rooms
 ```
 
 ### Create P2P Room
+
 ```bash
 POST /api/p2p/rooms
 
@@ -349,6 +370,7 @@ POST /api/p2p/rooms
 ```
 
 ### Get P2P Room
+
 ```bash
 GET /api/p2p/rooms/<roomId>
 
@@ -356,6 +378,7 @@ GET /api/p2p/rooms/<roomId>
 ```
 
 ### Get Room Messages
+
 ```bash
 GET /api/p2p/rooms/<roomId>/messages
 
@@ -374,6 +397,7 @@ GET /api/p2p/rooms/<roomId>/messages
 ```
 
 ### Add Message to Room
+
 ```bash
 POST /api/p2p/rooms/<roomId>/messages
 
@@ -416,6 +440,7 @@ All error responses follow this format:
 ```
 
 HTTP Status Codes:
+
 - `200`: Success
 - `400`: Bad Request (missing parameters)
 - `401`: Unauthorized (API key required)

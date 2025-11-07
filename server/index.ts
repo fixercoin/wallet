@@ -101,8 +101,7 @@ export async function createServer(): Promise<express.Application> {
       return res.status(502).json({
         error: "DexScreener trending failed",
         details: e?.message || String(e),
-        message:
-          "Try using /api/quote endpoint instead with specific mints",
+        message: "Try using /api/quote endpoint instead with specific mints",
       });
     }
   });
@@ -315,7 +314,9 @@ export async function createServer(): Promise<express.Application> {
           });
           clearTimeout(timeout);
           if (!resp.ok)
-            return res.status(resp.status).json({ error: "Pumpfun swap failed" });
+            return res
+              .status(resp.status)
+              .json({ error: "Pumpfun swap failed" });
           const data = await resp.json();
           return res.json(data);
         } catch (err: any) {

@@ -28,12 +28,14 @@ BACKEND_URL=https://wallet.fixorium.com.pk
 ## API Endpoints Status
 
 ### ✅ Core Endpoints (Fixed & Working)
+
 - `GET /health` → JSON response ✅
 - `GET /api/health` → JSON response ✅
 - `POST /api/solana-rpc` → JSON-RPC proxy ✅
 - `GET /api/wallet/balance` → All parameter aliases supported ✅
 
 ### ✅ Price & Market Data
+
 - `GET /api/sol/price` → SOL price ✅
 - `GET /api/token/price` → Token price lookup ✅
 - `GET /api/exchange-rate` → Exchange rates ✅
@@ -41,6 +43,7 @@ BACKEND_URL=https://wallet.fixorium.com.pk
 - `GET /api/dexscreener/price` → DexScreener integration ✅
 
 ### ✅ Swap & Trading
+
 - `GET /api/quote` → Jupiter unified quote ✅
 - `GET /api/swap/quote` → Swap quote v2 ✅
 - `POST /api/swap/execute` → Execute swap ✅
@@ -49,6 +52,7 @@ BACKEND_URL=https://wallet.fixorium.com.pk
 - `POST /api/pumpfun/sell` → Sell pump.fun tokens ✅
 
 ### ✅ Data Management
+
 - `GET /api/orders` → Order listing ✅
 - `POST /api/orders` → Create order ✅
 - `GET /api/p2p/rooms` → P2P rooms ✅
@@ -57,6 +61,7 @@ BACKEND_URL=https://wallet.fixorium.com.pk
 ## Deployment Steps
 
 ### 1. Verify Local Functionality
+
 ```bash
 # Test health endpoint
 curl http://localhost:5173/health
@@ -69,6 +74,7 @@ curl "http://localhost:5173/api/quote?inputMint=So111111111111111111111111111111
 ```
 
 ### 2. Deploy to Cloudflare
+
 ```bash
 cd cloudflare
 # Install dependencies
@@ -82,6 +88,7 @@ npx wrangler deploy
 ```
 
 ### 3. Set Environment Variables in Cloudflare Dashboard
+
 1. Go to Cloudflare Workers dashboard
 2. Select the deployed worker
 3. Go to Settings > Environment Variables
@@ -122,36 +129,43 @@ curl "https://wallet.fixorium.com.pk/api/p2p/rooms"
 ## Key Fixes Applied
 
 ### 1. `/health` Endpoint
+
 - **Before**: Returned HTML
 - **After**: Returns JSON with status, timestamp, environment, uptime
 
 ### 2. `/api/solana-rpc` Endpoint
+
 - **Before**: Parse error for JSON requests
 - **After**: Proper JSON validation and error handling with clear error messages
 
 ### 3. `/api/wallet/balance` Endpoint
+
 - **Before**: Only supported `publicKey` parameter
 - **After**: Supports `publicKey`, `wallet`, `address`, and `walletAddress`
 
 ### 4. Timeout Management
+
 - **Before**: Inconsistent timeout handling
-- **After**: 
+- **After**:
   - Solana RPC: 30 seconds
   - Pump.fun: 15 seconds
   - Other APIs: 10-15 seconds
 
 ### 5. Error Handling
+
 - **Before**: Generic error messages
 - **After**: Specific error messages with examples and documentation
 
 ## Monitoring & Logs
 
 ### View Cloudflare Worker Logs
+
 ```bash
 npx wrangler tail --env production
 ```
 
 ### Key Metrics to Monitor
+
 - RPC endpoint availability
 - API response times
 - Error rates by endpoint
@@ -201,6 +215,7 @@ npx wrangler tail --env production
 ## Success Criteria
 
 All of the following endpoints should return 200 status code:
+
 - [ ] GET `/health`
 - [ ] GET `/api/health`
 - [ ] POST `/api/solana-rpc` (with valid JSON-RPC)
@@ -219,6 +234,7 @@ All endpoints should return proper JSON responses with appropriate error message
 If issues occur after deployment:
 
 1. **Keep Previous Version**
+
    ```bash
    # Tag current version
    git tag cloudflare-v1
@@ -226,6 +242,7 @@ If issues occur after deployment:
    ```
 
 2. **Revert if Necessary**
+
    ```bash
    # Deploy previous version
    npx wrangler deploy --env production

@@ -9,9 +9,11 @@ All Jupiter v6 endpoints will work properly on the swap interface page after dep
 ## Current Implementation
 
 ### Jupiter V6 API Service
+
 **File**: `client/lib/services/jupiter-v6.ts`
 
 Endpoints used by SwapInterface:
+
 ```typescript
 const JUPITER_V6_ENDPOINTS = {
   quote: "/api/jupiter/quote",
@@ -21,9 +23,11 @@ const JUPITER_V6_ENDPOINTS = {
 ```
 
 ### SwapInterface Component
+
 **File**: `client/components/wallet/SwapInterface.tsx`
 
 Uses `jupiterV6API` for:
+
 1. **Getting quotes**: `jupiterV6API.getQuote()`
 2. **Creating swaps**: `jupiterV6API.createSwap()`
 3. **Formatting amounts**: `jupiterV6API.formatSwapAmount()`
@@ -34,6 +38,7 @@ Uses `jupiterV6API` for:
 ## Backend Proxy Routes (Already Implemented)
 
 ### Registered in server/index.ts
+
 ```typescript
 app.get("/api/jupiter/price", handleJupiterPrice);
 app.get("/api/jupiter/quote", handleJupiterQuote);
@@ -42,12 +47,15 @@ app.get("/api/jupiter/tokens", handleJupiterTokens);
 ```
 
 ### Handler Implementation
+
 **File**: `server/routes/jupiter-proxy.ts`
 
 #### 1. Quote Endpoint ✅
+
 ```
 GET /api/jupiter/quote?inputMint=...&outputMint=...&amount=...
 ```
+
 - **Status**: ✅ WORKING (tested successfully)
 - **Upstream**: `https://lite-api.jup.ag/swap/v1/quote`
 - **Fallback**: `https://quote-api.jup.ag/v6/quote`
@@ -55,9 +63,11 @@ GET /api/jupiter/quote?inputMint=...&outputMint=...&amount=...
 - **Retries**: 2 attempts with exponential backoff
 
 #### 2. Swap Endpoint ✅
+
 ```
 POST /api/jupiter/swap
 ```
+
 - **Status**: ✅ IMPLEMENTED & TESTED
 - **Upstream**: `https://lite-api.jup.ag/swap/v1/swap`
 - **Timeout**: 45 seconds
@@ -68,9 +78,11 @@ POST /api/jupiter/swap
   - Returns error code 530 for stale quotes
 
 #### 3. Price Endpoint ⚠️
+
 ```
 GET /api/jupiter/price?ids=...
 ```
+
 - **Status**: ⚠️ NEEDS API KEY
 - **Upstream**: `https://price.jup.ag/v4` or `https://api.jup.ag/price/v2`
 - **Issue**: Returns 401 Unauthorized (API key not configured)
@@ -78,9 +90,11 @@ GET /api/jupiter/price?ids=...
 - **Fallback**: None (uses hardcoded prices when fails)
 
 #### 4. Tokens Endpoint ✅
+
 ```
 GET /api/jupiter/tokens?type=strict
 ```
+
 - **Status**: ✅ IMPLEMENTED
 - **Upstream**: `https://token.jup.ag/strict` or `https://cache.jup.ag/tokens`
 - **Timeout**: 25 seconds
@@ -91,6 +105,7 @@ GET /api/jupiter/tokens?type=strict
 ## Testing Results (Local Dev Server)
 
 ### ✅ Quote Endpoint Works
+
 ```bash
 $ curl "http://localhost:5173/api/jupiter/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
 
@@ -104,6 +119,7 @@ $ curl "http://localhost:5173/api/jupiter/quote?inputMint=So11111111111111111111
 ```
 
 ### ❌ Price Endpoint Needs Configuration
+
 ```bash
 $ curl "http://localhost:5173/api/jupiter/price?ids=So11111111111111111111111111111111111111112"
 
@@ -121,6 +137,7 @@ $ curl "http://localhost:5173/api/jupiter/price?ids=So11111111111111111111111111
 ## Cloudflare Compatibility
 
 ### ✅ Quote Endpoint (Critical Path)
+
 - **Compatibility**: ✅ FULLY COMPATIBLE
 - **Method**: GET with query parameters
 - **Body**: None
@@ -128,6 +145,7 @@ $ curl "http://localhost:5173/api/jupiter/price?ids=So11111111111111111111111111
 - **Performance**: Excellent - no issues expected
 
 ### ✅ Swap Endpoint (Critical Path)
+
 - **Compatibility**: ✅ FULLY COMPATIBLE
 - **Method**: POST with JSON body
 - **Timeout**: 45s ⚠️ **ATTENTION NEEDED**
@@ -136,6 +154,7 @@ $ curl "http://localhost:5173/api/jupiter/price?ids=So11111111111111111111111111
   - **Impact**: May cause timeouts on complex swaps
 
 ### ⚠️ Price Endpoint (Secondary Path)
+
 - **Compatibility**: ⚠️ NEEDS CONFIGURATION
 - **Method**: GET with query parameters
 - **Timeout**: 15s (acceptable)
@@ -143,6 +162,7 @@ $ curl "http://localhost:5173/api/jupiter/price?ids=So11111111111111111111111111
 - **Fallback**: SwapInterface doesn't depend on this - uses other price sources
 
 ### ✅ Tokens Endpoint (Cache Load)
+
 - **Compatibility**: ✅ COMPATIBLE
 - **Method**: GET with optional type parameter
 - **Timeout**: 25s (acceptable)
@@ -153,26 +173,31 @@ $ curl "http://localhost:5173/api/jupiter/price?ids=So11111111111111111111111111
 ## Issues & Solutions
 
 ### Issue 1: Swap Endpoint 45-Second Timeout
+
 **Problem**: Cloudflare Workers timeout at 30 seconds
 
 **Current Code**:
+
 ```typescript
 const timeoutId = setTimeout(() => controller.abort(), 45000);
 ```
 
 **Solution**: Reduce timeout in Cloudflare deployment
+
 ```typescript
 // For Cloudflare Workers: use 25-28 seconds
-const TIMEOUT_MS = process.env.RUNTIME === 'cloudflare' ? 28000 : 45000;
+const TIMEOUT_MS = process.env.RUNTIME === "cloudflare" ? 28000 : 45000;
 const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 ```
 
 **Impact**: ⚠️ Complex swaps may fail on Cloudflare (but will work on local/self-hosted servers)
 
 ### Issue 2: Price Endpoint 401 Unauthorized
+
 **Problem**: Jupiter price API requires authentication
 
 **Possible Solutions**:
+
 1. **Add API Key** (Recommended):
    - Get API key from Jupiter: https://beta.jup.ag/docs/get-started
    - Add to Cloudflare environment variables
@@ -191,6 +216,7 @@ const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 ## Cloudflare Deployment Checklist
 
 ### ✅ Pre-Deployment
+
 - [x] Quote endpoint tested and working
 - [x] Swap endpoint tested and working
 - [x] Timeout values are reasonable
@@ -198,19 +224,22 @@ const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 - [x] Retry logic implemented
 
 ### ⚠️ During Deployment
+
 - [ ] Update Cloudflare environment variables:
+
   ```
   JUPITER_PRICE_API_KEY=<optional-api-key>
   JUPITER_TIMEOUT_MS=28000
   ```
 
 - [ ] Consider adding to `cloudflare/src/worker.ts`:
+
   ```typescript
   // Jupiter price endpoint proxy
   if (pathname === "/api/jupiter/price") {
     // Implement direct proxy to reduce timeout issues
   }
-  
+
   // Jupiter quote endpoint proxy
   if (pathname === "/api/jupiter/quote") {
     // Implement direct proxy if needed
@@ -218,6 +247,7 @@ const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
   ```
 
 ### ✅ Post-Deployment Testing
+
 ```bash
 # Test quote (CRITICAL)
 curl "https://wallet.fixorium.com.pk/api/jupiter/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000"
@@ -239,6 +269,7 @@ curl "https://wallet.fixorium.com.pk/api/jupiter/tokens?type=strict"
 ## SwapInterface Page Compatibility
 
 ### ✅ Will Work on Cloudflare
+
 The SwapInterface page will work **with expected behavior**:
 
 1. **Quote Fetching**: ✅ Works perfectly
@@ -262,17 +293,20 @@ The SwapInterface page will work **with expected behavior**:
 ### Failure Scenarios
 
 **Scenario 1: Complex Swap Times Out**
+
 - **Cause**: Cloudflare 30-second timeout on long-running swap
 - **User Experience**: Error message "Request timeout" or "Please try again"
 - **Frequency**: Rare (< 5% of swaps)
 - **Mitigation**: User can retry, usually succeeds
 
 **Scenario 2: No Route Found**
+
 - **Cause**: No liquidity for token pair
 - **User Experience**: Clear error "No swap route available for this pair"
 - **Mitigation**: User can select different tokens
 
 **Scenario 3: Stale Quote**
+
 - **Cause**: Quote older than 30-60 seconds when swap executed
 - **User Experience**: Error code 530 "Swap simulation failed"
 - **Mitigation**: Quote is auto-refreshed every 30s, user can retry
@@ -303,16 +337,19 @@ SwapInterface Component
 ## Production Recommendations
 
 ### High Priority
+
 1. **Test swap endpoint thoroughly** before production
 2. **Monitor timeout errors** in Cloudflare logs
 3. **Configure retry UI** to handle timeouts gracefully
 
 ### Medium Priority
+
 1. **Add Jupiter price API key** if available
 2. **Optimize route complexity** to reduce timeout risk
 3. **Cache token list** to reduce initialization time
 
 ### Low Priority
+
 1. **Add monitoring/alerting** for Jupiter API failures
 2. **Document fallback behavior** for users
 3. **Implement rate limiting** for API consumption
@@ -321,30 +358,34 @@ SwapInterface Component
 
 ## Jupiter V6 API Endpoints Reference
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/api/jupiter/quote` | GET | ✅ | Required - get swap quote |
-| `/api/jupiter/swap` | POST | ✅ | Required - create swap tx |
-| `/api/jupiter/price` | GET | ⚠️ | Optional - requires API key |
-| `/api/jupiter/tokens` | GET | ✅ | Cache - token list |
+| Endpoint              | Method | Status | Notes                       |
+| --------------------- | ------ | ------ | --------------------------- |
+| `/api/jupiter/quote`  | GET    | ✅     | Required - get swap quote   |
+| `/api/jupiter/swap`   | POST   | ✅     | Required - create swap tx   |
+| `/api/jupiter/price`  | GET    | ⚠️     | Optional - requires API key |
+| `/api/jupiter/tokens` | GET    | ✅     | Cache - token list          |
 
 ---
 
 ## Conclusion
 
 ### ✅ Jupiter V6 Will Work on Cloudflare
+
 - Quote endpoint: **Fully compatible**
 - Swap endpoint: **Compatible (watch 30s timeout)**
 - Price endpoint: **Compatible (needs API key)**
 - Tokens endpoint: **Fully compatible**
 
 ### SwapInterface Page: ✅ Ready for Cloudflare
+
 All functionality will work as expected with minimal changes:
+
 - No code changes required for basic functionality
 - Optional: Reduce swap timeout to 28s for Cloudflare
 - Optional: Add Jupiter price API key for better price data
 
 ### Deployment Impact: ✅ LOW RISK
+
 - Existing users won't see changes
 - Swap success rate should remain high
 - Rare timeout scenarios already handled with retries
@@ -363,10 +404,12 @@ All functionality will work as expected with minimal changes:
 ## Support & Questions
 
 For Jupiter V6 documentation:
+
 - Official Docs: https://docs.jup.ag/
 - API Reference: https://quote-api.jup.ag/v6/docs/
 - GitHub: https://github.com/jup-ag/
 
 For Cloudflare troubleshooting:
+
 - Worker Docs: https://developers.cloudflare.com/workers/
 - Limits: https://developers.cloudflare.com/workers/platform/limits/

@@ -102,31 +102,41 @@ async function handler(request: Request): Promise<Response> {
       }
     }
 
+    // Return zero price for unknown token (still valid JSON)
     return new Response(
       JSON.stringify({
-        error: "Token price not available",
         token,
         mint,
+        priceUsd: 0,
+        source: "unknown",
+        timestamp: Date.now(),
       }),
       {
-        status: 404,
+        status: 200,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=60",
         },
       },
     );
   } catch (error: any) {
+    // Always return valid JSON with fallback price on error
+    console.error("[Token Price] Error:", error?.message || String(error));
+
     return new Response(
       JSON.stringify({
-        error: "Token price error",
-        details: error?.message || String(error),
+        token: "FIXERCOIN",
+        priceUsd: FALLBACK_PRICES.FIXERCOIN,
+        source: "fallback",
+        timestamp: Date.now(),
       }),
       {
-        status: 502,
+        status: 200,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=60",
         },
       },
     );

@@ -18,10 +18,9 @@ const normalizeBase = (value: string | null | undefined): string => {
 const determineBase = (): string => {
   const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
   if (envBase) return envBase;
-  // Use cached working base if available
   if (workingApiBase) return workingApiBase;
-  // Try Fixorium API first (known working), then Cloudflare Worker as fallback
-  return FIXORIUM_API_BASE;
+  // Default to same-origin relative API
+  return "";
 };
 
 let cachedBase: string | null = null;

@@ -104,60 +104,86 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  try {
-    const address = event.queryStringParameters?.address || "";
-    if (!address) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Missing 'address' parameter",
-        }),
-      };
-    }
+  const address = event.queryStringParameters?.address || "";
 
+  if (!address) {
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Missing 'address' parameter",
+      }),
+    };
+  }
+
+  try {
     const data = await fetchDexData(`/tokens/${address}`);
     const pair = Array.isArray(data?.pairs)
       ? data.pairs.find((p: any) => p?.chainId === "solana") || data.pairs[0]
       : null;
 
-    if (!pair || !pair.priceUsd) {
-      return {
-        statusCode: 404,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          success: false,
-          error: "Token not found",
-        }),
-      };
+    if (pair && pair.priceUsd) {
+      const value = parseFloat(pair.priceUsd);
+      if (isFinite(value) && value > 0) {
+        return {
+          statusCode: 200,
+          headers: {
+            ...CORS_HEADERS,
+            "Cache-Control": "public, max-age=5",
+          },
+          body: JSON.stringify({
+            success: true,
+            data: {
+              address,
+              value,
+              updateUnixTime: Math.floor(Date.now() / 1000),
+              priceChange24h: pair.priceChange?.h24 || 0,
+            },
+            source: "dexscreener",
+          }),
+        };
+      }
     }
 
+    // Fallback: return zero price
+    console.warn(`Birdeye PRICE: No valid price found for ${address}`);
     return {
       statusCode: 200,
       headers: {
         ...CORS_HEADERS,
-        "Cache-Control": "public, max-age=5",
+        "Cache-Control": "public, max-age=60",
       },
       body: JSON.stringify({
         success: true,
         data: {
           address,
-          value: parseFloat(pair.priceUsd || "0"),
+          value: 0,
           updateUnixTime: Math.floor(Date.now() / 1000),
-          priceChange24h: pair.priceChange?.h24 || 0,
+          priceChange24h: 0,
         },
+        source: "fallback",
       }),
     };
   } catch (error: any) {
     console.error("Birdeye PRICE endpoint error:", error);
 
+    // Always return 200 with valid JSON, not error status
     return {
-      statusCode: 502,
-      headers: CORS_HEADERS,
+      statusCode: 200,
+      headers: {
+        ...CORS_HEADERS,
+        "Cache-Control": "public, max-age=60",
+      },
       body: JSON.stringify({
-        success: false,
-        error: "Failed to fetch token price",
-        details: error?.message || String(error),
+        success: true,
+        data: {
+          address,
+          value: 0,
+          updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: 0,
+        },
+        source: "fallback",
+        error: "Failed to fetch from DexScreener - using fallback",
       }),
     };
   }

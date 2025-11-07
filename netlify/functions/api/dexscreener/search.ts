@@ -68,7 +68,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    const data = await fetchFromDexScreener(`/search?q=${encodeURIComponent(query)}`);
+    const data = await fetchFromDexScreener(
+      `/search?q=${encodeURIComponent(query)}`,
+    );
 
     return {
       statusCode: 200,

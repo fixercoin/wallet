@@ -7,7 +7,8 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
+const BIRDEYE_API_KEY =
+  process.env.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
 const BIRDEYE_API = "https://public-api.birdeye.so";
 
 const FALLBACK_PRICES: Record<string, number> = {
@@ -48,7 +49,9 @@ async function getPriceFromBirdeye(address: string): Promise<number | null> {
   }
 }
 
-async function getPriceFromDexScreener(address: string): Promise<number | null> {
+async function getPriceFromDexScreener(
+  address: string,
+): Promise<number | null> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);

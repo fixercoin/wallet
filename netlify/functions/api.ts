@@ -80,9 +80,7 @@ export const handler: Handler = async (
     }
   }
 
-  console.log(
-    `[API Router] Path: ${apiPath}, Method: ${event.httpMethod}`,
-  );
+  console.log(`[API Router] Path: ${apiPath}, Method: ${event.httpMethod}`);
 
   // Handle local health checks
   if (apiPath === "health") {
@@ -153,9 +151,7 @@ export const handler: Handler = async (
   }
 
   // Fallback for unmapped endpoints
-  console.warn(
-    `[API Router] No handler found for path: ${apiPath}`,
-  );
+  console.warn(`[API Router] No handler found for path: ${apiPath}`);
 
   return {
     statusCode: 404,

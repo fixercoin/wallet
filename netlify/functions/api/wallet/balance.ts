@@ -40,7 +40,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "Missing publicKey parameter (also accepts: wallet, address, walletAddress)",
+          error:
+            "Missing publicKey parameter (also accepts: wallet, address, walletAddress)",
         }),
       };
     }

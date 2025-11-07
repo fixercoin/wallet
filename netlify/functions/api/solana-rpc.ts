@@ -37,7 +37,10 @@ function isEndpointRateLimited(endpoint: string): boolean {
   return true;
 }
 
-function markEndpointRateLimited(endpoint: string, durationMs: number = 30000): void {
+function markEndpointRateLimited(
+  endpoint: string,
+  durationMs: number = 30000,
+): void {
   const key = getEndpointKey(endpoint);
   rateLimitedEndpoints.set(key, Date.now() + durationMs);
 }
@@ -131,7 +134,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
         };
       } catch (error: any) {
         lastError = error;
-        console.warn(`[RPC] ${getEndpointKey(endpoint)} failed:`, error.message);
+        console.warn(
+          `[RPC] ${getEndpointKey(endpoint)} failed:`,
+          error.message,
+        );
 
         if (error.message.includes("429")) {
           markEndpointRateLimited(endpoint);

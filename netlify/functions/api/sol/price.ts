@@ -28,9 +28,7 @@ async function fetchFromDexScreener(): Promise<any> {
     );
 
     if (!response.ok) {
-      throw new Error(
-        `DexScreener returned status ${response.status}`,
-      );
+      throw new Error(`DexScreener returned status ${response.status}`);
     }
 
     const data = await response.json();
@@ -71,9 +69,7 @@ async function fetchFromCoinGecko(): Promise<any> {
     );
 
     if (!response.ok) {
-      throw new Error(
-        `CoinGecko returned status ${response.status}`,
-      );
+      throw new Error(`CoinGecko returned status ${response.status}`);
     }
 
     const data = await response.json();

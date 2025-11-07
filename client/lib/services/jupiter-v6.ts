@@ -58,7 +58,7 @@ class JupiterV6API {
     amount: string | number,
     slippageBps: number = 100,
     onlyDirectRoutes: boolean = false,
-    asLegacyTransaction: boolean = false
+    asLegacyTransaction: boolean = false,
   ): Promise<JupiterQuoteResponse | null> {
     try {
       const params = new URLSearchParams({
@@ -78,7 +78,7 @@ class JupiterV6API {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -98,17 +98,21 @@ class JupiterV6API {
   /**
    * Get token prices from Jupiter
    */
-  async getTokenPrices(mints: string[]): Promise<Record<string, JupiterTokenPrice>> {
+  async getTokenPrices(
+    mints: string[],
+  ): Promise<Record<string, JupiterTokenPrice>> {
     try {
       const ids = mints.join(",");
       const response = await fetch(
-        resolveApiUrl(`${JUPITER_V6_ENDPOINTS.price}?ids=${encodeURIComponent(ids)}`),
+        resolveApiUrl(
+          `${JUPITER_V6_ENDPOINTS.price}?ids=${encodeURIComponent(ids)}`,
+        ),
         {
           method: "GET",
           headers: {
             Accept: "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -136,7 +140,7 @@ class JupiterV6API {
       computeUnitPriceMicroLamports?: number;
       prioritizationFeeLamports?: number;
       asLegacyTransaction?: boolean;
-    } = {}
+    } = {},
   ): Promise<JupiterSwapResponse | null> {
     try {
       const body = {
@@ -201,7 +205,10 @@ class JupiterV6API {
   /**
    * Validate swap is still valid (not stale)
    */
-  isQuoteValid(quoteResponse: JupiterQuoteResponse, maxAgeSeconds: number = 30): boolean {
+  isQuoteValid(
+    quoteResponse: JupiterQuoteResponse,
+    maxAgeSeconds: number = 30,
+  ): boolean {
     if (!quoteResponse.contextSlot) return false;
     // Note: In real implementation, would compare with current slot
     return true;

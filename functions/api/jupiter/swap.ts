@@ -45,16 +45,13 @@ async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      {
-        status: 405,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 
   try {
@@ -62,16 +59,13 @@ async function handler(request: Request): Promise<Response> {
     try {
       body = await request.json();
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON body" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
     if (!body || !body.quoteResponse || !body.userPublicKey) {
@@ -85,7 +79,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -122,7 +116,11 @@ async function handler(request: Request): Promise<Response> {
 
     if (!response.ok) {
       // Check for stale quote error
-      if (data.includes("1016") || data.includes("stale") || data.includes("simulation")) {
+      if (
+        data.includes("1016") ||
+        data.includes("stale") ||
+        data.includes("simulation")
+      ) {
         return new Response(
           JSON.stringify({
             error: "STALE_QUOTE",
@@ -136,7 +134,7 @@ async function handler(request: Request): Promise<Response> {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
             },
-          }
+          },
         );
       }
 
@@ -152,7 +150,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -164,7 +162,8 @@ async function handler(request: Request): Promise<Response> {
       },
     });
   } catch (error: any) {
-    const isTimeout = error?.name === "AbortError" || error?.message?.includes("timeout");
+    const isTimeout =
+      error?.name === "AbortError" || error?.message?.includes("timeout");
 
     return new Response(
       JSON.stringify({
@@ -177,7 +176,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

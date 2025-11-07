@@ -29,14 +29,16 @@ async function handler(request: Request): Promise<Response> {
 
   try {
     const url = new URL(request.url);
-    
+
     // Parse parameters from query string
     const inputMint = url.searchParams.get("inputMint");
     const outputMint = url.searchParams.get("outputMint");
     const amount = url.searchParams.get("amount");
     const slippageBps = url.searchParams.get("slippageBps") || "100";
-    const onlyDirectRoutes = url.searchParams.get("onlyDirectRoutes") === "true";
-    const asLegacyTransaction = url.searchParams.get("asLegacyTransaction") === "true";
+    const onlyDirectRoutes =
+      url.searchParams.get("onlyDirectRoutes") === "true";
+    const asLegacyTransaction =
+      url.searchParams.get("asLegacyTransaction") === "true";
 
     if (!inputMint || !outputMint || !amount) {
       return new Response(
@@ -49,7 +51,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -66,14 +68,17 @@ async function handler(request: Request): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-    const response = await fetch(`${JUPITER_V6_API}?${jupiterParams.toString()}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${JUPITER_V6_API}?${jupiterParams.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
       },
-      signal: controller.signal,
-    });
+    );
 
     clearTimeout(timeoutId);
 
@@ -91,7 +96,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -108,7 +113,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -121,7 +126,8 @@ async function handler(request: Request): Promise<Response> {
       },
     });
   } catch (error: any) {
-    const isTimeout = error?.name === "AbortError" || error?.message?.includes("timeout");
+    const isTimeout =
+      error?.name === "AbortError" || error?.message?.includes("timeout");
 
     return new Response(
       JSON.stringify({
@@ -134,7 +140,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

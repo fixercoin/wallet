@@ -36,7 +36,7 @@ async function tryBirdeye(address: string, apiKey: string): Promise<any> {
           "X-API-KEY": apiKey,
         },
         signal: controller.signal,
-      }
+      },
     );
 
     clearTimeout(timeoutId);
@@ -71,7 +71,7 @@ async function tryDexScreener(address: string): Promise<any> {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-      }
+      },
     );
 
     clearTimeout(timeoutId);
@@ -83,8 +83,9 @@ async function tryDexScreener(address: string): Promise<any> {
       if (pairs.length > 0) {
         const pair = pairs.find(
           (p: any) =>
-            (p?.baseToken?.address === address || p?.quoteToken?.address === address) &&
-            p?.priceUsd
+            (p?.baseToken?.address === address ||
+              p?.quoteToken?.address === address) &&
+            p?.priceUsd,
         );
 
         if (pair && pair.priceUsd) {
@@ -119,7 +120,7 @@ async function tryJupiter(address: string): Promise<any> {
         method: "GET",
         headers: { Accept: "application/json" },
         signal: controller.signal,
-      }
+      },
     );
 
     clearTimeout(timeoutId);
@@ -176,14 +177,14 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
     // Try Birdeye first
     const birdeyeResult = await tryBirdeye(
       address,
-      "cecae2ad38d7461eaf382f533726d9bb"
+      "cecae2ad38d7461eaf382f533726d9bb",
     );
     if (birdeyeResult) {
       return new Response(
@@ -195,24 +196,21 @@ async function handler(request: Request): Promise<Response> {
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=10",
           },
-        }
+        },
       );
     }
 
     // Try DexScreener
     const dexResult = await tryDexScreener(address);
     if (dexResult) {
-      return new Response(
-        JSON.stringify({ success: true, data: dexResult }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "public, max-age=10",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ success: true, data: dexResult }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=10",
+        },
+      });
     }
 
     // Try Jupiter
@@ -227,7 +225,7 @@ async function handler(request: Request): Promise<Response> {
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=10",
           },
-        }
+        },
       );
     }
 
@@ -251,7 +249,7 @@ async function handler(request: Request): Promise<Response> {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
             },
-          }
+          },
         );
       }
     }
@@ -268,7 +266,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error: any) {
     return new Response(
@@ -283,7 +281,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

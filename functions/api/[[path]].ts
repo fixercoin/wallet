@@ -34,7 +34,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 
@@ -43,7 +43,8 @@ async function handler(request: Request): Promise<Response> {
     JSON.stringify({
       error: "API endpoint not found",
       path: pathname,
-      message: "This endpoint has not been implemented. Please check the API documentation.",
+      message:
+        "This endpoint has not been implemented. Please check the API documentation.",
     }),
     {
       status: 404,
@@ -51,7 +52,7 @@ async function handler(request: Request): Promise<Response> {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-    }
+    },
   );
 }
 

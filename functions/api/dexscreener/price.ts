@@ -29,7 +29,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -42,7 +42,7 @@ async function handler(request: Request): Promise<Response> {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-      }
+      },
     );
 
     clearTimeout(timeoutId);
@@ -68,7 +68,8 @@ async function handler(request: Request): Promise<Response> {
       },
     });
   } catch (error: any) {
-    const isTimeout = error?.name === "AbortError" || error?.message?.includes("timeout");
+    const isTimeout =
+      error?.name === "AbortError" || error?.message?.includes("timeout");
 
     return new Response(
       JSON.stringify({
@@ -81,7 +82,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

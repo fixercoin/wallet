@@ -31,21 +31,24 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(`${JUPITER_PRICE_API}?ids=${encodeURIComponent(ids)}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${JUPITER_PRICE_API}?ids=${encodeURIComponent(ids)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
       },
-      signal: controller.signal,
-    });
+    );
 
     clearTimeout(timeoutId);
 
@@ -63,7 +66,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -76,7 +79,8 @@ async function handler(request: Request): Promise<Response> {
       },
     });
   } catch (error: any) {
-    const isTimeout = error?.name === "AbortError" || error?.message?.includes("timeout");
+    const isTimeout =
+      error?.name === "AbortError" || error?.message?.includes("timeout");
 
     return new Response(
       JSON.stringify({
@@ -90,7 +94,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

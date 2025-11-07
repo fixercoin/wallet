@@ -29,16 +29,13 @@ async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      {
-        status: 405,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 
   try {
@@ -46,29 +43,23 @@ async function handler(request: Request): Promise<Response> {
     try {
       rpcRequest = await request.json();
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON body" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
     if (!rpcRequest || !rpcRequest.method) {
-      return new Response(
-        JSON.stringify({ error: "Missing RPC method" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Missing RPC method" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
     let lastError = "";
@@ -118,14 +109,21 @@ async function handler(request: Request): Promise<Response> {
           // Not valid JSON-RPC response
         }
 
-        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        if (
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
           lastError = `HTTP ${response.status}`;
           break;
         }
 
         lastError = `HTTP ${response.status}`;
       } catch (error: any) {
-        lastError = error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+        lastError =
+          error?.name === "AbortError"
+            ? "timeout"
+            : error?.message || String(error);
       }
     }
 
@@ -140,7 +138,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error: any) {
     return new Response(
@@ -154,7 +152,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

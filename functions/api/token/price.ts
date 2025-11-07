@@ -32,7 +32,11 @@ async function handler(request: Request): Promise<Response> {
 
   try {
     const url = new URL(request.url);
-    const token = (url.searchParams.get("token") || url.searchParams.get("symbol") || "FIXERCOIN").toUpperCase();
+    const token = (
+      url.searchParams.get("token") ||
+      url.searchParams.get("symbol") ||
+      "FIXERCOIN"
+    ).toUpperCase();
     const mint = url.searchParams.get("mint") || "";
 
     // Handle stablecoins
@@ -46,7 +50,7 @@ async function handler(request: Request): Promise<Response> {
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=3600",
           },
-        }
+        },
       );
     }
 
@@ -66,7 +70,7 @@ async function handler(request: Request): Promise<Response> {
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=60",
           },
-        }
+        },
       );
     }
 
@@ -74,7 +78,7 @@ async function handler(request: Request): Promise<Response> {
     if (mint && mint.length > 40) {
       // Try to find the token symbol for this mint
       const tokenSymbol = Object.entries(TOKEN_MINTS).find(
-        ([, m]) => m === mint
+        ([, m]) => m === mint,
       )?.[0];
 
       if (tokenSymbol && FALLBACK_PRICES[tokenSymbol]) {
@@ -93,7 +97,7 @@ async function handler(request: Request): Promise<Response> {
               "Access-Control-Allow-Origin": "*",
               "Cache-Control": "public, max-age=60",
             },
-          }
+          },
         );
       }
     }
@@ -110,7 +114,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error: any) {
     return new Response(
@@ -124,7 +128,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

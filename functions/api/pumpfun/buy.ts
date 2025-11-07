@@ -23,16 +23,13 @@ async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      {
-        status: 405,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 
   try {
@@ -40,19 +37,22 @@ async function handler(request: Request): Promise<Response> {
     try {
       body = await request.json();
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON body" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
-    const { mint, amount, buyer, slippageBps = 350, priorityFeeLamports = 10000 } = body;
+    const {
+      mint,
+      amount,
+      buyer,
+      slippageBps = 350,
+      priorityFeeLamports = 10000,
+    } = body;
 
     if (!mint || amount === undefined || !buyer) {
       return new Response(
@@ -65,7 +65,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -104,7 +104,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -116,11 +116,14 @@ async function handler(request: Request): Promise<Response> {
       },
     });
   } catch (error: any) {
-    const isTimeout = error?.name === "AbortError" || error?.message?.includes("timeout");
+    const isTimeout =
+      error?.name === "AbortError" || error?.message?.includes("timeout");
 
     return new Response(
       JSON.stringify({
-        error: isTimeout ? "Request timeout" : "Failed to request BUY transaction",
+        error: isTimeout
+          ? "Request timeout"
+          : "Failed to request BUY transaction",
         details: isTimeout
           ? "Pump.fun API took too long to respond"
           : error?.message || String(error),
@@ -131,7 +134,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

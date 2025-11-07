@@ -22,7 +22,8 @@ async function handler(request: Request): Promise<Response> {
 
   try {
     const url = new URL(request.url);
-    const publicKey = url.searchParams.get("publicKey") || url.searchParams.get("address");
+    const publicKey =
+      url.searchParams.get("publicKey") || url.searchParams.get("address");
 
     if (!publicKey) {
       return new Response(
@@ -33,7 +34,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -82,11 +83,14 @@ async function handler(request: Request): Promise<Response> {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
               },
-            }
+            },
           );
         }
       } catch (error: any) {
-        lastError = error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+        lastError =
+          error?.name === "AbortError"
+            ? "timeout"
+            : error?.message || String(error);
       }
     }
 
@@ -101,7 +105,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error: any) {
     return new Response(
@@ -115,7 +119,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

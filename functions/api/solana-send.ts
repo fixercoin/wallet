@@ -20,16 +20,13 @@ async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      {
-        status: 405,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 
   try {
@@ -37,16 +34,13 @@ async function handler(request: Request): Promise<Response> {
     try {
       body = await request.json();
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON body" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
     const { transaction } = body;
@@ -60,7 +54,7 @@ async function handler(request: Request): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -68,7 +62,10 @@ async function handler(request: Request): Promise<Response> {
       jsonrpc: "2.0",
       id: 1,
       method: "sendRawTransaction",
-      params: [transaction, { skipPreflight: false, preflightCommitment: "confirmed" }],
+      params: [
+        transaction,
+        { skipPreflight: false, preflightCommitment: "confirmed" },
+      ],
     };
 
     let lastError = "";
@@ -103,7 +100,7 @@ async function handler(request: Request): Promise<Response> {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
               },
-            }
+            },
           );
         }
 
@@ -112,7 +109,10 @@ async function handler(request: Request): Promise<Response> {
           continue;
         }
       } catch (error: any) {
-        lastError = error?.name === "AbortError" ? "timeout" : error?.message || String(error);
+        lastError =
+          error?.name === "AbortError"
+            ? "timeout"
+            : error?.message || String(error);
       }
     }
 
@@ -127,7 +127,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error: any) {
     return new Response(
@@ -141,7 +141,7 @@ async function handler(request: Request): Promise<Response> {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }

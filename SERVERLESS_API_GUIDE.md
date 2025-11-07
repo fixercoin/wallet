@@ -20,11 +20,13 @@ All API endpoints are implemented as serverless functions in the `functions/` di
 ### Jupiter v6 Swap Endpoints
 
 #### Quote
+
 ```
 GET /api/jupiter/quote?inputMint=...&outputMint=...&amount=...&slippageBps=100
 ```
 
 **Parameters:**
+
 - `inputMint` (required): Token to swap from (mint address)
 - `outputMint` (required): Token to swap to (mint address)
 - `amount` (required): Amount in smallest units
@@ -33,11 +35,13 @@ GET /api/jupiter/quote?inputMint=...&outputMint=...&amount=...&slippageBps=100
 - `asLegacyTransaction` (optional): Use legacy transaction format (true/false)
 
 **Example:**
+
 ```bash
 curl "http://localhost:8788/api/jupiter/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump&amount=1000000000&slippageBps=100"
 ```
 
 **Response:**
+
 ```json
 {
   "inputMint": "So11...",
@@ -51,6 +55,7 @@ curl "http://localhost:8788/api/jupiter/quote?inputMint=So1111111111111111111111
 ```
 
 #### Swap
+
 ```
 POST /api/jupiter/swap
 Content-Type: application/json
@@ -65,6 +70,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "swapTransaction": "base64_encoded_transaction",
@@ -74,11 +80,13 @@ Content-Type: application/json
 ```
 
 #### Price
+
 ```
 GET /api/jupiter/price?ids=mint1,mint2,mint3
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -94,6 +102,7 @@ GET /api/jupiter/price?ids=mint1,mint2,mint3
 ### Solana RPC Endpoints
 
 #### RPC Proxy
+
 ```
 POST /api/solana-rpc
 Content-Type: application/json
@@ -107,6 +116,7 @@ Content-Type: application/json
 ```
 
 Supports all standard Solana RPC methods:
+
 - `getBalance` - Get SOL balance
 - `getTokenAccountsByOwner` - Get token accounts
 - `getTransaction` - Get transaction details
@@ -116,11 +126,13 @@ Supports all standard Solana RPC methods:
 ### Wallet Endpoints
 
 #### Balance
+
 ```
 GET /api/wallet/balance?publicKey=wallet_address
 ```
 
 **Response:**
+
 ```json
 {
   "publicKey": "Address1...",
@@ -130,11 +142,13 @@ GET /api/wallet/balance?publicKey=wallet_address
 ```
 
 #### Tokens
+
 ```
 GET /api/wallet/tokens?publicKey=wallet_address
 ```
 
 **Response:**
+
 ```json
 {
   "publicKey": "Address1...",
@@ -154,17 +168,20 @@ GET /api/wallet/tokens?publicKey=wallet_address
 ### Price Endpoints
 
 #### Birdeye Price (with fallbacks)
+
 ```
 GET /api/birdeye/price?address=token_mint
 ```
 
 Uses fallback chain:
+
 1. Birdeye API
 2. DexScreener API
 3. Jupiter API
 4. Hardcoded fallback prices
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -179,11 +196,13 @@ Uses fallback chain:
 ```
 
 #### DexScreener Price
+
 ```
 GET /api/dexscreener/price?mint=token_mint
 ```
 
 #### Token Price Utility
+
 ```
 GET /api/token/price?token=SOL&symbol=SOL
 GET /api/token/price?mint=token_mint
@@ -192,6 +211,7 @@ GET /api/token/price?mint=token_mint
 ### Pump.fun Endpoints
 
 #### Buy
+
 ```
 POST /api/pumpfun/buy
 Content-Type: application/json
@@ -206,6 +226,7 @@ Content-Type: application/json
 ```
 
 #### Sell
+
 ```
 POST /api/pumpfun/sell
 Content-Type: application/json
@@ -226,6 +247,7 @@ GET /api/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -265,6 +287,7 @@ Cloudflare Pages has these built-in limits:
 - **Memory**: 128MB per function
 
 For production usage:
+
 - Implement client-side rate limiting
 - Cache quote responses (5-10 seconds)
 - Batch price requests
@@ -272,7 +295,9 @@ For production usage:
 ## Performance Tips
 
 ### 1. Cache Quote Responses
+
 Quotes are valid for ~30 seconds:
+
 ```typescript
 const quoteCache = new Map();
 const cacheKey = `${inputMint}-${outputMint}-${amount}`;
@@ -282,18 +307,22 @@ if (quoteCache.has(cacheKey)) {
 ```
 
 ### 2. Batch Price Requests
+
 ```bash
 # Instead of multiple requests
 GET /api/jupiter/price?ids=mint1,mint2,mint3,mint4,mint5
 ```
 
 ### 3. Use DexScreener for High-Traffic
+
 DexScreener is fastest for price feeds:
+
 ```bash
 GET /api/dexscreener/price?mint=token_mint
 ```
 
 ### 4. Connection Pooling
+
 Cloudflare automatically handles connection pooling.
 
 ## Development
@@ -327,6 +356,7 @@ curl "http://localhost:8788/api/wallet/balance?publicKey=wallet_address"
 
 1. Create file in `functions/api/...`
 2. Export default handler function:
+
 ```typescript
 export const config = {
   runtime: "nodejs_esmsh",
@@ -335,18 +365,21 @@ export const config = {
 async function handler(request: Request): Promise<Response> {
   // Implementation
   return new Response(JSON.stringify(response), {
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
 }
 
 export default handler;
 ```
+
 3. Function is automatically available at `/api/...` matching file path
 
 ## Security
 
 ### CORS
+
 All endpoints have CORS headers:
+
 ```
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, OPTIONS
@@ -354,17 +387,21 @@ Access-Control-Allow-Headers: Content-Type
 ```
 
 ### Input Validation
+
 - All functions validate required parameters
 - Query parameters are sanitized
 - JSON bodies are validated before processing
 
 ### Timeout Protection
+
 - All external HTTP calls have timeouts (15-45s)
 - Functions abort on timeout
 - Request/response limits enforced
 
 ### API Keys
+
 Store sensitive keys in Cloudflare Secrets:
+
 ```bash
 wrangler secret put BIRDEYE_API_KEY
 wrangler secret put SOLANA_RPC
@@ -375,14 +412,17 @@ Never commit `.env` with secrets!
 ## Monitoring
 
 ### Cloudflare Analytics
+
 View in Cloudflare Dashboard → Pages → Analytics
 
 ### Real-time Logs
+
 ```bash
 wrangler tail --project-name wallet-c36
 ```
 
 ### Key Metrics
+
 - Requests per second
 - Error rate
 - P95/P99 latency
@@ -391,21 +431,25 @@ wrangler tail --project-name wallet-c36
 ## Troubleshooting
 
 ### Function Returns 404
+
 - Check file path matches route
 - Verify correct TypeScript syntax
 - Rebuild: `npm run build`
 
 ### CORS Errors
+
 - Functions include CORS headers
 - Ensure preflight OPTIONS is handled
 - Check browser console for error details
 
 ### Timeout Errors (504)
+
 - Increase timeout in function
 - Check external API health
 - Implement retry logic
 
 ### Quote Stale Error
+
 - Request new quote
 - Quote valid for ~30 seconds
 - Use lower slippage for volatile tokens
@@ -413,6 +457,7 @@ wrangler tail --project-name wallet-c36
 ## Migration from Express
 
 Old setup:
+
 ```
 Express Server (port 3000)
     → /api/jupiter/quote
@@ -421,6 +466,7 @@ Express Server (port 3000)
 ```
 
 New setup:
+
 ```
 Cloudflare Pages (serverless)
     → /api/jupiter/quote (functions/api/jupiter/quote.ts)

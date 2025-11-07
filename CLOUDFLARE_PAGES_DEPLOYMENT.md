@@ -53,6 +53,7 @@ dist/                        # Build output (served by Cloudflare Pages)
 All API endpoints are now serverless and don't require an Express server:
 
 ### Jupiter v6 Swap
+
 ```
 GET /api/jupiter/quote?inputMint=...&outputMint=...&amount=...&slippageBps=100
 POST /api/jupiter/swap (with quoteResponse JSON body)
@@ -60,17 +61,20 @@ GET /api/jupiter/price?ids=mint1,mint2,...
 ```
 
 ### Solana RPC
+
 ```
 POST /api/solana-rpc (with JSON-RPC body)
 ```
 
 ### Wallet
+
 ```
 GET /api/wallet/balance?publicKey=...
 GET /api/wallet/tokens?publicKey=...
 ```
 
 ### Prices
+
 ```
 GET /api/birdeye/price?address=mint
 GET /api/dexscreener/price?mint=mint
@@ -78,6 +82,7 @@ GET /api/token/price?token=SOL&symbol=SOL
 ```
 
 ### Pump.fun
+
 ```
 POST /api/pumpfun/buy (with mint, amount, buyer)
 POST /api/pumpfun/sell (with mint, amount, seller)
@@ -120,10 +125,12 @@ BIRDEYE_API_KEY=your_birdeye_api_key
 ### Step 4: Deploy
 
 Option A: Automatic (recommended)
+
 - Push code to your connected branch
 - Cloudflare automatically builds and deploys
 
 Option B: Manual using Wrangler
+
 ```bash
 npm install -g @cloudflare/wrangler
 wrangler pages deploy dist --project-name wallet-c36
@@ -145,8 +152,9 @@ npm run dev
 ```
 
 The dev server will:
+
 - Serve frontend on http://localhost:5173 (Vite)
-- Serve API functions on http://localhost:8788/api/* (Wrangler)
+- Serve API functions on http://localhost:8788/api/\* (Wrangler)
 
 ## Jupiter API v6 Integration
 
@@ -160,15 +168,13 @@ const quote = await jupiterV6API.getQuote(
   inputMint,
   outputMint,
   amount,
-  100  // slippageBps
+  100, // slippageBps
 );
 
 // Create swap
-const swap = await jupiterV6API.createSwap(
-  quote,
-  userPublicKey,
-  { wrapAndUnwrapSol: true }
-);
+const swap = await jupiterV6API.createSwap(quote, userPublicKey, {
+  wrapAndUnwrapSol: true,
+});
 ```
 
 ## Monitoring and Debugging
@@ -186,6 +192,7 @@ wrangler tail --project-name wallet-c36
 ### Performance Metrics
 
 Monitor:
+
 - First Contentful Paint (FCP)
 - Largest Contentful Paint (LCP)
 - Cumulative Layout Shift (CLS)
@@ -194,6 +201,7 @@ Monitor:
 ## Scaling and Rate Limiting
 
 Cloudflare Pages provides automatic scaling:
+
 - **Requests**: Unlimited (within fair use)
 - **Functions**: Auto-scaled per region
 - **Concurrent Executions**: 1000+ simultaneously
@@ -201,6 +209,7 @@ Cloudflare Pages provides automatic scaling:
 - **Memory**: 128MB per function
 
 For high-traffic swaps, consider:
+
 1. Implementing request rate limiting in functions
 2. Caching quote responses in Cloudflare KV
 3. Using Cloudflare Workers KV for session state
@@ -210,16 +219,19 @@ For high-traffic swaps, consider:
 To add persistent storage:
 
 ### Option 1: Cloudflare D1 (SQLite)
+
 ```bash
 wrangler d1 create wallet-db
 ```
 
 ### Option 2: Cloudflare KV
+
 ```bash
 wrangler kv:namespace create wallet-cache
 ```
 
 ### Option 3: External Database
+
 - Neon (PostgreSQL)
 - Supabase
 - MongoDB Atlas
@@ -227,6 +239,7 @@ wrangler kv:namespace create wallet-cache
 ## Security Best Practices
 
 1. **API Keys**: Store in Cloudflare Workers Secrets, not in code
+
 ```bash
 wrangler secret put SOLANA_RPC
 wrangler secret put BIRDEYE_API_KEY
@@ -242,6 +255,7 @@ wrangler secret put BIRDEYE_API_KEY
 ### Functions Not Found
 
 Check that:
+
 - Files are in `functions/api/` directory
 - File names match the route structure
 - No syntax errors in TypeScript
@@ -259,6 +273,7 @@ npm run typecheck
 ### API Timeout
 
 Increase timeout or:
+
 1. Check RPC endpoint health
 2. Use fallback endpoints
 3. Implement retry logic
@@ -266,6 +281,7 @@ Increase timeout or:
 ### CORS Issues
 
 Functions have CORS headers enabled:
+
 ```
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, OPTIONS
@@ -282,6 +298,7 @@ No client changes needed! The API routes remain identical; the backend is now fu
 ## Cost Estimation
 
 Cloudflare Pages pricing:
+
 - **Unlimited requests**: No per-request charge
 - **Functions**: $0.50 per million requests
 - **Static files**: Free

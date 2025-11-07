@@ -471,7 +471,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       // Determine swap direction
       const isBuying = fromMint === SOL_MINT;
       const isSelling = toMint === SOL_MINT;
-      const isPumpfunToken = toMint.endsWith("pump") || fromMint.endsWith("pump");
+      const isPumpfunToken =
+        toMint.endsWith("pump") || fromMint.endsWith("pump");
 
       // Check if we should use Pump.fun or Jupiter
       const usePumpfun = (isBuying || isSelling) && isPumpfunToken;
@@ -491,7 +492,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             if (isBuying) {
               // BUY: SOL → Token
               setStatus("Requesting Pump.fun BUY transaction…");
-              txBase64 = await pumpBuy(tokenMint, amountInHuman, wallet.publicKey);
+              txBase64 = await pumpBuy(
+                tokenMint,
+                amountInHuman,
+                wallet.publicKey,
+              );
             } else {
               // SELL: Token → SOL
               setStatus("Requesting Pump.fun SELL transaction…");
@@ -503,7 +508,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             // Sign the transaction
             setStatus("Signing transaction…");
-            const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+            const tx = VersionedTransaction.deserialize(
+              bytesFromBase64(txBase64),
+            );
 
             const keypair = getKeypair(wallet);
             if (!keypair) {
@@ -564,7 +571,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           // Sign the transaction
           setStatus("Signing transaction…");
-          const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+          const tx = VersionedTransaction.deserialize(
+            bytesFromBase64(txBase64),
+          );
 
           const keypair = getKeypair(wallet);
           if (!keypair) {
@@ -830,7 +839,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 {quote.priceImpact !== undefined && (
                   <div className="flex justify-between">
                     <span className="text-xs text-gray-500">Price impact:</span>
-                    <span className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}>
+                    <span
+                      className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}
+                    >
                       {quote.priceImpact.toFixed(2)}%
                     </span>
                   </div>

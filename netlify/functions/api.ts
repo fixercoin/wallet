@@ -157,6 +157,46 @@ async function fetchDexData(path: string) {
   return request;
 }
 
+/**
+ * Helper to safely parse request body from Netlify event
+ * Handles both JSON and base64-encoded bodies
+ */
+function parseRequestBody(event: any): any {
+  try {
+    let body = event.body;
+
+    if (!body) {
+      return {};
+    }
+
+    // Decode base64 if needed
+    if (event.isBase64Encoded && typeof body === "string") {
+      try {
+        // Use standard base64 decode (atob is available in all JS runtimes)
+        // For Node.js, Buffer.from is preferred but we can use atob for compatibility
+        if (typeof Buffer !== "undefined") {
+          body = Buffer.from(body, "base64").toString("utf8");
+        } else {
+          body = atob(body);
+        }
+      } catch (decodeError) {
+        console.warn("[Netlify] Base64 decode failed, treating as plain text");
+        // Continue with the original body as-is
+      }
+    }
+
+    // Parse JSON
+    if (typeof body === "string" && body.trim()) {
+      return JSON.parse(body);
+    }
+
+    return {};
+  } catch (e) {
+    console.error("[Netlify] Failed to parse request body:", e);
+    return null; // Return null to indicate parse error
+  }
+}
+
 export const handler = async (event: any) => {
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");
@@ -199,10 +239,7 @@ export const handler = async (event: any) => {
 
     // Easypaisa webhook ingestion (best-effort schema)
     if (path === "/easypaisa/webhook" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const configuredSecret = process.env.EASYPAY_WEBHOOK_SECRET;
       const providedSecret =
@@ -265,10 +302,12 @@ export const handler = async (event: any) => {
 
     // Solana RPC
     if (path === "/solana-rpc" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event);
+      if (body === null) {
+        return jsonResponse(400, {
+          error: "Invalid JSON in request body",
+        });
+      }
 
       const methodName = body?.method;
       const params = body?.params ?? [];
@@ -278,8 +317,17 @@ export const handler = async (event: any) => {
         return jsonResponse(400, { error: "Missing RPC method" });
       }
 
-      const result = await callRpc(methodName, params, id);
-      return jsonResponse(200, result.body);
+      try {
+        const result = await callRpc(methodName, params, id);
+        return jsonResponse(200, result.body);
+      } catch (e: any) {
+        console.error("[Solana RPC] Handler error:", e);
+        return jsonResponse(502, {
+          error: "Failed to call Solana RPC",
+          details: e?.message || String(e),
+          method: methodName,
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR
@@ -864,10 +912,7 @@ export const handler = async (event: any) => {
         let amount = "";
 
         if (method === "POST") {
-          let body: any = {};
-          try {
-            body = event.body ? JSON.parse(event.body) : {};
-          } catch {}
+          const body = parseRequestBody(event) || {};
           inputMint = body?.inputMint || "";
           outputMint = body?.outputMint || "";
           amount = body?.amount || "";
@@ -909,10 +954,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun swap: /api/pumpfun/swap (POST)
     if (path === "/pumpfun/swap" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       if (!body || typeof body !== "object") {
         return jsonResponse(400, { error: "Invalid request body" });
@@ -939,10 +981,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun buy: /api/pumpfun/buy (POST)
     if (path === "/pumpfun/buy" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const { mint, amount, buyer } = body;
 
@@ -993,10 +1032,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun sell: /api/pumpfun/sell (POST)
     if (path === "/pumpfun/sell" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const { mint, amount, seller } = body;
 
@@ -1050,10 +1086,7 @@ export const handler = async (event: any) => {
       (path === "/solana-send" || path === "/swap/submit") &&
       method === "POST"
     ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const txBase64 =
         body?.signedBase64 ||
@@ -1080,10 +1113,7 @@ export const handler = async (event: any) => {
 
     // Simulate signed transaction: /api/solana-simulate (POST)
     if (path === "/solana-simulate" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const txBase64 =
         body?.signedBase64 ||

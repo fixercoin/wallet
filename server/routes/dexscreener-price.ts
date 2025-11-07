@@ -62,7 +62,10 @@ async function getDerivedTokenPrice(
         }
       }
     } catch (e) {
-      console.warn(`[Derived Price] Could not fetch SOL price, using fallback:`, e);
+      console.warn(
+        `[Derived Price] Could not fetch SOL price, using fallback:`,
+        e,
+      );
     }
 
     // Try to get token price via pair address first for better accuracy
@@ -114,7 +117,9 @@ async function getDerivedTokenPrice(
 
     // If we still don't have a price, return null
     if (tokenPrice === null || !isFinite(tokenPrice) || tokenPrice <= 0) {
-      console.warn(`[Derived Price] Could not determine price for ${tokenSymbol}`);
+      console.warn(
+        `[Derived Price] Could not determine price for ${tokenSymbol}`,
+      );
       return null;
     }
 
@@ -156,7 +161,9 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
       if (pair && pair.priceUsd) {
         const price = parseFloat(pair.priceUsd);
         if (isFinite(price) && price > 0) {
-          console.log(`[DexScreener Price] ✅ Successfully fetched price: $${price}`);
+          console.log(
+            `[DexScreener Price] ✅ Successfully fetched price: $${price}`,
+          );
           return res.json({
             token,
             price,
@@ -167,7 +174,9 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
         }
       }
 
-      console.warn(`[DexScreener Price] Invalid or missing price data for ${token}`);
+      console.warn(
+        `[DexScreener Price] Invalid or missing price data for ${token}`,
+      );
     } catch (error) {
       console.warn(
         `[DexScreener Price] Fetch failed:`,
@@ -176,7 +185,9 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
     }
 
     // Fallback response - return zero price but valid JSON
-    console.log(`[DexScreener Price] Returning zero price fallback for ${token}`);
+    console.log(
+      `[DexScreener Price] Returning zero price fallback for ${token}`,
+    );
     return res.json({
       token,
       price: 0,
@@ -213,7 +224,9 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
         const priceUsd = parseFloat(pair.priceUsd);
 
         if (isFinite(priceUsd) && priceUsd > 0) {
-          console.log(`[SOL Price] ✅ Successfully fetched SOL price: $${priceUsd}`);
+          console.log(
+            `[SOL Price] ✅ Successfully fetched SOL price: $${priceUsd}`,
+          );
           return res.json({
             token: "SOL",
             price: priceUsd,
@@ -228,7 +241,10 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
 
       console.warn(`[SOL Price] Invalid or missing price data, using fallback`);
     } catch (error) {
-      console.warn(`[SOL Price] DexScreener fetch failed:`, error instanceof Error ? error.message : String(error));
+      console.warn(
+        `[SOL Price] DexScreener fetch failed:`,
+        error instanceof Error ? error.message : String(error),
+      );
     }
 
     // Fallback response with status 200 (not 502) to ensure client receives valid JSON

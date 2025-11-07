@@ -142,7 +142,9 @@ async function handler(request: Request): Promise<Response> {
         market_cap: 0,
         volume_24h: 0,
         source: "fallback",
-        error: isTimeout ? "Request timeout - using fallback price" : "API error - using fallback price",
+        error: isTimeout
+          ? "Request timeout - using fallback price"
+          : "API error - using fallback price",
       }),
       {
         status: 200,

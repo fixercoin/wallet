@@ -267,8 +267,20 @@ export const handler = async (event: any) => {
     if (path === "/solana-rpc" && method === "POST") {
       let body: any = {};
       try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+        if (event.body) {
+          if (typeof event.body === "string") {
+            body = JSON.parse(event.body);
+          } else {
+            body = event.body;
+          }
+        }
+      } catch (e) {
+        console.error("[Solana RPC] Failed to parse request body:", e);
+        return jsonResponse(400, {
+          error: "Invalid JSON in request body",
+          details: (e as any)?.message,
+        });
+      }
 
       const methodName = body?.method;
       const params = body?.params ?? [];
@@ -278,8 +290,17 @@ export const handler = async (event: any) => {
         return jsonResponse(400, { error: "Missing RPC method" });
       }
 
-      const result = await callRpc(methodName, params, id);
-      return jsonResponse(200, result.body);
+      try {
+        const result = await callRpc(methodName, params, id);
+        return jsonResponse(200, result.body);
+      } catch (e: any) {
+        console.error("[Solana RPC] Handler error:", e);
+        return jsonResponse(502, {
+          error: "Failed to call Solana RPC",
+          details: e?.message || String(e),
+          method: methodName,
+        });
+      }
     }
 
     // Forex rate proxy: /api/forex/rate?base=USD&symbols=PKR

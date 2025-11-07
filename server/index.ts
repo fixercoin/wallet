@@ -710,15 +710,5 @@ export async function createServer(): Promise<express.Application> {
   return app;
 }
 
-// Cloudflare Workers compatibility export
-export default {
-  async fetch(req: Request): Promise<Response> {
-    const url = new URL(req.url);
-
-    if (url.pathname.startsWith("/api/solana-rpc")) {
-      return await handleSolanaRpc(req as any);
-    }
-
-    return new Response("Wallet backend active", { status: 200 });
-  },
-};
+// Export handler for Netlify serverless functions
+export const handler = createApp();

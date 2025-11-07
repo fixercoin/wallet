@@ -1,6 +1,6 @@
 // API router for Netlify functions
-// Routes requests to the appropriate handler based on the path
-import type { Handler } from "@netlify/functions";
+// This handler routes requests to the appropriate nested handlers based on the path
+import type { Handler, HandlerEvent, HandlerResponse } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -9,49 +9,9 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-// Import handlers
-import jupiterQuote from "./jupiter/quote";
-import jupiterSwap from "./jupiter/swap";
-import jupiterPrice from "./jupiter/price";
-import solPrice from "./sol/price";
-import tokenPrice from "./token/price";
-import solanRpc from "./solana-rpc";
-import health from "./health";
-import ping from "./ping";
-import dexscreenerPrice from "./dexscreener/price";
-import dexscreenerTokens from "./dexscreener/tokens";
-import birdeyePrice from "./birdeye/price";
-import walletBalance from "./wallet/balance";
-import pumpfunQuote from "./pumpfun/quote";
-import pumpfunBuy from "./pumpfun/buy";
-import pumpfunSell from "./pumpfun/sell";
-import pumpfunTrade from "./pumpfun/trade";
-import pumpfunCurve from "./pumpfun/curve";
-import forexRate from "./forex/rate";
-
-// Map of paths to handlers
-const handlers: Record<string, any> = {
-  "jupiter/quote": jupiterQuote,
-  "jupiter/swap": jupiterSwap,
-  "jupiter/price": jupiterPrice,
-  "sol/price": solPrice,
-  "token/price": tokenPrice,
-  "solana-rpc": solanRpc,
-  "health": health,
-  "ping": ping,
-  "dexscreener/price": dexscreenerPrice,
-  "dexscreener/tokens": dexscreenerTokens,
-  "birdeye/price": birdeyePrice,
-  "wallet/balance": walletBalance,
-  "pumpfun/quote": pumpfunQuote,
-  "pumpfun/buy": pumpfunBuy,
-  "pumpfun/sell": pumpfunSell,
-  "pumpfun/trade": pumpfunTrade,
-  "pumpfun/curve": pumpfunCurve,
-  "forex/rate": forexRate,
-};
-
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (
+  event: HandlerEvent
+): Promise<HandlerResponse> => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -61,36 +21,124 @@ export const handler: Handler = async (event) => {
   }
 
   // Extract the path from the event
-  // The path is everything after /api/
-  const path = event.path?.replace(/^\/api\/?/, "") || "";
-  
-  // Find a matching handler
-  if (handlers[path] && handlers[path].handler) {
-    try {
-      return await handlers[path].handler(event);
-    } catch (error: any) {
-      console.error(`Error in handler for ${path}:`, error);
-      return {
-        statusCode: 500,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: "Handler execution error",
-          details: error?.message || String(error),
-          path: path,
-        }),
-      };
-    }
-  }
+  // The rawPath should contain the full path like /api/jupiter/quote
+  const rawPath = event.rawPath || event.path || "";
+  const path = rawPath.replace(/^\/api\/?/, "").replace(/\?.*/, "");
 
-  // Fallback for unmapped endpoints
-  return {
-    statusCode: 404,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({
-      error: "API endpoint not found",
-      hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, /api/jupiter/quote, etc.",
-      path: path,
-      availableEndpoints: Object.keys(handlers),
-    }),
-  };
+  console.log(`API Router: Processing path: ${path}`);
+
+  // Route specific endpoints
+  const pathSegments = path.split("/");
+  const firstSegment = pathSegments[0];
+
+  // Dynamically import and call the appropriate handler
+  try {
+    let handler: any;
+
+    // Map paths to handler functions
+    switch (firstSegment) {
+      case "jupiter":
+        const jupiterEndpoint = pathSegments[1];
+        if (jupiterEndpoint === "quote") {
+          handler = (await import("./jupiter/quote")).handler;
+        } else if (jupiterEndpoint === "swap") {
+          handler = (await import("./jupiter/swap")).handler;
+        } else if (jupiterEndpoint === "price") {
+          handler = (await import("./jupiter/price")).handler;
+        }
+        break;
+
+      case "sol":
+        if (pathSegments[1] === "price") {
+          handler = (await import("./sol/price")).handler;
+        }
+        break;
+
+      case "token":
+        if (pathSegments[1] === "price") {
+          handler = (await import("./token/price")).handler;
+        }
+        break;
+
+      case "wallet":
+        if (pathSegments[1] === "balance") {
+          handler = (await import("./wallet/balance")).handler;
+        }
+        break;
+
+      case "solana-rpc":
+        handler = (await import("./solana-rpc")).handler;
+        break;
+
+      case "health":
+        handler = (await import("./health")).handler;
+        break;
+
+      case "ping":
+        handler = (await import("./ping")).handler;
+        break;
+
+      case "dexscreener":
+        const dexscreenerEndpoint = pathSegments[1];
+        if (dexscreenerEndpoint === "price") {
+          handler = (await import("./dexscreener/price")).handler;
+        } else if (dexscreenerEndpoint === "tokens") {
+          handler = (await import("./dexscreener/tokens")).handler;
+        }
+        break;
+
+      case "birdeye":
+        if (pathSegments[1] === "price") {
+          handler = (await import("./birdeye/price")).handler;
+        }
+        break;
+
+      case "pumpfun":
+        const pumpfunEndpoint = pathSegments[1];
+        if (pumpfunEndpoint === "quote") {
+          handler = (await import("./pumpfun/quote")).handler;
+        } else if (pumpfunEndpoint === "buy") {
+          handler = (await import("./pumpfun/buy")).handler;
+        } else if (pumpfunEndpoint === "sell") {
+          handler = (await import("./pumpfun/sell")).handler;
+        } else if (pumpfunEndpoint === "trade") {
+          handler = (await import("./pumpfun/trade")).handler;
+        } else if (pumpfunEndpoint === "curve") {
+          handler = (await import("./pumpfun/curve")).handler;
+        }
+        break;
+
+      case "forex":
+        if (pathSegments[1] === "rate") {
+          handler = (await import("./forex/rate")).handler;
+        }
+        break;
+    }
+
+    if (handler && typeof handler === "function") {
+      return await handler(event);
+    }
+
+    // No matching handler found
+    return {
+      statusCode: 404,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "API endpoint not found",
+        hint: "Use specific endpoints like /api/solana-rpc, /api/wallet/balance, /api/jupiter/quote, etc.",
+        requestedPath: path,
+      }),
+    };
+  } catch (error: any) {
+    console.error(`Error routing to handler for ${path}:`, error);
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Internal server error",
+        details: error?.message || String(error),
+        path: path,
+      }),
+    };
+  }
 };

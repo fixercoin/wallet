@@ -157,6 +157,31 @@ async function fetchDexData(path: string) {
   return request;
 }
 
+/**
+ * Helper to safely parse request body from Netlify event
+ * Handles both JSON and base64-encoded bodies
+ */
+function parseRequestBody(event: any): any {
+  try {
+    let body = event.body;
+
+    // Decode base64 if needed
+    if (event.isBase64Encoded && body) {
+      body = Buffer.from(body, "base64").toString("utf8");
+    }
+
+    // Parse JSON
+    if (typeof body === "string" && body.trim()) {
+      return JSON.parse(body);
+    }
+
+    return {};
+  } catch (e) {
+    console.error("[Netlify] Failed to parse request body:", e);
+    return null; // Return null to indicate parse error
+  }
+}
+
 export const handler = async (event: any) => {
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(204, "");

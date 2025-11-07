@@ -468,39 +468,60 @@ class JupiterAPI {
   async getStrictTokenList(): Promise<JupiterToken[]> {
     // Try multiple endpoints and strategies
     const endpoints = [
-      { url: "/api/jupiter/tokens?type=strict", name: "strict" },
-      { url: "/api/jupiter/tokens?type=all", name: "all" },
-      { url: "https://token.jup.ag/strict", name: "direct-strict" },
-      { url: "https://token.jup.ag/all", name: "direct-all" },
-      { url: "https://cache.jup.ag/tokens", name: "cache" },
+      { url: "/api/jupiter/tokens?type=strict", name: "strict", direct: false },
+      { url: "/api/jupiter/tokens?type=all", name: "all", direct: false },
+      {
+        url: "https://token.jup.ag/strict",
+        name: "direct-strict",
+        direct: true,
+      },
+      { url: "https://token.jup.ag/all", name: "direct-all", direct: true },
+      { url: "https://cache.jup.ag/tokens", name: "cache", direct: true },
     ];
 
     for (const endpoint of endpoints) {
-      try {
-        console.log(`Fetching Jupiter tokens from: ${endpoint.name}`);
-        const resp = endpoint.url.startsWith("/api/")
-          ? await fetchWithFallback(endpoint.url, { method: "GET" }).catch(
-              () => new Response("", { status: 0 } as any),
-            )
-          : await this.fetchWithTimeout(endpoint.url, 10000).catch(
-              () => new Response("", { status: 0 } as any),
-            );
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          console.log(
+            `Fetching Jupiter tokens from: ${endpoint.name} (attempt ${attempt}/2)`,
+          );
 
-        if (resp.ok) {
-          const data = await resp.json();
-          if (Array.isArray(data) && data.length > 0) {
-            console.log(
-              `✅ Successfully loaded ${data.length} tokens from ${endpoint.name}`,
+          let resp: Response;
+          if (endpoint.direct) {
+            resp = await this.fetchWithTimeout(endpoint.url, 15000);
+          } else {
+            resp = await fetchWithFallback(endpoint.url, { method: "GET" });
+          }
+
+          if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data) && data.length > 0) {
+              console.log(
+                `✅ Successfully loaded ${data.length} tokens from ${endpoint.name}`,
+              );
+              return data as JupiterToken[];
+            }
+          } else {
+            console.warn(
+              `[${endpoint.name}] HTTP ${resp.status}, retrying...`,
             );
-            return data as JupiterToken[];
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, 1500));
+              continue;
+            }
+          }
+          break;
+        } catch (e) {
+          const msg =
+            e instanceof Error ? e.message : String(e);
+          console.warn(
+            `[${endpoint.name}] Failed (attempt ${attempt}/2): ${msg}`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
           }
         }
-      } catch (e) {
-        console.warn(
-          `Failed to fetch from ${endpoint.name}:`,
-          e instanceof Error ? e.message : String(e),
-        );
-        // Continue to next endpoint
       }
     }
 

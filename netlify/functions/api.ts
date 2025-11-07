@@ -799,10 +799,7 @@ export const handler = async (event: any) => {
               }
             }
           } catch (e) {
-            console.warn(
-              `[Token Price] Token lookup failed for ${token}:`,
-              e,
-            );
+            console.warn(`[Token Price] Token lookup failed for ${token}:`, e);
           }
         }
       } catch (e) {
@@ -862,10 +859,8 @@ export const handler = async (event: any) => {
           mint: account?.account?.data?.parsed?.info?.mint,
           tokenAccount: account?.pubkey,
           amount: account?.account?.data?.parsed?.info?.tokenAmount?.amount,
-          decimals:
-            account?.account?.data?.parsed?.info?.tokenAmount?.decimals,
-          uiAmount:
-            account?.account?.data?.parsed?.info?.tokenAmount?.uiAmount,
+          decimals: account?.account?.data?.parsed?.info?.tokenAmount?.decimals,
+          uiAmount: account?.account?.data?.parsed?.info?.tokenAmount?.uiAmount,
         }));
 
         return jsonResponse(200, {

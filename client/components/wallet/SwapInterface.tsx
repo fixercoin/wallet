@@ -494,9 +494,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       try {
         // Sign the transaction with local wallet
         setStatus("Signing transaction…");
-        const tx = VersionedTransaction.deserialize(
-          bytesFromBase64(txBase64),
-        );
+        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
         const keypair = getKeypair(wallet);
         if (!keypair) {
@@ -510,9 +508,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           keypair,
         );
 
-        setSuccessMsg(
-          `Swap successful! Tx: ${txSignature.slice(0, 8)}...`,
-        );
+        setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
         setShowSuccess(true);
         setStatus("");
         setIsLoading(false);

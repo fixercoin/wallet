@@ -26,6 +26,8 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
+import { handler as dexscreenerSearchHandler } from "./api/dexscreener/search";
+
 const HANDLERS: Record<string, Handler> = {
   "sol/price": solPriceHandler,
   "jupiter/quote": jupiterQuoteHandler,
@@ -35,6 +37,7 @@ const HANDLERS: Record<string, Handler> = {
   "dexscreener/tokens": dexscreenerTokensHandler,
   "dexscreener/price": dexscreenerPriceHandler,
   "dexscreener/trending": dexscreenerTrendingHandler,
+  "dexscreener/search": dexscreenerSearchHandler,
   "birdeye/price": birdeyePriceHandler,
   "wallet/balance": walletBalanceHandler,
   "solana-rpc": solanaRpcHandler,

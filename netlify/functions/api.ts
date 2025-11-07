@@ -1074,10 +1074,7 @@ export const handler = async (event: any) => {
       (path === "/solana-send" || path === "/swap/submit") &&
       method === "POST"
     ) {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const txBase64 =
         body?.signedBase64 ||

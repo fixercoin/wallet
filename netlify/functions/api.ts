@@ -2,25 +2,25 @@
 // Routes requests to the appropriate nested handlers based on the path
 import type { Handler, HandlerEvent, HandlerResponse } from "@netlify/functions";
 
-// Import all handlers
-import jupiterQuote from "./jupiter/quote.ts";
-import jupiterSwap from "./jupiter/swap.ts";
-import jupiterPrice from "./jupiter/price.ts";
-import solPrice from "./sol/price.ts";
-import tokenPrice from "./token/price.ts";
-import walletBalance from "./wallet/balance.ts";
-import solanRpc from "./solana-rpc.ts";
-import health from "./health.ts";
-import ping from "./ping.ts";
-import dexscreenerPrice from "./dexscreener/price.ts";
-import dexscreenerTokens from "./dexscreener/tokens.ts";
-import birdeyePrice from "./birdeye/price.ts";
-import pumpfunQuote from "./pumpfun/quote.ts";
-import pumpfunBuy from "./pumpfun/buy.ts";
-import pumpfunSell from "./pumpfun/sell.ts";
-import pumpfunTrade from "./pumpfun/trade.ts";
-import pumpfunCurve from "./pumpfun/curve.ts";
-import forexRate from "./forex/rate.ts";
+// Import all handlers (named exports)
+import { handler as jupiterQuoteHandler } from "./jupiter/quote.ts";
+import { handler as jupiterSwapHandler } from "./jupiter/swap.ts";
+import { handler as jupiterPriceHandler } from "./jupiter/price.ts";
+import { handler as solPriceHandler } from "./sol/price.ts";
+import { handler as tokenPriceHandler } from "./token/price.ts";
+import { handler as walletBalanceHandler } from "./wallet/balance.ts";
+import { handler as solanRpcHandler } from "./solana-rpc.ts";
+import { handler as healthHandler } from "./health.ts";
+import { handler as pingHandler } from "./ping.ts";
+import { handler as dexscreenerPriceHandler } from "./dexscreener/price.ts";
+import { handler as dexscreenerTokensHandler } from "./dexscreener/tokens.ts";
+import { handler as birdeeyePriceHandler } from "./birdeye/price.ts";
+import { handler as pumpfunQuoteHandler } from "./pumpfun/quote.ts";
+import { handler as pumpfunBuyHandler } from "./pumpfun/buy.ts";
+import { handler as pumpfunSellHandler } from "./pumpfun/sell.ts";
+import { handler as pumpfunTradeHandler } from "./pumpfun/trade.ts";
+import { handler as pumpfunCurveHandler } from "./pumpfun/curve.ts";
+import { handler as forexRateHandler } from "./forex/rate.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -31,24 +31,24 @@ const CORS_HEADERS = {
 
 // Map of paths to handlers
 const handlers: Record<string, Handler> = {
-  "jupiter/quote": jupiterQuote,
-  "jupiter/swap": jupiterSwap,
-  "jupiter/price": jupiterPrice,
-  "sol/price": solPrice,
-  "token/price": tokenPrice,
-  "wallet/balance": walletBalance,
-  "solana-rpc": solanRpc,
-  "health": health,
-  "ping": ping,
-  "dexscreener/price": dexscreenerPrice,
-  "dexscreener/tokens": dexscreenerTokens,
-  "birdeye/price": birdeyePrice,
-  "pumpfun/quote": pumpfunQuote,
-  "pumpfun/buy": pumpfunBuy,
-  "pumpfun/sell": pumpfunSell,
-  "pumpfun/trade": pumpfunTrade,
-  "pumpfun/curve": pumpfunCurve,
-  "forex/rate": forexRate,
+  "jupiter/quote": jupiterQuoteHandler,
+  "jupiter/swap": jupiterSwapHandler,
+  "jupiter/price": jupiterPriceHandler,
+  "sol/price": solPriceHandler,
+  "token/price": tokenPriceHandler,
+  "wallet/balance": walletBalanceHandler,
+  "solana-rpc": solanRpcHandler,
+  "health": healthHandler,
+  "ping": pingHandler,
+  "dexscreener/price": dexscreenerPriceHandler,
+  "dexscreener/tokens": dexscreenerTokensHandler,
+  "birdeye/price": birdeeyePriceHandler,
+  "pumpfun/quote": pumpfunQuoteHandler,
+  "pumpfun/buy": pumpfunBuyHandler,
+  "pumpfun/sell": pumpfunSellHandler,
+  "pumpfun/trade": pumpfunTradeHandler,
+  "pumpfun/curve": pumpfunCurveHandler,
+  "forex/rate": forexRateHandler,
 };
 
 export const handler: Handler = async (

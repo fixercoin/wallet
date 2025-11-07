@@ -154,12 +154,36 @@ export async function createServer(): Promise<express.Application> {
   });
 
   // Wallet routes - also supports walletAddress alias
-  app.get("/api/wallet/balance", (req, res) => {
-    // Support walletAddress as an alias for publicKey
-    if (req.query.walletAddress && !req.query.publicKey) {
-      req.query.publicKey = req.query.walletAddress;
+  app.get("/api/wallet/balance", async (req, res) => {
+    try {
+      // Support walletAddress as an alias for publicKey
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "?publicKey=...",
+            "?wallet=...",
+            "?address=...",
+            "?walletAddress=...",
+          ],
+        });
+      }
+
+      // Create a modified request object
+      const modifiedReq = { ...req, query: { publicKey } };
+      handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet balance",
+        details: e?.message || String(e),
+      });
     }
-    handleWalletBalance(req, res);
   });
 
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)

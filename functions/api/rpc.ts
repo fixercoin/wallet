@@ -715,9 +715,18 @@ async function handleSolPrice(): Promise<Response> {
     }
 
     const price = Number(solPrice);
-    const priceChange24h = data?.data?.[SOL_MINT]?.priceChange24h ?? data?.data?.[SOL_MINT]?.price_change_24h ?? null;
-    const marketCap = data?.data?.[SOL_MINT]?.marketCap ?? data?.data?.[SOL_MINT]?.market_cap ?? null;
-    const volume24h = data?.data?.[SOL_MINT]?.volume24h ?? data?.data?.[SOL_MINT]?.volume_24h ?? null;
+    const priceChange24h =
+      data?.data?.[SOL_MINT]?.priceChange24h ??
+      data?.data?.[SOL_MINT]?.price_change_24h ??
+      null;
+    const marketCap =
+      data?.data?.[SOL_MINT]?.marketCap ??
+      data?.data?.[SOL_MINT]?.market_cap ??
+      null;
+    const volume24h =
+      data?.data?.[SOL_MINT]?.volume24h ??
+      data?.data?.[SOL_MINT]?.volume_24h ??
+      null;
 
     return new Response(
       JSON.stringify({

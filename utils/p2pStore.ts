@@ -48,8 +48,7 @@ export type TradeRoom = {
 const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
 // In-memory store (per server instance) with optional on-disk persistence
-// Note: File system operations are skipped in Cloudflare Workers environment
-// For persistent storage in Workers, use the p2pStoreCf.ts implementation with D1
+// For Netlify serverless functions, file I/O is available but data is ephemeral per invocation
 let fsPromises: any = null;
 let DATA_FILE: string = "";
 

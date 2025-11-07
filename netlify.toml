@@ -1,16 +1,15 @@
 [build]
 command = "pnpm build"
-publish = "dist/spa"
+publish = "dist"
 functions = "netlify/functions"
 
-# Proxy SPA API calls to the Netlify function, preserving path via :splat
-[[redirects]]
+# Route all API requests to the api.ts handler
+[[rewrites]]
 from = "/api/*"
-to = "/.netlify/functions/api/:splat"
+to = "/.netlify/functions/api"
 status = 200
-force = true
 
-# SPA fallback for client-side routing
+# SPA fallback for client-side routing (must be last)
 [[redirects]]
 from = "/*"
 to = "/index.html"

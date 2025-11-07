@@ -14,7 +14,15 @@ class SolPriceService {
   private readonly CACHE_DURATION = 60000; // 1 minute cache
 
   /**
-   * Fetch SOL price via proxy endpoint (routed through Cloudflare Worker)
+   * Validate that response is actually JSON
+   */
+  private isJsonResponse(response: Response): boolean {
+    const contentType = response.headers.get("content-type") || "";
+    return contentType.includes("application/json");
+  }
+
+  /**
+   * Fetch SOL price via proxy endpoint
    */
   async getSolPrice(): Promise<SolPriceData | null> {
     // Check cache first
@@ -28,11 +36,42 @@ class SolPriceService {
     try {
       const response = await fetch("/api/sol/price");
 
+      // Check content-type before trying to parse as JSON
+      if (!this.isJsonResponse(response)) {
+        const contentType = response.headers.get("content-type") || "unknown";
+        const bodyPreview = await response
+          .text()
+          .then((t) => t.substring(0, 200))
+          .catch(() => "");
+        console.error(
+          `SOL price API returned invalid content-type: ${contentType}. Response: ${bodyPreview}`,
+        );
+        throw new Error(
+          `Invalid response content-type: ${contentType}. Expected application/json`,
+        );
+      }
+
       if (!response.ok) {
+        console.warn(`SOL price API returned ${response.status}`);
         throw new Error(`Failed to fetch SOL price: ${response.status}`);
       }
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error(
+          "Failed to parse SOL price response as JSON:",
+          parseError,
+        );
+        throw parseError;
+      }
+
+      // Validate data structure
+      if (!data || typeof data !== "object") {
+        console.error("Invalid SOL price response structure:", data);
+        throw new Error("Invalid response structure");
+      }
 
       // Handle both direct price response and nested structure
       let priceData: SolPriceData;
@@ -54,7 +93,14 @@ class SolPriceService {
           volume_24h: data.solana.usd_24h_vol || 0,
         };
       } else {
-        return null;
+        console.warn("SOL price response missing expected fields:", data);
+        throw new Error("Missing price data in response");
+      }
+
+      // Validate price is a valid number
+      if (!isFinite(priceData.price)) {
+        console.warn("SOL price is not a valid number:", priceData.price);
+        throw new Error("Invalid price value");
       }
 
       // Update cache
@@ -67,12 +113,14 @@ class SolPriceService {
     } catch (error) {
       console.error("Error fetching SOL price:", error);
 
-      // Return fallback price if available in cache
+      // Return cached price if available
       if (this.cache.data) {
+        console.log("Returning cached SOL price due to error");
         return this.cache.data;
       }
 
       // Fallback to approximate price
+      console.log("Using fallback SOL price");
       return {
         price: 100,
         price_change_24h: 0,

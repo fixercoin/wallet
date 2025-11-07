@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, Plus } from "lucide-react";
+import { Eye, EyeOff, Copy } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -333,14 +333,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <Button
                     onClick={handleCreateWallet}
                     disabled={isLoading}
-                    className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-black shadow-lg hover:shadow-2xl transition-all"
                   >
-                    <Plus
-                      size={20}
-                      className="mr-2"
-                      color="white"
-                      strokeWidth={3}
-                    />
                     CREATE NEW WALLET
                   </Button>
 
@@ -441,7 +435,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         onClick={() => setShowPrivateKeyInput((s) => !s)}
                         className="text-white hover:bg-[#16a34a]/10"
                       >
-                        <span className="text-lg leading-none">*</span>
+                        {showPrivateKeyInput ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     )}
                   </div>
@@ -643,7 +641,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                       {showMnemonic
                         ? generatedWallet.mnemonic
-                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��•••••• •••••••••• •••••��•••• •••••••••• •••••••••• ••••••••••"}
+                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��••���••• •••••••••• •••••��•••• •••••••••• •••••••••• •���••••••••"}
                     </p>
                   </div>
                 </div>

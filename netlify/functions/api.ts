@@ -9,8 +9,10 @@ import { handler as solPriceHandler } from "./api/sol/price";
 import { handler as jupiterQuoteHandler } from "./api/jupiter/quote";
 import { handler as jupiterSwapHandler } from "./api/jupiter/swap";
 import { handler as jupiterTokensHandler } from "./api/jupiter/tokens";
+import { handler as jupiterPriceHandler } from "./api/jupiter/price";
 import { handler as dexscreenerTokensHandler } from "./api/dexscreener/tokens";
 import { handler as dexscreenerPriceHandler } from "./api/dexscreener/price";
+import { handler as dexscreenerTrendingHandler } from "./api/dexscreener/trending";
 import { handler as birdeyePriceHandler } from "./api/birdeye/price";
 import { handler as walletBalanceHandler } from "./api/wallet/balance";
 import { handler as solanaRpcHandler } from "./api/solana-rpc";
@@ -29,8 +31,10 @@ const HANDLERS: Record<string, Handler> = {
   "jupiter/quote": jupiterQuoteHandler,
   "jupiter/swap": jupiterSwapHandler,
   "jupiter/tokens": jupiterTokensHandler,
+  "jupiter/price": jupiterPriceHandler,
   "dexscreener/tokens": dexscreenerTokensHandler,
   "dexscreener/price": dexscreenerPriceHandler,
+  "dexscreener/trending": dexscreenerTrendingHandler,
   "birdeye/price": birdeyePriceHandler,
   "wallet/balance": walletBalanceHandler,
   "solana-rpc": solanaRpcHandler,

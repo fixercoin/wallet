@@ -1,15 +1,13 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler, HandlerEvent } from "@netlify/functions";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 };
 
-const JUPITER_V6_SWAP_API = "https://quote-api.jup.ag/v6/swap";
-
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -18,117 +16,70 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        error: "Method not allowed. Use POST.",
-      }),
-    };
-  }
-
   try {
-    let body: any = {};
-    if (event.body) {
-      try {
-        body = JSON.parse(event.body);
-      } catch {
-        return {
-          statusCode: 400,
-          headers: CORS_HEADERS,
-          body: JSON.stringify({
-            error: "Invalid JSON body",
-          }),
-        };
-      }
-    }
-
-    if (!body || !body.quoteResponse || !body.userPublicKey) {
+    if (!event.body) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "Missing required fields: quoteResponse, userPublicKey",
+          error: "Missing request body",
         }),
       };
     }
 
-    const swapRequest = {
-      quoteResponse: body.quoteResponse,
-      userPublicKey: body.userPublicKey,
-      wrapAndUnwrapSol: body.wrapAndUnwrapSol !== false,
-      useSharedAccounts: body.useSharedAccounts !== false,
-      asLegacyTransaction: body.asLegacyTransaction === true,
-      ...body,
-    };
-
-    delete (swapRequest as any).computeUnitPriceMicroLamports;
-    delete (swapRequest as any).prioritizationFeeLamports;
+    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(JUPITER_V6_SWAP_API, {
+    const response = await fetch("https://api.jup.ag/swap", {
       method: "POST",
       headers: {
-        Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(swapRequest),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
+    const data = await response.text();
+
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-
-      if (
-        errorText.includes("1016") ||
-        errorText.includes("stale") ||
-        errorText.includes("simulation")
-      ) {
-        return {
-          statusCode: 530,
-          headers: CORS_HEADERS,
-          body: JSON.stringify({
-            error: "STALE_QUOTE",
-            message: "Quote expired - market conditions changed",
-            details: "Please refresh the quote and try again",
-            code: 1016,
-          }),
-        };
-      }
-
+      console.error(`Jupiter swap error: ${response.status}`);
       return {
         statusCode: response.status,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: "Swap failed",
+          error: "Jupiter swap API error",
           status: response.status,
-          details: errorText.slice(0, 200),
         }),
       };
     }
 
-    const data = await response.json();
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify(data),
+      body: data,
     };
   } catch (error: any) {
-    const isTimeout =
-      error?.name === "AbortError" || error?.message?.includes("timeout");
-    console.error("Jupiter SWAP endpoint error:", error);
+    console.error("[Jupiter Swap] Error:", error);
+
+    if (error.name === "AbortError") {
+      return {
+        statusCode: 504,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Jupiter API request timeout",
+        }),
+      };
+    }
 
     return {
-      statusCode: isTimeout ? 504 : 502,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: isTimeout ? "Request timeout" : "Failed to create swap",
-        details: error?.message || String(error),
+        error: error.message || "Internal server error",
       }),
     };
   }

@@ -1,6 +1,10 @@
 // API router for Netlify functions
 // Routes requests to the appropriate nested handlers based on the path
-import type { Handler, HandlerEvent, HandlerResponse } from "@netlify/functions";
+import type {
+  Handler,
+  HandlerEvent,
+  HandlerResponse,
+} from "@netlify/functions";
 
 // Import all handlers (named exports)
 import { handler as jupiterQuoteHandler } from "./jupiter/quote";
@@ -25,7 +29,8 @@ import { handler as forexRateHandler } from "./forex/rate";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Requested-With",
   "Content-Type": "application/json",
 };
 
@@ -38,8 +43,8 @@ const handlers: Record<string, Handler> = {
   "token/price": tokenPriceHandler,
   "wallet/balance": walletBalanceHandler,
   "solana-rpc": solanRpcHandler,
-  "health": healthHandler,
-  "ping": pingHandler,
+  health: healthHandler,
+  ping: pingHandler,
   "dexscreener/price": dexscreenerPriceHandler,
   "dexscreener/tokens": dexscreenerTokensHandler,
   "birdeye/price": birdeeyePriceHandler,
@@ -52,7 +57,7 @@ const handlers: Record<string, Handler> = {
 };
 
 export const handler: Handler = async (
-  event: HandlerEvent
+  event: HandlerEvent,
 ): Promise<HandlerResponse> => {
   // Handle OPTIONS requests for CORS preflight
   if (event.httpMethod === "OPTIONS") {
@@ -72,7 +77,7 @@ export const handler: Handler = async (
   const path = pathWithoutPrefix.replace(/\?.*/, "");
 
   console.log(
-    `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`
+    `[API Router] Processing path: ${path}, Method: ${event.httpMethod}`,
   );
 
   // Find and execute matching handler

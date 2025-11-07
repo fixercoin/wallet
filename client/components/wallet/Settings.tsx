@@ -204,7 +204,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-gray-200 font-mono"
+                          className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-black font-mono"
                         >
                           {wallets.map((w) => (
                             <option
@@ -241,7 +241,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   e.target.value as "recovery" | "private",
                                 )
                               }
-                              className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-gray-200 font-mono"
+                              className="flex-1 bg-gray-50 text-gray-900 p-2 rounded-md border border-black font-mono"
                             >
                               <option value="recovery">RECOVERY PHRASE</option>
                               <option value="private">PRIVATE KEY</option>
@@ -344,7 +344,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   setShowRecoveryPhrase(false);
                                 }
                               }}
-                              className="bg-transparent text-gray-700 p-1 rounded-md border border-gray-200"
+                              className="bg-transparent text-gray-700 p-1 rounded-md border border-black"
                             >
                               <option value="hidden">Hidden</option>
                               <option value="show">Show</option>
@@ -361,7 +361,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   : ""
                             }
                             readOnly
-                            className="bg-gray-50 border border-gray-200 text-gray-900 font-mono text-sm resize-none min-h-[140px]"
+                            className="bg-gray-50 border border-black text-gray-900 font-mono text-sm resize-none min-h-[140px]"
                             placeholder={
                               showRecoveryPhrase || showPrivateKey
                                 ? ""
@@ -388,8 +388,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 <div className="space-y-3">
                   <Button
                     onClick={handleLogout}
-                    variant="outline"
-                    className="w-full flex items-center gap-2 bg-white border border-gray-200 text-gray-900 hover:bg-gray-50"
+                    variant="default"
+                    className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -397,11 +397,11 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
                   <Button
                     onClick={handleDeleteAccount}
-                    variant={confirmDelete ? "destructive" : "outline"}
+                    variant="default"
                     className={`w-full flex items-center gap-2 ${
                       confirmDelete
-                        ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-white border border-gray-200 text-gray-900 hover:bg-gray-50"
+                        ? "bg-green-700 hover:bg-green-800 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
                     }`}
                   >
                     <Trash2 className="h-4 w-4" />

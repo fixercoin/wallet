@@ -6,7 +6,6 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
 import {
   saveChatMessage,
@@ -34,7 +33,6 @@ export default function BuyNote() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
-  const { send } = useDurableRoom("global", API_BASE);
 
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<BuyOrder | null>(null);

@@ -30,8 +30,8 @@ export const SOLANA_RPC_URL = (() => {
     return process.env.ALCHEMY_RPC_URL;
   }
 
-  // Default public Solana RPC
-  return "https://api.mainnet-beta.solana.com";
+  // Default public Solana RPC (prioritize publicnode/ankr)
+  return "https://solana.publicnode.com";
 })();
 
 // Legacy export for backward compatibility

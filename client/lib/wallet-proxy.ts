@@ -164,7 +164,7 @@ export const getBalance = async (publicKey: string): Promise<number> => {
         return json.balance;
       }
 
-      // 2) Cloudflare worker shape: { walletAddress, balances: { SOL: number, ... } }
+      // 2) Alternative shape: { walletAddress, balances: { SOL: number, ... } }
       if (json.balances && typeof json.balances === "object") {
         const sol =
           json.balances.SOL ?? json.balances.sol ?? json.balances.SOLANA;

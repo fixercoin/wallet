@@ -15,8 +15,3 @@ BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
 [vars]
 SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
 BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
-
-# Build configuration
-[build]
-command = "npm run build"
-cwd = "."

@@ -8,16 +8,8 @@ functions = "netlify/functions"
 from = "/api/*"
 to = "/.netlify/functions/api"
 
-# Handle OPTIONS requests for CORS
-[[redirects]]
-from = "/api/*"
-to = "/.netlify/functions/api"
-status = 200
-methods = ["OPTIONS"]
-
 # SPA fallback for client-side routing (must be last)
-# Only rewrite paths that don't match known file extensions
-[[rewrites]]
+[[redirects]]
 from = "/*"
 to = "/index.html"
-conditions = { "Not" = [{ "Path" = ["/api/*"] }] }
+status = 200

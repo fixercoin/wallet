@@ -221,8 +221,13 @@ export const handler = async (event: any) => {
             balance: "/api/wallet/balance?publicKey=<address>",
             tokens: "/api/wallet/tokens?publicKey=<address>",
           },
+          pricing: {
+            "sol-price": "/api/sol/price",
+            "birdeye-price": "/api/birdeye/price?address=<mint>",
+            "dexscreener-price": "/api/dexscreener/price?token=<mint>",
+            "token-price": "/api/token/price?token=<symbol>&mint=<mint>",
+          },
           dexscreener: {
-            price: "/api/dexscreener/price?tokenAddress=<mint>",
             tokens: "/api/dexscreener/tokens",
             search: "/api/dexscreener/search",
             trending: "/api/dexscreener/trending",
@@ -242,7 +247,6 @@ export const handler = async (event: any) => {
           utilities: {
             "forex-rate": "/api/forex/rate",
             "exchange-rate": "/api/exchange-rate",
-            "token-price": "/api/token/price",
             "stable-24h": "/api/stable-24h",
             "dextools-price": "/api/dextools/price",
             "rpc-proxy": "/api/solana-rpc [POST]",

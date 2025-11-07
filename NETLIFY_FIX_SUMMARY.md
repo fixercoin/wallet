@@ -3,11 +3,13 @@
 ## Issues Found & Fixed
 
 ### 1. ✅ Missing Dependency
+
 - **Issue**: `@netlify/functions` package was not installed
 - **Fix**: Added `@netlify/functions` to devDependencies
 - **Impact**: Netlify functions can now be properly typed and built
 
 ### 2. ✅ API Router Path Handling
+
 - **Issue**: The API router wasn't correctly handling paths after Netlify's rewrite
 - **Fix**: Updated `netlify/functions/api.ts` to handle both:
   - Original paths: `/api/solana-rpc`
@@ -15,6 +17,7 @@
 - **Impact**: API calls will now correctly route to the appropriate handlers
 
 ### 3. ✅ Better Error Diagnostics
+
 - **Issue**: When external APIs returned errors, responses were not being validated for content-type
 - **Fix**: Added content-type validation in:
   - `netlify/functions/api/sol/price.ts`
@@ -46,6 +49,7 @@ To apply these fixes:
 ## What Changed
 
 ### Modified Files
+
 - `netlify.toml` - Clarified API routing configuration
 - `netlify/functions/api.ts` - Improved path handling
 - `netlify/functions/api/sol/price.ts` - Added content-type validation
@@ -71,6 +75,7 @@ Returns: JSON response with proper CORS headers
 ## Testing
 
 After deployment, test with:
+
 ```
 GET https://fixoriumpk.netlify.app/api/health
 GET https://fixoriumpk.netlify.app/api/sol/price
@@ -87,6 +92,7 @@ All should return JSON responses with `application/json` content-type, not HTML 
 4. ✅ Test the endpoints in browser DevTools (Network tab)
 
 If you still see HTML responses:
+
 - Check Netlify function logs in the dashboard
 - Verify `pnpm build` completes successfully
 - Ensure all environment variables are set if needed

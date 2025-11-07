@@ -7,81 +7,92 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-const DEX_CACHE_TTL_MS = 30_000;
-const DEX_CACHE = new Map<string, { data: any; expiresAt: number }>();
-const DEX_INFLIGHT = new Map<string, Promise<any>>();
+const PRICE_CACHE_TTL_MS = 60_000;
+const PRICE_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const INFLIGHT = new Map<string, Promise<any>>();
 
-const DEXSCREENER_ENDPOINTS = [
-  "https://api.dexscreener.com/latest/dex",
-  "https://api.dexscreener.io/latest/dex",
-];
-let currentDexIdx = 0;
-
-async function tryDexEndpoints(path: string) {
+async function fetchBirdeyePrice(address: string) {
   let lastError: Error | null = null;
-  for (let i = 0; i < DEXSCREENER_ENDPOINTS.length; i++) {
-    const idx = (currentDexIdx + i) % DEXSCREENER_ENDPOINTS.length;
-    const endpoint = DEXSCREENER_ENDPOINTS[idx];
-    const url = `${endpoint}${path}`;
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      const resp = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (!resp.ok) {
-        if (resp.status === 429) continue;
-        const t = await resp.text().catch(() => "");
-        throw new Error(`HTTP ${resp.status}: ${resp.statusText}. ${t}`);
-      }
-      const data = await resp.json();
-      currentDexIdx = idx;
-      return data;
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      if (i < DEXSCREENER_ENDPOINTS.length - 1)
-        await new Promise((r) => setTimeout(r, 1000));
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const url = `https://public-api.birdeye.so/defi/price?address=${encodeURIComponent(address)}`;
+
+    const resp = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "User-Agent":
+          "Mozilla/5.0 (compatible; SolanaWallet/1.0; +http://example.com)",
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!resp.ok) {
+      const preview = await resp.text().catch(() => "");
+      const contentType = resp.headers.get("content-type") || "";
+      console.error(
+        `[Birdeye] HTTP ${resp.status}: ${contentType} | ${preview.substring(0, 100)}`,
+      );
+      throw new Error(
+        `HTTP ${resp.status}: ${resp.statusText}. Content-Type: ${contentType}`,
+      );
     }
+
+    const contentType = resp.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const preview = await resp.text().catch(() => "");
+      console.error(
+        `[Birdeye] Invalid content-type: ${contentType}. Response: ${preview.substring(0, 100)}`,
+      );
+      throw new Error(
+        `Invalid content-type: ${contentType}. Expected application/json`,
+      );
+    }
+
+    const data = await resp.json();
+    console.log(`[Birdeye] Successfully fetched price for ${address}`);
+    return data;
+  } catch (e) {
+    lastError = e instanceof Error ? e : new Error(String(e));
+    const errorMsg =
+      lastError?.name === "AbortError" ? "timeout" : lastError?.message;
+    console.warn(`[Birdeye] Fetch failed: ${errorMsg}`);
+    throw lastError;
   }
-  throw new Error(lastError?.message || "All DexScreener endpoints failed");
 }
 
-async function fetchDexData(path: string) {
+async function fetchPriceData(address: string) {
   const now = Date.now();
-  const cached = DEX_CACHE.get(path);
+  const cached = PRICE_CACHE.get(address);
+
   if (cached && cached.expiresAt > now) {
-    const hasPriceChangeData =
-      Array.isArray(cached.data?.pairs) &&
-      cached.data.pairs.some(
-        (p: any) =>
-          p?.priceChange &&
-          (typeof p.priceChange.h24 === "number" ||
-            typeof p.priceChange.h6 === "number" ||
-            typeof p.priceChange.h1 === "number" ||
-            typeof p.priceChange.m5 === "number"),
-      );
-    if (hasPriceChangeData) {
-      return cached.data;
-    }
+    console.log(`[Birdeye] Cache hit for ${address}`);
+    return cached.data;
   }
-  const existing = DEX_INFLIGHT.get(path);
-  if (existing) return existing;
+
+  const existing = INFLIGHT.get(address);
+  if (existing) {
+    console.log(`[Birdeye] Reusing in-flight request for ${address}`);
+    return existing;
+  }
+
   const request = (async () => {
     try {
-      const data = await tryDexEndpoints(path);
-      DEX_CACHE.set(path, { data, expiresAt: Date.now() + DEX_CACHE_TTL_MS });
+      const data = await fetchBirdeyePrice(address);
+      PRICE_CACHE.set(address, {
+        data,
+        expiresAt: Date.now() + PRICE_CACHE_TTL_MS,
+      });
       return data;
     } finally {
-      DEX_INFLIGHT.delete(path);
+      INFLIGHT.delete(address);
     }
   })();
-  DEX_INFLIGHT.set(path, request);
+
+  INFLIGHT.set(address, request);
   return request;
 }
 
@@ -117,19 +128,16 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const data = await fetchDexData(`/tokens/${address}`);
-    const pair = Array.isArray(data?.pairs)
-      ? data.pairs.find((p: any) => p?.chainId === "solana") || data.pairs[0]
-      : null;
+    const data = await fetchPriceData(address);
 
-    if (pair && pair.priceUsd) {
-      const value = parseFloat(pair.priceUsd);
+    if (data?.data?.value) {
+      const value = parseFloat(data.data.value);
       if (isFinite(value) && value > 0) {
         return {
           statusCode: 200,
           headers: {
             ...CORS_HEADERS,
-            "Cache-Control": "public, max-age=5",
+            "Cache-Control": "public, max-age=30",
           },
           body: JSON.stringify({
             success: true,
@@ -137,16 +145,15 @@ export const handler: Handler = async (event) => {
               address,
               value,
               updateUnixTime: Math.floor(Date.now() / 1000),
-              priceChange24h: pair.priceChange?.h24 || 0,
             },
-            source: "dexscreener",
+            source: "birdeye",
           }),
         };
       }
     }
 
     // Fallback: return zero price
-    console.warn(`Birdeye PRICE: No valid price found for ${address}`);
+    console.warn(`[Birdeye] No valid price found for ${address}`);
     return {
       statusCode: 200,
       headers: {
@@ -159,13 +166,15 @@ export const handler: Handler = async (event) => {
           address,
           value: 0,
           updateUnixTime: Math.floor(Date.now() / 1000),
-          priceChange24h: 0,
         },
         source: "fallback",
       }),
     };
   } catch (error: any) {
-    console.error("Birdeye PRICE endpoint error:", error);
+    console.error(
+      `[Birdeye] Endpoint error for address ${address}:`,
+      error?.message || String(error),
+    );
 
     // Always return 200 with valid JSON, not error status
     return {
@@ -180,10 +189,9 @@ export const handler: Handler = async (event) => {
           address,
           value: 0,
           updateUnixTime: Math.floor(Date.now() / 1000),
-          priceChange24h: 0,
         },
         source: "fallback",
-        error: "Failed to fetch from DexScreener - using fallback",
+        error: "Failed to fetch from Birdeye - using fallback",
       }),
     };
   }

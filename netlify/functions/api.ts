@@ -1,57 +1,49 @@
 import type { Handler } from "@netlify/functions";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
+
 export const handler: Handler = async (event) => {
+  // Extract the path after /api/
+  const path = event.path?.replace(/^\/\.netlify\/functions\/api\/?/, "") || "";
+  
+  // Handle CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-      },
+      headers: CORS_HEADERS,
       body: "",
     };
   }
 
+  // Route to specific handler based on path
+  // This is a fallback router - in most cases Netlify should directly route to nested functions
+  
+  if (!path) {
+    // Base /api request - return error or redirect
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Invalid API request. Please use a specific endpoint like /api/solana-rpc",
+      }),
+    };
+  }
+
+  // For debugging - log the request
+  console.log(`[API Router] Received request for path: ${path}, method: ${event.httpMethod}`);
+
+  // Return method not allowed - this shouldn't be reached as Netlify should route to specific handlers
   return {
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Content-Type": "application/json",
-    },
+    statusCode:405,
+    headers: CORS_HEADERS,
     body: JSON.stringify({
-      ok: true,
-      service: "Fixorium Wallet API (Netlify)",
-      status: "operational",
-      timestamp: new Date().toISOString(),
-      endpoints: {
-        health: "/api/health",
-        status: "/api/status",
-        ping: "/api/ping",
-        wallet: {
-          balance: "/api/wallet/balance?publicKey=<address>",
-        },
-        pricing: {
-          "sol-price": "/api/sol/price",
-          "birdeye-price": "/api/birdeye/price?address=<mint>",
-          "dexscreener-price": "/api/dexscreener/price?token=<mint>",
-          "token-price": "/api/token/price?token=<symbol>&mint=<mint>",
-        },
-        jupiter: {
-          price: "/api/jupiter/price?ids=<mint>",
-          quote: "/api/jupiter/quote",
-          swap: "/api/jupiter/swap [POST]",
-        },
-        pumpfun: {
-          quote: "/api/pumpfun/quote",
-          buy: "/api/pumpfun/buy [POST]",
-          sell: "/api/pumpfun/sell [POST]",
-        },
-        utilities: {
-          "forex-rate": "/api/forex/rate",
-          ping: "/api/ping",
-        },
-      },
+      error: "Method not allowed or endpoint not found",
+      path: path,
     }),
   };
 };

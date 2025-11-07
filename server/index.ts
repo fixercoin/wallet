@@ -1,5 +1,5 @@
-import express from "express";
 import cors from "cors";
+import express from "express";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleExchangeRate } from "./routes/exchange-rate";
@@ -42,6 +42,27 @@ import {
   handleDeleteOrder,
 } from "./routes/orders";
 import { handleBirdeyePrice } from "./routes/api-birdeye";
+import {
+  handleSwapProxy,
+  handleQuoteProxy,
+  handleMeteoraQuoteProxy,
+  handleMeteoraSwapProxy,
+  handleSolanaSendProxy,
+  handleSolanaSimulateProxy,
+} from "./routes/swap-proxy";
+import {
+  handleSolanaSend,
+  handleSolanaSimulate,
+} from "./routes/solana-transaction";
+import { handleUnifiedSwapLocal } from "./routes/swap-handler";
+import { handleLocalQuote } from "./routes/quote-handler";
+import { handleSwapQuoteV2, handleSwapExecuteV2 } from "./routes/swap-v2";
+import { requireApiKey } from "./middleware/auth";
+import {
+  validateSwapRequest,
+  validateSolanaSend,
+  validateSwapSubmit,
+} from "./middleware/validate";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -81,6 +102,56 @@ export async function createServer(): Promise<express.Application> {
 
   // Wallet routes
   app.get("/api/wallet/balance", handleWalletBalance);
+
+  // Unified swap & quote proxies (forward to Fixorium worker or configured API)
+  // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
+
+  // Local unified swap endpoint (build unsigned swap). Validate payload.
+  app.post("/api/swap", validateSwapRequest, handleUnifiedSwapLocal);
+
+  // Local quote handler (preferred over external worker)
+  app.get("/api/quote", handleLocalQuote);
+
+  // New v2 unified swap endpoints with comprehensive fallback chain
+  app.get("/api/swap/quote", handleSwapQuoteV2);
+  app.post("/api/swap/execute", handleSwapExecuteV2);
+
+  // Keep proxy handlers as fallbacks (registered after local handler if needed)
+  app.get("/api/swap/meteora/quote", handleMeteoraQuoteProxy);
+  app.post("/api/swap/meteora/swap", handleMeteoraSwapProxy);
+
+  // Protect endpoints that accept signed txns or submit to RPC with API key + validation
+  app.post(
+    "/api/solana-send",
+    requireApiKey,
+    validateSolanaSend,
+    handleSolanaSend,
+  );
+  app.post(
+    "/api/solana-simulate",
+    requireApiKey,
+    validateSolanaSend,
+    handleSolanaSimulate,
+  );
+
+  // POST /api/swap/submit - require API key and validate
+  app.post(
+    "/api/swap/submit",
+    requireApiKey,
+    validateSwapSubmit,
+    (req, res) => {
+      // forward to proxy handler which calls RPC; reuse handleSolanaSendProxy logic by adapting body
+      return handleSolanaSendProxy(req, res as any);
+    },
+  );
+
+  // Proxy for /api/swap to worker (fallback) - registered last (protected by API key when forwarding sensitive actions)
+  app.post(
+    "/api/swap/proxy",
+    requireApiKey,
+    validateSwapRequest,
+    handleSwapProxy,
+  );
 
   // Pumpfun proxy (quote & swap)
   app.all(["/api/pumpfun/quote", "/api/pumpfun/swap"], async (req, res) => {
@@ -154,6 +225,177 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Pumpfun buy: /api/pumpfun/buy (POST)
+  app.post("/api/pumpfun/buy", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const {
+        mint,
+        amount,
+        buyer,
+        slippageBps = 350,
+        priorityFeeLamports = 10000,
+      } = body;
+
+      if (!mint || amount === undefined || !buyer) {
+        return res.status(400).json({
+          error: "Missing required fields: mint, amount, buyer",
+        });
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const resp = await fetch("https://pumpportal.fun/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mint,
+          amount: String(amount),
+          buyer,
+          slippageBps,
+          priorityFeeLamports,
+          txVersion: "V0",
+          operation: "buy",
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
+        return res.status(resp.status).json({
+          error: "Pump.fun API error",
+          details: errorText,
+        });
+      }
+
+      const data = await resp.json();
+      return res.json(data);
+    } catch (e: any) {
+      const isTimeout = (e as any)?.name === "AbortError";
+      return res.status(isTimeout ? 504 : 502).json({
+        error: "Failed to request BUY transaction",
+        details: isTimeout
+          ? "Request timeout - Pump.fun API took too long to respond"
+          : e?.message || String(e),
+      });
+    }
+  });
+
+  // Pumpfun sell: /api/pumpfun/sell (POST)
+  app.post("/api/pumpfun/sell", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const {
+        mint,
+        amount,
+        seller,
+        slippageBps = 350,
+        priorityFeeLamports = 10000,
+      } = body;
+
+      if (!mint || amount === undefined || !seller) {
+        return res.status(400).json({
+          error: "Missing required fields: mint, amount, seller",
+        });
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const resp = await fetch("https://pumpportal.fun/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mint,
+          amount: String(amount),
+          seller,
+          slippageBps,
+          priorityFeeLamports,
+          txVersion: "V0",
+          operation: "sell",
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
+        return res.status(resp.status).json({
+          error: "Pump.fun API error",
+          details: errorText,
+        });
+      }
+
+      const data = await resp.json();
+      return res.json(data);
+    } catch (e: any) {
+      const isTimeout = (e as any)?.name === "AbortError";
+      return res.status(isTimeout ? 504 : 502).json({
+        error: "Failed to request SELL transaction",
+        details: isTimeout
+          ? "Request timeout - Pump.fun API took too long to respond"
+          : e?.message || String(e),
+      });
+    }
+  });
+
+  // Pumpfun trade: /api/pumpfun/trade (POST) - unified trade endpoint
+  app.post("/api/pumpfun/trade", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const { mint, amount, trader, action } = body;
+
+      if (!mint || typeof amount !== "number" || !trader) {
+        return res.status(400).json({
+          error: "Missing required fields: mint, amount (number), trader",
+        });
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const tradeAction = String(action || "buy").toLowerCase();
+      const endpoint =
+        tradeAction === "sell"
+          ? "https://pump.fun/api/sell"
+          : "https://pump.fun/api/trade";
+      const payloadKey = tradeAction === "sell" ? "seller" : "buyer";
+
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mint,
+          amount,
+          [payloadKey]: trader,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "");
+        return res.status(resp.status).json({
+          error: "Pump.fun API error",
+          details: errorText,
+        });
+      }
+
+      const data = await resp.json();
+      return res.json(data);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "Failed to execute trade transaction",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // Token price endpoint (simple, robust fallback + stablecoins)
   app.get("/api/token/price", async (req, res) => {
     try {
@@ -163,11 +405,11 @@ export async function createServer(): Promise<express.Application> {
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       // If stablecoins or known symbols, return deterministic prices

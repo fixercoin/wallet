@@ -22,6 +22,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/api-client";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 
@@ -85,8 +86,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatBalance = (amount: number | undefined): string => {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // FIXERCOIN and LOCKER always show exactly 2 decimal places
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
@@ -106,10 +117,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
-    return price.toFixed(6);
+    if (price >= 0.0001) return price.toFixed(6);
+    return price.toFixed(8);
   };
 
   const [usdToPkr, setUsdToPkr] = useState<number>(() => {
@@ -127,7 +139,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        const res = await fetch(
+          resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"),
+        );
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -362,7 +376,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400">
+                          <span
+                            className={`text-xs text-gray-400 ${
+                              ["SOL", "FIXERCOIN", "LOCKER"].includes(
+                                (token.symbol || "").toUpperCase(),
+                              )
+                                ? "animate-price-pulse"
+                                : ""
+                            }`}
+                          >
                             ${formatTokenPriceDisplay(token.price)}
                           </span>
                           {percentChange !== null ? (

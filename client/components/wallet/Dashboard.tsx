@@ -59,7 +59,7 @@ interface DashboardProps {
 
 import { useNavigate } from "react-router-dom";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 
@@ -298,19 +298,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
-        // Health check via pumpfun/quote endpoint with minimal valid parameters
-        const url = resolveApiUrl("/api/pumpfun/quote");
-        const res = await fetch(url, {
-          method: "POST",
+        // Health check via reliable ping endpoint
+        const res = await fetchWithFallback("/api/ping", {
+          method: "GET",
           signal: controller.signal,
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            inputMint: "So11111111111111111111111111111111111111112",
-            outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-            amount: 1000000,
-          }),
         });
         clearTimeout(to);
 
@@ -411,8 +405,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const formatBalance = (amount: number | undefined): string => {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // FIXERCOIN and LOCKER always show exactly 2 decimal places
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
@@ -432,10 +436,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
-    return price.toFixed(6);
+    if (price >= 0.0001) return price.toFixed(6);
+    return price.toFixed(8);
   };
 
   const [usdToPkr, setUsdToPkr] = useState<number>(() => {
@@ -453,7 +458,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        const res = await fetch(
+          resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"),
+        );
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -768,6 +775,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>C-BUILDER</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    onSelect={onAutoBot}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Bot className="h-4 w-4" />
+                    <span>AI BOT</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onSelect={onBurn}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -959,7 +973,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="text-xs text-gray-300">
+                            <span
+                              className={`text-xs text-gray-300 ${
+                                ["SOL", "FIXERCOIN", "LOCKER"].includes(
+                                  (token.symbol || "").toUpperCase(),
+                                )
+                                  ? "animate-price-pulse"
+                                  : ""
+                              }`}
+                            >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
                             {percentChange !== null ? (
@@ -984,7 +1006,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                       <div className="text-right">
                         <p className="text-sm font-semibold text-white">
-                          {formatBalance(token.balance || 0)}
+                          {formatBalance(token.balance || 0, token.symbol)}
                         </p>
                         <p className="text-xs text-gray-300">
                           {typeof token.price === "number" && token.price > 0

@@ -3,28 +3,32 @@ import express from "express";
 import * as nodePath from "path";
 
 (async () => {
-  // Create the API app
-  const apiApp = await createServer();
+  // Create the API app (routes already have /api prefix)
+  const app = await createServer();
   const port = process.env.PORT || 3000;
-
-  // Create the root app and mount API under /api (match dev behavior)
-  const app = express();
-  app.use("/api", apiApp);
 
   // In production, serve the built SPA files
   const __dirname = import.meta.dirname;
   const distPath = nodePath.join(__dirname, "../spa");
+  const isDevelopment = process.env.NODE_ENV !== "production";
 
-  // Serve static assets
-  app.use(express.static(distPath));
-
-  // SPA fallback for non-API routes
-  app.get("*", (req, res) => {
-    // Do not intercept API or health endpoints
-    if (req.path.startsWith("/api/")) {
-      return res.status(404).json({ error: "API endpoint not found" });
+  // Only serve static assets if they exist (production mode)
+  try {
+    const fs = await import("fs");
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
     }
-    res.sendFile(nodePath.join(distPath, "index.html"));
+  } catch {
+    // Ignore
+  }
+
+  // 404 fallback for unmapped routes
+  app.use((req, res) => {
+    res.status(404).json({
+      error: "Not found",
+      path: req.path,
+      method: req.method,
+    });
   });
 
   app.listen(port, () => {

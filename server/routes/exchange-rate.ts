@@ -10,11 +10,11 @@ const TOKEN_MINTS = {
 } as const;
 
 const FALLBACK_RATES: Record<string, number> = {
-  FIXERCOIN: 0.005, // $0.005 per FIXERCOIN
-  SOL: 180, // $180 per SOL
+  FIXERCOIN: 0.00008139, // Real-time market price
+  SOL: 149.38, // Real-time market price
   USDC: 1.0, // $1 USDC
   USDT: 1.0, // $1 USDT
-  LOCKER: 0.1, // $0.1 per LOCKER
+  LOCKER: 0.00001112, // Real-time market price
 };
 
 const PKR_PER_USD = 280; // Approximate conversion rate

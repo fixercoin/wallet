@@ -8,9 +8,9 @@ import {
 const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
   "https://rpc.ankr.com/solana",
-  "https://solana-mainnet.rpc.extrnode.com",
   "https://solana.blockpi.network/v1/rpc/public",
   "https://solana.publicnode.com",
+  "https://solana-rpc.publicnode.com",
 ];
 
 async function callRpc(
@@ -162,11 +162,41 @@ export const handler = async (event: any) => {
     return jsonResponse(204, "");
   }
 
-  const path =
-    (event.path || "").replace(/^\/\.netlify\/functions\/api/, "") || "/";
+  const path = (event.path || "").replace(/^\/api/, "") || "/";
   const method = event.httpMethod;
 
   try {
+    // Root and health/status endpoints
+    if (path === "/" || path === "/health" || path === "/status") {
+      return jsonResponse(200, {
+        ok: true,
+        service: "Fixorium Wallet API (Netlify)",
+        endpoints: [
+          "/easypaisa/webhook [POST]",
+          "/easypaisa/payments [GET]",
+          "/solana-rpc [POST]",
+          "/forex/rate [GET]",
+          "/exchange-rate [GET]",
+          "/token/price [GET]",
+          "/stable-24h [GET]",
+          "/dexscreener/tokens [GET]",
+          "/dexscreener/search [GET]",
+          "/dexscreener/trending [GET]",
+          "/jupiter/price [GET]",
+          "/jupiter/tokens [GET]",
+          "/jupiter/quote [GET]",
+          "/jupiter/swap [POST]",
+          "/wallet/balance [GET]",
+          "/dextools/price [GET]",
+          "/coinmarketcap/quotes [GET]",
+          "/pumpfun/quote [GET, POST]",
+          "/pumpfun/swap [POST]",
+          "/pumpfun/buy [POST]",
+          "/pumpfun/sell [POST]",
+        ],
+      });
+    }
+
     // Easypaisa webhook ingestion (best-effort schema)
     if (path === "/easypaisa/webhook" && method === "POST") {
       let body: any = {};
@@ -339,11 +369,11 @@ export const handler = async (event: any) => {
       };
 
       const FALLBACK_USD: Record<string, number> = {
-        FIXERCOIN: 0.005,
-        SOL: 180,
+        FIXERCOIN: 0.00008139, // Real-time market price
+        SOL: 149.38, // Real-time market price
         USDC: 1.0,
         USDT: 1.0,
-        LOCKER: 0.1,
+        LOCKER: 0.00001112, // Real-time market price
       };
 
       const PKR_PER_USD = 280; // base FX
@@ -902,6 +932,188 @@ export const handler = async (event: any) => {
       } catch (e: any) {
         return jsonResponse(502, {
           error: "Failed to execute Pumpfun swap",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun buy: /api/pumpfun/buy (POST)
+    if (path === "/pumpfun/buy" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, buyer } = body;
+
+      if (!mint || typeof amount !== "number" || !buyer) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), buyer (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            buyer,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "buy",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request BUY transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Pumpfun sell: /api/pumpfun/sell (POST)
+    if (path === "/pumpfun/sell" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const { mint, amount, seller } = body;
+
+      if (!mint || typeof amount !== "number" || !seller) {
+        return jsonResponse(400, {
+          error:
+            "Missing required fields: mint, amount (number), seller (string)",
+        });
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const resp = await fetch("https://pumpportal.fun/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mint,
+            amount: String(amount),
+            seller,
+            slippageBps: body?.slippageBps ?? 350,
+            priorityFeeLamports: body?.priorityFeeLamports ?? 10000,
+            txVersion: "V0",
+            operation: "sell",
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          return jsonResponse(resp.status, {
+            error: "Pump.fun API error",
+            details: errorText,
+          });
+        }
+
+        const data = await resp.json();
+        return jsonResponse(200, data);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to request SELL transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Submit signed transaction aliases: /api/solana-send, /api/swap/submit (POST)
+    if (
+      (path === "/solana-send" || path === "/swap/submit") &&
+      method === "POST"
+    ) {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const txBase64 =
+        body?.signedBase64 ||
+        body?.signedTx ||
+        body?.signedTransaction ||
+        body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, {
+          error: "Missing signed transaction (base64)",
+        });
+      }
+
+      try {
+        const rpc = await callRpc("sendTransaction", [txBase64], Date.now());
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to submit signed transaction",
+          details: e?.message || String(e),
+        });
+      }
+    }
+
+    // Simulate signed transaction: /api/solana-simulate (POST)
+    if (path === "/solana-simulate" && method === "POST") {
+      let body: any = {};
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {}
+
+      const txBase64 =
+        body?.signedBase64 ||
+        body?.signedTx ||
+        body?.signedTransaction ||
+        body?.tx;
+      if (!txBase64 || typeof txBase64 !== "string") {
+        return jsonResponse(400, {
+          error: "Missing signed transaction (base64)",
+        });
+      }
+
+      try {
+        const rpc = await callRpc(
+          "simulateTransaction",
+          [
+            txBase64,
+            {
+              encoding: "base64",
+              replaceRecentBlockhash: true,
+              sigVerify: true,
+            },
+          ],
+          Date.now(),
+        );
+        const parsed = JSON.parse(String(rpc?.body || "{}"));
+        return jsonResponse(parsed?.error ? 502 : 200, parsed);
+      } catch (e: any) {
+        return jsonResponse(502, {
+          error: "Failed to simulate transaction",
           details: e?.message || String(e),
         });
       }

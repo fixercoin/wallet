@@ -64,7 +64,7 @@ cd cloudflare
 wrangler deploy --config ./wrangler.toml --env production
 ```
 
-This deploys to: `https://fixorium-proxy.khanbabusargodha.workers.dev`
+This deploys to: `https://proxy.fixorium.com.pk`
 
 ### Step 2: Update Frontend Build Environment
 
@@ -96,7 +96,7 @@ wrangler secret put SOLANA_RPC --config ./cloudflare/wrangler.toml
 
 ```bash
 # Test Worker health
-curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
+curl https://proxy.fixorium.com.pk/api/health
 
 # Test from frontend
 # Navigate to your Cloudflare Pages URL and check browser console

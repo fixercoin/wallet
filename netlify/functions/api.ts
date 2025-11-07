@@ -897,10 +897,7 @@ export const handler = async (event: any) => {
         let amount = "";
 
         if (method === "POST") {
-          let body: any = {};
-          try {
-            body = event.body ? JSON.parse(event.body) : {};
-          } catch {}
+          const body = parseRequestBody(event) || {};
           inputMint = body?.inputMint || "";
           outputMint = body?.outputMint || "";
           amount = body?.amount || "";

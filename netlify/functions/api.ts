@@ -942,10 +942,7 @@ export const handler = async (event: any) => {
 
     // Pumpfun swap: /api/pumpfun/swap (POST)
     if (path === "/pumpfun/swap" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       if (!body || typeof body !== "object") {
         return jsonResponse(400, { error: "Invalid request body" });

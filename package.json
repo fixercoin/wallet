@@ -7,8 +7,8 @@
     "dev": "concurrently \"vite\" \"tsx server/node-build.ts\"",
     "dev:frontend": "vite",
     "dev:backend": "tsx server/node-build.ts",
-    "build": "vite build",
-    "build:functions": "tsc --project tsconfig.functions.json",
+    "build": "vite build && npm run build:functions",
+    "build:functions": "tsc --noEmit functions/api/[[path]].ts && tsc --project tsconfig.functions.json",
     "preview": "vite preview",
     "deploy:cloudflare": "bash scripts/deploy-cloudflare.sh"
   },

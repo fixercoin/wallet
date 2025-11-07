@@ -22,7 +22,10 @@ async function handler(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const publicKey =
-      url.searchParams.get("publicKey") || url.searchParams.get("address");
+      url.searchParams.get("publicKey") ||
+      url.searchParams.get("address") ||
+      url.searchParams.get("wallet") ||
+      url.searchParams.get("walletAddress");
 
     if (!publicKey) {
       return new Response(
@@ -145,4 +148,5 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export default handler;
+export const onRequest = async ({ request }: { request: Request }) =>
+  handler(request);

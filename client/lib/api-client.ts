@@ -18,8 +18,8 @@ const determineBase = (): string => {
   const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
   if (envBaseAlt) return envBaseAlt;
   if (workingApiBase) return workingApiBase;
-  // Default to Cloudflare Worker backend
-  return "https://api.fixorium.com.pk";
+  // Default to relative /api (served by the same origin)
+  return "";
 };
 
 let cachedBase: string | null = null;

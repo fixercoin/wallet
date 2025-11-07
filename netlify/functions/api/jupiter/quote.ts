@@ -1,72 +1,93 @@
-export const config = {
-  runtime: "nodejs_esmsh",
-};
+import type { Handler } from "@netlify/functions";
 
-interface JupiterQuoteRequest {
-  inputMint: string;
-  outputMint: string;
-  amount: number | string;
-  slippageBps?: number;
-  onlyDirectRoutes?: boolean;
-  asLegacyTransaction?: boolean;
-  platformFeeBps?: number;
-  maxAccounts?: number;
-}
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
 
 const JUPITER_V6_API = "https://quote-api.jup.ag/v6/quote";
 
-async function handler(request: Request): Promise<Response> {
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+export const handler: Handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 204,
+      headers: CORS_HEADERS,
+      body: "",
+    };
+  }
+
+  if (event.httpMethod !== "GET" && event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Method not allowed. Use GET or POST.",
+      }),
+    };
   }
 
   try {
-    const url = new URL(request.url);
+    let inputMint = "";
+    let outputMint = "";
+    let amount = "";
+    let slippageBps = "100";
+    let onlyDirectRoutes = "false";
+    let asLegacyTransaction = "false";
 
-    // Parse parameters from query string
-    const inputMint = url.searchParams.get("inputMint");
-    const outputMint = url.searchParams.get("outputMint");
-    const amount = url.searchParams.get("amount");
-    const slippageBps = url.searchParams.get("slippageBps") || "100";
-    const onlyDirectRoutes =
-      url.searchParams.get("onlyDirectRoutes") === "true";
-    const asLegacyTransaction =
-      url.searchParams.get("asLegacyTransaction") === "true";
-
-    if (!inputMint || !outputMint || !amount) {
-      return new Response(
-        JSON.stringify({
-          error: "Missing required parameters: inputMint, outputMint, amount",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+    if (event.httpMethod === "GET") {
+      const params = new URLSearchParams(event.rawUrl.split("?")[1] || "");
+      inputMint = params.get("inputMint") || "";
+      outputMint = params.get("outputMint") || "";
+      amount = params.get("amount") || "";
+      slippageBps = params.get("slippageBps") || "100";
+      onlyDirectRoutes = params.get("onlyDirectRoutes") || "false";
+      asLegacyTransaction = params.get("asLegacyTransaction") || "false";
+    } else {
+      let body: any = {};
+      if (event.body) {
+        try {
+          body = JSON.parse(event.body);
+        } catch {
+          return {
+            statusCode: 400,
+            headers: CORS_HEADERS,
+            body: JSON.stringify({
+              error: "Invalid JSON body",
+            }),
+          };
+        }
+      }
+      inputMint = body?.inputMint || "";
+      outputMint = body?.outputMint || "";
+      amount = body?.amount || "";
+      slippageBps = body?.slippageBps || "100";
+      onlyDirectRoutes = String(body?.onlyDirectRoutes || false);
+      asLegacyTransaction = String(body?.asLegacyTransaction || false);
     }
 
-    // Build Jupiter API request
+    if (!inputMint || !outputMint || !amount) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: "Missing required parameters: inputMint, outputMint, amount",
+        }),
+      };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
     const jupiterParams = new URLSearchParams({
       inputMint,
       outputMint,
       amount: String(amount),
       slippageBps,
-      onlyDirectRoutes: String(onlyDirectRoutes),
-      asLegacyTransaction: String(asLegacyTransaction),
+      onlyDirectRoutes,
+      asLegacyTransaction,
     });
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     const response = await fetch(
       `${JUPITER_V6_API}?${jupiterParams.toString()}`,
@@ -82,67 +103,53 @@ async function handler(request: Request): Promise<Response> {
 
     clearTimeout(timeoutId);
 
-    const data = await response.text();
-
     if (response.status === 404 || response.status === 400) {
-      return new Response(
-        JSON.stringify({
+      const errorText = await response.text().catch(() => "");
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
           error: "No swap route found for this pair",
           code: "NO_ROUTE_FOUND",
+          details: errorText.slice(0, 200),
         }),
-        {
-          status: response.status,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      };
     }
 
     if (!response.ok) {
-      return new Response(
-        JSON.stringify({
+      const errorText = await response.text().catch(() => "");
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
           error: "Jupiter API error",
           status: response.status,
-          details: data.slice(0, 200),
+          details: errorText.slice(0, 200),
         }),
-        {
-          status: response.status,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      };
     }
 
-    return new Response(data, {
-      status: 200,
+    const data = await response.json();
+    return {
+      statusCode: 200,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        ...CORS_HEADERS,
         "Cache-Control": "public, max-age=5",
       },
-    });
+      body: JSON.stringify(data),
+    };
   } catch (error: any) {
     const isTimeout =
       error?.name === "AbortError" || error?.message?.includes("timeout");
+    console.error("Jupiter QUOTE endpoint error:", error);
 
-    return new Response(
-      JSON.stringify({
+    return {
+      statusCode: isTimeout ? 504 : 502,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
         error: isTimeout ? "Request timeout" : "Failed to fetch quote",
         details: error?.message || String(error),
       }),
-      {
-        status: isTimeout ? 504 : 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      },
-    );
+    };
   }
-}
-
-export default handler;
+};

@@ -1,38 +1,45 @@
-export const config = {
-  runtime: "nodejs_esmsh",
+import type { Handler } from "@netlify/functions";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
 };
 
 const JUPITER_PRICE_API = "https://api.jup.ag/price/v2";
 
-async function handler(request: Request): Promise<Response> {
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+export const handler: Handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 204,
+      headers: CORS_HEADERS,
+      body: "",
+    };
+  }
+
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Method not allowed. Use GET.",
+      }),
+    };
   }
 
   try {
-    const url = new URL(request.url);
-    const ids = url.searchParams.get("ids");
+    const params = new URLSearchParams(event.rawUrl.split("?")[1] || "");
+    const ids = params.get("ids");
 
     if (!ids) {
-      return new Response(
-        JSON.stringify({
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
           error: "Missing 'ids' parameter (comma-separated token mints)",
         }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      };
     }
 
     const controller = new AbortController();
@@ -52,51 +59,39 @@ async function handler(request: Request): Promise<Response> {
 
     clearTimeout(timeoutId);
 
-    const data = await response.text();
-
     if (!response.ok) {
-      return new Response(
-        JSON.stringify({
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
           error: "Jupiter price API error",
           status: response.status,
         }),
-        {
-          status: response.status,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      };
     }
 
-    return new Response(data, {
-      status: 200,
+    const data = await response.json();
+    return {
+      statusCode: 200,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        ...CORS_HEADERS,
         "Cache-Control": "public, max-age=10",
       },
-    });
+      body: JSON.stringify(data),
+    };
   } catch (error: any) {
     const isTimeout =
       error?.name === "AbortError" || error?.message?.includes("timeout");
+    console.error("Jupiter PRICE endpoint error:", error);
 
-    return new Response(
-      JSON.stringify({
+    return {
+      statusCode: isTimeout ? 504 : 502,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
         error: isTimeout ? "Request timeout" : "Failed to fetch prices",
         details: error?.message || String(error),
         data: {},
       }),
-      {
-        status: isTimeout ? 504 : 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      },
-    );
+    };
   }
-}
-
-export default handler;
+};

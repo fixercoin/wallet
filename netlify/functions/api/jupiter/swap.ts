@@ -1,90 +1,60 @@
-export const config = {
-  runtime: "nodejs_esmsh",
+import type { Handler } from "@netlify/functions";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
 };
-
-interface QuoteResponse {
-  inputMint: string;
-  inAmount: string;
-  outputMint: string;
-  outAmount: string;
-  otherAmountThreshold: string;
-  swapMode: string;
-  slippageBps: number;
-  platformFee: {
-    amount: string;
-    feeBps: number;
-  } | null;
-  priceImpactPct: string;
-  routePlan: any[];
-  [key: string]: any;
-}
-
-interface SwapRequest {
-  quoteResponse: QuoteResponse;
-  userPublicKey: string;
-  wrapAndUnwrapSol?: boolean;
-  useSharedAccounts?: boolean;
-  computeUnitPriceMicroLamports?: number;
-  prioritizationFeeLamports?: number;
-  asLegacyTransaction?: boolean;
-  [key: string]: any;
-}
 
 const JUPITER_V6_SWAP_API = "https://quote-api.jup.ag/v6/swap";
 
-async function handler(request: Request): Promise<Response> {
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+export const handler: Handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 204,
+      headers: CORS_HEADERS,
+      body: "",
+    };
   }
 
-  if (request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: "Method not allowed. Use POST.",
+      }),
+    };
   }
 
   try {
-    let body: SwapRequest;
-    try {
-      body = await request.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
+    let body: any = {};
+    if (event.body) {
+      try {
+        body = JSON.parse(event.body);
+      } catch {
+        return {
+          statusCode: 400,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({
+            error: "Invalid JSON body",
+          }),
+        };
+      }
     }
 
     if (!body || !body.quoteResponse || !body.userPublicKey) {
-      return new Response(
-        JSON.stringify({
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
           error: "Missing required fields: quoteResponse, userPublicKey",
         }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      };
     }
 
-    // Prepare swap request with safe defaults
-    const swapRequest: SwapRequest = {
+    const swapRequest = {
       quoteResponse: body.quoteResponse,
       userPublicKey: body.userPublicKey,
       wrapAndUnwrapSol: body.wrapAndUnwrapSol !== false,
@@ -93,7 +63,6 @@ async function handler(request: Request): Promise<Response> {
       ...body,
     };
 
-    // Remove fields that shouldn't be forwarded
     delete (swapRequest as any).computeUnitPriceMicroLamports;
     delete (swapRequest as any).prioritizationFeeLamports;
 
@@ -112,73 +81,55 @@ async function handler(request: Request): Promise<Response> {
 
     clearTimeout(timeoutId);
 
-    const data = await response.text();
-
     if (!response.ok) {
-      // Check for stale quote error
+      const errorText = await response.text().catch(() => "");
+
       if (
-        data.includes("1016") ||
-        data.includes("stale") ||
-        data.includes("simulation")
+        errorText.includes("1016") ||
+        errorText.includes("stale") ||
+        errorText.includes("simulation")
       ) {
-        return new Response(
-          JSON.stringify({
+        return {
+          statusCode: 530,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({
             error: "STALE_QUOTE",
             message: "Quote expired - market conditions changed",
             details: "Please refresh the quote and try again",
             code: 1016,
           }),
-          {
-            status: 530,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          },
-        );
+        };
       }
 
-      return new Response(
-        JSON.stringify({
+      return {
+        statusCode: response.status,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
           error: "Swap failed",
           status: response.status,
-          details: data.slice(0, 200),
+          details: errorText.slice(0, 200),
         }),
-        {
-          status: response.status,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      };
     }
 
-    return new Response(data, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    const data = await response.json();
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify(data),
+    };
   } catch (error: any) {
     const isTimeout =
       error?.name === "AbortError" || error?.message?.includes("timeout");
+    console.error("Jupiter SWAP endpoint error:", error);
 
-    return new Response(
-      JSON.stringify({
+    return {
+      statusCode: isTimeout ? 504 : 502,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
         error: isTimeout ? "Request timeout" : "Failed to create swap",
         details: error?.message || String(error),
       }),
-      {
-        status: isTimeout ? 504 : 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      },
-    );
+    };
   }
-}
-
-export default handler;
+};

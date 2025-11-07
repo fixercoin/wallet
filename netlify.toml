@@ -11,8 +11,9 @@ to = "/.netlify/functions/api?path=:splat"
 status = 200
 
 # SPA fallback for client-side routing
-# This redirect catches all URLs and rewrites to index.html for client-side routing
+# This redirect catches all URLs EXCEPT /api and rewrites to index.html for client-side routing
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
+conditions = { NOT = { Path = ["/api/*"] } }

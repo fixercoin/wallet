@@ -690,6 +690,49 @@ async function handleTokenPrice(url: URL): Promise<Response> {
   }
 }
 
+async function handleSolanaRpc(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body || typeof body !== "object" || !body.method || !body.params) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid JSON-RPC request",
+          message: "Provide method and params in JSON body",
+          example: {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getBalance",
+            params: ["11111111111111111111111111111111"],
+          },
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const rpcUrl = DEFAULT_SOLANA_RPC;
+    const response = await timeoutFetch(rpcUrl, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const responseBody = await response.text().catch(() => "");
+    return new Response(responseBody, {
+      status: response.status,
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({
+        error: "RPC error",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  }
+}
+
 async function handler(request: Request): Promise<Response> {
   try {
     if (request.method === "OPTIONS") {

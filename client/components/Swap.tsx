@@ -88,17 +88,37 @@ export default function Swap() {
         return null;
       }
 
-      const outAmount = BigInt(quoteResponse.outAmount);
-      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+      // Validate quote response has required fields
+      if (!quoteResponse.outAmount) {
+        setQuote(null);
+        setStatus("Invalid quote response. Please try again.");
+        console.error("[Swap] Quote missing outAmount:", quoteResponse);
+        return null;
+      }
 
-      setQuote({
-        quoteResponse,
-        outHuman,
-        outToken: toToken.symbol,
-        hops: quoteResponse.routePlan?.length ?? 0,
-      });
-      setStatus("");
-      return { quoteResponse };
+      try {
+        const outAmount = BigInt(quoteResponse.outAmount);
+        const outHuman =
+          Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+
+        setQuote({
+          quoteResponse,
+          outHuman,
+          outToken: toToken.symbol,
+          hops: quoteResponse.routePlan?.length ?? 0,
+        });
+        setStatus("");
+        return { quoteResponse };
+      } catch (bigintErr) {
+        setQuote(null);
+        setStatus("Invalid quote amount format. Please try again.");
+        console.error(
+          "[Swap] BigInt conversion error:",
+          bigintErr,
+          quoteResponse,
+        );
+        return null;
+      }
     } catch (err) {
       setStatus("Error: " + (err.message || err));
       console.error(err);

@@ -171,15 +171,29 @@ class JupiterV6API {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error("Jupiter swap error:", error);
+        const errorText = await response.text().catch(() => "");
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("Jupiter swap error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
 
         // Check for specific error codes
-        if (error.error === "STALE_QUOTE") {
+        if (errorData.error === "STALE_QUOTE" || errorData.code === 1016) {
           throw new Error("Quote expired - please refresh and try again");
         }
 
-        throw new Error(error.error || "Failed to create swap");
+        throw new Error(
+          errorData.error ||
+          errorData.message ||
+          "Failed to create swap"
+        );
       }
 
       const data: JupiterSwapResponse = await response.json();

@@ -615,6 +615,18 @@ export default {
         return await handleHealth();
       }
 
+      if (pathname === "/api/ping") {
+        return new Response(
+          JSON.stringify({
+            status: "ok",
+            message: "ping",
+            timestamp: new Date().toISOString(),
+            service: "Fixorium Wallet API",
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       if (
         pathname.startsWith("/api/wallet/balance") ||
         pathname === "/wallet/balance"

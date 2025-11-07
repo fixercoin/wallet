@@ -1021,7 +1021,7 @@ export const handler = async (event: any) => {
       const inputMint = event.queryStringParameters?.inputMint || "";
       const outputMint = event.queryStringParameters?.outputMint || "";
       const amount = event.queryStringParameters?.amount || "";
-      const slippageBps = event.queryStringParameters?.slippageBps || "50";
+      const slippageBps = event.queryStringParameters?.slippageBps || "100";
 
       if (!inputMint || !outputMint || !amount) {
         return jsonResponse(400, {

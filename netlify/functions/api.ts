@@ -1101,10 +1101,7 @@ export const handler = async (event: any) => {
 
     // Simulate signed transaction: /api/solana-simulate (POST)
     if (path === "/solana-simulate" && method === "POST") {
-      let body: any = {};
-      try {
-        body = event.body ? JSON.parse(event.body) : {};
-      } catch {}
+      const body = parseRequestBody(event) || {};
 
       const txBase64 =
         body?.signedBase64 ||

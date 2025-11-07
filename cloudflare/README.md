@@ -5,7 +5,7 @@ Suggested setup:
 1. Configure Cloudflare Pages for the frontend
    - Build command: pnpm build
    - Build output directory: dist
-   - Set environment variable VITE_API_URL to your Worker domain (e.g. https://api.fixorium.com.pk)
+   - Set environment variable VITE_API_URL to your Worker domain (e.g. https://fixorium-api.khanbabusargodha.workers.dev)
 
 2. Deploy Worker using wrangler
    - Install wrangler: npm i -g wrangler

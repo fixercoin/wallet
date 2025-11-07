@@ -4,24 +4,24 @@
 
 ### 1. ✅ Missing Dependency
 
-- **Issue**: `@netlify/functions` package was not installed
-- **Fix**: Added `@netlify/functions` to devDependencies
+- **Issue**: `@functions` package was not installed
+- **Fix**: Added `@functions` to devDependencies
 - **Impact**: Cloudflare Pages functions can now be properly typed and built
 
 ### 2. ✅ API Router Path Handling
 
 - **Issue**: The API router wasn't correctly handling paths after Cloudflare Pages's rewrite
-- **Fix**: Updated `netlify/functions/api.ts` to handle both:
+- **Fix**: Updated `functions/api.ts` to handle both:
   - Original paths: `/api/solana-rpc`
-  - Rewritten paths: `/.netlify/functions/api/...`
+  - Rewritten paths: `/.functions/api/...`
 - **Impact**: API calls will now correctly route to the appropriate handlers
 
 ### 3. ✅ Better Error Diagnostics
 
 - **Issue**: When external APIs returned errors, responses were not being validated for content-type
 - **Fix**: Added content-type validation in:
-  - `netlify/functions/api/sol/price.ts`
-  - `netlify/functions/api/dexscreener/tokens.ts`
+  - `functions/api/sol/price.ts`
+  - `functions/api/dexscreener/tokens.ts`
 - **Impact**: Errors are now logged with more context, making debugging easier
 
 ## Root Cause Analysis
@@ -29,7 +29,7 @@
 The 404 errors and HTML responses were happening because:
 
 1. The API router in `api.ts` wasn't properly handling the rewritten path from netlify.toml
-2. The code tried to extract `/api/` prefix from a path that might be `/.netlify/functions/api/...`
+2. The code tried to extract `/api/` prefix from a path that might be `/.functions/api/...`
 3. When path extraction failed, the route lookup failed, returning a 404
 
 The HTML responses (with `<!doctype`) were the Cloudflare Pages 404 error page being returned instead of the API response.
@@ -51,19 +51,19 @@ To apply these fixes:
 ### Modified Files
 
 - `netlify.toml` - Clarified API routing configuration
-- `netlify/functions/api.ts` - Improved path handling
-- `netlify/functions/api/sol/price.ts` - Added content-type validation
-- `netlify/functions/api/dexscreener/tokens.ts` - Added content-type validation
-- `package.json` - Added `@netlify/functions` dependency
+- `functions/api.ts` - Improved path handling
+- `functions/api/sol/price.ts` - Added content-type validation
+- `functions/api/dexscreener/tokens.ts` - Added content-type validation
+- `package.json` - Added `@functions` dependency
 
 ### How It Works Now
 
 ```
 Browser Request: GET /api/solana-rpc
         ↓
-Cloudflare Pages Rewrite: /api/* → /.netlify/functions/api
+Cloudflare Pages Rewrite: /api/* → /.functions/api
         ↓
-Function Receives: event.path = /api/solana-rpc (or /.netlify/functions/api depending on configuration)
+Function Receives: event.path = /api/solana-rpc (or /.functions/api depending on configuration)
         ↓
 api.ts Router: Extracts "solana-rpc" from path
         ↓

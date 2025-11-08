@@ -823,13 +823,13 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white">Amount to lock</Label>
+              <Label className="text-xs text-white uppercase">AMOUNT TO LOCK</Label>
               <Input
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-white/50 border border-gray-100 text-gray-900"
+                className="mt-1 bg-white/50 border border-black text-gray-900"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">

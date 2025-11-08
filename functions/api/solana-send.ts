@@ -58,7 +58,11 @@ export const onRequest: PagesFunction = async ({ request }) => {
         method: "sendRawTransaction",
         params: [
           tx,
-          { skipPreflight: false, preflightCommitment: "confirmed", encoding: "base64" },
+          {
+            skipPreflight: false,
+            preflightCommitment: "confirmed",
+            encoding: "base64",
+          },
         ],
       },
       {
@@ -67,7 +71,11 @@ export const onRequest: PagesFunction = async ({ request }) => {
         method: "sendTransaction",
         params: [
           tx,
-          { skipPreflight: false, preflightCommitment: "confirmed", encoding: "base64" },
+          {
+            skipPreflight: false,
+            preflightCommitment: "confirmed",
+            encoding: "base64",
+          },
         ],
       },
     ];
@@ -113,7 +121,11 @@ export const onRequest: PagesFunction = async ({ request }) => {
           if (data && data.error) {
             const msg = String(data.error.message || "RPC error");
             lastError = msg;
-            if (response.status === 429 || response.status >= 500 || /limit|rate/i.test(msg)) {
+            if (
+              response.status === 429 ||
+              response.status >= 500 ||
+              /limit|rate/i.test(msg)
+            ) {
               break; // try next endpoint
             }
             continue; // try next payload style

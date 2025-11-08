@@ -200,7 +200,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "confirm" | "sending" | "success">("form");
+  const [step, setStep] = useState<"form" | "confirm" | "sending" | "success">(
+    "form",
+  );
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
     initialMint || TOKEN_MINTS.SOL,
@@ -865,7 +867,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         <BloomExplosion show={showSuccess} />
         <div className="w-full max-w-md relative z-10">
           <div className="bg-transparent p-8 text-center">
-            <h3 className="text-3xl font-extrabold text-gray-900 tracking-widest">CONFIRMED</h3>
+            <h3 className="text-3xl font-extrabold text-gray-900 tracking-widest">
+              CONFIRMED
+            </h3>
           </div>
         </div>
       </div>

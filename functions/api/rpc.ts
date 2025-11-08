@@ -361,7 +361,9 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
           if (response.ok) {
             try {
               const data = JSON.parse(text || "{}");
-              return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+              return new Response(JSON.stringify(data), {
+                headers: CORS_HEADERS,
+              });
             } catch {
               return new Response(text, { headers: CORS_HEADERS });
             }
@@ -417,7 +419,10 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     );
   } catch (e: any) {
     return new Response(
-      JSON.stringify({ error: "Failed to create swap", details: String(e?.message || e) }),
+      JSON.stringify({
+        error: "Failed to create swap",
+        details: String(e?.message || e),
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }

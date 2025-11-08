@@ -691,6 +691,8 @@ export default {
         return handleJupiterPrice(url, env);
       if (pathname === "api/jupiter/swap" && request.method === "POST")
         return handleJupiterSwap(request, env);
+      if (pathname === "api/solana-send" && request.method === "POST")
+        return handleSolanaSend(request, env);
       if (pathname === "api/solana-rpc" && request.method === "POST")
         return handleSolanaRpc(request, env);
 

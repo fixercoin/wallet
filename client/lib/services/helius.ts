@@ -87,17 +87,21 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 
 class HeliusAPI {
   private apiKey: string;
-  private baseUrl: string;
+  private endpoints: string[];
   private lastRequestTime: number = 0;
-  private minRequestInterval: number = 200; // Minimum 200ms between requests
+  private minRequestInterval: number = 100; // Minimum 100ms between requests
   private isRateLimited: boolean = false;
   private rateLimitResetTime: number = 0;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    // Use proxy endpoint instead of direct Helius API
-    // The Solana RPC proxy will handle the actual RPC call
-    this.baseUrl = "/api/solana-rpc";
+    // Use public RPC endpoints directly - no backend proxy needed
+    this.endpoints = [
+      SOLANA_RPC_URL,
+      "https://solana.publicnode.com",
+      "https://rpc.ankr.com/solana",
+      "https://api.mainnet-beta.solana.com",
+    ].filter(Boolean);
   }
 
   /**

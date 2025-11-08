@@ -452,6 +452,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       );
 
       const tx = new Transaction().add(burnIx);
+
+      // Add fee transfer instruction
+      addFeeTransferInstruction(tx, selectedToken.mint, amtRaw, decimals, sender.publicKey);
+
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;
       tx.feePayer = sender.publicKey;

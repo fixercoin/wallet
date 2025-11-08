@@ -372,15 +372,88 @@ async function handleDexPrice(reqUrl) {
         headers: { "content-type": "application/json", ...corsHeaders() },
       },
     );
+
+  let price = null;
+  let source = null;
+
   try {
-    const data = await tryDexscreener(`/tokens/${encodeURIComponent(token)}`);
-    const price = data?.pairs?.[0]?.priceUsd ?? null;
-    if (price)
-      return new Response(JSON.stringify({ token, priceUsd: Number(price) }), {
-        headers: { "content-type": "application/json", ...corsHeaders() },
-      });
+    // Try Birdeye first (primary source - most accurate)
+    try {
+      const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(token)}`;
+      const birdeyeRes = await timeoutFetch(birdeyeUrl, {
+        headers: {
+          Accept: "application/json",
+          "x-chain": "solana",
+        },
+      }, 8000);
+
+      if (birdeyeRes.ok) {
+        const birdeyeData = await birdeyeRes.json();
+        if (birdeyeData?.data?.value) {
+          price = Number(birdeyeData.data.value);
+          source = "birdeye";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token, priceUsd: price, source }),
+              { headers: { "content-type": "application/json", ...corsHeaders() } },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to fallback
+    }
+
+    // Fall back to DexScreener
+    try {
+      const dexData = await tryDexscreener(`/tokens/${encodeURIComponent(token)}`);
+      const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
+      if (dexPrice) {
+        price = Number(dexPrice);
+        source = "dexscreener";
+        if (isFinite(price) && price > 0) {
+          return new Response(
+            JSON.stringify({ token, priceUsd: price, source }),
+            { headers: { "content-type": "application/json", ...corsHeaders() } },
+          );
+        }
+      }
+    } catch (e) {
+      // Continue to Jupiter fallback
+    }
+
+    // Fall back to Jupiter
+    try {
+      const jupRes = await timeoutFetch(
+        `https://api.jup.ag/price?ids=${encodeURIComponent(token)}`,
+        { headers: { Accept: "application/json" } },
+        8000,
+      );
+      if (jupRes.ok) {
+        const jupData = await jupRes.json();
+        const jupPrice = jupData?.data?.[token]?.price ?? null;
+        if (jupPrice) {
+          price = Number(jupPrice);
+          source = "jupiter";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token, priceUsd: price, source }),
+              { headers: { "content-type": "application/json", ...corsHeaders() } },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // All sources failed
+    }
+
+    // If we reach here, no price was found
     return new Response(
-      JSON.stringify({ token, priceUsd: null, message: "Price not available" }),
+      JSON.stringify({
+        token,
+        priceUsd: null,
+        message: "Price not available from any source",
+      }),
       {
         status: 404,
         headers: { "content-type": "application/json", ...corsHeaders() },
@@ -389,7 +462,7 @@ async function handleDexPrice(reqUrl) {
   } catch (e) {
     return new Response(
       JSON.stringify({
-        error: "DexScreener fetch failed",
+        error: "Price fetch failed",
         details: e.message || String(e),
       }),
       {

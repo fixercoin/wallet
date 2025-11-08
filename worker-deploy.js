@@ -837,7 +837,8 @@ async function handleJupiterSwap(req, env) {
     const result = await tryJupiter(
       candidates,
       { method: "POST", headers, body: JSON.stringify(body) },
-      10000,
+      20000,
+      2,
     );
     const ct = result.headers.get("content-type") || "application/json";
     return new Response(result.body, {

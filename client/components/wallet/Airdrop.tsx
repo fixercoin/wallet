@@ -543,14 +543,14 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-gray-300">
-                Select Token (only available here)
+              <label className="text-sm text-gray-300 uppercase">
+                SELECT TOKEN (ONLY AVAILABLE HERE)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
                 <SelectTrigger className="w-full bg-gray-300 text-gray-900 placeholder:text-gray-500 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-300 text-gray-900">
+                <SelectContent className="bg-gray-700 text-white">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
                       {t.symbol} ~{" "}

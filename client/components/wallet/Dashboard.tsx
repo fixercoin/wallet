@@ -827,16 +827,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     ) ||
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
-                    // Show both USD and PKR even when zero
+                    // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
                     const usdZero = `0.00 USD`;
-                    const pkrZero = `0.00 Pkr`;
                     return (
                       <>
                         <div className="text-base font-medium text-gray-900 leading-tight">
                           {showBalance ? `${usdZero}` : "****"}
-                        </div>
-                        <div className="text-sm text-gray-700 mt-1">
-                          {showBalance ? `${pkrZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
                           {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}

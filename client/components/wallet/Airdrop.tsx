@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Gift } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/api-client";
 import { Buffer } from "buffer";
 import bs58 from "bs58";
 import {
@@ -21,6 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
 
 interface AirdropProps {

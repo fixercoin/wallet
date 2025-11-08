@@ -277,11 +277,11 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     }
   };
 
-  const handleConfirmTransaction = async () => {
+  const handleConfirmTransaction = async (): Promise<boolean> => {
     if (selectedSymbol === "SOL") {
-      await handleSendSOL();
+      return await handleSendSOL();
     } else {
-      await handleSendSPL();
+      return await handleSendSPL();
     }
   };
 

@@ -748,7 +748,8 @@ async function handleJupiterQuote(reqUrl, env) {
     const result = await tryJupiter(
       candidates,
       { method: "GET", headers },
-      8000,
+      15000,
+      2,
     );
     const ct = result.headers.get("content-type") || "application/json";
     return new Response(result.body, {
@@ -756,6 +757,7 @@ async function handleJupiterQuote(reqUrl, env) {
       headers: { "content-type": ct, ...corsHeaders() },
     });
   } catch (e) {
+    console.error("Jupiter quote error:", e.message);
     return new Response(
       JSON.stringify({
         error: "Failed to fetch Jupiter quote",

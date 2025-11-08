@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE } from "@/lib/p2p";
 import {
   broadcastNotification,
@@ -31,15 +30,10 @@ export default function AdminBroadcast() {
     [orderId, sender, text, typeParam],
   );
 
-  const { send } = useDurableRoom(orderId, API_BASE);
-  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
-
   const [sent, setSent] = useState(false);
 
   const doSend = () => {
     saveNotification(notification);
-    broadcastNotification(send, notification);
-    broadcastNotification(sendGlobal, notification);
     setSent(true);
   };
 

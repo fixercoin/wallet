@@ -1,4 +1,7 @@
 // Token metadata interface for simplified token info
+import { Connection, PublicKey } from "@solana/web3.js";
+import { SOLANA_RPC_URL } from "../../../utils/solanaConfig";
+
 export interface TokenMetadata {
   mint: string;
   symbol: string;
@@ -52,8 +55,17 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 // Request queue to prevent duplicate requests
 const requestQueue = new Map<string, Promise<any>>();
 
+// Public RPC endpoints for fallback (avoid endpoints that don't support CORS)
+// NOTE: These may still fail with CORS for transaction sending from browser
+// Best practice: use backend proxy for sendTransaction/simulateTransaction
+const PUBLIC_RPC_ENDPOINTS = [
+  "https://solana-rpc.publicnode.com/",
+  "https://solana.publicnode.com",
+];
+
 /**
- * Make a Solana JSON RPC call through our proxy
+ * Make a Solana JSON RPC call directly to public endpoints
+ * No backend proxy needed - calls public RPC endpoints directly
  */
 export const makeRpcCall = async (
   method: string,
@@ -68,105 +80,103 @@ export const makeRpcCall = async (
   }
 
   const requestPromise = (async () => {
+    // Combine configured RPC URL with public endpoints
+    const endpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(Boolean);
+    // Remove duplicates
+    const uniqueEndpoints = Array.from(new Set(endpoints));
+
     let lastError: Error | null = null;
+    let lastErrorStatus: number | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        let response: Response;
+      for (const endpoint of uniqueEndpoints) {
         try {
-          response = await fetch("/api/solana-rpc", {
+          const controller = new AbortController();
+          const timeoutMs = 12000; // 12s timeout per endpoint
+          const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+          const response = await fetch(endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: Date.now(),
               method,
               params,
-              id: Date.now(),
             }),
+            signal: controller.signal,
           });
-        } catch (fetchErr) {
-          // Network/connection error (e.g. Dev server not running, middleware not mounted)
-          const fetchError =
-            fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
-          // Health check to provide better guidance
-          try {
-            const health = await fetch("/api/health")
-              .then((r) => r.text())
-              .catch(() => "");
-            throw new Error(
-              `Network fetch failed: ${fetchError}. API health check: ${health || "no response"}`,
+          clearTimeout(timeout);
+
+          if (!response.ok) {
+            const responseText = await response.text().catch(() => "");
+            console.warn(
+              `[RPC] ${method} on ${endpoint} returned ${response.status}`,
             );
-          } catch (hcErr) {
-            throw new Error(
-              `Network fetch failed: ${fetchError}. API health check failed: ${hcErr instanceof Error ? hcErr.message : String(hcErr)}`,
-            );
-          }
-        }
 
-        if (!response.ok) {
-          // Try to read body as text, then try to parse JSON for structured error info
-          const responseText = await response.text().catch(() => "");
-          let parsedErr: any = null;
-          try {
-            parsedErr = responseText ? JSON.parse(responseText) : null;
-          } catch {}
+            if (response.status === 429) {
+              lastErrorStatus = 429;
+            }
 
-          const details =
-            parsedErr?.error?.message ||
-            parsedErr?.message ||
-            responseText ||
-            response.statusText ||
-            "(no response body)";
-
-          // If server-provided diagnostics endpoint exists, attempt to fetch and append
-          let serverDiag = "";
-          if (response.status === 500) {
-            try {
-              serverDiag = await fetch("/api/debug/rpc")
-                .then((d) => d.text())
-                .catch(() => "");
-            } catch {}
+            continue;
           }
 
-          const diagSuffix = serverDiag
-            ? ` Server diagnostics: ${serverDiag}`
-            : "";
-          throw new Error(
-            `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
-          );
-        }
+          const text = await response.text().catch(() => "");
+          let data: any = null;
 
-        // Try to parse response as JSON, if not available return raw text
-        const text = await response.text().catch(() => "");
-        let data: any = null;
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch (e) {
-          data = text;
-        }
+          try {
+            data = text ? JSON.parse(text) : null;
+          } catch (e) {
+            console.warn(`[RPC] Failed to parse response from ${endpoint}`);
+            continue;
+          }
 
-        if (data && data.error) {
-          throw new Error(
-            `RPC error: ${data.error.message} (code: ${data.error.code || "unknown"})`,
-          );
-        }
+          if (data && data.error) {
+            console.warn(
+              `[RPC] ${method} on ${endpoint} returned error:`,
+              data.error,
+            );
+            continue;
+          }
 
-        return data?.result ?? data ?? text;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+          // Success!
+          return data?.result ?? data ?? text;
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          const isTimeout =
+            errorMsg.includes("abort") || errorMsg.includes("timeout");
 
-        if (attempt < retries) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * (attempt + 1)),
-          );
+          if (isTimeout) {
+            console.warn(`[RPC] ${method} on ${endpoint} timed out after 12s`);
+          } else {
+            console.warn(`[RPC] ${method} on ${endpoint} failed:`, errorMsg);
+          }
+
+          lastError = error instanceof Error ? error : new Error(errorMsg);
+          continue;
         }
+      }
+
+      // All endpoints failed for this attempt, retry if we have attempts left
+      if (attempt < retries) {
+        const isRateLimited = lastErrorStatus === 429;
+        const baseDelay = isRateLimited ? 2000 : 800;
+        const delayMs = baseDelay * Math.pow(2, attempt);
+
+        console.warn(
+          `[RPC] ${method} failed on all endpoints (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
 
     throw new Error(
-      `RPC call failed after ${retries + 1} attempts: ${lastError?.message || "Unknown error"}`,
+      `RPC call failed after ${retries + 1} attempts across all endpoints: ${lastError?.message || "Unknown error"}`,
     );
   })();
 
@@ -184,6 +194,7 @@ export const makeRpcCall = async (
  * Get SOL balance for a wallet
  */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
+  // First try via our API proxy (with retries/failover)
   try {
     const res = await makeRpcCall("getBalance", [publicKey]);
     const lamports =
@@ -193,36 +204,92 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
           ? (res as any).value
           : 0;
     const sol = lamports / 1_000_000_000;
+    if (Number.isFinite(sol)) return sol;
+  } catch (error) {
+    console.warn(
+      "Proxy RPC getBalance failed, attempting direct web3 fallback:",
+      error,
+    );
+  }
+
+  // Fallback: call Solana directly via web3.js (avoids proxy issues/rate limits)
+  try {
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const lamports = await conn.getBalance(new PublicKey(publicKey));
+    const sol = lamports / 1_000_000_000;
     return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
-    console.error("Error fetching wallet balance:", error);
+    console.error("Direct web3 getBalance failed:", error);
     return 0;
   }
 };
 
 /**
  * Get all token accounts for a wallet
+ * Includes multiple fallback RPC endpoints for reliability
  */
 export const getTokenAccounts = async (publicKey: string) => {
+  const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+  // Try via API proxy first
   try {
     const response = await makeRpcCall("getTokenAccountsByOwner", [
       publicKey,
-      {
-        programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-      },
-      {
-        encoding: "jsonParsed",
-        commitment: "confirmed",
-      },
+      { programId: TOKEN_PROGRAM_ID },
+      { encoding: "jsonParsed", commitment: "confirmed" },
     ]);
 
-    return response.value.map((account: any) => {
+    const value = (response as any)?.value || [];
+    if (Array.isArray(value) && value.length >= 0) {
+      console.log(
+        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+      );
+      return value.map((account: any) => {
+        const parsedInfo = account.account.data.parsed.info;
+        const mint = parsedInfo.mint;
+        const balance = parsedInfo.tokenAmount.uiAmount || 0;
+        const decimals = parsedInfo.tokenAmount.decimals;
+
+        const metadata = KNOWN_TOKENS[mint] || {
+          mint,
+          symbol: "UNKNOWN",
+          name: "Unknown Token",
+          decimals,
+        };
+
+        return {
+          ...metadata,
+          balance,
+          decimals: decimals || metadata.decimals,
+        };
+      });
+    }
+  } catch (error) {
+    console.warn(
+      "[Token Accounts] Proxy RPC getTokenAccountsByOwner failed, attempting direct web3.js fallback:",
+      error,
+    );
+  }
+
+  // Fallback: Try direct web3.js Connection via SOLANA_RPC_URL
+  try {
+    console.log("[Token Accounts] Attempting direct web3.js fallback...");
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const accounts = await conn.getParsedTokenAccountsByOwner(
+      new PublicKey(publicKey),
+      { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+    );
+
+    console.log(
+      `[Token Accounts] Got ${accounts.value.length} token accounts from web3.js fallback`,
+    );
+
+    return accounts.value.map((account: any) => {
       const parsedInfo = account.account.data.parsed.info;
       const mint = parsedInfo.mint;
       const balance = parsedInfo.tokenAmount.uiAmount || 0;
       const decimals = parsedInfo.tokenAmount.decimals;
 
-      // Get token metadata from known tokens or use defaults
       const metadata = KNOWN_TOKENS[mint] || {
         mint,
         symbol: "UNKNOWN",
@@ -236,8 +303,11 @@ export const getTokenAccounts = async (publicKey: string) => {
         decimals: decimals || metadata.decimals,
       };
     });
-  } catch (error) {
-    console.error("Error fetching token accounts:", error);
+  } catch (webError) {
+    console.error(
+      "[Token Accounts] Direct web3.js fallback also failed:",
+      webError,
+    );
     return [];
   }
 };

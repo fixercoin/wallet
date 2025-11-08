@@ -1,6 +1,10 @@
 // functions/api/wallet-balance.ts
 // Accepts POST JSON: { "walletAddress": "<Pubkey>" }
-// Returns the getBalance RPC result proxied via Alchemy or fallback RPC providers.
+// Returns the getBalance RPC result proxied via RPC providers
+
+// NOTE: Helius, Moralis, and Alchemy are RPC providers for Solana blockchain calls
+// They fetch wallet balance and transaction data - NOT for token price fetching
+// Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
 
 const RPC_ENDPOINTS = [
   "",
@@ -13,6 +17,7 @@ export async function onRequestPost(context: any) {
   const { request, env } = context;
 
   // Build RPC endpoint list with env vars first, then fallbacks
+  // Priority: Helius > Moralis > Alchemy > Public Solana RPC nodes
   const rpcEndpoints = [
     env?.HELIUS_API_KEY
       ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`

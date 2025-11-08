@@ -26,8 +26,9 @@ const fetchWithTimeout = (
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-  return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timeoutId));
+  return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(timeoutId),
+  );
 };
 
 async function handler(request: Request): Promise<Response> {
@@ -81,7 +82,11 @@ async function handler(request: Request): Promise<Response> {
     });
 
     // Try each endpoint with retry logic
-    for (let endpointIndex = 0; endpointIndex < JUPITER_QUOTE_ENDPOINTS.length; endpointIndex++) {
+    for (
+      let endpointIndex = 0;
+      endpointIndex < JUPITER_QUOTE_ENDPOINTS.length;
+      endpointIndex++
+    ) {
       const baseUrl = JUPITER_QUOTE_ENDPOINTS[endpointIndex];
 
       for (let attempt = 1; attempt <= 2; attempt++) {
@@ -108,7 +113,10 @@ async function handler(request: Request): Promise<Response> {
               `[Jupiter Quote] ${response.status} from ${baseUrl} - likely no route for this pair`,
             );
             // Don't retry other endpoints for 404/400, but try next endpoint
-            if (endpointIndex === JUPITER_QUOTE_ENDPOINTS.length - 1 && attempt === 1) {
+            if (
+              endpointIndex === JUPITER_QUOTE_ENDPOINTS.length - 1 &&
+              attempt === 1
+            ) {
               return new Response(
                 JSON.stringify({
                   error: "No swap route found for this pair",
@@ -145,9 +153,7 @@ async function handler(request: Request): Promise<Response> {
             break; // Try next endpoint
           }
 
-          console.log(
-            `[Jupiter Quote] ✅ Success from ${baseUrl}`,
-          );
+          console.log(`[Jupiter Quote] ✅ Success from ${baseUrl}`);
           return new Response(data, {
             status: 200,
             headers: {
@@ -158,7 +164,8 @@ async function handler(request: Request): Promise<Response> {
           });
         } catch (error: any) {
           const errorMsg = error?.message || String(error);
-          const isTimeout = errorMsg.includes("timeout") || error?.name === "AbortError";
+          const isTimeout =
+            errorMsg.includes("timeout") || error?.name === "AbortError";
 
           console.warn(
             `[Jupiter Quote] ${isTimeout ? "Timeout" : "Error"} on ${baseUrl} (attempt ${attempt}/2): ${errorMsg}`,

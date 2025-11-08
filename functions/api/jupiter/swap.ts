@@ -43,8 +43,9 @@ const fetchWithTimeout = (
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-  return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timeoutId));
+  return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(timeoutId),
+  );
 };
 
 async function handler(request: Request): Promise<Response> {
@@ -116,7 +117,11 @@ async function handler(request: Request): Promise<Response> {
     const outputMint = body.quoteResponse?.outputMint || "unknown";
 
     // Try each endpoint with retry logic
-    for (let endpointIndex = 0; endpointIndex < JUPITER_SWAP_ENDPOINTS.length; endpointIndex++) {
+    for (
+      let endpointIndex = 0;
+      endpointIndex < JUPITER_SWAP_ENDPOINTS.length;
+      endpointIndex++
+    ) {
       const baseUrl = JUPITER_SWAP_ENDPOINTS[endpointIndex];
 
       for (let attempt = 1; attempt <= 2; attempt++) {
@@ -207,9 +212,7 @@ async function handler(request: Request): Promise<Response> {
             break; // Try next endpoint for unexpected errors
           }
 
-          console.log(
-            `[Jupiter Swap] ✅ Success from ${baseUrl}`,
-          );
+          console.log(`[Jupiter Swap] ✅ Success from ${baseUrl}`);
           return new Response(data, {
             status: 200,
             headers: {
@@ -219,7 +222,8 @@ async function handler(request: Request): Promise<Response> {
           });
         } catch (error: any) {
           const errorMsg = error?.message || String(error);
-          const isTimeout = errorMsg.includes("timeout") || error?.name === "AbortError";
+          const isTimeout =
+            errorMsg.includes("timeout") || error?.name === "AbortError";
 
           console.warn(
             `[Jupiter Swap] ${isTimeout ? "Timeout" : "Error"} on ${baseUrl} (attempt ${attempt}/2): ${errorMsg}`,

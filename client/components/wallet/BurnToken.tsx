@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
+import { rpcCall as rpcCallUtil } from "@/lib/rpc-utils";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";

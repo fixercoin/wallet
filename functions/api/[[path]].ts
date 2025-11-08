@@ -411,21 +411,53 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
 
           const response = await timeoutFetch(endpoint, {
             method: "POST",
-            headers: browserHeaders(),
-            body: JSON.stringify(body),
+            headers: browserHeaders({ Accept: "application/json" }),
+            body: JSON.stringify({
+              ...body,
+              wrapAndUnwrapSol: body.wrapAndUnwrapSol !== false,
+              useSharedAccounts: body.useSharedAccounts !== false,
+              asLegacyTransaction: body.asLegacyTransaction === true,
+            }),
           });
 
           lastStatus = response.status;
 
+          const text = await response.text().catch(() => "");
+
           if (response.ok) {
-            const data = await response.json();
-            console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
-            return new Response(JSON.stringify(data), {
-              headers: CORS_HEADERS,
-            });
+            try {
+              const data = JSON.parse(text || "{}");
+              console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
+              return new Response(JSON.stringify(data), {
+                headers: CORS_HEADERS,
+              });
+            } catch {
+              console.warn("[Jupiter Swap] Non-JSON success payload");
+              return new Response(text, { headers: CORS_HEADERS });
+            }
           }
 
-          const text = await response.text().catch(() => "");
+          const lower = (text || "").toLowerCase();
+          const isStaleQuote =
+            lower.includes("1016") ||
+            lower.includes("stale") ||
+            lower.includes("simulation") ||
+            lower.includes("swap simulation failed") ||
+            lower.includes("quote expired");
+
+          if (isStaleQuote) {
+            console.warn(`[Jupiter Swap] Detected stale quote (1016)`);
+            return new Response(
+              JSON.stringify({
+                error: "STALE_QUOTE",
+                message: "Quote expired - market conditions changed",
+                details: text.slice(0, 300),
+                code: 1016,
+              }),
+              { status: 530, headers: CORS_HEADERS },
+            );
+          }
+
           lastError = text;
 
           if (response.status === 429 || response.status >= 500) {
@@ -460,8 +492,8 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     );
     return new Response(
       JSON.stringify({
-        error: `Swap failed: ${lastError}`,
-        details: lastError,
+        error: "Swap failed",
+        details: lastError || "Unknown error",
         statusCode: lastStatus,
       }),
       { status: lastStatus >= 400 ? lastStatus : 502, headers: CORS_HEADERS },
@@ -470,9 +502,10 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     console.error(`[Jupiter Swap] Exception: ${e?.message || e}`);
     return new Response(
       JSON.stringify({
-        error: String(e?.message || e),
+        error: "Failed to create swap",
+        details: String(e?.message || e),
       }),
-      { status: 500, headers: CORS_HEADERS },
+      { status: 502, headers: CORS_HEADERS },
     );
   }
 }

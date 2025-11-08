@@ -5,8 +5,8 @@ compatibility_date = "2025-01-01"
 # Type can be 'javascript' or 'webpack'
 type = "javascript"
 
-# Entrypoint - point to the worker module that exports `onRequest` or default fetch handler
-main = "src/worker.ts"
+# Entrypoint - point to the worker module that exports default fetch handler
+main = "worker.js"
 
 # Build configuration
 [build]

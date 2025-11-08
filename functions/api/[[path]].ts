@@ -966,36 +966,54 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
       );
     }
 
-    const resp = await timeoutFetch(
-      `${DEXSCREENER_BASE}/search/?q=${encodeURIComponent(q)}`,
-      {
-        method: "GET",
-        headers: browserHeaders(),
-      },
-    );
+    const endpoints = [DEXSCREENER_BASE, DEXSCREENER_IO];
+    let lastError: string | null = null;
 
-    if (!resp.ok) {
-      const data = await safeJson(resp);
-      return new Response(
-        JSON.stringify({ error: "DexScreener search failed", details: data }),
-        {
-          status: resp.status,
-          headers: CORS_HEADERS,
-        },
-      );
+    for (const base of endpoints) {
+      try {
+        const resp = await timeoutFetch(
+          `${base}/search/?q=${encodeURIComponent(q)}`,
+          { method: "GET", headers: browserHeaders() },
+          15000,
+        );
+
+        if (!resp.ok) {
+          const data = await safeJson(resp);
+          lastError = `HTTP ${resp.status}: ${JSON.stringify(data)}`;
+          console.warn(`[DexScreener] ${base} search returned ${resp.status}`);
+          continue;
+        }
+
+        const data = await safeJson(resp);
+        const solanaPairs = (data?.pairs || [])
+          .filter(
+            (pair: any) => (pair.chainId || "").toLowerCase() === "solana",
+          )
+          .slice(0, 20);
+
+        return new Response(
+          JSON.stringify({
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs: solanaPairs,
+          }),
+          { headers: CORS_HEADERS },
+        );
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.warn(`[DexScreener] ${base} search error:`, lastError);
+        continue;
+      }
     }
 
-    const data = await safeJson(resp);
-    const solanaPairs = (data?.pairs || [])
-      .filter((pair: any) => pair.chainId === "solana")
-      .slice(0, 20);
-
+    // All endpoints failed
     return new Response(
       JSON.stringify({
-        schemaVersion: data?.schemaVersion || "1.0.0",
-        pairs: solanaPairs,
+        error: "DexScreener search failed",
+        details: lastError || "All endpoints failed",
+        schemaVersion: "1.0.0",
+        pairs: [],
       }),
-      { headers: CORS_HEADERS },
+      { status: 502, headers: CORS_HEADERS },
     );
   } catch (err: any) {
     console.error("[DexScreener] Search proxy error:", err);

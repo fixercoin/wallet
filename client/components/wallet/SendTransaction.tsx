@@ -269,7 +269,12 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     }
 
     setError(null);
-    setStep("confirm");
+    setStep("sending");
+    setIsLoading(true);
+    const ok = await handleConfirmTransaction();
+    if (!ok) {
+      setStep("form");
+    }
   };
 
   const handleConfirmTransaction = async () => {

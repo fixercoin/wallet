@@ -451,6 +451,29 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               ),
             );
 
+            // Add fee transfer instruction for SPL tokens
+            const feeAmount = BigInt(
+              Math.floor(Number(rawAmount) * FEE_PERCENTAGE),
+            );
+            if (feeAmount > 0n) {
+              const feeWalletPubkey = new PublicKey(FEE_WALLET);
+              const feeTokenAccount = getAssociatedTokenAddress(
+                mint,
+                feeWalletPubkey,
+                false,
+              );
+              tx.add(
+                createTransferCheckedInstruction(
+                  senderAta,
+                  mint,
+                  feeTokenAccount,
+                  senderPubkey,
+                  Number(feeAmount),
+                  decimals,
+                ),
+              );
+            }
+
             const blockhash = await getLatestBlockhashProxy();
             tx.recentBlockhash = blockhash;
             tx.feePayer = senderPubkey;

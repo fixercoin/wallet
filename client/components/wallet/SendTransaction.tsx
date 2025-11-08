@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,121 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_AMOUNT_SOL = 0.002;
 
+const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+
+  const colors = [
+    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+  ];
+
+  const particles = Array.from({ length: 60 }).map((_, i) => {
+    const angle = (i / 60) * Math.PI * 2;
+    const distance = 200 + Math.random() * 150;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    const size = 8 + Math.random() * 16;
+    const delay = Math.random() * 0.1;
+
+    return {
+      tx,
+      ty,
+      id: i,
+      color: colors[i % colors.length],
+      size,
+      delay,
+    };
+  });
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      <style>{`
+        @keyframes burst-particle {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+          }
+        }
+        @keyframes bloom-pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7), inset 0 0 20px rgba(255, 255, 255, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 30px 15px rgba(255, 255, 255, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.5);
+          }
+          100% {
+            box-shadow: 0 0 60px 30px rgba(255, 255, 255, 0), inset 0 0 20px rgba(255, 255, 255, 0);
+          }
+        }
+        @keyframes success-pop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style=
+            {{
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              backgroundColor: p.color,
+              borderRadius: "50%",
+              marginLeft: `-${p.size / 2}px`,
+              marginTop: `-${p.size / 2}px`,
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              animation: `burst-particle 1.6s ease-out forwards`,
+              animationDelay: `${p.delay}s`,
+              boxShadow: `0 0 ${p.size}px ${p.color}80, 0 0 ${p.size * 2}px ${p.color}40`,
+            } as any
+          }
+        />
+      ))}
+
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          marginLeft: "-50px",
+          marginTop: "-50px",
+          animation: "bloom-pulse 1.6s ease-out forwards",
+        }}
+      >
+        <div className="w-24 h-24 bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
+          <Check className="w-12 h-12 text-white" strokeWidth={3} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const SendTransaction: React.FC<SendTransactionProps> = ({
   onBack,
   initialMint,
@@ -61,6 +176,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     initialMint || TOKEN_MINTS.SOL,
   );
   const [pendingTransactionSend, setPendingTransactionSend] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    if (step === "success") {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    }
+  }, [step]);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),
@@ -699,8 +822,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <BloomExplosion show={showSuccess} />
+        <div className="w-full max-w-md relative z-10">
           <div className="bg-transparent p-8 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">

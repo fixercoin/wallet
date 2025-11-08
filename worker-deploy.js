@@ -790,7 +790,8 @@ async function handleJupiterPrice(reqUrl, env) {
     const result = await tryJupiter(
       candidates,
       { method: "GET", headers: { Accept: "application/json" } },
-      7000,
+      12000,
+      2,
     );
     const ct = result.headers.get("content-type") || "application/json";
     return new Response(result.body, {
@@ -798,6 +799,7 @@ async function handleJupiterPrice(reqUrl, env) {
       headers: { "content-type": ct, ...corsHeaders() },
     });
   } catch (e) {
+    console.error("Jupiter price error:", e.message);
     return new Response(
       JSON.stringify({
         error: "Failed to fetch Jupiter price",

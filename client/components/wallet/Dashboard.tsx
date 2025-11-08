@@ -880,9 +880,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           : "****"}
                       </div>
                       {showBalance ? (
-                        <div className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                          <span className="font-medium">{isPositive ? "+" : "-"} {Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</span>
-                          <span className="ml-1">({Math.abs(isFinite(change24hPercent) ? change24hPercent : 0).toFixed(2)}%)</span>
+                        <div
+                          className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                        >
+                          <span className="font-medium">
+                            {isPositive ? "+" : "-"}{" "}
+                            {Math.abs(totalChange24h).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3,
+                              },
+                            )}
+                          </span>
+                          <span className="ml-1">
+                            (
+                            {Math.abs(
+                              isFinite(change24hPercent) ? change24hPercent : 0,
+                            ).toFixed(2)}
+                            %)
+                          </span>
                         </div>
                       ) : (
                         <div className="text-xs text-gray-400 mt-1">****</div>
@@ -892,7 +909,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 })()
               : "Connect wallet to see balance"}
           </div>
-
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 mt-10">

@@ -282,27 +282,36 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       const solDecimals = 9;
       const numMakers = currentSession.numberOfMakers;
-      const makers = currentSession.makers.map((m) => ({ ...m, status: "active" as const }));
+      const makers = currentSession.makers.map((m) => ({
+        ...m,
+        status: "active" as const,
+      }));
 
       const updatedSession = { ...currentSession, status: "running", makers };
       setCurrentSession(updatedSession);
-      const updatedSessions = sessions.map((s) => (s.id === updatedSession.id ? updatedSession : s));
+      const updatedSessions = sessions.map((s) =>
+        s.id === updatedSession.id ? updatedSession : s,
+      );
       setSessions(updatedSessions);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
 
-      toast({ title: "Market Making Started", description: `Executing ${numMakers} buys (client-side)` });
+      toast({
+        title: "Market Making Started",
+        description: `Executing ${numMakers} buys (client-side)`,
+      });
 
       // Helper to sign and send base64 versioned tx
       const getKeypair = (): Keypair | null => {
         try {
-          const sk = (wallet.secretKey as any) as Uint8Array | number[] | string;
+          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
           if (!sk) return null;
           if (typeof sk === "string") {
             // assume base64
             const arr = bytesFromBase64(sk);
             return Keypair.fromSecretKey(arr);
           }
-          if (Array.isArray(sk)) return Keypair.fromSecretKey(Uint8Array.from(sk));
+          if (Array.isArray(sk))
+            return Keypair.fromSecretKey(Uint8Array.from(sk));
           return Keypair.fromSecretKey(sk as Uint8Array);
         } catch (e) {
           return null;
@@ -318,7 +327,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         const signed = vtx.serialize();
         const signedBase64 = base64FromBytes(signed);
         // Send via RPC proxy
-        const res = await rpcCall("sendRawTransaction", [signedBase64, { skipPreflight: false, preflightCommitment: "confirmed" }]);
+        const res = await rpcCall("sendRawTransaction", [
+          signedBase64,
+          { skipPreflight: false, preflightCommitment: "confirmed" },
+        ]);
         return res as string;
       };
 
@@ -327,16 +339,29 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         const amountSol =
           parseFloat(currentSession.minOrderSOL) +
           Math.random() *
-            (parseFloat(currentSession.maxOrderSOL) - parseFloat(currentSession.minOrderSOL));
+            (parseFloat(currentSession.maxOrderSOL) -
+              parseFloat(currentSession.minOrderSOL));
 
         const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);
-        const quote = await jupiterAPI.getQuote(SOL_MINT, currentSession.tokenAddress, Number(rawAmount), 120);
+        const quote = await jupiterAPI.getQuote(
+          SOL_MINT,
+          currentSession.tokenAddress,
+          Number(rawAmount),
+          120,
+        );
         if (!quote) {
           // mark maker error
           const m = updatedSession.makers[i];
           if (m) {
             m.status = "error" as const;
-            m.buyTransactions.push({ type: "buy", timestamp: Date.now(), solAmount: amountSol, tokenAmount: 0, feeAmount: 0, status: "failed" });
+            m.buyTransactions.push({
+              type: "buy",
+              timestamp: Date.now(),
+              solAmount: amountSol,
+              tokenAmount: 0,
+              feeAmount: 0,
+              status: "failed",
+            });
           }
           continue;
         }
@@ -347,17 +372,35 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           const m = updatedSession.makers[i];
           if (m) {
             m.status = "error" as const;
-            m.buyTransactions.push({ type: "buy", timestamp: Date.now(), solAmount: amountSol, tokenAmount: 0, feeAmount: 0, status: "failed" });
+            m.buyTransactions.push({
+              type: "buy",
+              timestamp: Date.now(),
+              solAmount: amountSol,
+              tokenAmount: 0,
+              feeAmount: 0,
+              status: "failed",
+            });
           }
           continue;
         }
 
-        const swap = await jupiterAPI.getSwapTransaction({ quoteResponse: quote, userPublicKey: wallet.publicKey, wrapAndUnwrapSol: true });
+        const swap = await jupiterAPI.getSwapTransaction({
+          quoteResponse: quote,
+          userPublicKey: wallet.publicKey,
+          wrapAndUnwrapSol: true,
+        });
         if (!swap || !swap.swapTransaction) {
           const m = updatedSession.makers[i];
           if (m) {
             m.status = "error" as const;
-            m.buyTransactions.push({ type: "buy", timestamp: Date.now(), solAmount: amountSol, tokenAmount: 0, feeAmount: 0, status: "failed" });
+            m.buyTransactions.push({
+              type: "buy",
+              timestamp: Date.now(),
+              solAmount: amountSol,
+              tokenAmount: 0,
+              feeAmount: 0,
+              status: "failed",
+            });
           }
           continue;
         }
@@ -366,14 +409,33 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           const sig = await sendSignedTxGeneric(swap.swapTransaction);
           const m = updatedSession.makers[i];
           if (m) {
-            m.buyTransactions.push({ type: "buy", timestamp: Date.now(), solAmount: amountSol, tokenAmount: jupiterAPI.parseSwapAmount(quote.outAmount, quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0) || 0, feeAmount: 0, signature: sig, status: "confirmed" });
+            m.buyTransactions.push({
+              type: "buy",
+              timestamp: Date.now(),
+              solAmount: amountSol,
+              tokenAmount:
+                jupiterAPI.parseSwapAmount(
+                  quote.outAmount,
+                  quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
+                ) || 0,
+              feeAmount: 0,
+              signature: sig,
+              status: "confirmed",
+            });
             m.status = "completed" as const;
           }
         } catch (e) {
           const m = updatedSession.makers[i];
           if (m) {
             m.status = "error" as const;
-            m.buyTransactions.push({ type: "buy", timestamp: Date.now(), solAmount: amountSol, tokenAmount: 0, feeAmount: 0, status: "failed" });
+            m.buyTransactions.push({
+              type: "buy",
+              timestamp: Date.now(),
+              solAmount: amountSol,
+              tokenAmount: 0,
+              feeAmount: 0,
+              status: "failed",
+            });
           }
         }
 
@@ -387,14 +449,26 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       // finalize session
       const final = { ...updatedSession, status: "completed" as const };
       setCurrentSession(final);
-      const finalSessions = sessions.map((s) => (s.id === final.id ? final : s));
+      const finalSessions = sessions.map((s) =>
+        s.id === final.id ? final : s,
+      );
       setSessions(finalSessions);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(finalSessions));
 
-      toast({ title: "Market Maker Finished", description: "Client-side execution completed" });
+      toast({
+        title: "Market Maker Finished",
+        description: "Client-side execution completed",
+      });
     } catch (error) {
       console.error("Error starting market maker:", error);
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to start market maker", variant: "destructive" });
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to start market maker",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

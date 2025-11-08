@@ -1,21 +1,11 @@
-name = "wallet-c36"
-compatibility_date = "2024-12-01"
+name = "fixorium-pages"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare Pages configuration
+# Cloudflare Pages output directory
 pages_build_output_dir = "dist"
 
-[env.production]
-name = "wallet-c36-production"
-routes = [
-  { pattern = "wallet.fixorium.com.pk/*", zone_name = "fixorium.com.pk" },
-  { pattern = "wallet-c26.pages.dev/*", zone_name = "pages.dev" }
-]
-
-[env.production.vars]
-SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
-BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
-
+# Environment variables available at build time and to Functions (VITE_ prefix exposed to client)
 [vars]
-SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
-BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
+VITE_API_URL = ""
+VITE_API_BASE_URL = ""

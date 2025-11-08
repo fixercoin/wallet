@@ -119,6 +119,7 @@ import TokenListing from "./pages/TokenListing";
 import WalletHistory from "./pages/WalletHistory";
 import NotFound from "./pages/NotFound";
 import BuyCrypto from "./pages/BuyCrypto";
+import TokenSearchDetail from "./pages/TokenSearchDetail";
 import BuyNote from "./pages/BuyNote";
 import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";
@@ -150,6 +151,7 @@ function AppRoutes() {
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
       <Route path="/wallet/history" element={<WalletHistory />} />
+      <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

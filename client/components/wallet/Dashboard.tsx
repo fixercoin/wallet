@@ -59,9 +59,10 @@ interface DashboardProps {
 
 import { useNavigate } from "react-router-dom";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
+import { TokenSearch } from "./TokenSearch";
 
 const QUEST_TASKS = [
   {
@@ -299,8 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
         // Health check via reliable ping endpoint
-        const url = resolveApiUrl("/api/ping");
-        const res = await fetch(url, {
+        const res = await fetchWithFallback("/api/ping", {
           method: "GET",
           signal: controller.signal,
           headers: {
@@ -686,12 +686,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  🎁 Rewards
+                  �� Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>⚡ Early access to wallet updates</p>
+                  <p>��� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -745,8 +745,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
         {/* Balance Section */}
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2 flex-1">
+              <TokenSearch className="w-full mr-2" />
+            </div>
 
             <div className="flex items-center gap-2">
               {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
@@ -825,16 +827,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     ) ||
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
-                    // Show both USD and PKR even when zero
+                    // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
                     const usdZero = `0.00 USD`;
-                    const pkrZero = `0.00 Pkr`;
                     return (
                       <>
                         <div className="text-base font-medium text-gray-900 leading-tight">
                           {showBalance ? `${usdZero}` : "****"}
-                        </div>
-                        <div className="text-sm text-gray-700 mt-1">
-                          {showBalance ? `${pkrZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
                           {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
@@ -881,14 +879,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             })} USD`
                           : "****"}
                       </div>
-                      <div className="text-sm text-gray-700 mt-1">
-                        {showBalance
-                          ? `${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Pkr`
-                          : "****"}
-                      </div>
                       {showBalance ? (
-                        <div className="text-xs text-gray-400 mt-1">
-                          {`${isPositive ? "+" : "-"} ${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${Math.abs(isFinite(change24hPercent) ? change24hPercent : 0).toFixed(2)}%)`}
+                        <div
+                          className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                        >
+                          <span className="font-medium">
+                            {isPositive ? "+" : "-"}{" "}
+                            {Math.abs(totalChange24h).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3,
+                              },
+                            )}
+                          </span>
+                          <span className="ml-1">
+                            (
+                            {Math.abs(
+                              isFinite(change24hPercent) ? change24hPercent : 0,
+                            ).toFixed(2)}
+                            %)
+                          </span>
                         </div>
                       ) : (
                         <div className="text-xs text-gray-400 mt-1">****</div>
@@ -898,8 +909,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 })()
               : "Connect wallet to see balance"}
           </div>
+
           {/* Action Buttons */}
-          <div className="flex items-center gap-3 mt-6">
+          <div className="flex items-center gap-3 mt-10">
             <Button
               onClick={onSend}
               className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"

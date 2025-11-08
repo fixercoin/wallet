@@ -42,11 +42,21 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
-const JUPITER_V6_ENDPOINTS = {
-  quote: "/api/jupiter/quote",
-  swap: "/api/jupiter/swap",
-  price: "/api/jupiter/price",
-};
+// For Cloudflare Pages (frontend-only), call Jupiter API directly
+// Otherwise use local proxy endpoints
+const USE_DIRECT_JUPITER = typeof window !== "undefined"; // Browser environment
+
+const JUPITER_V6_ENDPOINTS = USE_DIRECT_JUPITER
+  ? {
+      quote: "https://quote-api.jup.ag/v6/quote",
+      swap: "https://quote-api.jup.ag/v6/swap",
+      price: "https://api.jup.ag/price/v2",
+    }
+  : {
+      quote: "/api/jupiter/quote",
+      swap: "/api/jupiter/swap",
+      price: "/api/jupiter/price",
+    };
 
 class JupiterV6API {
   /**

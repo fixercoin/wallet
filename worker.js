@@ -495,6 +495,63 @@ async function handleJupiterQuote(reqUrl, env) {
   }
 }
 
+async function handleSolPrice(env) {
+  const SOL_MINT = "So11111111111111111111111111111111111111112";
+  const params = `?ids=${encodeURIComponent(SOL_MINT)}`;
+  const candidates = [];
+  if (env && env.JUPITER_PRICE_BASE)
+    candidates.push(normalizeBase(env.JUPITER_PRICE_BASE) + `/price${params}`);
+  candidates.push(`https://price.jup.ag/v4/price${params}`);
+  candidates.push(`https://api.jup.ag/price/v2${params}`);
+
+  try {
+    const result = await tryJupiter(
+      candidates,
+      { method: "GET", headers: { Accept: "application/json" } },
+      7000,
+    );
+    if (result.status === 200) {
+      const data = JSON.parse(result.body);
+      const solPrice = data?.data?.[SOL_MINT]?.price ?? null;
+      if (solPrice) {
+        return new Response(
+          JSON.stringify({
+            token: "SOL",
+            mint: SOL_MINT,
+            price: solPrice,
+            priceUsd: solPrice,
+            timestamp: new Date().toISOString(),
+          }),
+          {
+            headers: { "content-type": "application/json", ...corsHeaders() },
+          },
+        );
+      }
+    }
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch SOL price",
+        details: "Price data not available",
+      }),
+      {
+        status: 502,
+        headers: { "content-type": "application/json", ...corsHeaders() },
+      },
+    );
+  } catch (e) {
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch SOL price",
+        details: e.message || String(e),
+      }),
+      {
+        status: 502,
+        headers: { "content-type": "application/json", ...corsHeaders() },
+      },
+    );
+  }
+}
+
 async function handleJupiterPrice(reqUrl, env) {
   const ids = reqUrl.searchParams.get("ids");
   if (!ids)
@@ -601,6 +658,8 @@ export default {
 
       if (pathname === "api/wallet/balance" || pathname === "api/balance")
         return handleWalletBalance(url, env);
+
+      if (pathname === "api/sol/price") return handleSolPrice(env);
 
       if (pathname === "api/dexscreener/tokens") return handleDexTokens(url);
       if (pathname === "api/dexscreener/search") return handleDexSearch(url);

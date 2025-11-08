@@ -954,6 +954,99 @@ async function handleDexscreenerPrice(url: URL): Promise<Response> {
   }
 }
 
+async function handleDexscreenerTokens(url: URL): Promise<Response> {
+  try {
+    const mintsParam = url.searchParams.get("mints");
+    if (!mintsParam || typeof mintsParam !== "string") {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing or invalid 'mints' parameter. Expected comma-separated token mints.",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const rawMints = mintsParam
+      .split(",")
+      .map((m) => m.trim())
+      .filter(Boolean);
+    const uniqueMints = Array.from(new Set(rawMints));
+
+    if (uniqueMints.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid mints provided" }), {
+        status: 400,
+        headers: CORS_HEADERS,
+      });
+    }
+
+    const MAX_TOKENS_PER_BATCH = 20;
+    const batches: string[][] = [];
+    for (let i = 0; i < uniqueMints.length; i += MAX_TOKENS_PER_BATCH) {
+      batches.push(uniqueMints.slice(i, i + MAX_TOKENS_PER_BATCH));
+    }
+
+    const endpoints = [DEXSCREENER_BASE, DEXSCREENER_IO];
+    const results: any[] = [];
+    let schemaVersion = "1.0.0";
+
+    for (const batch of batches) {
+      let success = false;
+      const path = `/tokens/${encodeURIComponent(batch.join(","))}`;
+
+      for (const base of endpoints) {
+        try {
+          const resp = await timeoutFetch(`${base}${path}`, {
+            method: "GET",
+            headers: browserHeaders(),
+          });
+          if (!resp.ok) {
+            continue;
+          }
+          const data = await safeJson(resp);
+          if (data?.schemaVersion) schemaVersion = data.schemaVersion;
+          if (Array.isArray(data?.pairs)) {
+            results.push(...data.pairs);
+          }
+          success = true;
+          break;
+        } catch {
+          // try next endpoint
+          continue;
+        }
+      }
+      // continue to next batch even if this one failed
+      if (!success) {
+        continue;
+      }
+    }
+
+    // Deduplicate and filter to Solana
+    const seen = new Set<string>();
+    const pairs = results
+      .filter((p: any) => (p?.chainId || "").toLowerCase() === "solana")
+      .filter((p: any) => {
+        const key = `${p?.baseToken?.address || ""}:${p?.quoteToken?.address || ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    return new Response(JSON.stringify({ schemaVersion, pairs }), {
+      headers: CORS_HEADERS,
+    });
+  } catch (err: any) {
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 200, headers: CORS_HEADERS },
+    );
+  }
+}
+
 async function handleDexscreenerSearch(url: URL): Promise<Response> {
   try {
     const q = url.searchParams.get("q");

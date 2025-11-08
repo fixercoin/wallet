@@ -728,6 +728,10 @@ export default {
         return await handleJupiterSwap(request);
       }
 
+      if (pathname.startsWith("/api/solana-send")) {
+        return await handleSolanaSend(request);
+      }
+
       if (pathname.startsWith("/api/jupiter/price")) {
         return await handleJupiterPrice(url);
       }

@@ -62,6 +62,7 @@ import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
+import { TokenSearch } from "./TokenSearch";
 
 const QUEST_TASKS = [
   {
@@ -685,7 +686,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  🎁 Rewards
+                  �� Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
@@ -897,6 +898,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 })()
               : "Connect wallet to see balance"}
           </div>
+
+          {/* Token search inside balance card */}
+          <div className="mt-4">
+            <TokenSearch />
+          </div>
+
           {/* Action Buttons */}
           <div className="flex items-center gap-3 mt-6">
             <Button

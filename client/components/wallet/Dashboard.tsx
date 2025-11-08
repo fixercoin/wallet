@@ -59,7 +59,7 @@ interface DashboardProps {
 
 import { useNavigate } from "react-router-dom";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 
@@ -299,8 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
         // Health check via reliable ping endpoint
-        const url = resolveApiUrl("/api/ping");
-        const res = await fetch(url, {
+        const res = await fetchWithFallback("/api/ping", {
           method: "GET",
           signal: controller.signal,
           headers: {

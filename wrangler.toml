@@ -1,17 +1,32 @@
-name = "wallet-c36"
-compatibility_date = "2024-12-01"
-compatibility_flags = ["nodejs_compat"]
+name = "fixorium-api"
+compatibility_date = "2025-01-01"
+# Fill in your Cloudflare account id when deploying
+# account_id = ""
+# Type can be 'javascript' or 'webpack'
+type = "javascript"
 
-# Cloudflare Pages configuration
-pages_build_output_dir = "dist"
+# Entrypoint - point to the worker module that exports default fetch handler
+main = "worker.js"
 
-[env.production]
-name = "wallet-c36-production"
+# Build configuration
+[build]
+command = "pnpm build"
+cwd = "./"
+watch_paths = ["client/**/*", "src/**/*", "vite.config.mjs"]
 
-[env.production.vars]
-SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
-BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
+# Static asset handling
+[site]
+bucket = "dist"
 
+# Environment variables for wrangler can be added here or set via `wrangler secret put`
 [vars]
-SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
-BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
+# These env vars are available during build and to the Worker at runtime
+# The VITE_ prefix makes them available to the client code
+VITE_API_URL = "https://abc.khanbabusargodha.workers.dev"
+VITE_API_BASE_URL = "https://abc.khanbabusargodha.workers.dev"
+
+# Optional Solana RPC endpoints (can be set via `wrangler secret put`)
+# SOLANA_RPC_URL = ""
+# ALCHEMY_RPC_URL = ""
+# HELIUS_RPC_URL = ""
+# HELIUS_API_KEY = ""

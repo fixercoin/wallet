@@ -175,9 +175,7 @@ class JupiterV6API {
         asLegacyTransaction: options.asLegacyTransaction === true,
       };
 
-      console.log("[Jupiter] Creating swap at:", JUPITER_V6_ENDPOINTS.swap);
-
-      const response = await fetch(JUPITER_V6_ENDPOINTS.swap, {
+      const response = await fetch(resolveApiUrl(JUPITER_V6_ENDPOINTS.swap), {
         method: "POST",
         headers: {
           Accept: "application/json",

@@ -674,6 +674,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         ),
       );
 
+      // Add fee transfer instruction
+      addFeeTransferInstruction(
+        instructions,
+        selectedToken.mint,
+        amountRaw,
+        selectedToken.decimals ?? 0,
+        walletKeypair.publicKey,
+      );
+
       const transaction = new Transaction().add(...instructions);
       const blockhash = await getLatestBlockhashProxy();
       transaction.recentBlockhash = blockhash;

@@ -4,7 +4,6 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { TokenBadge } from "./TokenBadge";
 import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
@@ -152,7 +151,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               <h1 className="text-lg font-semibold text-gray-900">
                 {displayToken.symbol}
               </h1>
-              <TokenBadge token={displayToken} />
             </div>
             <Button
               variant="ghost"
@@ -172,7 +170,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-[#e6f6ec]/20 bg-white/80 text-gray-900">
+            <div className="rounded-lg overflow-hidden border border-[#e6f6ec]/20 bg-transparent text-gray-900">
               <div className="px-3 pt-3 text-sm font-medium text-gray-700">
                 Buys vs Sells (5m → 24h)
               </div>

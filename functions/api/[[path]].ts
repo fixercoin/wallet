@@ -32,13 +32,16 @@ const CORS_HEADERS = {
 function timeoutFetch(
   resource: string,
   options: RequestInit = {},
-  ms = 20000,
+  ms = 30000,
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   const init = { ...options, signal: controller.signal };
   return fetch(resource, init)
-    .finally(() => clearTimeout(timer))
+    .then((response) => {
+      clearTimeout(timer);
+      return response;
+    })
     .catch((e) => {
       clearTimeout(timer);
       throw e;
@@ -116,7 +119,6 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     });
   }
 
-  const SOLANA_RPC = DEFAULT_SOLANA_RPC;
   const payload = {
     jsonrpc: "2.0",
     id: 1,
@@ -124,27 +126,68 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     params: [publicKey],
   };
 
-  try {
-    const rpcRes = await timeoutFetch(SOLANA_RPC, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const rpcJson = await rpcRes.json();
-    const lamports = rpcJson?.result?.value ?? 0;
-    const sol = lamports / 1_000_000_000;
-    return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-      headers: CORS_HEADERS,
-    });
-  } catch (e: any) {
-    return new Response(
-      JSON.stringify({
-        error: "rpc_error",
-        details: String(e?.message || e).slice(0, 200),
-      }),
-      { status: 502, headers: CORS_HEADERS },
-    );
+  // Build ordered list of endpoints to try (unique)
+  const endpoints = Array.from(
+    new Set([DEFAULT_SOLANA_RPC, ...(FALLBACK_RPC_ENDPOINTS || [])]),
+  );
+
+  let lastError = "";
+  let lastStatus = 502;
+
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const resp = await timeoutFetch(endpoint, {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        });
+
+        lastStatus = resp.status;
+
+        if (resp.ok) {
+          const rpcJson = await resp.json().catch(() => ({}));
+          const lamports = rpcJson?.result?.value ?? 0;
+          const sol = lamports / 1_000_000_000;
+          return new Response(JSON.stringify({ lamports, sol, publicKey }), {
+            headers: CORS_HEADERS,
+          });
+        }
+
+        // Non-OK response
+        const text = await resp.text().catch(() => "");
+        lastError = `HTTP ${resp.status}: ${text}`;
+
+        // Retry on server errors
+        if (resp.status >= 500) {
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+            continue;
+          }
+        }
+
+        // Not retryable, break to next endpoint
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 300 * attempt));
+          continue;
+        }
+      }
+    }
   }
+
+  // All endpoints failed
+  return new Response(
+    JSON.stringify({
+      error: "rpc_error",
+      details: lastError,
+      status: lastStatus,
+    }),
+    { status: 502, headers: CORS_HEADERS },
+  );
 }
 
 async function handleWalletTokens(url: URL): Promise<Response> {
@@ -242,44 +285,97 @@ async function handleJupiterQuote(url: URL): Promise<Response> {
   const urls = [
     `${JUPITER_V6_SWAP_BASE}/quote?${params.toString()}`,
     `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
+    `https://api.jup.ag/quote/v1?${params.toString()}`,
   ];
 
-  for (const fetchUrl of urls) {
-    try {
-      const response = await timeoutFetch(fetchUrl, {
-        method: "GET",
-        headers: browserHeaders(),
-      });
+  let lastError: string = "";
+  let lastStatus: number = 500;
 
-      if (response.ok) {
-        const data = await response.json();
-        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
-      }
-
-      if (response.status === 404 || response.status === 400) {
-        return new Response(
-          JSON.stringify({
-            error: "No swap route found for this pair",
-            code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
-          }),
-          { status: response.status, headers: CORS_HEADERS },
+  for (let urlIdx = 0; urlIdx < urls.length; urlIdx++) {
+    const fetchUrl = urls[urlIdx];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[Jupiter Quote] Attempt ${attempt}/2 for URL ${urlIdx + 1}/${urls.length}: ${fetchUrl.split("?")[0]}`,
         );
-      }
 
-      if (response.status === 429 || response.status >= 500) {
-        continue;
-      }
+        const response = await timeoutFetch(fetchUrl, {
+          method: "GET",
+          headers: browserHeaders(),
+        });
 
-      const text = await response.text().catch(() => "");
-      throw new Error(`HTTP ${response.status}: ${text}`);
-    } catch (e: any) {
-      continue;
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Jupiter Quote] Success on attempt ${attempt}`);
+          return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+        }
+
+        lastStatus = response.status;
+
+        if (response.status === 404 || response.status === 400) {
+          const text = await response.text().catch(() => "");
+          lastError = `HTTP ${response.status}: ${text}`;
+          console.warn(
+            `[Jupiter Quote] No route or invalid params (${response.status}): ${text}`,
+          );
+          return new Response(
+            JSON.stringify({
+              error: "No swap route found for this pair",
+              code:
+                response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            }),
+            { status: response.status, headers: CORS_HEADERS },
+          );
+        }
+
+        if (response.status === 429) {
+          lastError = "Rate limited";
+          console.warn(`[Jupiter Quote] Rate limited (429)`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+          break;
+        }
+
+        if (response.status >= 500) {
+          lastError = `Server error ${response.status}`;
+          console.warn(`[Jupiter Quote] Server error (${response.status})`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+          break;
+        }
+
+        const text = await response.text().catch(() => "");
+        lastError = `HTTP ${response.status}: ${text}`;
+        console.warn(`[Jupiter Quote] Unexpected status ${response.status}`);
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.error(
+          `[Jupiter Quote] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+          continue;
+        }
+      }
     }
   }
 
+  console.error(
+    `[Jupiter Quote] All attempts failed. Last error: ${lastError}`,
+  );
   return new Response(
-    JSON.stringify({ error: "Quote API error", code: "API_ERROR" }),
-    { status: 500, headers: CORS_HEADERS },
+    JSON.stringify({
+      error: "Quote API error",
+      code: "API_ERROR",
+      details: lastError,
+      statusCode: lastStatus,
+    }),
+    { status: 502, headers: CORS_HEADERS },
   );
 }
 
@@ -297,30 +393,87 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       );
     }
 
-    const response = await timeoutFetch(`${JUPITER_V6_SWAP_BASE}/swap`, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(body),
-    });
+    const endpoints = [
+      `${JUPITER_V6_SWAP_BASE}/swap`,
+      `${JUPITER_SWAP_BASE}/swap`,
+    ];
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      return new Response(
-        JSON.stringify({
-          error: `Swap failed: ${response.statusText}`,
-          details: text,
-        }),
-        { status: response.status, headers: CORS_HEADERS },
-      );
+    let lastError = "";
+    let lastStatus = 500;
+
+    for (let idx = 0; idx < endpoints.length; idx++) {
+      const endpoint = endpoints[idx];
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          console.log(
+            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+          );
+
+          const response = await timeoutFetch(endpoint, {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(body),
+          });
+
+          lastStatus = response.status;
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
+            return new Response(JSON.stringify(data), {
+              headers: CORS_HEADERS,
+            });
+          }
+
+          const text = await response.text().catch(() => "");
+          lastError = text;
+
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(
+              `[Jupiter Swap] Retryable error (${response.status}), retrying...`,
+            );
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, 1000 * attempt));
+              continue;
+            }
+          }
+
+          console.warn(
+            `[Jupiter Swap] Non-retryable error (${response.status}), trying next endpoint`,
+          );
+          break;
+        } catch (e: any) {
+          lastError = String(e?.message || e);
+          console.error(
+            `[Jupiter Swap] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+            continue;
+          }
+        }
+      }
     }
 
-    const data = await response.json();
-    return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+    console.error(
+      `[Jupiter Swap] All endpoints failed. Last error: ${lastError}`,
+    );
+    return new Response(
+      JSON.stringify({
+        error: `Swap failed: ${lastError}`,
+        details: lastError,
+        statusCode: lastStatus,
+      }),
+      { status: lastStatus >= 400 ? lastStatus : 502, headers: CORS_HEADERS },
+    );
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
-      status: 500,
-      headers: CORS_HEADERS,
-    });
+    console.error(`[Jupiter Swap] Exception: ${e?.message || e}`);
+    return new Response(
+      JSON.stringify({
+        error: String(e?.message || e),
+      }),
+      { status: 500, headers: CORS_HEADERS },
+    );
   }
 }
 
@@ -339,30 +492,76 @@ async function handleJupiterPrice(url: URL): Promise<Response> {
   const endpoints = [
     `${JUPITER_PRICE_BASE}/price?ids=${ids}`,
     `https://api.jup.ag/price/v2?ids=${ids}`,
+    `https://public-api.birdeye.so/public/token/price?list_address=${ids}`,
   ];
 
-  for (const endpoint of endpoints) {
-    try {
-      const response = await timeoutFetch(endpoint, {
-        method: "GET",
-        headers: browserHeaders(),
-      });
+  let lastError = "";
 
-      if (response.ok) {
-        const data = await response.json();
-        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+  for (let idx = 0; idx < endpoints.length; idx++) {
+    const endpoint = endpoints[idx];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[Jupiter Price] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+        );
+
+        const response = await timeoutFetch(endpoint, {
+          method: "GET",
+          headers: browserHeaders(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Jupiter Price] Success on attempt ${attempt}`);
+          return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+        }
+
+        lastError = `HTTP ${response.status}`;
+
+        if (response.status === 429) {
+          console.warn(`[Jupiter Price] Rate limited (429)`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+
+        if (response.status >= 500) {
+          console.warn(`[Jupiter Price] Server error (${response.status})`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+
+        console.warn(
+          `[Jupiter Price] Non-OK response (${response.status}), trying next endpoint`,
+        );
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.error(
+          `[Jupiter Price] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+          continue;
+        }
       }
-
-      if (response.status === 429) continue;
-    } catch (e) {
-      continue;
     }
   }
 
-  return new Response(JSON.stringify({ error: "Price API error", data: {} }), {
-    status: 500,
-    headers: CORS_HEADERS,
-  });
+  console.error(
+    `[Jupiter Price] All endpoints failed. Last error: ${lastError}`,
+  );
+  return new Response(
+    JSON.stringify({
+      error: "Price API error",
+      data: {},
+      details: lastError,
+    }),
+    { status: 502, headers: CORS_HEADERS },
+  );
 }
 
 async function handleJupiterTokens(url: URL): Promise<Response> {
@@ -374,30 +573,67 @@ async function handleJupiterTokens(url: URL): Promise<Response> {
     "https://token.jup.ag/all",
   ];
 
-  for (const endpoint of endpoints) {
-    try {
-      const response = await timeoutFetch(endpoint, {
-        method: "GET",
-        headers: browserHeaders(),
-      });
+  let lastError = "";
 
-      if (response.ok) {
-        const data = await response.json();
-        return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
-      }
+  for (let idx = 0; idx < endpoints.length; idx++) {
+    const endpoint = endpoints[idx];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[Jupiter Tokens] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+        );
 
-      if (response.status === 429 || response.status >= 500) {
-        continue;
+        const response = await timeoutFetch(endpoint, {
+          method: "GET",
+          headers: browserHeaders(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Jupiter Tokens] Success on attempt ${attempt}`);
+          return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+        }
+
+        lastError = `HTTP ${response.status}`;
+
+        if (response.status === 429 || response.status >= 500) {
+          console.warn(
+            `[Jupiter Tokens] Retryable error (${response.status}), trying next endpoint`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+
+        console.warn(
+          `[Jupiter Tokens] Non-OK response (${response.status}), trying next endpoint`,
+        );
+        break;
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.error(
+          `[Jupiter Tokens] Fetch error on attempt ${attempt}/${2}: ${lastError}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+          continue;
+        }
       }
-    } catch (e) {
-      continue;
     }
   }
 
-  return new Response(JSON.stringify({ error: "Tokens API error", data: [] }), {
-    status: 502,
-    headers: CORS_HEADERS,
-  });
+  console.error(
+    `[Jupiter Tokens] All endpoints failed. Last error: ${lastError}`,
+  );
+  return new Response(
+    JSON.stringify({
+      error: "Tokens API error",
+      data: [],
+      details: lastError,
+    }),
+    { status: 502, headers: CORS_HEADERS },
+  );
 }
 
 async function handlePumpFunCurve(url: URL): Promise<Response> {
@@ -794,6 +1030,124 @@ async function handleTokenPrice(url: URL): Promise<Response> {
   }
 }
 
+async function handleForexRate(url: URL): Promise<Response> {
+  try {
+    const base = (url.searchParams.get("base") || "USD").toUpperCase();
+    const symbols = (url.searchParams.get("symbols") || "PKR").toUpperCase();
+    const firstSymbol = symbols.split(",")[0];
+    const PROVIDER_TIMEOUT_MS = 5000;
+
+    const providers: Array<{
+      name: string;
+      url: string;
+      parse: (j: any) => number | null;
+    }> = [
+      {
+        name: "exchangerate.host",
+        url: `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(firstSymbol)}`,
+        parse: (j) =>
+          j && j.rates && typeof j.rates[firstSymbol] === "number"
+            ? j.rates[firstSymbol]
+            : null,
+      },
+      {
+        name: "frankfurter",
+        url: `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(firstSymbol)}`,
+        parse: (j) =>
+          j && j.rates && typeof j.rates[firstSymbol] === "number"
+            ? j.rates[firstSymbol]
+            : null,
+      },
+      {
+        name: "er-api",
+        url: `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+        parse: (j) =>
+          j && j.rates && typeof j.rates[firstSymbol] === "number"
+            ? j.rates[firstSymbol]
+            : null,
+      },
+      {
+        name: "fawazahmed-cdn",
+        url: `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${base.toLowerCase()}/${firstSymbol.toLowerCase()}.json`,
+        parse: (j) =>
+          j && typeof j[firstSymbol.toLowerCase()] === "number"
+            ? j[firstSymbol.toLowerCase()]
+            : null,
+      },
+    ];
+
+    const fetchProvider = async (
+      provider: (typeof providers)[number],
+    ): Promise<{ rate: number; provider: string }> => {
+      try {
+        const resp = await timeoutFetch(
+          provider.url,
+          { method: "GET", headers: browserHeaders() },
+          PROVIDER_TIMEOUT_MS,
+        );
+        if (!resp.ok) {
+          const reason = `${resp.status} ${resp.statusText}`.trim();
+          throw new Error(reason || "non-ok response");
+        }
+        const json = await resp.json();
+        const rate = provider.parse(json);
+        if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+          return { rate, provider: provider.name };
+        }
+        throw new Error("invalid response payload");
+      } catch (error: any) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`[${provider.name}] ${message}`);
+      }
+    };
+
+    const runProviders = async (): Promise<{
+      rate: number;
+      provider: string;
+    }> => {
+      const attempts = providers.map((p) => fetchProvider(p));
+      if (typeof (Promise as any).any === "function") {
+        return (Promise as any).any(attempts);
+      }
+      return new Promise((resolve, reject) => {
+        const errors: string[] = [];
+        let remaining = attempts.length;
+        attempts.forEach((attempt) => {
+          (attempt as Promise<any>).then(resolve).catch((err) => {
+            errors.push(err instanceof Error ? err.message : String(err));
+            remaining -= 1;
+            if (remaining === 0) reject(new Error(errors.join("; ")));
+          });
+        });
+      });
+    };
+
+    try {
+      const { rate, provider } = await runProviders();
+      return new Response(
+        JSON.stringify({
+          base,
+          symbols: [firstSymbol],
+          rates: { [firstSymbol]: rate },
+          provider,
+        }),
+        { headers: CORS_HEADERS },
+      );
+    } catch (error: any) {
+      const msg = error instanceof Error ? error.message : String(error);
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch forex rate", details: msg }),
+        { status: 502, headers: CORS_HEADERS },
+      );
+    }
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: "Unexpected error" }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
+  }
+}
+
 async function handleSolanaRpc(request: Request): Promise<Response> {
   try {
     const body = await request.json().catch(() => ({}));
@@ -859,7 +1213,7 @@ async function handler(request: Request): Promise<Response> {
       return new Response(
         JSON.stringify({
           ok: true,
-          service: "Fixorium Wallet API (Netlify)",
+          service: "Fixorium Wallet API (Cloudflare)",
           status: "operational",
           timestamp: new Date().toISOString(),
           endpoints: [
@@ -871,6 +1225,7 @@ async function handler(request: Request): Promise<Response> {
             "/api/jupiter/price?ids=<mint> - Get Jupiter price",
             "/api/jupiter/quote - Get swap quote",
             "/api/pumpfun/quote - Get PumpFun quote",
+            "/api/forex/rate?base=USD&symbols=PKR - Forex rate",
             "/api/solana-rpc - Proxy RPC calls",
           ],
         }),
@@ -926,6 +1281,10 @@ async function handler(request: Request): Promise<Response> {
 
     if (pathname.startsWith("/api/dexscreener/price")) {
       return await handleDexscreenerPrice(url);
+    }
+
+    if (pathname.startsWith("/api/forex/rate") || pathname === "/forex/rate") {
+      return await handleForexRate(url);
     }
 
     if (pathname === "/api/solana-rpc" || pathname === "/api/solana-rpc/") {

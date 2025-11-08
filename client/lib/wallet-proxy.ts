@@ -12,34 +12,6 @@ import {
   getTokenAccounts as getSolanaTokenAccounts,
 } from "@/lib/services/solana-rpc";
 
-const fetchJsonWithTimeout = async (url: string, ms = 10000) => {
-  let id: any;
-  const timeoutResult = { ok: false, json: {}, error: "timeout" } as any;
-
-  const timeoutPromise = new Promise<{ ok: boolean; json: any }>((resolve) => {
-    id = setTimeout(() => resolve(timeoutResult), ms);
-  });
-
-  const fetchPromise = (async () => {
-    try {
-      const resp = await fetch(url);
-      const json = await resp.json().catch(() => ({}));
-      return { ok: resp.ok, json } as { ok: boolean; json: any };
-    } catch (err) {
-      console.warn(`fetchJsonWithTimeout failed for ${url}:`, err);
-      return {
-        ok: false,
-        json: {},
-        error: err instanceof Error ? err.message : String(err),
-      } as any;
-    }
-  })();
-
-  const result = await Promise.race([fetchPromise, timeoutPromise]);
-  clearTimeout(id);
-  return result as { ok: boolean; json: any };
-};
-
 export interface WalletData {
   publicKey: string;
   secretKey: Uint8Array;
@@ -143,75 +115,15 @@ export const recoverWallet = (mnemonicInput: string): WalletData => {
 };
 
 export const getBalance = async (publicKey: string): Promise<number> => {
-  // Try our REST endpoint(s) first — support different deployed backends (publicKey or wallet param)
-  const endpoints = [
-    `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
-    `/api/wallet/balance?wallet=${encodeURIComponent(publicKey)}`,
-    `/api/wallet/balance?address=${encodeURIComponent(publicKey)}`,
-  ];
-
-  for (const url of endpoints) {
-    try {
-      const { ok, json } = await fetchJsonWithTimeout(url, 10000);
-      if (!ok || !json) continue;
-
-      // Compatible shapes:
-      // 1) { balance: number }
-      if (typeof json.balance === "number") {
-        console.log(
-          `✅ Wallet balance endpoint successful (${url}): ${json.balance} SOL`,
-        );
-        return json.balance;
-      }
-
-      // 2) Alternative shape: { walletAddress, balances: { SOL: number, ... } }
-      if (json.balances && typeof json.balances === "object") {
-        const sol =
-          json.balances.SOL ?? json.balances.sol ?? json.balances.SOLANA;
-        if (typeof sol === "number") {
-          console.log(
-            `✅ Wallet balance endpoint (balances) successful (${url}): ${sol} SOL`,
-          );
-          return sol;
-        }
-      }
-
-      // 3) Older proxy RPC response shape: { result: { value: <lamports> } } or { result: <number> }
-      if (json.result !== undefined) {
-        // result may be an object with value or a number (lamports)
-        if (typeof json.result === "number") {
-          // assume lamports
-          const lamports = json.result as number;
-          const sol = lamports / 1_000_000_000;
-          console.log(`✅ Wallet proxy returned lamports (${url}): ${sol} SOL`);
-          return sol;
-        }
-        if (
-          json.result?.value !== undefined &&
-          typeof json.result.value === "number"
-        ) {
-          const lamports = json.result.value as number;
-          const sol = lamports / 1_000_000_000;
-          console.log(
-            `✅ Wallet proxy returned result.value (${url}): ${sol} SOL`,
-          );
-          return sol;
-        }
-      }
-    } catch (err) {
-      // Silently continue to next endpoint
-      continue;
-    }
-  }
-
-  // Final fallback to direct Solana RPC
+  // Use direct Solana RPC call with public endpoints
+  // No backend proxy needed
   try {
-    console.log(`Fetching balance via Solana RPC for: ${publicKey}`);
+    console.log(`Fetching balance for: ${publicKey}`);
     const balance = await getSolanaBalance(publicKey);
-    console.log(`✅ Solana RPC successful: ${balance} SOL`);
+    console.log(`✅ Balance fetched: ${balance} SOL`);
     return balance;
   } catch (error) {
-    console.error("Solana RPC failed for balance:", error);
+    console.error("Failed to fetch balance:", error);
     return 0;
   }
 };

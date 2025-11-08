@@ -42,6 +42,8 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
+// Use local proxy endpoints (requires backend server)
+// For Cloudflare Pages production, you'll need a Cloudflare Worker proxy
 const JUPITER_V6_ENDPOINTS = {
   quote: "/api/jupiter/quote",
   swap: "/api/jupiter/swap",
@@ -82,13 +84,35 @@ class JupiterV6API {
       );
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error("Jupiter quote error:", error);
+        const errorText = await response.text().catch(() => "");
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("Jupiter quote error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
         return null;
       }
 
-      const data: JupiterQuoteResponse = await response.json();
-      return data;
+      const rawData: any = await response.json();
+
+      // Some proxies return { source: 'jupiter', quote: {...} }
+      const data =
+        rawData && typeof rawData === "object" && "quote" in rawData
+          ? rawData.quote
+          : rawData;
+
+      if (!data || !data.outAmount || data.outAmount === "0") {
+        console.warn("Jupiter quote returned no outAmount:", rawData);
+        return null;
+      }
+
+      return data as JupiterQuoteResponse;
     } catch (error) {
       console.error("Jupiter getQuote error:", error);
       throw error;
@@ -161,15 +185,27 @@ class JupiterV6API {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error("Jupiter swap error:", error);
+        const errorText = await response.text().catch(() => "");
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("Jupiter swap error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
 
         // Check for specific error codes
-        if (error.error === "STALE_QUOTE") {
+        if (errorData.error === "STALE_QUOTE" || errorData.code === 1016) {
           throw new Error("Quote expired - please refresh and try again");
         }
 
-        throw new Error(error.error || "Failed to create swap");
+        throw new Error(
+          errorData.error || errorData.message || "Failed to create swap",
+        );
       }
 
       const data: JupiterSwapResponse = await response.json();

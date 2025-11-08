@@ -587,23 +587,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             lockerPriceService.getLockerPrice(),
           ]);
 
-          if (fixercoinData && fixercoinData.price > 0) {
+          if (
+            fixercoinData &&
+            fixercoinData.price > 0 &&
+            isFinite(fixercoinData.price)
+          ) {
             prices[fixercoinMint] = fixercoinData.price;
             changeMap[fixercoinMint] = fixercoinData.priceChange24h;
             console.log(
-              `[WalletContext] FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%)`,
+              `[WalletContext] ✅ FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%) via ${fixercoinData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ FIXERCOIN price fetch resulted in invalid price:`,
+              fixercoinData,
             );
           }
 
-          if (lockerData && lockerData.price > 0) {
+          if (
+            lockerData &&
+            lockerData.price > 0 &&
+            isFinite(lockerData.price)
+          ) {
             prices[lockerMint] = lockerData.price;
             changeMap[lockerMint] = lockerData.priceChange24h;
             console.log(
-              `[WalletContext] LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%)`,
+              `[WalletContext] ✅ LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%) via ${lockerData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
+              lockerData,
             );
           }
         } catch (e) {
-          console.warn("Failed to fetch FIXERCOIN/LOCKER prices:", e);
+          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER prices:", e);
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint

@@ -58,7 +58,6 @@ const requestQueue = new Map<string, Promise<any>>();
 // Public RPC endpoints for fallback
 // These endpoints have better CORS support for frontend deployments
 const PUBLIC_RPC_ENDPOINTS = [
-  "https://api.rpcpool.com/",
   "https://solana-rpc.publicnode.com/",
   "https://solana.publicnode.com",
   "https://spl.solana.com",

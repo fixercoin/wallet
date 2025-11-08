@@ -624,8 +624,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     }
   };
 
-  const handleSendSPL = async () => {
-    if (!wallet || !selectedToken) return;
+  const handleSendSPL = async (): Promise<boolean> => {
+    if (!wallet || !selectedToken) return false;
 
     setIsLoading(true);
     setError(null);
@@ -790,6 +790,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         title: "Transaction Sent",
         description: `Successfully sent ${amount} ${selectedToken.symbol}`,
       });
+      return true;
     } catch (error) {
       console.error("SPL Transaction error:", error);
       let message =
@@ -821,6 +822,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         description: message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }

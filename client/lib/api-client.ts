@@ -15,13 +15,21 @@ const normalizeBase = (value: string | null | undefined): string => {
 const determineBase = (): string => {
   // Try primary env var
   const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBasePrimary && !envBasePrimary.includes("api.fixorium.com.pk") && !envBasePrimary.includes("wallet.fixorium.com.pk")) {
+  if (
+    envBasePrimary &&
+    !envBasePrimary.includes("api.fixorium.com.pk") &&
+    !envBasePrimary.includes("wallet.fixorium.com.pk")
+  ) {
     return envBasePrimary;
   }
 
   // Try alternative env var
   const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
-  if (envBaseAlt && !envBaseAlt.includes("api.fixorium.com.pk") && !envBaseAlt.includes("wallet.fixorium.com.pk")) {
+  if (
+    envBaseAlt &&
+    !envBaseAlt.includes("api.fixorium.com.pk") &&
+    !envBaseAlt.includes("wallet.fixorium.com.pk")
+  ) {
     return envBaseAlt;
   }
 

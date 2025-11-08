@@ -292,7 +292,7 @@ async function sendSignedTx(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        signedBase64,
+        transaction: signedBase64,
       }),
     });
 

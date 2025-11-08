@@ -186,7 +186,7 @@ class JupiterV6API {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        let errorData = {};
+        let errorData: any = {};
         try {
           errorData = JSON.parse(errorText);
         } catch {
@@ -198,11 +198,51 @@ class JupiterV6API {
           data: errorData,
         });
 
-        // Check for specific error codes
-        if (errorData.error === "STALE_QUOTE" || errorData.code === 1016) {
+        // Handle stale/expired quotes explicitly
+        if (errorData?.error === "STALE_QUOTE" || errorData?.code === 1016) {
           throw new Error("Quote expired - please refresh and try again");
         }
 
+        // Fallback: call Jupiter directly if proxy fails (e.g., 5xx from Cloudflare)
+        const directEndpoints = [
+          "https://quote-api.jup.ag/v6/swap",
+          "https://lite-api.jup.ag/swap/v1/swap",
+        ];
+        for (const ep of directEndpoints) {
+          try {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 25000);
+            const r = await fetch(ep, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (compatible; FixoriumWallet/1.0)",
+              },
+              body: JSON.stringify(body),
+              signal: ctrl.signal,
+            });
+            clearTimeout(timer);
+
+            const txt = await r.text();
+            if (!r.ok) {
+              if (
+                txt.includes("1016") ||
+                txt.includes("STALE") ||
+                txt.includes("simulation")
+              ) {
+                throw new Error("Quote expired - please refresh and try again");
+              }
+              continue; // try next endpoint
+            }
+            return JSON.parse(txt) as JupiterSwapResponse;
+          } catch (e: any) {
+            // try next endpoint on error/timeout
+            continue;
+          }
+        }
+
+        // If all fallbacks failed, throw the original error
         throw new Error(
           errorData.error || errorData.message || "Failed to create swap",
         );

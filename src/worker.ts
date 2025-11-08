@@ -589,7 +589,7 @@ async function handlePumpFunQuote(
 
 // Main fetch handler for worker
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: any): Promise<Response> {
     try {
       let url: URL;
       try {
@@ -610,7 +610,8 @@ export default {
       }
       const pathname = url.pathname || "/";
 
-      // Basic routing
+      // API Routes - handle these first
+      // Health check
       if (pathname === "/health" || pathname === "/api/health") {
         return await handleHealth();
       }
@@ -694,6 +695,46 @@ export default {
             "Access-Control-Max-Age": "86400",
           },
         });
+      }
+
+      // Static asset serving for React SPA
+      // Try to serve static assets from the dist folder
+      if (env && typeof env === "object" && "ASSETS" in env) {
+        try {
+          const response = await (env as any).ASSETS.fetch(request);
+          if (response.status === 200) {
+            return response;
+          }
+        } catch (e) {
+          // Continue to fallback logic
+        }
+      }
+
+      // For SPA routing: serve index.html for non-API, non-static routes
+      if (
+        !pathname.startsWith("/api/") &&
+        !pathname.includes(".") &&
+        request.method === "GET"
+      ) {
+        try {
+          if (env && typeof env === "object" && "ASSETS" in env) {
+            const indexResponse = await (env as any).ASSETS.fetch(
+              new URL("/index.html", request.url),
+            );
+            if (indexResponse.status === 200) {
+              return new Response(indexResponse.body, {
+                status: 200,
+                headers: {
+                  ...Object.fromEntries(indexResponse.headers),
+                  "Content-Type": "text/html; charset=utf-8",
+                  "Cache-Control": "no-cache",
+                },
+              });
+            }
+          }
+        } catch (e) {
+          // Fallback to 404
+        }
       }
 
       // Default 404

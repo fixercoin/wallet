@@ -6,7 +6,7 @@ compatibility_date = "2025-01-01"
 type = "javascript"
 
 # Entrypoint - point to the worker module that exports `onRequest` or default fetch handler
-main = "functions/api/[[path]].ts"
+main = "src/worker.ts"
 
 # NOTE: This worker is no longer needed as the frontend now calls public Solana RPC endpoints directly
 # The frontend makes direct calls to:

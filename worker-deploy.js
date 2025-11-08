@@ -13,6 +13,34 @@ const DEFAULT_RPC_FALLBACKS = [
 
 const MAX_DEX_BATCH = 20;
 
+// Simple in-memory cache with TTL
+const responseCache = new Map();
+
+function getCacheKey(path) {
+  return `dex:${path}`;
+}
+
+function cacheGet(key) {
+  const cached = responseCache.get(key);
+  if (!cached) return null;
+
+  const now = Date.now();
+  if (now - cached.timestamp > cached.ttl) {
+    responseCache.delete(key);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function cacheSet(key, data, ttlMs = 30000) {
+  responseCache.set(key, {
+    data,
+    timestamp: Date.now(),
+    ttl: ttlMs,
+  });
+}
+
 function normalizeBase(v) {
   if (!v) return "";
   return v.replace(/\/+$|^\/+/, "");

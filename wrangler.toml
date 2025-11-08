@@ -8,11 +8,12 @@ type = "javascript"
 # Entrypoint - point to the worker module that exports `onRequest` or default fetch handler
 main = "functions/api/[[path]].ts"
 
-# Bind this Worker to both custom domain routes
-routes = [
-  { pattern = "fixorium-api.khanbabusargodha.workers.dev/*" },
-  { pattern = "fixorium-proxy.khanbabusargodha.workers.dev/*" }
-]
+# NOTE: This worker is no longer needed as the frontend now calls public Solana RPC endpoints directly
+# The frontend makes direct calls to:
+# - https://solana.publicnode.com
+# - https://rpc.ankr.com/solana
+# - https://api.mainnet-beta.solana.com
+# No backend proxy is required for wallet balance or token queries
 
 [build]
 command = "pnpm build"

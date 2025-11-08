@@ -974,10 +974,13 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
     const uniqueMints = Array.from(new Set(rawMints));
 
     if (uniqueMints.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid mints provided" }), {
-        status: 400,
-        headers: CORS_HEADERS,
-      });
+      return new Response(
+        JSON.stringify({ error: "No valid mints provided" }),
+        {
+          status: 400,
+          headers: CORS_HEADERS,
+        },
+      );
     }
 
     const MAX_TOKENS_PER_BATCH = 20;

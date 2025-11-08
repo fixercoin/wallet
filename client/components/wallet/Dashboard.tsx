@@ -897,6 +897,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 })()
               : "Connect wallet to see balance"}
           </div>
+
+          {/* Token search inside balance card */}
+          <div className="mt-4">
+            <TokenSearch />
+          </div>
+
           {/* Action Buttons */}
           <div className="flex items-center gap-3 mt-6">
             <Button

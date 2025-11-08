@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterV6API } from "@/lib/services/jupiter-v6";
-import { resolveApiUrl } from "@/lib/api-client";
+import { rpcCall } from "@/lib/rpc-utils";
 import {
   Select,
   SelectContent,
@@ -226,30 +226,17 @@ async function sendSignedTx(
   const signed = vtx.serialize();
   const signedBase64 = base64FromBytes(signed);
 
-  const body = {
-    method: "sendRawTransaction",
-    params: [
+  // Use the new RPC utility to send the signed transaction
+  try {
+    const result = await rpcCall("sendRawTransaction", [
       signedBase64,
       { skipPreflight: false, preflightCommitment: "confirmed" },
-    ],
-    id: Date.now(),
-  };
-
-  const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!r.ok) {
-    const t = await r.text().catch(() => "");
-    throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+    ]);
+    return result as string;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to send transaction: ${msg}`);
   }
-
-  const j = await r.json();
-  if (j.error) throw new Error(j.error.message || "RPC error");
-
-  return j.result as string;
 }
 
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {

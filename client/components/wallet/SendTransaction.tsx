@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { rpcCall } from "@/lib/rpc-utils";
 import {
   Transaction,
   SystemProgram,
@@ -160,75 +161,54 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   };
 
   const postTx = async (url: string, b64: string) => {
-    const body = {
-      method: "sendTransaction",
-      params: [b64, { skipPreflight: false, preflightCommitment: "confirmed" }],
-      id: Date.now(),
-    };
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-      const t = await resp.text().catch(() => "");
-      throw new Error(`RPC ${resp.status}: ${t || resp.statusText}`);
+    // Use the new RPC utility instead of direct fetch
+    try {
+      const result = await rpcCall("sendTransaction", [
+        b64,
+        { skipPreflight: false, preflightCommitment: "confirmed" },
+      ]);
+      return result as string;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to send transaction: ${msg}`);
     }
-    const j = await resp.json().catch(() => null);
-    if (j && j.error) throw new Error(j.error.message || "RPC error");
-    // If j has result return it, otherwise try fallback
-    if (j && typeof j.result !== "undefined") return j.result as string;
-
-    return (j as any) || ("" as string);
-  };
-
-  const rpcCall = async (method: string, params: any[]): Promise<any> => {
-    const tryPost = async (url: string) => {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: Date.now(),
-          method,
-          params,
-        }),
-      });
-      if (!r.ok) {
-        const t = await r.text().catch(() => "");
-        throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
-      }
-      const j = await r.json();
-      if (j.error) throw new Error(j.error.message || "RPC error");
-      return j.result;
-    };
-    return await tryPost("/api/solana-rpc");
   };
 
   const getLatestBlockhashProxy = async (): Promise<string> => {
-    const res = await rpcCall("getLatestBlockhash", [
-      { commitment: "confirmed" },
-    ]);
-    if (res?.value?.blockhash) return res.value.blockhash;
-    if (res?.blockhash) return res.blockhash;
-    throw new Error("Failed to fetch blockhash");
+    // Use direct RPC call for blockhash
+    try {
+      const res = await rpcCall("getLatestBlockhash", [
+        { commitment: "confirmed" },
+      ]);
+      if (res?.value?.blockhash) return res.value.blockhash;
+      if (res?.blockhash) return res.blockhash;
+      throw new Error("Failed to parse blockhash response");
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch blockhash: ${msg}`);
+    }
   };
 
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
+    // Use RPC call to check transaction confirmation
     const started = Date.now();
     const timeoutMs = 20000;
     while (Date.now() - started < timeoutMs) {
-      const statusRes = await rpcCall("getSignatureStatuses", [
-        [sig],
-        { searchTransactionHistory: true },
-      ]);
-      const st = statusRes?.value?.[0];
-      if (
-        st &&
-        (st.confirmationStatus === "confirmed" ||
-          st.confirmationStatus === "finalized")
-      )
-        return;
+      try {
+        const statusRes = await rpcCall("getSignatureStatuses", [
+          [sig],
+          { searchTransactionHistory: true },
+        ]);
+        const st = statusRes?.value?.[0];
+        if (
+          st &&
+          (st.confirmationStatus === "confirmed" ||
+            st.confirmationStatus === "finalized")
+        )
+          return;
+      } catch (error) {
+        console.warn("Error checking signature status:", error);
+      }
       await new Promise((r) => setTimeout(r, 1000));
     }
     throw new Error("Confirmation timeout");

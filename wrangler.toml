@@ -8,8 +8,11 @@ type = "javascript"
 # Entrypoint - point to the worker module that exports `onRequest` or default fetch handler
 main = "functions/api/[[path]].ts"
 
-# Bind this Worker to your custom domain route
-route = "fixorium-api.khanbabusargodha.workers.dev/*"
+# Bind this Worker to both custom domain routes
+routes = [
+  { pattern = "fixorium-api.khanbabusargodha.workers.dev/*" },
+  { pattern = "fixorium-proxy.khanbabusargodha.workers.dev/*" }
+]
 
 [build]
 command = "pnpm build"

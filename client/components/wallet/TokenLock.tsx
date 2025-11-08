@@ -79,6 +79,8 @@ const LOCK_OPTIONS: { label: string; ms: number; id: string }[] = [
   { label: "1 month", ms: 30 * 24 * 60 * 60 * 1000, id: "1month" },
   { label: "3 months", ms: 90 * 24 * 60 * 60 * 1000, id: "3months" },
 ];
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
 
 const storageKeyForWallet = (walletPubkey: string) =>
   `spl_token_locks_${walletPubkey}`;

@@ -42,6 +42,8 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
+// Use local proxy endpoints (requires backend server)
+// For Cloudflare Pages production, you'll need a Cloudflare Worker proxy
 const JUPITER_V6_ENDPOINTS = {
   quote: "/api/jupiter/quote",
   swap: "/api/jupiter/swap",

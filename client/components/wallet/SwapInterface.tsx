@@ -29,7 +29,7 @@ import {
 } from "@solana/spl-token";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 
-const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
+const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
@@ -226,13 +226,27 @@ async function sendSignedTx(
   const signed = vtx.serialize();
   const signedBase64 = base64FromBytes(signed);
 
-  // Use the new RPC utility to send the signed transaction
+  // Send transaction through backend proxy to avoid CORS issues
   try {
-    const result = await rpcCall("sendRawTransaction", [
-      signedBase64,
-      { skipPreflight: false, preflightCommitment: "confirmed" },
-    ]);
-    return result as string;
+    const response = await fetch("/api/solana-send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        signedBase64,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.signature || data.result;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to send transaction: ${msg}`);
@@ -382,7 +396,17 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       const decimalsIn = fromToken.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
+
+      // Validate amount is not empty or zero
+      const amountNum = Number(amount || "0");
+      if (isNaN(amountNum) || amountNum <= 0) {
+        setQuote(null);
+        setStatus("Enter an amount to get a quote");
+        setIsLoading(false);
+        return null;
+      }
+
+      const amountRaw = humanToRaw(amount, decimalsIn);
       const amountStr = jupiterV6API.formatSwapAmount(
         Number(amountRaw) / Math.pow(10, decimalsIn),
         decimalsIn,

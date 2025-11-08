@@ -20,10 +20,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://fixorium-api.khanbabusargodha.workers.dev",
+        target: "http://localhost:3000",
         changeOrigin: true,
         rewrite: (path) => path,
-        secure: true,
       },
     },
   },

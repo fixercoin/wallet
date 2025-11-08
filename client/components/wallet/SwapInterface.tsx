@@ -382,7 +382,17 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       const decimalsIn = fromToken.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
+
+      // Validate amount is not empty or zero
+      const amountNum = Number(amount || "0");
+      if (isNaN(amountNum) || amountNum <= 0) {
+        setQuote(null);
+        setStatus("Enter an amount to get a quote");
+        setIsLoading(false);
+        return null;
+      }
+
+      const amountRaw = humanToRaw(amount, decimalsIn);
       const amountStr = jupiterV6API.formatSwapAmount(
         Number(amountRaw) / Math.pow(10, decimalsIn),
         decimalsIn,

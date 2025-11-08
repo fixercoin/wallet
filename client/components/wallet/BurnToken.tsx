@@ -53,16 +53,8 @@ function base64FromBytes(bytes: Uint8Array): string {
 }
 
 async function rpcCall(method: string, params: any[]) {
-  const payload = { jsonrpc: "2.0", id: Date.now(), method, params };
-  const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!resp.ok) throw new Error(`RPC ${resp.status}`);
-  const j = await resp.json().catch(() => null);
-  if (j && j.error) throw new Error(j.error.message || "RPC error");
-  return j?.result ?? j;
+  // Use the new RPC utility instead of direct fetch
+  return rpcCallUtil(method, params);
 }
 
 async function getLatestBlockhashProxy(): Promise<string> {

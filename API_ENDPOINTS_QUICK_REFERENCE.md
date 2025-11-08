@@ -3,6 +3,7 @@
 ## All Endpoints at a Glance
 
 ### Base URL
+
 ```
 https://abc.khanbabusargodha.workers.dev
 ```
@@ -11,13 +12,14 @@ https://abc.khanbabusargodha.workers.dev
 
 ## 1. Health & Status
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api` | GET | API info & available endpoints |
-| `/api/health` | GET | Health check |
-| `/api/ping` | GET | Ping response |
+| Endpoint      | Method | Purpose                        |
+| ------------- | ------ | ------------------------------ |
+| `/api`        | GET    | API info & available endpoints |
+| `/api/health` | GET    | Health check                   |
+| `/api/ping`   | GET    | Ping response                  |
 
 ### Examples
+
 ```bash
 # Health check
 curl https://abc.khanbabusargodha.workers.dev/api/health
@@ -33,11 +35,12 @@ curl https://abc.khanbabusargodha.workers.dev/api
 
 ## 2. Wallet Balance
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/wallet/balance` | GET | `publicKey` (required) |
+| Endpoint              | Method | Parameters             |
+| --------------------- | ------ | ---------------------- |
+| `/api/wallet/balance` | GET    | `publicKey` (required) |
 
 ### Examples
+
 ```bash
 # Get SOL balance
 curl "https://abc.khanbabusargodha.workers.dev/api/wallet/balance?publicKey=YOUR_PUBLIC_KEY"
@@ -48,6 +51,7 @@ curl "https://abc.khanbabusargodha.workers.dev/api/wallet/balance?address=YOUR_P
 ```
 
 ### Response
+
 ```json
 {
   "publicKey": "So11111111111111111111111111111111111111112",
@@ -60,11 +64,12 @@ curl "https://abc.khanbabusargodha.workers.dev/api/wallet/balance?address=YOUR_P
 
 ## 3. Forex Rates
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/forex/rate` | GET | `base` (USD), `symbols` (PKR) |
+| Endpoint          | Method | Parameters                    |
+| ----------------- | ------ | ----------------------------- |
+| `/api/forex/rate` | GET    | `base` (USD), `symbols` (PKR) |
 
 ### Examples
+
 ```bash
 # Get USD to PKR rate
 curl "https://abc.khanbabusargodha.workers.dev/api/forex/rate?base=USD&symbols=PKR"
@@ -77,6 +82,7 @@ curl https://abc.khanbabusargodha.workers.dev/api/forex/rate
 ```
 
 ### Response
+
 ```json
 {
   "base": "USD",
@@ -94,9 +100,9 @@ curl https://abc.khanbabusargodha.workers.dev/api/forex/rate
 
 ### 4.1 Token Price
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/dexscreener/price` | GET | `tokenAddress` (required) |
+| Endpoint                 | Method | Parameters                |
+| ------------------------ | ------ | ------------------------- |
+| `/api/dexscreener/price` | GET    | `tokenAddress` (required) |
 
 ```bash
 # Get token price
@@ -107,6 +113,7 @@ curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/price?mint=EPjFWd
 ```
 
 **Response:**
+
 ```json
 {
   "token": "EPjFWdd5Au17w...",
@@ -116,9 +123,9 @@ curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/price?mint=EPjFWd
 
 ### 4.2 Multiple Tokens
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/dexscreener/tokens` | GET | `mints` (required) - comma-separated |
+| Endpoint                  | Method | Parameters                           |
+| ------------------------- | ------ | ------------------------------------ |
+| `/api/dexscreener/tokens` | GET    | `mints` (required) - comma-separated |
 
 ```bash
 # Get multiple tokens data
@@ -126,6 +133,7 @@ curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/tokens?mints=MINT
 ```
 
 **Response:**
+
 ```json
 {
   "schemaVersion": "1.0.0",
@@ -142,9 +150,9 @@ curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/tokens?mints=MINT
 
 ### 4.3 Search Tokens
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/dexscreener/search` | GET | `q` (required) - search query |
+| Endpoint                  | Method | Parameters                    |
+| ------------------------- | ------ | ----------------------------- |
+| `/api/dexscreener/search` | GET    | `q` (required) - search query |
 
 ```bash
 # Search for a token
@@ -155,6 +163,7 @@ curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/search?q=raydium"
 ```
 
 **Response:**
+
 ```json
 {
   "schemaVersion": "1.0.0",
@@ -174,9 +183,9 @@ curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/search?q=raydium"
 
 ### 5.1 Token Prices
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/jupiter/price` | GET | `ids` (required) - comma-separated token mints |
+| Endpoint             | Method | Parameters                                     |
+| -------------------- | ------ | ---------------------------------------------- |
+| `/api/jupiter/price` | GET    | `ids` (required) - comma-separated token mints |
 
 ```bash
 # Get single token price
@@ -187,6 +196,7 @@ curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/price?ids=So11...,EPj
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -200,9 +210,9 @@ curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/price?ids=So11...,EPj
 
 ### 5.2 SOL Price
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/sol/price` | GET | None |
+| Endpoint         | Method | Parameters |
+| ---------------- | ------ | ---------- |
+| `/api/sol/price` | GET    | None       |
 
 ```bash
 # Get current SOL price
@@ -210,6 +220,7 @@ curl https://abc.khanbabusargodha.workers.dev/api/sol/price
 ```
 
 **Response:**
+
 ```json
 {
   "token": "SOL",
@@ -222,9 +233,9 @@ curl https://abc.khanbabusargodha.workers.dev/api/sol/price
 
 ### 5.3 Quote (Swap Route)
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/jupiter/quote` | GET | `inputMint`, `outputMint`, `amount` (required) |
+| Endpoint             | Method | Parameters                                     |
+| -------------------- | ------ | ---------------------------------------------- |
+| `/api/jupiter/quote` | GET    | `inputMint`, `outputMint`, `amount` (required) |
 
 ```bash
 # Get swap quote
@@ -235,6 +246,7 @@ curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/quote?inputMint=EPjFW
 ```
 
 **Response:**
+
 ```json
 {
   "inputMint": "EPjFWdd5...",
@@ -248,9 +260,9 @@ curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/quote?inputMint=EPjFW
 
 ### 5.4 Execute Swap
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/jupiter/swap` | POST | JSON body with quote & user key |
+| Endpoint            | Method | Parameters                      |
+| ------------------- | ------ | ------------------------------- |
+| `/api/jupiter/swap` | POST   | JSON body with quote & user key |
 
 ```bash
 # Execute swap (POST)
@@ -269,6 +281,7 @@ curl -X POST https://abc.khanbabusargodha.workers.dev/api/jupiter/swap \
 ```
 
 **Response:**
+
 ```json
 {
   "swapTransaction": "base64_encoded_transaction",
@@ -280,9 +293,9 @@ curl -X POST https://abc.khanbabusargodha.workers.dev/api/jupiter/swap \
 
 ## 6. Solana RPC Direct Proxy
 
-| Endpoint | Method | Parameters |
-|----------|--------|------------|
-| `/api/solana-rpc` | POST | Any Solana JSON-RPC body |
+| Endpoint          | Method | Parameters               |
+| ----------------- | ------ | ------------------------ |
+| `/api/solana-rpc` | POST   | Any Solana JSON-RPC body |
 
 ```bash
 # Get balance via RPC
@@ -317,6 +330,7 @@ curl -X POST https://abc.khanbabusargodha.workers.dev/api/solana-rpc \
 ```
 
 **Response:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -351,19 +365,19 @@ POST  /api/solana-rpc             - Direct RPC proxy
 
 ## Common Query Parameters
 
-| Param | Aliases | Used In |
-|-------|---------|---------|
-| `publicKey` | `wallet`, `address` | `/api/wallet/balance` |
-| `base` | - | `/api/forex/rate` |
-| `symbols` | - | `/api/forex/rate` |
-| `tokenAddress` | `token`, `mint` | `/api/dexscreener/price` |
-| `mints` | - | `/api/dexscreener/tokens` |
-| `q` | - | `/api/dexscreener/search` |
-| `ids` | - | `/api/jupiter/price` |
-| `inputMint` | - | `/api/jupiter/quote` |
-| `outputMint` | - | `/api/jupiter/quote` |
-| `amount` | - | `/api/jupiter/quote` |
-| `slippageBps` | - | `/api/jupiter/quote` |
+| Param          | Aliases             | Used In                   |
+| -------------- | ------------------- | ------------------------- |
+| `publicKey`    | `wallet`, `address` | `/api/wallet/balance`     |
+| `base`         | -                   | `/api/forex/rate`         |
+| `symbols`      | -                   | `/api/forex/rate`         |
+| `tokenAddress` | `token`, `mint`     | `/api/dexscreener/price`  |
+| `mints`        | -                   | `/api/dexscreener/tokens` |
+| `q`            | -                   | `/api/dexscreener/search` |
+| `ids`          | -                   | `/api/jupiter/price`      |
+| `inputMint`    | -                   | `/api/jupiter/quote`      |
+| `outputMint`   | -                   | `/api/jupiter/quote`      |
+| `amount`       | -                   | `/api/jupiter/quote`      |
+| `slippageBps`  | -                   | `/api/jupiter/quote`      |
 
 ---
 
@@ -397,6 +411,7 @@ All endpoints return consistent error format:
 ```
 
 ### Common Status Codes
+
 - `200` - Success
 - `400` - Missing required parameters
 - `404` - Not found (e.g., token not available)
@@ -444,26 +459,31 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ## Common Use Cases
 
 ### Get User Balance
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/wallet/balance?publicKey=USER_ADDRESS"
 ```
 
 ### Check if Token is Tradeable
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/price?tokenAddress=MINT_ADDRESS"
 ```
 
 ### Get Best Swap Route
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/quote?inputMint=INPUT_MINT&outputMint=OUTPUT_MINT&amount=AMOUNT"
 ```
 
 ### Get Real-time Token Prices
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/price?ids=MINT1,MINT2,MINT3"
 ```
 
 ### Execute Complex RPC Call
+
 ```bash
 curl -X POST https://abc.khanbabusargodha.workers.dev/api/solana-rpc \
   -H "Content-Type: application/json" \

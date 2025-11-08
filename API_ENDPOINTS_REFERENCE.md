@@ -7,14 +7,17 @@ This document outlines all available API endpoints for your Cloudflare Workers d
 ## 1. Health & Status Endpoints
 
 ### GET `/api/health`
+
 Health check with upstream service status.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/health
 ```
 
 **Response (200):**
+
 ```json
 {
   "status": "ok",
@@ -23,6 +26,7 @@ GET https://your-worker.workers.dev/api/health
 ```
 
 **Handler:**
+
 ```javascript
 async function handleHealth() {
   return new Response(
@@ -35,14 +39,17 @@ async function handleHealth() {
 ```
 
 ### GET `/api/ping`
+
 Ping endpoint.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/ping
 ```
 
 **Response (200):**
+
 ```json
 {
   "status": "pong",
@@ -51,6 +58,7 @@ GET https://your-worker.workers.dev/api/ping
 ```
 
 **Handler:**
+
 ```javascript
 async function handlePing() {
   return new Response(
@@ -63,14 +71,17 @@ async function handlePing() {
 ```
 
 ### GET `/api`
+
 Root API information.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api
 ```
 
 **Response (200):**
+
 ```json
 {
   "status": "ok",
@@ -94,17 +105,21 @@ GET https://your-worker.workers.dev/api
 ## 2. Wallet Endpoints
 
 ### GET `/api/wallet/balance`
+
 Get SOL balance for a wallet.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/wallet/balance?publicKey=<public_key>
 ```
 
 **Query Parameters:**
+
 - `publicKey` (required): Solana public key
 
 **Response (200):**
+
 ```json
 {
   "publicKey": "So11111111111111111111111111111111111111112",
@@ -114,6 +129,7 @@ GET https://your-worker.workers.dev/api/wallet/balance?publicKey=<public_key>
 ```
 
 **Response (400):**
+
 ```json
 {
   "error": "Missing publicKey parameter"
@@ -121,6 +137,7 @@ GET https://your-worker.workers.dev/api/wallet/balance?publicKey=<public_key>
 ```
 
 **Handler:**
+
 ```javascript
 async function handleWalletBalance(reqUrl, env) {
   const publicKey =
@@ -212,18 +229,22 @@ async function handleWalletBalance(reqUrl, env) {
 ## 3. Forex Endpoints
 
 ### GET `/api/forex/rate`
+
 Get forex exchange rates.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/forex/rate?base=USD&symbols=PKR
 ```
 
 **Query Parameters:**
+
 - `base` (optional, default: USD): Base currency code
 - `symbols` (optional, default: PKR): Target currency code(s)
 
 **Response (200):**
+
 ```json
 {
   "base": "USD",
@@ -236,6 +257,7 @@ GET https://your-worker.workers.dev/api/forex/rate?base=USD&symbols=PKR
 ```
 
 **Handler:**
+
 ```javascript
 async function handleForexRate(reqUrl) {
   const base = (reqUrl.searchParams.get("base") || "USD").toUpperCase();
@@ -328,17 +350,21 @@ async function handleForexRate(reqUrl) {
 ## 4. DexScreener Endpoints
 
 ### GET `/api/dexscreener/price`
+
 Get token price from DexScreener.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/dexscreener/price?tokenAddress=<mint>
 ```
 
 **Query Parameters:**
+
 - `tokenAddress` (required): Token mint address
 
 **Response (200):**
+
 ```json
 {
   "token": "EPjFWdd5Au...",
@@ -347,6 +373,7 @@ GET https://your-worker.workers.dev/api/dexscreener/price?tokenAddress=<mint>
 ```
 
 **Response (404):**
+
 ```json
 {
   "token": "EPjFWdd5Au...",
@@ -356,6 +383,7 @@ GET https://your-worker.workers.dev/api/dexscreener/price?tokenAddress=<mint>
 ```
 
 **Handler:**
+
 ```javascript
 async function handleDexPrice(reqUrl) {
   const token =
@@ -400,17 +428,21 @@ async function handleDexPrice(reqUrl) {
 ```
 
 ### GET `/api/dexscreener/tokens`
+
 Get token data for multiple mints.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/dexscreener/tokens?mints=<mint1>,<mint2>,...
 ```
 
 **Query Parameters:**
+
 - `mints` (required): Comma-separated token mint addresses
 
 **Response (200):**
+
 ```json
 {
   "schemaVersion": "1.0.0",
@@ -426,6 +458,7 @@ GET https://your-worker.workers.dev/api/dexscreener/tokens?mints=<mint1>,<mint2>
 ```
 
 **Handler:**
+
 ```javascript
 async function handleDexTokens(reqUrl) {
   const mints = reqUrl.searchParams.get("mints");
@@ -484,17 +517,21 @@ async function handleDexTokens(reqUrl) {
 ```
 
 ### GET `/api/dexscreener/search`
+
 Search for tokens on DexScreener.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/dexscreener/search?q=<query>
 ```
 
 **Query Parameters:**
+
 - `q` (required): Search query
 
 **Response (200):**
+
 ```json
 {
   "schemaVersion": "1.0.0",
@@ -509,6 +546,7 @@ GET https://your-worker.workers.dev/api/dexscreener/search?q=<query>
 ```
 
 **Handler:**
+
 ```javascript
 async function handleDexSearch(reqUrl) {
   const q = reqUrl.searchParams.get("q");
@@ -546,17 +584,21 @@ async function handleDexSearch(reqUrl) {
 ## 5. Jupiter Endpoints
 
 ### GET `/api/jupiter/price`
+
 Get token prices from Jupiter.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/jupiter/price?ids=<mint1>,<mint2>
 ```
 
 **Query Parameters:**
+
 - `ids` (required): Comma-separated token mint addresses
 
 **Response (200):**
+
 ```json
 {
   "data": {
@@ -569,6 +611,7 @@ GET https://your-worker.workers.dev/api/jupiter/price?ids=<mint1>,<mint2>
 ```
 
 **Handler:**
+
 ```javascript
 async function handleJupiterPrice(reqUrl, env) {
   const ids = reqUrl.searchParams.get("ids");
@@ -612,20 +655,24 @@ async function handleJupiterPrice(reqUrl, env) {
 ```
 
 ### GET `/api/jupiter/quote`
+
 Get a swap quote from Jupiter.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/jupiter/quote?inputMint=<mint>&outputMint=<mint>&amount=<amount>
 ```
 
 **Query Parameters:**
+
 - `inputMint` (required): Input token mint
 - `outputMint` (required): Output token mint
 - `amount` (required): Amount in smallest units
 - `slippageBps` (optional): Slippage in basis points
 
 **Response (200):**
+
 ```json
 {
   "inputMint": "EPjFWdd5...",
@@ -637,6 +684,7 @@ GET https://your-worker.workers.dev/api/jupiter/quote?inputMint=<mint>&outputMin
 ```
 
 **Handler:**
+
 ```javascript
 async function handleJupiterQuote(reqUrl, env) {
   const params = reqUrl.search;
@@ -676,9 +724,11 @@ async function handleJupiterQuote(reqUrl, env) {
 ```
 
 ### POST `/api/jupiter/swap`
+
 Execute a swap transaction via Jupiter.
 
 **Request:**
+
 ```
 POST https://your-worker.workers.dev/api/jupiter/swap
 Content-Type: application/json
@@ -691,6 +741,7 @@ Content-Type: application/json
 ```
 
 **Response (200):**
+
 ```json
 {
   "swapTransaction": "...",
@@ -699,6 +750,7 @@ Content-Type: application/json
 ```
 
 **Handler:**
+
 ```javascript
 async function handleJupiterSwap(req, env) {
   let body;
@@ -747,14 +799,17 @@ async function handleJupiterSwap(req, env) {
 ```
 
 ### GET `/api/sol/price`
+
 Get SOL token price from Jupiter.
 
 **Request:**
+
 ```
 GET https://your-worker.workers.dev/api/sol/price
 ```
 
 **Response (200):**
+
 ```json
 {
   "token": "SOL",
@@ -766,6 +821,7 @@ GET https://your-worker.workers.dev/api/sol/price
 ```
 
 **Handler:**
+
 ```javascript
 async function handleSolPrice(env) {
   const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -830,9 +886,11 @@ async function handleSolPrice(env) {
 ## 6. Solana RPC Endpoints
 
 ### POST `/api/solana-rpc`
+
 Direct proxy to Solana RPC endpoints.
 
 **Request:**
+
 ```
 POST https://your-worker.workers.dev/api/solana-rpc
 Content-Type: application/json
@@ -846,6 +904,7 @@ Content-Type: application/json
 ```
 
 **Response (200):**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -857,6 +916,7 @@ Content-Type: application/json
 ```
 
 **Handler:**
+
 ```javascript
 async function handleSolanaRpc(req, env) {
   let body;
@@ -921,6 +981,7 @@ async function handleSolanaRpc(req, env) {
 Add these utility functions to your worker.js:
 
 ### CORS Headers
+
 ```javascript
 function corsHeaders() {
   return {
@@ -932,6 +993,7 @@ function corsHeaders() {
 ```
 
 ### Timeout Fetch
+
 ```javascript
 async function timeoutFetch(url, opts = {}, ms = 8000) {
   const controller = new AbortController();
@@ -946,6 +1008,7 @@ async function timeoutFetch(url, opts = {}, ms = 8000) {
 ```
 
 ### Try DexScreener
+
 ```javascript
 const DEXSCREENER_BASES = [
   "https://api.dexscreener.com/latest/dex",
@@ -973,6 +1036,7 @@ async function tryDexscreener(path) {
 ```
 
 ### Try Jupiter
+
 ```javascript
 async function tryJupiter(urlCandidates, options = {}, ms = 8000) {
   for (const candidate of urlCandidates) {
@@ -990,6 +1054,7 @@ async function tryJupiter(urlCandidates, options = {}, ms = 8000) {
 ```
 
 ### Normalize Base
+
 ```javascript
 function normalizeBase(v) {
   if (!v) return "";
@@ -1098,31 +1163,37 @@ JUPITER_API_KEY=<your-jupiter-key>
 ## Testing Examples
 
 ### Test Health
+
 ```bash
 curl https://abc.khanbabusargodha.workers.dev/api/health
 ```
 
 ### Test Wallet Balance
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/wallet/balance?publicKey=<public_key>"
 ```
 
 ### Test Forex Rate
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/forex/rate?base=USD&symbols=PKR"
 ```
 
 ### Test DexScreener Price
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/dexscreener/price?tokenAddress=<mint>"
 ```
 
 ### Test Jupiter Price
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/price?ids=<mint1>,<mint2>"
 ```
 
 ### Test Jupiter Quote
+
 ```bash
 curl "https://abc.khanbabusargodha.workers.dev/api/jupiter/quote?inputMint=<mint1>&outputMint=<mint2>&amount=1000000"
 ```

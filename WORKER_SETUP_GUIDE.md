@@ -47,6 +47,7 @@ wrangler deploy
 ```
 
 Or deploy directly via Cloudflare Dashboard:
+
 1. Go to Cloudflare Dashboard
 2. Navigate to Workers & Pages
 3. Create a new Worker or edit existing one
@@ -119,20 +120,14 @@ To add a new endpoint:
 async function handleMyEndpoint(reqUrl, env) {
   try {
     // Your logic here
-    return new Response(
-      JSON.stringify({ status: "ok", data: result }),
-      {
-        headers: { "content-type": "application/json", ...corsHeaders() },
-      },
-    );
+    return new Response(JSON.stringify({ status: "ok", data: result }), {
+      headers: { "content-type": "application/json", ...corsHeaders() },
+    });
   } catch (e) {
-    return new Response(
-      JSON.stringify({ error: e.message }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json", ...corsHeaders() },
-      },
-    );
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { "content-type": "application/json", ...corsHeaders() },
+    });
   }
 }
 
@@ -150,6 +145,7 @@ HELIUS_API_KEY = your-key-here
 ```
 
 Access in code:
+
 ```javascript
 if (env && env.HELIUS_API_KEY) {
   // Use the API key
@@ -191,10 +187,10 @@ async function handleMyEndpoint(reqUrl, env) {
   // Get required param
   const param1 = reqUrl.searchParams.get("param1");
   if (!param1) {
-    return new Response(
-      JSON.stringify({ error: "Missing param1" }),
-      { status: 400, headers: { ...corsHeaders() } }
-    );
+    return new Response(JSON.stringify({ error: "Missing param1" }), {
+      status: 400,
+      headers: { ...corsHeaders() },
+    });
   }
 
   // Get optional param with default
@@ -215,18 +211,18 @@ async function handleMyEndpoint(request, env) {
   try {
     body = await request.json();
   } catch (e) {
-    return new Response(
-      JSON.stringify({ error: "Invalid JSON" }),
-      { status: 400, headers: { ...corsHeaders() } }
-    );
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      status: 400,
+      headers: { ...corsHeaders() },
+    });
   }
 
   // Validate required fields
   if (!body.requiredField) {
-    return new Response(
-      JSON.stringify({ error: "Missing requiredField" }),
-      { status: 400, headers: { ...corsHeaders() } }
-    );
+    return new Response(JSON.stringify({ error: "Missing requiredField" }), {
+      status: 400,
+      headers: { ...corsHeaders() },
+    });
   }
 
   // Proceed...
@@ -244,7 +240,7 @@ async function handleMyEndpoint(reqUrl, env) {
       throw new Error(`API returned ${result.status}`);
     }
     const data = await result.json();
-    
+
     return new Response(JSON.stringify(data), {
       headers: { "content-type": "application/json", ...corsHeaders() },
     });
@@ -285,15 +281,16 @@ export default {
       // 3. Route to handler
       if (pathname === "api/health") return handleHealth();
       if (pathname === "api/ping") return handlePing();
-      if (pathname === "api/wallet/balance") return handleWalletBalance(url, env);
+      if (pathname === "api/wallet/balance")
+        return handleWalletBalance(url, env);
       // ... more routes
 
       // 4. Not found
       if (pathname.startsWith("api")) {
-        return new Response(
-          JSON.stringify({ error: "Not found" }),
-          { status: 404, headers: corsHeaders() }
-        );
+        return new Response(JSON.stringify({ error: "Not found" }), {
+          status: 404,
+          headers: corsHeaders(),
+        });
       }
 
       // 5. Fallback HTML
@@ -303,7 +300,7 @@ export default {
     } catch (err) {
       return new Response(
         JSON.stringify({ error: "Internal error", details: err.message }),
-        { status: 500, headers: corsHeaders() }
+        { status: 500, headers: corsHeaders() },
       );
     }
   },
@@ -315,11 +312,13 @@ export default {
 ## Testing Your Worker
 
 ### Test Health
+
 ```bash
 curl https://your-worker.workers.dev/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -328,11 +327,13 @@ Expected response:
 ```
 
 ### Test with Parameters
+
 ```bash
 curl "https://your-worker.workers.dev/api/wallet/balance?publicKey=YOUR_KEY"
 ```
 
 ### Test POST Request
+
 ```bash
 curl -X POST https://your-worker.workers.dev/api/solana-rpc \
   -H "Content-Type: application/json" \
@@ -340,11 +341,13 @@ curl -X POST https://your-worker.workers.dev/api/solana-rpc \
 ```
 
 ### Test CORS
+
 ```bash
 curl -i -X OPTIONS https://your-worker.workers.dev/api/health
 ```
 
 You should see:
+
 ```
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET,POST,OPTIONS
@@ -393,6 +396,7 @@ secrets = ["SOLANA_RPC_URL"]
 ```
 
 Deploy to environment:
+
 ```bash
 wrangler deploy --env production
 ```
@@ -416,6 +420,7 @@ wrangler deploy
 ## Monitoring
 
 ### View Logs
+
 ```bash
 wrangler tail
 ```
@@ -437,6 +442,7 @@ watch -n 10 'curl -s "https://your-worker.workers.dev/api/wallet/balance?publicK
 ### Endpoint Returns 404
 
 Check routing in fetch handler:
+
 ```javascript
 // Make sure path matches exactly
 if (pathname === "api/health") return handleHealth();
@@ -445,6 +451,7 @@ if (pathname === "api/health") return handleHealth();
 ### Timeout Errors
 
 Increase timeout for slow operations:
+
 ```javascript
 // Change from 8000 to 15000ms
 const result = await timeoutFetch(url, options, 15000);
@@ -453,6 +460,7 @@ const result = await timeoutFetch(url, options, 15000);
 ### CORS Issues
 
 Verify corsHeaders() is included in response:
+
 ```javascript
 return new Response(data, {
   headers: { "content-type": "application/json", ...corsHeaders() },
@@ -462,17 +470,19 @@ return new Response(data, {
 ### Invalid JSON Response
 
 Make sure to stringify objects:
+
 ```javascript
 // Correct
-JSON.stringify({ status: "ok" })
+JSON.stringify({ status: "ok" });
 
 // Wrong
-"{ status: 'ok' }"
+("{ status: 'ok' }");
 ```
 
 ### RPC Connection Failed
 
 Check environment variables and fallback endpoints are configured:
+
 ```javascript
 const rpcCandidates = [];
 if (env && env.SOLANA_RPC_URL) rpcCandidates.push(env.SOLANA_RPC_URL);
@@ -494,6 +504,7 @@ rpcCandidates.push(...DEFAULT_RPC_FALLBACKS); // Fallback!
 ## Security Considerations
 
 ✅ **Done in this template:**
+
 - CORS properly configured
 - No secrets in code
 - Error details don't expose system info
@@ -501,6 +512,7 @@ rpcCandidates.push(...DEFAULT_RPC_FALLBACKS); // Fallback!
 - Timeout protection against hanging requests
 
 ✅ **Consider adding:**
+
 - Rate limiting (use Cloudflare rules)
 - API key authentication (if private)
 - Request signing (for sensitive operations)

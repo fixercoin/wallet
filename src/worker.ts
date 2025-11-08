@@ -234,6 +234,79 @@ async function handlePrice(url: URL): Promise<Response> {
   }
 }
 
+// Solana Send Transaction handler
+async function handleSolanaSend(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body || !body.signedBase64 || typeof body.signedBase64 !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Missing required field: signedBase64" }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const rpcBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "sendTransaction",
+      params: [
+        body.signedBase64,
+        { skipPreflight: false, preflightCommitment: "processed" },
+      ],
+    };
+
+    const endpoints = [
+      ...FALLBACK_RPC_ENDPOINTS,
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await timeoutFetch(endpoint, {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(rpcBody),
+        });
+
+        const text = await response.text().catch(() => "");
+        if (!response.ok) {
+          continue;
+        }
+
+        const data = text ? JSON.parse(text) : {};
+
+        if (data.result) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              result: data.result,
+              signature: data.result,
+            }),
+            { status: 200, headers: CORS_HEADERS },
+          );
+        } else if (data.error) {
+          continue;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: "Failed to send transaction",
+        details: "All RPC endpoints failed",
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
+  }
+}
+
 // Jupiter Quote handler
 async function handleJupiterQuote(url: URL): Promise<Response> {
   const { inputMint, outputMint, amount, slippageBps, asLegacyTransaction } =

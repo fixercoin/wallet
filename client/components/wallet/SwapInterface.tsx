@@ -636,18 +636,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           keypair,
         );
 
-        setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
         setShowSuccess(true);
         setStatus("");
         setIsLoading(false);
 
-        setTimeout(() => setShowSuccess(false), 3000);
-
-        toast({
-          title: "Swap Successful",
-          description: `Transaction: ${txSignature}`,
-          variant: "default",
-        });
+        setTimeout(() => setShowSuccess(false), 1600);
 
         setAmount("");
         setQuote(null);
@@ -918,15 +911,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         <BloomExplosion show={showSuccess} />
-        {showSuccess && (
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-green-400 mt-32">
-                {successMsg}
-              </h2>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

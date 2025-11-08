@@ -100,7 +100,6 @@ class HeliusAPI {
       SOLANA_RPC_URL,
       "https://solana-rpc.publicnode.com/",
       "https://solana.publicnode.com",
-      "https://spl.solana.com",
     ].filter(Boolean);
   }
 

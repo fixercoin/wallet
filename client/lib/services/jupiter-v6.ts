@@ -127,14 +127,17 @@ class JupiterV6API {
   ): Promise<Record<string, JupiterTokenPrice>> {
     try {
       const ids = mints.join(",");
-      const priceUrl = `${JUPITER_V6_ENDPOINTS.price}?ids=${encodeURIComponent(ids)}`;
-
-      const response = await fetch(priceUrl, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
+      const response = await fetch(
+        resolveApiUrl(
+          `${JUPITER_V6_ENDPOINTS.price}?ids=${encodeURIComponent(ids)}`,
+        ),
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         console.error("Jupiter price error:", response.status);

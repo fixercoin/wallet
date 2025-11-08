@@ -1,7 +1,5 @@
-// Production deployment defaults
-const CLOUDFLARE_WORKER_BASE =
-  "https://fixorium-proxy.khanbabusargodha.workers.dev/api";
-const LOCALHOST_API_BASE = "http://localhost:5173"; // Local fallback
+// API base resolution prefers env (VITE_API_BASE_URL or VITE_API_URL),
+// then defaults to the Cloudflare Worker domain
 
 // Track which API base is currently working
 let workingApiBase: string | null = null;
@@ -15,12 +13,22 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
-  const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBase) return envBase;
-  // Use cached working base if available
+  // Try primary env var
+  const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
+  if (envBasePrimary) {
+    return envBasePrimary;
+  }
+
+  // Try alternative env var
+  const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
+  if (envBaseAlt) {
+    return envBaseAlt;
+  }
+
   if (workingApiBase) return workingApiBase;
-  // Try Cloudflare Worker first, fall back to localhost in dev
-  return CLOUDFLARE_WORKER_BASE;
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
+  return "";
 };
 
 let cachedBase: string | null = null;
@@ -78,6 +86,7 @@ export const fetchWithFallback = async (
   options?: RequestInit,
 ): Promise<Response> => {
   const url = resolveApiUrl(path);
+  const currentBase = getApiBaseUrl();
 
   try {
     const response = await fetch(url, {
@@ -88,24 +97,12 @@ export const fetchWithFallback = async (
 
     // If successful, mark this base as working
     if (response.ok) {
-      workingApiBase = getApiBaseUrl();
+      workingApiBase = currentBase;
     }
 
     return response;
   } catch (error) {
-    // If Cloudflare Worker is unreachable and not in dev mode, log it
-    const currentBase = getApiBaseUrl();
-    if (currentBase === CLOUDFLARE_WORKER_BASE) {
-      markApiBaseFailed(currentBase);
-      console.warn(
-        "Cloudflare Worker at " +
-          CLOUDFLARE_WORKER_BASE +
-          " appears to be unavailable. " +
-          "Error: " +
-          (error instanceof Error ? error.message : String(error)),
-      );
-    }
-
-    throw error;
+    // No external fallback; surface the error to caller
+    throw error as any;
   }
 };

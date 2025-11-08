@@ -19,6 +19,7 @@ import {
   Transaction,
   PublicKey,
 } from "@solana/web3.js";
+import { rpcCall } from "@/lib/rpc-utils";
 
 interface AutoBotProps {
   onBack: () => void;

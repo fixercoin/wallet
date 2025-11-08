@@ -13,6 +13,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { rpcCall as rpcCallUtil } from "@/lib/rpc-utils";
+import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
@@ -21,8 +22,13 @@ import {
   PublicKey,
   Transaction,
   TransactionInstruction,
+  SystemProgram,
 } from "@solana/web3.js";
-import { createBurnCheckedInstruction } from "@solana/spl-token";
+import {
+  createBurnCheckedInstruction,
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import bs58 from "bs58";
 
 interface BurnTokenProps {

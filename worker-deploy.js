@@ -451,6 +451,100 @@ async function handleSolanaRpc(req, env) {
   });
 }
 
+async function handleSolanaSend(req, env) {
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { "content-type": "application/json", ...corsHeaders() },
+    });
+  }
+
+  const { signedBase64 } = body || {};
+  if (!signedBase64 || typeof signedBase64 !== "string") {
+    return new Response(
+      JSON.stringify({ error: "Missing required field: signedBase64" }),
+      {
+        status: 400,
+        headers: { "content-type": "application/json", ...corsHeaders() },
+      },
+    );
+  }
+
+  const rpcBody = {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "sendTransaction",
+    params: [signedBase64, { skipPreflight: false, preflightCommitment: "processed" }],
+  };
+
+  const candidates = [];
+  if (env && env.SOLANA_RPC_URL) candidates.push(env.SOLANA_RPC_URL);
+  if (env && env.ALCHEMY_RPC_URL) candidates.push(env.ALCHEMY_RPC_URL);
+  if (env && env.HELIUS_RPC_URL) candidates.push(env.HELIUS_RPC_URL);
+  if (env && env.MORALIS_RPC_URL) candidates.push(env.MORALIS_RPC_URL);
+  if (env && env.HELIUS_API_KEY)
+    candidates.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  candidates.push(...DEFAULT_RPC_FALLBACKS);
+
+  let lastError = null;
+  for (const endpoint of candidates) {
+    try {
+      const r = await timeoutFetch(
+        endpoint,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rpcBody),
+        },
+        10000,
+      );
+      const text = await r.text();
+      const data = text ? JSON.parse(text) : {};
+
+      if (data.result) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            result: data.result,
+            signature: data.result,
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json",
+              ...corsHeaders(),
+            },
+          },
+        );
+      } else if (data.error) {
+        lastError = new Error(
+          data.error.message || JSON.stringify(data.error),
+        );
+        continue;
+      }
+    } catch (e) {
+      lastError = e;
+      continue;
+    }
+  }
+
+  return new Response(
+    JSON.stringify({
+      error: "Failed to send transaction",
+      details: lastError ? lastError.message : "All RPC endpoints failed",
+    }),
+    {
+      status: 502,
+      headers: { "content-type": "application/json", ...corsHeaders() },
+    },
+  );
+}
+
 async function handleJupiterQuote(reqUrl, env) {
   const params = reqUrl.search;
   const candidates = [];

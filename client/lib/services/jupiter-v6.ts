@@ -80,16 +80,16 @@ class JupiterV6API {
         asLegacyTransaction: String(asLegacyTransaction),
       });
 
-      const response = await fetch(
-        resolveApiUrl(`${JUPITER_V6_ENDPOINTS.quote}?${params.toString()}`),
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
+      const quoteUrl = `${JUPITER_V6_ENDPOINTS.quote}?${params.toString()}`;
+      console.log("[Jupiter] Fetching quote from:", quoteUrl);
+
+      const response = await fetch(quoteUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");

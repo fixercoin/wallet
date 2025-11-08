@@ -814,6 +814,13 @@ export default {
         return await handlePrice(url);
       }
 
+      if (
+        pathname.startsWith("/api/dexscreener/price") ||
+        pathname === "/dexscreener/price"
+      ) {
+        return await handlePrice(url);
+      }
+
       // Jupiter routes
       if (pathname.startsWith("/api/jupiter/quote")) {
         return await handleJupiterQuote(url);

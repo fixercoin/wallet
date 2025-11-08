@@ -22,7 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
+import { rpcCall as rpcCallUtil } from "@/lib/rpc-utils";
 import { formatTokenAmount } from "@/lib/utils";
 import { shortenAddress } from "@/lib/wallet";
 import type { TokenInfo } from "@/lib/wallet";

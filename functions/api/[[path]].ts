@@ -959,22 +959,30 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
     const q = url.searchParams.get("q");
     if (!q || typeof q !== "string") {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid 'q' parameter for search query." }),
+        JSON.stringify({
+          error: "Missing or invalid 'q' parameter for search query.",
+        }),
         { status: 400, headers: CORS_HEADERS },
       );
     }
 
-    const resp = await timeoutFetch(`${DEXSCREENER_BASE}/search/?q=${encodeURIComponent(q)}`, {
-      method: "GET",
-      headers: browserHeaders(),
-    });
+    const resp = await timeoutFetch(
+      `${DEXSCREENER_BASE}/search/?q=${encodeURIComponent(q)}`,
+      {
+        method: "GET",
+        headers: browserHeaders(),
+      },
+    );
 
     if (!resp.ok) {
       const data = await safeJson(resp);
-      return new Response(JSON.stringify({ error: "DexScreener search failed", details: data }), {
-        status: resp.status,
-        headers: CORS_HEADERS,
-      });
+      return new Response(
+        JSON.stringify({ error: "DexScreener search failed", details: data }),
+        {
+          status: resp.status,
+          headers: CORS_HEADERS,
+        },
+      );
     }
 
     const data = await safeJson(resp);
@@ -983,13 +991,20 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
       .slice(0, 20);
 
     return new Response(
-      JSON.stringify({ schemaVersion: data?.schemaVersion || "1.0.0", pairs: solanaPairs }),
+      JSON.stringify({
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs: solanaPairs,
+      }),
       { headers: CORS_HEADERS },
     );
   } catch (err: any) {
     console.error("[DexScreener] Search proxy error:", err);
     return new Response(
-      JSON.stringify({ error: { message: err?.message || String(err), details: String(err) }, schemaVersion: "1.0.0", pairs: [] }),
+      JSON.stringify({
+        error: { message: err?.message || String(err), details: String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
       { status: 500, headers: CORS_HEADERS },
     );
   }
@@ -1004,19 +1019,37 @@ async function handleDexscreenerTrending(url: URL): Promise<Response> {
     const data = await safeJson(resp);
 
     const trendingPairs = (data?.pairs || [])
-      .filter((pair: any) => pair.volume?.h24 > 1000 && pair.liquidity?.usd && pair.liquidity.usd > 10000)
+      .filter(
+        (pair: any) =>
+          pair.volume?.h24 > 1000 &&
+          pair.liquidity?.usd &&
+          pair.liquidity.usd > 10000,
+      )
       .sort((a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
       .slice(0, 50);
 
-    return new Response(JSON.stringify({ schemaVersion: data?.schemaVersion || "1.0.0", pairs: trendingPairs }), {
-      headers: CORS_HEADERS,
-    });
+    return new Response(
+      JSON.stringify({
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs: trendingPairs,
+      }),
+      {
+        headers: CORS_HEADERS,
+      },
+    );
   } catch (err: any) {
     console.error("[DexScreener] Trending proxy error:", err);
-    return new Response(JSON.stringify({ error: { message: err?.message || String(err) }, schemaVersion: "1.0.0", pairs: [] }), {
-      status: 500,
-      headers: CORS_HEADERS,
-    });
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      {
+        status: 500,
+        headers: CORS_HEADERS,
+      },
+    );
   }
 }
 

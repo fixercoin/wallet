@@ -6,7 +6,7 @@ compatibility_date = "2025-01-01"
 type = "javascript"
 
 # Entrypoint - point to the worker module that exports `onRequest` or default fetch handler
-main = "functions/api/[[path]].ts"
+main = "src/worker.ts"
 
 # NOTE: This worker is no longer needed as the frontend now calls public Solana RPC endpoints directly
 # The frontend makes direct calls to:
@@ -20,6 +20,6 @@ command = "pnpm build"
 
 # Environment variables for wrangler can be added here or set via `wrangler secret put`
 [vars]
-VITE_API_URL = "https://62783ca6cfb34306983ae587a54ebcde-5cefec47cb6b4097a9ea526f8.fly.dev"
-VITE_API_BASE_URL = "https://62783ca6cfb34306983ae587a54ebcde-5cefec47cb6b4097a9ea526f8.fly.dev"
+VITE_API_URL = "https://abc.khanbabusargodha.workers.dev"
+VITE_API_BASE_URL = "https://abc.khanbabusargodha.workers.dev"
 # SOLANA_RPC = "https://solana.publicnode.com"

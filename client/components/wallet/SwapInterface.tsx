@@ -234,9 +234,7 @@ async function sendSignedTx(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        transaction: signedBase64,
-        skipPreflight: false,
-        preflightCommitment: "confirmed",
+        signedBase64,
       }),
     });
 

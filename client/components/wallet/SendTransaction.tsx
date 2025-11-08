@@ -717,7 +717,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     });
   };
 
-
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">

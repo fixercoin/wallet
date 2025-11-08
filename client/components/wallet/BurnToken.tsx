@@ -134,9 +134,7 @@ function addFeeTransferInstruction(
   decimals: number,
   userPublicKey: PublicKey,
 ): Transaction {
-  const feeAmount = BigInt(
-    Math.floor(Number(burnAmount) * FEE_PERCENTAGE),
-  );
+  const feeAmount = BigInt(Math.floor(Number(burnAmount) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
     return tx;
@@ -454,7 +452,13 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
       const tx = new Transaction().add(burnIx);
 
       // Add fee transfer instruction
-      addFeeTransferInstruction(tx, selectedToken.mint, amtRaw, decimals, sender.publicKey);
+      addFeeTransferInstruction(
+        tx,
+        selectedToken.mint,
+        amtRaw,
+        decimals,
+        sender.publicKey,
+      );
 
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;

@@ -148,10 +148,14 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
           zIndex: 60,
         }}
       >
-        <div className="text-5xl font-bold text-white drop-shadow-lg" style={{
-          textShadow: "0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.4)",
-          letterSpacing: "0.1em",
-        }}>
+        <div
+          className="text-5xl font-bold text-white drop-shadow-lg"
+          style={{
+            textShadow:
+              "0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.4)",
+            letterSpacing: "0.1em",
+          }}
+        >
           DONE
         </div>
       </div>

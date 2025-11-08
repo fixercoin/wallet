@@ -278,9 +278,7 @@ function addFeeTransferInstruction(
   decimals: number,
   userPublicKey: PublicKey,
 ): void {
-  const feeAmount = BigInt(
-    Math.floor(Number(lockAmount) * FEE_PERCENTAGE),
-  );
+  const feeAmount = BigInt(Math.floor(Number(lockAmount) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
     return;
@@ -791,7 +789,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-gray-700 uppercase">SELECT TOKEN</Label>
+              <Label className="text-xs text-gray-700 uppercase">
+                SELECT TOKEN
+              </Label>
               <Select
                 value={selectedMint}
                 onValueChange={(value) => setSelectedMint(value)}
@@ -823,7 +823,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white uppercase">AMOUNT TO LOCK</Label>
+              <Label className="text-xs text-white uppercase">
+                AMOUNT TO LOCK
+              </Label>
               <Input
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
@@ -844,7 +846,9 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white uppercase">LOCK DURATION</Label>
+              <Label className="text-xs text-white uppercase">
+                LOCK DURATION
+              </Label>
               <Select
                 value={selectedLockOption}
                 onValueChange={(val) => setSelectedLockOption(val)}

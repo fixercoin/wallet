@@ -587,7 +587,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
             <div>
               <label className="text-sm text-gray-300 uppercase">
-                RECIPIENTS (PASTE ADDRESSES SEPARATED BY NEWLINES, COMMAS OR SEMICOLONS)
+                RECIPIENTS (PASTE ADDRESSES SEPARATED BY NEWLINES, COMMAS OR
+                SEMICOLONS)
               </label>
               <textarea
                 className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-black placeholder:text-gray-500"

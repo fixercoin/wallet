@@ -29,7 +29,7 @@ import {
 } from "@solana/spl-token";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 
-const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
+const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;

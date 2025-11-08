@@ -179,7 +179,9 @@ class HeliusAPI {
           clearTimeout(timeout);
 
           if (!response.ok) {
-            const errorText = await response.text().catch(() => "Unknown error");
+            const errorText = await response
+              .text()
+              .catch(() => "Unknown error");
 
             // Handle rate limiting specifically
             if (response.status === 429) {
@@ -188,9 +190,14 @@ class HeliusAPI {
 
               if (attempt < retries) {
                 // Exponential backoff for rate limits
-                const backoffTime = Math.min(3000 * Math.pow(2, attempt), 30000);
+                const backoffTime = Math.min(
+                  3000 * Math.pow(2, attempt),
+                  30000,
+                );
                 console.log(`Rate limit backoff: waiting ${backoffTime}ms`);
-                await new Promise((resolve) => setTimeout(resolve, backoffTime));
+                await new Promise((resolve) =>
+                  setTimeout(resolve, backoffTime),
+                );
               }
             }
 
@@ -203,9 +210,7 @@ class HeliusAPI {
           const data = await response.json();
 
           if (data.error) {
-            console.warn(
-              `RPC error on ${endpoint}: ${data.error.message}`,
-            );
+            console.warn(`RPC error on ${endpoint}: ${data.error.message}`);
             continue;
           }
 
@@ -220,9 +225,7 @@ class HeliusAPI {
           if (isTimeout) {
             console.warn(`RPC call timed out on ${endpoint}`);
           } else {
-            console.warn(
-              `RPC call failed on ${endpoint}: ${errorMsg}`,
-            );
+            console.warn(`RPC call failed on ${endpoint}: ${errorMsg}`);
           }
 
           lastError = error instanceof Error ? error : new Error(errorMsg);

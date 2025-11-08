@@ -15,7 +15,10 @@ import { makeRpcCall } from "./services/solana-rpc";
  * const balance = await rpcCall("getBalance", [publicKey]);
  * const tokens = await rpcCall("getTokenAccountsByOwner", [publicKey, {programId}, {encoding}]);
  */
-export async function rpcCall(method: string, params: any[] = []): Promise<any> {
+export async function rpcCall(
+  method: string,
+  params: any[] = [],
+): Promise<any> {
   return makeRpcCall(method, params);
 }
 
@@ -71,8 +74,7 @@ export const solanaRpc = {
       publicKey,
       {
         programId:
-          options?.programId ||
-          "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          options?.programId || "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
       },
       {
         encoding: options?.encoding || "jsonParsed",
@@ -142,6 +144,5 @@ export const solanaRpc = {
   /**
    * Get transaction fee estimate
    */
-  getFeeForMessage: (message: string) =>
-    rpcCall("getFeeForMessage", [message]),
+  getFeeForMessage: (message: string) => rpcCall("getFeeForMessage", [message]),
 };

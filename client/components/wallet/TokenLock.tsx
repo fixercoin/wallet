@@ -254,7 +254,9 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
         return result as string;
       } catch (fallbackError) {
         const fallbackMsg =
-          fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+          fallbackError instanceof Error
+            ? fallbackError.message
+            : String(fallbackError);
         throw new Error(`Failed to send transaction: ${fallbackMsg}`);
       }
     }

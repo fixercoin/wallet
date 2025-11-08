@@ -150,14 +150,9 @@ export const makeRpcCall = async (
             errorMsg.includes("abort") || errorMsg.includes("timeout");
 
           if (isTimeout) {
-            console.warn(
-              `[RPC] ${method} on ${endpoint} timed out after 12s`,
-            );
+            console.warn(`[RPC] ${method} on ${endpoint} timed out after 12s`);
           } else {
-            console.warn(
-              `[RPC] ${method} on ${endpoint} failed:`,
-              errorMsg,
-            );
+            console.warn(`[RPC] ${method} on ${endpoint} failed:`, errorMsg);
           }
 
           lastError = error instanceof Error ? error : new Error(errorMsg);

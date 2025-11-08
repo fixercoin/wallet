@@ -3,6 +3,7 @@
 ## Overview
 
 The frontend now makes **direct calls to public Solana RPC endpoints** instead of proxying through a backend worker. This eliminates the need for:
+
 - Cloudflare Workers for RPC proxying
 - Backend API infrastructure
 - Environment variables pointing to worker domains
@@ -10,15 +11,17 @@ The frontend now makes **direct calls to public Solana RPC endpoints** instead o
 ## What Changed
 
 ### Before (Worker-based)
+
 ```typescript
 // Old approach - calls /api/solana-rpc endpoint
 const response = await fetch("/api/solana-rpc", {
   method: "POST",
-  body: JSON.stringify({ method: "getBalance", params: [publicKey] })
+  body: JSON.stringify({ method: "getBalance", params: [publicKey] }),
 });
 ```
 
 ### After (Direct RPC)
+
 ```typescript
 // New approach - calls public RPC endpoints directly
 import { solanaRpc } from "@/lib/rpc-utils";
@@ -73,7 +76,7 @@ const result = await rpcCall("getBalance", [publicKey]);
 const tokens = await rpcCall("getTokenAccountsByOwner", [
   publicKey,
   { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-  { encoding: "jsonParsed", commitment: "confirmed" }
+  { encoding: "jsonParsed", commitment: "confirmed" },
 ]);
 ```
 
@@ -85,7 +88,7 @@ import { rpcPayload } from "@/lib/rpc-utils";
 const response = await rpcPayload({
   method: "getBalance",
   params: [publicKey],
-  id: 1
+  id: 1,
 });
 ```
 
@@ -94,18 +97,20 @@ const response = await rpcPayload({
 ### Components using fetch directly
 
 **Before:**
+
 ```typescript
 const resp = await fetch("/api/solana-rpc", {
   method: "POST",
   body: JSON.stringify({
     method: "getBalance",
-    params: [publicKey]
-  })
+    params: [publicKey],
+  }),
 });
 const result = await resp.json();
 ```
 
 **After:**
+
 ```typescript
 import { rpcCall } from "@/lib/rpc-utils";
 
@@ -150,7 +155,7 @@ const balance = await solanaRpc.getBalance(publicKey);
 ✅ **Automatic Failover** - Uses multiple public RPC endpoints  
 ✅ **Lower Latency** - Direct calls instead of proxying through worker  
 ✅ **Cost Savings** - No worker compute costs  
-✅ **Simplified Deployment** - Deploy only frontend  
+✅ **Simplified Deployment** - Deploy only frontend
 
 ## Available RPC Methods
 
@@ -174,7 +179,7 @@ For other RPC methods, use `rpcCall(method, params)`.
 The public RPC endpoints have rate limits:
 
 - Solana Public Node: ~100 requests/second
-- Ankr: ~200 requests/second  
+- Ankr: ~200 requests/second
 - Solana API: Lower rate limit
 
 If you hit rate limits frequently:
@@ -189,26 +194,33 @@ To test the RPC calls in your browser console:
 
 ```javascript
 // Import dynamically in console
-const { solanaRpc } = await import('http://localhost:5173/src/lib/rpc-utils.ts');
+const { solanaRpc } = await import(
+  "http://localhost:5173/src/lib/rpc-utils.ts"
+);
 
 // Test a call
-const balance = await solanaRpc.getBalance('YourPublicKeyHere');
+const balance = await solanaRpc.getBalance("YourPublicKeyHere");
 console.log(balance);
 ```
 
 ## Troubleshooting
 
 ### CORS Errors
+
 Public RPC endpoints allow CORS from all origins, so CORS errors shouldn't occur.
 
 ### Timeout Errors
+
 If you see timeout errors:
+
 1. Check your internet connection
 2. Try a different RPC endpoint
 3. Ensure `SOLANA_RPC_URL` is not set to a broken endpoint
 
 ### Rate Limit Errors (429)
+
 The system automatically retries with backoff. If persistent:
+
 1. Use a private RPC endpoint (set `SOLANA_RPC_URL`)
 2. Reduce request frequency
 3. Implement client-side caching

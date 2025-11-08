@@ -12,7 +12,6 @@ import {
   getTokenAccounts as getSolanaTokenAccounts,
 } from "@/lib/services/solana-rpc";
 
-
 export interface WalletData {
   publicKey: string;
   secretKey: Uint8Array;

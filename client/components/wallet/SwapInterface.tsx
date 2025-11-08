@@ -499,10 +499,30 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Please get a quote first by clicking 'Get Quote'");
       }
 
+      // Refresh the quote immediately before swap to prevent STALE_QUOTE/expired quote errors
+      setStatus("Refreshing quote…");
+      const oldQuote = quote.quoteResponse;
+      let freshQuote = oldQuote;
+
+      try {
+        const refreshed = await jupiterV6API.getQuote(
+          oldQuote.inputMint,
+          oldQuote.outputMint,
+          parseInt(oldQuote.inAmount),
+          oldQuote.slippageBps || 5000,
+        );
+        if (refreshed) {
+          freshQuote = refreshed;
+          console.log("✅ Quote refreshed successfully before swap");
+        }
+      } catch (refreshErr) {
+        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+      }
+
       // Request swap transaction from Jupiter
       setStatus("Creating swap transaction…");
       const swapResponse = await jupiterV6API.createSwap(
-        quote.quoteResponse,
+        freshQuote,
         wallet.publicKey,
         {
           wrapAndUnwrapSol: true,

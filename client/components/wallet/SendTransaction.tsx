@@ -865,61 +865,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         <BloomExplosion show={showSuccess} />
         <div className="w-full max-w-md relative z-10">
           <div className="bg-transparent p-8 text-center">
-            <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">
-                <Check className="h-8 w-8 text-emerald-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Transaction Sent!
-              </h3>
-              <p className="text-gray-600">
-                Your transfer has been successfully sent
-              </p>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount:</span>
-                <span className="font-medium text-gray-900">
-                  {amount} {selectedSymbol}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">To:</span>
-                <span className="font-mono text-xs text-gray-900">
-                  {recipient.slice(0, 8)}...{recipient.slice(-8)}
-                </span>
-              </div>
-              {txSignature && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Signature:</span>
-                  <a
-                    href={`https://explorer.solana.com/tx/${txSignature}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-xs text-gray-900 hover:underline"
-                  >
-                    {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={handleNewTransaction}
-                className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50 uppercase"
-              >
-                Send Another
-              </Button>
-              <Button
-                onClick={onBack}
-                className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900 uppercase"
-              >
-                Back to Wallet
-              </Button>
-            </div>
+            <h3 className="text-3xl font-extrabold text-gray-900 tracking-widest">CONFIRMED</h3>
           </div>
         </div>
       </div>

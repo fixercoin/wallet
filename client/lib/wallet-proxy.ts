@@ -12,33 +12,6 @@ import {
   getTokenAccounts as getSolanaTokenAccounts,
 } from "@/lib/services/solana-rpc";
 
-const fetchJsonWithTimeout = async (url: string, ms = 10000) => {
-  let id: any;
-  const timeoutResult = { ok: false, json: {}, error: "timeout" } as any;
-
-  const timeoutPromise = new Promise<{ ok: boolean; json: any }>((resolve) => {
-    id = setTimeout(() => resolve(timeoutResult), ms);
-  });
-
-  const fetchPromise = (async () => {
-    try {
-      const resp = await fetch(url);
-      const json = await resp.json().catch(() => ({}));
-      return { ok: resp.ok, json } as { ok: boolean; json: any };
-    } catch (err) {
-      console.warn(`fetchJsonWithTimeout failed for ${url}:`, err);
-      return {
-        ok: false,
-        json: {},
-        error: err instanceof Error ? err.message : String(err),
-      } as any;
-    }
-  })();
-
-  const result = await Promise.race([fetchPromise, timeoutPromise]);
-  clearTimeout(id);
-  return result as { ok: boolean; json: any };
-};
 
 export interface WalletData {
   publicKey: string;

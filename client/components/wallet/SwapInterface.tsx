@@ -226,13 +226,29 @@ async function sendSignedTx(
   const signed = vtx.serialize();
   const signedBase64 = base64FromBytes(signed);
 
-  // Use the new RPC utility to send the signed transaction
+  // Send transaction through backend proxy to avoid CORS issues
   try {
-    const result = await rpcCall("sendRawTransaction", [
-      signedBase64,
-      { skipPreflight: false, preflightCommitment: "confirmed" },
-    ]);
-    return result as string;
+    const response = await fetch("/api/solana-send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        transaction: signedBase64,
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.signature || data.result;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to send transaction: ${msg}`);

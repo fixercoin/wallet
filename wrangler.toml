@@ -20,6 +20,13 @@ bucket = "dist"
 
 # Environment variables for wrangler can be added here or set via `wrangler secret put`
 [vars]
+# These env vars are available during build and to the Worker at runtime
+# The VITE_ prefix makes them available to the client code
 VITE_API_URL = "https://abc.khanbabusargodha.workers.dev"
 VITE_API_BASE_URL = "https://abc.khanbabusargodha.workers.dev"
-# SOLANA_RPC = "https://solana.publicnode.com"
+
+# Optional Solana RPC endpoints (can be set via `wrangler secret put`)
+# SOLANA_RPC_URL = ""
+# ALCHEMY_RPC_URL = ""
+# HELIUS_RPC_URL = ""
+# HELIUS_API_KEY = ""

@@ -13,32 +13,21 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
+  // Try primary env var
   const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBasePrimary) {
-    // If env explicitly points to the old worker subdomain that we want to avoid,
-    // prefer using relative /api paths to prevent console errors from unreachable domains.
-    if (
-      envBasePrimary.includes("api.fixorium.com.pk") ||
-      envBasePrimary.includes("wallet.fixorium.com.pk")
-    ) {
-      return "";
-    }
+  if (envBasePrimary && !envBasePrimary.includes("api.fixorium.com.pk") && !envBasePrimary.includes("wallet.fixorium.com.pk")) {
     return envBasePrimary;
   }
 
+  // Try alternative env var
   const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
-  if (envBaseAlt) {
-    if (
-      envBaseAlt.includes("api.fixorium.com.pk") ||
-      envBaseAlt.includes("wallet.fixorium.com.pk")
-    ) {
-      return "";
-    }
+  if (envBaseAlt && !envBaseAlt.includes("api.fixorium.com.pk") && !envBaseAlt.includes("wallet.fixorium.com.pk")) {
     return envBaseAlt;
   }
 
   if (workingApiBase) return workingApiBase;
-  // Default to relative /api (served by the same origin)
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
   return "";
 };
 

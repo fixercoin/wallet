@@ -16,7 +16,7 @@ const MAX_DEX_BATCH = 20;
 
 function normalizeBase(v) {
   if (!v) return '';
-  return v.replace(/\/+$/, '');
+  return v.replace(/\/+$|^\/+/, '');
 }
 
 async function timeoutFetch(url, opts = {}, ms = 8000) {
@@ -35,9 +35,7 @@ async function tryDexscreener(path) {
     try {
       const url = `${base}${path}`;
       const res = await timeoutFetch(url, { headers: { Accept: 'application/json' } }, 8000);
-      if (!res.ok) {
-        continue;
-      }
+      if (!res.ok) continue;
       const data = await res.json();
       return data;
     } catch (e) {
@@ -45,6 +43,29 @@ async function tryDexscreener(path) {
     }
   }
   throw new Error('All DexScreener endpoints failed');
+}
+
+async function tryJupiter(urlCandidates, options = {}, ms = 8000) {
+  for (const candidate of urlCandidates) {
+    try {
+      const res = await timeoutFetch(candidate, options, ms);
+      if (!res) continue;
+      // return raw response for full transparency
+      const text = await res.text();
+      return { status: res.status, headers: res.headers, body: text };
+    } catch (e) {
+      // try next
+    }
+  }
+  throw new Error('All Jupiter endpoints failed');
+}
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+  };
 }
 
 async function handleApiRoot() {
@@ -59,17 +80,11 @@ async function handleApiRoot() {
       '/api/forex/rate?base=USD&symbols=PKR',
       '/api/dexscreener/tokens?mints=<comma-separated>',
       '/api/dexscreener/price?tokenAddress=<mint>',
-      '/api/solana-rpc (POST JSON-RPC proxy)'
+      '/api/jupiter/price?ids=...',
+      '/api/jupiter/quote?inputMint=...&outputMint=...&amount=...',
+      '/api/jupiter/swap (POST - proxy to Jupiter swap)'
     ]
   }), { headers: { 'content-type': 'application/json' } });
-}
-
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-  };
 }
 
 async function handleHealth() {
@@ -121,7 +136,6 @@ async function handleForexRate(reqUrl) {
   });
 
   try {
-    // Use Promise.any if available, else emulate
     let res;
     if (typeof Promise.any === 'function') {
       res = await Promise.any(attempts);
@@ -272,6 +286,70 @@ async function handleSolanaRpc(req, env) {
   return new Response(JSON.stringify({ error: 'All RPC endpoints failed' }), { status: 502, headers: { 'content-type': 'application/json', ...corsHeaders() } });
 }
 
+// Jupiter v6 proxy handlers
+async function handleJupiterQuote(reqUrl, env) {
+  const params = reqUrl.search;
+  // Candidates - allow env override
+  const candidates = [];
+  if (env && env.JUPITER_QUOTE_BASE) candidates.push(normalizeBase(env.JUPITER_QUOTE_BASE) + params);
+  // Common known endpoints
+  candidates.push(`https://quote-api.jup.ag/v6/quote${params}`);
+  candidates.push(`https://api.jup.ag/quote/v1${params}`);
+
+  const headers = { Accept: 'application/json' };
+  if (env && env.JUPITER_API_KEY) headers['x-api-key'] = env.JUPITER_API_KEY;
+
+  try {
+    const result = await tryJupiter(candidates, { method: 'GET', headers }, 8000);
+    // return result body and forward content-type
+    const ct = result.headers.get('content-type') || 'application/json';
+    return new Response(result.body, { status: result.status, headers: { 'content-type': ct, ...corsHeaders() } });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Failed to fetch Jupiter quote', details: e.message || String(e) }), { status: 502, headers: { 'content-type': 'application/json', ...corsHeaders() } });
+  }
+}
+
+async function handleJupiterPrice(reqUrl, env) {
+  const ids = reqUrl.searchParams.get('ids');
+  if (!ids) return new Response(JSON.stringify({ error: "Missing 'ids' parameter" }), { status: 400, headers: { 'content-type': 'application/json', ...corsHeaders() } });
+
+  const params = `?ids=${encodeURIComponent(ids)}`;
+  const candidates = [];
+  if (env && env.JUPITER_PRICE_BASE) candidates.push(normalizeBase(env.JUPITER_PRICE_BASE) + `/price${params}`);
+  candidates.push(`https://price.jup.ag/v4/price${params}`);
+  candidates.push(`https://api.jup.ag/price/v2${params}`);
+
+  try {
+    const result = await tryJupiter(candidates, { method: 'GET', headers: { Accept: 'application/json' } }, 7000);
+    const ct = result.headers.get('content-type') || 'application/json';
+    return new Response(result.body, { status: result.status, headers: { 'content-type': ct, ...corsHeaders() } });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Failed to fetch Jupiter price', details: e.message || String(e) }), { status: 502, headers: { 'content-type': 'application/json', ...corsHeaders() } });
+  }
+}
+
+async function handleJupiterSwap(req, env) {
+  // Proxy POST body to Jupiter swap endpoints
+  let body;
+  try { body = await req.json(); } catch (e) { return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400, headers: { 'content-type': 'application/json', ...corsHeaders() } }); }
+
+  const candidates = [];
+  if (env && env.JUPITER_SWAP_BASE) candidates.push(normalizeBase(env.JUPITER_SWAP_BASE) + '/swap');
+  candidates.push('https://quote-api.jup.ag/v6/swap');
+  candidates.push('https://lite-api.jup.ag/swap/v1');
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (env && env.JUPITER_API_KEY) headers['x-api-key'] = env.JUPITER_API_KEY;
+
+  try {
+    const result = await tryJupiter(candidates, { method: 'POST', headers, body: JSON.stringify(body) }, 10000);
+    const ct = result.headers.get('content-type') || 'application/json';
+    return new Response(result.body, { status: result.status, headers: { 'content-type': ct, ...corsHeaders() } });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Failed to execute Jupiter swap', details: e.message || String(e) }), { status: 502, headers: { 'content-type': 'application/json', ...corsHeaders() } });
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     // Handle CORS preflight
@@ -295,6 +373,11 @@ export default {
       if (pathname === 'api/dexscreener/tokens') return handleDexTokens(url);
       if (pathname === 'api/dexscreener/search') return handleDexSearch(url);
       if (pathname === 'api/dexscreener/price') return handleDexPrice(url);
+
+      // Jupiter v6 proxies
+      if (pathname === 'api/jupiter/quote' && request.method === 'GET') return handleJupiterQuote(url, env);
+      if (pathname === 'api/jupiter/price' && request.method === 'GET') return handleJupiterPrice(url, env);
+      if (pathname === 'api/jupiter/swap' && request.method === 'POST') return handleJupiterSwap(request, env);
 
       if (pathname === 'api/solana-rpc' && request.method === 'POST') return handleSolanaRpc(request, env);
 

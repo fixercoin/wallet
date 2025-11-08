@@ -200,7 +200,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const [step, setStep] = useState<"form" | "confirm" | "sending" | "success">(
+    "form",
+  );
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
     initialMint || TOKEN_MINTS.SOL,
@@ -269,14 +271,19 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     }
 
     setError(null);
-    setStep("confirm");
+    setStep("sending");
+    setIsLoading(true);
+    const ok = await handleConfirmTransaction();
+    if (!ok) {
+      setStep("form");
+    }
   };
 
-  const handleConfirmTransaction = async () => {
+  const handleConfirmTransaction = async (): Promise<boolean> => {
     if (selectedSymbol === "SOL") {
-      await handleSendSOL();
+      return await handleSendSOL();
     } else {
-      await handleSendSPL();
+      return await handleSendSPL();
     }
   };
 
@@ -439,8 +446,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     });
   };
 
-  const handleSendSOL = async () => {
-    if (!wallet) return;
+  const handleSendSOL = async (): Promise<boolean> => {
+    if (!wallet) return false;
 
     setIsLoading(true);
     setError(null);
@@ -572,6 +579,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         title: "Transaction Sent",
         description: `Successfully sent ${amount} SOL`,
       });
+      return true;
     } catch (error) {
       console.error("Transaction error:", error);
       let message =
@@ -612,13 +620,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         description: message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendSPL = async () => {
-    if (!wallet || !selectedToken) return;
+  const handleSendSPL = async (): Promise<boolean> => {
+    if (!wallet || !selectedToken) return false;
 
     setIsLoading(true);
     setError(null);
@@ -783,6 +792,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         title: "Transaction Sent",
         description: `Successfully sent ${amount} ${selectedToken.symbol}`,
       });
+      return true;
     } catch (error) {
       console.error("SPL Transaction error:", error);
       let message =
@@ -814,6 +824,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         description: message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -856,62 +867,20 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         <BloomExplosion show={showSuccess} />
         <div className="w-full max-w-md relative z-10">
           <div className="bg-transparent p-8 text-center">
-            <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">
-                <Check className="h-8 w-8 text-emerald-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Transaction Sent!
-              </h3>
-              <p className="text-gray-600">
-                Your transfer has been successfully sent
-              </p>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount:</span>
-                <span className="font-medium text-gray-900">
-                  {amount} {selectedSymbol}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">To:</span>
-                <span className="font-mono text-xs text-gray-900">
-                  {recipient.slice(0, 8)}...{recipient.slice(-8)}
-                </span>
-              </div>
-              {txSignature && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Signature:</span>
-                  <a
-                    href={`https://explorer.solana.com/tx/${txSignature}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-xs text-gray-900 hover:underline"
-                  >
-                    {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={handleNewTransaction}
-                className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50 uppercase"
-              >
-                Send Another
-              </Button>
-              <Button
-                onClick={onBack}
-                className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900 uppercase"
-              >
-                Back to Wallet
-              </Button>
-            </div>
+            <h3 className="text-3xl font-extrabold text-gray-900 tracking-widest">
+              CONFIRMED
+            </h3>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "sending") {
+    return (
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-pulse text-lg">Processing transaction...</div>
         </div>
       </div>
     );
@@ -919,18 +888,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      {/* Decorative curved accent background elements */}
-
-      {/* Form Container - Centered */}
       <div className="flex-1 flex items-center justify-center relative z-20">
         <div className="w-full max-w-md px-4 py-6">
           <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
-                <div className="text-gray-900">Processing transaction...</div>
-              </div>
-            )}
-
             <div className="space-y-6 p-6">
               <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
                 <Button

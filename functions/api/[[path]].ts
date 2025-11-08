@@ -1630,4 +1630,7 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export const onRequest = handler;
+export async function onRequest(context: any): Promise<Response> {
+  // Cloudflare Pages Functions pass a context object; extract the Request
+  return handler(context.request as Request);
+}

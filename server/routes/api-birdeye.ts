@@ -247,7 +247,30 @@ export async function handleBirdeyePrice(
     });
   } catch (error: any) {
     console.error(`[Birdeye] Handler error:`, error?.message || String(error));
-    res.status(502).json({
+
+    // Try to get fallback price for known tokens
+    const address = (req.query.address as string) || "";
+    const tokenSymbol = getTokenSymbol(address);
+
+    if (tokenSymbol && FALLBACK_USD[tokenSymbol]) {
+      console.log(
+        `[Birdeye] Handler error fallback for ${tokenSymbol}: $${FALLBACK_USD[tokenSymbol]}`,
+      );
+      return res.json({
+        success: true,
+        data: {
+          address,
+          value: FALLBACK_USD[tokenSymbol],
+          updateUnixTime: Math.floor(Date.now() / 1000),
+          priceChange24h: 0,
+          volume24h: 0,
+        },
+        _source: "fallback",
+      });
+    }
+
+    // If no fallback available, return error but still with valid JSON
+    res.json({
       success: false,
       error: "Failed to fetch token price",
       details: error?.message || String(error),

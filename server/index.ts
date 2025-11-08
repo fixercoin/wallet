@@ -644,6 +644,64 @@ export async function createServer(): Promise<express.Application> {
     });
   });
 
+  // Ping endpoint
+  app.get("/api/ping", (req, res) => {
+    res.json({
+      status: "pong",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Root API endpoint
+  app.get("/api", (req, res) => {
+    res.json({
+      status: "ok",
+      message: "Fixorium Wallet API",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        health: "/api/health",
+        ping: "/api/ping",
+        wallet: "/api/wallet/balance",
+        balance: "/api/balance",
+        quote: "/api/quote",
+        swap: "/api/swap/execute",
+        orders: "/api/orders",
+      },
+    });
+  });
+
+  // Balance endpoint (alias for /api/wallet/balance)
+  app.get("/api/balance", async (req, res) => {
+    try {
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "?publicKey=...",
+            "?wallet=...",
+            "?address=...",
+            "?walletAddress=...",
+          ],
+        });
+      }
+
+      const modifiedReq = { ...req, query: { publicKey } };
+      handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({ error: "API endpoint not found", path: req.path });
@@ -652,15 +710,5 @@ export async function createServer(): Promise<express.Application> {
   return app;
 }
 
-// Cloudflare Workers compatibility export
-export default {
-  async fetch(req: Request): Promise<Response> {
-    const url = new URL(req.url);
-
-    if (url.pathname.startsWith("/api/solana-rpc")) {
-      return await handleSolanaRpc(req as any);
-    }
-
-    return new Response("Wallet backend active", { status: 200 });
-  },
-};
+// Export handler for Netlify serverless functions
+export const handler = createServer();

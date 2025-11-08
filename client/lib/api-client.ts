@@ -1,4 +1,5 @@
-// API base resolution is via VITE_API_BASE_URL; otherwise same-origin /api
+// API base resolution prefers env (VITE_API_BASE_URL or VITE_API_URL),
+// then defaults to the Cloudflare Worker domain
 
 // Track which API base is currently working
 let workingApiBase: string | null = null;
@@ -12,10 +13,21 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
-  const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBase) return envBase;
+  // Try primary env var
+  const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
+  if (envBasePrimary) {
+    return envBasePrimary;
+  }
+
+  // Try alternative env var
+  const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
+  if (envBaseAlt) {
+    return envBaseAlt;
+  }
+
   if (workingApiBase) return workingApiBase;
-  // Default to same-origin relative API
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
   return "";
 };
 

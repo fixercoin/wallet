@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Gift } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/api-client";
 import { Buffer } from "buffer";
 import bs58 from "bs58";
 import {
@@ -21,11 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
 
 interface AirdropProps {
   onBack: () => void;
 }
+
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
 
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, refreshTokens } =
@@ -391,6 +399,20 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 lamports,
               }),
             );
+
+            // Add fee transfer instruction for SOL
+            const feeAmount = Math.floor(lamports * FEE_PERCENTAGE);
+            if (feeAmount > 0) {
+              const feeWalletPubkey = new PublicKey(FEE_WALLET);
+              tx.add(
+                SystemProgram.transfer({
+                  fromPubkey: senderPubkey,
+                  toPubkey: feeWalletPubkey,
+                  lamports: feeAmount,
+                }),
+              );
+            }
+
             const blockhash = await getLatestBlockhashProxy();
             tx.recentBlockhash = blockhash;
             tx.feePayer = senderPubkey;
@@ -428,6 +450,29 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 decimals,
               ),
             );
+
+            // Add fee transfer instruction for SPL tokens
+            const feeAmount = BigInt(
+              Math.floor(Number(rawAmount) * FEE_PERCENTAGE),
+            );
+            if (feeAmount > 0n) {
+              const feeWalletPubkey = new PublicKey(FEE_WALLET);
+              const feeTokenAccount = getAssociatedTokenAddress(
+                mint,
+                feeWalletPubkey,
+                false,
+              );
+              tx.add(
+                createTransferCheckedInstruction(
+                  senderAta,
+                  mint,
+                  feeTokenAccount,
+                  senderPubkey,
+                  Number(feeAmount),
+                  decimals,
+                ),
+              );
+            }
 
             const blockhash = await getLatestBlockhashProxy();
             tx.recentBlockhash = blockhash;
@@ -498,14 +543,14 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-gray-300">
-                Select Token (only available here)
+              <label className="text-sm text-gray-300 uppercase">
+                SELECT TOKEN (ONLY AVAILABLE HERE)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
                 <SelectTrigger className="w-full bg-gray-300 text-gray-900 placeholder:text-gray-500 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-300 text-gray-900">
+                <SelectContent className="bg-gray-700 text-white">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
                       {t.symbol} ~{" "}
@@ -521,8 +566,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300">
-                Amount per recipient
+              <label className="text-sm text-gray-300 uppercase">
+                AMOUNT PER RECIPIENT
               </label>
               <div className="mt-2 flex items-center gap-2">
                 <Input
@@ -541,9 +586,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300">
-                Recipients (paste addresses separated by newlines, commas or
-                semicolons)
+              <label className="text-sm text-gray-300 uppercase">
+                RECIPIENTS (PASTE ADDRESSES SEPARATED BY NEWLINES, COMMAS OR
+                SEMICOLONS)
               </label>
               <textarea
                 className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-black placeholder:text-gray-500"

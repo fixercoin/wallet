@@ -380,12 +380,16 @@ async function handleDexPrice(reqUrl) {
     // Try Birdeye first (primary source - most accurate)
     try {
       const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(token)}`;
-      const birdeyeRes = await timeoutFetch(birdeyeUrl, {
-        headers: {
-          Accept: "application/json",
-          "x-chain": "solana",
+      const birdeyeRes = await timeoutFetch(
+        birdeyeUrl,
+        {
+          headers: {
+            Accept: "application/json",
+            "x-chain": "solana",
+          },
         },
-      }, 8000);
+        8000,
+      );
 
       if (birdeyeRes.ok) {
         const birdeyeData = await birdeyeRes.json();
@@ -395,7 +399,12 @@ async function handleDexPrice(reqUrl) {
           if (isFinite(price) && price > 0) {
             return new Response(
               JSON.stringify({ token, priceUsd: price, source }),
-              { headers: { "content-type": "application/json", ...corsHeaders() } },
+              {
+                headers: {
+                  "content-type": "application/json",
+                  ...corsHeaders(),
+                },
+              },
             );
           }
         }
@@ -406,7 +415,9 @@ async function handleDexPrice(reqUrl) {
 
     // Fall back to DexScreener
     try {
-      const dexData = await tryDexscreener(`/tokens/${encodeURIComponent(token)}`);
+      const dexData = await tryDexscreener(
+        `/tokens/${encodeURIComponent(token)}`,
+      );
       const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
       if (dexPrice) {
         price = Number(dexPrice);
@@ -414,7 +425,9 @@ async function handleDexPrice(reqUrl) {
         if (isFinite(price) && price > 0) {
           return new Response(
             JSON.stringify({ token, priceUsd: price, source }),
-            { headers: { "content-type": "application/json", ...corsHeaders() } },
+            {
+              headers: { "content-type": "application/json", ...corsHeaders() },
+            },
           );
         }
       }
@@ -438,7 +451,12 @@ async function handleDexPrice(reqUrl) {
           if (isFinite(price) && price > 0) {
             return new Response(
               JSON.stringify({ token, priceUsd: price, source }),
-              { headers: { "content-type": "application/json", ...corsHeaders() } },
+              {
+                headers: {
+                  "content-type": "application/json",
+                  ...corsHeaders(),
+                },
+              },
             );
           }
         }
@@ -550,7 +568,10 @@ async function handleSolanaSend(req, env) {
     jsonrpc: "2.0",
     id: 1,
     method: "sendTransaction",
-    params: [signedBase64, { skipPreflight: false, preflightCommitment: "processed" }],
+    params: [
+      signedBase64,
+      { skipPreflight: false, preflightCommitment: "processed" },
+    ],
   };
 
   const candidates = [];
@@ -595,9 +616,7 @@ async function handleSolanaSend(req, env) {
           },
         );
       } else if (data.error) {
-        lastError = new Error(
-          data.error.message || JSON.stringify(data.error),
-        );
+        lastError = new Error(data.error.message || JSON.stringify(data.error));
         continue;
       }
     } catch (e) {

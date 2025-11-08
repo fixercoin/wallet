@@ -232,12 +232,16 @@ async function handlePrice(url: URL): Promise<Response> {
       const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(
         mint,
       )}`;
-      const birdeyeRes = await timeoutFetch(birdeyeUrl, {
-        method: "GET",
-        headers: browserHeaders({
-          "x-chain": "solana",
-        }),
-      }, 8000);
+      const birdeyeRes = await timeoutFetch(
+        birdeyeUrl,
+        {
+          method: "GET",
+          headers: browserHeaders({
+            "x-chain": "solana",
+          }),
+        },
+        8000,
+      );
 
       if (birdeyeRes.ok) {
         const birdeyeData = await birdeyeRes.json();
@@ -351,9 +355,7 @@ async function handleSolanaSend(request: Request): Promise<Response> {
       ],
     };
 
-    const endpoints = [
-      ...FALLBACK_RPC_ENDPOINTS,
-    ];
+    const endpoints = [...FALLBACK_RPC_ENDPOINTS];
 
     for (const endpoint of endpoints) {
       try {

@@ -226,7 +226,11 @@ class JupiterV6API {
 
             const txt = await r.text();
             if (!r.ok) {
-              if (txt.includes("1016") || txt.includes("STALE") || txt.includes("simulation")) {
+              if (
+                txt.includes("1016") ||
+                txt.includes("STALE") ||
+                txt.includes("simulation")
+              ) {
                 throw new Error("Quote expired - please refresh and try again");
               }
               continue; // try next endpoint

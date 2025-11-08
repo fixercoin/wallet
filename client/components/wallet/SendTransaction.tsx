@@ -1065,14 +1065,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                 </>
               ) : (
                 <>
-                  <Alert className="bg-orange-500/20 border-orange-400/30 text-orange-200">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Please review the transaction details carefully. This
-                      action cannot be undone.
-                    </AlertDescription>
-                  </Alert>
-
                   <div className="space-y-4">
                     <div className="space-y-3">
                       <div className="flex justify-between">

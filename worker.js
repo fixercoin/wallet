@@ -659,6 +659,8 @@ export default {
       if (pathname === "api/wallet/balance" || pathname === "api/balance")
         return handleWalletBalance(url, env);
 
+      if (pathname === "api/sol/price") return handleSolPrice(env);
+
       if (pathname === "api/dexscreener/tokens") return handleDexTokens(url);
       if (pathname === "api/dexscreener/search") return handleDexSearch(url);
       if (pathname === "api/dexscreener/price") return handleDexPrice(url);

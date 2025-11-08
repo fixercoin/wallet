@@ -846,6 +846,7 @@ async function handleJupiterSwap(req, env) {
       headers: { "content-type": ct, ...corsHeaders() },
     });
   } catch (e) {
+    console.error("Jupiter swap error:", e.message);
     return new Response(
       JSON.stringify({
         error: "Failed to execute Jupiter swap",

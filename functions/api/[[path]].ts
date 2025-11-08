@@ -959,7 +959,9 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
     const q = url.searchParams.get("q");
     if (!q || typeof q !== "string") {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid 'q' parameter for search query." }),
+        JSON.stringify({
+          error: "Missing or invalid 'q' parameter for search query.",
+        }),
         { status: 400, headers: CORS_HEADERS },
       );
     }
@@ -984,11 +986,16 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
 
         const data = await safeJson(resp);
         const solanaPairs = (data?.pairs || [])
-          .filter((pair: any) => (pair.chainId || "").toLowerCase() === "solana")
+          .filter(
+            (pair: any) => (pair.chainId || "").toLowerCase() === "solana",
+          )
           .slice(0, 20);
 
         return new Response(
-          JSON.stringify({ schemaVersion: data?.schemaVersion || "1.0.0", pairs: solanaPairs }),
+          JSON.stringify({
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs: solanaPairs,
+          }),
           { headers: CORS_HEADERS },
         );
       } catch (e: any) {

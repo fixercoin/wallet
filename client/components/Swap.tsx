@@ -139,12 +139,31 @@ export default function Swap() {
         return null;
       }
 
+      const oldQuote = quote.quoteResponse;
+
+      // Refresh the quote immediately before swap to prevent STALE_QUOTE errors
+      setStatus("Refreshing quote…");
+      const freshQuote = await jupiterAPI.getQuote(
+        oldQuote.inputMint,
+        oldQuote.outputMint,
+        parseInt(oldQuote.inAmount),
+        oldQuote.slippageBps || 5000,
+      );
+
+      if (!freshQuote) {
+        setStatus(
+          "Failed to refresh quote. Using cached quote, but swap may fail.",
+        );
+        console.warn("Quote refresh failed, using stale quote");
+      }
+
       const swapRequest = {
-        quoteResponse: quote.quoteResponse,
+        quoteResponse: freshQuote || oldQuote,
         userPublicKey: wallet.publicKey,
         wrapAndUnwrapSol: true,
       };
 
+      setStatus("Executing swap…");
       const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
 
       if (!swapResult || !swapResult.swapTransaction) {

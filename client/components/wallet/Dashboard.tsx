@@ -746,7 +746,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2" />
+            <div className="flex items-center gap-2">
+              <TokenSearch className="w-[220px] sm:w-[260px]" />
+            </div>
 
             <div className="flex items-center gap-2">
               {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
@@ -899,10 +901,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               : "Connect wallet to see balance"}
           </div>
 
-          {/* Token search inside balance card */}
-          <div className="mt-4">
-            <TokenSearch />
-          </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 mt-6">

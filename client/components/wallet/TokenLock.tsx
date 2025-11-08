@@ -197,24 +197,9 @@ const ixTransferChecked = (
   });
 };
 
+// Use the new RPC utility instead of direct fetch
 const rpcCall = async (method: string, params: any[]): Promise<any> => {
-  const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: Date.now(),
-      method,
-      params,
-    }),
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => "");
-    throw new Error(`RPC ${resp.status}: ${text || resp.statusText}`);
-  }
-  const json = await resp.json();
-  if (json?.error) throw new Error(json.error.message || "RPC error");
-  return json.result;
+  return rpcCallUtil(method, params);
 };
 
 const getLatestBlockhashProxy = async (): Promise<string> => {

@@ -444,8 +444,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     });
   };
 
-  const handleSendSOL = async () => {
-    if (!wallet) return;
+  const handleSendSOL = async (): Promise<boolean> => {
+    if (!wallet) return false;
 
     setIsLoading(true);
     setError(null);
@@ -577,6 +577,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         title: "Transaction Sent",
         description: `Successfully sent ${amount} SOL`,
       });
+      return true;
     } catch (error) {
       console.error("Transaction error:", error);
       let message =
@@ -617,6 +618,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         description: message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }

@@ -1526,6 +1526,10 @@ async function handler(request: Request): Promise<Response> {
       );
     }
 
+    if (pathname.startsWith("/api/dexscreener/tokens")) {
+      return await handleDexscreenerTokens(url);
+    }
+
     if (pathname.startsWith("/api/dexscreener/search")) {
       return await handleDexscreenerSearch(url);
     }

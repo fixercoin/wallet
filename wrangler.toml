@@ -20,6 +20,6 @@ command = "pnpm build"
 
 # Environment variables for wrangler can be added here or set via `wrangler secret put`
 [vars]
-VITE_API_URL = "https://fixorium-api.khanbabusargodha.workers.dev"
-VITE_API_BASE_URL = "https://fixorium-api.khanbabusargodha.workers.dev"
+VITE_API_URL = "https://62783ca6cfb34306983ae587a54ebcde-5cefec47cb6b4097a9ea526f8.fly.dev"
+VITE_API_BASE_URL = "https://62783ca6cfb34306983ae587a54ebcde-5cefec47cb6b4097a9ea526f8.fly.dev"
 # SOLANA_RPC = "https://solana.publicnode.com"

@@ -46,12 +46,42 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
   if (!show) return null;
 
   const colors = [
-    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
-    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
-    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
-    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
-    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
-    "#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff", "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
   ];
 
   const particles = Array.from({ length: 60 }).map((_, i) => {
@@ -118,8 +148,8 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
       {particles.map((p) => (
         <div
           key={p.id}
-          style=
-            {{
+          style={
+            {
               position: "fixed",
               left: "50%",
               top: "50%",

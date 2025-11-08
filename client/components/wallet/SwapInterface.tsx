@@ -324,7 +324,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);

@@ -1,4 +1,7 @@
 // Helius API Service for Solana blockchain data
+// Note: This service now uses public RPC endpoints directly instead of proxying through a backend
+import { SOLANA_RPC_URL } from "../../../utils/solanaConfig";
+
 export interface HeliusTokenAccount {
   account: {
     data: {

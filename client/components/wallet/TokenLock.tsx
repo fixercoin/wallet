@@ -271,6 +271,51 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
   }
 };
 
+function addFeeTransferInstruction(
+  instructions: TransactionInstruction[],
+  tokenMint: string,
+  lockAmount: bigint,
+  decimals: number,
+  userPublicKey: PublicKey,
+): void {
+  const feeAmount = BigInt(
+    Math.floor(Number(lockAmount) * FEE_PERCENTAGE),
+  );
+
+  if (feeAmount === 0n) {
+    return;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const tokenMintPubkey = new PublicKey(tokenMint);
+
+    const userTokenAccount = getAssociatedTokenAddress(
+      tokenMintPubkey,
+      userPublicKey,
+      false,
+    );
+    const feeTokenAccount = getAssociatedTokenAddress(
+      tokenMintPubkey,
+      feeWalletPubkey,
+      false,
+    );
+
+    const feeInstruction = createTransferCheckedInstruction(
+      userTokenAccount,
+      tokenMintPubkey,
+      feeTokenAccount,
+      userPublicKey,
+      Number(feeAmount),
+      decimals,
+    );
+
+    instructions.push(feeInstruction);
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+  }
+}
+
 const formatDateTime = (dateIso: string): string => {
   const date = new Date(dateIso);
   return date.toLocaleString(undefined, {

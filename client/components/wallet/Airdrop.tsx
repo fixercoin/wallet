@@ -566,8 +566,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300">
-                Amount per recipient
+              <label className="text-sm text-gray-300 uppercase">
+                AMOUNT PER RECIPIENT
               </label>
               <div className="mt-2 flex items-center gap-2">
                 <Input

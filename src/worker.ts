@@ -719,7 +719,7 @@ export default {
         try {
           if (env && typeof env === "object" && "ASSETS" in env) {
             const indexResponse = await (env as any).ASSETS.fetch(
-              new URL("/index.html", request.url)
+              new URL("/index.html", request.url),
             );
             if (indexResponse.status === 200) {
               return new Response(indexResponse.body, {

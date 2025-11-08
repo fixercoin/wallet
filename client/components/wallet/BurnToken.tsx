@@ -587,7 +587,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               <div className="text-xs uppercase tracking-wide text-orange-500">
                 Burn SPL Tokens
               </div>
-             
+             <h1></h1>
             </div>
           </div>
 

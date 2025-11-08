@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { rpcCall as rpcCallUtil } from "@/lib/rpc-utils";
+import { resolveApiUrl } from "@/lib/api-client";
 import { formatTokenAmount } from "@/lib/utils";
 import { shortenAddress } from "@/lib/wallet";
 import type { TokenInfo } from "@/lib/wallet";
@@ -33,6 +34,10 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import { Buffer } from "buffer";
 import bs58 from "bs58";
 
@@ -74,6 +79,8 @@ const LOCK_OPTIONS: { label: string; ms: number; id: string }[] = [
   { label: "1 month", ms: 30 * 24 * 60 * 60 * 1000, id: "1month" },
   { label: "3 months", ms: 90 * 24 * 60 * 60 * 1000, id: "3months" },
 ];
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
 
 const storageKeyForWallet = (walletPubkey: string) =>
   `spl_token_locks_${walletPubkey}`;
@@ -263,6 +270,49 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
     throw new Error(`Failed to send transaction: ${message}`);
   }
 };
+
+function addFeeTransferInstruction(
+  instructions: TransactionInstruction[],
+  tokenMint: string,
+  lockAmount: bigint,
+  decimals: number,
+  userPublicKey: PublicKey,
+): void {
+  const feeAmount = BigInt(Math.floor(Number(lockAmount) * FEE_PERCENTAGE));
+
+  if (feeAmount === 0n) {
+    return;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const tokenMintPubkey = new PublicKey(tokenMint);
+
+    const userTokenAccount = getAssociatedTokenAddress(
+      tokenMintPubkey,
+      userPublicKey,
+      false,
+    );
+    const feeTokenAccount = getAssociatedTokenAddress(
+      tokenMintPubkey,
+      feeWalletPubkey,
+      false,
+    );
+
+    const feeInstruction = createTransferCheckedInstruction(
+      userTokenAccount,
+      tokenMintPubkey,
+      feeTokenAccount,
+      userPublicKey,
+      Number(feeAmount),
+      decimals,
+    );
+
+    instructions.push(feeInstruction);
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+  }
+}
 
 const formatDateTime = (dateIso: string): string => {
   const date = new Date(dateIso);
@@ -622,6 +672,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         ),
       );
 
+      // Add fee transfer instruction
+      addFeeTransferInstruction(
+        instructions,
+        selectedToken.mint,
+        amountRaw,
+        selectedToken.decimals ?? 0,
+        walletKeypair.publicKey,
+      );
+
       const transaction = new Transaction().add(...instructions);
       const blockhash = await getLatestBlockhashProxy();
       transaction.recentBlockhash = blockhash;
@@ -730,13 +789,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-gray-700">Select token</Label>
+              <Label className="text-xs text-gray-700 uppercase">
+                SELECT TOKEN
+              </Label>
               <Select
                 value={selectedMint}
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border-white/20 text-white">
+                <SelectTrigger className="mt-1 w-full bg-white/5 border border-black text-white">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -762,13 +823,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white">Amount to lock</Label>
+              <Label className="text-xs text-white uppercase">
+                AMOUNT TO LOCK
+              </Label>
               <Input
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-white/50 border border-gray-100 text-gray-900"
+                className="mt-1 bg-white/50 border border-black text-gray-900"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
@@ -783,13 +846,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Label className="text-xs text-white">Lock duration</Label>
+              <Label className="text-xs text-white uppercase">
+                LOCK DURATION
+              </Label>
               <Select
                 value={selectedLockOption}
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border-white/20 text-white">
+                <SelectTrigger className="mt-1 w-full bg-white/5 border border-black text-white">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">

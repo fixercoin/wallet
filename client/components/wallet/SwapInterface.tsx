@@ -56,41 +56,29 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
     "#8338ec",
     "#3a86ff",
     "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
   ];
 
-  const particles = Array.from({ length: 60 }).map((_, i) => {
-    const angle = (i / 60) * Math.PI * 2;
-    const distance = 200 + Math.random() * 150;
+  const particles = Array.from({ length: 150 }).map((_, i) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 100 + Math.random() * 400;
     const tx = Math.cos(angle) * distance;
     const ty = Math.sin(angle) * distance;
-    const size = 8 + Math.random() * 16;
-    const delay = Math.random() * 0.1;
+    const width = 4 + Math.random() * 6;
+    const height = 6 + Math.random() * 10;
+    const delay = Math.random() * 0.2;
+    const rotation = Math.random() * 360;
+    const spinSpeed = 1 + Math.random() * 3;
 
     return {
       tx,
       ty,
       id: i,
       color: colors[i % colors.length],
-      size,
+      width,
+      height,
       delay,
+      rotation,
+      spinSpeed,
     };
   });
 
@@ -100,34 +88,23 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
         @keyframes burst-particle {
           0% {
             opacity: 1;
-            transform: translate(0, 0) scale(1) rotate(0deg);
+            transform: translate(0, 0) scale(1) rotate(var(--rotation));
           }
           50% {
             opacity: 1;
           }
           100% {
             opacity: 0;
-            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+            transform: translate(var(--tx), var(--ty)) scale(0) rotate(calc(var(--rotation) + 720deg));
           }
         }
-        @keyframes bloom-pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7), inset 0 0 20px rgba(255, 255, 255, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 30px 15px rgba(255, 255, 255, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.5);
-          }
-          100% {
-            box-shadow: 0 0 60px 30px rgba(255, 255, 255, 0), inset 0 0 20px rgba(255, 255, 255, 0);
-          }
-        }
-        @keyframes success-pop {
+        @keyframes done-pulse {
           0% {
             transform: scale(0);
             opacity: 0;
           }
-          60% {
-            transform: scale(1.2);
+          40% {
+            transform: scale(1.1);
             opacity: 1;
           }
           100% {
@@ -145,17 +122,17 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
               position: "fixed",
               left: "50%",
               top: "50%",
-              width: `${p.size}px`,
-              height: `${p.size}px`,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
               backgroundColor: p.color,
-              borderRadius: "50%",
-              marginLeft: `-${p.size / 2}px`,
-              marginTop: `-${p.size / 2}px`,
+              borderRadius: "2px",
+              marginLeft: `-${p.width / 2}px`,
+              marginTop: `-${p.height / 2}px`,
               "--tx": `${p.tx}px`,
               "--ty": `${p.ty}px`,
-              animation: `burst-particle 1.6s ease-out forwards`,
+              "--rotation": `${p.rotation}deg`,
+              animation: `burst-particle 2s ease-out forwards`,
               animationDelay: `${p.delay}s`,
-              boxShadow: `0 0 ${p.size}px ${p.color}80, 0 0 ${p.size * 2}px ${p.color}40`,
             } as any
           }
         />
@@ -166,13 +143,16 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
           position: "fixed",
           left: "50%",
           top: "50%",
-          marginLeft: "-50px",
-          marginTop: "-50px",
-          animation: "bloom-pulse 1.6s ease-out forwards",
+          transform: "translate(-50%, -50%)",
+          animation: "done-pulse 0.8s ease-out forwards",
+          zIndex: 60,
         }}
       >
-        <div className="w-24 h-24 bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
-          <Check className="w-12 h-12 text-white" strokeWidth={3} />
+        <div className="text-5xl font-bold text-white drop-shadow-lg" style={{
+          textShadow: "0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.4)",
+          letterSpacing: "0.1em",
+        }}>
+          DONE
         </div>
       </div>
     </div>

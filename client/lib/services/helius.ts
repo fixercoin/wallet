@@ -98,7 +98,6 @@ class HeliusAPI {
     // Use public RPC endpoints directly - no backend proxy needed
     this.endpoints = [
       SOLANA_RPC_URL,
-      "https://api.rpcpool.com/",
       "https://solana-rpc.publicnode.com/",
       "https://solana.publicnode.com",
       "https://spl.solana.com",

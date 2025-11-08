@@ -9,7 +9,8 @@
     "dev:backend": "tsx server/node-build.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy:cloudflare": "wrangler deploy --env production"
+    "deploy:cloudflare": "wrangler deploy --env production",
+    "deploy:pages": "wrangler pages deploy dist"
   },
   "dependencies": {
     "@noble/hashes": "^1.4.0",

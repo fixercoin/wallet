@@ -681,14 +681,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-gray-300 border border-gray-300 text-gray-900 placeholder:text-gray-500"
+                    className="h-11 bg-transparent border border-black text-black placeholder:text-gray-500"
                   />
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={handleUseMax}
                     disabled={isLoading || !selectedToken}
-                    className="h-11 rounded-full px-4 text-sm bg-gray-300 border border-gray-300 text-gray-900 hover:bg-gray-400"
+                    className="h-11 rounded-full px-4 text-sm bg-green-500 border border-green-500 text-white hover:bg-green-600 hover:border-green-600"
                   >
                     Max
                   </Button>

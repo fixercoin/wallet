@@ -3,7 +3,9 @@ export const config = {
 };
 
 const RPC_ENDPOINTS = [
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
+  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151",
+  "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
 ];
 

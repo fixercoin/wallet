@@ -372,15 +372,106 @@ async function handleDexPrice(reqUrl) {
         headers: { "content-type": "application/json", ...corsHeaders() },
       },
     );
+
+  let price = null;
+  let source = null;
+
   try {
-    const data = await tryDexscreener(`/tokens/${encodeURIComponent(token)}`);
-    const price = data?.pairs?.[0]?.priceUsd ?? null;
-    if (price)
-      return new Response(JSON.stringify({ token, priceUsd: Number(price) }), {
-        headers: { "content-type": "application/json", ...corsHeaders() },
-      });
+    // Try Birdeye first (primary source - most accurate)
+    try {
+      const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(token)}`;
+      const birdeyeRes = await timeoutFetch(
+        birdeyeUrl,
+        {
+          headers: {
+            Accept: "application/json",
+            "x-chain": "solana",
+          },
+        },
+        8000,
+      );
+
+      if (birdeyeRes.ok) {
+        const birdeyeData = await birdeyeRes.json();
+        if (birdeyeData?.data?.value) {
+          price = Number(birdeyeData.data.value);
+          source = "birdeye";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token, priceUsd: price, source }),
+              {
+                headers: {
+                  "content-type": "application/json",
+                  ...corsHeaders(),
+                },
+              },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to fallback
+    }
+
+    // Fall back to DexScreener
+    try {
+      const dexData = await tryDexscreener(
+        `/tokens/${encodeURIComponent(token)}`,
+      );
+      const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
+      if (dexPrice) {
+        price = Number(dexPrice);
+        source = "dexscreener";
+        if (isFinite(price) && price > 0) {
+          return new Response(
+            JSON.stringify({ token, priceUsd: price, source }),
+            {
+              headers: { "content-type": "application/json", ...corsHeaders() },
+            },
+          );
+        }
+      }
+    } catch (e) {
+      // Continue to Jupiter fallback
+    }
+
+    // Fall back to Jupiter
+    try {
+      const jupRes = await timeoutFetch(
+        `https://api.jup.ag/price?ids=${encodeURIComponent(token)}`,
+        { headers: { Accept: "application/json" } },
+        8000,
+      );
+      if (jupRes.ok) {
+        const jupData = await jupRes.json();
+        const jupPrice = jupData?.data?.[token]?.price ?? null;
+        if (jupPrice) {
+          price = Number(jupPrice);
+          source = "jupiter";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token, priceUsd: price, source }),
+              {
+                headers: {
+                  "content-type": "application/json",
+                  ...corsHeaders(),
+                },
+              },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // All sources failed
+    }
+
+    // If we reach here, no price was found
     return new Response(
-      JSON.stringify({ token, priceUsd: null, message: "Price not available" }),
+      JSON.stringify({
+        token,
+        priceUsd: null,
+        message: "Price not available from any source",
+      }),
       {
         status: 404,
         headers: { "content-type": "application/json", ...corsHeaders() },
@@ -389,7 +480,7 @@ async function handleDexPrice(reqUrl) {
   } catch (e) {
     return new Response(
       JSON.stringify({
-        error: "DexScreener fetch failed",
+        error: "Price fetch failed",
         details: e.message || String(e),
       }),
       {
@@ -449,6 +540,101 @@ async function handleSolanaRpc(req, env) {
     status: 502,
     headers: { "content-type": "application/json", ...corsHeaders() },
   });
+}
+
+async function handleSolanaSend(req, env) {
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { "content-type": "application/json", ...corsHeaders() },
+    });
+  }
+
+  const { signedBase64 } = body || {};
+  if (!signedBase64 || typeof signedBase64 !== "string") {
+    return new Response(
+      JSON.stringify({ error: "Missing required field: signedBase64" }),
+      {
+        status: 400,
+        headers: { "content-type": "application/json", ...corsHeaders() },
+      },
+    );
+  }
+
+  const rpcBody = {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "sendTransaction",
+    params: [
+      signedBase64,
+      { skipPreflight: false, preflightCommitment: "processed" },
+    ],
+  };
+
+  const candidates = [];
+  if (env && env.SOLANA_RPC_URL) candidates.push(env.SOLANA_RPC_URL);
+  if (env && env.ALCHEMY_RPC_URL) candidates.push(env.ALCHEMY_RPC_URL);
+  if (env && env.HELIUS_RPC_URL) candidates.push(env.HELIUS_RPC_URL);
+  if (env && env.MORALIS_RPC_URL) candidates.push(env.MORALIS_RPC_URL);
+  if (env && env.HELIUS_API_KEY)
+    candidates.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  candidates.push(...DEFAULT_RPC_FALLBACKS);
+
+  let lastError = null;
+  for (const endpoint of candidates) {
+    try {
+      const r = await timeoutFetch(
+        endpoint,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rpcBody),
+        },
+        10000,
+      );
+      const text = await r.text();
+      const data = text ? JSON.parse(text) : {};
+
+      if (data.result) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            result: data.result,
+            signature: data.result,
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json",
+              ...corsHeaders(),
+            },
+          },
+        );
+      } else if (data.error) {
+        lastError = new Error(data.error.message || JSON.stringify(data.error));
+        continue;
+      }
+    } catch (e) {
+      lastError = e;
+      continue;
+    }
+  }
+
+  return new Response(
+    JSON.stringify({
+      error: "Failed to send transaction",
+      details: lastError ? lastError.message : "All RPC endpoints failed",
+    }),
+    {
+      status: 502,
+      headers: { "content-type": "application/json", ...corsHeaders() },
+    },
+  );
 }
 
 async function handleJupiterQuote(reqUrl, env) {
@@ -597,6 +783,8 @@ export default {
         return handleJupiterPrice(url, env);
       if (pathname === "api/jupiter/swap" && request.method === "POST")
         return handleJupiterSwap(request, env);
+      if (pathname === "api/solana-send" && request.method === "POST")
+        return handleSolanaSend(request, env);
       if (pathname === "api/solana-rpc" && request.method === "POST")
         return handleSolanaRpc(request, env);
 

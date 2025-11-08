@@ -211,7 +211,11 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
 
 // Generic price endpoint using DexScreener
 async function handlePrice(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
+  const mint =
+    url.searchParams.get("mint") ||
+    url.searchParams.get("tokenAddress") ||
+    url.searchParams.get("token");
+
   if (!mint) {
     return new Response(JSON.stringify({ error: "mint required" }), {
       status: 400,
@@ -219,16 +223,182 @@ async function handlePrice(url: URL): Promise<Response> {
     });
   }
 
+  let price = null;
+  let source = null;
+
   try {
-    const r = await timeoutFetch(`${DEXSCREENER_BASE}/tokens/${mint}`, {
-      method: "GET",
-      headers: browserHeaders(),
-    });
-    const j = await safeJson(r);
-    return new Response(JSON.stringify({ data: j }), { headers: CORS_HEADERS });
+    // Try Birdeye first (primary source - most accurate)
+    try {
+      const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(
+        mint,
+      )}`;
+      const birdeyeRes = await timeoutFetch(
+        birdeyeUrl,
+        {
+          method: "GET",
+          headers: browserHeaders({
+            "x-chain": "solana",
+          }),
+        },
+        8000,
+      );
+
+      if (birdeyeRes.ok) {
+        const birdeyeData = await birdeyeRes.json();
+        if (birdeyeData?.data?.value) {
+          price = Number(birdeyeData.data.value);
+          source = "birdeye";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token: mint, priceUsd: price, source }),
+              { headers: CORS_HEADERS },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to fallback
+    }
+
+    // Fall back to DexScreener
+    try {
+      const dexRes = await timeoutFetch(
+        `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`,
+        {
+          method: "GET",
+          headers: browserHeaders(),
+        },
+        8000,
+      );
+      if (dexRes.ok) {
+        const dexData = await dexRes.json();
+        const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
+        if (dexPrice) {
+          price = Number(dexPrice);
+          source = "dexscreener";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token: mint, priceUsd: price, source }),
+              { headers: CORS_HEADERS },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to Jupiter fallback
+    }
+
+    // Fall back to Jupiter
+    try {
+      const jupRes = await timeoutFetch(
+        `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`,
+        { method: "GET", headers: browserHeaders() },
+        8000,
+      );
+      if (jupRes.ok) {
+        const jupData = await jupRes.json();
+        const jupPrice = jupData?.data?.[mint]?.price ?? null;
+        if (jupPrice) {
+          price = Number(jupPrice);
+          source = "jupiter";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token: mint, priceUsd: price, source }),
+              { headers: CORS_HEADERS },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // All sources failed
+    }
+
+    // If we reach here, no price was found
+    return new Response(
+      JSON.stringify({
+        token: mint,
+        priceUsd: null,
+        message: "Price not available from any source",
+      }),
+      {
+        status: 404,
+        headers: CORS_HEADERS,
+      },
+    );
   } catch (e: any) {
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 502,
+      headers: CORS_HEADERS,
+    });
+  }
+}
+
+// Solana Send Transaction handler
+async function handleSolanaSend(request: Request): Promise<Response> {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    if (!body || !body.signedBase64 || typeof body.signedBase64 !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Missing required field: signedBase64" }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const rpcBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "sendTransaction",
+      params: [
+        body.signedBase64,
+        { skipPreflight: false, preflightCommitment: "processed" },
+      ],
+    };
+
+    const endpoints = [...FALLBACK_RPC_ENDPOINTS];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await timeoutFetch(endpoint, {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(rpcBody),
+        });
+
+        const text = await response.text().catch(() => "");
+        if (!response.ok) {
+          continue;
+        }
+
+        const data = text ? JSON.parse(text) : {};
+
+        if (data.result) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              result: data.result,
+              signature: data.result,
+            }),
+            { status: 200, headers: CORS_HEADERS },
+          );
+        } else if (data.error) {
+          continue;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: "Failed to send transaction",
+        details: "All RPC endpoints failed",
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 500,
       headers: CORS_HEADERS,
     });
   }
@@ -646,6 +816,13 @@ export default {
         return await handlePrice(url);
       }
 
+      if (
+        pathname.startsWith("/api/dexscreener/price") ||
+        pathname === "/dexscreener/price"
+      ) {
+        return await handlePrice(url);
+      }
+
       // Jupiter routes
       if (pathname.startsWith("/api/jupiter/quote")) {
         return await handleJupiterQuote(url);
@@ -653,6 +830,10 @@ export default {
 
       if (pathname.startsWith("/api/jupiter/swap")) {
         return await handleJupiterSwap(request);
+      }
+
+      if (pathname.startsWith("/api/solana-send")) {
+        return await handleSolanaSend(request);
       }
 
       if (pathname.startsWith("/api/jupiter/price")) {

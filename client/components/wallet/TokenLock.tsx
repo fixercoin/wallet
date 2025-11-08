@@ -234,54 +234,32 @@ const confirmSignatureProxy = async (signature: string): Promise<void> => {
 
 const postTransaction = async (serialized: Uint8Array): Promise<string> => {
   const b64 = base64FromBytes(serialized);
-  const body = {
-    method: "sendTransaction",
-    params: [b64, { skipPreflight: false, preflightCommitment: "confirmed" }],
-    id: Date.now(),
-  };
-  const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => "");
-    throw new Error(`RPC ${resp.status}: ${text || resp.statusText}`);
-  }
-  const json = await resp.json().catch(() => null);
-  if (json?.error) {
-    const message = json.error.message || "RPC error";
-    if (/invalid base58/i.test(message)) {
-      const base58 = bs58.encode(serialized);
-      const fallbackPayload = {
-        jsonrpc: "2.0",
-        id: Date.now(),
-        method: "sendTransaction",
-        params: [
+  try {
+    // Use the new RPC utility to send transaction
+    const result = await rpcCall("sendTransaction", [
+      b64,
+      { skipPreflight: false, preflightCommitment: "confirmed" },
+    ]);
+    return result as string;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // Try base58 encoding as fallback if base64 failed
+    if (/invalid base58/i.test(message) || /invalid/i.test(message)) {
+      try {
+        const base58 = bs58.encode(serialized);
+        const result = await rpcCall("sendTransaction", [
           base58,
           { skipPreflight: false, preflightCommitment: "confirmed" },
-        ],
-      };
-      const fallback = await fetch(resolveApiUrl("/api/solana-rpc"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fallbackPayload),
-      });
-      if (!fallback.ok) {
-        const fallbackText = await fallback.text().catch(() => "");
-        throw new Error(
-          `RPC ${fallback.status}: ${fallbackText || fallback.statusText}`,
-        );
+        ]);
+        return result as string;
+      } catch (fallbackError) {
+        const fallbackMsg =
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        throw new Error(`Failed to send transaction: ${fallbackMsg}`);
       }
-      const fallbackJson = await fallback.json().catch(() => null);
-      if (fallbackJson?.error) {
-        throw new Error(fallbackJson.error.message || "RPC error");
-      }
-      return fallbackJson?.result || fallbackJson;
     }
-    throw new Error(message);
+    throw new Error(`Failed to send transaction: ${message}`);
   }
-  return json?.result || json;
 };
 
 const formatDateTime = (dateIso: string): string => {

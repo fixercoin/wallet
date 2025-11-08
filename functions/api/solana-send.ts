@@ -51,56 +51,82 @@ export const onRequest: PagesFunction = async ({ request }) => {
       );
     }
 
-    const rpcBody = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "sendRawTransaction",
-      params: [
-        transaction,
-        { skipPreflight: false, preflightCommitment: "confirmed" },
-      ],
-    } as const;
+    const makePayloads = (tx: string) => [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "sendRawTransaction",
+        params: [
+          tx,
+          { skipPreflight: false, preflightCommitment: "confirmed", encoding: "base64" },
+        ],
+      },
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "sendTransaction",
+        params: [
+          tx,
+          { skipPreflight: false, preflightCommitment: "confirmed", encoding: "base64" },
+        ],
+      },
+    ];
+
+    const payloads = makePayloads(transaction);
 
     let lastError = "";
 
     for (const endpoint of RPC_ENDPOINTS) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+      for (const rpcBody of payloads) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rpcBody),
-          signal: controller.signal,
-        });
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rpcBody),
+            signal: controller.signal,
+          });
 
-        clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-        const data = await response.json().catch(() => ({}));
+          const text = await response.text();
+          let data: any = {};
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = { raw: text };
+          }
 
-        if (data && data.result) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              signature: data.result,
-              timestamp: Date.now(),
-            }),
-            { status: 200, headers: cors() },
-          );
+          if (data && data.result) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                signature: data.result,
+                timestamp: Date.now(),
+              }),
+              { status: 200, headers: cors() },
+            );
+          }
+
+          if (data && data.error) {
+            const msg = String(data.error.message || "RPC error");
+            lastError = msg;
+            if (response.status === 429 || response.status >= 500 || /limit|rate/i.test(msg)) {
+              break; // try next endpoint
+            }
+            continue; // try next payload style
+          }
+
+          lastError = `Unexpected response from ${endpoint}`;
+        } catch (error: any) {
+          lastError =
+            error?.name === "AbortError"
+              ? "timeout"
+              : error?.message || String(error);
+          break; // try next endpoint on network error
         }
-
-        if (data && data.error) {
-          lastError = data.error.message || "RPC error";
-          continue;
-        }
-
-        lastError = `Unexpected response from ${endpoint}`;
-      } catch (error: any) {
-        lastError =
-          error?.name === "AbortError"
-            ? "timeout"
-            : error?.message || String(error);
       }
     }
 

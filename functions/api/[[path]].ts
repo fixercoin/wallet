@@ -974,7 +974,7 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
         const resp = await timeoutFetch(
           `${base}/search/?q=${encodeURIComponent(q)}`,
           { method: "GET", headers: browserHeaders() },
-          15000,
+          25000,
         );
 
         if (!resp.ok) {

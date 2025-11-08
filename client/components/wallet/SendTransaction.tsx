@@ -872,20 +872,21 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     );
   }
 
+  if (step === "sending") {
+    return (
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-pulse text-lg">Processing transaction...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      {/* Decorative curved accent background elements */}
-
-      {/* Form Container - Centered */}
       <div className="flex-1 flex items-center justify-center relative z-20">
         <div className="w-full max-w-md px-4 py-6">
           <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
-                <div className="text-gray-900">Processing transaction...</div>
-              </div>
-            )}
-
             <div className="space-y-6 p-6">
               <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
                 <Button

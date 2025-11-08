@@ -502,9 +502,17 @@ async function handleDexPrice(reqUrl) {
 
     // Fall back to DexScreener
     try {
-      const dexData = await tryDexscreener(
-        `/tokens/${encodeURIComponent(token)}`,
-      );
+      const dexPath = `/tokens/${encodeURIComponent(token)}`;
+      const dexCacheKey = getCacheKey(dexPath);
+
+      let dexData = cacheGet(dexCacheKey);
+      if (!dexData) {
+        dexData = await tryDexscreener(dexPath, 2);
+        if (dexData) {
+          cacheSet(dexCacheKey, dexData, 60000); // Cache for 60 seconds
+        }
+      }
+
       const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
       if (dexPrice) {
         price = Number(dexPrice);
@@ -519,6 +527,7 @@ async function handleDexPrice(reqUrl) {
         }
       }
     } catch (e) {
+      console.error("DexScreener fallback error:", e.message);
       // Continue to Jupiter fallback
     }
 

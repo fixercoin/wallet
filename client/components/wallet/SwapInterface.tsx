@@ -353,6 +353,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, [wallet, userTokens]);
 
+  // Auto-fetch quotes when amount, fromMint, or toMint changes
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (amount && fromMint && toMint && !isLoading) {
+        getQuote().catch((e) => console.error("Auto-fetch quote failed:", e));
+      } else if (!amount) {
+        setQuote(null);
+        setStatus("");
+      }
+    }, 500); // 500ms debounce to avoid too many requests
+
+    return () => clearTimeout(debounceTimer);
+  }, [amount, fromMint, toMint, wallet]);
+
   const humanToRaw = (amountStr, decimals) => {
     const amt = Number(amountStr);
     if (isNaN(amt) || amt <= 0) throw new Error("Invalid amount");
@@ -820,18 +834,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {status}
             </div>
           )}
-
-          <Button
-            onClick={getQuote}
-            disabled={!amount || isLoading}
-            className="w-full bg-gradient-to-r from-[#5a9f6f] to-[#3d7a52] hover:from-[#4a8f5f] hover:to-[#2d6a42] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Get Quote (Optional)"
-            )}
-          </Button>
 
           <Button
             onClick={executeSwap}

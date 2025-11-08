@@ -49,7 +49,9 @@ export default function TokenSearchDetail() {
       const decimals = meta?.decimals ?? 9;
       const symbol = dexToken.baseToken?.symbol || meta?.symbol || "TOKEN";
       const name = dexToken.baseToken?.name || meta?.name || symbol;
-      const priceUsd = dexToken.priceUsd ? parseFloat(dexToken.priceUsd) : undefined;
+      const priceUsd = dexToken.priceUsd
+        ? parseFloat(dexToken.priceUsd)
+        : undefined;
       const logoURI = dexToken.info?.imageUrl;
 
       const token: TokenInfo = {
@@ -101,7 +103,12 @@ export default function TokenSearchDetail() {
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900">
       <div className="w-full max-w-md mx-auto px-4 py-6">
         <div className="flex items-center gap-2 mb-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8 p-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8 p-0"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="text-base font-semibold">Token detail</div>
@@ -113,16 +120,24 @@ export default function TokenSearchDetail() {
               <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                 {img ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img} alt={symbol} className="h-full w-full object-cover" />
+                  <img
+                    src={img}
+                    alt={symbol}
+                    className="h-full w-full object-cover"
+                  />
                 ) : null}
               </div>
               <div className="min-w-0">
-                <div className="text-lg font-semibold text-gray-900">{symbol || name}</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {symbol || name}
+                </div>
                 <div className="text-xs text-gray-700 truncate">{name}</div>
               </div>
               {priceUsd > 0 ? (
                 <div className="ml-auto text-right">
-                  <div className="text-sm font-semibold text-gray-900">${priceUsd.toFixed(6)}</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    ${priceUsd.toFixed(6)}
+                  </div>
                   <div className="text-xs text-gray-600">USD</div>
                 </div>
               ) : null}

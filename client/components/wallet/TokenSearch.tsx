@@ -49,7 +49,9 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({ className }) => {
         }
 
         // Only solana
-        const filtered = list.filter((t) => (t.chainId || "").toLowerCase() === "solana");
+        const filtered = list.filter(
+          (t) => (t.chainId || "").toLowerCase() === "solana",
+        );
 
         if (!cancelled) {
           setResults(filtered);
@@ -104,8 +106,8 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({ className }) => {
           onFocus={() => results.length > 0 && setOpen(true)}
         />
         {loading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />)
-        }
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+        )}
       </div>
 
       {open && results.length > 0 && (
@@ -125,7 +127,11 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({ className }) => {
                 <div className="h-7 w-7 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   {img ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={img} alt={symbol} className="h-full w-full object-cover" />
+                    <img
+                      src={img}
+                      alt={symbol}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-xs text-gray-500">
                       {symbol.slice(0, 2).toUpperCase()}
@@ -136,15 +142,22 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({ className }) => {
                   <div className="text-sm font-medium text-gray-900 truncate">
                     {symbol ? `${symbol}` : name}
                     {symbol && name && symbol !== name ? (
-                      <span className="text-gray-500 font-normal"> · {name}</span>
+                      <span className="text-gray-500 font-normal">
+                        {" "}
+                        · {name}
+                      </span>
                     ) : null}
                   </div>
                   {mint && (
-                    <div className="text-[11px] text-gray-500 truncate">{shorten(mint)}</div>
+                    <div className="text-[11px] text-gray-500 truncate">
+                      {shorten(mint)}
+                    </div>
                   )}
                 </div>
                 {r.priceUsd ? (
-                  <div className="ml-auto text-xs text-gray-700">${Number(r.priceUsd).toFixed(6)}</div>
+                  <div className="ml-auto text-xs text-gray-700">
+                    ${Number(r.priceUsd).toFixed(6)}
+                  </div>
                 ) : null}
               </button>
             );

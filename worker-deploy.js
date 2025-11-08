@@ -48,11 +48,12 @@ function normalizeBase(v) {
 
 function getBrowserHeaders(overrides = {}) {
   return {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "application/json",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    Accept: "application/json",
     "Accept-Language": "en-US,en;q=0.9",
     "Cache-Control": "no-cache",
-    "Pragma": "no-cache",
+    Pragma: "no-cache",
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "cross-site",
@@ -65,7 +66,11 @@ async function timeoutFetch(url, opts = {}, ms = 12000) {
   const id = setTimeout(() => controller.abort(), ms);
   try {
     const defaultHeaders = getBrowserHeaders(opts.headers || {});
-    const response = await fetch(url, { signal: controller.signal, ...opts, headers: defaultHeaders });
+    const response = await fetch(url, {
+      signal: controller.signal,
+      ...opts,
+      headers: defaultHeaders,
+    });
     return response;
   } finally {
     clearTimeout(id);
@@ -73,7 +78,7 @@ async function timeoutFetch(url, opts = {}, ms = 12000) {
 }
 
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function tryDexscreener(path, retries = 3) {
@@ -89,7 +94,8 @@ async function tryDexscreener(path, retries = 3) {
 
         // Handle rate limiting with exponential backoff
         if (res.status === 429) {
-          const retryAfter = res.headers.get("Retry-After") || (attempt + 1) * 2000;
+          const retryAfter =
+            res.headers.get("Retry-After") || (attempt + 1) * 2000;
           await sleep(parseInt(retryAfter) || (attempt + 1) * 2000);
           continue;
         }
@@ -109,7 +115,12 @@ async function tryDexscreener(path, retries = 3) {
   throw new Error("All DexScreener endpoints failed");
 }
 
-async function tryJupiter(urlCandidates, options = {}, ms = 12000, retries = 3) {
+async function tryJupiter(
+  urlCandidates,
+  options = {},
+  ms = 12000,
+  retries = 3,
+) {
   for (let attempt = 0; attempt < retries; attempt++) {
     for (const candidate of urlCandidates) {
       try {
@@ -118,7 +129,8 @@ async function tryJupiter(urlCandidates, options = {}, ms = 12000, retries = 3) 
 
         // Handle rate limiting with exponential backoff
         if (res.status === 429) {
-          const retryAfter = res.headers.get("Retry-After") || (attempt + 1) * 2000;
+          const retryAfter =
+            res.headers.get("Retry-After") || (attempt + 1) * 2000;
           await sleep(parseInt(retryAfter) || (attempt + 1) * 2000);
           continue;
         }

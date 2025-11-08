@@ -381,11 +381,23 @@ async function handleDexTokens(reqUrl) {
   for (const batch of batches) {
     try {
       const path = `/tokens/${batch.join(",")}`;
-      const data = await tryDexscreener(path);
+      const cacheKey = getCacheKey(path);
+
+      // Try cache first
+      let data = cacheGet(cacheKey);
+
+      if (!data) {
+        data = await tryDexscreener(path, 2);
+        if (data) {
+          cacheSet(cacheKey, data, 45000); // Cache for 45 seconds
+        }
+      }
+
       if (!data) continue;
       if (data.schemaVersion) schemaVersion = data.schemaVersion;
       if (Array.isArray(data.pairs)) results.push(...data.pairs);
     } catch (e) {
+      console.error(`DexTokens batch error:`, e.message);
       // continue to next batch
     }
   }

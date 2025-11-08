@@ -47,6 +47,8 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
 const FIXER_MINT = new PublicKey(FIXER_MINT_ADDRESS);
 const LOCKER_MINT = new PublicKey(LOCKER_MINT_ADDRESS);
 const REWARD_SINK_WALLET = "Rri3wiD8fEfH3oMqbY7FHpNmnCe8ZLtSnVLYwdSTvwm";
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
 
 function base64FromBytes(bytes: Uint8Array): string {
   let binary = "";

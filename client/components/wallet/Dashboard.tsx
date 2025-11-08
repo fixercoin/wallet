@@ -879,11 +879,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             })} USD`
                           : "****"}
                       </div>
-                      <div className="text-sm text-gray-700 mt-1">
-                        {showBalance
-                          ? `${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Pkr`
-                          : "****"}
-                      </div>
+                      {showBalance && total > 0 ? (
+                        <div className="text-sm text-gray-700 mt-1">
+                          {`${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Pkr`}
+                        </div>
+                      ) : null}
                       {showBalance ? (
                         <div className="text-xs text-gray-400 mt-1">
                           {`${isPositive ? "+" : "-"} ${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${Math.abs(isFinite(change24hPercent) ? change24hPercent : 0).toFixed(2)}%)`}

@@ -211,7 +211,11 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
 
 // Generic price endpoint using DexScreener
 async function handlePrice(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
+  const mint =
+    url.searchParams.get("mint") ||
+    url.searchParams.get("tokenAddress") ||
+    url.searchParams.get("token");
+
   if (!mint) {
     return new Response(JSON.stringify({ error: "mint required" }), {
       status: 400,
@@ -219,13 +223,104 @@ async function handlePrice(url: URL): Promise<Response> {
     });
   }
 
+  let price = null;
+  let source = null;
+
   try {
-    const r = await timeoutFetch(`${DEXSCREENER_BASE}/tokens/${mint}`, {
-      method: "GET",
-      headers: browserHeaders(),
-    });
-    const j = await safeJson(r);
-    return new Response(JSON.stringify({ data: j }), { headers: CORS_HEADERS });
+    // Try Birdeye first (primary source - most accurate)
+    try {
+      const birdeyeUrl = `https://public-api.birdeye.so/public/price?address=${encodeURIComponent(
+        mint,
+      )}`;
+      const birdeyeRes = await timeoutFetch(birdeyeUrl, {
+        method: "GET",
+        headers: browserHeaders({
+          "x-chain": "solana",
+        }),
+      }, 8000);
+
+      if (birdeyeRes.ok) {
+        const birdeyeData = await birdeyeRes.json();
+        if (birdeyeData?.data?.value) {
+          price = Number(birdeyeData.data.value);
+          source = "birdeye";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token: mint, priceUsd: price, source }),
+              { headers: CORS_HEADERS },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to fallback
+    }
+
+    // Fall back to DexScreener
+    try {
+      const dexRes = await timeoutFetch(
+        `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`,
+        {
+          method: "GET",
+          headers: browserHeaders(),
+        },
+        8000,
+      );
+      if (dexRes.ok) {
+        const dexData = await dexRes.json();
+        const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
+        if (dexPrice) {
+          price = Number(dexPrice);
+          source = "dexscreener";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token: mint, priceUsd: price, source }),
+              { headers: CORS_HEADERS },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to Jupiter fallback
+    }
+
+    // Fall back to Jupiter
+    try {
+      const jupRes = await timeoutFetch(
+        `https://api.jup.ag/price?ids=${encodeURIComponent(mint)}`,
+        { method: "GET", headers: browserHeaders() },
+        8000,
+      );
+      if (jupRes.ok) {
+        const jupData = await jupRes.json();
+        const jupPrice = jupData?.data?.[mint]?.price ?? null;
+        if (jupPrice) {
+          price = Number(jupPrice);
+          source = "jupiter";
+          if (isFinite(price) && price > 0) {
+            return new Response(
+              JSON.stringify({ token: mint, priceUsd: price, source }),
+              { headers: CORS_HEADERS },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // All sources failed
+    }
+
+    // If we reach here, no price was found
+    return new Response(
+      JSON.stringify({
+        token: mint,
+        priceUsd: null,
+        message: "Price not available from any source",
+      }),
+      {
+        status: 404,
+        headers: CORS_HEADERS,
+      },
+    );
   } catch (e: any) {
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 502,

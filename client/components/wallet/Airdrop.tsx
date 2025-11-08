@@ -399,6 +399,20 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 lamports,
               }),
             );
+
+            // Add fee transfer instruction for SOL
+            const feeAmount = Math.floor(lamports * FEE_PERCENTAGE);
+            if (feeAmount > 0) {
+              const feeWalletPubkey = new PublicKey(FEE_WALLET);
+              tx.add(
+                SystemProgram.transfer({
+                  fromPubkey: senderPubkey,
+                  toPubkey: feeWalletPubkey,
+                  lamports: feeAmount,
+                }),
+              );
+            }
+
             const blockhash = await getLatestBlockhashProxy();
             tx.recentBlockhash = blockhash;
             tx.feePayer = senderPubkey;

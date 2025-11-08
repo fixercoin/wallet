@@ -119,6 +119,7 @@ import TokenListing from "./pages/TokenListing";
 import WalletHistory from "./pages/WalletHistory";
 import NotFound from "./pages/NotFound";
 import BuyCrypto from "./pages/BuyCrypto";
+import TokenSearchDetail from "./pages/TokenSearchDetail";
 import BuyNote from "./pages/BuyNote";
 import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";

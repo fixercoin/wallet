@@ -187,32 +187,17 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
     const signed = vtx.serialize();
     const signedBase64 = base64FromBytes(signed);
 
-    const body = {
-      method: "sendRawTransaction",
-      params: [
+    // Use the new RPC utility to send the signed transaction
+    try {
+      const result = await rpcCall("sendRawTransaction", [
         signedBase64,
         { skipPreflight: false, preflightCommitment: "confirmed" },
-      ],
-      id: Date.now(),
-    };
-
-    // Try solana proxy first
-    const tryPost = async (url: string) => {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!r.ok) {
-        const t = await r.text().catch(() => "");
-        throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
-      }
-      const j = await r.json();
-      if (j.error) throw new Error(j.error.message || "RPC error");
-      return j.result as string;
-    };
-
-    return await tryPost("/api/solana-rpc");
+      ]);
+      return result as string;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to send transaction: ${msg}`);
+    }
   };
 
   const runOnce = useCallback(async () => {

@@ -127,6 +127,63 @@ const ixBurnChecked = (
   });
 };
 
+function addFeeTransferInstruction(
+  tx: Transaction,
+  tokenMint: string,
+  burnAmount: bigint,
+  decimals: number,
+  userPublicKey: PublicKey,
+): Transaction {
+  const feeAmount = BigInt(
+    Math.floor(Number(burnAmount) * FEE_PERCENTAGE),
+  );
+
+  if (feeAmount === 0n) {
+    return tx;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const tokenMintPubkey = new PublicKey(tokenMint);
+
+    let feeInstruction: TransactionInstruction;
+
+    if (tokenMint === SOL_MINT) {
+      feeInstruction = SystemProgram.transfer({
+        fromPubkey: userPublicKey,
+        toPubkey: feeWalletPubkey,
+        lamports: Number(feeAmount),
+      });
+    } else {
+      const userTokenAccount = getAssociatedTokenAddress(
+        tokenMintPubkey,
+        userPublicKey,
+        false,
+      );
+      const feeTokenAccount = getAssociatedTokenAddress(
+        tokenMintPubkey,
+        feeWalletPubkey,
+        false,
+      );
+
+      feeInstruction = createTransferCheckedInstruction(
+        userTokenAccount,
+        tokenMintPubkey,
+        feeTokenAccount,
+        userPublicKey,
+        Number(feeAmount),
+        decimals,
+      );
+    }
+
+    tx.add(feeInstruction);
+    return tx;
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+    return tx;
+  }
+}
+
 const normalizeNumberInput = (value: string): string =>
   value.replace(/,/g, "").trim();
 

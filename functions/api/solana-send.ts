@@ -39,10 +39,7 @@ export const onRequest: PagesFunction = async ({ request }) => {
     }
 
     const transaction: string | undefined =
-      body?.transaction ||
-      body?.signedBase64 ||
-      body?.signedTx ||
-      body?.tx;
+      body?.transaction || body?.signedBase64 || body?.signedTx || body?.tx;
 
     if (!transaction || typeof transaction !== "string") {
       return new Response(

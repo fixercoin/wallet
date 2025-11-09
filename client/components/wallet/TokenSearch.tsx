@@ -147,23 +147,23 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
+                  <div className="text-sm font-medium text-white truncate">
                     {symbol ? `${symbol}` : name}
                     {symbol && name && symbol !== name ? (
-                      <span className="text-gray-500 font-normal">
+                      <span className="text-gray-400 font-normal">
                         {" "}
                         · {name}
                       </span>
                     ) : null}
                   </div>
                   {mint && (
-                    <div className="text-[11px] text-gray-500 truncate">
+                    <div className="text-[11px] text-gray-400 truncate">
                       {shorten(mint)}
                     </div>
                   )}
                 </div>
                 {r.priceUsd ? (
-                  <div className="ml-auto text-xs text-gray-700">
+                  <div className="ml-auto text-xs text-gray-300">
                     ${Number(r.priceUsd).toFixed(6)}
                   </div>
                 ) : null}

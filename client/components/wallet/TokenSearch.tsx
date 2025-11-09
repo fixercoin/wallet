@@ -7,9 +7,10 @@ import { Search as SearchIcon, Loader2 } from "lucide-react";
 
 interface TokenSearchProps {
   className?: string;
+  inputClassName?: string;
 }
 
-export const TokenSearch: React.FC<TokenSearchProps> = ({ className }) => {
+export const TokenSearch: React.FC<TokenSearchProps> = ({ className, inputClassName }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DexscreenerToken[]>([]);
   const [loading, setLoading] = useState(false);

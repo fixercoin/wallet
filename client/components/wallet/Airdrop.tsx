@@ -547,7 +547,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 SELECT TOKEN (ONLY AVAILABLE HERE)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-transparent text-gray-900 border border-gray-400 placeholder:text-gray-500 mt-2">
+                <SelectTrigger className="w-full bg-gray-300/30 text-gray-900 border border-gray-400 placeholder:text-gray-500 mt-2">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 text-white">
@@ -574,7 +574,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-transparent border border-gray-400 text-gray-900 placeholder:text-gray-500"
+                  className="flex-1 bg-gray-300/30 border border-gray-400 text-gray-900 placeholder:text-gray-500"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}
@@ -591,7 +591,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 SEMICOLONS)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-transparent text-gray-900 rounded-md h-40 font-mono text-sm border border-gray-400 placeholder:text-gray-500"
+                className="w-full mt-2 p-2 bg-gray-300/30 text-gray-900 rounded-md h-40 font-mono text-sm border border-gray-400 placeholder:text-gray-500"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"

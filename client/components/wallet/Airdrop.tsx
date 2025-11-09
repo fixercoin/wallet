@@ -541,7 +541,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               AIRDROP DISTRIBUTION
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6">
             <div>
               <label className="text-sm text-gray-300 uppercase">
                 SELECT TOKEN (ONLY AVAILABLE HERE)

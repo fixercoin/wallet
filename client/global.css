@@ -153,10 +153,11 @@
     color: hsl(var(--foreground)) !important;
   }
 
-  /* P2P page white text override and mobile fullscreen */
+  /* P2P page styling for dark grey theme and mobile fullscreen */
   .express-p2p-page {
     width: 100% !important;
     max-width: 100% !important;
+    background: hsl(var(--background)) !important;
   }
 
   .express-p2p-page p,
@@ -177,7 +178,7 @@
   .express-p2p-page textarea,
   .express-p2p-page select,
   .express-p2p-page div {
-    color: white !important;
+    color: hsl(var(--foreground)) !important;
   }
 
   /* Light-theme override for express-p2p pages (white background with dark text) */

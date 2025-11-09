@@ -624,11 +624,18 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 </div>
 
                 <div className="bg-[#064e3b]/50 rounded-xl p-6">
-                    <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
-                      {showMnemonic
-                        ? generatedWallet.mnemonic
-                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��••���••• •••••••••• •••••��•••• •••••••••• •••••••••• •���••••••••"}
-                    </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {generatedWallet.mnemonic.split(" ").map((word: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2 bg-[#0d3d2d]/50 rounded p-2">
+                        <span className="text-xs font-semibold text-gray-300 min-w-[1.5rem]">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs text-white truncate">
+                          {showMnemonic ? word : "••••••"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex gap-3">

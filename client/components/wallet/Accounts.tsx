@@ -82,7 +82,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-white/80 border border-gray-100 rounded-md flex items-center gap-2"
+                    className="w-full p-3 bg-transparent border border-gray-200 rounded-md flex items-center gap-2"
                   >
                     <button
                       onClick={() => {

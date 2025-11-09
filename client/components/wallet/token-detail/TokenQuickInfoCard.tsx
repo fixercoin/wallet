@@ -38,11 +38,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
             />
           ) : (
             <div
-              className={`h-10 w-10 rounded-full flex-shrink-0 ${
-                variant === "light"
-                  ? "bg-white/80 text-gray-900"
-                  : "bg-gray-700 text-white"
-              } flex items-center justify-center text-sm font-bold`}
+              className="h-10 w-10 rounded-full flex-shrink-0 bg-white/80 text-gray-900 flex items-center justify-center text-sm font-bold"
             >
               {token.symbol?.slice(0, 1) || "?"}
             </div>
@@ -54,9 +50,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
               Current Price
             </div>
             <div
-              className={`text-[10px] font-bold ${
-                variant === "light" ? "text-gray-900" : "text-white"
-              }`}
+              className="text-[10px] font-bold text-gray-900"
             >
               $
               {currentPrice.toLocaleString(undefined, {
@@ -90,9 +84,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
             </div>
           ) : (
             <span
-              className={`text-[10px] font-medium ${
-                variant === "light" ? "text-gray-500" : "text-gray-400"
-              }`}
+              className="text-[10px] font-medium text-gray-500"
             >
               —
             </span>

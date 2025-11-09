@@ -14,7 +14,7 @@ interface TokenRemovalDialogProps {
   open: boolean;
   token: TokenInfo | null;
   onOpenChange: (open: boolean) => void;
-  onRemove: () => Promise<void>;
+  onRemove: () => Promise<void> | void;
   onContinue: () => void;
   isRemoving?: boolean;
 }

@@ -36,35 +36,33 @@ class SolPriceService {
     try {
       const response = await fetch("/api/sol/price");
 
-      // Check content-type before trying to parse as JSON
-      if (!this.isJsonResponse(response)) {
-        const contentType = response.headers.get("content-type") || "unknown";
-        const bodyPreview = await response
-          .text()
-          .then((t) => t.substring(0, 200))
-          .catch(() => "");
-        console.error(
-          `SOL price API returned invalid content-type: ${contentType}. Response: ${bodyPreview}`,
-        );
-        throw new Error(
-          `Invalid response content-type: ${contentType}. Expected application/json`,
-        );
-      }
-
-      if (!response.ok) {
-        console.warn(`SOL price API returned ${response.status}`);
-        throw new Error(`Failed to fetch SOL price: ${response.status}`);
-      }
-
+      // Try to parse response as JSON regardless of content-type
+      // (server may return errors with wrong content-type)
       let data: any;
       try {
         data = await response.json();
       } catch (parseError) {
+        // If JSON parsing fails and response is not ok, log and use fallback
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type") || "unknown";
+          console.warn(
+            `SOL price API returned ${response.status} with content-type: ${contentType}. Using fallback.`,
+          );
+          throw new Error(`Failed to fetch SOL price: HTTP ${response.status}`);
+        }
         console.error(
           "Failed to parse SOL price response as JSON:",
           parseError,
         );
         throw parseError;
+      }
+
+      // Check if response status is ok after successful JSON parse
+      if (!response.ok) {
+        console.warn(
+          `SOL price API returned ${response.status}, but JSON was parsed. Using fallback.`,
+        );
+        throw new Error(`Failed to fetch SOL price: ${response.status}`);
       }
 
       // Validate data structure
@@ -120,7 +118,7 @@ class SolPriceService {
       }
 
       // Fallback to approximate price
-      console.log("Using fallback SOL price");
+      console.log("Using fallback SOL price ($100)");
       return {
         price: 100,
         price_change_24h: 0,

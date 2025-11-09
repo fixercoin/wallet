@@ -493,6 +493,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           hops: quoteResponse.routePlan?.length ?? 0,
           priceImpact,
           quoteTime: Date.now(),
+          slippageBps: 100,
         });
         setStatus("");
         setIsLoading(false);
@@ -569,20 +570,28 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("Refreshing quote…");
       const oldQuote = quote.quoteResponse;
       let freshQuote = oldQuote;
+      const slippageBps = quote.slippageBps || 100;
 
       try {
         const refreshed = await jupiterV6API.getQuote(
           oldQuote.inputMint,
           oldQuote.outputMint,
           parseInt(oldQuote.inAmount),
-          oldQuote.slippageBps || 5000,
+          slippageBps,
         );
         if (refreshed) {
           freshQuote = refreshed;
           console.log("✅ Quote refreshed successfully before swap");
+        } else {
+          console.warn("Quote refresh returned null, using original quote");
         }
       } catch (refreshErr) {
-        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+        console.warn("Quote refresh failed:", refreshErr);
+        const refreshErrorMsg =
+          refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+        if (refreshErrorMsg.includes("timeout")) {
+          throw new Error(`Quote refresh timed out. Please try again.`);
+        }
       }
 
       // Request swap transaction from Jupiter
@@ -634,21 +643,32 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
     } catch (err) {
       setIsLoading(false);
+      setQuote(null);
+      setStatus("");
 
       const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-
-      setStatus("");
 
       if (
         errorMsg.includes("QUOTE_EXPIRED") ||
         errorMsg.includes("STALE_QUOTE") ||
-        errorMsg.includes("expired")
+        errorMsg.includes("expired") ||
+        errorMsg.includes("Quote expired")
       ) {
         toast({
           title: "Quote Expired",
           description:
-            "The quote expired or changed. Please request a new quote and try again.",
+            "The quote expired or market conditions changed. Please request a new quote and try again.",
           variant: "default",
+        });
+        return null;
+      }
+
+      if (errorMsg.includes("refresh failed") || errorMsg.includes("timeout")) {
+        toast({
+          title: "Network Error",
+          description:
+            "Failed to refresh quote due to network issues. Please try again.",
+          variant: "destructive",
         });
         return null;
       }

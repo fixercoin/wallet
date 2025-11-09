@@ -413,7 +413,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       // Auto-refresh quote if it's getting too old (near expiration)
       if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
-        console.log("[SwapInterface] Quote approaching expiration, refreshing...");
+        console.log(
+          "[SwapInterface] Quote approaching expiration, refreshing...",
+        );
         getQuote().catch((e) => console.warn("Auto-refresh quote failed:", e));
       }
     };
@@ -453,7 +455,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const isQuoteWarning = (): boolean => {
     if (!quote || !quote.quoteTime) return false;
-    return quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS && !isQuoteExpired();
+    return (
+      quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS &&
+      !isQuoteExpired()
+    );
   };
 
   const getQuoteTimeRemaining = (): number => {

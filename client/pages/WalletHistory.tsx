@@ -264,21 +264,21 @@ export default function WalletHistory() {
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              aria-label="Back"
+              aria-label="BACK"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-xl font-semibold">History</h1>
+            <h1 className="text-xl font-semibold uppercase">HISTORY</h1>
           </div>
 
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-medium">Transactions</h2>
+              <h2 className="text-lg font-medium uppercase">TRANSACTIONS</h2>
               <button
                 onClick={handleRefresh}
                 disabled={loading}
                 className="p-1 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Refresh transactions"
+                aria-label="REFRESH TRANSACTIONS"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -305,10 +305,10 @@ export default function WalletHistory() {
 
               if (confirmedOnChainTxs.length === 0) {
                 return (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 uppercase">
                     {loading
-                      ? "Loading transactions..."
-                      : "No transactions found."}
+                      ? "LOADING TRANSACTIONS..."
+                      : "NO TRANSACTIONS FOUND."}
                   </div>
                 );
               }
@@ -346,8 +346,8 @@ export default function WalletHistory() {
                               <span className="text-sm font-semibold text-gray-900 uppercase">
                                 {kind}
                               </span>
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                On-chain
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase">
+                                ON-CHAIN
                               </span>
                             </div>
                             {whenStr ? (
@@ -367,7 +367,7 @@ export default function WalletHistory() {
                               >
                                 <ExternalLink className="h-4 w-4" />
                                 <span className="sr-only">
-                                  Open transaction
+                                  OPEN TRANSACTION
                                 </span>
                               </a>
                             ))}

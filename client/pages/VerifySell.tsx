@@ -369,7 +369,7 @@ export default function VerifySell() {
                 <Button
                   onClick={goBack}
                   variant="outline"
-                  className="w-full text-white border-white/20 hover:bg-white/10"
+                  className="w-full text-white border-white/5 hover:bg-white/10"
                 >
                   Cancel
                 </Button>
@@ -448,7 +448,7 @@ export default function VerifySell() {
                       className={`p-2 rounded text-xs ${
                         msg.senderWallet === wallet?.publicKey
                           ? "bg-[#FF7A5C]/20 border border-[#FF7A5C]/40 text-white/90"
-                          : "bg-white/10 border border-white/20 text-white/80"
+                          : "bg-white/10 border border-white/5 text-white/80"
                       }`}
                     >
                       <div className="font-semibold text-[#FF7A5C] mb-1">

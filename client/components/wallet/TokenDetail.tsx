@@ -112,12 +112,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
   if (!token) {
     return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex items-center justify-center">
-        {/* Decorative curved accent background elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden flex items-center justify-center">
         <div className="text-center relative z-20">
-          <p className="text-gray-900 text-lg mb-4">Token not found</p>
+          <p className="text-foreground text-lg mb-4">Token not found</p>
           <Button onClick={onBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Go Back
@@ -130,25 +127,21 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   const displayToken = enhancedToken || token;
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#22c55e] pointer-events-none" />
-
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
+        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-card relative overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
               aria-label="Back"
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-card text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2 flex-1">
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-lg font-semibold text-foreground">
                 {displayToken.symbol}
               </h1>
             </div>
@@ -157,7 +150,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-500/60 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-card text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -170,8 +163,8 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-[#e6f6ec]/20 bg-transparent text-gray-900">
-              <div className="px-3 pt-3 text-sm font-medium text-gray-700">
+            <div className="rounded-lg overflow-hidden border-0 bg-transparent">
+              <div className="px-3 pt-3 text-sm font-medium text-foreground">
                 Buys vs Sells (5m → 24h)
               </div>
               <div className="p-3">

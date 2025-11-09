@@ -35,6 +35,7 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { TokenRemovalDialog } from "./TokenRemovalDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -121,6 +122,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [showTokenRemovalDialog, setShowTokenRemovalDialog] = useState(false);
+  const [selectedTokenForRemoval, setSelectedTokenForRemoval] =
+    useState<TokenInfo | null>(null);
+  const [isRemovingToken, setIsRemovingToken] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -398,12 +403,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {
-    // Directly navigate to token detail page (parent handles routing)
+    setSelectedTokenForRemoval(token);
+    setShowTokenRemovalDialog(true);
+  };
+
+  const handleRemoveToken = async () => {
+    if (!selectedTokenForRemoval) return;
+    setIsRemovingToken(true);
     try {
-      onTokenClick(token.mint);
+      removeToken(selectedTokenForRemoval.mint);
+      toast({
+        title: "Token Removed",
+        description: `${selectedTokenForRemoval.symbol} has been removed from your wallet`,
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to remove token";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsRemovingToken(false);
+      setShowTokenRemovalDialog(false);
+      setSelectedTokenForRemoval(null);
+    }
+  };
+
+  const handleContinueToTokenDetail = () => {
+    if (!selectedTokenForRemoval) return;
+    setShowTokenRemovalDialog(false);
+    try {
+      onTokenClick(selectedTokenForRemoval.mint);
     } catch (e) {
       console.warn("onTokenClick handler not provided or failed:", e);
     }
+    setSelectedTokenForRemoval(null);
   };
 
   const formatBalance = (
@@ -1053,6 +1089,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         open={showAddTokenDialog}
         onOpenChange={setShowAddTokenDialog}
         onTokenAdd={addCustomToken}
+      />
+
+      {/* Token Removal Dialog */}
+      <TokenRemovalDialog
+        open={showTokenRemovalDialog}
+        token={selectedTokenForRemoval}
+        onOpenChange={setShowTokenRemovalDialog}
+        onRemove={handleRemoveToken}
+        onContinue={handleContinueToTokenDetail}
+        isRemoving={isRemovingToken}
       />
     </div>
   );

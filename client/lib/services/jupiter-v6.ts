@@ -244,13 +244,24 @@ class JupiterV6API {
 
   /**
    * Validate swap is still valid (not stale)
+   * Checks if the quote has a valid contextSlot
    */
-  isQuoteValid(
-    quoteResponse: JupiterQuoteResponse,
-    maxAgeSeconds: number = 30,
-  ): boolean {
+  isQuoteValid(quoteResponse: JupiterQuoteResponse): boolean {
+    if (!quoteResponse) return false;
     if (!quoteResponse.contextSlot) return false;
+    // Quote is valid as long as it has a contextSlot
+    // Age validation should be done separately with timestamp
     return true;
+  }
+
+  /**
+   * Check if a quote age is still acceptable for execution
+   * Jupiter quotes expire after ~30 seconds of inactivity
+   */
+  isQuoteAgeAcceptable(quoteAgeMs: number): boolean {
+    // Be conservative: treat quotes > 20 seconds old as stale
+    // This gives cushion for network delays and processing
+    return quoteAgeMs < 20000;
   }
 }
 

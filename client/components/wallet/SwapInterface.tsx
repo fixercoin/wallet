@@ -629,14 +629,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Please get a quote first by clicking 'Get Quote'");
       }
 
-      // Smart quote refresh: only refresh if quote is getting old (>15 seconds)
+      // Smart quote refresh: be aggressive about freshness (refresh if >10 seconds old)
       const oldQuote = quote.quoteResponse;
       let freshQuote = oldQuote;
       const slippageBps = quote.slippageBps || 100;
 
-      // Check if quote still has reasonable time left (>15 seconds remaining)
+      // Check if quote still has reasonable time left (>10 seconds remaining)
       const timeRemaining = getQuoteTimeRemaining();
-      const shouldRefresh = timeRemaining <= 15;
+      const shouldRefresh = timeRemaining <= 10;
 
       if (shouldRefresh) {
         setStatus("Refreshing quote…");
@@ -651,10 +651,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             freshQuote = refreshed;
             console.log("✅ Quote refreshed successfully before swap");
           } else {
-            console.warn("Quote refresh returned null, using original quote");
+            console.warn(
+              "Quote refresh returned null, attempting swap with original quote",
+            );
           }
         } catch (refreshErr) {
-          console.warn("Quote refresh failed:", refreshErr);
+          console.warn(
+            "Quote refresh failed, attempting swap with original quote",
+          );
           const refreshErrorMsg =
             refreshErr instanceof Error
               ? refreshErr.message
@@ -662,12 +666,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           if (refreshErrorMsg.includes("timeout")) {
             throw new Error(`Quote refresh timed out. Please try again.`);
           }
-          // If refresh fails for other reasons and quote still has time, continue with original
-          console.warn("Using original quote for swap");
+          // Continue with original quote - let Jupiter validation handle it
         }
       } else {
         console.log(
-          `Quote still fresh (${timeRemaining}s remaining), skipping refresh`,
+          `Quote fresh (${timeRemaining}s remaining), using current quote`,
+        );
+      }
+
+      // Verify quote is not stale before sending to Jupiter
+      if (quoteAge >= QUOTE_MAX_AGE_MS) {
+        throw new Error(
+          "Quote expired during execution. Please get a new quote and try again.",
         );
       }
 

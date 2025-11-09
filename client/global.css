@@ -517,15 +517,15 @@
 
   /* Glass morphism effect */
   .glass {
-    @apply bg-white/20 backdrop-blur-md border border-white/30;
+    @apply bg-gray-800/50 backdrop-blur-md border border-gray-700/30;
   }
 
   .glass-dark {
-    @apply bg-gray-900/20 backdrop-blur-md border border-gray-700/30;
+    @apply bg-gray-800/50 backdrop-blur-md border border-gray-700/30;
   }
 
   .transparent-cardboard {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl;
+    @apply bg-gray-800/70 backdrop-blur-xl border border-gray-700/30 shadow-2xl;
   }
 
   /* Dashboard button - shining light blue styling */

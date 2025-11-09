@@ -20,9 +20,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
 
   return (
     <div
-      className={`rounded-lg border border-black p-4 ${
-        variant === "light" ? "bg-white/50" : "bg-gray-800/50"
-      }`}
+      className={`rounded-lg border border-gray-300/30 p-4 bg-transparent`}
     >
       <div className="flex items-center justify-between gap-3">
         {/* Token Logo and Price */}

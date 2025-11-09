@@ -304,7 +304,7 @@
   }
 
   .wallet-button-secondary {
-    @apply bg-white/90 backdrop-blur-sm border border-white/30 hover:bg-white text-gray-900 shadow-md hover:shadow-lg transition-all duration-200;
+    @apply bg-gray-700 backdrop-blur-sm border border-gray-600 hover:bg-gray-600 text-gray-100 shadow-md hover:shadow-lg transition-all duration-200;
   }
 
   .token-icon {

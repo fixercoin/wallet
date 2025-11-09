@@ -129,7 +129,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
       <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-card relative overflow-hidden">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-gray-300/30 bg-transparent relative overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3">
             <Button
               variant="ghost"
@@ -158,7 +158,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Token Quick Info Card */}
           <div className="px-4 py-3">
-            <TokenQuickInfoCard token={displayToken} variant="light" />
+            <TokenQuickInfoCard token={displayToken} />
           </div>
 
           {/* Chart and actions */}

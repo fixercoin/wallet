@@ -3,6 +3,7 @@ import { ArrowLeft, Flame, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -600,7 +601,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-1 bg-transparent border border-[#22c55e]/30 text-black">
+                  <SelectTrigger className="mt-1 bg-transparent border border-gray-300/30 text-black">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border border-black text-white">
@@ -632,35 +633,38 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <div className="rounded-xl border-0 bg-transparent p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-300">
-                        Selected token
-                      </p>
-                      <p className="text-lg font-semibold text-white">
-                        {selectedToken.symbol || selectedToken.mint.slice(0, 6)}{" "}
-                        ·{" "}
-                        {formatNumber(
-                          selectedToken.balance,
-                          selectedToken.decimals ?? 0,
-                          selectedToken.symbol,
-                        )}
-                      </p>
+                <Card className="rounded-xl border border-gray-300/30 bg-transparent px-4">
+                  <CardContent className="pt-4 px-0 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-300">
+                          Selected token
+                        </p>
+                        <p className="text-lg font-semibold text-white">
+                          {selectedToken.symbol ||
+                            selectedToken.mint.slice(0, 6)}{" "}
+                          ·{" "}
+                          {formatNumber(
+                            selectedToken.balance,
+                            selectedToken.decimals ?? 0,
+                            selectedToken.symbol,
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right text-[11px] text-gray-300">
+                        <p>Mint address</p>
+                        <a
+                          className="font-medium text-orange-500 underline-offset-4 hover:underline"
+                          href={`https://solscan.io/token/${selectedToken.mint}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {shortenAddress(selectedToken.mint, 6)}
+                        </a>
+                      </div>
                     </div>
-                    <div className="text-right text-[11px] text-gray-300">
-                      <p>Mint address</p>
-                      <a
-                        className="font-medium text-orange-500 underline-offset-4 hover:underline"
-                        href={`https://solscan.io/token/${selectedToken.mint}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {shortenAddress(selectedToken.mint, 6)}
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : null}
 
               <div>
@@ -676,7 +680,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-transparent border border-[#22c55e]/30 text-black placeholder:text-gray-500"
+                    className="h-11 bg-transparent border border-gray-300/30 text-black placeholder:text-gray-500"
                   />
                   <Button
                     type="button"

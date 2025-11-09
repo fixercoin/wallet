@@ -793,7 +793,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border border-black text-white">
+                <SelectTrigger className="mt-1 w-full bg-white/5 border border-gray-300/30 text-white">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -827,7 +827,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-transparent border border-[#22c55e]/30 text-white placeholder:text-gray-400"
+                className="mt-1 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
@@ -850,7 +850,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border border-black text-white">
+                <SelectTrigger className="mt-1 w-full bg-white/5 border border-gray-300/30 text-white">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -946,7 +946,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-xl border border-[#e6f6ec]/20 bg-white/80 space-y-3 text-gray-900"
+                    className="p-4 rounded-xl border border-gray-300/30 bg-white/80 space-y-3 text-gray-900"
                   >
                     <div className="flex items-center justify-between">
                       <div>

@@ -96,11 +96,11 @@
   }
 }
 
-/* Global icon style override: make all lucide icons monochrome black, line-only */
+/* Global icon style override: make all lucide icons light grey for dark theme */
 .lucide,
 .lucide * {
-  color: #000 !important;
-  stroke: #000 !important;
+  color: #e8eaed !important;
+  stroke: #e8eaed !important;
   fill: none !important;
 }
 

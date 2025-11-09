@@ -678,18 +678,7 @@
   .express-detecting-text {
     text-transform: uppercase;
     letter-spacing: 0.35em;
-    animation: express-detecting-wave 1.25s ease-in-out infinite alternate;
-  }
-
-  @keyframes express-detecting-wave {
-    from {
-      transform: translateX(-8px);
-      opacity: 0.75;
-    }
-    to {
-      transform: translateX(8px);
-      opacity: 1;
-    }
+    animation: none;
   }
 
   /* From Uiverse.io by mrhyddenn */

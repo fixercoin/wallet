@@ -100,10 +100,13 @@ export const TokenManage: React.FC<TokenManageProps> = ({
                 <p className="font-semibold text-sm text-gray-900 uppercase">
                   {token.symbol}
                 </p>
-                <p className="text-xs text-gray-500 uppercase">{token.name || token.mint.slice(0, 8)}</p>
+                <p className="text-xs text-gray-500 uppercase">
+                  {token.name || token.mint.slice(0, 8)}
+                </p>
                 {typeof token.balance === "number" && (
                   <p className="text-xs text-gray-600 mt-1 uppercase">
-                    BALANCE: {token.balance.toFixed(token.decimals || 6)} {token.symbol}
+                    BALANCE: {token.balance.toFixed(token.decimals || 6)}{" "}
+                    {token.symbol}
                   </p>
                 )}
               </div>
@@ -130,10 +133,12 @@ export const TokenManage: React.FC<TokenManageProps> = ({
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2 mt-6">
               <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-yellow-800">
-                <p className="font-semibold mb-1 uppercase">REMOVING THIS TOKEN</p>
+                <p className="font-semibold mb-1 uppercase">
+                  REMOVING THIS TOKEN
+                </p>
                 <p className="uppercase">
-                  REMOVING A TOKEN FROM YOUR WALLET VIEW DOESN'T DELETE IT FROM THE BLOCKCHAIN.
-                  YOU CAN ADD IT BACK ANYTIME.
+                  REMOVING A TOKEN FROM YOUR WALLET VIEW DOESN'T DELETE IT FROM
+                  THE BLOCKCHAIN. YOU CAN ADD IT BACK ANYTIME.
                 </p>
               </div>
             </div>

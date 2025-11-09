@@ -3,10 +3,7 @@ import { ArrowLeft, Flame, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -644,7 +641,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           Selected token
                         </p>
                         <p className="text-lg font-semibold text-white">
-                          {selectedToken.symbol || selectedToken.mint.slice(0, 6)}{" "}
+                          {selectedToken.symbol ||
+                            selectedToken.mint.slice(0, 6)}{" "}
                           ·{" "}
                           {formatNumber(
                             selectedToken.balance,

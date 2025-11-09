@@ -454,7 +454,7 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
                 details: text.slice(0, 300),
                 code: 1016,
               }),
-              { status: 530, headers: CORS_HEADERS },
+              { status: 409, headers: CORS_HEADERS },
             );
           }
 

@@ -112,12 +112,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
   if (!token) {
     return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex items-center justify-center">
-        {/* Decorative curved accent background elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden flex items-center justify-center">
         <div className="text-center relative z-20">
-          <p className="text-gray-900 text-lg mb-4">Token not found</p>
+          <p className="text-foreground text-lg mb-4">Token not found</p>
           <Button onClick={onBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Go Back

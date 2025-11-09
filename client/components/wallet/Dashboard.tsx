@@ -994,7 +994,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="space-y-0">
+        <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&

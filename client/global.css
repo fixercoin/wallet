@@ -336,6 +336,17 @@
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
   }
 
+  /* Green cards for Send, Receive, Swap pages */
+  .express-p2p-page .rounded-2xl[class*="border-"][class*="bg-gradient"] {
+    background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
+    border-color: #22c55e !important;
+  }
+
+  /* Green cards with specific gradient pattern */
+  .express-p2p-page .bg-gradient-to-br[class*="from-"] {
+    background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
+  }
+
   /* Mobile optimizations */
   @media (max-width: 640px) {
     .container {

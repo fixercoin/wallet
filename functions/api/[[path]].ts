@@ -393,9 +393,23 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       );
     }
 
+    // Build swap request with proper defaults (matching server implementation)
+    const swapRequest = {
+      quoteResponse: body.quoteResponse,
+      userPublicKey: body.userPublicKey,
+      wrapAndUnwrapSol:
+        body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
+      useSharedAccounts:
+        body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
+      computeUnitPriceMicroLamports: body.computeUnitPriceMicroLamports,
+      prioritizationFeeLamports: body.prioritizationFeeLamports,
+      asLegacyTransaction: body.asLegacyTransaction || false,
+      ...body,
+    };
+
     const endpoints = [
-      `${JUPITER_V6_SWAP_BASE}/swap`,
       `${JUPITER_SWAP_BASE}/swap`,
+      `${JUPITER_V6_SWAP_BASE}/swap`,
     ];
 
     let lastError = "";
@@ -406,22 +420,16 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           console.log(
-            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}: ${endpoint}`,
           );
 
           const response = await timeoutFetch(endpoint, {
             method: "POST",
             headers: browserHeaders({ Accept: "application/json" }),
-            body: JSON.stringify({
-              ...body,
-              wrapAndUnwrapSol: body.wrapAndUnwrapSol !== false,
-              useSharedAccounts: body.useSharedAccounts !== false,
-              asLegacyTransaction: body.asLegacyTransaction === true,
-            }),
+            body: JSON.stringify(swapRequest),
           });
 
           lastStatus = response.status;
-
           const text = await response.text().catch(() => "");
 
           if (response.ok) {
@@ -437,16 +445,25 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
             }
           }
 
+          // Parse error response
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch {}
+
           const lower = (text || "").toLowerCase();
           const isStaleQuote =
             lower.includes("1016") ||
             lower.includes("stale") ||
             lower.includes("simulation") ||
             lower.includes("swap simulation failed") ||
-            lower.includes("quote expired");
+            lower.includes("quote expired") ||
+            errorData?.code === 1016;
 
           if (isStaleQuote) {
-            console.warn(`[Jupiter Swap] Detected stale quote (1016)`);
+            console.warn(
+              `[Jupiter Swap] Detected stale quote (1016) from ${endpoint}`,
+            );
             return new Response(
               JSON.stringify({
                 error: "STALE_QUOTE",
@@ -454,7 +471,26 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
                 details: text.slice(0, 300),
                 code: 1016,
               }),
-              { status: 409, headers: CORS_HEADERS },
+              { status: 530, headers: CORS_HEADERS },
+            );
+          }
+
+          // Check for other client errors that shouldn't be retried
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            console.warn(
+              `[Jupiter Swap] Client error (${response.status}), not retrying`,
+            );
+            return new Response(
+              JSON.stringify({
+                error: `Swap request failed: ${response.statusText}`,
+                details: text,
+                code: "SWAP_REQUEST_ERROR",
+              }),
+              { status: response.status, headers: CORS_HEADERS },
             );
           }
 

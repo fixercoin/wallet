@@ -834,7 +834,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const usdZero = `0.00 USD`;
                     return (
                       <>
-                        <div className="text-base font-medium text-gray-900 leading-tight">
+                        <div className="text-3xl font-medium text-gray-900 leading-tight">
                           {showBalance ? `${usdZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
@@ -874,7 +874,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   return (
                     <>
-                      <div className="text-base font-medium text-gray-900 leading-tight">
+                      <div className="text-3xl font-medium text-gray-900 leading-tight">
                         {showBalance
                           ? `${total.toLocaleString(undefined, {
                               minimumFractionDigits: 2,

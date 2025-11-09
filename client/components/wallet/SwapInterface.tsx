@@ -575,14 +575,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           oldQuote.inputMint,
           oldQuote.outputMint,
           parseInt(oldQuote.inAmount),
-          oldQuote.slippageBps || 5000,
+          100,
         );
         if (refreshed) {
           freshQuote = refreshed;
           console.log("✅ Quote refreshed successfully before swap");
+        } else {
+          console.warn("Quote refresh returned null, retrying with original quote");
         }
       } catch (refreshErr) {
-        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+        console.warn("Quote refresh failed:", refreshErr);
+        const refreshErrorMsg = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+        if (refreshErrorMsg.includes("timeout") || refreshErrorMsg.includes("failed")) {
+          throw new Error(`Quote refresh failed: ${refreshErrorMsg}. Please try again.`);
+        }
       }
 
       // Request swap transaction from Jupiter

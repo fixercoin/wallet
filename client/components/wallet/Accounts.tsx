@@ -43,7 +43,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 Active Wallet
               </div>
               <div className="w-full">
-                <div className="bg-white/80 rounded-md p-4 flex items-center justify-between">
+                <div className="bg-transparent border border-gray-200 rounded-md p-4 flex items-center justify-between">
                   <div className="min-w-0">
                     <div className="text-xs text-gray-600 mb-1">Address</div>
                     <div className="font-mono text-sm break-all text-gray-900">

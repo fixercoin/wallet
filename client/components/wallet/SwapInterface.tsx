@@ -594,6 +594,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
+      if (isQuoteExpired()) {
+        setStatus("Quote has expired. Please get a fresh quote.");
+        setIsLoading(false);
+        toast({
+          title: "Quote Expired",
+          description:
+            "Your quote has expired. Please request a new quote before swapping.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       const fromToken = tokenList.find((t) => t.address === fromMint);
       const toToken = tokenList.find((t) => t.address === toMint);
 

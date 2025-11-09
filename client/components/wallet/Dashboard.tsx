@@ -1004,8 +1004,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             const isPositive = (percentChange ?? 0) >= 0;
 
             return (
-              <div key={token.mint}>
-                <Card className="bg-transparent rounded-md border-0">
+              <div key={token.mint} className="w-full">
+                <Card className="w-full bg-transparent rounded-md border-0">
                   <CardContent className="p-0">
                     <div
                       className="flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"

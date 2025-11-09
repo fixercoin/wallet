@@ -319,21 +319,22 @@
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
   }
 
-  /* Green cards - Balance, Send, Receive, Swap cards */
-  .express-p2p-page [class*="rounded-lg"],
-  .express-p2p-page [class*="rounded-2xl"] {
+  /* Green cards - Balance, Send, Receive, Swap main containers */
+  .express-p2p-page .max-w-md > div {
     background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%) !important;
     border-color: #22c55e !important;
   }
 
-  /* Green action buttons (Send, Receive, Swap) in Dashboard */
-  .express-p2p-page button {
+  /* Green action buttons in flex gap-3 container */
+  .express-p2p-page .gap-3 button,
+  .express-p2p-page .flex.gap-3 button {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
     border-color: #22c55e !important;
     color: white !important;
   }
 
-  .express-p2p-page button:hover {
+  .express-p2p-page .gap-3 button:hover,
+  .express-p2p-page .flex.gap-3 button:hover {
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
   }
 

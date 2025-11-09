@@ -103,7 +103,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({ className, inputClassN
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search Solana tokens by name or address"
-          className="pl-9 bg-white/80 text-gray-900 placeholder:text-gray-500 border border-[#22c55e]/30 focus-visible:ring-0"
+          className={inputClassName ? `pl-9 ${inputClassName}` : "pl-9 bg-white/80 text-gray-900 placeholder:text-gray-500 border border-[#22c55e]/30 focus-visible:ring-0"}
           onFocus={() => results.length > 0 && setOpen(true)}
         />
         {loading && (

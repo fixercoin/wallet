@@ -488,18 +488,18 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   if (currentSession) {
     return (
       <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
-        <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+        <div className="rounded-2xl border border-gray-700/50 bg-transparent backdrop-blur-sm">
           <div className="space-y-6 p-6 relative">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCurrentSession(null)}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-700/30 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="font-semibold text-sm text-gray-900 uppercase">
+              <div className="font-semibold text-sm text-white uppercase">
                 Session Details
               </div>
             </div>
@@ -507,85 +507,85 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Number of Makers
                   </Label>
-                  <p className="text-lg font-bold text-gray-900 mt-1">
+                  <p className="text-lg font-bold text-white mt-1">
                     {currentSession.numberOfMakers}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Sell Strategy
                   </Label>
-                  <p className="text-sm text-gray-900 mt-1 capitalize">
+                  <p className="text-sm text-white mt-1 capitalize">
                     {currentSession.sellStrategy}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Order Range
                   </Label>
-                  <p className="text-sm text-gray-900 mt-1">
+                  <p className="text-sm text-white mt-1">
                     ◎ {currentSession.minOrderSOL.toFixed(4)} -{" "}
                     {currentSession.maxOrderSOL.toFixed(4)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Status
                   </Label>
-                  <p className="text-sm text-gray-900 mt-1 capitalize font-semibold">
+                  <p className="text-sm text-white mt-1 capitalize font-semibold">
                     {currentSession.status}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+              <div className="p-4 bg-transparent border border-green-500/30 rounded-lg">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-700">Estimated Fees (1%):</span>
-                  <span className="font-bold text-gray-900">
+                  <span className="text-gray-300">Estimated Fees (1%):</span>
+                  <span className="font-bold text-white">
                     ◎ {currentSession.estimatedTotalFees.toFixed(4)}
                   </span>
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <Label className="text-xs text-gray-600 uppercase font-semibold mb-3 block">
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Token Address
                 </Label>
-                <p className="text-xs font-mono break-all text-gray-700 bg-gray-50 p-3 rounded border border-gray-200">
+                <p className="text-xs font-mono break-all text-gray-300 bg-transparent p-3 rounded border border-gray-700/50">
                   {currentSession.tokenAddress}
                 </p>
               </div>
 
-              <div className="border-t pt-4">
-                <Label className="text-xs text-gray-600 uppercase font-semibold mb-3 block">
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Maker Accounts ({currentSession.makers.length})
                 </Label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {currentSession.makers.map((maker) => (
                     <div
                       key={maker.id}
-                      className="text-xs p-3 bg-gray-50 rounded border border-gray-200"
+                      className="text-xs p-3 bg-transparent rounded border border-gray-700/50"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-mono text-gray-900">
+                        <span className="font-mono text-white">
                           {maker.id}
                         </span>
                         <span
                           className={`text-xs font-semibold px-2 py-1 rounded ${
                             maker.status === "active"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-green-500/20 text-green-400"
                               : maker.status === "completed"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-red-100 text-red-700"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : "bg-red-500/20 text-red-400"
                           }`}
                         >
                           {maker.status}
                         </span>
                       </div>
-                      <div className="text-gray-600 mt-2 text-xs">
+                      <div className="text-gray-400 mt-2 text-xs">
                         Buys: {maker.buyTransactions.length} | Sells:{" "}
                         {maker.sellTransactions.length}
                       </div>
@@ -594,7 +594,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className="border-t pt-4 flex gap-2">
+              <div className="border-t border-gray-700/50 pt-4 flex gap-2">
                 {currentSession.status === "setup" && (
                   <Button
                     onClick={handleStartSession}
@@ -605,7 +605,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   </Button>
                 )}
                 {currentSession.status === "running" && (
-                  <div className="flex-1 py-3 px-4 bg-green-50 border border-green-200 rounded text-xs text-green-800 font-bold flex items-center justify-center gap-2">
+                  <div className="flex-1 py-3 px-4 bg-green-500/20 border border-green-500/50 rounded text-xs text-green-400 font-bold flex items-center justify-center gap-2">
                     <Zap className="w-4 h-4" />
                     Running
                   </div>
@@ -613,7 +613,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={() => setCurrentSession(null)}
-                  className="border border-gray-700 text-gray-900 uppercase"
+                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase"
                 >
                   Close
                 </Button>

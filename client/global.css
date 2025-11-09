@@ -319,6 +319,23 @@
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
   }
 
+  /* Green cards for Balance, Send, Receive, Swap in Dashboard */
+  .express-p2p-page div[class*="mt-6"][class*="mb-1"][class*="rounded-lg"][class*="p-6"][class*="border"] {
+    background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
+    border: 0 !important;
+  }
+
+  /* Green action buttons (Send, Receive, Swap buttons in Dashboard) */
+  .express-p2p-page div[class*="mt-10"] button {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border-color: #22c55e !important;
+    color: white !important;
+  }
+
+  .express-p2p-page div[class*="mt-10"] button:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  }
+
   /* Mobile optimizations */
   @media (max-width: 640px) {
     .container {

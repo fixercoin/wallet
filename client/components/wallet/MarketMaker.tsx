@@ -270,7 +270,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   };
 
   const handleStartSession = async () => {
-    if (!currentSession) return;
+    if (!currentSession) {
+      toast({
+        title: "Error",
+        description: "No active session found",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -287,7 +294,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         status: "active" as const,
       }));
 
-      const updatedSession = { ...currentSession, status: "running", makers };
+      const updatedSession = { ...currentSession, status: "running" as const, makers };
       setCurrentSession(updatedSession);
       const updatedSessions = sessions.map((s) =>
         s.id === updatedSession.id ? updatedSession : s,
@@ -297,7 +304,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       toast({
         title: "Market Making Started",
-        description: `Executing ${numMakers} buys (client-side)`,
+        description: `Executing ${numMakers} buys. This may take a few moments...`,
       });
 
       // Helper to sign and send base64 versioned tx
@@ -306,7 +313,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           const sk = wallet.secretKey as any as Uint8Array | number[] | string;
           if (!sk) return null;
           if (typeof sk === "string") {
-            // assume base64
             const arr = bytesFromBase64(sk);
             return Keypair.fromSecretKey(arr);
           }
@@ -314,6 +320,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             return Keypair.fromSecretKey(Uint8Array.from(sk));
           return Keypair.fromSecretKey(sk as Uint8Array);
         } catch (e) {
+          console.error("Error creating keypair:", e);
           return null;
         }
       };
@@ -326,7 +333,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         vtx.sign([kp]);
         const signed = vtx.serialize();
         const signedBase64 = base64FromBytes(signed);
-        // Send via RPC proxy
         const res = await rpcCall("sendRawTransaction", [
           signedBase64,
           { skipPreflight: false, preflightCommitment: "confirmed" },
@@ -342,89 +348,111 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             (parseFloat(currentSession.maxOrderSOL) -
               parseFloat(currentSession.minOrderSOL));
 
-        const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);
-        const quote = await jupiterAPI.getQuote(
-          SOL_MINT,
-          currentSession.tokenAddress,
-          Number(rawAmount),
-          120,
-        );
-        if (!quote) {
-          // mark maker error
-          const m = updatedSession.makers[i];
-          if (m) {
-            m.status = "error" as const;
-            m.buyTransactions.push({
-              type: "buy",
-              timestamp: Date.now(),
-              solAmount: amountSol,
-              tokenAmount: 0,
-              feeAmount: 0,
-              status: "failed",
-            });
-          }
-          continue;
-        }
-
-        const impact = Math.abs(parseFloat(quote.priceImpactPct || "0")) * 100;
-        if (isFinite(impact) && impact > 20) {
-          // skip high impact
-          const m = updatedSession.makers[i];
-          if (m) {
-            m.status = "error" as const;
-            m.buyTransactions.push({
-              type: "buy",
-              timestamp: Date.now(),
-              solAmount: amountSol,
-              tokenAmount: 0,
-              feeAmount: 0,
-              status: "failed",
-            });
-          }
-          continue;
-        }
-
-        const swap = await jupiterAPI.getSwapTransaction({
-          quoteResponse: quote,
-          userPublicKey: wallet.publicKey,
-          wrapAndUnwrapSol: true,
-        });
-        if (!swap || !swap.swapTransaction) {
-          const m = updatedSession.makers[i];
-          if (m) {
-            m.status = "error" as const;
-            m.buyTransactions.push({
-              type: "buy",
-              timestamp: Date.now(),
-              solAmount: amountSol,
-              tokenAmount: 0,
-              feeAmount: 0,
-              status: "failed",
-            });
-          }
-          continue;
-        }
-
         try {
-          const sig = await sendSignedTxGeneric(swap.swapTransaction);
-          const m = updatedSession.makers[i];
-          if (m) {
-            m.buyTransactions.push({
-              type: "buy",
-              timestamp: Date.now(),
-              solAmount: amountSol,
-              tokenAmount:
-                jupiterAPI.parseSwapAmount(
-                  quote.outAmount,
-                  quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
-                ) || 0,
-              feeAmount: 0,
-              signature: sig,
-              status: "confirmed",
+          const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);
+          const quote = await jupiterAPI.getQuote(
+            SOL_MINT,
+            currentSession.tokenAddress,
+            Number(rawAmount),
+            120,
+          );
+
+          if (!quote) {
+            const m = updatedSession.makers[i];
+            if (m) {
+              m.status = "error" as const;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+            }
+            continue;
+          }
+
+          const impact = Math.abs(parseFloat(quote.priceImpactPct || "0")) * 100;
+          if (isFinite(impact) && impact > 20) {
+            const m = updatedSession.makers[i];
+            if (m) {
+              m.status = "error" as const;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+            }
+            continue;
+          }
+
+          const swap = await jupiterAPI.getSwapTransaction({
+            quoteResponse: quote,
+            userPublicKey: wallet.publicKey,
+            wrapAndUnwrapSol: true,
+          });
+
+          if (!swap || !swap.swapTransaction) {
+            const m = updatedSession.makers[i];
+            if (m) {
+              m.status = "error" as const;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+            }
+            continue;
+          }
+
+          try {
+            const sig = await sendSignedTxGeneric(swap.swapTransaction);
+            const m = updatedSession.makers[i];
+            if (m) {
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount:
+                  jupiterAPI.parseSwapAmount(
+                    quote.outAmount,
+                    quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
+                  ) || 0,
+                feeAmount: 0,
+                signature: sig,
+                status: "confirmed",
+              });
+              m.status = "completed" as const;
+            }
+
+            setCurrentSession({
+              ...updatedSession,
+              makers: updatedSession.makers,
             });
-            m.status = "completed" as const;
+          } catch (txError) {
+            console.error(`Error sending transaction for maker ${i}:`, txError);
+            const m = updatedSession.makers[i];
+            if (m) {
+              m.status = "error" as const;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+            }
           }
         } catch (e) {
+          console.error(`Error processing maker ${i}:`, e);
           const m = updatedSession.makers[i];
           if (m) {
             m.status = "error" as const;
@@ -456,8 +484,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(finalSessions));
 
       toast({
-        title: "Market Maker Finished",
-        description: "Client-side execution completed",
+        title: "Market Maker Completed",
+        description: "All buys executed successfully",
       });
     } catch (error) {
       console.error("Error starting market maker:", error);
@@ -469,6 +497,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             : "Failed to start market maker",
         variant: "destructive",
       });
+
+      setCurrentSession(currentSession);
     } finally {
       setIsLoading(false);
     }

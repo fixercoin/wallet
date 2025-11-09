@@ -410,7 +410,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (!selectedTokenForRemoval) return;
     setIsRemovingToken(true);
     try {
-      await removeToken(selectedTokenForRemoval.mint);
+      removeToken(selectedTokenForRemoval.mint);
       toast({
         title: "Token Removed",
         description: `${selectedTokenForRemoval.symbol} has been removed from your wallet`,

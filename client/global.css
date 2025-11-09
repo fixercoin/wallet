@@ -336,14 +336,21 @@
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
   }
 
-  /* Green cards for Send, Receive, Swap pages */
-  .express-p2p-page .rounded-2xl[class*="border-"][class*="bg-gradient"] {
+  /* Green cards for Send, Receive, Swap pages - override gradient backgrounds */
+  .express-p2p-page [class*="rounded-2xl"][class*="border"][class*="bg-gradient"] {
     background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
     border-color: #22c55e !important;
   }
 
-  /* Green cards with specific gradient pattern */
-  .express-p2p-page .bg-gradient-to-br[class*="from-"] {
+  /* Target all gradient-to-br backgrounds in express-p2p-page */
+  .express-p2p-page .from-\[\#ffffff\],
+  .express-p2p-page [style*="from-[#ffffff]"],
+  .express-p2p-page [class*="from-[#ffffff]"] {
+    background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
+  }
+
+  /* Ensure SwapInterface cards are green */
+  .express-p2p-page [class*="rounded-2xl"][class*="border-\["] {
     background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
   }
 

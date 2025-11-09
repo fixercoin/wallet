@@ -9,52 +9,52 @@
    * A different format will require also updating the theme in tailwind.config.ts.
   */
   :root {
-    /* White background, purple accents; global text in black */
-    --background: 0 0% 100%; /* white */
-    --foreground: 0 0% 0%; /* black text */
+    /* Dark grey theme - all pages */
+    --background: 210 15% 18%; /* dark grey background */
+    --foreground: 210 10% 92%; /* light grey text */
 
-    --card: 260 10% 98%; /* subtle off-white for card area */
-    --card-foreground: 0 0% 0%;
+    --card: 210 13% 24%; /* slightly lighter grey for cards */
+    --card-foreground: 210 10% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 210 13% 24%;
+    --popover-foreground: 210 10% 92%;
 
-    --primary: 270 65% 54%; /* purple */
-    --primary-foreground: 260 10% 98%;
+    --primary: 270 65% 54%; /* purple accent */
+    --primary-foreground: 210 10% 92%;
 
-    --secondary: 270 50% 96%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 210 12% 32%;
+    --secondary-foreground: 210 10% 92%;
 
-    --muted: 270 50% 96%;
-    --muted-foreground: 0 0% 0%;
+    --muted: 210 12% 32%;
+    --muted-foreground: 210 10% 70%;
 
     --accent: 270 65% 54%;
-    --accent-foreground: 260 10% 98%;
+    --accent-foreground: 210 10% 92%;
 
     --destructive: 0 62% 45%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 10% 92%;
 
-    --border: 260 20% 90%;
-    --input: 260 20% 96%;
+    --border: 210 12% 28%;
+    --input: 210 12% 28%;
     --ring: 270 65% 54%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 260 8% 98%;
+    --sidebar-background: 210 15% 18%;
 
-    --sidebar-foreground: 0 0% 0%;
+    --sidebar-foreground: 210 10% 92%;
 
-    --sidebar-primary: 270 60% 20%;
+    --sidebar-primary: 270 65% 54%;
 
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary-foreground: 210 10% 92%;
 
-    --sidebar-accent: 270 60% 95%;
+    --sidebar-accent: 210 12% 32%;
 
-    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-accent-foreground: 210 10% 92%;
 
-    --sidebar-border: 260 10% 92%;
+    --sidebar-border: 210 12% 28%;
 
-    --sidebar-ring: 270 70% 60%;
+    --sidebar-ring: 270 65% 54%;
   }
 
   .dark {

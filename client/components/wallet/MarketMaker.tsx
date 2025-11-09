@@ -183,6 +183,20 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const { totalSOLNeeded, totalFees } = calculateEstimatedCost();
   const canAfford = solBalance >= totalSOLNeeded;
 
+  const handleRemoveSession = useCallback(
+    (sessionId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const updatedSessions = sessions.filter((s) => s.id !== sessionId);
+      setSessions(updatedSessions);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
+      toast({
+        title: "Session Removed",
+        description: "The session has been deleted",
+      });
+    },
+    [sessions, toast],
+  );
+
   const handleStartMarketMaking = async () => {
     const validationError = validateInputs();
     if (validationError) {

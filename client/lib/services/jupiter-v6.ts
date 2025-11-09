@@ -42,20 +42,17 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
-// Direct Jupiter API endpoints - bypass proxy to avoid quote expiration
+// Direct Jupiter API endpoints - public endpoints that don't require authentication
 const JUPITER_QUOTE_ENDPOINTS = [
   "https://quote-api.jup.ag/v6/quote",
-  "https://api.jup.ag/quote/v6",
 ];
 
 const JUPITER_SWAP_ENDPOINTS = [
   "https://quote-api.jup.ag/v6/swap",
-  "https://lite-api.jup.ag/swap/v1/swap",
 ];
 
 const JUPITER_PRICE_ENDPOINTS = [
   "https://price.jup.ag/v4",
-  "https://api.jup.ag/price/v2",
 ];
 
 class JupiterV6API {

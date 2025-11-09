@@ -1056,11 +1056,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-white">
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-semibold text-white whitespace-nowrap">
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>
-                        <p className="text-xs text-gray-300">
+                        <p className="text-xs text-gray-300 whitespace-nowrap">
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatBalance((token.balance || 0) * token.price)}`
                             : "$0.00"}

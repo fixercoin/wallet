@@ -971,11 +971,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           <Button
             onClick={executeSwap}
-            disabled={!amount || isLoading}
+            disabled={!amount || isLoading || isQuoteExpired()}
             className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              isQuoteExpired()
+                ? "Quote expired - please get a new quote"
+                : isQuoteWarning()
+                  ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                  : ""
+            }
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isQuoteExpired() ? (
+              "Quote Expired - Get New Quote"
             ) : (
               "Swap (Smart Route)"
             )}

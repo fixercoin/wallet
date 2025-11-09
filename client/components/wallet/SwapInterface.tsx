@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Loader2, ArrowLeft, Check } from "lucide-react";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { jupiterV6API } from "@/lib/services/jupiter-v6";
+import { rpcCall } from "@/lib/rpc-utils";
 import {
   Select,
   SelectContent,
@@ -12,1139 +16,774 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ArrowLeft,
-  ArrowUpDown,
-  Settings,
-  Check,
-  ExternalLink,
-} from "lucide-react";
-import { useWallet } from "@/contexts/WalletContext";
-import { TokenInfo } from "@/lib/wallet";
-import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
-import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { PUMP_TOKENS } from "@/lib/constants/pump-tokens";
-import { jupiterAPI, JupiterQuoteResponse } from "@/lib/services/jupiter";
-import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
-import { birdeyeAPI } from "@/lib/services/birdeye";
-import {
-  Keypair,
-  VersionedTransaction,
-  Transaction,
   SystemProgram,
   PublicKey,
-  LAMPORTS_PER_SOL,
+  TransactionInstruction,
+  VersionedTransaction,
+  Keypair,
+  Transaction,
 } from "@solana/web3.js";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
+import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 
-interface SwapInterfaceProps {
-  onBack: () => void;
+const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
+
+const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+
+  const colors = [
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+    "#ff006e",
+    "#fb5607",
+    "#ffbe0b",
+    "#8338ec",
+    "#3a86ff",
+    "#06ffa5",
+  ];
+
+  const particles = Array.from({ length: 150 }).map((_, i) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 100 + Math.random() * 400;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    const width = 4 + Math.random() * 6;
+    const height = 6 + Math.random() * 10;
+    const delay = Math.random() * 0.2;
+    const rotation = Math.random() * 360;
+    const spinSpeed = 1 + Math.random() * 3;
+
+    return {
+      tx,
+      ty,
+      id: i,
+      color: colors[i % colors.length],
+      width,
+      height,
+      delay,
+      rotation,
+      spinSpeed,
+    };
+  });
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      <style>{`
+        @keyframes burst-particle {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1) rotate(var(--rotation));
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0) rotate(calc(var(--rotation) + 720deg));
+          }
+        }
+        @keyframes done-pulse {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          40% {
+            transform: scale(1.1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={
+            {
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              backgroundColor: p.color,
+              borderRadius: "2px",
+              marginLeft: `-${p.width / 2}px`,
+              marginTop: `-${p.height / 2}px`,
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              "--rotation": `${p.rotation}deg`,
+              animation: `burst-particle 2s ease-out forwards`,
+              animationDelay: `${p.delay}s`,
+            } as any
+          }
+        />
+      ))}
+
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          animation: "done-pulse 0.8s ease-out forwards",
+          zIndex: 60,
+        }}
+      >
+        <div
+          className="text-5xl font-bold text-white drop-shadow-lg"
+          style={{
+            textShadow:
+              "0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.4)",
+            letterSpacing: "0.1em",
+          }}
+        >
+          DONE
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function addFeeTransferInstruction(
+  tx: VersionedTransaction,
+  fromMint: string,
+  fromAmount: string,
+  decimals: number,
+  userPublicKey: string,
+): VersionedTransaction {
+  const feeAmount = BigInt(
+    Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
+  );
+
+  if (feeAmount === 0n) {
+    return tx;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const userPubkey = new PublicKey(userPublicKey);
+    const fromMintPubkey = new PublicKey(fromMint);
+
+    let feeInstruction: TransactionInstruction;
+
+    if (fromMint === SOL_MINT) {
+      feeInstruction = SystemProgram.transfer({
+        fromPubkey: userPubkey,
+        toPubkey: feeWalletPubkey,
+        lamports: Number(feeAmount),
+      });
+    } else {
+      const userTokenAccount = getAssociatedTokenAddress(
+        fromMintPubkey,
+        userPubkey,
+        false,
+      );
+      const feeTokenAccount = getAssociatedTokenAddress(
+        fromMintPubkey,
+        feeWalletPubkey,
+        false,
+      );
+
+      feeInstruction = createTransferCheckedInstruction(
+        userTokenAccount,
+        fromMintPubkey,
+        feeTokenAccount,
+        userPubkey,
+        Number(feeAmount),
+        decimals,
+      );
+    }
+
+    tx.message.instructions.push(feeInstruction);
+    return tx;
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+    return tx;
+  }
 }
 
-const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const SWAP_FEE_BPS = 30;
+function coerceSecretKey(val: unknown): Uint8Array | null {
+  try {
+    if (!val) return null;
+    if (val instanceof Uint8Array) return val;
+    if (Array.isArray(val)) return Uint8Array.from(val as number[]);
+    if (typeof val === "string") {
+      try {
+        const bin = atob(val);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        if (out.length > 0) return out;
+      } catch {}
+      try {
+        const arr = JSON.parse(val);
+        if (Array.isArray(arr)) return Uint8Array.from(arr as number[]);
+      } catch {}
+    }
+    if (typeof val === "object") {
+      const values = Object.values(val as Record<string, unknown>).filter(
+        (x) => typeof x === "number",
+      ) as number[];
+      if (values.length > 0) return Uint8Array.from(values);
+    }
+  } catch {}
+  return null;
+}
 
-export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
-  const { wallet, balance, tokens, refreshBalance, connection } =
-    useWallet() as any;
+function getKeypair(walletData: any): Keypair | null {
+  try {
+    const sk = coerceSecretKey(walletData?.secretKey);
+    if (!sk || sk.length === 0) return null;
+    return Keypair.fromSecretKey(sk);
+  } catch {
+    return null;
+  }
+}
+
+async function sendSignedTx(
+  txBase64: string,
+  keypair: Keypair,
+): Promise<string> {
+  const buf = bytesFromBase64(txBase64);
+  const vtx = VersionedTransaction.deserialize(buf);
+  vtx.sign([keypair]);
+  const signed = vtx.serialize();
+  const signedBase64 = base64FromBytes(signed);
+
+  // Send transaction through backend proxy to avoid CORS issues
+  try {
+    const response = await fetch("/api/solana-send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        signedBase64,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.signature || data.result;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to send transaction: ${msg}`);
+  }
+}
+
+export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const { wallet, tokens: userTokens } = useWallet();
   const { toast } = useToast();
 
-  const [fromToken, setFromToken] = useState<TokenInfo | null>(null);
-  const [toToken, setToToken] = useState<TokenInfo | null>(null);
-  const [fromAmount, setFromAmount] = useState("");
-  const [toAmount, setToAmount] = useState("");
-  const [slippage, setSlippage] = useState("0.5");
+  const [tokenList, setTokenList] = useState([]);
+  const [fromMint, setFromMint] = useState(SOL_MINT);
+  const [toMint, setToMint] = useState(FIXER_MINT);
+  const [amount, setAmount] = useState("");
+  const [quote, setQuote] = useState<any>(null);
+  const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [quote, setQuote] = useState<JupiterQuoteResponse | null>(null);
-  const [meteoraQuote, setMeteoraQuote] = useState<any | null>(null);
-  const [indicative, setIndicative] = useState(false);
-  const [quoteSource, setQuoteSource] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "success">("form");
-  const [txSignature, setTxSignature] = useState<string | null>(null);
-  const [availableTokens, setAvailableTokens] = useState<TokenInfo[]>(
-    tokens || [],
-  );
-  const allTokens = availableTokens;
-  const [supportedMints, setSupportedMints] = useState<Set<string>>(new Set());
-  const [quoteError, setQuoteError] = useState<string>("");
-  const [fromUsdPrice, setFromUsdPrice] = useState<number | null>(null);
-  const [toUsdPrice, setToUsdPrice] = useState<number | null>(null);
-  const [walletReady, setWalletReady] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [quoteAge, setQuoteAge] = useState(0);
 
-  // Monitor wallet readiness
+  // Quote validity constants (in milliseconds)
+  const QUOTE_MAX_AGE_MS = 30000; // Jupiter quotes valid for 30 seconds
+  const QUOTE_WARNING_THRESHOLD_MS = 5000; // Show warning at 5 seconds remaining
+
+  const fromToken = tokenList.find((t) => t.address === fromMint);
+  const toToken = tokenList.find((t) => t.address === toMint);
+  const fromTokenBalance =
+    userTokens?.find((t) => t.mint === fromMint)?.balance || 0;
+  const toTokenBalance =
+    userTokens?.find((t) => t.mint === toMint)?.balance || 0;
+
+  const initTokenList = async () => {
+    if (initialized) return;
+
+    try {
+      // Build token list from TOKEN_MINTS constants + user tokens
+      const tokenMintEntries = Object.entries(TOKEN_MINTS);
+      const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
+        address: mint,
+        symbol,
+        decimals: symbol === "SOL" ? 9 : 6,
+        name: symbol,
+      }));
+
+      // Add user tokens if available (avoid duplicates with standard tokens)
+      const standardMints = new Set(standardTokens.map((t) => t.address));
+      const userTokensNotInStandard = (userTokens || []).filter(
+        (ut) => !standardMints.has(ut.mint),
+      );
+
+      const combinedTokens = [
+        ...standardTokens,
+        ...userTokensNotInStandard.map((ut) => ({
+          address: ut.mint,
+          symbol: ut.symbol,
+          decimals: ut.decimals,
+          name: ut.name,
+        })),
+      ];
+
+      // Sort: SOL first, then FIXERCOIN, then alphabetical
+      combinedTokens.sort((a, b) => {
+        if (a.address === SOL_MINT) return -1;
+        if (b.address === SOL_MINT) return 1;
+        if (a.address === FIXER_MINT) return -1;
+        if (b.address === FIXER_MINT) return 1;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+      setTokenList(combinedTokens);
+      setInitialized(true);
+      setStatus("");
+    } catch (err) {
+      console.error("[SwapInterface] Error loading tokens:", err);
+      // Fallback to minimal token list
+      const fallbackTokens = [
+        { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+        {
+          address: FIXER_MINT,
+          symbol: "FIXERCOIN",
+          decimals: 6,
+          name: "FIXERCOIN",
+        },
+      ];
+      setTokenList(fallbackTokens);
+      setInitialized(true);
+      setStatus("");
+    }
+  };
+
   useEffect(() => {
-    const isReady = !!(
-      wallet &&
-      wallet.publicKey &&
-      wallet.secretKey &&
-      balance !== undefined &&
-      tokens.length > 0
+    if (!wallet) return;
+
+    setInitialized(false);
+
+    if (userTokens && userTokens.length > 0 && tokenList.length === 0) {
+      const fallbackTokens = userTokens.map((ut) => ({
+        address: ut.mint,
+        symbol: ut.symbol,
+        decimals: ut.decimals,
+        name: ut.name,
+      }));
+      setTokenList(fallbackTokens);
+    }
+
+    initTokenList().catch((e) => {
+      console.warn("Token list init warning:", e);
+    });
+  }, [wallet, userTokens]);
+
+  // Track quote age over time
+  useEffect(() => {
+    if (!quote || !quote.quoteTime) {
+      setQuoteAge(0);
+      return;
+    }
+
+    const updateQuoteAge = () => {
+      const age = Date.now() - quote.quoteTime;
+      setQuoteAge(age);
+
+      // Auto-refresh quote if it's getting too old (near expiration)
+      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
+        console.log(
+          "[SwapInterface] Quote approaching expiration, refreshing...",
+        );
+        getQuote().catch((e) => console.warn("Auto-refresh quote failed:", e));
+      }
+    };
+
+    // Update immediately
+    updateQuoteAge();
+
+    // Update every 500ms while quote is valid
+    const interval = setInterval(updateQuoteAge, 500);
+    return () => clearInterval(interval);
+  }, [quote?.quoteTime]);
+
+  // Auto-fetch quotes when amount, fromMint, or toMint changes
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (amount && fromMint && toMint && !isLoading) {
+        getQuote().catch((e) => console.error("Auto-fetch quote failed:", e));
+      } else if (!amount) {
+        setQuote(null);
+        setStatus("");
+      }
+    }, 500); // 500ms debounce to avoid too many requests
+
+    return () => clearTimeout(debounceTimer);
+  }, [amount, fromMint, toMint, wallet]);
+
+  const humanToRaw = (amountStr, decimals) => {
+    const amt = Number(amountStr);
+    if (isNaN(amt) || amt <= 0) throw new Error("Invalid amount");
+    return BigInt(Math.round(amt * Math.pow(10, decimals)));
+  };
+
+  const isQuoteExpired = (): boolean => {
+    if (!quote || !quote.quoteTime) return true;
+    return quoteAge >= QUOTE_MAX_AGE_MS;
+  };
+
+  const isQuoteWarning = (): boolean => {
+    if (!quote || !quote.quoteTime) return false;
+    return (
+      quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS &&
+      !isQuoteExpired()
     );
-    setWalletReady(isReady);
+  };
 
-    if (!isReady) {
-      console.log("[SwapInterface] Wallet not ready:", {
-        wallet: !!wallet,
-        publicKey: !!wallet?.publicKey,
-        secretKey: !!wallet?.secretKey,
-        balance: balance,
-        tokensLength: tokens?.length || 0,
-      });
-    }
-  }, [wallet, balance, tokens]);
+  const getQuoteTimeRemaining = (): number => {
+    const remaining = Math.max(0, QUOTE_MAX_AGE_MS - quoteAge);
+    return Math.ceil(remaining / 1000);
+  };
 
-  useEffect(() => {
-    const loadTokens = async () => {
-      try {
-        const jupiterTokens = await jupiterAPI.getStrictTokenList();
-        const popularTokens: TokenInfo[] = (jupiterTokens || [])
-          .slice(0, 50)
-          .map((jt: any) => ({
-            mint: jt.address,
-            symbol: jt.symbol,
-            name: jt.name,
-            decimals: jt.decimals,
-            logoURI: jt.logoURI,
-          }));
-        setSupportedMints(
-          new Set((jupiterTokens || []).map((t: any) => t.address)),
-        );
-
-        const userTokens = tokens || [];
-        const pumpTokens: TokenInfo[] = (PUMP_TOKENS || []).map((p: any) => ({
-          mint: p.mint,
-          symbol: p.symbol,
-          name: p.symbol,
-          decimals: p.decimals,
-          logoURI: undefined,
-        }));
-
-        const combined = [
-          ...userTokens,
-          ...pumpTokens.filter(
-            (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint),
-          ),
-          ...popularTokens.filter(
-            (pt) => !userTokens.some((t: TokenInfo) => t.mint === pt.mint),
-          ),
-        ];
-        setAvailableTokens(combined);
-      } catch (err) {
-        console.error("Error loading tokens:", err);
-        setAvailableTokens(tokens || []);
-      }
-    };
-
-    loadTokens();
-
-    const sol = (tokens || []).find((t: TokenInfo) => t.symbol === "SOL");
-    if (sol && !fromToken) setFromToken(sol);
-  }, [tokens, fromToken]);
-
-  useEffect(() => {
-    const getQuote = async () => {
-      if (!fromAmount || !fromToken || !toToken) {
-        setQuote(null);
-        setToAmount("");
-        setQuoteError("");
-        setIndicative(false);
-        setQuoteSource(null);
-        return;
-      }
-
-      if (
-        supportedMints.size > 0 &&
-        (!supportedMints.has(fromToken.mint) ||
-          !supportedMints.has(toToken.mint))
-      ) {
-        // Not in Jupiter strict list; still attempt unified quote (Meteora/Pumpfun/Bridged)
-        console.debug(
-          "Tokens not in Jupiter strict list, trying other providers...",
-        );
-      }
-      setQuoteError("");
-
-      if (parseFloat(fromAmount) <= 0) {
-        setToAmount("");
-        setIndicative(false);
-        return;
-      }
-
+  const getQuote = async () => {
+    try {
+      setStatus("Computing Jupiter routes…");
       setIsLoading(true);
-      try {
-        const amount = jupiterAPI.formatSwapAmount(
-          parseFloat(fromAmount),
-          fromToken.decimals,
-        );
-        const amountInt = parseInt(amount, 10);
-        if (!amountInt || amountInt <= 0) {
-          setToAmount("");
-          setQuoteError("");
-          setIndicative(false);
-          setQuoteSource(null);
-          setIsLoading(false);
-          return;
-        }
 
-        console.log(
-          `Fetching unified quote for ${fromToken.symbol} -> ${toToken.symbol}, amount: ${amountInt}`,
-        );
-
-        // Use unified quote endpoint which tries: Jupiter → Meteora → PumpFun → Bridged
-        const slippageBps = Math.max(
-          1,
-          Math.round(parseFloat(slippage || "0.5") * 100),
-        );
-
-        const isPumpPair =
-          (fromToken.mint === TOKEN_MINTS.SOL &&
-            PUMP_TOKENS.some((p: any) => p.mint === toToken.mint)) ||
-          (toToken.mint === TOKEN_MINTS.SOL &&
-            PUMP_TOKENS.some((p: any) => p.mint === fromToken.mint));
-        const pumpMint =
-          fromToken.mint === TOKEN_MINTS.SOL ? toToken.mint : fromToken.mint;
-        const urlParams =
-          `/api/swap/quote?inputMint=${fromToken.mint}&outputMint=${toToken.mint}&amount=${amountInt}&slippageBps=${slippageBps}` +
-          (isPumpPair ? `&mint=${encodeURIComponent(pumpMint)}` : "");
-        const quoteResponse = await fetch(resolveApiUrl(urlParams)).then(
-          (res) => res.json(),
-        );
-
-        // Check if unified quote succeeded
-        if (quoteResponse && !quoteResponse.error) {
-          const q = quoteResponse.quote;
-          const outAmount =
-            q?.outAmount ||
-            q?.estimatedOut ||
-            q?.minReceived ||
-            q?.minimum_received ||
-            null;
-
-          if (outAmount && outAmount !== "0") {
-            console.log(
-              `✅ Quote succeeded via ${quoteResponse.source}: ${outAmount}`,
-            );
-
-            // Store the full quote response for execution
-            setQuote(q);
-            setMeteoraQuote(null);
-            setQuoteSource(quoteResponse.source || null);
-
-            // Parse and display output amount
-            const outHuman =
-              typeof outAmount === "string"
-                ? parseInt(outAmount, 10) / Math.pow(10, toToken.decimals)
-                : Number(outAmount) / Math.pow(10, toToken.decimals);
-
-            setToAmount(isFinite(outHuman) ? outHuman.toFixed(6) : "");
-            setQuoteError("");
-            setIndicative(false);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // If unified quote failed, fall back to Birdeye pricing
-        console.log(
-          `Unified quote failed, falling back to Birdeye pricing for ${fromToken.symbol} ↔ ${toToken.symbol}`,
-        );
-
-        const [fromBirdeye, toBirdeye] = await Promise.all([
-          birdeyeAPI.getTokenByMint(fromToken.mint),
-          birdeyeAPI.getTokenByMint(toToken.mint),
-        ]);
-        const fromUsd = fromBirdeye?.priceUsd
-          ? parseFloat(String(fromBirdeye.priceUsd))
-          : null;
-        const toUsd = toBirdeye?.priceUsd
-          ? parseFloat(String(toBirdeye.priceUsd))
-          : null;
-
-        if (fromUsd && toUsd && fromUsd > 0 && toUsd > 0) {
-          const fromHuman = amountInt / Math.pow(10, fromToken.decimals);
-          const estOutHuman = (fromHuman * fromUsd) / toUsd;
-          setToAmount(estOutHuman.toFixed(6));
-          setQuote(null); // Clear actual quote, use indicative
-          setQuoteError("");
-          setIndicative(true);
-          setQuoteSource("indicative");
-        } else {
-          console.debug(
-            `No pricing data available: fromUsd=${fromUsd}, toUsd=${toUsd}`,
-          );
-          setToAmount("");
-          setQuote(null);
-          setQuoteError("");
-          setIndicative(false);
-          setQuoteSource(null);
-        }
-      } catch (err) {
-        console.debug("Quote fetch error:", err);
-        setToAmount("");
-        setQuote(null);
-        setQuoteError("");
-        setIndicative(false);
-        setQuoteSource(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const t = setTimeout(getQuote, 300);
-    return () => clearTimeout(t);
-  }, [fromAmount, fromToken, toToken, slippage]);
-
-  // Load USD prices for selected tokens
-  useEffect(() => {
-    const loadPrices = async () => {
-      if (!fromToken && !toToken) {
-        setFromUsdPrice(null);
-        setToUsdPrice(null);
-        return;
-      }
-      const mints: string[] = [];
-      if (fromToken?.mint) mints.push(fromToken.mint);
-      if (toToken?.mint && toToken.mint !== fromToken?.mint)
-        mints.push(toToken.mint);
-      if (mints.length === 0) {
-        setFromUsdPrice(null);
-        setToUsdPrice(null);
-        return;
-      }
-      try {
-        const tokens = await birdeyeAPI.getTokensByMints(mints);
-        const birdeyeMap = birdeyeAPI.getTokenPrices(tokens);
-        const fromPrice: number | null = fromToken?.mint
-          ? (birdeyeMap[fromToken.mint] ?? null)
-          : null;
-        const toPrice: number | null = toToken?.mint
-          ? (birdeyeMap[toToken.mint] ?? null)
-          : null;
-        setFromUsdPrice(fromPrice ?? null);
-        setToUsdPrice(toPrice ?? null);
-      } catch (e) {
-        setFromUsdPrice(null);
-        setToUsdPrice(null);
-      }
-    };
-    loadPrices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromToken?.mint, toToken?.mint]);
-
-  const handleSwapTokens = () => {
-    const prevFrom = fromToken;
-    const prevFromAmount = fromAmount;
-    setFromToken(toToken);
-    setToToken(prevFrom);
-    setFromAmount(toAmount);
-    setToAmount(prevFromAmount);
-  };
-
-  const getTokenBalance = (token?: TokenInfo) => {
-    if (!token) return 0;
-    if (token.symbol === "SOL") return balance || 0;
-    return token.balance || 0;
-  };
-
-  const formatAmount = (amount: number | string, symbol?: string) => {
-    const num =
-      typeof amount === "string" ? parseFloat(amount) : (amount as number);
-    if (isNaN(num)) return "0.00";
-    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-    return num.toFixed(3);
-  };
-
-  const validateSwap = (): string | null => {
-    if (!fromToken || !toToken) return "Please select both tokens";
-    if (!fromAmount || parseFloat(fromAmount) <= 0)
-      return "Enter a valid amount";
-    if (parseFloat(fromAmount) > getTokenBalance(fromToken))
-      return "Insufficient balance";
-
-    // Check if enough SOL for network fees
-    const solToken = availableTokens.find((t) => t.symbol === "SOL");
-    if (solToken) {
-      const solBalance = getTokenBalance(solToken);
-      const swapAmt = parseFloat(fromAmount || "0");
-      // Need swap amount + transaction fee (~0.00025) + small buffer
-      const minNeeded = fromToken?.symbol === "SOL" ? swapAmt + 0.0003 : 0.0005;
-      if (solBalance < minNeeded) {
-        return `Insufficient SOL. Need ${minNeeded.toFixed(6)} SOL, have ${solBalance.toFixed(6)} SOL`;
-      }
-    }
-
-    return null;
-  };
-
-  const getKeypair = (): Keypair | null => {
-    try {
       if (!wallet) {
-        console.error("getKeypair: wallet is null");
-        return null;
-      }
-      if (!wallet.secretKey) {
-        console.error("getKeypair: wallet.secretKey is not available");
-        return null;
-      }
-      if (!wallet.publicKey) {
-        console.error("getKeypair: wallet.publicKey is not available");
+        setStatus("No wallet detected.");
+        setIsLoading(false);
         return null;
       }
 
-      let secretKey: Uint8Array;
+      if (!fromMint || !toMint) {
+        throw new Error("Select tokens");
+      }
 
-      if (typeof wallet.secretKey === "string") {
-        try {
-          secretKey = Uint8Array.from(bytesFromBase64(wallet.secretKey));
-        } catch (e) {
-          console.error("Failed to decode base64 secretKey:", e);
-          return null;
-        }
-      } else if (Array.isArray(wallet.secretKey)) {
-        secretKey = Uint8Array.from(wallet.secretKey);
-      } else if (wallet.secretKey instanceof Uint8Array) {
-        secretKey = wallet.secretKey;
-      } else {
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+      if (!fromToken || !toToken) {
+        throw new Error("Token metadata not found");
+      }
+
+      const decimalsIn = fromToken.decimals ?? 6;
+
+      // Validate amount is not empty or zero
+      const amountNum = Number(amount || "0");
+      if (isNaN(amountNum) || amountNum <= 0) {
+        setQuote(null);
+        setStatus("Enter an amount to get a quote");
+        setIsLoading(false);
+        return null;
+      }
+
+      const amountRaw = humanToRaw(amount, decimalsIn);
+      const amountStr = jupiterV6API.formatSwapAmount(
+        Number(amountRaw) / Math.pow(10, decimalsIn),
+        decimalsIn,
+      );
+
+      // Use 1% slippage tolerance (100 basis points) for more forgiving execution
+      const quoteResponse = await jupiterV6API.getQuote(
+        fromMint,
+        toMint,
+        amountStr,
+        100,
+      );
+
+      if (!quoteResponse) {
+        setQuote(null);
+        setStatus("No route available. Try a different amount or token pair.");
+        setIsLoading(false);
+        return null;
+      }
+
+      // Validate quote response has required fields
+      if (!quoteResponse.outAmount) {
+        setQuote(null);
+        setStatus("Invalid quote response. Please try again.");
+        setIsLoading(false);
         console.error(
-          "getKeypair: secretKey is in an unsupported format:",
-          typeof wallet.secretKey,
-        );
-        return null;
-      }
-
-      if (!secretKey || secretKey.length !== 64) {
-        console.error(
-          `getKeypair: Invalid secret key length: ${secretKey?.length}`,
+          "[SwapInterface] Quote missing outAmount:",
+          quoteResponse,
         );
         return null;
       }
 
       try {
-        return Keypair.fromSecretKey(secretKey);
-      } catch (err) {
+        const outAmount = BigInt(quoteResponse.outAmount);
+        const outHuman =
+          Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+        const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
+
+        setQuote({
+          quoteResponse,
+          outHuman,
+          outToken: toToken.symbol,
+          hops: quoteResponse.routePlan?.length ?? 0,
+          priceImpact,
+          quoteTime: Date.now(),
+          slippageBps: 100,
+        });
+        setStatus("");
+        setIsLoading(false);
+        return { quoteResponse };
+      } catch (bigintErr) {
+        setQuote(null);
+        setStatus("Invalid quote amount format. Please try again.");
+        setIsLoading(false);
         console.error(
-          "getKeypair: Failed to create Keypair from secret key:",
-          err,
+          "[SwapInterface] BigInt conversion error:",
+          bigintErr,
+          quoteResponse,
         );
         return null;
       }
     } catch (err) {
-      console.error("getKeypair unexpected error:", err);
-      return null;
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      let friendlyMsg = "Failed to get quote. ";
+
+      if (errorMsg.includes("timeout")) {
+        friendlyMsg += "Network timeout. Please try again.";
+      } else if (errorMsg.includes("STALE_QUOTE")) {
+        friendlyMsg += "Quote expired. Please request a new quote.";
+      } else if (errorMsg.includes("simulation")) {
+        friendlyMsg += "Transaction would fail. Try a different amount.";
+      } else if (errorMsg.includes("NO_ROUTE")) {
+        friendlyMsg += "No trading route found for this pair.";
+      } else {
+        friendlyMsg += errorMsg;
+      }
+
+      setStatus(friendlyMsg);
+      setIsLoading(false);
+      console.error("[SwapInterface] Quote error:", err);
     }
   };
 
-  const sendSwapFee = async (): Promise<void> => {
-    if (
-      !wallet ||
-      !wallet.publicKey ||
-      !wallet.secretKey ||
-      !connection ||
-      !fromToken
-    )
-      return;
+  const confirmSwap = async () => {
     try {
-      const kp = getKeypair();
-      if (!kp) return;
+      setStatus("Preparing swap��");
+      setIsLoading(true);
 
-      const feeRate = SWAP_FEE_BPS / 10000; // 0.30%
-      const inputAmt = parseFloat(fromAmount || "0");
-      if (!isFinite(inputAmt) || inputAmt <= 0) return;
-
-      let feeInSol = 0;
-      if (fromToken.symbol === "SOL") {
-        feeInSol = inputAmt * feeRate;
-      } else {
-        const solInfo = await birdeyeAPI.getTokenByMint(TOKEN_MINTS.SOL);
-        const solUsd = solInfo?.priceUsd || 0;
-        const fromUsd = fromUsdPrice ?? null;
-        const toUsd = toUsdPrice ?? null;
-        const outAmt = parseFloat(toAmount || "0");
-
-        let usdValue: number | null = null;
-        if (fromUsd && isFinite(fromUsd)) {
-          usdValue = inputAmt * fromUsd;
-        } else if (toUsd && isFinite(toUsd) && isFinite(outAmt) && outAmt > 0) {
-          usdValue = outAmt * toUsd;
-        }
-
-        if (usdValue && solUsd > 0) {
-          feeInSol = (usdValue * feeRate) / solUsd;
-        } else {
-          return; // cannot price accurately; skip fee silently
-        }
+      if (!wallet) {
+        setStatus("No wallet detected.");
+        setIsLoading(false);
+        return null;
       }
 
-      const feeLamports = Math.floor(feeInSol * LAMPORTS_PER_SOL);
-      if (feeLamports <= 0) return;
+      if (!amount || parseFloat(amount) <= 0) {
+        setStatus("Enter a valid amount");
+        setIsLoading(false);
+        return null;
+      }
 
-      const feeWalletPubkey = new PublicKey(FEE_WALLET);
-      const latestBlockhash = await connection.getLatestBlockhash();
-      const tx = new Transaction({
-        recentBlockhash: latestBlockhash.blockhash,
-        feePayer: kp.publicKey,
-      }).add(
-        SystemProgram.transfer({
-          fromPubkey: kp.publicKey,
-          toPubkey: feeWalletPubkey,
-          lamports: feeLamports,
-        }),
+      if (isQuoteExpired()) {
+        setStatus("Quote has expired. Please get a fresh quote.");
+        setIsLoading(false);
+        toast({
+          title: "Quote Expired",
+          description:
+            "Your quote has expired. Please request a new quote before swapping.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+
+      if (!fromToken || !toToken) {
+        setStatus("Token metadata not found");
+        setIsLoading(false);
+        return null;
+      }
+
+      const amountInHuman = parseFloat(amount);
+
+      // ✅ Use Jupiter V6 for all token-to-token swaps
+      setStatus("Preparing Jupiter swap…");
+
+      if (!quote || !quote.quoteResponse) {
+        throw new Error("Please get a quote first by clicking 'Get Quote'");
+      }
+
+      // Smart quote refresh: only refresh if quote is getting old (>15 seconds)
+      const oldQuote = quote.quoteResponse;
+      let freshQuote = oldQuote;
+      const slippageBps = quote.slippageBps || 100;
+
+      // Check if quote still has reasonable time left (>15 seconds remaining)
+      const timeRemaining = getQuoteTimeRemaining();
+      const shouldRefresh = timeRemaining <= 15;
+
+      if (shouldRefresh) {
+        setStatus("Refreshing quote…");
+        try {
+          const refreshed = await jupiterV6API.getQuote(
+            oldQuote.inputMint,
+            oldQuote.outputMint,
+            parseInt(oldQuote.inAmount),
+            slippageBps,
+          );
+          if (refreshed) {
+            freshQuote = refreshed;
+            console.log("✅ Quote refreshed successfully before swap");
+          } else {
+            console.warn("Quote refresh returned null, using original quote");
+          }
+        } catch (refreshErr) {
+          console.warn("Quote refresh failed:", refreshErr);
+          const refreshErrorMsg =
+            refreshErr instanceof Error
+              ? refreshErr.message
+              : String(refreshErr);
+          if (refreshErrorMsg.includes("timeout")) {
+            throw new Error(`Quote refresh timed out. Please try again.`);
+          }
+          // If refresh fails for other reasons and quote still has time, continue with original
+          console.warn("Using original quote for swap");
+        }
+      } else {
+        console.log(
+          `Quote still fresh (${timeRemaining}s remaining), skipping refresh`,
+        );
+      }
+
+      // Request swap transaction from Jupiter
+      setStatus("Creating swap transaction…");
+      const swapResponse = await jupiterV6API.createSwap(
+        freshQuote,
+        wallet.publicKey,
+        {
+          wrapAndUnwrapSol: true,
+          useSharedAccounts: true,
+        },
       );
 
-      tx.sign(kp);
-      const serialized = tx.serialize();
+      if (!swapResponse || !swapResponse.swapTransaction) {
+        throw new Error("Failed to create swap transaction");
+      }
 
-      let bin = "";
-      for (let i = 0; i < serialized.length; i++)
-        bin += String.fromCharCode(serialized[i]);
-      const signedBase64 = btoa(bin);
+      const txBase64 = swapResponse.swapTransaction;
 
-      const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signedBase64 }),
-      });
+      try {
+        // Sign the transaction with local wallet
+        setStatus("Signing transaction…");
+        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
 
-      if (!sendResp.ok) return;
-      const jb = await sendResp.json();
-      if (jb.result) {
-        console.log("Swap fee transferred:", jb.result);
+        const keypair = getKeypair(wallet);
+        if (!keypair) {
+          throw new Error("Invalid wallet secret key");
+        }
+
+        // Submit signed transaction
+        setStatus("Submitting transaction…");
+        const txSignature = await sendSignedTx(
+          base64FromBytes(tx.serialize()),
+          keypair,
+        );
+
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 1600);
+
+        setAmount("");
+        setQuote(null);
+      } catch (swapError) {
+        throw new Error(
+          `Swap failed: ${swapError instanceof Error ? swapError.message : String(swapError)}`,
+        );
       }
     } catch (err) {
-      console.warn("Failed to send swap fee:", err);
-    }
-  };
+      setIsLoading(false);
+      setQuote(null);
+      setStatus("");
 
-  const handleSwap = () => {
-    // Check wallet availability first
-    if (!wallet || !wallet.publicKey || !wallet.secretKey) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet before performing a swap.",
-        variant: "destructive",
-      });
-      return;
-    }
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
 
-    const err = validateSwap();
-    if (err) {
-      toast({
-        title: "Invalid Swap",
-        description: err,
-        variant: "destructive",
-      });
-      return;
-    }
-    executeSwap();
-  };
-
-  const executeSwap = async () => {
-    if (!wallet || !wallet.publicKey || !wallet.secretKey) {
-      toast({
-        title: "Wallet Error",
-        description:
-          "Wallet is not properly initialized. Please reconnect your wallet.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setIsLoading(true);
-
-    try {
-      // Helper to submit a single-quote swap via Jupiter
-      const submitQuote = async (q: JupiterQuoteResponse): Promise<string> => {
-        if (!wallet || !wallet.publicKey) {
-          throw new Error(
-            "Wallet not available. Please reconnect your wallet.",
-          );
-        }
-
-        const swapRequest = {
-          quoteResponse: q,
-          userPublicKey: wallet.publicKey,
-          wrapAndUnwrapSol: true,
-        } as any;
-        const swapResponse = await jupiterAPI.getSwapTransaction(swapRequest);
-        if (!swapResponse || !swapResponse.swapTransaction)
-          throw new Error("Failed to get swap transaction");
-        const kp = getKeypair();
-        if (!kp)
-          throw new Error(
-            "Missing wallet key to sign transaction. Please ensure your wallet is properly connected.",
-          );
-        const swapTransactionBuf = bytesFromBase64(
-          swapResponse.swapTransaction,
-        );
-        const tx = VersionedTransaction.deserialize(swapTransactionBuf);
-        tx.sign([kp]);
-        const serialized = tx.serialize();
-
-        if (connection && typeof connection.sendRawTransaction === "function") {
-          const sig = await connection.sendRawTransaction(serialized, {
-            skipPreflight: false,
-          });
-          return sig;
-        }
-
-        const signedBase64 = (() => {
-          let bin = "";
-          const arr = serialized;
-          for (let i = 0; i < arr.length; i++)
-            bin += String.fromCharCode(arr[i]);
-          try {
-            return btoa(bin);
-          } catch (e) {
-            return base64FromBytes(arr);
-          }
-        })();
-
-        // Simulate
-        const simResp = await fetch(resolveApiUrl("/api/solana-simulate"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signedBase64 }),
-        });
-        if (!simResp.ok) {
-          const txt = await simResp.text().catch(() => "");
-          throw new Error(txt || simResp.statusText || "Simulation failed");
-        }
-        const simJson = await simResp.json();
-        if (simJson?.insufficientLamports) {
-          const d = simJson.insufficientLamports;
-          const missingSOL = d.diffSol ?? (d.diff ? d.diff / 1e9 : null);
-          throw new Error(
-            `Insufficient SOL (~${missingSOL?.toFixed(6) ?? "0.000000"}) for fees/rent`,
-          );
-        }
-
-        // Send
-        const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signedBase64 }),
-        });
-        if (!sendResp.ok) {
-          const txt = await sendResp.text().catch(() => "");
-          throw new Error(txt || sendResp.statusText || "Send failed");
-        }
-        const jb = await sendResp.json();
-        if (jb.error) {
-          throw new Error(jb.error?.message || "RPC send error");
-        }
-        return jb.result as string;
-      };
-
-      // If we have a direct quote, do normal single-leg swap
-      if (quote) {
-        const sig = await submitQuote(quote);
-        setTxSignature(sig);
-        setStep("success");
-        setTimeout(() => refreshBalance?.(), 2000);
-        toast({
-          title: "Swap Submitted",
-          description: `Transaction submitted: ${sig}. Awaiting confirmation...`,
-        });
-        if (connection && typeof connection.getLatestBlockhash === "function") {
-          try {
-            const latest = await connection.getLatestBlockhash();
-            await connection.confirmTransaction({
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-              signature: sig,
-            });
-            toast({
-              title: "Swap Confirmed",
-              description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol} confirmed.`,
-            });
-            // Send fee silently after swap confirmation
-            await sendSwapFee();
-          } catch {}
-        }
-        return;
-      }
-
-      // If no Jupiter quote but we have a Meteora quote, use Meteora to build & send the swap
-      if (!quote && meteoraQuote) {
-        try {
-          if (!wallet || !wallet.publicKey) {
-            throw new Error(
-              "Wallet not available for Meteora swap. Please reconnect your wallet.",
-            );
-          }
-
-          const swapTx = await buildMeteoraSwap(
-            meteoraQuote.route,
-            wallet.publicKey,
-          );
-
-          const txBase64 =
-            swapTx?.transaction ||
-            swapTx?.swapTransaction ||
-            swapTx?.transactionBase64 ||
-            swapTx?.base64 ||
-            swapTx;
-          if (!txBase64 || typeof txBase64 !== "string") {
-            throw new Error("Invalid swap transaction returned from Meteora");
-          }
-
-          // Prefer provider-based signing (do NOT use raw secret keys)
-          const provider =
-            (window as any).solana ?? (window as any).fixorium ?? null;
-          if (!provider || typeof provider.signTransaction !== "function") {
-            throw new Error(
-              "Wallet provider does not support signTransaction. Connect a compatible wallet/provider.",
-            );
-          }
-
-          const tx = Transaction.from(Buffer.from(txBase64, "base64"));
-          tx.feePayer = new PublicKey(wallet.publicKey);
-
-          const signedTx = await provider.signTransaction(tx);
-
-          let sig: string;
-          if (
-            connection &&
-            typeof connection.sendRawTransaction === "function"
-          ) {
-            sig = await connection.sendRawTransaction(signedTx.serialize(), {
-              skipPreflight: false,
-            });
-            // confirm
-            const latest = await connection.getLatestBlockhash();
-            await connection.confirmTransaction({
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-              signature: sig,
-            });
-          } else {
-            const signedBase64 = (() => {
-              try {
-                const arr = signedTx.serialize();
-                let bin = "";
-                for (let i = 0; i < arr.length; i++)
-                  bin += String.fromCharCode(arr[i]);
-                return btoa(bin);
-              } catch (e) {
-                return base64FromBytes(signedTx.serialize());
-              }
-            })();
-            const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ signedBase64 }),
-            });
-            if (!sendResp.ok) {
-              const txt = await sendResp.text().catch(() => "");
-              throw new Error(txt || sendResp.statusText || "Send failed");
-            }
-            const jb = await sendResp.json();
-            if (jb.error) throw new Error(jb.error?.message || "Send failed");
-            sig = jb.result as string;
-          }
-
-          setTxSignature(sig);
-          setStep("success");
-          setTimeout(() => refreshBalance?.(), 2000);
-          toast({
-            title: "Swap Completed!",
-            description: `Swap ${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
-          });
-          // send fee
-          await sendSwapFee();
-          return;
-        } catch (e) {
-          console.error("Meteora swap failed:", e);
-          // continue to bridged attempts below
-        }
-      }
-
-      // No direct route: attempt bridged two-leg swap via USDC, USDT, or SOL
-      if (!fromToken || !toToken) throw new Error("Missing tokens");
-      const slippageBps = Math.max(
-        1,
-        Math.round(parseFloat(slippage || "0.5") * 100),
-      );
-      const amountInt = parseInt(
-        jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
-        10,
-      );
-      // Prefer SOL as bridge first. For pump.fun tokens, only try SOL.
-      const isPumpfunToken =
-        toToken?.mint === TOKEN_MINTS.FIXERCOIN ||
-        PUMP_TOKENS.some(
-          (p: any) => p.mint === toToken?.mint || p.mint === fromToken?.mint,
-        );
-      const BRIDGES = isPumpfunToken
-        ? [TOKEN_MINTS.SOL]
-        : [TOKEN_MINTS.SOL, TOKEN_MINTS.USDC, TOKEN_MINTS.USDT];
-
-      const bridgeAttempts = [];
-      let lastBridgeError = null;
-
-      for (const bridge of BRIDGES) {
-        if (bridge === fromToken.mint || bridge === toToken.mint) continue;
-        const bridgeToken = allTokens.find((t) => t.mint === bridge);
-        const bridgeDecimals =
-          bridgeToken?.decimals ?? (bridge === TOKEN_MINTS.USDT ? 6 : 6);
-
-        try {
-          console.log(
-            `Attempting bridged swap via ${bridgeToken?.symbol || bridge}...`,
-          );
-
-          // With improved retry logic on client/server, allow longer timeout for retries
-          const q1 = await jupiterAPI.getQuote(
-            fromToken.mint,
-            bridge,
-            amountInt,
-            slippageBps,
-          );
-          if (!q1 || !q1.outAmount || q1.outAmount === "0") {
-            const reason = !q1
-              ? "no_quote_leg1"
-              : q1.outAmount === "0"
-                ? "zero_output_leg1"
-                : "empty_outAmount_leg1";
-            bridgeAttempts.push({
-              bridge: bridgeToken?.symbol || bridge,
-              status: reason,
-            });
-            console.warn(
-              `Bridge ${bridgeToken?.symbol} leg1 failed: ${reason}`,
-            );
-            continue;
-          }
-
-          const out1 = jupiterAPI.parseSwapAmount(q1.outAmount, bridgeDecimals);
-          const amount2 = jupiterAPI.formatSwapAmount(out1, bridgeDecimals);
-          const q2 = await jupiterAPI.getQuote(
-            bridge,
-            toToken.mint,
-            parseInt(amount2, 10),
-            slippageBps,
-          );
-          if (!q2 || !q2.outAmount || q2.outAmount === "0") {
-            const reason = !q2
-              ? "no_quote_leg2"
-              : q2.outAmount === "0"
-                ? "zero_output_leg2"
-                : "empty_outAmount_leg2";
-            bridgeAttempts.push({
-              bridge: bridgeToken?.symbol || bridge,
-              status: reason,
-            });
-            console.warn(
-              `Bridge ${bridgeToken?.symbol} leg2 failed: ${reason}`,
-            );
-            continue;
-          }
-
-          // Execute leg1 then leg2
-          console.log(`Executing bridged swap via ${bridgeToken?.symbol}...`);
-          const sig1 = await submitQuote(q1);
-          toast({ title: "Leg 1 submitted", description: sig1 });
-          const sig2 = await submitQuote(q2);
-          setTxSignature(sig2);
-          setToAmount(
-            jupiterAPI
-              .parseSwapAmount(q2.outAmount, toToken.decimals)
-              .toFixed(6),
-          );
-          setStep("success");
-          setTimeout(() => refreshBalance?.(), 2000);
-          toast({
-            title: "Swap Completed!",
-            description: `Bridged via ${bridgeToken?.symbol || "bridge"}`,
-          });
-          // Send fee silently after swap completion
-          await sendSwapFee();
-          return;
-        } catch (bridgeErr) {
-          lastBridgeError = bridgeErr;
-          const errMsg =
-            bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr);
-          console.warn(
-            `Bridge attempt via ${bridgeToken?.symbol} failed:`,
-            bridgeErr,
-          );
-          bridgeAttempts.push({
-            bridge: bridgeToken?.symbol || bridge,
-            status: "error",
-            error: errMsg.substring(0, 50),
-          });
-          continue;
-        }
-      }
-
-      const attemptSummary = bridgeAttempts
-        .map((a) => `${a.bridge} (${a.status})`)
-        .join(", ");
-      const errorDetail = lastBridgeError
-        ? lastBridgeError instanceof Error
-          ? lastBridgeError.message
-          : String(lastBridgeError)
-        : "Unknown error";
-
-      throw new Error(
-        `No executable bridged route found. Attempted: ${attemptSummary || "none"}. ${errorDetail}`,
-      );
-    } catch (err: any) {
-      console.error("Swap execution error:", err);
-
-      let errorMsg = err instanceof Error ? err.message : String(err);
-
-      // Improve error messages
       if (
-        errorMsg.includes("Wallet not available") ||
-        errorMsg.includes("Missing wallet") ||
-        errorMsg.includes("not properly initialized")
+        errorMsg.includes("QUOTE_EXPIRED") ||
+        errorMsg.includes("STALE_QUOTE") ||
+        errorMsg.includes("expired") ||
+        errorMsg.includes("Quote expired")
       ) {
-        errorMsg = `Wallet connection lost. Please ensure your wallet is properly connected and try again.`;
-      } else if (
-        errorMsg.includes("insufficient lamports") ||
-        errorMsg.includes("Insufficient SOL")
-      ) {
-        errorMsg = `Insufficient SOL for transaction. You need more SOL to cover fees and rent. Current balance: ~${(balance || 0).toFixed(6)} SOL. Try adding more SOL to your wallet.`;
-      } else if (errorMsg.includes("custom program error: 0x1")) {
-        errorMsg = `Transaction failed: insufficient funds. You may need more SOL for transaction fees. Current balance: ~${(balance || 0).toFixed(6)} SOL. Add more SOL and try again.`;
-      } else if (errorMsg.includes("secret key")) {
-        errorMsg = `Wallet signing failed. Your wallet may not be properly configured. Please reconnect your wallet and try again.`;
-      } else if (
-        errorMsg.includes("No executable bridged route found") ||
-        errorMsg.includes("Attempted bridges")
-      ) {
-        const isFixercoin = toToken?.symbol?.toLowerCase().includes("fixer");
-        const isPumpfun = toToken?.mint === TOKEN_MINTS.FIXERCOIN; // pump.fun tokens
-        let suggestion =
-          "Unable to find a swap route. Try: (1) Swapping through an intermediate token like USDC, (2) Using a smaller amount, or (3) Checking if both tokens have adequate liquidity.";
-        if (isPumpfun) {
-          suggestion +=
-            " FIXERCOIN is a pump.fun token - try using Raydium DEX directly for better liquidity, or swap to USDC first then bridge manually.";
-        }
-        errorMsg = suggestion;
+        toast({
+          title: "Quote Expired",
+          description:
+            "The quote expired or market conditions changed. Please request a new quote and try again.",
+          variant: "default",
+        });
+        return null;
+      }
+
+      if (errorMsg.includes("refresh failed") || errorMsg.includes("timeout")) {
+        toast({
+          title: "Network Error",
+          description:
+            "Failed to refresh quote due to network issues. Please try again.",
+          variant: "destructive",
+        });
+        return null;
       }
 
       toast({
         title: "Swap Failed",
-        description: errorMsg,
+        description: errorMsg || "Unknown error occurred",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Meteora helpers - using proxied endpoints through server
-  async function getMeteoraQuote(
-    inputMint: string,
-    outputMint: string,
-    amount: number,
-  ) {
-    const url = `${resolveApiUrl("/api/swap/meteora/quote")}?inputMint=${encodeURIComponent(
-      inputMint,
-    )}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(
-      String(amount),
-    )}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Meteora quote failed: ${resp.status}`);
-    return resp.json();
-  }
-
-  async function buildMeteoraSwap(_route: any, userPublicKey: string) {
-    // Use local unified /api/swap endpoint with provider=meteora to build an unsigned transaction.
-    if (!fromToken || !toToken || !fromAmount)
-      throw new Error("Missing tokens or amount for Meteora build");
-    const amountInt = parseInt(
-      jupiterAPI.formatSwapAmount(parseFloat(fromAmount), fromToken.decimals),
-      10,
-    );
-    const payload = {
-      provider: "meteora",
-      inputMint: fromToken.mint,
-      outputMint: toToken.mint,
-      amount: amountInt,
-      wallet: userPublicKey,
-      sign: false,
-    } as any;
-
-    const res = await fetch(resolveApiUrl("/api/swap"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(txt || `Meteora build swap failed: ${res.status}`);
+  const executeSwap = async () => {
+    if (!wallet) {
+      toast({
+        title: "Error",
+        description: "Wallet not connected",
+        variant: "destructive",
+      });
+      return;
     }
-    return res.json();
-  }
-
-  const resetSwap = () => {
-    setFromAmount("");
-    setToAmount("");
-    setStep("form");
-    setTxSignature(null);
+    if (!amount || parseFloat(amount) <= 0) {
+      toast({
+        title: "Error",
+        description: "Enter a valid amount",
+        variant: "destructive",
+      });
+      return;
+    }
+    await confirmSwap();
   };
 
-  const TokenSelector: React.FC<{
-    selectedToken: TokenInfo | null;
-    onSelect: (t: TokenInfo) => void;
-    label: string;
-  }> = ({ selectedToken, onSelect, label }) => {
+  if (!wallet) {
     return (
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-[hsl(var(--muted-foreground))]">
-          {label}
-        </label>
-        <div>
-          <Select
-            value={selectedToken?.mint || ""}
-            onValueChange={(v) => {
-              const t = allTokens.find((x) => x.mint === v);
-              if (t) onSelect(t);
-            }}
-          >
-            <SelectTrigger className="w-full bg-[hsl(var(--card))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70">
-              <SelectValue placeholder="Select a token">
-                {selectedToken ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                      <AvatarImage
-                        src={selectedToken.logoURI}
-                        alt={selectedToken.symbol}
-                      />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                        {selectedToken.symbol.slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{selectedToken.symbol}</span>
-                    <span className="text-[hsl(var(--muted-foreground))] text-sm">
-                      (
-                      {formatAmount(
-                        getTokenBalance(selectedToken),
-                        selectedToken.symbol,
-                      )}
-                      )
-                    </span>
-                  </div>
-                ) : null}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="max-h-60 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
-              {allTokens
-                .filter((token) => token.logoURI)
-                .map((token) => (
-                  <SelectItem
-                    key={token.mint}
-                    value={token.mint}
-                    className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]/70 focus:bg-[hsl(var(--card))]/70"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                        <AvatarImage src={token.logoURI} alt={token.symbol} />
-                        <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                          {token.symbol.slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">
-                        {token.symbol} ~{" "}
-                        {formatAmount(getTokenBalance(token), token.symbol)}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    );
-  };
-
-  if (step === "success") {
-    return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
-        <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 pt-8 px-0 sm:px-4">
-          <div className="bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border border-[#e6f6ec]/20 rounded-2xl">
-            <div className="p-8 text-center">
-              <div className="mb-6">
-                <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">
-                  <Check className="h-8 w-8 text-emerald-500" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Swap Completed!
-                </h3>
-                <p className="text-gray-600">
-                  Your transaction has been successfully executed
-                </p>
-              </div>
-
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Swapped:</span>
-                  <span className="font-medium text-gray-900">
-                    {fromAmount} {fromToken?.symbol}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Received:</span>
-                  <span className="font-medium text-gray-900">
-                    {toAmount} {toToken?.symbol}
-                  </span>
-                </div>
-                {txSignature && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Transaction:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-emerald-500">
-                        {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
-                      </span>
-                      <a
-                        href={`https://solscan.io/tx/${txSignature}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-500"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={resetSwap}
-                  className="flex-1 bg-white/50 hover:bg-gray-50 border border-transparent text-gray-900"
-                >
-                  Swap Again
-                </Button>
-                <Button
-                  onClick={onBack}
-                  className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900"
-                >
-                  Back to Wallet
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 px-0 py-4 sm:px-4 relative overflow-hidden">
-      <div className="w-full max-w-none sm:max-w-md mx-auto relative z-10 px-0 sm:px-4">
-        {/* Card */}
-        <div className="rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#e6f6ec]/20 overflow-hidden text-gray-900 bg-transparent sm:bg-gradient-to-br sm:from-[#ffffff] sm:via-[#f0fff4] sm:to-[#a7f3d0]">
-          <div className="p-5 space-y-4">
-            {/* Header with back button */}
-            <div className="flex items-center gap-3 -mt-3 -mx-5 px-5 pt-3 pb-2">
+      <div className="w-full max-w-md mx-auto px-4">
+        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+          <div className="space-y-6 p-6">
+            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -1154,326 +793,236 @@ export const SwapInterface: React.FC<SwapInterfaceProps> = ({ onBack }) => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-lg font-semibold text-gray-900 flex-1">
-                Swap
-              </h1>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 p-0 text-gray-900 hover:text-gray-900 hover:bg-gray-100 transition-colors flex-shrink-0"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+              <h3 className="text-lg font-semibold text-white uppercase">
+                FIXORIUM TRADE
+              </h3>
             </div>
-            {/* FROM row */}
-            <Card className="bg-transparent border border-black rounded-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 pr-3">
-                    <Input
-                      type="number"
-                      placeholder="0.000"
-                      value={fromAmount}
-                      onChange={(e) => setFromAmount(e.target.value)}
-                      className="w-full bg-transparent border-0 p-0 h-auto text-2xl leading-none tracking-tight text-gray-900 placeholder:text-gray-400 focus-visible:ring-0"
-                    />
-                    <div
-                      className="mt-2 text-[14px] text-gray-900 font-medium"
-                      style={{ fontFamily: "Arial, sans-serif" }}
-                    >
-                      {(() => {
-                        const amt = parseFloat(fromAmount || "0");
-                        const price = fromUsdPrice ?? 0;
-                        const usd = amt * price;
-                        return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Token select pill (from) */}
-                  <div className="flex flex-col items-end min-w-[8.5rem]">
-                    <Select
-                      value={fromToken?.mint || ""}
-                      onValueChange={(v) => {
-                        const t = allTokens.find((x) => x.mint === v);
-                        if (t) setFromToken(t);
-                      }}
-                    >
-                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
-                        <SelectValue>
-                          <div className="flex items-center gap-2 text-gray-900">
-                            {fromToken ? (
-                              <>
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage
-                                    src={fromToken.logoURI}
-                                    alt={fromToken.symbol}
-                                  />
-                                  <AvatarFallback className="text-xs">
-                                    {fromToken.symbol.slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-gray-900">
-                                  {fromToken.symbol}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-gray-900">Select</span>
-                            )}
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
-                        {allTokens
-                          .filter((token) => token.logoURI)
-                          .map((token) => (
-                            <SelectItem
-                              key={token.mint}
-                              value={token.mint}
-                              className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-2 w-full">
-                                <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                                  <AvatarImage
-                                    src={token.logoURI}
-                                    alt={token.symbol}
-                                  />
-                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                                    {token.symbol.slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-xs whitespace-nowrap">
-                                  {token.symbol} ~{" "}
-                                  <span className="text-white">
-                                    {formatAmount(
-                                      getTokenBalance(token),
-                                      token.symbol,
-                                    )}
-                                  </span>
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    {fromToken ? (
-                      <div className="mt-2 text-xs text-gray-900">
-                        {formatAmount(
-                          getTokenBalance(fromToken),
-                          fromToken.symbol,
-                        )}{" "}
-                        {fromToken.symbol}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* swap arrow */}
-            <div className="flex items-center justify-center py-1">
-              <Button
-                size="icon"
-                onClick={handleSwapTokens}
-                className="rounded-full h-9 w-9 bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 border border-[#FF7A5C]/30 text-gray-900 transition-colors"
-              >
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* TO row */}
-            <Card className="bg-transparent border border-black rounded-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 pr-3">
-                    <div className="text-xl leading-none tracking-tight text-gray-900">
-                      {toAmount
-                        ? formatAmount(toAmount, toToken?.symbol)
-                        : "0.000"}
-                    </div>
-                    <div
-                      className="mt-2 text-[14px] text-gray-900 font-medium"
-                      style={{ fontFamily: "Arial, sans-serif" }}
-                    >
-                      {(() => {
-                        const amt = parseFloat(toAmount || "0");
-                        const price = toUsdPrice ?? 0;
-                        const usd = amt * price;
-                        return `${usd > 0 ? usd.toFixed(2) : "0.00"} USD`;
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Token select pill (to) */}
-                  <div className="flex flex-col items-end min-w-[8.5rem]">
-                    <Select
-                      value={toToken?.mint || ""}
-                      onValueChange={(v) => {
-                        const t = allTokens.find((x) => x.mint === v);
-                        if (t) setToToken(t);
-                      }}
-                    >
-                      <SelectTrigger className="h-11 rounded-full bg-white border border-[#e6f6ec]/20 text-gray-900 hover:bg-[#f0fff4] w-auto px-3 transition-colors">
-                        <SelectValue>
-                          <div className="flex items-center gap-2 text-gray-900">
-                            {toToken ? (
-                              <>
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage
-                                    src={toToken.logoURI}
-                                    alt={toToken.symbol}
-                                  />
-                                  <AvatarFallback className="text-xs">
-                                    {toToken.symbol.slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-gray-900">
-                                  {toToken.symbol}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-gray-900">Select</span>
-                            )}
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 bg-gray-600 border border-[#e6f6ec]/20 text-gray-900">
-                        {allTokens
-                          .filter((token) => token.logoURI)
-                          .map((token) => (
-                            <SelectItem
-                              key={token.mint}
-                              value={token.mint}
-                              className="text-gray-900 hover:bg-[#f0fff4]/50 focus:bg-[#f0fff4]/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-2 w-full">
-                                <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                                  <AvatarImage
-                                    src={token.logoURI}
-                                    alt={token.symbol}
-                                  />
-                                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-600 text-gray-900">
-                                    {token.symbol.slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-xs whitespace-nowrap">
-                                  {token.symbol} ~{" "}
-                                  <span className="text-white">
-                                    {formatAmount(
-                                      getTokenBalance(token),
-                                      token.symbol,
-                                    )}
-                                  </span>
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    {toToken ? (
-                      <div className="mt-2 text-xs text-gray-900 font-mono">
-                        {toToken.mint.slice(0, 4)}...{toToken.mint.slice(-3)}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quote details */}
-            {(quote || (indicative && toAmount)) && fromToken && toToken ? (
-              <div className="mt-2 bg-[#1a2540]/50 border border-[#FF7A5C]/30 rounded-2xl p-4 space-y-3 text-gray-900">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-900">Quote</span>
-                  <span className="text-sm text-gray-900">
-                    1 {fromToken.symbol} ={" "}
-                    {(
-                      parseFloat(toAmount) / parseFloat(fromAmount || "1")
-                    ).toFixed(4)}{" "}
-                    {toToken.symbol}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-900">Route</span>
-                  <span className="text-gray-900">
-                    {(() => {
-                      // Build a human-readable route string
-                      if (quote && Array.isArray((quote as any).routePlan)) {
-                        try {
-                          const labels = ((quote as any).routePlan || [])
-                            .map((r: any) => r?.swapInfo?.label)
-                            .filter(Boolean);
-                          if (labels.length) return labels.join(" → ");
-                        } catch {}
-                      }
-                      return (quoteSource || "unknown").toString();
-                    })()}
-                  </span>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Loading indicator */}
-            {isLoading && (
-              <Alert className="bg-yellow-500/10 border-yellow-400/20 text-yellow-200">
-                Signing & Connecting - submitting transaction ...
-              </Alert>
-            )}
-
-            {/* Quick % selector */}
-            <div className="grid grid-cols-4 gap-2 mt-2">
-              {[25, 50, 75, 100].map((pct) => (
-                <button
-                  key={pct}
-                  type="button"
-                  onClick={() => {
-                    const bal = getTokenBalance(fromToken || undefined);
-                    const reserve = fromToken?.symbol === "SOL" ? 0.002 : 0; // leave SOL for fees
-                    const usable = Math.max(0, (bal || 0) - reserve);
-                    const amt = usable * (pct / 100);
-                    const digits = Math.min(
-                      6,
-                      Math.max(0, fromToken?.decimals ?? 6),
-                    );
-                    setFromAmount(amt > 0 ? amt.toFixed(digits) : "");
-                  }}
-                  className="text-xs px-2 py-2 rounded-lg bg-[#1a2540]/50 hover:bg-[#FF7A5C]/20 text-gray-900 border border-[#FF7A5C]/30 transition-colors"
-                >
-                  {pct}%
-                </button>
-              ))}
-            </div>
-
-            {/* Submit */}
-            {!walletReady && (
-              <Alert className="bg-red-500/10 border-red-400/20 text-red-600 mb-2">
-                <AlertDescription>
-                  Wallet not ready. Please ensure your wallet is properly
-                  loaded.
-                </AlertDescription>
-              </Alert>
-            )}
+            <p className="text-gray-600 text-center">
+              No wallet detected. Please set up or import a wallet to use the
+              swap feature.
+            </p>
             <Button
-              onClick={handleSwap}
-              className="mt-2 w-full h-12 rounded-xl font-semibold border-0 disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-gray-900 shadow-lg hover:shadow-2xl transition-all"
-              disabled={
-                (!quote && !indicative) ||
-                !!quoteError ||
-                !fromToken ||
-                !toToken ||
-                !fromAmount ||
-                isLoading ||
-                !walletReady
-              }
+              onClick={onBack}
+              variant="outline"
+              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase"
             >
-              {!walletReady
-                ? "Loading Wallet..."
-                : indicative
-                  ? "Swap (Estimated)"
-                  : "Submit"}
+              Back
             </Button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+        {isLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+          </div>
+        )}
+
+        <div className="space-y-6 p-6 relative">
+          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="font-semibold text-sm text-white uppercase">
+              FIXORIUM TRADE
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="from-token"
+              className="text-gray-700 uppercase text-xs font-semibold"
+            >
+              From
+            </Label>
+            <div className="flex gap-3">
+              <Select value={fromMint} onValueChange={setFromMint}>
+                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                  <SelectValue>
+                    {fromToken ? (
+                      <span className="text-gray-900 font-medium">
+                        {fromToken.symbol}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">Select token</span>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+                  {tokenList.length > 0 ? (
+                    tokenList.map((t) => {
+                      const tokenBalance =
+                        userTokens?.find((ut) => ut.mint === t.address)
+                          ?.balance || 0;
+                      return (
+                        <SelectItem key={t.address} value={t.address}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium">
+                              {t.symbol}
+                            </span>
+                            <span className="text-gray-400 text-sm">
+                              ({(tokenBalance || 0).toFixed(6)})
+                            </span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })
+                  ) : (
+                    <div className="p-2 text-center text-sm text-gray-400">
+                      Loading tokens...
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="to-token"
+              className="text-gray-700 uppercase text-xs font-semibold"
+            >
+              To
+            </Label>
+            <Select value={toMint} onValueChange={setToMint}>
+              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                <SelectValue>
+                  {toToken ? (
+                    <span className="text-gray-900 font-medium">
+                      {toToken.symbol}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">Select token</span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+                {tokenList.length > 0 ? (
+                  tokenList.map((t) => {
+                    const tokenBalance =
+                      userTokens?.find((ut) => ut.mint === t.address)
+                        ?.balance || 0;
+                    return (
+                      <SelectItem key={t.address} value={t.address}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-medium">
+                            {t.symbol}
+                          </span>
+                          <span className="text-gray-400 text-sm">
+                            ({(tokenBalance || 0).toFixed(6)})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })
+                ) : (
+                  <div className="p-2 text-center text-sm text-gray-400">
+                    Loading tokens...
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {quote && (
+            <div
+              className={`p-4 border rounded-lg transition-colors ${
+                isQuoteExpired()
+                  ? "bg-transparent border-red-200"
+                  : isQuoteWarning()
+                    ? "bg-transparent border-yellow-200"
+                    : "bg-transparent border-[#a7f3d0]/30"
+              }`}
+            >
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">
+                    Estimated receive:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900">
+                      {quote.outHuman.toFixed(6)} {quote.outToken}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded ${
+                        isQuoteExpired()
+                          ? "bg-red-200 text-red-700"
+                          : isQuoteWarning()
+                            ? "bg-yellow-200 text-yellow-700"
+                            : "bg-green-200 text-green-700"
+                      }`}
+                    >
+                      {isQuoteExpired()
+                        ? "Expired"
+                        : `${getQuoteTimeRemaining()}s`}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-500">Route hops:</span>
+                  <span className="text-xs text-gray-600">{quote.hops}</span>
+                </div>
+                {quote.priceImpact !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-500">Price impact:</span>
+                    <span
+                      className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}
+                    >
+                      {quote.priceImpact.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {status && (
+            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-4 border-[#a7f3d0] p-3 rounded">
+              {status}
+            </div>
+          )}
+
+          <Button
+            onClick={executeSwap}
+            disabled={!amount || isLoading || isQuoteExpired()}
+            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              isQuoteExpired()
+                ? "Quote expired - please get a new quote"
+                : isQuoteWarning()
+                  ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                  : ""
+            }
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isQuoteExpired() ? (
+              "Quote Expired - Get New Quote"
+            ) : (
+              "Swap (Smart Route)"
+            )}
+          </Button>
+        </div>
+
+        <BloomExplosion show={showSuccess} />
       </div>
     </div>
   );

@@ -1,5 +1,9 @@
-// Production deployment defaults
-const CLOUDFLARE_WORKER_BASE = "https://proxy.fixorium.com.pk";
+// API base resolution prefers env (VITE_API_BASE_URL or VITE_API_URL),
+// then defaults to the Cloudflare Worker domain
+
+// Track which API base is currently working
+let workingApiBase: string | null = null;
+let lastFailureTime: Record<string, number> = {};
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";
@@ -9,10 +13,22 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
-  const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBase) return envBase;
-  // Always use remote Cloudflare Worker in dev and production
-  return CLOUDFLARE_WORKER_BASE;
+  // Try primary env var
+  const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
+  if (envBasePrimary) {
+    return envBasePrimary;
+  }
+
+  // Try alternative env var
+  const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
+  if (envBaseAlt) {
+    return envBaseAlt;
+  }
+
+  if (workingApiBase) return workingApiBase;
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
+  return "";
 };
 
 let cachedBase: string | null = null;
@@ -22,6 +38,20 @@ export const getApiBaseUrl = (): string => {
     cachedBase = determineBase();
   }
   return cachedBase;
+};
+
+// Mark an API base as failed for a period
+export const markApiBaseFailed = (base: string): void => {
+  lastFailureTime[base] = Date.now();
+  workingApiBase = null; // Reset working base so we try alternatives
+};
+
+// Check if an API base should be retried
+const canRetryApiBase = (base: string): boolean => {
+  const lastFailure = lastFailureTime[base];
+  if (!lastFailure) return true;
+  // Retry after 30 seconds of being marked as failed
+  return Date.now() - lastFailure > 30000;
 };
 
 export const resolveApiUrl = (path: string): string => {
@@ -48,4 +78,31 @@ export const resolveApiUrl = (path: string): string => {
 
   // Otherwise, append the full normalizedPath
   return `${baseNorm}${normalizedPath}`;
+};
+
+// Fetch wrapper with automatic fallback support
+export const fetchWithFallback = async (
+  path: string,
+  options?: RequestInit,
+): Promise<Response> => {
+  const url = resolveApiUrl(path);
+  const currentBase = getApiBaseUrl();
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      // Add timeout if not present
+      signal: options?.signal || AbortSignal.timeout?.(30000),
+    });
+
+    // If successful, mark this base as working
+    if (response.ok) {
+      workingApiBase = currentBase;
+    }
+
+    return response;
+  } catch (error) {
+    // No external fallback; surface the error to caller
+    throw error as any;
+  }
 };

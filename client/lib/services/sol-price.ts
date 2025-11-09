@@ -48,9 +48,7 @@ class SolPriceService {
           console.warn(
             `SOL price API returned ${response.status} with content-type: ${contentType}. Using fallback.`,
           );
-          throw new Error(
-            `Failed to fetch SOL price: HTTP ${response.status}`,
-          );
+          throw new Error(`Failed to fetch SOL price: HTTP ${response.status}`);
         }
         console.error(
           "Failed to parse SOL price response as JSON:",

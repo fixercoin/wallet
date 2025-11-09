@@ -487,14 +487,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
 
         setQuote({
-        quoteResponse,
-        outHuman,
-        outToken: toToken.symbol,
-        hops: quoteResponse.routePlan?.length ?? 0,
-        priceImpact,
-        quoteTime: Date.now(),
-        slippageBps: 100,
-      });
+          quoteResponse,
+          outHuman,
+          outToken: toToken.symbol,
+          hops: quoteResponse.routePlan?.length ?? 0,
+          priceImpact,
+          quoteTime: Date.now(),
+          slippageBps: 100,
+        });
         setStatus("");
         setIsLoading(false);
         return { quoteResponse };
@@ -587,7 +587,8 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       } catch (refreshErr) {
         console.warn("Quote refresh failed:", refreshErr);
-        const refreshErrorMsg = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+        const refreshErrorMsg =
+          refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
         if (refreshErrorMsg.includes("timeout")) {
           throw new Error(`Quote refresh timed out. Please try again.`);
         }

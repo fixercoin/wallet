@@ -1,19 +1,67 @@
 import { RequestHandler } from "express";
 
 const RPC_ENDPOINTS = [
-  // Priority: Premium endpoints with better support for getTokenAccountsByOwner
+  // Prefer environment-configured RPC first
+  process.env.SOLANA_RPC_URL || "",
+  // Provider-specific overrides (only add if configured)
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.HELIUS_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.SOLANA_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  // Fallback public endpoints (best ones first)
-  "https://api.mainnet-beta.solana.com",
+  // Fallback public endpoints (reliable, no authentication required)
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-rpc.publicnode.com",
 ].filter(Boolean);
+
+// Track rate-limited endpoints with cooldown periods
+const rateLimitedEndpoints = new Map<
+  string,
+  { until: number; count: number }
+>();
+
+function getEndpointKey(endpoint: string): string {
+  try {
+    const url = new URL(endpoint);
+    return `${url.hostname}`;
+  } catch {
+    return endpoint;
+  }
+}
+
+function isEndpointRateLimited(endpoint: string): boolean {
+  const key = getEndpointKey(endpoint);
+  const entry = rateLimitedEndpoints.get(key);
+  if (!entry) return false;
+
+  const now = Date.now();
+  if (now > entry.until) {
+    rateLimitedEndpoints.delete(key);
+    return false;
+  }
+
+  return true;
+}
+
+function markEndpointRateLimited(endpoint: string, delayMs: number): void {
+  const key = getEndpointKey(endpoint);
+  const entry = rateLimitedEndpoints.get(key) || { count: 0, until: 0 };
+
+  // Exponential backoff: each rate limit increases the cooldown
+  const backoffMultiplier = Math.min(entry.count + 1, 5);
+  const cooldownMs = delayMs * backoffMultiplier;
+
+  entry.count = backoffMultiplier;
+  entry.until = Date.now() + cooldownMs;
+
+  rateLimitedEndpoints.set(key, entry);
+  console.log(
+    `[RPC Proxy] Endpoint rate limited for ${cooldownMs / 1000}s (${backoffMultiplier}x backoff): ${key}`,
+  );
+}
 
 export const handleSolanaRpc: RequestHandler = async (req, res) => {
   try {
@@ -26,19 +74,40 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
     }
 
     const method = body.method || "unknown";
+
+    // Filter out currently rate-limited endpoints
+    const availableEndpoints = RPC_ENDPOINTS.filter(
+      (ep) => !isEndpointRateLimited(ep),
+    );
+    const totalEndpoints = RPC_ENDPOINTS.length;
+    const workingEndpoints = availableEndpoints.length;
+
+    if (workingEndpoints === 0) {
+      console.warn(
+        `[RPC Proxy] ${method} - All ${totalEndpoints} endpoints currently rate limited, returning 429`,
+      );
+      return res.status(429).json({
+        error: "All RPC endpoints are currently rate limited",
+        message:
+          "Please retry after a moment. The service is experiencing high load.",
+        allEndpointsRateLimited: true,
+        totalEndpoints: totalEndpoints,
+      });
+    }
+
     console.log(
-      `[RPC Proxy] ${method} request to ${RPC_ENDPOINTS.length} endpoints`,
+      `[RPC Proxy] ${method} request - ${workingEndpoints}/${totalEndpoints} endpoints available`,
     );
 
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;
     let lastErrorData: any = null;
 
-    for (let i = 0; i < RPC_ENDPOINTS.length; i++) {
-      const endpoint = RPC_ENDPOINTS[i];
+    for (let i = 0; i < availableEndpoints.length; i++) {
+      const endpoint = availableEndpoints[i];
       try {
         console.log(
-          `[RPC Proxy] ${method} - Attempting endpoint ${i + 1}/${RPC_ENDPOINTS.length}: ${endpoint.substring(0, 50)}...`,
+          `[RPC Proxy] ${method} - Attempting endpoint ${i + 1}/${workingEndpoints}: ${endpoint.substring(0, 50)}...`,
         );
 
         const controller = new AbortController();
@@ -70,12 +139,12 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
           lastError = new Error(`RPC error (${errorCode}): ${errorMsg}`);
 
           // Some endpoints don't support certain methods, skip and try next
-          if (i < RPC_ENDPOINTS.length - 1) {
+          if (i < availableEndpoints.length - 1) {
             continue;
           }
         }
 
-        // Treat 403 errors as endpoint being blocked/rate limited, try next
+        // Treat 403 errors as endpoint being blocked, try next
         if (response.status === 403) {
           console.warn(
             `[RPC Proxy] ${method} - Endpoint returned 403 (Access Forbidden), trying next...`,
@@ -85,14 +154,22 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
           continue;
         }
 
-        // Treat 429 (rate limit) as temporary, skip to next
+        // Treat 429 (rate limit) as temporary, mark endpoint and try next
         if (response.status === 429) {
           console.warn(
-            `[RPC Proxy] ${method} - Endpoint rate limited (429), trying next...`,
+            `[RPC Proxy] ${method} - Endpoint rate limited (429), marking for cooldown...`,
           );
+          markEndpointRateLimited(endpoint, 10000); // 10 second base cooldown
           lastErrorStatus = 429;
           lastError = new Error(`Rate limited: ${endpoint}`);
-          continue;
+
+          // If more endpoints available, continue to next
+          if (i < availableEndpoints.length - 1) {
+            continue;
+          }
+
+          // If this was the last available endpoint, return 429 to client
+          break;
         }
 
         // For other server errors, try next endpoint
@@ -107,7 +184,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
 
         // Success or client error - return response
         console.log(
-          `[RPC Proxy] ${method} - SUCCESS with endpoint ${i + 1} (status: ${response.status})`,
+          `[RPC Proxy] ${method} - SUCCESS with endpoint ${i + 1}/${workingEndpoints} (status: ${response.status})`,
         );
         res.set("Content-Type", "application/json");
         return res.status(response.status).send(data);
@@ -118,23 +195,29 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
           lastError.message,
         );
         // Try next endpoint
-        if (i < RPC_ENDPOINTS.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 500)); // Brief delay before retry
+        if (i < availableEndpoints.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay before retry
         }
         continue;
       }
     }
 
     console.error(
-      `[RPC Proxy] ${method} - All ${RPC_ENDPOINTS.length} RPC endpoints failed`,
+      `[RPC Proxy] ${method} - All ${workingEndpoints} available RPC endpoints exhausted`,
     );
-    return res.status(lastErrorStatus || 503).json({
+
+    // Return 429 if rate limiting was the issue, otherwise 503
+    const statusCode = lastErrorStatus === 429 ? 429 : lastErrorStatus || 503;
+
+    return res.status(statusCode).json({
       error:
         lastError?.message ||
         "All RPC endpoints failed - no Solana RPC available",
       details: `Last error: ${lastErrorStatus || "unknown"}`,
       rpcErrorDetails: lastErrorData?.error || null,
-      configuredEndpoints: RPC_ENDPOINTS.length,
+      configuredEndpoints: totalEndpoints,
+      availableEndpoints: workingEndpoints,
+      rateLimitingActive: statusCode === 429,
     });
   } catch (error) {
     console.error("[RPC Proxy] Handler error:", error);

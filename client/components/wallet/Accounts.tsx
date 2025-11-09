@@ -21,9 +21,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white p-4">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 p-4 relative overflow-hidden">
       <div className="w-full max-w-md mx-auto py-6">
-        <div className="rounded-lg border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
+        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"
@@ -34,9 +34,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-              Accounts
-            </h1>
+            <h1 className="text-lg font-semibold text-gray-900">Accounts</h1>
           </div>
 
           <div className="px-4 pb-4 space-y-4">
@@ -45,10 +43,10 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 Active Wallet
               </div>
               <div className="w-full">
-                <div className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl rounded-md p-4 flex items-center justify-between">
+                <div className="bg-white/80 rounded-md p-4 flex items-center justify-between">
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-300 mb-1">Address</div>
-                    <div className="font-mono text-sm break-all text-white">
+                    <div className="text-xs text-gray-600 mb-1">Address</div>
+                    <div className="font-mono text-sm break-all text-gray-900">
                       {wallet
                         ? shortenAddress(wallet.publicKey, 8)
                         : "No wallet"}
@@ -60,13 +58,13 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                       size="sm"
                       onClick={handleCopy}
                       aria-label="Copy address"
-                      className="text-white hover:bg-[#a855f7]/10"
+                      className="text-gray-900 hover:bg-white/10"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       onClick={() => onOpenSetup && onOpenSetup()}
-                      className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#a855f7] to-[#22c55e] text-white shadow-sm"
+                      className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm"
                       aria-label="Add wallet"
                     >
                       <Plus className="h-4 w-4" />
@@ -84,7 +82,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-[#2d1b47]/50 border border-[#a855f7]/30 rounded-md flex items-center gap-2"
+                    className="w-full p-3 bg-white/80 border border-gray-100 rounded-md flex items-center gap-2"
                   >
                     <button
                       onClick={() => {

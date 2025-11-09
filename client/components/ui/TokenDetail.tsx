@@ -5,7 +5,6 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { TokenBadge } from "./TokenBadge";
 import { PriceCard } from "./token-detail/PriceCard";
 import { BuyPanel } from "./token-detail/BuyPanel";
 import { SellPanel } from "./token-detail/SellPanel";
@@ -107,10 +106,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold text-white">
+            <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">
               {displayToken.symbol}
             </h1>
-            <TokenBadge token={displayToken} />
           </div>
           <Button
             variant="ghost"

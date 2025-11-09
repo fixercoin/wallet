@@ -5,6 +5,100 @@ import process from "process";
 (window as any).Buffer = Buffer;
 (window as any).process = process;
 
+// In Builder preview the Builder iframe may proxy analytics requests (Amplitude) through
+// cdn.builder.codes which can hit rate limits (429) and cause the editor iframe to fail.
+// Intercept those proxied requests when running inside a Builder preview so they return
+// harmless responses and don't block iframe evaluation.
+if (typeof window !== "undefined") {
+  try {
+    const isBuilderPreview =
+      window.location.hostname.includes("projects.builder.my") ||
+      window.location.hostname.endsWith("builder.my") ||
+      window.location.search.includes("fusion=true") ||
+      window.location.search.includes("builder.frameEditing");
+
+    if (isBuilderPreview) {
+      const blockedPatterns: string[] = [
+        "cdn.builder.codes/api/v1/proxy-api",
+        "cdn.builder.codes",
+        "amplitude.com",
+        "api2.amplitude.com",
+        "builder.my/_next/static",
+        "builder.my/assets",
+      ];
+
+      if (window.fetch) {
+        const originalFetch = window.fetch.bind(window);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        window.fetch = async (input: any, init?: any) => {
+          try {
+            const url = typeof input === "string" ? input : input?.url;
+            if (typeof url === "string") {
+              for (const p of blockedPatterns) {
+                if (url.includes(p)) {
+                  return new Response(JSON.stringify({ status: "skipped" }), {
+                    status: 200,
+                    headers: { "Content-Type": "application/json" },
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            // swallow
+          }
+          return originalFetch(input, init);
+        };
+      }
+
+      // Intercept XHR as well (some libs use XHR not fetch)
+      if (typeof XMLHttpRequest !== "undefined") {
+        const origOpen = XMLHttpRequest.prototype.open;
+        const origSend = XMLHttpRequest.prototype.send;
+        // @ts-ignore
+        XMLHttpRequest.prototype.open = function (method: string, url: string) {
+          try {
+            // @ts-ignore
+            this._url = url;
+          } catch (e) {}
+          // @ts-ignore
+          return origOpen.apply(this, arguments as any);
+        };
+        // @ts-ignore
+        XMLHttpRequest.prototype.send = function (body?: any) {
+          try {
+            // @ts-ignore
+            const url = this._url || "";
+            for (const p of blockedPatterns) {
+              if (url.includes(p)) {
+                // emulate a successful XHR response
+                setTimeout(() => {
+                  try {
+                    // @ts-ignore
+                    this.readyState = 4;
+                    // @ts-ignore
+                    this.status = 200;
+                    // @ts-ignore
+                    this.responseText = JSON.stringify({ status: "skipped" });
+                    if (typeof this.onload === "function") this.onload();
+                    if (typeof this.onreadystatechange === "function")
+                      this.onreadystatechange();
+                  } catch (e) {}
+                }, 0);
+                return;
+              }
+            }
+          } catch (e) {}
+          // @ts-ignore
+          return origSend.apply(this, arguments as any);
+        };
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
 import "./global.css";
 
 import { Toaster } from "@/components/ui/toaster";
@@ -15,7 +109,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
-import { ExpressP2PProvider } from "@/contexts/ExpressP2PContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
 import MobileShell from "@/components/ui/MobileShell";
@@ -23,17 +116,10 @@ import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
+import WalletHistory from "./pages/WalletHistory";
 import NotFound from "./pages/NotFound";
-import OrderBook from "./pages/OrderBook";
-import BuyTrade from "./pages/BuyTrade";
-import ExpressPay from "./pages/ExpressPay";
-import ExpressAddPost from "./pages/ExpressAddPost";
-import ExpressOrderComplete from "./pages/ExpressOrderComplete";
-import ExpressPendingOrders from "./pages/ExpressPendingOrders";
-import ExpressPostOrderDetail from "./pages/ExpressPostOrderDetail";
-import ExpressPostView from "./pages/ExpressPostView";
-import ExpressStartTrade from "./pages/ExpressStartTrade";
 import BuyCrypto from "./pages/BuyCrypto";
+import TokenSearchDetail from "./pages/TokenSearchDetail";
 import BuyNote from "./pages/BuyNote";
 import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";
@@ -43,6 +129,7 @@ import Select from "./pages/select";
 import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
+import SwapPage from "./pages/Swap";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +137,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
       <Route path="/buy-now" element={<BuyNow />} />
       <Route path="/sell-now" element={<SellNow />} />
@@ -62,25 +150,8 @@ function AppRoutes() {
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
-      <Route path="/express/orderbook" element={<OrderBook />} />
-      <Route path="/express/buy-trade" element={<BuyTrade />} />
-      <Route path="/express/pay" element={<ExpressPay />} />
-      <Route path="/express/add-post" element={<ExpressAddPost />} />
-      <Route
-        path="/express/order-complete"
-        element={<ExpressOrderComplete />}
-      />
-      <Route
-        path="/express/pending-orders"
-        element={<ExpressPendingOrders />}
-      />
-      <Route
-        path="/express/post-order/:orderId"
-        element={<ExpressPostOrderDetail />}
-      />
-      <Route path="/express/post-order" element={<ExpressAddPost />} />
-      <Route path="/express/post/:orderId" element={<ExpressPostView />} />
-      <Route path="/express/start-trade" element={<ExpressStartTrade />} />
+      <Route path="/wallet/history" element={<WalletHistory />} />
+      <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -119,25 +190,23 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <ExpressP2PProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <CurrencyProvider>
-                <BrowserRouter>
-                  {isMobileMatch ? (
-                    <MobileShell>
-                      <AppRoutes />
-                    </MobileShell>
-                  ) : (
-                    <div className="min-h-screen">
-                      <AppRoutes />
-                    </div>
-                  )}
-                </BrowserRouter>
-              </CurrencyProvider>
-            </TooltipProvider>
-          </ExpressP2PProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <CurrencyProvider>
+              <BrowserRouter>
+                {isMobileMatch ? (
+                  <MobileShell>
+                    <AppRoutes />
+                  </MobileShell>
+                ) : (
+                  <div className="min-h-screen">
+                    <AppRoutes />
+                  </div>
+                )}
+              </BrowserRouter>
+            </CurrencyProvider>
+          </TooltipProvider>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

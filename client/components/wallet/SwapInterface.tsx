@@ -629,32 +629,46 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Please get a quote first by clicking 'Get Quote'");
       }
 
-      // Refresh the quote immediately before swap to prevent STALE_QUOTE/expired quote errors
-      setStatus("Refreshing quote…");
+      // Smart quote refresh: only refresh if quote is getting old (>15 seconds)
       const oldQuote = quote.quoteResponse;
       let freshQuote = oldQuote;
       const slippageBps = quote.slippageBps || 100;
 
-      try {
-        const refreshed = await jupiterV6API.getQuote(
-          oldQuote.inputMint,
-          oldQuote.outputMint,
-          parseInt(oldQuote.inAmount),
-          slippageBps,
+      // Check if quote still has reasonable time left (>15 seconds remaining)
+      const timeRemaining = getQuoteTimeRemaining();
+      const shouldRefresh = timeRemaining <= 15;
+
+      if (shouldRefresh) {
+        setStatus("Refreshing quote…");
+        try {
+          const refreshed = await jupiterV6API.getQuote(
+            oldQuote.inputMint,
+            oldQuote.outputMint,
+            parseInt(oldQuote.inAmount),
+            slippageBps,
+          );
+          if (refreshed) {
+            freshQuote = refreshed;
+            console.log("✅ Quote refreshed successfully before swap");
+          } else {
+            console.warn("Quote refresh returned null, using original quote");
+          }
+        } catch (refreshErr) {
+          console.warn("Quote refresh failed:", refreshErr);
+          const refreshErrorMsg =
+            refreshErr instanceof Error
+              ? refreshErr.message
+              : String(refreshErr);
+          if (refreshErrorMsg.includes("timeout")) {
+            throw new Error(`Quote refresh timed out. Please try again.`);
+          }
+          // If refresh fails for other reasons and quote still has time, continue with original
+          console.warn("Using original quote for swap");
+        }
+      } else {
+        console.log(
+          `Quote still fresh (${timeRemaining}s remaining), skipping refresh`,
         );
-        if (refreshed) {
-          freshQuote = refreshed;
-          console.log("✅ Quote refreshed successfully before swap");
-        } else {
-          console.warn("Quote refresh returned null, using original quote");
-        }
-      } catch (refreshErr) {
-        console.warn("Quote refresh failed:", refreshErr);
-        const refreshErrorMsg =
-          refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
-        if (refreshErrorMsg.includes("timeout")) {
-          throw new Error(`Quote refresh timed out. Please try again.`);
-        }
       }
 
       // Request swap transaction from Jupiter
@@ -779,7 +793,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h3 className="text-lg font-semibold text-gray-900 uppercase">
+              <h3 className="text-lg font-semibold text-white uppercase">
                 FIXORIUM TRADE
               </h3>
             </div>
@@ -820,7 +834,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">
+            <div className="font-semibold text-sm text-white uppercase">
               FIXORIUM TRADE
             </div>
           </div>
@@ -932,10 +946,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div
               className={`p-4 border rounded-lg transition-colors ${
                 isQuoteExpired()
-                  ? "bg-red-50/60 border-red-200"
+                  ? "bg-transparent border-red-200"
                   : isQuoteWarning()
-                    ? "bg-yellow-50/60 border-yellow-200"
-                    : "bg-[#f0fff4]/60 border-[#a7f3d0]/30"
+                    ? "bg-transparent border-yellow-200"
+                    : "bg-transparent border-[#a7f3d0]/30"
               }`}
             >
               <div className="space-y-2">

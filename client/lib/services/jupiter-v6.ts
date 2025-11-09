@@ -197,8 +197,13 @@ class JupiterV6API {
           data: errorData,
         });
 
-        // Handle stale/expired quotes explicitly
-        if (errorData?.error === "STALE_QUOTE" || errorData?.code === 1016) {
+        // Handle stale/expired quotes explicitly (409, 530, or error code 1016)
+        if (
+          errorData?.error === "STALE_QUOTE" ||
+          errorData?.code === 1016 ||
+          response.status === 409 ||
+          response.status === 530
+        ) {
           throw new Error("Quote expired - please refresh and try again");
         }
 

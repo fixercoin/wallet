@@ -308,6 +308,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [quoteAge, setQuoteAge] = useState(0);
+
+  // Quote validity constants (in milliseconds)
+  const QUOTE_MAX_AGE_MS = 30000; // Jupiter quotes valid for 30 seconds
+  const QUOTE_WARNING_THRESHOLD_MS = 5000; // Show warning at 5 seconds remaining
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -395,6 +400,34 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, [wallet, userTokens]);
 
+  // Track quote age over time
+  useEffect(() => {
+    if (!quote || !quote.quoteTime) {
+      setQuoteAge(0);
+      return;
+    }
+
+    const updateQuoteAge = () => {
+      const age = Date.now() - quote.quoteTime;
+      setQuoteAge(age);
+
+      // Auto-refresh quote if it's getting too old (near expiration)
+      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
+        console.log(
+          "[SwapInterface] Quote approaching expiration, refreshing...",
+        );
+        getQuote().catch((e) => console.warn("Auto-refresh quote failed:", e));
+      }
+    };
+
+    // Update immediately
+    updateQuoteAge();
+
+    // Update every 500ms while quote is valid
+    const interval = setInterval(updateQuoteAge, 500);
+    return () => clearInterval(interval);
+  }, [quote?.quoteTime]);
+
   // Auto-fetch quotes when amount, fromMint, or toMint changes
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -413,6 +446,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const amt = Number(amountStr);
     if (isNaN(amt) || amt <= 0) throw new Error("Invalid amount");
     return BigInt(Math.round(amt * Math.pow(10, decimals)));
+  };
+
+  const isQuoteExpired = (): boolean => {
+    if (!quote || !quote.quoteTime) return true;
+    return quoteAge >= QUOTE_MAX_AGE_MS;
+  };
+
+  const isQuoteWarning = (): boolean => {
+    if (!quote || !quote.quoteTime) return false;
+    return (
+      quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS &&
+      !isQuoteExpired()
+    );
+  };
+
+  const getQuoteTimeRemaining = (): number => {
+    const remaining = Math.max(0, QUOTE_MAX_AGE_MS - quoteAge);
+    return Math.ceil(remaining / 1000);
   };
 
   const getQuote = async () => {
@@ -545,6 +596,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       if (!amount || parseFloat(amount) <= 0) {
         setStatus("Enter a valid amount");
         setIsLoading(false);
+        return null;
+      }
+
+      if (isQuoteExpired()) {
+        setStatus("Quote has expired. Please get a fresh quote.");
+        setIsLoading(false);
+        toast({
+          title: "Quote Expired",
+          description:
+            "Your quote has expired. Please request a new quote before swapping.",
+          variant: "destructive",
+        });
         return null;
       }
 
@@ -866,15 +929,38 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           {quote && (
-            <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+            <div
+              className={`p-4 border rounded-lg transition-colors ${
+                isQuoteExpired()
+                  ? "bg-red-50/60 border-red-200"
+                  : isQuoteWarning()
+                    ? "bg-yellow-50/60 border-yellow-200"
+                    : "bg-[#f0fff4]/60 border-[#a7f3d0]/30"
+              }`}
+            >
               <div className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">
                     Estimated receive:
                   </span>
-                  <span className="font-semibold text-gray-900">
-                    {quote.outHuman.toFixed(6)} {quote.outToken}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900">
+                      {quote.outHuman.toFixed(6)} {quote.outToken}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded ${
+                        isQuoteExpired()
+                          ? "bg-red-200 text-red-700"
+                          : isQuoteWarning()
+                            ? "bg-yellow-200 text-yellow-700"
+                            : "bg-green-200 text-green-700"
+                      }`}
+                    >
+                      {isQuoteExpired()
+                        ? "Expired"
+                        : `${getQuoteTimeRemaining()}s`}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs text-gray-500">Route hops:</span>
@@ -902,11 +988,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           <Button
             onClick={executeSwap}
-            disabled={!amount || isLoading}
+            disabled={!amount || isLoading || isQuoteExpired()}
             className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              isQuoteExpired()
+                ? "Quote expired - please get a new quote"
+                : isQuoteWarning()
+                  ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                  : ""
+            }
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isQuoteExpired() ? (
+              "Quote Expired - Get New Quote"
             ) : (
               "Swap (Smart Route)"
             )}

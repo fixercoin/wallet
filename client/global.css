@@ -9,52 +9,52 @@
    * A different format will require also updating the theme in tailwind.config.ts.
   */
   :root {
-    /* White background, purple accents; global text in black */
-    --background: 0 0% 100%; /* white */
-    --foreground: 0 0% 0%; /* black text */
+    /* Dark grey theme - all pages */
+    --background: 210 15% 18%; /* dark grey background */
+    --foreground: 210 10% 92%; /* light grey text */
 
-    --card: 260 10% 98%; /* subtle off-white for card area */
-    --card-foreground: 0 0% 0%;
+    --card: 210 13% 24%; /* slightly lighter grey for cards */
+    --card-foreground: 210 10% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 210 13% 24%;
+    --popover-foreground: 210 10% 92%;
 
-    --primary: 270 65% 54%; /* purple */
-    --primary-foreground: 260 10% 98%;
+    --primary: 270 65% 54%; /* purple accent */
+    --primary-foreground: 210 10% 92%;
 
-    --secondary: 270 50% 96%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 210 12% 32%;
+    --secondary-foreground: 210 10% 92%;
 
-    --muted: 270 50% 96%;
-    --muted-foreground: 0 0% 0%;
+    --muted: 210 12% 32%;
+    --muted-foreground: 210 10% 70%;
 
     --accent: 270 65% 54%;
-    --accent-foreground: 260 10% 98%;
+    --accent-foreground: 210 10% 92%;
 
     --destructive: 0 62% 45%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 10% 92%;
 
-    --border: 260 20% 90%;
-    --input: 260 20% 96%;
+    --border: 210 12% 28%;
+    --input: 210 12% 28%;
     --ring: 270 65% 54%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 260 8% 98%;
+    --sidebar-background: 210 15% 18%;
 
-    --sidebar-foreground: 0 0% 0%;
+    --sidebar-foreground: 210 10% 92%;
 
-    --sidebar-primary: 270 60% 20%;
+    --sidebar-primary: 270 65% 54%;
 
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary-foreground: 210 10% 92%;
 
-    --sidebar-accent: 270 60% 95%;
+    --sidebar-accent: 210 12% 32%;
 
-    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-accent-foreground: 210 10% 92%;
 
-    --sidebar-border: 260 10% 92%;
+    --sidebar-border: 210 12% 28%;
 
-    --sidebar-ring: 270 70% 60%;
+    --sidebar-ring: 270 65% 54%;
   }
 
   .dark {
@@ -96,11 +96,11 @@
   }
 }
 
-/* Global icon style override: make all lucide icons monochrome black, line-only */
+/* Global icon style override: make all lucide icons light grey for dark theme */
 .lucide,
 .lucide * {
-  color: #000 !important;
-  stroke: #000 !important;
+  color: #e8eaed !important;
+  stroke: #e8eaed !important;
   fill: none !important;
 }
 
@@ -153,10 +153,11 @@
     color: hsl(var(--foreground)) !important;
   }
 
-  /* P2P page white text override and mobile fullscreen */
+  /* P2P page styling for dark grey theme and mobile fullscreen */
   .express-p2p-page {
     width: 100% !important;
     max-width: 100% !important;
+    background: hsl(var(--background)) !important;
   }
 
   .express-p2p-page p,
@@ -177,7 +178,7 @@
   .express-p2p-page textarea,
   .express-p2p-page select,
   .express-p2p-page div {
-    color: white !important;
+    color: hsl(var(--foreground)) !important;
   }
 
   /* Light-theme override for express-p2p pages (white background with dark text) */
@@ -204,7 +205,7 @@
     fill: currentColor !important;
   }
 
-  /* Decorative bottom wave for light theme (SVG is added in markup) */
+  /* Decorative bottom wave for light theme (SVG is added in markup) - HIDDEN */
   .express-p2p-page .bottom-wave {
     position: absolute;
     left: 0;
@@ -212,6 +213,17 @@
     width: 100%;
     height: 220px;
     pointer-events: none;
+    display: none !important;
+  }
+
+  /* Hide all wavy/decorative SVG elements */
+  svg.wave,
+  svg[class*="wave"],
+  .wave-container,
+  [class*="wavy"],
+  [class*="bottom-wave"],
+  [class*="top-wave"] {
+    display: none !important;
   }
 
   /* Dropdown menu text override */
@@ -278,13 +290,13 @@
 }
 
 @layer components {
-  /* Wallet-specific styles */
+  /* Wallet-specific styles - dark grey theme */
   .wallet-gradient {
-    @apply bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100;
+    @apply bg-gray-800;
   }
 
   .wallet-card {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;
+    @apply bg-gray-800 backdrop-blur-sm border border-gray-700/30 shadow-xl;
   }
 
   .wallet-button-primary {
@@ -292,7 +304,7 @@
   }
 
   .wallet-button-secondary {
-    @apply bg-white/90 backdrop-blur-sm border border-white/30 hover:bg-white text-gray-900 shadow-md hover:shadow-lg transition-all duration-200;
+    @apply bg-gray-700 backdrop-blur-sm border border-gray-600 hover:bg-gray-600 text-gray-100 shadow-md hover:shadow-lg transition-all duration-200;
   }
 
   .token-icon {
@@ -300,11 +312,29 @@
   }
 
   .balance-card {
-    @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 shadow-2xl border-0;
+    @apply bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-xl p-6 shadow-2xl border-0;
   }
 
   .transaction-item {
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
+  }
+
+  /* Green cards - specific main card containers with borders */
+  .express-p2p-page [class*="mt-6"][class*="rounded-lg"],
+  .express-p2p-page [class*="rounded-2xl"][class*="border-\["] {
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%) !important;
+    border-color: #22c55e !important;
+  }
+
+  /* Green action buttons in Dashboard gap-3 container */
+  .express-p2p-page [class*="gap-3"][class*="mt-10"] button {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    border-color: #22c55e !important;
+    color: white !important;
+  }
+
+  .express-p2p-page [class*="gap-3"][class*="mt-10"] button:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
   }
 
   /* Mobile optimizations */
@@ -368,8 +398,8 @@
     pointer-events: none;
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.65),
-      rgba(248, 250, 252, 0.4)
+      rgba(30, 30, 40, 0.85),
+      rgba(40, 45, 55, 0.7)
     );
     backdrop-filter: blur(8px);
   }
@@ -400,7 +430,7 @@
     align-items: center;
     --color: hsl(var(--primary));
     --animation: 1.6s ease-in-out infinite;
-    background-color: white;
+    background-color: hsl(var(--card));
     padding: 2px;
     border-radius: 9999px;
   }
@@ -515,15 +545,15 @@
 
   /* Glass morphism effect */
   .glass {
-    @apply bg-white/20 backdrop-blur-md border border-white/30;
+    @apply bg-gray-800/50 backdrop-blur-md border border-gray-700/30;
   }
 
   .glass-dark {
-    @apply bg-gray-900/20 backdrop-blur-md border border-gray-700/30;
+    @apply bg-gray-800/50 backdrop-blur-md border border-gray-700/30;
   }
 
   .transparent-cardboard {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl;
+    @apply bg-gray-800/70 backdrop-blur-xl border border-gray-700/30 shadow-2xl;
   }
 
   /* Dashboard button - shining light blue styling */
@@ -602,19 +632,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background:
-      radial-gradient(
-        circle at 30% 20%,
-        rgba(139, 92, 246, 0.18),
-        transparent 30%
-      ),
-      linear-gradient(135deg, #8b5cf6, #3b82f6);
+    background: #374151;
     box-shadow:
-      0 12px 30px rgba(59, 130, 246, 0.12),
+      0 12px 30px rgba(0, 0, 0, 0.3),
       inset 0 2px 8px rgba(255, 255, 255, 0.06);
-    color: white;
+    color: #e8eaed;
     text-align: center;
     padding: 0.5rem;
+    border: 1px solid #4b5563;
   }
 
   .express-p2p-official {
@@ -681,18 +706,7 @@
   .express-detecting-text {
     text-transform: uppercase;
     letter-spacing: 0.35em;
-    animation: express-detecting-wave 1.25s ease-in-out infinite alternate;
-  }
-
-  @keyframes express-detecting-wave {
-    from {
-      transform: translateX(-8px);
-      opacity: 0.75;
-    }
-    to {
-      transform: translateX(8px);
-      opacity: 1;
-    }
+    animation: none;
   }
 
   /* From Uiverse.io by mrhyddenn */
@@ -705,16 +719,13 @@
     width: 400px;
     height: 400px;
     border-radius: 20px;
-    background: linear-gradient(
-      170deg,
-      rgba(58, 56, 56, 0.623) 0%,
-      rgb(31, 31, 31) 100%
-    );
+    background: #374151;
     position: relative;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.55);
     cursor: pointer;
     transition: all 0.3s;
     padding: 20px;
+    border: 1px solid #4b5563;
   }
   .card_box:hover {
     transform: scale(0.9);

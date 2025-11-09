@@ -757,7 +757,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const isFormDisabled = isSubmitting || !wallet || !selectedToken;
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-slate-900 text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
@@ -783,8 +783,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               fill="none"
               strokeWidth={2}
             />
-            <span className="text-sm font-semibold text-gray-900">
-              Create new lock
+            <span className="text-xs font-semibold text-gray-900 leading-relaxed">
+              DISCLAIMER: TOKEN LOCKING IS A MECHANISM USED TO HOLD A PORTION OF TOKENS FOR A SPECIFIED PERIOD OF TIME TO SUPPORT PROJECT STABILITY AND PREVENT UNCONTROLLED MARKET RELEASE. HOWEVER, TOKEN LOCKS DO NOT GUARANTEE PRICE PROTECTION, PROFIT, OR MARKET PERFORMANCE. THE VALUE OF THE TOKEN MAY STILL FLUCTUATE BASED ON MARKET CONDITIONS, USER DEMAND, AND PROJECT DEVELOPMENT. TOKEN LOCKING SHOULD NOT BE INTERPRETED AS A FINANCIAL PROMISE OR INVESTMENT ADVICE. ALL PARTICIPANTS ARE ENCOURAGED TO CONDUCT INDEPENDENT RESEARCH AND ASSESS RISK BEFORE MAKING ANY DECISIONS
             </span>
           </div>
           <div className="space-y-4">
@@ -831,7 +831,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-white/50 border border-black text-gray-900"
+                className="mt-1 bg-transparent border border-[#22c55e]/30 text-white placeholder:text-gray-400"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">

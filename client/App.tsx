@@ -106,12 +106,10 @@ import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
-import MobileShell from "@/components/ui/MobileShell";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -159,33 +157,6 @@ function AppRoutes() {
 }
 
 function App() {
-  const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 640px)").matches
-      : false,
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 640px)");
-    const handler = (e: MediaQueryListEvent) => setIsMobileMatch(e.matches);
-    try {
-      mq.addEventListener("change", handler);
-    } catch (e) {
-      // Safari fallback
-      // @ts-ignore
-      mq.addListener(handler);
-    }
-    return () => {
-      try {
-        mq.removeEventListener("change", handler);
-      } catch (e) {
-        // @ts-ignore
-        mq.removeListener(handler);
-      }
-    };
-  }, []);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
@@ -195,15 +166,9 @@ function App() {
             <Sonner />
             <CurrencyProvider>
               <BrowserRouter>
-                {isMobileMatch ? (
-                  <MobileShell>
-                    <AppRoutes />
-                  </MobileShell>
-                ) : (
-                  <div className="min-h-screen">
-                    <AppRoutes />
-                  </div>
-                )}
+                <div className="min-h-screen">
+                  <AppRoutes />
+                </div>
               </BrowserRouter>
             </CurrencyProvider>
           </TooltipProvider>

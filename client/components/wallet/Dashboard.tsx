@@ -778,9 +778,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      <div className="w-full md:max-w-2xl mx-auto px-4 sm:px-4 py-2 relative z-20">
+      <div className="w-full lg:max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-2 relative z-20">
         {/* Balance Section */}
-        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+        <div className="w-full mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2 flex-1">
               <TokenSearch
@@ -950,24 +950,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3 mt-10">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-10 w-full">
             <Button
               onClick={onSend}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SWAP
             </Button>
@@ -994,7 +994,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="space-y-0">
+        <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&
@@ -1004,14 +1004,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
             const isPositive = (percentChange ?? 0) >= 0;
 
             return (
-              <div key={token.mint}>
-                <Card className="bg-transparent rounded-md border-0">
-                  <CardContent className="p-0">
+              <div key={token.mint} className="w-full">
+                <Card className="w-full bg-transparent rounded-md border-0">
+                  <CardContent className="w-full p-0">
                     <div
-                      className="flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
@@ -1056,11 +1056,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-white">
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-semibold text-white whitespace-nowrap">
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>
-                        <p className="text-xs text-gray-300">
+                        <p className="text-xs text-gray-300 whitespace-nowrap">
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatBalance((token.balance || 0) * token.price)}`
                             : "$0.00"}

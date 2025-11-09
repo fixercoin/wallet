@@ -88,7 +88,7 @@ export const TokenManage: React.FC<TokenManageProps> = ({
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 p-4 bg-transparent rounded-lg border border-gray-300/30">
               {token.logoURI && (
                 <img
                   src={token.logoURI}

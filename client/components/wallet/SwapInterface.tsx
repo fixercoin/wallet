@@ -570,25 +570,26 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setStatus("Refreshing quote…");
       const oldQuote = quote.quoteResponse;
       let freshQuote = oldQuote;
+      const slippageBps = quote.slippageBps || 100;
 
       try {
         const refreshed = await jupiterV6API.getQuote(
           oldQuote.inputMint,
           oldQuote.outputMint,
           parseInt(oldQuote.inAmount),
-          100,
+          slippageBps,
         );
         if (refreshed) {
           freshQuote = refreshed;
           console.log("✅ Quote refreshed successfully before swap");
         } else {
-          console.warn("Quote refresh returned null, retrying with original quote");
+          console.warn("Quote refresh returned null, using original quote");
         }
       } catch (refreshErr) {
         console.warn("Quote refresh failed:", refreshErr);
         const refreshErrorMsg = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
-        if (refreshErrorMsg.includes("timeout") || refreshErrorMsg.includes("failed")) {
-          throw new Error(`Quote refresh failed: ${refreshErrorMsg}. Please try again.`);
+        if (refreshErrorMsg.includes("timeout")) {
+          throw new Error(`Quote refresh timed out. Please try again.`);
         }
       }
 

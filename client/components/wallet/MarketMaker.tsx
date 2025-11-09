@@ -880,23 +880,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           </Button>
 
           {sessions.length > 0 && (
-            <div className="border-t pt-4">
-              <Label className="text-xs text-gray-600 uppercase font-semibold mb-3 block">
+            <div className="border-t border-gray-700/50 pt-4">
+              <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                 Previous Sessions
               </Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
-                    className="p-3 border border-gray-200 rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="p-3 border border-gray-700/50 rounded-lg bg-transparent cursor-pointer hover:bg-gray-700/20 transition-colors"
                     onClick={() => setCurrentSession(session)}
                   >
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <p className="text-xs font-mono text-gray-900">
+                        <p className="text-xs font-mono text-white">
                           {session.id}
                         </p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                           {session.numberOfMakers} makers •{" "}
                           {session.sellStrategy}
                         </p>
@@ -904,10 +904,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       <span
                         className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
                           session.status === "running"
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-green-500/20 text-green-400"
                             : session.status === "completed"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-200 text-gray-700"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-gray-500/20 text-gray-300"
                         }`}
                       >
                         {session.status}

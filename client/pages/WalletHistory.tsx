@@ -253,32 +253,32 @@ export default function WalletHistory() {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+    <div className="express-p2p-page light-theme min-h-screen bg-gray-900 text-gray-900 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-0 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-0 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
+        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-3 mb-6">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              aria-label="Back"
+              aria-label="BACK"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-xl font-semibold">History</h1>
+            <h1 className="text-xl font-semibold uppercase">HISTORY</h1>
           </div>
 
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-medium">Transactions</h2>
+              <h2 className="text-lg font-medium uppercase">TRANSACTIONS</h2>
               <button
                 onClick={handleRefresh}
                 disabled={loading}
                 className="p-1 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Refresh transactions"
+                aria-label="REFRESH TRANSACTIONS"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -305,10 +305,10 @@ export default function WalletHistory() {
 
               if (confirmedOnChainTxs.length === 0) {
                 return (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 uppercase">
                     {loading
-                      ? "Loading transactions..."
-                      : "No transactions found."}
+                      ? "LOADING TRANSACTIONS..."
+                      : "NO TRANSACTIONS FOUND."}
                   </div>
                 );
               }
@@ -346,8 +346,8 @@ export default function WalletHistory() {
                               <span className="text-sm font-semibold text-gray-900 uppercase">
                                 {kind}
                               </span>
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                On-chain
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase">
+                                ON-CHAIN
                               </span>
                             </div>
                             {whenStr ? (
@@ -367,7 +367,7 @@ export default function WalletHistory() {
                               >
                                 <ExternalLink className="h-4 w-4" />
                                 <span className="sr-only">
-                                  Open transaction
+                                  OPEN TRANSACTION
                                 </span>
                               </a>
                             ))}

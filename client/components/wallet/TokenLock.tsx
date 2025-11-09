@@ -787,7 +787,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               Create new lock
             </span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6 mt-6">
             <div>
               <Label className="text-xs text-gray-700 uppercase">
                 SELECT TOKEN
@@ -897,20 +897,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               )}
             </Button>
           </div>
-        </div>
-
-        <div className="rounded-lg border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] p-6 relative overflow-hidden">
-          <p className="text-xs font-semibold text-gray-900 leading-relaxed">
-            DISCLAIMER: TOKEN LOCKING IS A MECHANISM USED TO HOLD A PORTION OF
-            TOKENS FOR A SPECIFIED PERIOD OF TIME TO SUPPORT PROJECT STABILITY
-            AND PREVENT UNCONTROLLED MARKET RELEASE. HOWEVER, TOKEN LOCKS DO NOT
-            GUARANTEE PRICE PROTECTION, PROFIT, OR MARKET PERFORMANCE. THE VALUE
-            OF THE TOKEN MAY STILL FLUCTUATE BASED ON MARKET CONDITIONS, USER
-            DEMAND, AND PROJECT DEVELOPMENT. TOKEN LOCKING SHOULD NOT BE
-            INTERPRETED AS A FINANCIAL PROMISE OR INVESTMENT ADVICE. ALL
-            PARTICIPANTS ARE ENCOURAGED TO CONDUCT INDEPENDENT RESEARCH AND
-            ASSESS RISK BEFORE MAKING ANY DECISIONS
-          </p>
         </div>
 
         <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">

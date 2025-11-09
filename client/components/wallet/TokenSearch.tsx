@@ -119,7 +119,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
       </div>
 
       {open && results.length > 0 && (
-        <div className="mt-2 max-h-72 overflow-auto rounded-md border border-[#22c55e]/30 bg-white/90 backdrop-blur-sm shadow-lg">
+        <div className="mt-2 max-h-72 overflow-auto rounded-md border border-[#22c55e]/30 bg-gray-800 backdrop-blur-sm shadow-lg">
           {results.slice(0, 20).map((r) => {
             const mint = r.baseToken?.address || r.quoteToken?.address;
             const img = r.info?.imageUrl;
@@ -129,7 +129,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
               <button
                 key={`${r.pairAddress}-${mint}`}
                 onClick={() => onSelect(r)}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#e6f6ec] text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 text-left"
                 aria-label={`Open ${symbol} ${name}`}
               >
                 <div className="h-7 w-7 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
@@ -147,23 +147,23 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
+                  <div className="text-sm font-medium text-white truncate">
                     {symbol ? `${symbol}` : name}
                     {symbol && name && symbol !== name ? (
-                      <span className="text-gray-500 font-normal">
+                      <span className="text-gray-400 font-normal">
                         {" "}
                         · {name}
                       </span>
                     ) : null}
                   </div>
                   {mint && (
-                    <div className="text-[11px] text-gray-500 truncate">
+                    <div className="text-[11px] text-gray-400 truncate">
                       {shorten(mint)}
                     </div>
                   )}
                 </div>
                 {r.priceUsd ? (
-                  <div className="ml-auto text-xs text-gray-700">
+                  <div className="ml-auto text-xs text-gray-300">
                     ${Number(r.priceUsd).toFixed(6)}
                   </div>
                 ) : null}

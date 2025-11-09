@@ -638,7 +638,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">
+            <div className="font-semibold text-sm text-white uppercase">
               Fixorium Market Maker
             </div>
           </div>

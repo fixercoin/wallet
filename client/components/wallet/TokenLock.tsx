@@ -787,7 +787,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               Create new lock
             </span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6 mt-6">
             <div>
               <Label className="text-xs text-gray-700 uppercase">
                 SELECT TOKEN

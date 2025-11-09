@@ -4,12 +4,10 @@ import { TokenInfo } from "@/lib/wallet";
 
 interface TokenQuickInfoCardProps {
   token: TokenInfo;
-  variant?: "light" | "dark";
 }
 
 export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
   token,
-  variant = "light",
 }) => {
   const currentPrice = token.price || 0;
   const priceChangePercent =

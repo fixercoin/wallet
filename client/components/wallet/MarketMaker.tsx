@@ -906,7 +906,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     onClick={() => setCurrentSession(session)}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <div>
+                      <div className="flex-1">
                         <p className="text-xs font-mono text-white">
                           {session.id}
                         </p>
@@ -915,17 +915,26 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           {session.sellStrategy}
                         </p>
                       </div>
-                      <span
-                        className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
-                          session.status === "running"
-                            ? "bg-green-500/20 text-green-400"
-                            : session.status === "completed"
-                              ? "bg-blue-500/20 text-blue-400"
-                              : "bg-gray-500/20 text-gray-300"
-                        }`}
-                      >
-                        {session.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
+                            session.status === "running"
+                              ? "bg-green-500/20 text-green-400"
+                              : session.status === "completed"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : "bg-gray-500/20 text-gray-300"
+                          }`}
+                        >
+                          {session.status}
+                        </span>
+                        <button
+                          onClick={(e) => handleRemoveSession(session.id, e)}
+                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                          title="Remove session"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

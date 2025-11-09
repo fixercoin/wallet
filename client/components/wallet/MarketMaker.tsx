@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, AlertTriangle, Zap } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Zap, X } from "lucide-react";
 
 interface MarketMakerProps {
   onBack: () => void;

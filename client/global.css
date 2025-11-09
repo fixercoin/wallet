@@ -346,6 +346,23 @@
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
   }
 
+  /* Settings page: force pure dark page theme and hide decorative gradients */
+  .dark-settings .bg-gradient-to-br,
+  .dark-settings .rounded-lg.p-6,
+  .dark-settings .rounded-2xl.p-6,
+  .dark-settings .express-p2p-page > div {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--foreground)) !important;
+    background-image: none !important;
+  }
+
+  /* Hide the decorative absolute gradient blobs only inside settings */
+  .dark-settings .absolute[class*="bg-gradient-to-br"],
+  .dark-settings .absolute[class*="bg-[#"] {
+    display: none !important;
+  }
+
   /* Global override: any rounded gradient card becomes page background */
   [class*="rounded-lg"][class*="bg-gradient-to-br"],
   [class*="rounded-2xl"][class*="bg-gradient-to-br"] {

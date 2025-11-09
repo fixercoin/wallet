@@ -30,7 +30,10 @@ export const TokenRemovalDialog: React.FC<TokenRemovalDialogProps> = ({
   if (!token) return null;
 
   const handleRemove = async () => {
-    await onRemove();
+    const result = onRemove();
+    if (result instanceof Promise) {
+      await result;
+    }
     onOpenChange(false);
   };
 

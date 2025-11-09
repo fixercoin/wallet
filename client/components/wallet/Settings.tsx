@@ -204,7 +204,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-transparent text-gray-900 p-2 rounded-md border-0 font-mono"
+                          className="flex-1 bg-transparent text-gray-900 p-2 rounded-md border border-gray-400 font-mono"
                         >
                           {wallets.map((w) => (
                             <option
@@ -241,7 +241,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   e.target.value as "recovery" | "private",
                                 )
                               }
-                              className="flex-1 bg-transparent text-gray-900 p-2 rounded-md border-0 font-mono"
+                              className="flex-1 bg-transparent text-gray-900 p-2 rounded-md border border-gray-400 font-mono"
                             >
                               <option value="recovery">RECOVERY PHRASE</option>
                               <option value="private">PRIVATE KEY</option>
@@ -361,7 +361,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   : ""
                             }
                             readOnly
-                            className="bg-transparent border border-black text-gray-900 font-mono text-sm resize-none min-h-[140px]"
+                            className="bg-transparent border border-gray-400 text-gray-900 font-mono text-sm resize-none min-h-[140px]"
                             placeholder={
                               showRecoveryPhrase || showPrivateKey
                                 ? ""

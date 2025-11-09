@@ -12,6 +12,7 @@ import { Airdrop } from "@/components/wallet/Airdrop";
 import { Accounts } from "@/components/wallet/Accounts";
 import { TokenLock } from "@/components/wallet/TokenLock";
 import { BurnToken } from "@/components/wallet/BurnToken";
+import { TokenManage } from "@/components/wallet/TokenManage";
 
 type Screen =
   | "dashboard"
@@ -19,6 +20,7 @@ type Screen =
   | "receive"
   | "swap"
   | "token-detail"
+  | "token-manage"
   | "settings"
   | "autobot"
   | "setup"
@@ -99,6 +101,15 @@ export default function Index() {
           onSell={handleSellToken}
           onSend={handleSendToken}
           onReceive={() => navigateToScreen("receive")}
+        />
+      );
+
+    case "token-manage":
+      return (
+        <TokenManage
+          tokenMint={currentScreen.tokenMint || ""}
+          onBack={navigateToDashboard}
+          onContinue={handleTokenClick}
         />
       );
 

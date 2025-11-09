@@ -361,7 +361,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                                   : ""
                             }
                             readOnly
-                            className="bg-transparent border-0 text-gray-900 font-mono text-sm resize-none min-h-[140px]"
+                            className="bg-transparent border border-black text-gray-900 font-mono text-sm resize-none min-h-[140px]"
                             placeholder={
                               showRecoveryPhrase || showPrivateKey
                                 ? ""

@@ -1011,7 +1011,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       className="w-full flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">

@@ -656,7 +656,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         } catch (refreshErr) {
           console.warn("Quote refresh failed:", refreshErr);
           const refreshErrorMsg =
-            refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+            refreshErr instanceof Error
+              ? refreshErr.message
+              : String(refreshErr);
           if (refreshErrorMsg.includes("timeout")) {
             throw new Error(`Quote refresh timed out. Please try again.`);
           }
@@ -664,7 +666,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           console.warn("Using original quote for swap");
         }
       } else {
-        console.log(`Quote still fresh (${timeRemaining}s remaining), skipping refresh`);
+        console.log(
+          `Quote still fresh (${timeRemaining}s remaining), skipping refresh`,
+        );
       }
 
       // Request swap transaction from Jupiter

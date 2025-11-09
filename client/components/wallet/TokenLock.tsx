@@ -758,7 +758,6 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-gray-800 text-gray-900 relative overflow-hidden">
-
       <div className="w-full max-w-2xl mx-auto px-4 py-6 space-y-3 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-2">

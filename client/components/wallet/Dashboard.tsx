@@ -778,7 +778,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      <div className="w-full max-w-2xl mx-auto px-4 py-2 relative z-20">
+      <div className="w-full md:max-w-2xl mx-auto px-4 sm:px-4 py-2 relative z-20">
         {/* Balance Section */}
         <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">

@@ -400,6 +400,32 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, [wallet, userTokens]);
 
+  // Track quote age over time
+  useEffect(() => {
+    if (!quote || !quote.quoteTime) {
+      setQuoteAge(0);
+      return;
+    }
+
+    const updateQuoteAge = () => {
+      const age = Date.now() - quote.quoteTime;
+      setQuoteAge(age);
+
+      // Auto-refresh quote if it's getting too old (near expiration)
+      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
+        console.log("[SwapInterface] Quote approaching expiration, refreshing...");
+        getQuote().catch((e) => console.warn("Auto-refresh quote failed:", e));
+      }
+    };
+
+    // Update immediately
+    updateQuoteAge();
+
+    // Update every 500ms while quote is valid
+    const interval = setInterval(updateQuoteAge, 500);
+    return () => clearInterval(interval);
+  }, [quote?.quoteTime]);
+
   // Auto-fetch quotes when amount, fromMint, or toMint changes
   useEffect(() => {
     const debounceTimer = setTimeout(() => {

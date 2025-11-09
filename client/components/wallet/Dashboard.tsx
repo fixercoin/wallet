@@ -35,6 +35,7 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { TokenRemovalDialog } from "./TokenRemovalDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -34,22 +34,22 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold text-gray-900">Accounts</h1>
+            <h1 className="text-lg font-semibold text-gray-900 uppercase">ACCOUNTS</h1>
           </div>
 
           <div className="px-4 pb-4 space-y-4">
             <div>
-              <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))]">
-                Active Wallet
+              <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))] uppercase">
+                ACTIVE WALLET
               </div>
               <div className="w-full">
                 <div className="bg-transparent border border-gray-200 rounded-md p-4 flex items-center justify-between">
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-600 mb-1">Address</div>
+                    <div className="text-xs text-gray-600 mb-1 uppercase">ADDRESS</div>
                     <div className="font-mono text-sm break-all text-gray-900">
                       {wallet
                         ? shortenAddress(wallet.publicKey, 8)
-                        : "No wallet"}
+                        : "NO WALLET"}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                       variant="ghost"
                       size="sm"
                       onClick={handleCopy}
-                      aria-label="Copy address"
+                      aria-label="COPY ADDRESS"
                       className="text-gray-900 hover:bg-white/10"
                     >
                       <Copy className="h-4 w-4" />
@@ -65,7 +65,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                     <Button
                       onClick={() => onOpenSetup && onOpenSetup()}
                       className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm"
-                      aria-label="Add wallet"
+                      aria-label="ADD WALLET"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -75,8 +75,8 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             </div>
 
             <div>
-              <div className="text-sm mb-2 text-[hsl(var(--foreground))] font-medium">
-                All Accounts
+              <div className="text-sm mb-2 text-[hsl(var(--foreground))] font-medium uppercase">
+                ALL ACCOUNTS
               </div>
               <div className="space-y-2">
                 {wallets.map((w) => (
@@ -93,7 +93,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                         onBack();
                       }}
                       className="text-left flex-1"
-                      title="Select this wallet"
+                      title="SELECT THIS WALLET"
                     >
                       <div className="font-medium">
                         {w.label ? w.label : shortenAddress(w.publicKey, 8)}
@@ -110,7 +110,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}
-                          placeholder="Enter name"
+                          placeholder="ENTER NAME"
                           className="h-8 w-36"
                         />
                         <Button
@@ -121,7 +121,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setLabelInput("");
                           }}
                           className="h-8 px-2"
-                          aria-label="Save"
+                          aria-label="SAVE"
                         >
                           <Save className="h-4 w-4" />
                         </Button>
@@ -133,7 +133,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setLabelInput("");
                           }}
                           className="h-8 px-2"
-                          aria-label="Cancel"
+                          aria-label="CANCEL"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -147,7 +147,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                           setLabelInput(w.label || "");
                         }}
                         className="h-8 px-2"
-                        aria-label="Edit name"
+                        aria-label="EDIT NAME"
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>

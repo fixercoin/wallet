@@ -106,11 +106,49 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
-  app.get("/api/dexscreener/price", handleDexscreenerPrice);
+  app.get("/api/dexscreener/price", async (req, res) => {
+    try {
+      return await handleDexscreenerPrice(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener price failed",
+        details: e?.message || String(e),
+      });
+    }
+  });
 
   // Price routes
-  app.get("/api/sol/price", handleSolPrice);
-  app.get("/api/token/price", handleTokenPrice);
+  app.get("/api/sol/price", async (req, res) => {
+    try {
+      return await handleSolPrice(req, res);
+    } catch (e: any) {
+      console.error("[SOL Price] Unhandled error:", e);
+      return res.status(500).json({
+        token: "SOL",
+        price: 149.38,
+        priceUsd: 149.38,
+        priceChange24h: 0,
+        volume24h: 0,
+        marketCap: 0,
+        source: "fallback",
+        error: "Price service temporarily unavailable",
+      });
+    }
+  });
+  app.get("/api/token/price", async (req, res) => {
+    try {
+      return await handleTokenPrice(req, res);
+    } catch (e: any) {
+      console.error("[Token Price] Unhandled error:", e);
+      return res.status(500).json({
+        token: (req.query.token as string) || "FIXERCOIN",
+        price: 0.00008139,
+        priceUsd: "0.00008139",
+        source: "fallback",
+        error: "Price service temporarily unavailable",
+      });
+    }
+  });
 
   // CoinMarketCap routes
   app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);

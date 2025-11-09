@@ -1,4 +1,4 @@
-// Call Jupiter directly to avoid proxy latency that causes quote expiration
+import { resolveApiUrl } from "@/lib/api-client";
 
 export interface JupiterQuoteResponse {
   inputMint: string;
@@ -42,22 +42,16 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
-// Direct Jupiter API endpoints - public endpoints that don't require authentication
-const JUPITER_QUOTE_ENDPOINTS = [
-  "https://quote-api.jup.ag/v6/quote",
-];
-
-const JUPITER_SWAP_ENDPOINTS = [
-  "https://quote-api.jup.ag/v6/swap",
-];
-
-const JUPITER_PRICE_ENDPOINTS = [
-  "https://price.jup.ag/v4",
-];
+// Use server-side proxies to avoid CORS issues
+const JUPITER_V6_ENDPOINTS = {
+  quote: "/api/jupiter/quote",
+  swap: "/api/jupiter/swap",
+  price: "/api/jupiter/price",
+};
 
 class JupiterV6API {
   /**
-   * Get a quote for swapping tokens - calls Jupiter directly
+   * Get a quote for swapping tokens
    */
   async getQuote(
     inputMint: string,
@@ -77,83 +71,49 @@ class JupiterV6API {
         asLegacyTransaction: String(asLegacyTransaction),
       });
 
-      let lastError: Error | null = null;
+      const response = await fetch(
+        resolveApiUrl(`${JUPITER_V6_ENDPOINTS.quote}?${params.toString()}`),
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      // Try multiple endpoints
-      for (let i = 0; i < JUPITER_QUOTE_ENDPOINTS.length; i++) {
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        let errorData = {};
         try {
-          const endpoint = JUPITER_QUOTE_ENDPOINTS[i];
-          console.log(`[Jupiter Quote] Trying endpoint ${i + 1}...`);
-
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-          const response = await fetch(
-            `${endpoint}?${params.toString()}`,
-            {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0 (compatible; FixoriumWallet/1.0)",
-              },
-              signal: controller.signal,
-            },
-          );
-
-          clearTimeout(timeoutId);
-
-          if (!response.ok) {
-            const errorText = await response.text().catch(() => "");
-            console.warn(
-              `[Jupiter Quote] Endpoint ${i + 1} failed (${response.status}):`,
-              errorText.slice(0, 100),
-            );
-            lastError = new Error(
-              `HTTP ${response.status}: ${errorText.slice(0, 100)}`,
-            );
-            continue;
-          }
-
-          const rawData: any = await response.json();
-          const data =
-            rawData && typeof rawData === "object" && "quote" in rawData
-              ? rawData.quote
-              : rawData;
-
-          if (!data || !data.outAmount || data.outAmount === "0") {
-            console.warn(
-              "[Jupiter Quote] No outAmount in response:",
-              rawData,
-            );
-            return null;
-          }
-
-          console.log("[Jupiter Quote] Success");
-          return data as JupiterQuoteResponse;
-        } catch (error: any) {
-          const msg =
-            error instanceof Error ? error.message : String(error);
-          console.warn(`[Jupiter Quote] Endpoint ${i + 1} error:`, msg);
-          lastError = error instanceof Error ? error : new Error(msg);
-
-          // Wait before trying next endpoint
-          if (i < JUPITER_QUOTE_ENDPOINTS.length - 1) {
-            await new Promise((r) => setTimeout(r, 500));
-          }
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
         }
+        console.error("[SwapInterface] Quote error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
+        return null;
       }
 
-      console.error(
-        "[Jupiter Quote] All endpoints failed:",
-        lastError?.message,
-      );
-      throw (
-        lastError ||
-        new Error("All Jupiter quote endpoints failed")
-      );
+      const rawData: any = await response.json();
+
+      // Some proxies return { source: 'jupiter', quote: {...} }
+      const data =
+        rawData && typeof rawData === "object" && "quote" in rawData
+          ? rawData.quote
+          : rawData;
+
+      if (!data || !data.outAmount || data.outAmount === "0") {
+        console.warn("[SwapInterface] Quote returned no outAmount:", rawData);
+        return null;
+      }
+
+      return data as JupiterQuoteResponse;
     } catch (error) {
-      console.error("[Jupiter Quote] Error:", error);
+      console.error("[SwapInterface] Quote error:", error);
       throw error;
     }
   }
@@ -166,53 +126,33 @@ class JupiterV6API {
   ): Promise<Record<string, JupiterTokenPrice>> {
     try {
       const ids = mints.join(",");
-      let lastError: Error | null = null;
+      const response = await fetch(
+        resolveApiUrl(
+          `${JUPITER_V6_ENDPOINTS.price}?ids=${encodeURIComponent(ids)}`,
+        ),
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
 
-      for (let i = 0; i < JUPITER_PRICE_ENDPOINTS.length; i++) {
-        try {
-          const endpoint = JUPITER_PRICE_ENDPOINTS[i];
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-          const response = await fetch(
-            `${endpoint}/price?ids=${encodeURIComponent(ids)}`,
-            {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-                "User-Agent": "Mozilla/5.0 (compatible; FixoriumWallet/1.0)",
-              },
-              signal: controller.signal,
-            },
-          );
-
-          clearTimeout(timeoutId);
-
-          if (!response.ok) {
-            lastError = new Error(`HTTP ${response.status}`);
-            continue;
-          }
-
-          const data = await response.json();
-          return data.data || {};
-        } catch (error: any) {
-          lastError = error instanceof Error ? error : new Error(String(error));
-          if (i < JUPITER_PRICE_ENDPOINTS.length - 1) {
-            await new Promise((r) => setTimeout(r, 300));
-          }
-        }
+      if (!response.ok) {
+        console.error("[SwapInterface] Price error:", response.status);
+        return {};
       }
 
-      console.warn("[Jupiter Price] All endpoints failed, returning empty");
-      return {};
+      const data = await response.json();
+      return data.data || {};
     } catch (error) {
-      console.error("[Jupiter Price] Error:", error);
+      console.error("[SwapInterface] Price error:", error);
       return {};
     }
   }
 
   /**
-   * Create a swap transaction - calls Jupiter directly
+   * Create a swap transaction
    */
   async createSwap(
     quoteResponse: JupiterQuoteResponse,
@@ -234,122 +174,43 @@ class JupiterV6API {
         asLegacyTransaction: options.asLegacyTransaction === true,
       };
 
-      let lastError: Error | null = null;
-      let lastStatus = 0;
+      const response = await fetch(resolveApiUrl(JUPITER_V6_ENDPOINTS.swap), {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-      // Try multiple swap endpoints
-      for (let endpointIdx = 0; endpointIdx < JUPITER_SWAP_ENDPOINTS.length; endpointIdx++) {
-        const endpoint = JUPITER_SWAP_ENDPOINTS[endpointIdx];
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("[SwapInterface] Swap error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
 
-        // Retry each endpoint twice
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          try {
-            console.log(
-              `[Jupiter Swap] Endpoint ${endpointIdx + 1}/${JUPITER_SWAP_ENDPOINTS.length}, Attempt ${attempt}/2`,
-            );
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-            const response = await fetch(endpoint, {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0 (compatible; FixoriumWallet/1.0)",
-              },
-              body: JSON.stringify(body),
-              signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-            lastStatus = response.status;
-
-            const text = await response.text().catch(() => "");
-
-            if (response.ok) {
-              try {
-                const data = JSON.parse(text || "{}");
-                console.log("[Jupiter Swap] Success");
-                return data as JupiterSwapResponse;
-              } catch {
-                console.warn("[Jupiter Swap] Failed to parse response");
-                return null;
-              }
-            }
-
-            // Check if it's a stale quote error
-            const lower = (text || "").toLowerCase();
-            const isStaleQuote =
-              lower.includes("1016") ||
-              lower.includes("stale") ||
-              lower.includes("quote expired") ||
-              lower.includes("simulation failed");
-
-            if (isStaleQuote) {
-              console.warn(
-                "[Jupiter Swap] Detected stale/expired quote (1016)",
-              );
-              throw new Error("Quote expired - please refresh and try again");
-            }
-
-            // Retryable errors
-            if (response.status === 429 || response.status >= 500) {
-              console.warn(
-                `[Jupiter Swap] Retryable error (${response.status})`,
-              );
-              lastError = new Error(
-                `HTTP ${response.status}: ${text.slice(0, 100)}`,
-              );
-
-              if (attempt < 2) {
-                await new Promise((r) =>
-                  setTimeout(r, 1000 * attempt),
-                );
-                continue;
-              }
-              break;
-            }
-
-            // Non-retryable error on this endpoint
-            lastError = new Error(
-              `HTTP ${response.status}: ${text.slice(0, 100)}`,
-            );
-            break;
-          } catch (error: any) {
-            const msg =
-              error instanceof Error ? error.message : String(error);
-            console.warn(
-              `[Jupiter Swap] Endpoint ${endpointIdx + 1}, Attempt ${attempt} error:`,
-              msg.slice(0, 100),
-            );
-
-            if (msg.includes("Quote expired")) {
-              throw error;
-            }
-
-            lastError = error instanceof Error ? error : new Error(msg);
-
-            if (attempt === 1) {
-              await new Promise((r) => setTimeout(r, 1000));
-            }
-          }
+        // Handle stale/expired quotes explicitly
+        if (errorData?.error === "STALE_QUOTE" || errorData?.code === 1016) {
+          throw new Error("Quote expired - please refresh and try again");
         }
 
-        // Wait before trying next endpoint
-        if (endpointIdx < JUPITER_SWAP_ENDPOINTS.length - 1) {
-          await new Promise((r) => setTimeout(r, 500));
-        }
+        throw new Error(
+          errorData.error || errorData.message || "Failed to create swap",
+        );
       }
 
-      const errorMsg = lastError?.message || "Failed to create swap";
-      console.error(
-        "[Jupiter Swap] All endpoints failed:",
-        errorMsg,
-      );
-      throw lastError || new Error(errorMsg);
+      const data: JupiterSwapResponse = await response.json();
+      return data;
     } catch (error) {
-      console.error("[Jupiter Swap] Error:", error);
+      console.error("[SwapInterface] Swap error:", error);
       throw error;
     }
   }

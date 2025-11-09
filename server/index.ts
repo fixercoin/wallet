@@ -740,6 +740,21 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Global error handler for async errors
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("[Server] Unhandled error:", {
+      message: err?.message || String(err),
+      stack: err?.stack,
+      path: req.path,
+    });
+
+    // Always return JSON to prevent text/plain responses
+    res.status(500).json({
+      error: "Internal server error",
+      details: err?.message || "Unknown error",
+    });
+  });
+
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({ error: "API endpoint not found", path: req.path });

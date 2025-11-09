@@ -308,7 +308,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         status: "active" as const,
       }));
 
-      const updatedSession = { ...currentSession, status: "running" as const, makers };
+      const updatedSession = {
+        ...currentSession,
+        status: "running" as const,
+        makers,
+      };
       setCurrentSession(updatedSession);
       const updatedSessions = sessions.map((s) =>
         s.id === updatedSession.id ? updatedSession : s,
@@ -387,7 +391,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             continue;
           }
 
-          const impact = Math.abs(parseFloat(quote.priceImpactPct || "0")) * 100;
+          const impact =
+            Math.abs(parseFloat(quote.priceImpactPct || "0")) * 100;
           if (isFinite(impact) && impact > 20) {
             const m = updatedSession.makers[i];
             if (m) {
@@ -614,9 +619,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       className="text-xs p-3 bg-transparent rounded border border-gray-700/50"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-mono text-white">
-                          {maker.id}
-                        </span>
+                        <span className="font-mono text-white">{maker.id}</span>
                         <span
                           className={`text-xs font-semibold px-2 py-1 rounded ${
                             maker.status === "active"

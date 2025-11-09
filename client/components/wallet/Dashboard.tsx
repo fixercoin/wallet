@@ -121,10 +121,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
-  const [showTokenRemovalDialog, setShowTokenRemovalDialog] = useState(false);
-  const [selectedTokenForRemoval, setSelectedTokenForRemoval] =
-    useState<TokenInfo | null>(null);
-  const [isRemovingToken, setIsRemovingToken] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);

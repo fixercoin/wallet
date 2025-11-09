@@ -59,7 +59,7 @@ export default function Index() {
   };
 
   const handleTokenClick = (tokenMint: string) => {
-    navigateToScreen("token-detail", tokenMint);
+    navigateToScreen("token-manage", tokenMint);
   };
 
   const handleBuyToken = (tokenMint: string) => {

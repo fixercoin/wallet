@@ -319,14 +319,15 @@
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
   }
 
-  /* Green cards - specific main card containers with borders */
+  /* Dark grey cards - specific main card containers with borders */
   .express-p2p-page [class*="mt-6"][class*="rounded-lg"],
   .express-p2p-page [class*="rounded-2xl"][class*="border-\["] {
-    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%) !important;
-    border-color: #22c55e !important;
+    background: #1f2937 !important; /* gray-800 */
+    border-color: #374151 !important; /* gray-700 */
+    background-image: none !important;
   }
 
-  /* Green action buttons in Dashboard gap-3 container */
+  /* Keep action buttons styling unchanged */
   .express-p2p-page [class*="gap-3"][class*="mt-10"] button {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
     border-color: #22c55e !important;
@@ -335,6 +336,20 @@
 
   .express-p2p-page [class*="gap-3"][class*="mt-10"] button:hover {
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  }
+
+  /* Global override: any rounded gradient card becomes dark grey */
+  [class*="rounded-lg"][class*="bg-gradient-to-br"],
+  [class*="rounded-2xl"][class*="bg-gradient-to-br"] {
+    background: #1f2937 !important; /* gray-800 */
+    border-color: #374151 !important; /* gray-700 */
+    background-image: none !important;
+  }
+
+  /* Override translucent black cards to solid dark grey within express pages */
+  .express-p2p-page [class*="bg-black/20"] {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
   }
 
   /* Mobile optimizations */

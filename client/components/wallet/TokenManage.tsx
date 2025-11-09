@@ -78,11 +78,11 @@ export const TokenManage: React.FC<TokenManageProps> = ({
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                Manage Token
+              <h1 className="text-lg font-semibold text-gray-900 uppercase">
+                MANAGE TOKEN
               </h1>
-              <p className="text-xs text-gray-500 mt-1">
-                What would you like to do with {token.symbol}?
+              <p className="text-xs text-gray-500 mt-1 uppercase">
+                WHAT WOULD YOU LIKE TO DO WITH {token.symbol}?
               </p>
             </div>
           </div>
@@ -97,13 +97,13 @@ export const TokenManage: React.FC<TokenManageProps> = ({
                 />
               )}
               <div>
-                <p className="font-semibold text-sm text-gray-900">
+                <p className="font-semibold text-sm text-gray-900 uppercase">
                   {token.symbol}
                 </p>
-                <p className="text-xs text-gray-500">{token.name || token.mint.slice(0, 8)}</p>
+                <p className="text-xs text-gray-500 uppercase">{token.name || token.mint.slice(0, 8)}</p>
                 {typeof token.balance === "number" && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    Balance: {token.balance.toFixed(token.decimals || 6)} {token.symbol}
+                  <p className="text-xs text-gray-600 mt-1 uppercase">
+                    BALANCE: {token.balance.toFixed(token.decimals || 6)} {token.symbol}
                   </p>
                 )}
               </div>
@@ -112,28 +112,28 @@ export const TokenManage: React.FC<TokenManageProps> = ({
             <div className="space-y-3">
               <Button
                 onClick={handleContinue}
-                className="w-full h-11 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white font-semibold rounded-lg shadow-lg"
+                className="w-full h-11 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white font-semibold rounded-lg shadow-lg uppercase"
                 disabled={isRemoving}
               >
-                View Token Details
+                VIEW TOKEN DETAILS
               </Button>
               <Button
                 onClick={handleRemoveToken}
                 disabled={isRemoving}
-                className="w-full h-11 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-lg flex items-center justify-center gap-2"
+                className="w-full h-11 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-lg flex items-center justify-center gap-2 uppercase"
               >
                 <Trash2 className="h-4 w-4" />
-                {isRemoving ? "Removing..." : "Remove Token"}
+                {isRemoving ? "REMOVING..." : "REMOVE TOKEN"}
               </Button>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2 mt-6">
               <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-yellow-800">
-                <p className="font-semibold mb-1">Removing this token</p>
-                <p>
-                  Removing a token from your wallet view doesn't delete it from the blockchain.
-                  You can add it back anytime.
+                <p className="font-semibold mb-1 uppercase">REMOVING THIS TOKEN</p>
+                <p className="uppercase">
+                  REMOVING A TOKEN FROM YOUR WALLET VIEW DOESN'T DELETE IT FROM THE BLOCKCHAIN.
+                  YOU CAN ADD IT BACK ANYTIME.
                 </p>
               </div>
             </div>

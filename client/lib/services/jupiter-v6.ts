@@ -42,8 +42,7 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
-// Use local proxy endpoints (requires backend server)
-// For Cloudflare Pages production, you'll need a Cloudflare Worker proxy
+// Use server-side proxies to avoid CORS issues
 const JUPITER_V6_ENDPOINTS = {
   quote: "/api/jupiter/quote",
   swap: "/api/jupiter/swap",
@@ -91,7 +90,7 @@ class JupiterV6API {
         } catch {
           errorData = { message: errorText || `HTTP ${response.status}` };
         }
-        console.error("Jupiter quote error:", {
+        console.error("[SwapInterface] Quote error:", {
           status: response.status,
           statusText: response.statusText,
           data: errorData,
@@ -108,13 +107,13 @@ class JupiterV6API {
           : rawData;
 
       if (!data || !data.outAmount || data.outAmount === "0") {
-        console.warn("Jupiter quote returned no outAmount:", rawData);
+        console.warn("[SwapInterface] Quote returned no outAmount:", rawData);
         return null;
       }
 
       return data as JupiterQuoteResponse;
     } catch (error) {
-      console.error("Jupiter getQuote error:", error);
+      console.error("[SwapInterface] Quote error:", error);
       throw error;
     }
   }
@@ -140,14 +139,14 @@ class JupiterV6API {
       );
 
       if (!response.ok) {
-        console.error("Jupiter price error:", response.status);
+        console.error("[SwapInterface] Price error:", response.status);
         return {};
       }
 
       const data = await response.json();
       return data.data || {};
     } catch (error) {
-      console.error("Jupiter getTokenPrices error:", error);
+      console.error("[SwapInterface] Price error:", error);
       return {};
     }
   }
@@ -192,7 +191,7 @@ class JupiterV6API {
         } catch {
           errorData = { message: errorText || `HTTP ${response.status}` };
         }
-        console.error("Jupiter swap error:", {
+        console.error("[SwapInterface] Swap error:", {
           status: response.status,
           statusText: response.statusText,
           data: errorData,
@@ -203,46 +202,6 @@ class JupiterV6API {
           throw new Error("Quote expired - please refresh and try again");
         }
 
-        // Fallback: call Jupiter directly if proxy fails (e.g., 5xx from Cloudflare)
-        const directEndpoints = [
-          "https://quote-api.jup.ag/v6/swap",
-          "https://lite-api.jup.ag/swap/v1/swap",
-        ];
-        for (const ep of directEndpoints) {
-          try {
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 25000);
-            const r = await fetch(ep, {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0 (compatible; FixoriumWallet/1.0)",
-              },
-              body: JSON.stringify(body),
-              signal: ctrl.signal,
-            });
-            clearTimeout(timer);
-
-            const txt = await r.text();
-            if (!r.ok) {
-              if (
-                txt.includes("1016") ||
-                txt.includes("STALE") ||
-                txt.includes("simulation")
-              ) {
-                throw new Error("Quote expired - please refresh and try again");
-              }
-              continue; // try next endpoint
-            }
-            return JSON.parse(txt) as JupiterSwapResponse;
-          } catch (e: any) {
-            // try next endpoint on error/timeout
-            continue;
-          }
-        }
-
-        // If all fallbacks failed, throw the original error
         throw new Error(
           errorData.error || errorData.message || "Failed to create swap",
         );
@@ -251,7 +210,7 @@ class JupiterV6API {
       const data: JupiterSwapResponse = await response.json();
       return data;
     } catch (error) {
-      console.error("Jupiter createSwap error:", error);
+      console.error("[SwapInterface] Swap error:", error);
       throw error;
     }
   }
@@ -286,7 +245,6 @@ class JupiterV6API {
     maxAgeSeconds: number = 30,
   ): boolean {
     if (!quoteResponse.contextSlot) return false;
-    // Note: In real implementation, would compare with current slot
     return true;
   }
 }

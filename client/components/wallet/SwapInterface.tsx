@@ -487,13 +487,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
 
         setQuote({
-          quoteResponse,
-          outHuman,
-          outToken: toToken.symbol,
-          hops: quoteResponse.routePlan?.length ?? 0,
-          priceImpact,
-          quoteTime: Date.now(),
-        });
+        quoteResponse,
+        outHuman,
+        outToken: toToken.symbol,
+        hops: quoteResponse.routePlan?.length ?? 0,
+        priceImpact,
+        quoteTime: Date.now(),
+        slippageBps: 100,
+      });
         setStatus("");
         setIsLoading(false);
         return { quoteResponse };

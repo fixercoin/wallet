@@ -1088,6 +1088,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onOpenChange={setShowAddTokenDialog}
         onTokenAdd={addCustomToken}
       />
+
+      {/* Token Removal Dialog */}
+      <TokenRemovalDialog
+        open={showTokenRemovalDialog}
+        token={selectedTokenForRemoval}
+        onOpenChange={setShowTokenRemovalDialog}
+        onRemove={handleRemoveToken}
+        onContinue={handleContinueToTokenDetail}
+        isRemoving={isRemovingToken}
+      />
     </div>
   );
 };

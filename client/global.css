@@ -312,7 +312,7 @@
   }
 
   .balance-card {
-    @apply bg-gray-800 text-gray-100 rounded-xl p-6 shadow-2xl border border-gray-700/30;
+    @apply bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-xl p-6 shadow-2xl border-0;
   }
 
   .transaction-item {

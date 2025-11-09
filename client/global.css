@@ -691,16 +691,13 @@
     width: 400px;
     height: 400px;
     border-radius: 20px;
-    background: linear-gradient(
-      170deg,
-      rgba(58, 56, 56, 0.623) 0%,
-      rgb(31, 31, 31) 100%
-    );
+    background: #374151;
     position: relative;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.55);
     cursor: pointer;
     transition: all 0.3s;
     padding: 20px;
+    border: 1px solid #4b5563;
   }
   .card_box:hover {
     transform: scale(0.9);

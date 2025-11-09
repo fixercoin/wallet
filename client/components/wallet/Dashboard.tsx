@@ -747,7 +747,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2 flex-1">
-              <TokenSearch className="w-full mr-2" />
+              <TokenSearch
+                className="w-full mr-2"
+                inputClassName="bg-transparent text-foreground placeholder:text-[hsl(var(--muted-foreground))] border border-border focus-visible:ring-0"
+              />
             </div>
 
             <div className="flex items-center gap-2">

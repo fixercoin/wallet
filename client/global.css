@@ -292,11 +292,14 @@
 @layer components {
   /* Wallet-specific styles - dark grey theme */
   .wallet-gradient {
-    @apply bg-gray-800;
+    background: hsl(var(--background));
   }
 
   .wallet-card {
-    @apply bg-gray-800 backdrop-blur-sm border border-gray-700/30 shadow-xl;
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
   }
 
   .wallet-button-primary {
@@ -312,21 +315,27 @@
   }
 
   .balance-card {
-    @apply bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-xl p-6 shadow-2xl border-0;
+    background: hsl(var(--background)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: none !important;
   }
 
   .transaction-item {
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
   }
 
-  /* Green cards - specific main card containers with borders */
+  /* Card containers should match page background */
   .express-p2p-page [class*="mt-6"][class*="rounded-lg"],
   .express-p2p-page [class*="rounded-2xl"][class*="border-\["] {
-    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%) !important;
-    border-color: #22c55e !important;
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    background-image: none !important;
   }
 
-  /* Green action buttons in Dashboard gap-3 container */
+  /* Keep action buttons styling unchanged */
   .express-p2p-page [class*="gap-3"][class*="mt-10"] button {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
     border-color: #22c55e !important;
@@ -335,6 +344,37 @@
 
   .express-p2p-page [class*="gap-3"][class*="mt-10"] button:hover {
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  }
+
+  /* Settings page: force pure dark page theme and hide decorative gradients */
+  .dark-settings .bg-gradient-to-br,
+  .dark-settings .rounded-lg.p-6,
+  .dark-settings .rounded-2xl.p-6,
+  .dark-settings .express-p2p-page > div {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--foreground)) !important;
+    background-image: none !important;
+  }
+
+  /* Hide the decorative absolute gradient blobs only inside settings */
+  .dark-settings .absolute[class*="bg-gradient-to-br"],
+  .dark-settings .absolute[class*="bg-[#"] {
+    display: none !important;
+  }
+
+  /* Global override: any rounded gradient card becomes page background */
+  [class*="rounded-lg"][class*="bg-gradient-to-br"],
+  [class*="rounded-2xl"][class*="bg-gradient-to-br"] {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    background-image: none !important;
+  }
+
+  /* Override translucent black cards to match page background within express pages */
+  .express-p2p-page [class*="bg-black/20"] {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
   }
 
   /* Mobile optimizations */

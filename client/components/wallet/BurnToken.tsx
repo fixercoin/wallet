@@ -587,7 +587,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               <div className="text-xs uppercase tracking-wide text-orange-500">
                 Burn SPL Tokens
               </div>
-             <h1></h1>
+              <h1></h1>
             </div>
           </div>
 
@@ -595,7 +595,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />
               <span className="text-xs font-semibold text-white leading-relaxed">
-                DISCLAIMER: TOKEN BURNING DOES NOT GUARANTEE AN INCREASE IN VALUE. WHILE THE PROCESS REDUCES THE TOTAL SUPPLY BY PERMANENTLY REMOVING TOKENS FROM CIRCULATION, MARKET CONDITIONS, DEMAND, AND OTHER EXTERNAL FACTORS WILL CONTINUE TO INFLUENCE PRICE. TOKEN BURNING SHOULD BE VIEWED AS A LONG-TERM ECONOMIC MECHANISM WITHIN THE PROJECT ECOSYSTEM, NOT AS A PROMISE OF PROFITS OR FINANCIAL RETURNS. PARTICIPANTS SHOULD CONDUCT THEIR OWN RESEARCH AND UNDERSTAND THE RISKS BEFORE MAKING ANY DECISIONS
+                DISCLAIMER: TOKEN BURNING DOES NOT GUARANTEE AN INCREASE IN
+                VALUE. WHILE THE PROCESS REDUCES THE TOTAL SUPPLY BY PERMANENTLY
+                REMOVING TOKENS FROM CIRCULATION, MARKET CONDITIONS, DEMAND, AND
+                OTHER EXTERNAL FACTORS WILL CONTINUE TO INFLUENCE PRICE. TOKEN
+                BURNING SHOULD BE VIEWED AS A LONG-TERM ECONOMIC MECHANISM
+                WITHIN THE PROJECT ECOSYSTEM, NOT AS A PROMISE OF PROFITS OR
+                FINANCIAL RETURNS. PARTICIPANTS SHOULD CONDUCT THEIR OWN
+                RESEARCH AND UNDERSTAND THE RISKS BEFORE MAKING ANY DECISIONS
               </span>
             </div>
 

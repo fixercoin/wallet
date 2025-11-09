@@ -129,7 +129,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
               <button
                 key={`${r.pairAddress}-${mint}`}
                 onClick={() => onSelect(r)}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#e6f6ec] text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 text-left"
                 aria-label={`Open ${symbol} ${name}`}
               >
                 <div className="h-7 w-7 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">

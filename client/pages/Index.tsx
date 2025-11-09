@@ -62,6 +62,10 @@ export default function Index() {
     navigateToScreen("token-manage", tokenMint);
   };
 
+  const handleTokenManageContinue = (tokenMint: string) => {
+    navigateToScreen("token-detail", tokenMint);
+  };
+
   const handleBuyToken = (tokenMint: string) => {
     // For buy functionality, redirect to swap with the token pre-selected
     navigateToScreen("swap");
@@ -109,7 +113,7 @@ export default function Index() {
         <TokenManage
           tokenMint={currentScreen.tokenMint || ""}
           onBack={navigateToDashboard}
-          onContinue={handleTokenClick}
+          onContinue={handleTokenManageContinue}
         />
       );
 

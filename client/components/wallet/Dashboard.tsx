@@ -1008,7 +1008,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Card className="w-full bg-transparent rounded-md border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
                       onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-3">

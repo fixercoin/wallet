@@ -182,7 +182,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-6">
-              <Card className="bg-transparent rounded-md border border-white/8">
+              <Card className="bg-transparent rounded-md border border-white/3">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-md transition-colors">
                     <div className="min-w-0 w-full">
@@ -222,7 +222,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-transparent rounded-md border border-white/8">
+              <Card className="bg-transparent rounded-md border border-white/3">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-md transition-colors">
                     <div className="min-w-0 w-full">

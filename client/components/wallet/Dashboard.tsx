@@ -123,7 +123,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
   const [showTokenRemovalDialog, setShowTokenRemovalDialog] = useState(false);
-  const [selectedTokenForRemoval, setSelectedTokenForRemoval] = useState<TokenInfo | null>(null);
+  const [selectedTokenForRemoval, setSelectedTokenForRemoval] =
+    useState<TokenInfo | null>(null);
   const [isRemovingToken, setIsRemovingToken] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
@@ -416,7 +417,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         description: `${selectedTokenForRemoval.symbol} has been removed from your wallet`,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to remove token";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to remove token";
       toast({
         title: "Error",
         description: errorMessage,

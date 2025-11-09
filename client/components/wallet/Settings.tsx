@@ -39,7 +39,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
   if (wallets.length === 0) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white p-4">
+      <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
         <div className="w-full max-w-md mx-auto pt-8 px-4">
           <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">

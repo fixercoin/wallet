@@ -308,6 +308,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [quoteAge, setQuoteAge] = useState(0);
+
+  // Quote validity constants (in milliseconds)
+  const QUOTE_MAX_AGE_MS = 30000; // Jupiter quotes valid for 30 seconds
+  const QUOTE_WARNING_THRESHOLD_MS = 5000; // Show warning at 5 seconds remaining
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);

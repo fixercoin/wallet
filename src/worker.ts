@@ -525,7 +525,9 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
           if (response.ok) {
             try {
               const data = JSON.parse(text || "{}");
-              return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+              return new Response(JSON.stringify(data), {
+                headers: CORS_HEADERS,
+              });
             } catch {
               return new Response(text, { headers: CORS_HEADERS });
             }
@@ -558,7 +560,11 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
           }
 
           // Don't retry client errors
-          if (response.status === 400 || response.status === 401 || response.status === 403) {
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
             return new Response(
               JSON.stringify({
                 error: `Swap request failed: ${response.statusText}`,

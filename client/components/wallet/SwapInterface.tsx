@@ -651,10 +651,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             freshQuote = refreshed;
             console.log("✅ Quote refreshed successfully before swap");
           } else {
-            console.warn("Quote refresh returned null, attempting swap with original quote");
+            console.warn(
+              "Quote refresh returned null, attempting swap with original quote",
+            );
           }
         } catch (refreshErr) {
-          console.warn("Quote refresh failed, attempting swap with original quote");
+          console.warn(
+            "Quote refresh failed, attempting swap with original quote",
+          );
           const refreshErrorMsg =
             refreshErr instanceof Error
               ? refreshErr.message
@@ -672,7 +676,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       // Verify quote is not stale before sending to Jupiter
       if (quoteAge >= QUOTE_MAX_AGE_MS) {
-        throw new Error("Quote expired during execution. Please get a new quote and try again.");
+        throw new Error(
+          "Quote expired during execution. Please get a new quote and try again.",
+        );
       }
 
       // Request swap transaction from Jupiter

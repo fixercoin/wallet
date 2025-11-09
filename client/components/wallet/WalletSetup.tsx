@@ -598,43 +598,48 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowMnemonic(!showMnemonic)}
-                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                      >
-                        {showMnemonic ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                        {showMnemonic ? "Hide" : "Show"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={copyFullMnemonic}
-                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                      >
-                        <Copy className="h-4 w-4" />
-                        Copy All
-                      </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMnemonic(!showMnemonic)}
+                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                    >
+                      {showMnemonic ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                      {showMnemonic ? "Hide" : "Show"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyFullMnemonic}
+                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy All
+                    </Button>
                   </div>
                 </div>
 
                 <div className="bg-[#064e3b]/50 rounded-xl p-6">
                   <div className="grid grid-cols-3 gap-3">
-                    {generatedWallet.mnemonic.split(" ").map((word: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2 bg-[#0d3d2d]/50 rounded p-2">
-                        <span className="text-xs font-semibold text-gray-300 min-w-[1.5rem]">
-                          {idx + 1}
-                        </span>
-                        <span className="text-xs text-white truncate">
-                          {showMnemonic ? word : "••••••"}
-                        </span>
-                      </div>
-                    ))}
+                    {generatedWallet.mnemonic
+                      .split(" ")
+                      .map((word: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-[#0d3d2d]/50 rounded p-2"
+                        >
+                          <span className="text-xs font-semibold text-gray-300 min-w-[1.5rem]">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs text-white truncate">
+                            {showMnemonic ? word : "••••••"}
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </div>
 

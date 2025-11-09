@@ -34,7 +34,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold text-gray-900 uppercase">ACCOUNTS</h1>
+            <h1 className="text-lg font-semibold text-gray-900 uppercase">
+              ACCOUNTS
+            </h1>
           </div>
 
           <div className="px-4 pb-4 space-y-4">
@@ -45,7 +47,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               <div className="w-full">
                 <div className="bg-transparent border border-gray-200 rounded-md p-4 flex items-center justify-between">
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-600 mb-1 uppercase">ADDRESS</div>
+                    <div className="text-xs text-gray-600 mb-1 uppercase">
+                      ADDRESS
+                    </div>
                     <div className="font-mono text-sm break-all text-gray-900">
                       {wallet
                         ? shortenAddress(wallet.publicKey, 8)

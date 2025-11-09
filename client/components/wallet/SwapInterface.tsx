@@ -446,6 +446,21 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return BigInt(Math.round(amt * Math.pow(10, decimals)));
   };
 
+  const isQuoteExpired = (): boolean => {
+    if (!quote || !quote.quoteTime) return true;
+    return quoteAge >= QUOTE_MAX_AGE_MS;
+  };
+
+  const isQuoteWarning = (): boolean => {
+    if (!quote || !quote.quoteTime) return false;
+    return quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS && !isQuoteExpired();
+  };
+
+  const getQuoteTimeRemaining = (): number => {
+    const remaining = Math.max(0, QUOTE_MAX_AGE_MS - quoteAge);
+    return Math.ceil(remaining / 1000);
+  };
+
   const getQuote = async () => {
     try {
       setStatus("Computing Jupiter routes…");

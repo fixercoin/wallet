@@ -779,7 +779,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h3 className="text-lg font-semibold text-gray-900 uppercase">
+              <h3 className="text-lg font-semibold text-white uppercase">
                 FIXORIUM TRADE
               </h3>
             </div>
@@ -820,7 +820,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">
+            <div className="font-semibold text-sm text-white uppercase">
               FIXORIUM TRADE
             </div>
           </div>
@@ -932,10 +932,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div
               className={`p-4 border rounded-lg transition-colors ${
                 isQuoteExpired()
-                  ? "bg-red-50/60 border-red-200"
+                  ? "bg-transparent border-red-200"
                   : isQuoteWarning()
-                    ? "bg-yellow-50/60 border-yellow-200"
-                    : "bg-[#f0fff4]/60 border-[#a7f3d0]/30"
+                    ? "bg-transparent border-yellow-200"
+                    : "bg-transparent border-[#a7f3d0]/30"
               }`}
             >
               <div className="space-y-2">

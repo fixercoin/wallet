@@ -216,6 +216,16 @@
     display: none !important;
   }
 
+  /* Hide all wavy/decorative SVG elements */
+  svg.wave,
+  svg[class*="wave"],
+  .wave-container,
+  [class*="wavy"],
+  [class*="bottom-wave"],
+  [class*="top-wave"] {
+    display: none !important;
+  }
+
   /* Dropdown menu text override */
   [role="menu"] p,
   [role="menu"] span,

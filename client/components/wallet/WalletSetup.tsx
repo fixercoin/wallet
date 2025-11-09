@@ -596,22 +596,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               )}
 
               <div className="space-y-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    Secret Recovery Phrase
-                  </div>
-                  <div className="opacity-80">
-                    Save these words in a safe place. They&apos;re the only way
-                    to recover your wallet.
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-lg font-semibold">
-                      Recovery Phrase
-                    </Label>
-                    <div className="flex gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -634,32 +620,15 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         <Copy className="h-4 w-4" />
                         Copy All
                       </Button>
-                    </div>
                   </div>
+                </div>
 
-                  <div className="bg-[#064e3b]/50 rounded-xl p-6">
+                <div className="bg-[#064e3b]/50 rounded-xl p-6">
                     <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
                       {showMnemonic
                         ? generatedWallet.mnemonic
                         : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��••���••• •••••••••• •••••��•••• •••••••••• •••••••••• •���••••••••"}
                     </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="confirm-backup"
-                    checked={confirmedMnemonic}
-                    onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                    className="rounded bg-[#064e3b]/50"
-                  />
-                  <Label
-                    htmlFor="confirm-backup"
-                    className="text-sm opacity-80"
-                  >
-                    I have safely backed up my recovery phrase
-                  </Label>
                 </div>
 
                 <div className="flex gap-3">
@@ -672,8 +641,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </Button>
                   <Button
                     onClick={handleConfirmWallet}
-                    disabled={!confirmedMnemonic}
-                    className="flex-1 h-12 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="flex-1 h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Create Wallet
                   </Button>

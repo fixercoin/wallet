@@ -642,21 +642,32 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
     } catch (err) {
       setIsLoading(false);
+      setQuote(null);
+      setStatus("");
 
       const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-
-      setStatus("");
 
       if (
         errorMsg.includes("QUOTE_EXPIRED") ||
         errorMsg.includes("STALE_QUOTE") ||
-        errorMsg.includes("expired")
+        errorMsg.includes("expired") ||
+        errorMsg.includes("Quote expired")
       ) {
         toast({
           title: "Quote Expired",
           description:
-            "The quote expired or changed. Please request a new quote and try again.",
+            "The quote expired or market conditions changed. Please request a new quote and try again.",
           variant: "default",
+        });
+        return null;
+      }
+
+      if (errorMsg.includes("refresh failed") || errorMsg.includes("timeout")) {
+        toast({
+          title: "Network Error",
+          description:
+            "Failed to refresh quote due to network issues. Please try again.",
+          variant: "destructive",
         });
         return null;
       }

@@ -912,15 +912,38 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           {quote && (
-            <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+            <div
+              className={`p-4 border rounded-lg transition-colors ${
+                isQuoteExpired()
+                  ? "bg-red-50/60 border-red-200"
+                  : isQuoteWarning()
+                    ? "bg-yellow-50/60 border-yellow-200"
+                    : "bg-[#f0fff4]/60 border-[#a7f3d0]/30"
+              }`}
+            >
               <div className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">
                     Estimated receive:
                   </span>
-                  <span className="font-semibold text-gray-900">
-                    {quote.outHuman.toFixed(6)} {quote.outToken}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900">
+                      {quote.outHuman.toFixed(6)} {quote.outToken}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded ${
+                        isQuoteExpired()
+                          ? "bg-red-200 text-red-700"
+                          : isQuoteWarning()
+                            ? "bg-yellow-200 text-yellow-700"
+                            : "bg-green-200 text-green-700"
+                      }`}
+                    >
+                      {isQuoteExpired()
+                        ? "Expired"
+                        : `${getQuoteTimeRemaining()}s`}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs text-gray-500">Route hops:</span>

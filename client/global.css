@@ -292,11 +292,14 @@
 @layer components {
   /* Wallet-specific styles - dark grey theme */
   .wallet-gradient {
-    @apply bg-gray-800;
+    background: hsl(var(--background));
   }
 
   .wallet-card {
-    @apply bg-gray-800 backdrop-blur-sm border border-gray-700/30 shadow-xl;
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
   }
 
   .wallet-button-primary {
@@ -312,18 +315,23 @@
   }
 
   .balance-card {
-    @apply bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-xl p-6 shadow-2xl border-0;
+    background: hsl(var(--background)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: none !important;
   }
 
   .transaction-item {
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
   }
 
-  /* Dark grey cards - specific main card containers with borders */
+  /* Card containers should match page background */
   .express-p2p-page [class*="mt-6"][class*="rounded-lg"],
   .express-p2p-page [class*="rounded-2xl"][class*="border-\["] {
-    background: #1f2937 !important; /* gray-800 */
-    border-color: #374151 !important; /* gray-700 */
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
     background-image: none !important;
   }
 
@@ -338,18 +346,18 @@
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
   }
 
-  /* Global override: any rounded gradient card becomes dark grey */
+  /* Global override: any rounded gradient card becomes page background */
   [class*="rounded-lg"][class*="bg-gradient-to-br"],
   [class*="rounded-2xl"][class*="bg-gradient-to-br"] {
-    background: #1f2937 !important; /* gray-800 */
-    border-color: #374151 !important; /* gray-700 */
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
     background-image: none !important;
   }
 
-  /* Override translucent black cards to solid dark grey within express pages */
+  /* Override translucent black cards to match page background within express pages */
   .express-p2p-page [class*="bg-black/20"] {
-    background: #1f2937 !important;
-    border-color: #374151 !important;
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
   }
 
   /* Mobile optimizations */

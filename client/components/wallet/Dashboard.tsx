@@ -403,43 +403,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {
-    setSelectedTokenForRemoval(token);
-    setShowTokenRemovalDialog(true);
-  };
-
-  const handleRemoveToken = async () => {
-    if (!selectedTokenForRemoval) return;
-    setIsRemovingToken(true);
-    try {
-      removeToken(selectedTokenForRemoval.mint);
-      toast({
-        title: "Token Removed",
-        description: `${selectedTokenForRemoval.symbol} has been removed from your wallet`,
-      });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to remove token";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsRemovingToken(false);
-      setShowTokenRemovalDialog(false);
-      setSelectedTokenForRemoval(null);
-    }
-  };
-
-  const handleContinueToTokenDetail = () => {
-    if (!selectedTokenForRemoval) return;
-    setShowTokenRemovalDialog(false);
-    try {
-      onTokenClick(selectedTokenForRemoval.mint);
-    } catch (e) {
-      console.warn("onTokenClick handler not provided or failed:", e);
-    }
-    setSelectedTokenForRemoval(null);
+    onTokenClick(token.mint);
   };
 
   const formatBalance = (

@@ -319,27 +319,22 @@
     @apply flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200;
   }
 
-  /* Override Tailwind gradient backgrounds with green for all p2p page cards */
-  .express-p2p-page > div > div,
+  /* Green cards - Balance, Send, Receive, Swap cards */
   .express-p2p-page [class*="rounded-lg"],
   .express-p2p-page [class*="rounded-2xl"] {
-    background: linear-gradient(to bottom right, #16a34a, #22c55e) !important;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%) !important;
     border-color: #22c55e !important;
   }
 
-  /* Green action buttons (Send, Receive, Swap buttons in Dashboard) */
-  .express-p2p-page div[class*="mt-10"] button,
-  .express-p2p-page button[class*="bg-\["],
-  .express-p2p-page button[class*="h-10"] {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  /* Green action buttons (Send, Receive, Swap) in Dashboard */
+  .express-p2p-page button {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
     border-color: #22c55e !important;
     color: white !important;
   }
 
-  .express-p2p-page div[class*="mt-10"] button:hover,
-  .express-p2p-page button[class*="bg-\["]:hover,
-  .express-p2p-page button[class*="h-10"]:hover {
-    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  .express-p2p-page button:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
   }
 
   /* Mobile optimizations */

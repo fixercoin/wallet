@@ -487,8 +487,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (currentSession) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+      <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
           <div className="space-y-6 p-6 relative">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
@@ -626,8 +626,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+    <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
             <Button

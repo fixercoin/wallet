@@ -571,8 +571,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"
@@ -587,15 +587,22 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               <div className="text-xs uppercase tracking-wide text-orange-500">
                 Burn SPL Tokens
               </div>
-             <h1></h1>
+              <h1></h1>
             </div>
           </div>
 
           <div className="px-4 pb-6 space-y-5">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />
-              <span className="text-sm font-semibold text-white">
-                Burn tokens you control
+              <span className="text-xs font-semibold text-white leading-relaxed">
+                DISCLAIMER: TOKEN BURNING DOES NOT GUARANTEE AN INCREASE IN
+                VALUE. WHILE THE PROCESS REDUCES THE TOTAL SUPPLY BY PERMANENTLY
+                REMOVING TOKENS FROM CIRCULATION, MARKET CONDITIONS, DEMAND, AND
+                OTHER EXTERNAL FACTORS WILL CONTINUE TO INFLUENCE PRICE. TOKEN
+                BURNING SHOULD BE VIEWED AS A LONG-TERM ECONOMIC MECHANISM
+                WITHIN THE PROJECT ECOSYSTEM, NOT AS A PROMISE OF PROFITS OR
+                FINANCIAL RETURNS. PARTICIPANTS SHOULD CONDUCT THEIR OWN
+                RESEARCH AND UNDERSTAND THE RISKS BEFORE MAKING ANY DECISIONS
               </span>
             </div>
 
@@ -607,7 +614,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-1 bg-transparent border border-black text-black">
+                  <SelectTrigger className="mt-1 bg-transparent border border-[#22c55e]/30 text-black">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border border-black text-white">
@@ -639,7 +646,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <div className="rounded-xl border border-[#e6f6ec]/20 bg-white p-4 space-y-3">
+                <div className="rounded-xl border-0 bg-transparent p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-300">
@@ -683,7 +690,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-transparent border border-black text-black placeholder:text-gray-500"
+                    className="h-11 bg-transparent border border-[#22c55e]/30 text-black placeholder:text-gray-500"
                   />
                   <Button
                     type="button"

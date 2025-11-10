@@ -123,6 +123,22 @@ export function encryptStoredWalletsIfNeeded(): void {
       encryptWalletData(w, password),
     );
     localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(encrypted));
+
+    // Notify other parts of the app (WalletContext) that wallets were encrypted
+    try {
+      if (
+        typeof window !== "undefined" &&
+        typeof window.dispatchEvent === "function"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("wallets_encrypted", {
+            detail: { timestamp: Date.now() },
+          }),
+        );
+      }
+    } catch (e) {
+      // ignore
+    }
   } catch (e) {
     // swallow to avoid breaking settings flow
     console.warn("encryptStoredWalletsIfNeeded failed:", e);

@@ -255,13 +255,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-            <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="w-full sm:max-w-md mx-auto bg-transparent overflow-hidden">
               <div className="space-y-6">
-                <div className="text-center pb-2">
+                <div className="flex items-center justify-center pb-2">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"
-                    className="mx-auto w-40 h-40 sm:w-[240px] sm:h-[240px] object-contain"
+                    className="block mx-auto w-[300px] h-[300px] object-contain max-w-full"
                   />
                 </div>
 
@@ -329,13 +329,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-            <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="w-full sm:max-w-md mx-auto bg-transparent overflow-hidden">
               <div className="space-y-6">
-                <div className="text-center pb-2">
+                <div className="flex items-center justify-center pb-2">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"
-                    className="mx-auto w-40 h-40 sm:w-[240px] sm:h-[240px] object-contain"
+                    className="block mx-auto w-[300px] h-[300px] object-contain max-w-full"
                   />
                 </div>
 

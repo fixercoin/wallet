@@ -56,7 +56,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   if (wallets.length === 0) {
     return (
       <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
-        <div className="w-full max-w-md mx-auto pt-8 px-4">
+        <div className="w-full px-4 mx-auto pt-8">
           <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">
@@ -232,7 +232,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full p-4 py-6 relative z-20">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
         <div>
           <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden -mx-4 sm:mx-0">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
@@ -270,7 +270,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-gray-700 text-white p-2 pr-6 rounded-none font-mono"
+                          className="flex-1 bg-transparent text-[hsl(var(--foreground))] p-2 pr-6 rounded-none font-mono"
                         >
                           {wallets.map((w) => (
                             <option

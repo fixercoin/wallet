@@ -125,6 +125,15 @@ export default function WalletHistory() {
       setPendingOrders([]);
     }
 
+    // Load persisted transactions (if any)
+    try {
+      const rawTx = localStorage.getItem(`wallet_transactions_${wallet.publicKey}`) || "[]";
+      const parsedTx = JSON.parse(rawTx);
+      if (Array.isArray(parsedTx)) setBlockchainTxs(parsedTx as BlockchainTransaction[]);
+    } catch (e) {
+      // ignore
+    }
+
     // Init token map (Jupiter + known) and then fetch transactions
     let isMounted = true;
     (async () => {

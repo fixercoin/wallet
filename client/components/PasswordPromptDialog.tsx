@@ -77,7 +77,7 @@ export const PasswordPromptDialog: React.FC<PasswordPromptDialogProps> = ({
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
                   disabled={isLoading}
                   className="bg-gray-800 border border-gray-700 text-white rounded-none pr-10 placeholder:uppercase placeholder:text-gray-400"
                   autoFocus

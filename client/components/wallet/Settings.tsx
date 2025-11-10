@@ -33,6 +33,19 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [recoveryPhrase, setRecoveryPhrase] = useState("");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [passwordEnabled, setPasswordEnabled] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showPasswordField, setShowPasswordField] = useState(false);
+
+  React.useEffect(() => {
+    const checkPassword = async () => {
+      const hasPassword = await doesWalletRequirePassword();
+      setPasswordEnabled(hasPassword);
+    };
+    checkPassword();
+  }, []);
 
   if (wallets.length === 0) {
     return (

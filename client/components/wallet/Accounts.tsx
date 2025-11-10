@@ -45,7 +45,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 ACTIVE WALLET
               </div>
               <div className="w-full">
-                <div className="bg-transparent border border-gray-200 rounded-md p-4 flex items-center justify-between">
+                <div className="bg-transparent border border-gray-300/30 rounded-none p-4 flex items-center justify-between">
                   <div className="min-w-0">
                     <div className="text-xs text-gray-600 mb-1 uppercase">
                       ADDRESS

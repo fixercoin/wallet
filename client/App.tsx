@@ -128,6 +128,8 @@ import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
+import AutoBot from "./pages/AutoBot";
+import AirdropPage from "./pages/AirdropPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
 
 const queryClient = new QueryClient();

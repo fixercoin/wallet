@@ -610,10 +610,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         size="sm"
                         onClick={() => {
                           try {
-                            if (typeof window !== "undefined" && window.history && window.history.length > 1) {
-                              navigate(-1);
-                            } else {
+                            if (activeTab && activeTab !== "create") {
                               setActiveTab("create");
+                            } else {
+                              // exit setup to previous route when already at create tab
+                              navigate(-1);
                             }
                           } catch {
                             setActiveTab("create");

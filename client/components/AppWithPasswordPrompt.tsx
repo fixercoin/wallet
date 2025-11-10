@@ -39,9 +39,7 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-pulse text-lg text-gray-600">
-            Loading...
-          </div>
+          <div className="animate-pulse text-lg text-gray-600">Loading...</div>
         </div>
       </div>
     );

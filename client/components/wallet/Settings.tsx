@@ -18,7 +18,11 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { setWalletPassword, getWalletPassword, doesWalletRequirePassword } from "@/lib/wallet-password";
+import {
+  setWalletPassword,
+  getWalletPassword,
+  doesWalletRequirePassword,
+} from "@/lib/wallet-password";
 import bs58 from "bs58";
 
 interface SettingsProps {
@@ -206,7 +210,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
       setShowPasswordForm(false);
       toast({
         title: "Success",
-        description: "Password set successfully. You will be prompted for it when you open the app.",
+        description:
+          "Password set successfully. You will be prompted for it when you open the app.",
       });
     } catch (error) {
       toast({
@@ -288,7 +293,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   >
                     <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
                       <Lock className="h-5 w-5" />
-                      <span className="font-medium">{passwordEnabled ? "PASSWORD ENABLED" : "SET PASSWORD"}</span>
+                      <span className="font-medium">
+                        {passwordEnabled ? "PASSWORD ENABLED" : "SET PASSWORD"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {passwordEnabled && (
@@ -330,10 +337,15 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           type="checkbox"
                           id="showPassword"
                           checked={showPasswordField}
-                          onChange={(e) => setShowPasswordField(e.target.checked)}
+                          onChange={(e) =>
+                            setShowPasswordField(e.target.checked)
+                          }
                           className="w-4 h-4 rounded-none"
                         />
-                        <label htmlFor="showPassword" className="text-xs text-gray-600">
+                        <label
+                          htmlFor="showPassword"
+                          className="text-xs text-gray-600"
+                        >
                           Show password
                         </label>
                       </div>
@@ -357,7 +369,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   {passwordEnabled && !showPasswordForm && (
                     <div className="px-4 pb-4">
                       <p className="text-xs text-green-600">
-                        Password protection is active. You will be prompted for your password when you open the app.
+                        Password protection is active. You will be prompted for
+                        your password when you open the app.
                       </p>
                     </div>
                   )}

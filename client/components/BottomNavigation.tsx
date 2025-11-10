@@ -4,7 +4,7 @@ import { Home, TrendingUp, Gift, Clock, ExternalLink } from "lucide-react";
 
 import { useEffect, useState } from "react";
 
-export const BottomNavigation: React.FC = () => {
+export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [noFixed, setNoFixed] = useState<boolean>(() => {

@@ -131,6 +131,7 @@ import SwapPage from "./pages/Swap";
 import AutoBot from "./pages/AutoBot";
 import AirdropPage from "./pages/AirdropPage";
 import DappsPage from "./pages/DappsPage";
+import DappView from "./pages/DappView";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
@@ -159,6 +160,7 @@ function AppRoutes() {
       <Route path="/autobot" element={<AutoBot />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/dapps" element={<DappsPage />} />
+      <Route path="/dapps/view" element={<DappView />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

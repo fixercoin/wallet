@@ -26,6 +26,16 @@ interface WalletSetupProps {
 }
 
 export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
+  useEffect(() => {
+    try {
+      document.body.classList.add("no-fixed-bottom");
+    } catch {}
+    return () => {
+      try {
+        document.body.classList.remove("no-fixed-bottom");
+      } catch {}
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return (sessionStorage.getItem("wallet_setup_tab") as string) || "create";

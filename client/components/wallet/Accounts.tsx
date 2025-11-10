@@ -22,8 +22,8 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 p-4 relative overflow-hidden">
-      <div className="w-full max-w-2xl mx-auto py-6">
-        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+      <div className="w-full max-w-2xl mx-auto py-6 px-4 sm:px-0">
+        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden -mx-4 sm:mx-0">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"
@@ -39,13 +39,13 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             </h1>
           </div>
 
-          <div className="px-4 pb-4 space-y-4">
+          <div className="px-0 sm:px-4 pb-4 space-y-4">
             <div>
               <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))] uppercase">
                 ACTIVE WALLET
               </div>
               <div className="w-full">
-                <div className="bg-transparent border border-gray-200 rounded-md p-4 flex items-center justify-between">
+                <div className="bg-transparent border border-gray-300/30 rounded-md p-4 flex items-center justify-between">
                   <div className="min-w-0">
                     <div className="text-xs text-gray-600 mb-1 uppercase">
                       ADDRESS
@@ -86,7 +86,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-transparent border border-gray-200 rounded-md flex items-center gap-2"
+                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-md flex items-center gap-2"
                   >
                     <button
                       onClick={() => {

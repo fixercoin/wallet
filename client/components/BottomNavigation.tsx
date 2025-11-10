@@ -28,14 +28,14 @@ export const BottomNavigation: React.FC = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className={`flex items-center justify-center py-2 px-4 rounded-none transition-colors ${
+              className={`flex items-center justify-center py-2 px-4 rounded-none transition-colors text-sm font-semibold uppercase ${
                 active
                   ? "text-green-500"
                   : "text-gray-400 hover:text-gray-200"
               }`}
               aria-label={item.label}
             >
-              <Icon className="h-6 w-6" />
+              {item.label}
             </button>
           );
         })}

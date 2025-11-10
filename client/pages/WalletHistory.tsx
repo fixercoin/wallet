@@ -381,7 +381,7 @@ export default function WalletHistory() {
                               <span className="text-sm font-semibold text-gray-900 uppercase">
                                 {kind}
                               </span>
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase">
+                              <span className="text-xs bg-transparent text-blue-700 px-2 py-0.5 rounded uppercase">
                                 ON-CHAIN
                               </span>
                             </div>

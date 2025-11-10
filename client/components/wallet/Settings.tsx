@@ -542,7 +542,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     <Button
                       onClick={handleLogout}
                       variant="default"
-                      className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-none"
+                      className="w-full sm:w-40 mx-4 sm:mx-0 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-none"
                     >
                       <LogOut className="h-4 w-4" />
                       Logout

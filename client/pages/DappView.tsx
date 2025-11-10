@@ -128,11 +128,38 @@ export default function DappView() {
       }
     }, 500);
 
+    // Auto-open popup if embedding blocked
+    if (iframeBlocked && !popupOpen) {
+      try {
+        handleOpenNewTab();
+      } catch (e) {
+        // ignore
+      }
+    }
+
     return () => {
       window.removeEventListener("message", handler);
       window.clearInterval(popupInterval);
     };
-  }, [url, toast]);
+  }, [url, toast, iframeBlocked, popupOpen]);
+
+  const handleSimulateRequest = async () => {
+    // Debug helper: simulate an incoming REQUEST_CONNECT from the DApp
+    const ok = window.confirm("Simulate DApp connection request (for testing)?");
+    if (!ok) return;
+    setLoading(true);
+    try {
+      const provider = ensureFixoriumProvider();
+      if (!provider) throw new Error("Provider unavailable");
+      const res = await provider.connect();
+      const pub = res?.publicKey?.toBase58 ? res.publicKey.toBase58() : String(res?.publicKey);
+      toast({ title: "Simulated Connect Success", description: pub });
+    } catch (err: any) {
+      toast({ title: "Simulated Connect Failed", description: err?.message || String(err), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 py-6">

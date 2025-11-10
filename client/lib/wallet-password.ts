@@ -126,8 +126,15 @@ export function encryptStoredWalletsIfNeeded(): void {
 
     // Notify other parts of the app (WalletContext) that wallets were encrypted
     try {
-      if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
-        window.dispatchEvent(new CustomEvent("wallets_encrypted", { detail: { timestamp: Date.now() } }));
+      if (
+        typeof window !== "undefined" &&
+        typeof window.dispatchEvent === "function"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("wallets_encrypted", {
+            detail: { timestamp: Date.now() },
+          }),
+        );
       }
     } catch (e) {
       // ignore

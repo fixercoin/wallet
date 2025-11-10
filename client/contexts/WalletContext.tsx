@@ -93,7 +93,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
     } catch (e) {
-      console.warn("[WalletContext] Failed to reload encrypted wallets on lock:", e);
+      console.warn(
+        "[WalletContext] Failed to reload encrypted wallets on lock:",
+        e,
+      );
     }
 
     // Clear sensitive in-memory wallet material
@@ -856,7 +859,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Determine source of encrypted wallets: prefer in-memory ref, fallback to localStorage
       let encryptedData: any[] = [];
       try {
-        if (encryptedWalletsRef.current && encryptedWalletsRef.current.length > 0) {
+        if (
+          encryptedWalletsRef.current &&
+          encryptedWalletsRef.current.length > 0
+        ) {
           encryptedData = encryptedWalletsRef.current;
         } else {
           const raw = localStorage.getItem(WALLETS_STORAGE_KEY);
@@ -866,7 +872,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
       } catch (e) {
-        console.warn("[WalletContext] Failed to read encrypted wallets from storage:", e);
+        console.warn(
+          "[WalletContext] Failed to read encrypted wallets from storage:",
+          e,
+        );
         encryptedData = encryptedWalletsRef.current || [];
       }
 

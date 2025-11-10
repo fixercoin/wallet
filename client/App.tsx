@@ -131,6 +131,7 @@ import SwapPage from "./pages/Swap";
 import AutoBot from "./pages/AutoBot";
 import AirdropPage from "./pages/AirdropPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
 const queryClient = new QueryClient();
 
@@ -166,18 +167,20 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <CurrencyProvider>
-              <BrowserRouter>
-                <div className="min-h-screen pb-20">
-                  <AppRoutes />
-                  <BottomNavigation />
-                </div>
-              </BrowserRouter>
-            </CurrencyProvider>
-          </TooltipProvider>
+          <AppWithPasswordPrompt>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <CurrencyProvider>
+                <BrowserRouter>
+                  <div className="min-h-screen pb-20">
+                    <AppRoutes />
+                    <BottomNavigation />
+                  </div>
+                </BrowserRouter>
+              </CurrencyProvider>
+            </TooltipProvider>
+          </AppWithPasswordPrompt>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -12,10 +13,16 @@ import {
   Key,
   Eye,
   EyeOff,
+  Lock,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import {
+  setWalletPassword,
+  getWalletPassword,
+  doesWalletRequirePassword,
+} from "@/lib/wallet-password";
 import bs58 from "bs58";
 
 interface SettingsProps {
@@ -30,6 +37,19 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [recoveryPhrase, setRecoveryPhrase] = useState("");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [passwordEnabled, setPasswordEnabled] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showPasswordField, setShowPasswordField] = useState(false);
+
+  React.useEffect(() => {
+    const checkPassword = async () => {
+      const hasPassword = await doesWalletRequirePassword();
+      setPasswordEnabled(hasPassword);
+    };
+    checkPassword();
+  }, []);
 
   if (wallets.length === 0) {
     return (
@@ -154,6 +174,54 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
     onBack();
   };
 
+  const handleSetPassword = async () => {
+    if (!newPassword) {
+      toast({
+        title: "Error",
+        description: "Please enter a password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await setWalletPassword(newPassword);
+      setPasswordEnabled(true);
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordForm(false);
+      toast({
+        title: "Success",
+        description:
+          "Password set successfully. You will be prompted for it when you open the app.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to set password",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Decorative curved accent background elements */}
@@ -176,7 +244,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-6">
-              <Card className="bg-transparent rounded-none border border-white/3">
+              <Card className="bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -198,7 +266,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-transparent text-gray-900 p-2 rounded-none border border-gray-300/30 font-mono"
+                          className="flex-1 bg-gray-700 text-white p-2 pr-6 rounded-none font-mono"
                         >
                           {wallets.map((w) => (
                             <option
@@ -216,8 +284,101 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </CardContent>
               </Card>
 
+              {/* Password Card */}
+              <Card className="bg-transparent rounded-none border border-gray-300/30">
+                <CardContent className="p-0">
+                  <button
+                    onClick={() => setShowPasswordForm(!showPasswordForm)}
+                    className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
+                  >
+                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
+                      <Lock className="h-5 w-5" />
+                      <span className="font-medium">
+                        {passwordEnabled ? "PASSWORD ENABLED" : "SET PASSWORD"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {passwordEnabled && (
+                        <span className="text-xs bg-green-500/20 text-green-600 px-2 py-1 rounded-none">
+                          Active
+                        </span>
+                      )}
+                      <Eye className="h-4 w-4 text-gray-600" />
+                    </div>
+                  </button>
+                  {showPasswordForm && (
+                    <div className="px-4 pb-4 space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-600 font-semibold uppercase block mb-2">
+                          Password
+                        </label>
+                        <Input
+                          type={showPasswordField ? "text" : "password"}
+                          placeholder="Enter password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="bg-white/5 border border-gray-300/30 text-gray-900 rounded-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600 font-semibold uppercase block mb-2">
+                          Confirm Password
+                        </label>
+                        <Input
+                          type={showPasswordField ? "text" : "password"}
+                          placeholder="Confirm password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="bg-white/5 border border-gray-300/30 text-gray-900 rounded-none"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="showPassword"
+                          checked={showPasswordField}
+                          onChange={(e) =>
+                            setShowPasswordField(e.target.checked)
+                          }
+                          className="w-4 h-4 rounded-none"
+                        />
+                        <label
+                          htmlFor="showPassword"
+                          className="text-xs text-gray-600"
+                        >
+                          Show password
+                        </label>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSetPassword}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-none"
+                        >
+                          Set Password
+                        </Button>
+                        <Button
+                          onClick={() => setShowPasswordForm(false)}
+                          variant="outline"
+                          className="flex-1 bg-transparent border border-gray-300/30 text-gray-900 rounded-none"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {passwordEnabled && !showPasswordForm && (
+                    <div className="px-4 pb-4">
+                      <p className="text-xs text-green-600">
+                        Password protection is active. You will be prompted for
+                        your password when you open the app.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Recovery Phrase Card */}
-              <Card className="bg-transparent rounded-none border border-white/3">
+              <Card className="bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -283,7 +444,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Private Key Card */}
-              <Card className="bg-transparent rounded-none border border-white/3">
+              <Card className="bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {

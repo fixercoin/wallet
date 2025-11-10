@@ -78,7 +78,8 @@ export default function DappsPage() {
     if (!query) return null;
     if (!isLikelyUrl(query)) return null;
     const url = normalizeUrl(query);
-    if (DEFAULT_DAPPS.find((d) => d.url === url || d.url === query)) return null;
+    // don't treat as custom if blank
+    if (!url) return null;
     try {
       return {
         name: new URL(url).hostname,

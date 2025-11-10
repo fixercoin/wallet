@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
 import { Search as SearchIcon, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DappInfo {
   name: string;
@@ -53,12 +54,10 @@ const writeConnected = (arr: any[]) => {
 export default function DappsPage() {
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [connected, setConnected] = useState<any[]>(() => readConnected());
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null);
-  const [lastOpenedUrl, setLastOpenedUrl] = useState<string | null>(null);
-  const [embeddedUrl, setEmbeddedUrl] = useState<string | null>(null);
-  const [iframeKey, setIframeKey] = useState(0);
 
   useEffect(() => {
     setConnected(readConnected());
@@ -206,10 +205,7 @@ export default function DappsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    setLastOpenedUrl(customDapp.url);
-                    setEmbeddedUrl(customDapp.url);
-                    setIframeKey((k) => k + 1);
-                    toast({ title: "Opened DApp", description: `Opened ${customDapp.name} inside the app` });
+                    navigate(`/dapps/view?url=${encodeURIComponent(customDapp.url)}`);
                   }}
                   className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
                 >
@@ -249,10 +245,7 @@ export default function DappsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    setLastOpenedUrl(d.url);
-                    setEmbeddedUrl(d.url);
-                    setIframeKey((k) => k + 1);
-                    toast({ title: "Opened DApp", description: `Opened ${d.name} inside the app` });
+                    navigate(`/dapps/view?url=${encodeURIComponent(d.url)}`);
                   }}
                   className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
                 >
@@ -276,37 +269,6 @@ export default function DappsPage() {
           </Card>
         ))}
       </div>
-
-      {/* Embedded DApp viewer */}
-      {embeddedUrl && (
-        <div className="mt-4 border border-gray-300/20 rounded-none overflow-hidden">
-          <div className="flex items-center justify-between p-2 bg-gray-50">
-            <div className="text-sm font-medium">{(() => { try { return new URL(embeddedUrl).hostname } catch { return embeddedUrl } })()}</div>
-            <div className="flex items-center gap-2">
-              <a href={embeddedUrl} target="_blank" rel="noopener noreferrer" className="text-xs underline">
-                Open in new tab
-              </a>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEmbeddedUrl(null);
-                }}
-                className="rounded-none"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-          <iframe
-            key={iframeKey}
-            src={embeddedUrl}
-            className="w-full h-96"
-            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-            title="Embedded DApp"
-          />
-        </div>
-      )}
 
       <div className="mt-6">
         <div className="mb-2 text-sm font-medium">Connected DApps</div>

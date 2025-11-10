@@ -15,6 +15,7 @@ import {
   EyeOff,
   Lock,
   ExternalLink,
+  ChevronDown,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -247,7 +248,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Button>
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
-            <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
+            <div className="space-y-3 md:space-y-6 px-4 md:px-0">
               <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
@@ -255,7 +256,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <div className="mb-2 text-[hsl(var(--foreground))] font-medium">
                         SELECT ACCOUNT
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-center relative w-full">
                         <select
                           value={wallet?.publicKey || ""}
                           onChange={(e) => {
@@ -270,7 +271,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-gray-700 text-white p-2 pr-6 rounded-none font-mono"
+                          className="w-full bg-gray-700 text-white p-2 pr-10 rounded-none font-mono appearance-none"
                         >
                           {wallets.map((w) => (
                             <option
@@ -282,6 +283,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             </option>
                           ))}
                         </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
                       </div>
                     </div>
                   </div>

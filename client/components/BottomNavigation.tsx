@@ -22,7 +22,10 @@ export const BottomNavigation = () => {
       } catch {}
     });
     try {
-      obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      obs.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
     } catch {}
     return () => obs.disconnect();
   }, []);

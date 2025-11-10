@@ -669,9 +669,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 </div>
 
                 <p className="text-[10px] text-gray-300 leading-relaxed border border-gray-300/30 rounded-none p-3">
-                  THIS APPLICATION IS A NON-CUSTODIAL CRYPTOCURRENCY WALLET.<br/>
-                  USERS ARE SOLELY RESPONSIBLE FOR THEIR OWN PRIVATE KEYS AND FUNDS.<br/>
-                  THE DEVELOPER DOES NOT HAVE ACCESS TO USER WALLETS, RECOVERY PHRASES, OR DIGITAL ASSETS.
+                  THIS APPLICATION IS A NON-CUSTODIAL CRYPTOCURRENCY WALLET.
+                  <br />
+                  USERS ARE SOLELY RESPONSIBLE FOR THEIR OWN PRIVATE KEYS AND
+                  FUNDS.
+                  <br />
+                  THE DEVELOPER DOES NOT HAVE ACCESS TO USER WALLETS, RECOVERY
+                  PHRASES, OR DIGITAL ASSETS.
                 </p>
 
                 <div>

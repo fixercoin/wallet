@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { doesWalletRequirePassword } from "@/lib/wallet-password";
+import {
+  doesWalletRequirePassword,
+  clearWalletPassword,
+} from "@/lib/wallet-password";
 import { PasswordPromptDialog } from "./PasswordPromptDialog";
 
 interface AppWithPasswordPromptProps {
@@ -10,9 +13,11 @@ interface AppWithPasswordPromptProps {
 export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   children,
 }) => {
-  const { needsPasswordUnlock } = useWallet();
+  const { needsPasswordUnlock, setNeedsPasswordUnlock } = useWallet();
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const idleTimerRef = useRef<number | null>(null);
+  const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 
   useEffect(() => {
     const checkPasswordRequirement = async () => {
@@ -31,8 +36,49 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
     checkPasswordRequirement();
   }, [needsPasswordUnlock]);
 
+  useEffect(() => {
+    const requiresPassword = doesWalletRequirePassword();
+    if (!requiresPassword) return;
+
+    const resetTimer = () => {
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = window.setTimeout(() => {
+        try {
+          clearWalletPassword();
+          setNeedsPasswordUnlock(true);
+          setShowPasswordDialog(true);
+        } catch (e) {}
+      }, IDLE_TIMEOUT_MS);
+    };
+
+    resetTimer();
+
+    const onActivity = () => resetTimer();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") resetTimer();
+    };
+
+    window.addEventListener("mousemove", onActivity);
+    window.addEventListener("keydown", onActivity);
+    window.addEventListener("touchstart", onActivity);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("mousemove", onActivity);
+      window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("touchstart", onActivity);
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+    };
+  }, [setNeedsPasswordUnlock]);
+
   const handlePasswordUnlocked = () => {
     setShowPasswordDialog(false);
+    // reset inactivity timer on successful unlock
+    if (idleTimerRef.current) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
   };
 
   if (isChecking) {

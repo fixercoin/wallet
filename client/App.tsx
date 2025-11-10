@@ -130,6 +130,7 @@ import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
 import AutoBot from "./pages/AutoBot";
 import AirdropPage from "./pages/AirdropPage";
+import DappsPage from "./pages/DappsPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
@@ -157,6 +158,7 @@ function AppRoutes() {
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="/autobot" element={<AutoBot />} />
       <Route path="/airdrop" element={<AirdropPage />} />
+      <Route path="/dapps" element={<DappsPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

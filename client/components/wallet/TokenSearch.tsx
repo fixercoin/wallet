@@ -105,7 +105,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search Solana tokens by name or address"
+          placeholder="Use Name or Address"
           className={
             inputClassName
               ? `pl-9 ${inputClassName}`

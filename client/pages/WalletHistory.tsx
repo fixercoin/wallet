@@ -253,6 +253,11 @@ export default function WalletHistory() {
 
       console.log(`Extracted ${txs.length} token transfers`);
       setBlockchainTxs(txs);
+      try {
+        localStorage.setItem(`wallet_transactions_${wallet.publicKey}`, JSON.stringify(txs));
+      } catch (e) {
+        console.warn("Failed to persist transactions to localStorage", e);
+      }
     } catch (error) {
       console.error("Error fetching blockchain transactions:", error);
       setBlockchainTxs([]);

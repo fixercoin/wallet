@@ -613,10 +613,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setShowMnemonic(!showMnemonic)}
-                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                        className="bg-transparent text-white hover:bg-transparent p-1"
                       >
                         {showMnemonic ? (
                           <EyeOff className="h-4 w-4" />
@@ -625,10 +625,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         )}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={copyFullMnemonic}
-                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                        className="bg-transparent text-white hover:bg-transparent p-1"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>

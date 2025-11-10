@@ -54,18 +54,18 @@ export const PasswordPromptDialog: React.FC<PasswordPromptDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-transparent rounded-none border border-gray-300/30 w-full max-w-md mx-4 p-6 shadow-lg">
+      <div className="bg-gray-900 rounded-none border border-gray-700 w-full max-w-md mx-4 p-6 shadow-lg">
         <div className="space-y-6">
           <div className="text-center space-y-2">
-            <h2 className="text-xl font-bold text-gray-900">UNLOCK WALLET</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-xl font-bold text-white">UNLOCK WALLET</h2>
+            <p className="text-sm text-gray-300">
               Enter your password to access your wallet
             </p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-gray-700 font-semibold uppercase block mb-2">
+              <label className="text-xs text-gray-300 font-semibold uppercase block mb-2">
                 Password
               </label>
               <div className="relative">
@@ -76,13 +76,13 @@ export const PasswordPromptDialog: React.FC<PasswordPromptDialogProps> = ({
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
-                  className="bg-gray-100 border border-gray-300/30 text-gray-900 rounded-none pr-10"
+                  className="bg-gray-800 border border-gray-700 text-white rounded-none pr-10"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -109,7 +109,7 @@ export const PasswordPromptDialog: React.FC<PasswordPromptDialogProps> = ({
             </Button>
           </div>
 
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-400 text-center">
             Your password is required to access your wallet data.
           </p>
         </div>

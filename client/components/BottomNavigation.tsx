@@ -2,9 +2,30 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, TrendingUp, Gift, Clock, ExternalLink } from "lucide-react";
 
+import React, { useEffect, useState } from "react";
+
 export const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [noFixed, setNoFixed] = useState<boolean>(() => {
+    try {
+      return document.body.classList.contains("no-fixed-bottom");
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      try {
+        setNoFixed(document.body.classList.contains("no-fixed-bottom"));
+      } catch {}
+    });
+    try {
+      obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    } catch {}
+    return () => obs.disconnect();
+  }, []);
 
   const navItems = [
     { icon: Home, path: "/", label: "Home" },
@@ -21,7 +42,7 @@ export const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg">
+    <div className={`${noFixed ? "relative" : "fixed"} bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg`}>
       <div className="flex items-center justify-between h-14 px-1 sm:px-2 md:px-4 gap-1 sm:gap-2 md:gap-4">
         {navItems.map((item) => {
           const active = isActive(item.path);

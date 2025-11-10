@@ -541,7 +541,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <Button
                     onClick={handleLogout}
                     variant="default"
-                    className="w-full sm:w-1/2 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-none"
+                    className="w-3/4 sm:w-1/2 mx-auto flex items-center gap-2 justify-center bg-green-600 hover:bg-green-700 text-white rounded-none"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -550,7 +550,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <Button
                     onClick={handleDeleteAccount}
                     variant="default"
-                    className={`w-full sm:w-1/2 flex items-center gap-2 rounded-none ${
+                    className={`w-3/4 sm:w-1/2 mx-auto flex items-center gap-2 justify-center rounded-none ${
                       confirmDelete
                         ? "bg-green-700 hover:bg-green-800 text-white"
                         : "bg-green-600 hover:bg-green-700 text-white"

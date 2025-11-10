@@ -119,7 +119,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
       </div>
 
       {open && results.length > 0 && (
-        <div className="mt-2 max-h-72 overflow-auto rounded-md border border-[#22c55e]/30 bg-gray-800 backdrop-blur-sm shadow-lg">
+        <div className="mt-2 max-h-72 overflow-auto rounded-none border border-[#22c55e]/30 bg-gray-800 backdrop-blur-sm shadow-lg">
           {results.slice(0, 20).map((r) => {
             const mint = r.baseToken?.address || r.quoteToken?.address;
             const img = r.info?.imageUrl;

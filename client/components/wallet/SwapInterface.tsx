@@ -156,7 +156,7 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
             letterSpacing: "0.1em",
           }}
         >
-          DONE
+          SUCCESSFUL
         </div>
       </div>
     </div>

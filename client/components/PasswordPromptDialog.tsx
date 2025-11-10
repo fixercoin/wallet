@@ -55,7 +55,7 @@ export const PasswordPromptDialog: React.FC<PasswordPromptDialogProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-gray-900 rounded-none border border-gray-700 w-full max-w-md mx-4 p-6 shadow-lg">
-        <div className="space-y-6">
+        <div className="space-y-6 uppercase">
           <div className="text-center space-y-2">
             <h2 className="text-xl font-bold text-white">UNLOCK WALLET</h2>
             <p className="text-sm text-gray-300">
@@ -76,7 +76,7 @@ export const PasswordPromptDialog: React.FC<PasswordPromptDialogProps> = ({
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
-                  className="bg-gray-800 border border-gray-700 text-white rounded-none pr-10"
+                  className="bg-gray-800 border border-gray-700 text-white rounded-none pr-10 placeholder:uppercase placeholder:text-gray-400"
                   autoFocus
                 />
                 <button

@@ -601,7 +601,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-1 bg-transparent border border-gray-300/30 text-black">
+                  <SelectTrigger className="mt-1 bg-transparent border border-gray-300/30 text-black rounded-none">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border border-black text-white">

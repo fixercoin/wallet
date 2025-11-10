@@ -21,8 +21,9 @@ import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import {
   setWalletPassword,
-  getWalletPassword,
   doesWalletRequirePassword,
+  markWalletAsPasswordProtected,
+  encryptStoredWalletsIfNeeded,
 } from "@/lib/wallet-password";
 import bs58 from "bs58";
 
@@ -205,6 +206,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
     try {
       await setWalletPassword(newPassword);
+      markWalletAsPasswordProtected();
+      encryptStoredWalletsIfNeeded();
       setPasswordEnabled(true);
       setNewPassword("");
       setConfirmPassword("");

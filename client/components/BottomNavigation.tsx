@@ -41,8 +41,10 @@ export const BottomNavigation = () => {
     );
   };
 
+  if (noFixed) return null;
+
   return (
-    <div className={`${noFixed ? "relative" : "fixed"} bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg`}>
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg">
       <div className="flex items-center justify-between h-14 px-1 sm:px-2 md:px-4 gap-1 sm:gap-2 md:gap-4">
         {navItems.map((item) => {
           const active = isActive(item.path);

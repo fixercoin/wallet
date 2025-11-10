@@ -2,9 +2,33 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, TrendingUp, Gift, Clock, ExternalLink } from "lucide-react";
 
-export const BottomNavigation: React.FC = () => {
+import { useEffect, useState } from "react";
+
+export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [noFixed, setNoFixed] = useState<boolean>(() => {
+    try {
+      return document.body.classList.contains("no-fixed-bottom");
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      try {
+        setNoFixed(document.body.classList.contains("no-fixed-bottom"));
+      } catch {}
+    });
+    try {
+      obs.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    } catch {}
+    return () => obs.disconnect();
+  }, []);
 
   const navItems = [
     { icon: Home, path: "/", label: "Home" },
@@ -19,6 +43,8 @@ export const BottomNavigation: React.FC = () => {
       location.pathname === path || location.pathname.startsWith(path + "/")
     );
   };
+
+  if (noFixed) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg">

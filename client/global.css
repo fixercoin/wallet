@@ -354,6 +354,11 @@
     background: hsl(var(--background));
   }
 
+  /* Hide fixed bottom navigation when WalletSetup or similar pages are active */
+  body.no-fixed-bottom .fixed.bottom-0.left-0.right-0.z-40 {
+    display: none !important;
+  }
+
   .wallet-card {
     background: hsl(var(--background)) !important;
     border-color: hsl(var(--border)) !important;

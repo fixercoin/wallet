@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy } from "lucide-react";
+import { Eye, EyeOff, Copy, ArrowLeft } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -15,6 +15,7 @@ import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { prefetchWalletAddressData } from "@/lib/services/address-setup";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { PasswordSetup } from "./PasswordSetup";
 import {
   setWalletPassword,
@@ -26,6 +27,18 @@ interface WalletSetupProps {
 }
 
 export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      document.body.classList.add("no-fixed-bottom");
+    } catch {}
+    return () => {
+      try {
+        document.body.classList.remove("no-fixed-bottom");
+      } catch {}
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return (sessionStorage.getItem("wallet_setup_tab") as string) || "create";
@@ -333,7 +346,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <Button
                     onClick={handleCreateWallet}
                     disabled={isLoading}
-                    className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="w-full h-12 rounded-none font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     CREATE NEW WALLET
                   </Button>
@@ -478,19 +491,12 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   )}
                 </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab("create")}
-                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                  >
-                    Back
-                  </Button>
+                <div>
                   {recoverMode === "mnemonic" ? (
                     <Button
                       onClick={handleRecoverWallet}
                       disabled={!isMnemonicWordCountValid || isLoading}
-                      className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                      className="w-full h-12 rounded-none font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
                       Recover Wallet
                     </Button>
@@ -524,7 +530,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         }
                       }}
                       disabled={!privateKeyInput.trim()}
-                      className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                      className="w-full h-12 rounded-none font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
                       Import Wallet
                     </Button>
@@ -596,34 +602,53 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               )}
 
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowMnemonic(!showMnemonic)}
-                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                    >
-                      {showMnemonic ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      {showMnemonic ? "Hide" : "Show"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyFullMnemonic}
-                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy All
-                    </Button>
-                  </div>
-                </div>
-
                 <div className="bg-[#064e3b]/50 rounded-xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          try {
+                            if (activeTab && activeTab !== "create") {
+                              setActiveTab("create");
+                            } else {
+                              // exit setup to previous route when already at create tab
+                              navigate(-1);
+                            }
+                          } catch {
+                            setActiveTab("create");
+                          }
+                        }}
+                        className="text-white hover:bg-transparent"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowMnemonic(!showMnemonic)}
+                        className="bg-transparent text-white hover:bg-transparent p-1"
+                      >
+                        {showMnemonic ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyFullMnemonic}
+                        className="bg-transparent text-white hover:bg-transparent p-1"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-3 gap-3">
                     {generatedWallet.mnemonic
                       .split(" ")
@@ -643,17 +668,20 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab("create")}
-                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                  >
-                    Back
-                  </Button>
+                <p className="text-[10px] text-gray-300 leading-relaxed border border-gray-300/30 rounded-none p-3">
+                  THIS APPLICATION IS A NON-CUSTODIAL CRYPTOCURRENCY WALLET.
+                  <br />
+                  USERS ARE SOLELY RESPONSIBLE FOR THEIR OWN PRIVATE KEYS AND
+                  FUNDS.
+                  <br />
+                  THE DEVELOPER DOES NOT HAVE ACCESS TO USER WALLETS, RECOVERY
+                  PHRASES, OR DIGITAL ASSETS.
+                </p>
+
+                <div>
                   <Button
                     onClick={handleConfirmWallet}
-                    className="flex-1 h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="w-full h-12 rounded-none font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Create Wallet
                   </Button>

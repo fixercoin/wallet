@@ -571,7 +571,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden capitalize">
       <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
         <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
@@ -595,13 +595,13 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           <div className="px-4 pb-6 space-y-5">
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-gray-300">Select token</Label>
+                <Label className="text-xs text-gray-300 mb-2 block">Select token</Label>
                 <Select
                   value={selectedMint}
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-1 bg-transparent border border-gray-300/30 text-black rounded-none">
+                  <SelectTrigger className="mt-2 bg-transparent border border-gray-300/30 text-black rounded-none">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border border-black text-white">

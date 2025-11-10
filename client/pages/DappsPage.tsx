@@ -69,11 +69,9 @@ export default function DappsPage() {
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return DEFAULT_DAPPS;
-    return DEFAULT_DAPPS.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) || d.url.toLowerCase().includes(q),
-    );
+    if (!q) return [] as DappInfo[];
+    // No local index — return empty list; rely on custom URL connect or external integration
+    return [] as DappInfo[];
   }, [query]);
 
   const customDapp = useMemo(() => {

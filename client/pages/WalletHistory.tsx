@@ -180,6 +180,19 @@ export default function WalletHistory() {
     await fetchBlockchainTransactions(tokenMap);
   };
 
+  const handleClearHistory = () => {
+    if (!wallet?.publicKey) return;
+    try {
+      localStorage.removeItem(`wallet_transactions_${wallet.publicKey}`);
+      setBlockchainTxs([]);
+      // Also clear any orders/locks persisted if desired
+      toast({ title: "History cleared", description: "Transaction history was removed from local storage." });
+    } catch (e) {
+      console.error("Failed to clear history", e);
+      toast({ title: "Clear failed", description: String(e), variant: "destructive" });
+    }
+  };
+
   const fetchBlockchainTransactions = async (
     resolvedTokenMap?: Record<string, { symbol: string; decimals: number }>,
   ) => {

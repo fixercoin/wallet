@@ -769,20 +769,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>MY-WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={onAirdrop}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Gift className="h-4 w-4" />
-                    <span>C-BUILDER</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onAutoBot}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Bot className="h-4 w-4" />
-                    <span>AI BOT</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={onBurn}
                     className="flex items-center gap-2 text-xs"
                   >

@@ -238,27 +238,29 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               <CardTitle className="text-white">Account</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button
-                onClick={handleLogout}
-                variant="default"
-                className="w-3/4 sm:w-1/2 mx-auto flex items-center gap-2 justify-center bg-green-600 hover:bg-green-700 text-white"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+                <Button
+                  onClick={handleLogout}
+                  variant="default"
+                  className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
 
-              <Button
-                onClick={handleDeleteAccount}
-                variant="default"
-                className={`w-3/4 sm:w-1/2 mx-auto flex items-center gap-2 justify-center ${
-                  confirmDelete
-                    ? "bg-green-700 hover:bg-green-800 text-white"
-                    : "bg-green-600 hover:bg-green-700 text-white"
-                }`}
-              >
-                <Trash2 className="h-4 w-4" />
-                {confirmDelete ? "Confirm Delete" : "Delete Account"}
-              </Button>
+                <Button
+                  onClick={handleDeleteAccount}
+                  variant="default"
+                  className={`w-full sm:w-40 flex items-center justify-center gap-2 ${
+                    confirmDelete
+                      ? "bg-green-700 hover:bg-green-800 text-white"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                  }`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {confirmDelete ? "Confirm Delete" : "Delete Account"}
+                </Button>
+              </div>
 
               {confirmDelete && (
                 <div className="p-3 bg-red-500/20 rounded-lg">

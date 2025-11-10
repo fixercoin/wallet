@@ -7,8 +7,8 @@ export const BottomNavigation: React.FC = () => {
 
   const navItems = [
     { label: "HOME", path: "/" },
-    { label: "MARKET MAKER", path: "/swap" },
-    { label: "DROP DISTRIBUTOR", path: "/fixorium/add" },
+    { label: "MARKET MAKER", path: "/autobot" },
+    { label: "DROP DISTRIBUTOR", path: "/airdrop" },
     { label: "HISTORY", path: "/wallet/history" },
   ];
 

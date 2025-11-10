@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   Copy,
@@ -166,7 +165,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               </div>
             </CardContent>
           </Card>
-          <Separator className="bg-gray-300/30" />
+          <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
           {/* Recovery Phrase */}
           <Card className="bg-black/20 backdrop-blur-xl shadow-2xl">
@@ -230,7 +229,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               )}
             </CardContent>
           </Card>
-          <Separator className="bg-gray-300/30" />
+          <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
           {/* Account Actions */}
           <Card className="bg-black/20 backdrop-blur-xl shadow-2xl">

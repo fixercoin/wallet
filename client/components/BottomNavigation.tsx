@@ -1,5 +1,4 @@
 import React from "react";
-import { Home, TrendingUp, Gift, History } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export const BottomNavigation: React.FC = () => {
@@ -7,10 +6,10 @@ export const BottomNavigation: React.FC = () => {
   const location = useLocation();
 
   const navItems = [
-    { label: "HOME", icon: Home, path: "/" },
-    { label: "MARKET MAKER", icon: TrendingUp, path: "/swap" },
-    { label: "DROP DISTRIBUTOR", icon: Gift, path: "/fixorium/add" },
-    { label: "HISTORY", icon: History, path: "/wallet/history" },
+    { label: "HOME", path: "/" },
+    { label: "MARKET MAKER", path: "/swap" },
+    { label: "DROP DISTRIBUTOR", path: "/fixorium/add" },
+    { label: "HISTORY", path: "/wallet/history" },
   ];
 
   const isActive = (path: string) => {
@@ -21,7 +20,6 @@ export const BottomNavigation: React.FC = () => {
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const active = isActive(item.path);
 
           return (

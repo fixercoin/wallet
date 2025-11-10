@@ -125,6 +125,17 @@ export default function WalletHistory() {
       setPendingOrders([]);
     }
 
+    // Load persisted transactions (if any)
+    try {
+      const rawTx =
+        localStorage.getItem(`wallet_transactions_${wallet.publicKey}`) || "[]";
+      const parsedTx = JSON.parse(rawTx);
+      if (Array.isArray(parsedTx))
+        setBlockchainTxs(parsedTx as BlockchainTransaction[]);
+    } catch (e) {
+      // ignore
+    }
+
     // Init token map (Jupiter + known) and then fetch transactions
     let isMounted = true;
     (async () => {
@@ -169,6 +180,26 @@ export default function WalletHistory() {
 
   const handleRefresh = async () => {
     await fetchBlockchainTransactions(tokenMap);
+  };
+
+  const handleClearHistory = () => {
+    if (!wallet?.publicKey) return;
+    try {
+      localStorage.removeItem(`wallet_transactions_${wallet.publicKey}`);
+      setBlockchainTxs([]);
+      // Also clear any orders/locks persisted if desired
+      toast({
+        title: "History cleared",
+        description: "Transaction history was removed from local storage.",
+      });
+    } catch (e) {
+      console.error("Failed to clear history", e);
+      toast({
+        title: "Clear failed",
+        description: String(e),
+        variant: "destructive",
+      });
+    }
   };
 
   const fetchBlockchainTransactions = async (
@@ -244,6 +275,14 @@ export default function WalletHistory() {
 
       console.log(`Extracted ${txs.length} token transfers`);
       setBlockchainTxs(txs);
+      try {
+        localStorage.setItem(
+          `wallet_transactions_${wallet.publicKey}`,
+          JSON.stringify(txs),
+        );
+      } catch (e) {
+        console.warn("Failed to persist transactions to localStorage", e);
+      }
     } catch (error) {
       console.error("Error fetching blockchain transactions:", error);
       setBlockchainTxs([]);
@@ -274,18 +313,26 @@ export default function WalletHistory() {
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-medium uppercase">TRANSACTIONS</h2>
-              <button
-                onClick={handleRefresh}
-                disabled={loading}
-                className="p-1 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="REFRESH TRANSACTIONS"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="p-1 hover:bg-gray-200 rounded-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="REFRESH TRANSACTIONS"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  onClick={handleClearHistory}
+                  className="p-1 px-2 bg-red-50 text-red-600 rounded-none text-xs hover:bg-red-100"
+                >
+                  CLEAR
+                </button>
+              </div>
             </div>
 
             {/* Show only confirmed on-chain transactions */}
@@ -338,7 +385,7 @@ export default function WalletHistory() {
                     return (
                       <li
                         key={t.id || t.txid || t.signature || idx}
-                        className="p-3 rounded-md border border-gray-300/30"
+                        className="p-3 rounded-none border border-gray-300/30"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex flex-col gap-2">
@@ -346,7 +393,7 @@ export default function WalletHistory() {
                               <span className="text-sm font-semibold text-gray-900 uppercase">
                                 {kind}
                               </span>
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase">
+                              <span className="text-xs bg-transparent text-blue-700 px-2 py-0.5 rounded uppercase">
                                 ON-CHAIN
                               </span>
                             </div>

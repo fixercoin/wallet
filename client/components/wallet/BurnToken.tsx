@@ -571,7 +571,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden capitalize">
       <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
         <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
@@ -595,13 +595,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           <div className="px-4 pb-6 space-y-5">
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-gray-300">Select token</Label>
+                <Label className="text-xs text-gray-300 mb-2 block">
+                  Select token
+                </Label>
                 <Select
                   value={selectedMint}
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-1 bg-transparent border border-gray-300/30 text-black">
+                  <SelectTrigger className="mt-2 bg-transparent border border-gray-300/30 text-black rounded-none">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border border-black text-white">
@@ -633,7 +635,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <Card className="rounded-xl border border-gray-300/30 bg-transparent px-4">
+                <Card className="rounded-none border border-gray-300/30 bg-transparent px-4">
                   <CardContent className="pt-4 px-0 space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -680,14 +682,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-transparent border border-gray-300/30 text-black placeholder:text-gray-500"
+                    className="h-11 bg-transparent border border-gray-300/30 text-black placeholder:text-gray-500 rounded-none"
                   />
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={handleUseMax}
                     disabled={isLoading || !selectedToken}
-                    className="h-11 rounded-full px-4 text-sm bg-green-500 border border-green-500 text-white hover:bg-green-600 hover:border-green-600"
+                    className="h-11 rounded-none px-4 text-sm bg-green-500 border border-green-500 text-white hover:bg-green-600 hover:border-green-600"
                   >
                     Max
                   </Button>
@@ -712,7 +714,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               <Button
-                className="h-11 w-full border-0 font-semibold rounded-xl bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                className="h-11 w-full border-0 font-semibold rounded-none bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
                 onClick={handleBurn}
                 disabled={isConfirmDisabled}
               >

@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, TrendingUp, Gift, Clock } from "lucide-react";
+import { Home, TrendingUp, Gift, Clock, ExternalLink } from "lucide-react";
 
 export const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
@@ -10,6 +10,7 @@ export const BottomNavigation: React.FC = () => {
     { icon: Home, path: "/", label: "Home" },
     { icon: TrendingUp, path: "/autobot", label: "Market Maker" },
     { icon: Gift, path: "/airdrop", label: "Drop Distributor" },
+    { icon: ExternalLink, path: "/dapps", label: "DApps" },
     { icon: Clock, path: "/wallet/history", label: "History" },
   ];
 

@@ -17,7 +17,9 @@ export default function DappView() {
   const navigate = useNavigate();
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const popupRef = useRef<Window | null>(null);
   const [loading, setLoading] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeBlocked, setIframeBlocked] = useState(false);
   const loadTimeoutRef = useRef<number | null>(null);
@@ -39,7 +41,20 @@ export default function DappView() {
   }, [url, navigate, iframeLoaded]);
 
   const handleOpenNewTab = () => {
-    window.open(url, "_blank", "noopener");
+    try {
+      // open popup without noopener so DApp can postMessage to opener
+      const w = window.open(url, "_blank", "toolbar=no,location=no,status=no,menubar=no,width=1100,height=800");
+      if (w) {
+        popupRef.current = w;
+        setPopupOpen(true);
+        toast({ title: "DApp opened", description: "DApp opened in a new window. Approve connection there when prompted." });
+        try { w.focus(); } catch {}
+      } else {
+        toast({ title: "Popup blocked", description: "Popup was blocked. Allow popups or use Open in new tab.", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Open failed", description: String(e), variant: "destructive" });
+    }
   };
 
   const handleConnectFromView = async () => {
@@ -104,7 +119,19 @@ export default function DappView() {
     };
 
     window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
+
+    // also poll for popup close
+    const popupInterval = window.setInterval(() => {
+      if (popupRef.current && popupRef.current.closed) {
+        popupRef.current = null;
+        setPopupOpen(false);
+      }
+    }, 500);
+
+    return () => {
+      window.removeEventListener("message", handler);
+      window.clearInterval(popupInterval);
+    };
   }, [url, toast]);
 
   return (
@@ -126,11 +153,42 @@ export default function DappView() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleOpenNewTab} className="rounded-none bg-white/5 text-black">Open in new tab</Button>
-          <Button onClick={() => navigate("/dapps")} variant="outline" className="rounded-none">Back</Button>
-          <Button onClick={handleConnectFromView} className="rounded-none bg-green-600 text-white" disabled={loading}>
-            {loading ? "Connecting..." : "Connect Wallet"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!popupOpen ? (
+              <Button onClick={handleOpenNewTab} className="rounded-none bg-white/5 text-black">Open DApp (popup)</Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  popupRef.current?.focus?.();
+                }}
+                className="rounded-none bg-white/5 text-black"
+              >
+                Focus DApp
+              </Button>
+            )}
+
+            {popupOpen && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  try {
+                    popupRef.current?.close();
+                  } catch {}
+                  popupRef.current = null;
+                  setPopupOpen(false);
+                }}
+                className="rounded-none"
+              >
+                Close DApp Window
+              </Button>
+            )}
+
+            <Button onClick={() => navigate("/dapps")} variant="outline" className="rounded-none">Back</Button>
+
+            <Button onClick={handleConnectFromView} className="rounded-none bg-green-600 text-white" disabled={loading}>
+              {loading ? "Connecting..." : "Connect Wallet"}
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -56,7 +56,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   if (wallets.length === 0) {
     return (
       <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
-        <div className="w-full px-4 mx-auto pt-8 max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl">
+        <div className="w-full px-4 mx-auto pt-8">
           <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
               <p className="text-[hsl(var(--muted-foreground))]">

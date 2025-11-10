@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -12,10 +13,12 @@ import {
   Key,
   Eye,
   EyeOff,
+  Lock,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { setWalletPassword, getWalletPassword, doesWalletRequirePassword } from "@/lib/wallet-password";
 import bs58 from "bs58";
 
 interface SettingsProps {

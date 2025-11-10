@@ -684,7 +684,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   �� Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
                   <p>��� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
@@ -744,7 +744,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex items-center gap-2 flex-1">
               <TokenSearch
                 className="w-full mr-2"
-                inputClassName="bg-transparent text-foreground placeholder:text-[hsl(var(--muted-foreground))] border border-border focus-visible:ring-0"
+                inputClassName="bg-transparent text-foreground placeholder:text-[hsl(var(--muted-foreground))] border border-border focus-visible:ring-0 rounded-none"
               />
             </div>
 
@@ -769,20 +769,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>MY-WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={onAirdrop}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Gift className="h-4 w-4" />
-                    <span>C-BUILDER</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onAutoBot}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Bot className="h-4 w-4" />
-                    <span>AI BOT</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={onBurn}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -795,13 +781,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   >
                     <Lock className="h-4 w-4" />
                     <span>LOCK-SPL</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/wallet/history")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Clock className="h-4 w-4" />
-                    <span>HISTORY</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -912,21 +891,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-10 w-full">
             <Button
               onClick={onSend}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-none font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-none font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-none font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SWAP
             </Button>

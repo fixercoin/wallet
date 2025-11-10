@@ -128,6 +128,9 @@ import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
+import AutoBot from "./pages/AutoBot";
+import AirdropPage from "./pages/AirdropPage";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +154,8 @@ function AppRoutes() {
       <Route path="/wallet/history" element={<WalletHistory />} />
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
+      <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -166,8 +171,9 @@ function App() {
             <Sonner />
             <CurrencyProvider>
               <BrowserRouter>
-                <div className="min-h-screen">
+                <div className="min-h-screen pb-20">
                   <AppRoutes />
+                  <BottomNavigation />
                 </div>
               </BrowserRouter>
             </CurrencyProvider>

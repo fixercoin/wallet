@@ -509,11 +509,19 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <span className="font-medium">DAPP CONNECTIONS</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <a href="/dapps" className="text-xs text-gray-700 hover:underline">Manage</a>
+                      <a
+                        href="/dapps"
+                        className="text-xs text-gray-700 hover:underline"
+                      >
+                        Manage
+                      </a>
                     </div>
                   </div>
                   <div className="px-4 pb-4">
-                    <div className="text-xs text-[hsl(var(--muted-foreground))]">Shows dapps this wallet has connected to. Manage connections on the DApps page.</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                      Shows dapps this wallet has connected to. Manage
+                      connections on the DApps page.
+                    </div>
                   </div>
                 </CardContent>
               </Card>

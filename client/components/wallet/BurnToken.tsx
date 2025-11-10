@@ -595,7 +595,9 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
           <div className="px-4 pb-6 space-y-5">
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-gray-300 mb-2 block">Select token</Label>
+                <Label className="text-xs text-gray-300 mb-2 block">
+                  Select token
+                </Label>
                 <Select
                   value={selectedMint}
                   onValueChange={setSelectedMint}
@@ -712,10 +714,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               <Button
-              className="h-11 w-full border-0 font-semibold rounded-none bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
-              onClick={handleBurn}
-              disabled={isConfirmDisabled}
-            >
+                className="h-11 w-full border-0 font-semibold rounded-none bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                onClick={handleBurn}
+                disabled={isConfirmDisabled}
+              >
                 {isLoading ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />

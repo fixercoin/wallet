@@ -43,17 +43,36 @@ export default function DappView() {
   const handleOpenNewTab = () => {
     try {
       // open popup without noopener so DApp can postMessage to opener
-      const w = window.open(url, "_blank", "toolbar=no,location=no,status=no,menubar=no,width=1100,height=800");
+      const w = window.open(
+        url,
+        "_blank",
+        "toolbar=no,location=no,status=no,menubar=no,width=1100,height=800",
+      );
       if (w) {
         popupRef.current = w;
         setPopupOpen(true);
-        toast({ title: "DApp opened", description: "DApp opened in a new window. Approve connection there when prompted." });
-        try { w.focus(); } catch {}
+        toast({
+          title: "DApp opened",
+          description:
+            "DApp opened in a new window. Approve connection there when prompted.",
+        });
+        try {
+          w.focus();
+        } catch {}
       } else {
-        toast({ title: "Popup blocked", description: "Popup was blocked. Allow popups or use Open in new tab.", variant: "destructive" });
+        toast({
+          title: "Popup blocked",
+          description:
+            "Popup was blocked. Allow popups or use Open in new tab.",
+          variant: "destructive",
+        });
       }
     } catch (e: any) {
-      toast({ title: "Open failed", description: String(e), variant: "destructive" });
+      toast({
+        title: "Open failed",
+        description: String(e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -63,10 +82,16 @@ export default function DappView() {
       const provider = ensureFixoriumProvider();
       if (!provider) throw new Error("Provider unavailable");
       const res = await provider.connect();
-      const pub = res?.publicKey?.toBase58 ? res.publicKey.toBase58() : String(res?.publicKey);
+      const pub = res?.publicKey?.toBase58
+        ? res.publicKey.toBase58()
+        : String(res?.publicKey);
       toast({ title: "DApp Connected", description: `${pub}` });
     } catch (err: any) {
-      toast({ title: "Connect Failed", description: err?.message || String(err), variant: "destructive" });
+      toast({
+        title: "Connect Failed",
+        description: err?.message || String(err),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -90,9 +115,19 @@ export default function DappView() {
         if (type === "REQUEST_CONNECT") {
           if (origin !== "*" && ev.origin !== origin) return;
 
-          const allow = window.confirm(`DApp at ${ev.origin} requests wallet connection. Allow?`);
+          const allow = window.confirm(
+            `DApp at ${ev.origin} requests wallet connection. Allow?`,
+          );
           if (!allow) {
-            ev.source?.postMessage?.({ type: "CONNECT_RESPONSE", success: false, error: "User rejected", requestId }, ev.origin);
+            ev.source?.postMessage?.(
+              {
+                type: "CONNECT_RESPONSE",
+                success: false,
+                error: "User rejected",
+                requestId,
+              },
+              ev.origin,
+            );
             return;
           }
 
@@ -100,12 +135,34 @@ export default function DappView() {
             const provider = ensureFixoriumProvider();
             if (!provider) throw new Error("Provider unavailable");
             const res = await provider.connect();
-            const pub = res?.publicKey?.toBase58 ? res.publicKey.toBase58() : String(res?.publicKey);
-            ev.source?.postMessage?.({ type: "CONNECT_RESPONSE", success: true, publicKey: pub, requestId }, ev.origin);
+            const pub = res?.publicKey?.toBase58
+              ? res.publicKey.toBase58()
+              : String(res?.publicKey);
+            ev.source?.postMessage?.(
+              {
+                type: "CONNECT_RESPONSE",
+                success: true,
+                publicKey: pub,
+                requestId,
+              },
+              ev.origin,
+            );
             toast({ title: "DApp Connected", description: `${pub}` });
           } catch (err: any) {
-            ev.source?.postMessage?.({ type: "CONNECT_RESPONSE", success: false, error: err?.message || String(err), requestId }, ev.origin);
-            toast({ title: "Connect Failed", description: err?.message || String(err), variant: "destructive" });
+            ev.source?.postMessage?.(
+              {
+                type: "CONNECT_RESPONSE",
+                success: false,
+                error: err?.message || String(err),
+                requestId,
+              },
+              ev.origin,
+            );
+            toast({
+              title: "Connect Failed",
+              description: err?.message || String(err),
+              variant: "destructive",
+            });
           }
         }
 
@@ -145,17 +202,25 @@ export default function DappView() {
 
   const handleSimulateRequest = async () => {
     // Debug helper: simulate an incoming REQUEST_CONNECT from the DApp
-    const ok = window.confirm("Simulate DApp connection request (for testing)?");
+    const ok = window.confirm(
+      "Simulate DApp connection request (for testing)?",
+    );
     if (!ok) return;
     setLoading(true);
     try {
       const provider = ensureFixoriumProvider();
       if (!provider) throw new Error("Provider unavailable");
       const res = await provider.connect();
-      const pub = res?.publicKey?.toBase58 ? res.publicKey.toBase58() : String(res?.publicKey);
+      const pub = res?.publicKey?.toBase58
+        ? res.publicKey.toBase58()
+        : String(res?.publicKey);
       toast({ title: "Simulated Connect Success", description: pub });
     } catch (err: any) {
-      toast({ title: "Simulated Connect Failed", description: err?.message || String(err), variant: "destructive" });
+      toast({
+        title: "Simulated Connect Failed",
+        description: err?.message || String(err),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -169,20 +234,29 @@ export default function DappView() {
             <ExternalLink className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-medium">{(() => {
-              try {
-                return new URL(url).hostname;
-              } catch {
-                return url;
-              }
-            })()}</div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">{url}</div>
+            <div className="font-medium">
+              {(() => {
+                try {
+                  return new URL(url).hostname;
+                } catch {
+                  return url;
+                }
+              })()}
+            </div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))]">
+              {url}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             {!popupOpen ? (
-              <Button onClick={handleOpenNewTab} className="rounded-none bg-white/5 text-black">Open DApp (popup)</Button>
+              <Button
+                onClick={handleOpenNewTab}
+                className="rounded-none bg-white/5 text-black"
+              >
+                Open DApp (popup)
+              </Button>
             ) : (
               <Button
                 onClick={() => {
@@ -210,9 +284,19 @@ export default function DappView() {
               </Button>
             )}
 
-            <Button onClick={() => navigate("/dapps")} variant="outline" className="rounded-none">Back</Button>
+            <Button
+              onClick={() => navigate("/dapps")}
+              variant="outline"
+              className="rounded-none"
+            >
+              Back
+            </Button>
 
-            <Button onClick={handleConnectFromView} className="rounded-none bg-green-600 text-white" disabled={loading}>
+            <Button
+              onClick={handleConnectFromView}
+              className="rounded-none bg-green-600 text-white"
+              disabled={loading}
+            >
               {loading ? "Connecting..." : "Connect Wallet"}
             </Button>
           </div>
@@ -244,10 +328,16 @@ export default function DappView() {
       <div className="mt-4 text-xs text-[hsl(var(--muted-foreground))]">
         {iframeBlocked ? (
           <>
-            This site may block embedding (X-Frame-Options or CSP). Use "Open in new tab" to load it, or use the Connect Wallet button to connect directly.
+            This site may block embedding (X-Frame-Options or CSP). Use "Open in
+            new tab" to load it, or use the Connect Wallet button to connect
+            directly.
           </>
         ) : (
-          <>This page supports a postMessage handshake. The DApp can post {JSON.stringify({ type: "REQUEST_CONNECT" })} to request a wallet connection; the parent will reply with CONNECT_RESPONSE.</>
+          <>
+            This page supports a postMessage handshake. The DApp can post{" "}
+            {JSON.stringify({ type: "REQUEST_CONNECT" })} to request a wallet
+            connection; the parent will reply with CONNECT_RESPONSE.
+          </>
         )}
       </div>
 

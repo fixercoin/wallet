@@ -127,9 +127,11 @@ export default function WalletHistory() {
 
     // Load persisted transactions (if any)
     try {
-      const rawTx = localStorage.getItem(`wallet_transactions_${wallet.publicKey}`) || "[]";
+      const rawTx =
+        localStorage.getItem(`wallet_transactions_${wallet.publicKey}`) || "[]";
       const parsedTx = JSON.parse(rawTx);
-      if (Array.isArray(parsedTx)) setBlockchainTxs(parsedTx as BlockchainTransaction[]);
+      if (Array.isArray(parsedTx))
+        setBlockchainTxs(parsedTx as BlockchainTransaction[]);
     } catch (e) {
       // ignore
     }
@@ -186,10 +188,17 @@ export default function WalletHistory() {
       localStorage.removeItem(`wallet_transactions_${wallet.publicKey}`);
       setBlockchainTxs([]);
       // Also clear any orders/locks persisted if desired
-      toast({ title: "History cleared", description: "Transaction history was removed from local storage." });
+      toast({
+        title: "History cleared",
+        description: "Transaction history was removed from local storage.",
+      });
     } catch (e) {
       console.error("Failed to clear history", e);
-      toast({ title: "Clear failed", description: String(e), variant: "destructive" });
+      toast({
+        title: "Clear failed",
+        description: String(e),
+        variant: "destructive",
+      });
     }
   };
 
@@ -267,7 +276,10 @@ export default function WalletHistory() {
       console.log(`Extracted ${txs.length} token transfers`);
       setBlockchainTxs(txs);
       try {
-        localStorage.setItem(`wallet_transactions_${wallet.publicKey}`, JSON.stringify(txs));
+        localStorage.setItem(
+          `wallet_transactions_${wallet.publicKey}`,
+          JSON.stringify(txs),
+        );
       } catch (e) {
         console.warn("Failed to persist transactions to localStorage", e);
       }

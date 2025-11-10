@@ -40,14 +40,25 @@ export default function DappVisit() {
 
   const handleOpenPopup = () => {
     try {
-      const w = window.open(url, "_blank", "toolbar=no,location=no,status=no,menubar=no,width=1100,height=800");
+      const w = window.open(
+        url,
+        "_blank",
+        "toolbar=no,location=no,status=no,menubar=no,width=1100,height=800",
+      );
       if (!w) {
-        toast({ title: "Popup blocked", description: "Allow popups to enable DApp connection.", variant: "destructive" });
+        toast({
+          title: "Popup blocked",
+          description: "Allow popups to enable DApp connection.",
+          variant: "destructive",
+        });
         return;
       }
       popupRef.current = w;
       setPopupOpen(true);
-      toast({ title: "DApp opened", description: "Popup opened — waiting for handshake." });
+      toast({
+        title: "DApp opened",
+        description: "Popup opened — waiting for handshake.",
+      });
 
       const origin = (() => {
         try {
@@ -80,16 +91,28 @@ export default function DappVisit() {
         }
       }, 500);
     } catch (e: any) {
-      toast({ title: "Open failed", description: String(e), variant: "destructive" });
+      toast({
+        title: "Open failed",
+        description: String(e),
+        variant: "destructive",
+      });
     }
   };
 
   const handleClosePopup = () => {
-    try { popupRef.current?.close(); } catch {}
+    try {
+      popupRef.current?.close();
+    } catch {}
     popupRef.current = null;
     setPopupOpen(false);
-    if (parentPingRef.current) { window.clearInterval(parentPingRef.current); parentPingRef.current = null; }
-    if (popupPollRef.current) { window.clearInterval(popupPollRef.current); popupPollRef.current = null; }
+    if (parentPingRef.current) {
+      window.clearInterval(parentPingRef.current);
+      parentPingRef.current = null;
+    }
+    if (popupPollRef.current) {
+      window.clearInterval(popupPollRef.current);
+      popupPollRef.current = null;
+    }
   };
 
   // Listen for REQUEST_CONNECT from popup (or CONNECT_RESPONSE) and respond
@@ -99,24 +122,58 @@ export default function DappVisit() {
         if (!ev.data || typeof ev.data !== "object") return;
         const { type, requestId } = ev.data as any;
         if (type === "REQUEST_CONNECT") {
-          const allow = window.confirm(`DApp requests wallet connection. Allow?`);
+          const allow = window.confirm(
+            `DApp requests wallet connection. Allow?`,
+          );
           if (!allow) {
-            ev.source?.postMessage?.({ type: "CONNECT_RESPONSE", success: false, error: "User rejected", requestId }, ev.origin);
+            ev.source?.postMessage?.(
+              {
+                type: "CONNECT_RESPONSE",
+                success: false,
+                error: "User rejected",
+                requestId,
+              },
+              ev.origin,
+            );
             return;
           }
           try {
             const provider = ensureFixoriumProvider();
             if (!provider) throw new Error("Provider unavailable");
             const res = await provider.connect();
-            const pub = res?.publicKey?.toBase58 ? res.publicKey.toBase58() : String(res?.publicKey);
-            ev.source?.postMessage?.({ type: "CONNECT_RESPONSE", success: true, publicKey: pub, requestId }, ev.origin);
+            const pub = res?.publicKey?.toBase58
+              ? res.publicKey.toBase58()
+              : String(res?.publicKey);
+            ev.source?.postMessage?.(
+              {
+                type: "CONNECT_RESPONSE",
+                success: true,
+                publicKey: pub,
+                requestId,
+              },
+              ev.origin,
+            );
             toast({ title: "DApp Connected", description: `${pub}` });
             // close popup after connect
-            try { ev.source?.close?.(); } catch {}
+            try {
+              ev.source?.close?.();
+            } catch {}
             handleClosePopup();
           } catch (err: any) {
-            ev.source?.postMessage?.({ type: "CONNECT_RESPONSE", success: false, error: err?.message || String(err), requestId }, ev.origin);
-            toast({ title: "Connect Failed", description: err?.message || String(err), variant: "destructive" });
+            ev.source?.postMessage?.(
+              {
+                type: "CONNECT_RESPONSE",
+                success: false,
+                error: err?.message || String(err),
+                requestId,
+              },
+              ev.origin,
+            );
+            toast({
+              title: "Connect Failed",
+              description: err?.message || String(err),
+              variant: "destructive",
+            });
           }
         }
       } catch (e) {}
@@ -132,31 +189,72 @@ export default function DappVisit() {
           <ExternalLink className="w-5 h-5" />
         </div>
         <div>
-          <div className="font-medium">{(() => { try { return new URL(url).hostname } catch { return url } })()}</div>
-          <div className="text-xs text-[hsl(var(--muted-foreground))]">{url}</div>
+          <div className="font-medium">
+            {(() => {
+              try {
+                return new URL(url).hostname;
+              } catch {
+                return url;
+              }
+            })()}
+          </div>
+          <div className="text-xs text-[hsl(var(--muted-foreground))]">
+            {url}
+          </div>
         </div>
       </div>
 
       <Card className="rounded-none border border-gray-300/20">
         <CardContent>
           <div className="space-y-3">
-            <p className="text-sm">You are about to open the external DApp. For a seamless connection the app can be opened in a popup which will request a connection automatically (if the DApp implements the handshake).</p>
+            <p className="text-sm">
+              You are about to open the external DApp. For a seamless connection
+              the app can be opened in a popup which will request a connection
+              automatically (if the DApp implements the handshake).
+            </p>
             <div className="flex items-center gap-2">
-              <Button onClick={handleOpenSameTab} className="rounded-none bg-green-600 text-white">Open in this tab</Button>
-              <Button onClick={handleOpenInNewTab} variant="outline" className="rounded-none">Open in new tab</Button>
+              <Button
+                onClick={handleOpenSameTab}
+                className="rounded-none bg-green-600 text-white"
+              >
+                Open in this tab
+              </Button>
+              <Button
+                onClick={handleOpenInNewTab}
+                variant="outline"
+                className="rounded-none"
+              >
+                Open in new tab
+              </Button>
               {!popupOpen ? (
-                <Button onClick={handleOpenPopup} className="rounded-none">Open popup & auto-connect</Button>
+                <Button onClick={handleOpenPopup} className="rounded-none">
+                  Open popup & auto-connect
+                </Button>
               ) : (
-                <Button onClick={handleClosePopup} variant="outline" className="rounded-none">Close popup</Button>
+                <Button
+                  onClick={handleClosePopup}
+                  variant="outline"
+                  className="rounded-none"
+                >
+                  Close popup
+                </Button>
               )}
-              <Button variant="ghost" onClick={() => navigate('/dapps')} className="rounded-none">Cancel</Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/dapps")}
+                className="rounded-none"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="mt-4 text-xs text-[hsl(var(--muted-foreground))]">
-        Note: some sites require the DApp to initiate a connection request. For best UX add this snippet to the DApp so it can auto-request when opened in a popup by the wallet:
+        Note: some sites require the DApp to initiate a connection request. For
+        best UX add this snippet to the DApp so it can auto-request when opened
+        in a popup by the wallet:
         <pre className="mt-2 p-2 bg-gray-100 text-xs overflow-auto rounded-none">{`// In the DApp page
 function listenForParent() {
   window.addEventListener('message', (ev) => {

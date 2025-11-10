@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, TrendingUp, Gift, Clock, ExternalLink } from "lucide-react";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();

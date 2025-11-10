@@ -827,7 +827,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400"
+                className="mt-2 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400 rounded-none"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">

@@ -81,7 +81,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 <Input
                   value={wallet.publicKey}
                   readOnly
-                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30"
+                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-none"
                 />
                 <Button
                   variant="outline"

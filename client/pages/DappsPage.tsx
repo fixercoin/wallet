@@ -211,45 +211,49 @@ export default function DappsPage() {
           </Card>
         )}
 
-        {items.map((d) => (
-          <Card key={d.url} className="rounded-none border border-gray-300/30">
-            <CardContent className="p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-transparent text-gray-700 flex items-center justify-center rounded-none">
-                  <ExternalLink className="w-5 h-5" />
+        {items.length === 0 && !customDapp ? (
+          <div className="p-4 text-sm text-[hsl(var(--muted-foreground))]">No dapps available. Enter a DApp URL above to open or connect (e.g. https://example.com).</div>
+        ) : (
+          items.map((d) => (
+            <Card key={d.url} className="rounded-none border border-gray-300/30">
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-transparent text-gray-700 flex items-center justify-center rounded-none">
+                    <ExternalLink className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{d.name}</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">{d.url}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium">{d.name}</div>
-                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{d.url}</div>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    navigate(`/dapps/visit?url=${encodeURIComponent(d.url)}`);
-                  }}
-                  className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
-                >
-                  Open in app
-                </button>
-                {isConnectedTo(d.url) ? (
-                  <Button variant="outline" className="rounded-none" onClick={() => handleDisconnect(d.url)}>
-                    Disconnect
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => handleConnect(d)}
-                    className="bg-green-600 hover:bg-green-700 text-white rounded-none"
-                    disabled={!!loadingUrl}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigate(`/dapps/visit?url=${encodeURIComponent(d.url)}`);
+                    }}
+                    className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
                   >
-                    {loadingUrl === d.url ? "Connecting..." : "Connect"}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    Open in app
+                  </button>
+                  {isConnectedTo(d.url) ? (
+                    <Button variant="outline" className="rounded-none" onClick={() => handleDisconnect(d.url)}>
+                      Disconnect
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleConnect(d)}
+                      className="bg-green-600 hover:bg-green-700 text-white rounded-none"
+                      disabled={!!loadingUrl}
+                    >
+                      {loadingUrl === d.url ? "Connecting..." : "Connect"}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       <div className="mt-6">

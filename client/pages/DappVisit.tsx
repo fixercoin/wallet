@@ -6,9 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
-import { useEffect, useRef, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);

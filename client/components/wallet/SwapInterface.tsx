@@ -791,14 +791,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   if (!wallet) {
     return (
       <div className="w-full max-w-md mx-auto px-4">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+        <div className="rounded-none border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
           <div className="space-y-6 p-6">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -814,7 +814,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <Button
               onClick={onBack}
               variant="outline"
-              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase"
+              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase rounded-none"
             >
               Back
             </Button>

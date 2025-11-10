@@ -1,8 +1,11 @@
 import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";

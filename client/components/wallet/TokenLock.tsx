@@ -946,7 +946,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-xl border border-gray-300/30 bg-white/80 space-y-3 text-gray-900"
+                    className="p-4 rounded-none border border-gray-300/30 bg-transparent space-y-3 text-white"
                   >
                     <div className="flex items-center justify-between">
                       <div>

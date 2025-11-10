@@ -131,6 +131,7 @@ import SwapPage from "./pages/Swap";
 import AutoBot from "./pages/AutoBot";
 import AirdropPage from "./pages/AirdropPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
 const queryClient = new QueryClient();
 

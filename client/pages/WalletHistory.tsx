@@ -301,18 +301,26 @@ export default function WalletHistory() {
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-medium uppercase">TRANSACTIONS</h2>
-              <button
-                onClick={handleRefresh}
-                disabled={loading}
-                className="p-1 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="REFRESH TRANSACTIONS"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="p-1 hover:bg-gray-200 rounded-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="REFRESH TRANSACTIONS"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  onClick={handleClearHistory}
+                  className="p-1 px-2 bg-red-50 text-red-600 rounded-none text-xs hover:bg-red-100"
+                >
+                  CLEAR
+                </button>
+              </div>
             </div>
 
             {/* Show only confirmed on-chain transactions */}

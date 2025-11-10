@@ -145,7 +145,7 @@ export default function DappsPage() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 py-6">
+    <div className="w-full max-w-2xl mx-auto p-4 py-6 capitalize">
       <Card className="mb-4 rounded-none border border-gray-300/30">
         <CardContent className="p-3">
           <label className="text-sm text-gray-500 uppercase block">SEARCH DAPPS</label>
@@ -258,26 +258,31 @@ export default function DappsPage() {
         )}
       </div>
 
-      <div className="mt-6">
-        <div className="mb-2 text-sm font-medium">Connected DApps</div>
-        <div className="space-y-2">
-          {connected.length === 0 && <div className="text-xs text-[hsl(var(--muted-foreground))]">No connected dapps</div>}
-          {connected.map((c) => (
-            <Card key={`${c.url}-${c.walletPublicKey}`} className="rounded-none border border-gray-300/20">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{c.name}</div>
-                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{c.url}</div>
-                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{new Date(c.connectedAt).toLocaleString()}</div>
-                </div>
-                <div>
-                  <Button variant="outline" onClick={() => handleDisconnect(c.url)} className="rounded-none">Disconnect</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <Card className="mt-6 rounded-none border border-gray-300/30">
+        <CardContent className="p-3">
+          <div className="mb-2 text-sm font-medium uppercase">CONNECTED DAPPS</div>
+          <div className="space-y-2">
+            {connected.length === 0 && (
+              <div className="text-xs text-[hsl(var(--muted-foreground))] uppercase">NO CONNECTED DAPPS</div>
+            )}
+
+            {connected.map((c) => (
+              <Card key={`${c.url}-${c.walletPublicKey}`} className="rounded-none border border-gray-300/20">
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium capitalize">{c.name}</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">{c.url}</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">{new Date(c.connectedAt).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <Button variant="outline" onClick={() => handleDisconnect(c.url)} className="rounded-none">Disconnect</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

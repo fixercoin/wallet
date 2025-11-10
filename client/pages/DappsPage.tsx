@@ -146,28 +146,30 @@ export default function DappsPage() {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 py-6">
-      <div className="mb-4">
-        <label className="text-sm text-gray-500 uppercase">SEARCH DAPPS</label>
-        <div className="mt-2 flex items-center gap-2">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or url"
-            className="rounded-none"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setQuery((q) => q.trim());
-              }
-            }}
-          />
-          <Button
-            className="rounded-none"
-            onClick={() => setQuery((q) => q.trim())}
-          >
-            <SearchIcon className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      <Card className="mb-4 rounded-none border border-gray-300/30">
+        <CardContent className="p-3">
+          <label className="text-sm text-gray-500 uppercase block">SEARCH DAPPS</label>
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or url"
+              className="rounded-none"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setQuery((q) => q.trim());
+                }
+              }}
+            />
+            <Button
+              className="rounded-none"
+              onClick={() => setQuery((q) => q.trim())}
+            >
+              <SearchIcon className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="space-y-3">
         {/* If query looks like a URL and it's not in the default list show a quick connect card */}

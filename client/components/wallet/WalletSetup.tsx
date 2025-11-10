@@ -636,23 +636,16 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <p className="text-[12px] text-gray-300 leading-relaxed border border-white/20 rounded-none p-3">
+                <p className="text-[10px] text-gray-300 leading-relaxed border border-gray-300/30 rounded-none p-3">
                   THIS APPLICATION IS A NON-CUSTODIAL CRYPTOCURRENCY WALLET.<br/>
                   USERS ARE SOLELY RESPONSIBLE FOR THEIR OWN PRIVATE KEYS AND FUNDS.<br/>
                   THE DEVELOPER DOES NOT HAVE ACCESS TO USER WALLETS, RECOVERY PHRASES, OR DIGITAL ASSETS.
                 </p>
 
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab("create")}
-                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                  >
-                    Back
-                  </Button>
+                <div>
                   <Button
                     onClick={handleConfirmWallet}
-                    className="flex-1 h-12 rounded-none font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="w-full h-12 rounded-none font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Create Wallet
                   </Button>

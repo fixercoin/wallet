@@ -340,7 +340,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <Button
                     onClick={handleLogout}
                     variant="default"
-                    className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                    className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-none"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -349,7 +349,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   <Button
                     onClick={handleDeleteAccount}
                     variant="default"
-                    className={`w-full flex items-center gap-2 ${
+                    className={`w-full flex items-center gap-2 rounded-none ${
                       confirmDelete
                         ? "bg-green-700 hover:bg-green-800 text-white"
                         : "bg-green-600 hover:bg-green-700 text-white"
@@ -360,7 +360,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </Button>
 
                   {confirmDelete && (
-                    <div className="p-3 bg-red-500/20 border border-red-400/30 rounded-lg">
+                    <div className="p-3 bg-red-500/20 border border-red-400/30 rounded-none">
                       <div className="flex items-center gap-2 text-red-200 text-sm">
                         <AlertTriangle className="h-4 w-4" />
                         <span>This action cannot be undone</span>
@@ -369,7 +369,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setConfirmDelete(false)}
-                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-none"
                       >
                         Cancel
                       </Button>

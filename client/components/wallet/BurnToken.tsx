@@ -633,7 +633,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <Card className="rounded-xl border border-gray-300/30 bg-transparent px-4">
+                <Card className="rounded-none border border-gray-300/30 bg-transparent px-4">
                   <CardContent className="pt-4 px-0 space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>

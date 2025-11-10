@@ -194,7 +194,7 @@ export default function DappsPage() {
           <Card key={customDapp.url} className="rounded-none border border-gray-300/30">
             <CardContent className="p-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-gray-200 text-gray-700 flex items-center justify-center rounded-none">
+                <div className="h-10 w-10 bg-transparent text-gray-700 flex items-center justify-center rounded-none">
                   <ExternalLink className="w-5 h-5" />
                 </div>
                 <div>
@@ -237,7 +237,7 @@ export default function DappsPage() {
           <Card key={d.url} className="rounded-none border border-gray-300/30">
             <CardContent className="p-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-gray-200 text-gray-700 flex items-center justify-center rounded-none">
+                <div className="h-10 w-10 bg-transparent text-gray-700 flex items-center justify-center rounded-none">
                   <ExternalLink className="w-5 h-5" />
                 </div>
                 <div>

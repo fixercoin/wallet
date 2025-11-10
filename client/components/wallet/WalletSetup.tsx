@@ -20,6 +20,7 @@ import { PasswordSetup } from "./PasswordSetup";
 import {
   setWalletPassword,
   markWalletAsPasswordProtected,
+  doesWalletRequirePassword,
 } from "@/lib/wallet-password";
 
 interface WalletSetupProps {
@@ -149,7 +150,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
       // Show password setup for new wallet import
       setPendingWallet(walletData);
-      setPasswordSetupMode("create");
+      setPasswordSetupMode(doesWalletRequirePassword() ? "unlock" : "create");
       setShowPasswordSetup(true);
     } catch (error) {
       setError(
@@ -294,11 +295,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       <>
         <PasswordSetup
           isOpen={showPasswordSetup}
-          onConfirm={
-            passwordSetupMode === "create"
-              ? handlePasswordSetup
-              : handleUnlockWallets
-          }
+          onConfirm={handlePasswordSetup}
           onCancel={() => {
             setShowPasswordSetup(false);
             setPendingWallet(null);
@@ -379,11 +376,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       <>
         <PasswordSetup
           isOpen={showPasswordSetup}
-          onConfirm={
-            passwordSetupMode === "create"
-              ? handlePasswordSetup
-              : handleUnlockWallets
-          }
+          onConfirm={handlePasswordSetup}
           onCancel={() => {
             setShowPasswordSetup(false);
             setPendingWallet(null);
@@ -507,18 +500,12 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         try {
                           const walletData =
                             importWalletFromPrivateKey(privateKeyInput);
-                          setWallet(walletData);
-                          // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-                          void prefetchWalletAddressData(
-                            walletData.publicKey,
-                          ).catch(() => undefined);
-                          await refreshBalance().catch(() => {});
-                          await refreshTokens().catch(() => {});
-                          toast({
-                            title: "Wallet Imported",
-                            description: "Imported wallet from private key.",
-                          });
-                          onComplete();
+                          // Defer finalizing import until password step completes
+                          setPendingWallet(walletData);
+                          setPasswordSetupMode(
+                            doesWalletRequirePassword() ? "unlock" : "create",
+                          );
+                          setShowPasswordSetup(true);
                         } catch (e) {
                           setError(
                             e instanceof Error
@@ -556,11 +543,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       <>
         <PasswordSetup
           isOpen={showPasswordSetup}
-          onConfirm={
-            passwordSetupMode === "create"
-              ? handlePasswordSetup
-              : handleUnlockWallets
-          }
+          onConfirm={handlePasswordSetup}
           onCancel={() => {
             setShowPasswordSetup(false);
             setPendingWallet(null);

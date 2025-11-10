@@ -4,7 +4,5 @@ import { MarketMaker } from "@/components/wallet/MarketMaker";
 export default function AutoBot() {
   const navigate = useNavigate();
 
-  return (
-    <MarketMaker onBack={() => navigate("/")} />
-  );
+  return <MarketMaker onBack={() => navigate("/")} />;
 }

@@ -4,7 +4,5 @@ import { Airdrop } from "@/components/wallet/Airdrop";
 export default function AirdropPage() {
   const navigate = useNavigate();
 
-  return (
-    <Airdrop onBack={() => navigate("/")} />
-  );
+  return <Airdrop onBack={() => navigate("/")} />;
 }

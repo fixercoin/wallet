@@ -228,7 +228,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       } else {
                         toast({
                           title: "Recovery Phrase Unavailable",
-                          description: "Recovery phrase is not available for this wallet",
+                          description:
+                            "Recovery phrase is not available for this wallet",
                           variant: "destructive",
                         });
                       }
@@ -272,7 +273,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   {!wallet?.mnemonic && (
                     <div className="px-4 pb-4">
                       <p className="text-xs text-red-400">
-                        This account was imported with a private key; no recovery phrase exists. Create/recover a wallet with a phrase to view it.
+                        This account was imported with a private key; no
+                        recovery phrase exists. Create/recover a wallet with a
+                        phrase to view it.
                       </p>
                     </div>
                   )}
@@ -290,7 +293,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       } else {
                         toast({
                           title: "Private Key Unavailable",
-                          description: "Private key is not available for this wallet",
+                          description:
+                            "Private key is not available for this wallet",
                           variant: "destructive",
                         });
                       }

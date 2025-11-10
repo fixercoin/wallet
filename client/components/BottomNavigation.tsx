@@ -13,7 +13,9 @@ export const BottomNavigation: React.FC = () => {
   ];
 
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + "/");
+    return (
+      location.pathname === path || location.pathname.startsWith(path + "/")
+    );
   };
 
   return (
@@ -27,13 +29,13 @@ export const BottomNavigation: React.FC = () => {
               key={item.label}
               onClick={() => navigate(item.path)}
               className={`flex-1 flex items-center justify-center py-2 px-1 sm:px-2 rounded-none transition-colors font-semibold uppercase text-xs sm:text-sm whitespace-nowrap min-w-0 ${
-                active
-                  ? "text-green-500"
-                  : "text-gray-400 hover:text-gray-200"
+                active ? "text-green-500" : "text-gray-400 hover:text-gray-200"
               }`}
               aria-label={item.label}
             >
-              <span className="overflow-hidden text-ellipsis">{item.label}</span>
+              <span className="overflow-hidden text-ellipsis">
+                {item.label}
+              </span>
             </button>
           );
         })}

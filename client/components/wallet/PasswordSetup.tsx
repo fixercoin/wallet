@@ -67,7 +67,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="w-full max-w-md mx-4 rounded-none bg-transparent border border-gray-300/30 p-6 shadow-lg">
         <div className="space-y-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
@@ -91,7 +91,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="pr-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                  className="pr-10 bg-gray-100 border border-gray-300/30 text-gray-900 rounded-none placeholder:text-gray-400"
                   autoFocus
                 />
                 <button
@@ -122,7 +122,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isLoading}
-                    className="pr-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                    className="pr-10 bg-gray-100 border border-gray-300/30 text-gray-900 rounded-none placeholder:text-gray-400"
                   />
                   <button
                     type="button"

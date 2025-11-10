@@ -27,6 +27,8 @@ interface WalletSetupProps {
 }
 
 export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     try {
       document.body.classList.add("no-fixed-bottom");

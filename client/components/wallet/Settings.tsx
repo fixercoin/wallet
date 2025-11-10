@@ -234,7 +234,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
       <div className="w-full p-4 py-6 relative z-20">
         <div>
-          <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+          <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden -mx-4 sm:mx-0">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
@@ -247,8 +247,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Button>
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
-            <div className="space-y-6">
-              <Card className="bg-transparent rounded-none border border-gray-300/30">
+            <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
+              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -289,7 +289,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Password Card */}
-              <Card className="bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => setShowPasswordForm(!showPasswordForm)}
@@ -382,7 +382,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Recovery Phrase Card */}
-              <Card className="bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -448,7 +448,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Private Key Card */}
-              <Card className="bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -504,7 +504,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* DApp Connected Card */}
-              <Card className="bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="w-full flex items-center justify-between p-4 rounded-none">
                     <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">

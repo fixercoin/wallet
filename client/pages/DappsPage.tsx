@@ -15,23 +15,6 @@ interface DappInfo {
   icon?: string;
 }
 
-const DEFAULT_DAPPS: DappInfo[] = [
-  {
-    name: "Uniswap Clone",
-    url: "https://app.uniswap.example",
-    description: "Swap tokens and provide liquidity",
-  },
-  {
-    name: "NFT Gallery",
-    url: "https://nft.gallery.example",
-    description: "Browse and buy NFTs",
-  },
-  {
-    name: "DeFi Dashboard",
-    url: "https://defi.example",
-    description: "Track yields and positions",
-  },
-];
 
 const CONNECTED_DAPPS_KEY = "connected_dapps";
 

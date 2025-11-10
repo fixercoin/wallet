@@ -608,7 +608,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setActiveTab("create")}
+                        onClick={() => navigate(-1)}
                         className="text-white hover:bg-transparent"
                       >
                         <ArrowLeft className="h-4 w-4" />

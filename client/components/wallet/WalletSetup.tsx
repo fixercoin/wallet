@@ -257,7 +257,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
             <div className="w-full sm:max-w-md mx-auto bg-transparent overflow-hidden">
               <div className="space-y-6">
-                <div className="text-center pb-2">
+                <div className="flex items-center justify-center pb-2">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"
@@ -331,7 +331,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
             <div className="w-full sm:max-w-md mx-auto bg-transparent overflow-hidden">
               <div className="space-y-6">
-                <div className="text-center pb-2">
+                <div className="flex items-center justify-center pb-2">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"

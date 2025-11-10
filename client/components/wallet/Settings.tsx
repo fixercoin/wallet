@@ -240,7 +240,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -248,7 +248,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
-              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -287,9 +287,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </CardContent>
               </Card>
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Password Card */}
-              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none">
                 <CardContent className="p-0">
                   <button
                     onClick={() => setShowPasswordForm(!showPasswordForm)}
@@ -321,7 +322,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           placeholder="Enter password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="bg-white/5 border border-gray-300/30 text-gray-900 rounded-none"
+                          className="bg-white/5 text-gray-900 rounded-none"
                         />
                       </div>
                       <div>
@@ -333,7 +334,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           placeholder="Confirm password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="bg-white/5 border border-gray-300/30 text-gray-900 rounded-none"
+                          className="bg-white/5 text-gray-900 rounded-none"
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -363,7 +364,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         <Button
                           onClick={() => setShowPasswordForm(false)}
                           variant="outline"
-                          className="flex-1 bg-transparent border border-gray-300/30 text-gray-900 rounded-none"
+                          className="flex-1 bg-transparent text-gray-900 rounded-none"
                         >
                           Cancel
                         </Button>
@@ -380,9 +381,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -414,7 +416,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.stopPropagation();
                             handleCopyRecoveryPhrase();
                           }}
-                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-none border border-gray-300/30"
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-none"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -431,7 +433,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Textarea
                         value={recoveryPhrase}
                         readOnly
-                        className="bg-white/5 border border-gray-300/30 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-none"
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-none"
                       />
                     </div>
                   )}
@@ -446,9 +448,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Private Key Card */}
-              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -479,7 +482,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.stopPropagation();
                             handleCopyPrivateKey();
                           }}
-                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-none border border-gray-300/30"
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-none"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -496,15 +499,16 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Textarea
                         value={privateKeyBase58}
                         readOnly
-                        className="bg-white/5 border border-gray-300/30 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-none"
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-none"
                       />
                     </div>
                   )}
                 </CardContent>
               </Card>
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* DApp Connected Card */}
-              <Card className="w-full bg-transparent rounded-none border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-none">
                 <CardContent className="p-0">
                   <div className="w-full flex items-center justify-between p-4 rounded-none">
                     <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
@@ -528,34 +532,39 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </CardContent>
               </Card>
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
-                  <Button
-                    onClick={handleLogout}
-                    variant="default"
-                    className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-none"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
+                  <div className="px-4 sm:px-0">
+                    <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full">
+                      <Button
+                        onClick={handleLogout}
+                        variant="default"
+                        className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-none"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </Button>
 
-                  <Button
-                    onClick={handleDeleteAccount}
-                    variant="default"
-                    className={`w-full flex items-center gap-2 rounded-none ${
-                      confirmDelete
-                        ? "bg-green-700 hover:bg-green-800 text-white"
-                        : "bg-green-600 hover:bg-green-700 text-white"
-                    }`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {confirmDelete ? "Confirm Delete" : "Delete Account"}
-                  </Button>
+                      <Button
+                        onClick={handleDeleteAccount}
+                        variant="default"
+                        className={`w-full sm:w-40 flex items-center justify-center gap-2 rounded-none ${
+                          confirmDelete
+                            ? "bg-green-700 hover:bg-green-800 text-white"
+                            : "bg-green-600 hover:bg-green-700 text-white"
+                        }`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {confirmDelete ? "Confirm Delete" : "Delete Account"}
+                      </Button>
+                    </div>
+                  </div>
 
                   {confirmDelete && (
-                    <div className="p-3 bg-red-500/20 border border-red-400/30 rounded-none">
+                    <div className="p-3 bg-red-500/20 rounded-none">
                       <div className="flex items-center gap-2 text-red-200 text-sm">
                         <AlertTriangle className="h-4 w-4" />
                         <span>This action cannot be undone</span>

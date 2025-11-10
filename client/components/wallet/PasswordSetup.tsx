@@ -68,7 +68,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md mx-4 rounded-none bg-gray-900 border border-gray-700 p-6 shadow-lg">
-        <div className="space-y-4">
+        <div className="space-y-4 uppercase">
           <div>
             <h2 className="text-2xl font-bold text-white">{title}</h2>
             <p className="mt-2 text-sm text-gray-300">{description}</p>
@@ -91,7 +91,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="pr-10 bg-gray-800 border border-gray-700 text-white rounded-none placeholder:text-gray-400"
+                  className="pr-10 bg-gray-800 border border-gray-700 text-white rounded-none placeholder:uppercase placeholder:text-gray-400"
                   autoFocus
                 />
                 <button
@@ -122,7 +122,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isLoading}
-                    className="pr-10 bg-gray-800 border border-gray-700 text-white rounded-none placeholder:text-gray-400"
+                    className="pr-10 bg-gray-800 border border-gray-700 text-white rounded-none placeholder:uppercase placeholder:text-gray-400"
                   />
                   <button
                     type="button"
@@ -162,14 +162,14 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                 onClick={onCancel}
                 disabled={isLoading}
                 variant="outline"
-                className="flex-1 bg-gray-800 text-white hover:bg-gray-700 border border-gray-700"
+                className="flex-1 bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 uppercase"
               >
                 {mode === "create" ? "Cancel" : "Close"}
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading || (!password.trim() && mode === "create")}
-                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold"
+                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold uppercase"
               >
                 {isLoading
                   ? "Processing..."

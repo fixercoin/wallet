@@ -56,6 +56,7 @@ export default function DappsPage() {
   const [query, setQuery] = useState("");
   const [connected, setConnected] = useState<any[]>(() => readConnected());
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null);
+  const [lastOpenedUrl, setLastOpenedUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setConnected(readConnected());
@@ -123,6 +124,12 @@ export default function DappsPage() {
     }
 
     try {
+      // Require that user opened the site first in this session
+      if (lastOpenedUrl !== d.url) {
+        toast({ title: "Open the site first", description: "Please open the DApp site and then connect from there or return and click Connect.", variant: "destructive" });
+        return;
+      }
+
       setLoadingUrl(d.url);
       const res = await provider.connect();
       const publicKey = res?.publicKey?.toBase58 ? res.publicKey.toBase58() : String(res?.publicKey || wallet.publicKey);
@@ -195,6 +202,18 @@ export default function DappsPage() {
               </div>
 
               <div className="flex items-center gap-2">
+                <a
+                  href={customDapp.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    setLastOpenedUrl(customDapp.url);
+                    toast({ title: "Opened DApp", description: `Opened ${customDapp.name} in a new tab` });
+                  }}
+                  className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
+                >
+                  Open
+                </a>
                 {isConnectedTo(customDapp.url) ? (
                   <Button variant="outline" className="rounded-none" onClick={() => handleDisconnect(customDapp.url)}>
                     Disconnect
@@ -227,6 +246,18 @@ export default function DappsPage() {
               </div>
 
               <div className="flex items-center gap-2">
+                <a
+                  href={d.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    setLastOpenedUrl(d.url);
+                    toast({ title: "Opened DApp", description: `Opened ${d.name} in a new tab` });
+                  }}
+                  className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
+                >
+                  Open
+                </a>
                 {isConnectedTo(d.url) ? (
                   <Button variant="outline" className="rounded-none" onClick={() => handleDisconnect(d.url)}>
                     Disconnect

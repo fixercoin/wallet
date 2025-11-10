@@ -589,34 +589,42 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               )}
 
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowMnemonic(!showMnemonic)}
-                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                    >
-                      {showMnemonic ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      {showMnemonic ? "Hide" : "Show"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyFullMnemonic}
-                      className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy All
-                    </Button>
-                  </div>
-                </div>
-
                 <div className="bg-[#064e3b]/50 rounded-xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setActiveTab("create")}
+                        className="text-white hover:bg-transparent"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowMnemonic(!showMnemonic)}
+                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                      >
+                        {showMnemonic ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyFullMnemonic}
+                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-3 gap-3">
                     {generatedWallet.mnemonic
                       .split(" ")

@@ -61,6 +61,27 @@ export default function DappsPage() {
     setConnected(readConnected());
   }, []);
 
+  const normalizeUrl = (u: string) => {
+    try {
+      let v = u.trim();
+      if (!v) return "";
+      if (!v.startsWith("http://") && !v.startsWith("https://")) {
+        v = `https://${v}`;
+      }
+      const url = new URL(v);
+      return url.href;
+    } catch {
+      return u.trim();
+    }
+  };
+
+  const isLikelyUrl = (s: string) => {
+    if (!s) return false;
+    const t = s.trim();
+    if (t.startsWith("http://") || t.startsWith("https://")) return true;
+    return /\S+\.\S+/.test(t);
+  };
+
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return DEFAULT_DAPPS;
@@ -68,6 +89,22 @@ export default function DappsPage() {
       (d) =>
         d.name.toLowerCase().includes(q) || d.url.toLowerCase().includes(q),
     );
+  }, [query]);
+
+  const customDapp = useMemo(() => {
+    if (!query) return null;
+    if (!isLikelyUrl(query)) return null;
+    const url = normalizeUrl(query);
+    if (DEFAULT_DAPPS.find((d) => d.url === url || d.url === query)) return null;
+    try {
+      return {
+        name: new URL(url).hostname,
+        url,
+        description: "Custom DApp",
+      } as DappInfo;
+    } catch {
+      return { name: query, url, description: "Custom DApp" } as DappInfo;
+    }
   }, [query]);
 
   const isConnectedTo = (url: string) =>
@@ -127,14 +164,55 @@ export default function DappsPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or url"
             className="rounded-none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setQuery((q) => q.trim());
+              }
+            }}
           />
-          <Button className="rounded-none">
+          <Button
+            className="rounded-none"
+            onClick={() => setQuery((q) => q.trim())}
+          >
             <SearchIcon className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       <div className="space-y-3">
+        {/* If query looks like a URL and it's not in the default list show a quick connect card */}
+        {customDapp && (
+          <Card key={customDapp.url} className="rounded-none border border-gray-300/30">
+            <CardContent className="p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-gray-200 text-gray-700 flex items-center justify-center rounded-none">
+                  <ExternalLink className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-medium">{customDapp.name}</div>
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{customDapp.url}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isConnectedTo(customDapp.url) ? (
+                  <Button variant="outline" className="rounded-none" onClick={() => handleDisconnect(customDapp.url)}>
+                    Disconnect
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => handleConnect(customDapp)}
+                    className="bg-green-600 hover:bg-green-700 text-white rounded-none"
+                    disabled={!!loadingUrl}
+                  >
+                    {loadingUrl === customDapp.url ? "Connecting..." : "Connect"}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {items.map((d) => (
           <Card key={d.url} className="rounded-none border border-gray-300/30">
             <CardContent className="p-3 flex items-center justify-between gap-3">

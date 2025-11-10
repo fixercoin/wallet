@@ -154,6 +154,8 @@ function AppRoutes() {
       <Route path="/wallet/history" element={<WalletHistory />} />
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
+      <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

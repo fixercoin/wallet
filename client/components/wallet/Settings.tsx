@@ -30,12 +30,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [recoveryPhrase, setRecoveryPhrase] = useState("");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
-  const [selectedSecret, setSelectedSecret] = useState<"recovery" | "private">(
-    "recovery",
-  );
-  const [secretAction, setSecretAction] = useState<"hidden" | "show" | "copy">(
-    "hidden",
-  );
 
   if (wallets.length === 0) {
     return (

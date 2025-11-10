@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { doesWalletRequirePassword, clearWalletPassword } from "@/lib/wallet-password";
+import {
+  doesWalletRequirePassword,
+  clearWalletPassword,
+} from "@/lib/wallet-password";
 import { PasswordPromptDialog } from "./PasswordPromptDialog";
 
 interface AppWithPasswordPromptProps {

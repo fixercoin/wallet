@@ -4,7 +4,11 @@
  * This prevents exposure in localStorage while maintaining user session
  */
 
-import { encryptWalletData, isEncryptedWalletStorage, isPlaintextWalletStorage } from "@/lib/secure-storage";
+import {
+  encryptWalletData,
+  isEncryptedWalletStorage,
+  isPlaintextWalletStorage,
+} from "@/lib/secure-storage";
 import type { WalletData } from "@/lib/wallet-proxy";
 
 const PASSWORD_SESSION_KEY = "wallet_encryption_password";
@@ -115,7 +119,9 @@ export function encryptStoredWalletsIfNeeded(): void {
       return obj as WalletData;
     });
 
-    const encrypted = plaintextWallets.map((w) => encryptWalletData(w, password));
+    const encrypted = plaintextWallets.map((w) =>
+      encryptWalletData(w, password),
+    );
     localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(encrypted));
   } catch (e) {
     // swallow to avoid breaking settings flow

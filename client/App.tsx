@@ -167,18 +167,20 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <CurrencyProvider>
-              <BrowserRouter>
-                <div className="min-h-screen pb-20">
-                  <AppRoutes />
-                  <BottomNavigation />
-                </div>
-              </BrowserRouter>
-            </CurrencyProvider>
-          </TooltipProvider>
+          <AppWithPasswordPrompt>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <CurrencyProvider>
+                <BrowserRouter>
+                  <div className="min-h-screen pb-20">
+                    <AppRoutes />
+                    <BottomNavigation />
+                  </div>
+                </BrowserRouter>
+              </CurrencyProvider>
+            </TooltipProvider>
+          </AppWithPasswordPrompt>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

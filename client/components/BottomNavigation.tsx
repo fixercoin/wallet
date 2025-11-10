@@ -18,7 +18,7 @@ export const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -28,17 +28,14 @@ export const BottomNavigation: React.FC = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-none transition-colors ${
+              className={`flex items-center justify-center py-2 px-4 rounded-none transition-colors ${
                 active
-                  ? "text-green-600 bg-green-50"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  ? "text-green-500"
+                  : "text-gray-400 hover:text-gray-200"
               }`}
               aria-label={item.label}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-semibold uppercase whitespace-nowrap">
-                {item.label}
-              </span>
+              <Icon className="h-6 w-6" />
             </button>
           );
         })}

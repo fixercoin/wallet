@@ -793,7 +793,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border border-gray-300/30 text-white">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-none">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -850,7 +850,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border border-gray-300/30 text-white">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-none">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">

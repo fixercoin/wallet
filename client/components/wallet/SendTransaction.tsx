@@ -890,14 +890,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
       <div className="flex-1 flex items-center justify-center relative z-20">
         <div className="w-full max-w-2xl px-4 py-6">
-          <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+          <div className="rounded-none border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
             <div className="space-y-6 p-6">
               <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={onBack}
-                  className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                  className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                   aria-label="Back"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -917,10 +917,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       value={selectedMint}
                       onValueChange={setSelectedMint}
                     >
-                      <SelectTrigger className="w-full bg-transparent border border-gray-700 text-white placeholder:text-gray-400 uppercase">
+                      <SelectTrigger className="w-full bg-transparent border border-gray-700 text-white placeholder:text-gray-400 uppercase rounded-none">
                         <SelectValue placeholder="SELECT TOKEN" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border border-gray-700 text-white">
+                      <SelectContent className="bg-gray-800 border border-gray-700 text-white rounded-none">
                         {availableTokens.map((t) => (
                           <SelectItem
                             key={t.mint}
@@ -956,7 +956,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="ENTER SOLANA ADDRESS"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
-                      className="font-mono text-sm bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="font-mono text-sm bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground rounded-none"
                     />
                   </div>
 
@@ -983,7 +983,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground rounded-none"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -992,7 +992,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.25).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
                       >
                         25%
                       </Button>
@@ -1002,7 +1002,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.5).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
                       >
                         50%
                       </Button>
@@ -1012,7 +1012,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.75).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
                       >
                         75%
                       </Button>
@@ -1022,7 +1022,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.99).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
                       >
                         Max
                       </Button>
@@ -1041,13 +1041,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="ADD A NOTE"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground rounded-none"
                     />
                   </div>
 
                   <Button
                     onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
+                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase rounded-none"
                     disabled={!recipient || !amount}
                   >
                     Continue
@@ -1108,14 +1108,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     <Button
                       variant="outline"
                       onClick={() => setStep("form")}
-                      className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                      className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
                       disabled={isLoading}
                     >
                       Back
                     </Button>
                     <Button
                       onClick={handleConfirmTransaction}
-                      className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
+                      className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase rounded-none"
                       disabled={isLoading}
                     >
                       {isLoading ? "Sending..." : "Send Transaction"}

@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   Lock,
+  ExternalLink,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -496,6 +497,24 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       />
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* DApp Connected Card */}
+              <Card className="bg-transparent rounded-none border border-gray-300/30">
+                <CardContent className="p-0">
+                  <div className="w-full flex items-center justify-between p-4 rounded-none">
+                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
+                      <ExternalLink className="h-5 w-5" />
+                      <span className="font-medium">DAPP CONNECTIONS</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a href="/dapps" className="text-xs text-gray-700 hover:underline">Manage</a>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4">
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">Shows dapps this wallet has connected to. Manage connections on the DApps page.</div>
+                  </div>
                 </CardContent>
               </Card>
 

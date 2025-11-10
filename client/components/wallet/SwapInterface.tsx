@@ -791,7 +791,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   if (!wallet) {
     return (
       <div className="w-full max-w-md mx-auto px-4">
-        <div className="rounded-none border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+        <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button

@@ -205,7 +205,7 @@ export default function DappsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    navigate(`/dapps/view?url=${encodeURIComponent(customDapp.url)}`);
+                    navigate(`/dapps/visit?url=${encodeURIComponent(customDapp.url)}`);
                   }}
                   className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
                 >
@@ -245,7 +245,7 @@ export default function DappsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    navigate(`/dapps/view?url=${encodeURIComponent(d.url)}`);
+                    navigate(`/dapps/visit?url=${encodeURIComponent(d.url)}`);
                   }}
                   className="text-xs bg-white/5 px-3 py-2 rounded-none border border-gray-300/20 hover:bg-white/10"
                 >

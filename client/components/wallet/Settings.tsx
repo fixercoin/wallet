@@ -4,7 +4,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   Copy,
@@ -288,7 +287,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </CardContent>
               </Card>
-              <Separator className="bg-gray-300/30 mx-4 sm:mx-0" />
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Password Card */}
               <Card className="w-full bg-transparent rounded-none">
@@ -382,7 +381,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
-              <Separator className="bg-gray-300/30 mx-4 sm:mx-0" />
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Recovery Phrase Card */}
               <Card className="w-full bg-transparent rounded-none">
@@ -449,7 +448,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
-              <Separator className="bg-gray-300/30 mx-4 sm:mx-0" />
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Private Key Card */}
               <Card className="w-full bg-transparent rounded-none">
@@ -506,7 +505,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
-              <Separator className="bg-gray-300/30 mx-4 sm:mx-0" />
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* DApp Connected Card */}
               <Card className="w-full bg-transparent rounded-none">
@@ -533,7 +532,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </CardContent>
               </Card>
-              <Separator className="bg-gray-300/30 mx-4 sm:mx-0" />
+              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>

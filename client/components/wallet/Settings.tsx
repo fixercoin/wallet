@@ -198,7 +198,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-transparent text-gray-900 p-2 rounded-none border border-gray-300/30 font-mono"
+                          className="flex-1 bg-gray-100 text-gray-900 p-2 pr-6 rounded-none font-mono"
                         >
                           {wallets.map((w) => (
                             <option

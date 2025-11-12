@@ -327,7 +327,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                           bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
-                          method: "sendRawTransaction",
+                          method: "sendTransaction",
                           params: [
                             signedBase64,
                             {

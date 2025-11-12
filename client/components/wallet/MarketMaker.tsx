@@ -31,6 +31,7 @@ interface MakerAccount {
   currentTokenBalance: number;
   profitUSD: number;
   status: "active" | "completed" | "error";
+  errorMessage?: string;
 }
 
 interface Transaction {

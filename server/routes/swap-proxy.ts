@@ -1,8 +1,10 @@
 import { RequestHandler } from "express";
 
-const WORKER_BASE =
+const WORKER_BASE = (
+  process.env.PROXY_BASE_URL ||
   process.env.VITE_API_BASE_URL ||
-  "https://fixorium-proxy.khanbabusargodha.workers.dev";
+  ""
+).trim();
 
 async function forwardRequest(path: string, req: any) {
   const url = `${WORKER_BASE.replace(/\/+$/, "")}${path}`;
@@ -40,6 +42,9 @@ async function forwardRequest(path: string, req: any) {
 }
 
 export const handleSwapProxy: RequestHandler = async (req, res) => {
+  if (!WORKER_BASE) {
+    return res.status(501).json({ error: "Worker proxy disabled" });
+  }
   try {
     const path = "/api/swap";
     const result = await forwardRequest(path, req);
@@ -54,6 +59,9 @@ export const handleSwapProxy: RequestHandler = async (req, res) => {
 };
 
 export const handleQuoteProxy: RequestHandler = async (req, res) => {
+  if (!WORKER_BASE) {
+    return res.status(501).json({ error: "Worker proxy disabled" });
+  }
   try {
     const qs = req.originalUrl.replace(/^[^?]+/, ""); // keep querystring
     const path = `/api/quote${qs}`;
@@ -69,6 +77,9 @@ export const handleQuoteProxy: RequestHandler = async (req, res) => {
 };
 
 export const handleMeteoraQuoteProxy: RequestHandler = async (req, res) => {
+  if (!WORKER_BASE) {
+    return res.status(501).json({ error: "Worker proxy disabled" });
+  }
   try {
     const qs = req.originalUrl.replace(/^[^?]+/, "");
     const path = `/api/swap/meteora/quote${qs}`;
@@ -84,6 +95,9 @@ export const handleMeteoraQuoteProxy: RequestHandler = async (req, res) => {
 };
 
 export const handleMeteoraSwapProxy: RequestHandler = async (req, res) => {
+  if (!WORKER_BASE) {
+    return res.status(501).json({ error: "Worker proxy disabled" });
+  }
   try {
     const path = "/api/swap/meteora/swap";
     const result = await forwardRequest(path, req);
@@ -98,6 +112,9 @@ export const handleMeteoraSwapProxy: RequestHandler = async (req, res) => {
 };
 
 export const handleSolanaSendProxy: RequestHandler = async (req, res) => {
+  if (!WORKER_BASE) {
+    return res.status(501).json({ error: "Worker proxy disabled" });
+  }
   try {
     const path = "/api/solana-send";
     const result = await forwardRequest(path, req);
@@ -112,6 +129,9 @@ export const handleSolanaSendProxy: RequestHandler = async (req, res) => {
 };
 
 export const handleSolanaSimulateProxy: RequestHandler = async (req, res) => {
+  if (!WORKER_BASE) {
+    return res.status(501).json({ error: "Worker proxy disabled" });
+  }
   try {
     const path = "/api/solana-simulate";
     const result = await forwardRequest(path, req);

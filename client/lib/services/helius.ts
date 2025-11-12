@@ -209,7 +209,9 @@ class HeliusAPI {
           const data = await response.json();
 
           if (data.error) {
-            console.warn(`RPC error on ${endpoint}: ${data.error.message}`);
+            const errorMsg = data.error.message || JSON.stringify(data.error);
+            console.warn(`RPC error on ${endpoint}: ${errorMsg}`);
+            lastError = new Error(errorMsg);
             continue;
           }
 

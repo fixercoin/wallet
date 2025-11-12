@@ -131,14 +131,17 @@ export const makeRpcCall = async (
             data = text ? JSON.parse(text) : null;
           } catch (e) {
             console.warn(`[RPC] Failed to parse response from ${endpoint}`);
+            lastError = new Error(`Failed to parse response: ${String(e)}`);
             continue;
           }
 
           if (data && data.error) {
+            const errorMsg = data.error.message || JSON.stringify(data.error);
             console.warn(
               `[RPC] ${method} on ${endpoint} returned error:`,
               data.error,
             );
+            lastError = new Error(errorMsg);
             continue;
           }
 

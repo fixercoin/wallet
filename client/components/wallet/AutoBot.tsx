@@ -284,7 +284,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const signed = vtx.serialize();
                       const signedBase64 = base64FromBytes(signed);
                       const body = {
-                        method: "sendRawTransaction",
+                        method: "sendTransaction",
                         params: [
                           signedBase64,
                           {

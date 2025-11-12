@@ -302,7 +302,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const signedBase64 = base64FromBytes(signed);
                       // Send
                       const body = {
-                        method: "sendRawTransaction",
+                        method: "sendTransaction",
                         params: [
                           signedBase64,
                           {

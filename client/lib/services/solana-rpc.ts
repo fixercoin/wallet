@@ -114,7 +114,9 @@ export const makeRpcCall = async (
           if (!response.ok) {
             const responseText = await response.text().catch(() => "");
             const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
-            console.warn(`[RPC] ${method} on ${endpoint} returned ${response.status}`);
+            console.warn(
+              `[RPC] ${method} on ${endpoint} returned ${response.status}`,
+            );
 
             if (response.status === 429) {
               lastErrorStatus = 429;

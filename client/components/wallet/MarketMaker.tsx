@@ -31,6 +31,7 @@ interface MakerAccount {
   currentTokenBalance: number;
   profitUSD: number;
   status: "active" | "completed" | "error";
+  errorMessage?: string;
 }
 
 interface Transaction {
@@ -306,6 +307,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       const makers = currentSession.makers.map((m) => ({
         ...m,
         status: "active" as const,
+        errorMessage: undefined,
       }));
 
       const updatedSession = {
@@ -358,6 +360,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         return res as string;
       };
 
+      // Track successful trades
+      let successCount = 0;
+      let errorCount = 0;
+
       // Execute sequential buys with delays
       for (let i = 0; i < numMakers; i++) {
         const amountSol =
@@ -378,7 +384,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           if (!quote) {
             const m = updatedSession.makers[i];
             if (m) {
+              const error = "No route found for token swap";
               m.status = "error" as const;
+              m.errorMessage = error;
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
@@ -387,7 +395,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 feeAmount: 0,
                 status: "failed",
               });
+              console.error(`Maker ${m.id}: ${error}`);
             }
+            errorCount++;
             continue;
           }
 
@@ -396,7 +406,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           if (isFinite(impact) && impact > 20) {
             const m = updatedSession.makers[i];
             if (m) {
+              const error = `Price impact too high: ${impact.toFixed(2)}%`;
               m.status = "error" as const;
+              m.errorMessage = error;
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
@@ -405,7 +417,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 feeAmount: 0,
                 status: "failed",
               });
+              console.error(`Maker ${m.id}: ${error}`);
             }
+            errorCount++;
             continue;
           }
 
@@ -418,7 +432,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           if (!swap || !swap.swapTransaction) {
             const m = updatedSession.makers[i];
             if (m) {
+              const error = "Failed to build swap transaction";
               m.status = "error" as const;
+              m.errorMessage = error;
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
@@ -427,7 +443,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 feeAmount: 0,
                 status: "failed",
               });
+              console.error(`Maker ${m.id}: ${error}`);
             }
+            errorCount++;
             continue;
           }
 
@@ -449,6 +467,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 status: "confirmed",
               });
               m.status = "completed" as const;
+              console.log(
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig})`,
+              );
+              successCount++;
             }
 
             setCurrentSession({
@@ -456,10 +478,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               makers: updatedSession.makers,
             });
           } catch (txError) {
+            const errorMsg =
+              txError instanceof Error ? txError.message : String(txError);
             console.error(`Error sending transaction for maker ${i}:`, txError);
             const m = updatedSession.makers[i];
             if (m) {
               m.status = "error" as const;
+              m.errorMessage = `Transaction failed: ${errorMsg}`;
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
@@ -469,12 +494,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 status: "failed",
               });
             }
+            errorCount++;
           }
         } catch (e) {
+          const errorMsg = e instanceof Error ? e.message : String(e);
           console.error(`Error processing maker ${i}:`, e);
           const m = updatedSession.makers[i];
           if (m) {
             m.status = "error" as const;
+            m.errorMessage = errorMsg;
             m.buyTransactions.push({
               type: "buy",
               timestamp: Date.now(),
@@ -484,6 +512,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               status: "failed",
             });
           }
+          errorCount++;
         }
 
         // random delay between minDelay and maxDelay
@@ -502,10 +531,18 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setSessions(finalSessions);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(finalSessions));
 
-      toast({
-        title: "Market Maker Completed",
-        description: "All buys executed successfully",
-      });
+      if (successCount > 0) {
+        toast({
+          title: "Market Maker Completed",
+          description: `${successCount} buy(s) executed successfully${errorCount > 0 ? `, ${errorCount} failed` : ""}`,
+        });
+      } else {
+        toast({
+          title: "Market Maker Failed",
+          description: `All ${errorCount} buy attempts failed. Check maker accounts for error details.`,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error starting market maker:", error);
       toast({
@@ -636,6 +673,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         Buys: {maker.buyTransactions.length} | Sells:{" "}
                         {maker.sellTransactions.length}
                       </div>
+                      {maker.errorMessage && (
+                        <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-2 rounded border border-red-500/30">
+                          {maker.errorMessage}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

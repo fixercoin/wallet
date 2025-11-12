@@ -353,7 +353,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         vtx.sign([kp]);
         const signed = vtx.serialize();
         const signedBase64 = base64FromBytes(signed);
-        const res = await rpcCall("sendRawTransaction", [
+        const res = await rpcCall("sendTransaction", [
           signedBase64,
           { skipPreflight: false, preflightCommitment: "confirmed" },
         ]);

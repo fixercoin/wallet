@@ -187,7 +187,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
     const signedBase64 = base64FromBytes(signed);
 
     const body = {
-      method: "sendRawTransaction",
+      method: "sendTransaction",
       params: [
         signedBase64,
         { skipPreflight: false, preflightCommitment: "confirmed" },
@@ -302,7 +302,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const signedBase64 = base64FromBytes(signed);
                       // Send
                       const body = {
-                        method: "sendRawTransaction",
+                        method: "sendTransaction",
                         params: [
                           signedBase64,
                           {
@@ -346,7 +346,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                           bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
-                          method: "sendRawTransaction",
+                          method: "sendTransaction",
                           params: [
                             signedBase64,
                             {

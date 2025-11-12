@@ -189,7 +189,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
 
     // Use the new RPC utility to send the signed transaction
     try {
-      const result = await rpcCall("sendRawTransaction", [
+      const result = await rpcCall("sendTransaction", [
         signedBase64,
         { skipPreflight: false, preflightCommitment: "confirmed" },
       ]);
@@ -284,7 +284,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const signed = vtx.serialize();
                       const signedBase64 = base64FromBytes(signed);
                       const body = {
-                        method: "sendRawTransaction",
+                        method: "sendTransaction",
                         params: [
                           signedBase64,
                           {
@@ -327,7 +327,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                           bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
-                          method: "sendRawTransaction",
+                          method: "sendTransaction",
                           params: [
                             signedBase64,
                             {

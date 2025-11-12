@@ -189,7 +189,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
 
     // Use the new RPC utility to send the signed transaction
     try {
-      const result = await rpcCall("sendRawTransaction", [
+      const result = await rpcCall("sendTransaction", [
         signedBase64,
         { skipPreflight: false, preflightCommitment: "confirmed" },
       ]);

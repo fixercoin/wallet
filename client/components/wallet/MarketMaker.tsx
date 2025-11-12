@@ -467,7 +467,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 status: "confirmed",
               });
               m.status = "completed" as const;
-              console.log(`✅ Maker ${m.id}: Buy transaction confirmed (${sig})`);
+              console.log(
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig})`,
+              );
               successCount++;
             }
 
@@ -476,7 +478,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               makers: updatedSession.makers,
             });
           } catch (txError) {
-            const errorMsg = txError instanceof Error ? txError.message : String(txError);
+            const errorMsg =
+              txError instanceof Error ? txError.message : String(txError);
             console.error(`Error sending transaction for maker ${i}:`, txError);
             const m = updatedSession.makers[i];
             if (m) {

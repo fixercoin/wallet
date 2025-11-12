@@ -670,6 +670,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         Buys: {maker.buyTransactions.length} | Sells:{" "}
                         {maker.sellTransactions.length}
                       </div>
+                      {maker.errorMessage && (
+                        <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-2 rounded border border-red-500/30">
+                          {maker.errorMessage}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -80,6 +80,34 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     useState<boolean>(false);
   const encryptedWalletsRef = useRef<any[]>([]);
 
+  // When the app requests a password unlock (lock state), clear in-memory wallets
+  // and reload encrypted wallet blobs from localStorage so unlockWithPassword can decrypt them.
+  useEffect(() => {
+    if (!needsPasswordUnlock) return;
+    try {
+      const raw = localStorage.getItem(WALLETS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          encryptedWalletsRef.current = parsed;
+        }
+      }
+    } catch (e) {
+      console.warn(
+        "[WalletContext] Failed to reload encrypted wallets on lock:",
+        e,
+      );
+    }
+
+    // Clear sensitive in-memory wallet material
+    setWallets([]);
+    setActivePublicKey(null);
+    setBalance(0);
+    balanceRef.current = 0;
+    setTokens(DEFAULT_TOKENS);
+    // keep needsPasswordUnlock as-is; UI will show prompt
+  }, [needsPasswordUnlock]);
+
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -828,17 +856,49 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   const unlockWithPassword = async (password: string): Promise<boolean> => {
     try {
-      if (encryptedWalletsRef.current.length === 0) {
+      // Determine source of encrypted wallets: prefer in-memory ref, fallback to localStorage
+      let encryptedData: any[] = [];
+      try {
+        if (
+          encryptedWalletsRef.current &&
+          encryptedWalletsRef.current.length > 0
+        ) {
+          encryptedData = encryptedWalletsRef.current;
+        } else {
+          const raw = localStorage.getItem(WALLETS_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            encryptedData = Array.isArray(parsed) ? parsed : [];
+          }
+        }
+      } catch (e) {
+        console.warn(
+          "[WalletContext] Failed to read encrypted wallets from storage:",
+          e,
+        );
+        encryptedData = encryptedWalletsRef.current || [];
+      }
+
+      if (!encryptedData || encryptedData.length === 0) {
         console.warn("[WalletContext] No encrypted wallets to unlock");
         return false;
       }
 
-      const decrypted = encryptedWalletsRef.current.map((enc) =>
-        decryptWalletData(enc, password),
-      );
+      // Attempt to decrypt each entry. If any decryption fails, throw to indicate invalid password
+      const decrypted: any[] = [];
+      for (const enc of encryptedData) {
+        try {
+          const dec = decryptWalletData(enc, password);
+          decrypted.push(dec);
+        } catch (err) {
+          console.error("[WalletContext] Decryption failed for an entry:", err);
+          throw new Error("Invalid password or corrupted wallet data");
+        }
+      }
 
+      // Success: store password in session and update state
       setWalletPassword(password);
-      setWallets(decrypted);
+      setWallets(decrypted as any);
       setNeedsPasswordUnlock(false);
       if (decrypted.length > 0) setActivePublicKey(decrypted[0].publicKey);
 

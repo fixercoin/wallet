@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy } from "lucide-react";
+import { Eye, EyeOff, Copy, ArrowLeft } from "lucide-react";
 import {
   generateWallet,
   recoverWallet,
@@ -15,10 +15,12 @@ import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { prefetchWalletAddressData } from "@/lib/services/address-setup";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { PasswordSetup } from "./PasswordSetup";
 import {
   setWalletPassword,
   markWalletAsPasswordProtected,
+  doesWalletRequirePassword,
 } from "@/lib/wallet-password";
 
 interface WalletSetupProps {
@@ -26,6 +28,18 @@ interface WalletSetupProps {
 }
 
 export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      document.body.classList.add("no-fixed-bottom");
+    } catch {}
+    return () => {
+      try {
+        document.body.classList.remove("no-fixed-bottom");
+      } catch {}
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       return (sessionStorage.getItem("wallet_setup_tab") as string) || "create";
@@ -136,7 +150,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
       // Show password setup for new wallet import
       setPendingWallet(walletData);
-      setPasswordSetupMode("create");
+      setPasswordSetupMode(doesWalletRequirePassword() ? "unlock" : "create");
       setShowPasswordSetup(true);
     } catch (error) {
       setError(
@@ -241,13 +255,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-            <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
               <div className="space-y-6">
-                <div className="text-center pb-2">
+                <div className="flex items-center justify-center pb-2">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"
-                    className="mx-auto w-[240px] h-[240px] object-contain"
+                    className="block mx-auto w-[300px] h-[300px] object-contain max-w-full"
                   />
                 </div>
 
@@ -281,11 +295,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       <>
         <PasswordSetup
           isOpen={showPasswordSetup}
-          onConfirm={
-            passwordSetupMode === "create"
-              ? handlePasswordSetup
-              : handleUnlockWallets
-          }
+          onConfirm={handlePasswordSetup}
           onCancel={() => {
             setShowPasswordSetup(false);
             setPendingWallet(null);
@@ -319,13 +329,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-            <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
               <div className="space-y-6">
-                <div className="text-center pb-2">
+                <div className="flex items-center justify-center pb-2">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"
-                    className="mx-auto w-[240px] h-[240px] object-contain"
+                    className="block mx-auto w-[300px] h-[300px] object-contain max-w-full"
                   />
                 </div>
 
@@ -333,7 +343,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <Button
                     onClick={handleCreateWallet}
                     disabled={isLoading}
-                    className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-black shadow-lg hover:shadow-2xl transition-all"
+                    className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     CREATE NEW WALLET
                   </Button>
@@ -341,7 +351,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <Button
                     onClick={() => setActiveTab("recover")}
                     variant="ghost"
-                    className="w-full h-12 rounded-xl text-black hover:bg-[#16a34a]/10"
+                    className="w-full h-12 rounded-xl text-white hover:bg-[#16a34a]/10"
                   >
                     IMPORT WALLET
                   </Button>
@@ -366,11 +376,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       <>
         <PasswordSetup
           isOpen={showPasswordSetup}
-          onConfirm={
-            passwordSetupMode === "create"
-              ? handlePasswordSetup
-              : handleUnlockWallets
-          }
+          onConfirm={handlePasswordSetup}
           onCancel={() => {
             setShowPasswordSetup(false);
             setPendingWallet(null);
@@ -404,7 +410,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-            <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="relative w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
               {isLoading && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                   <div className="text-white">Importing wallet...</div>
@@ -478,19 +484,12 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   )}
                 </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab("create")}
-                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                  >
-                    Back
-                  </Button>
+                <div>
                   {recoverMode === "mnemonic" ? (
                     <Button
                       onClick={handleRecoverWallet}
                       disabled={!isMnemonicWordCountValid || isLoading}
-                      className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                      className="w-full h-12 rounded-[2px] font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
                       Recover Wallet
                     </Button>
@@ -501,18 +500,12 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         try {
                           const walletData =
                             importWalletFromPrivateKey(privateKeyInput);
-                          setWallet(walletData);
-                          // Prefetch address data via RPC providers (Helius, Moralis, etc.)
-                          void prefetchWalletAddressData(
-                            walletData.publicKey,
-                          ).catch(() => undefined);
-                          await refreshBalance().catch(() => {});
-                          await refreshTokens().catch(() => {});
-                          toast({
-                            title: "Wallet Imported",
-                            description: "Imported wallet from private key.",
-                          });
-                          onComplete();
+                          // Defer finalizing import until password step completes
+                          setPendingWallet(walletData);
+                          setPasswordSetupMode(
+                            doesWalletRequirePassword() ? "unlock" : "create",
+                          );
+                          setShowPasswordSetup(true);
                         } catch (e) {
                           setError(
                             e instanceof Error
@@ -524,7 +517,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         }
                       }}
                       disabled={!privateKeyInput.trim()}
-                      className="flex-1 h-12 rounded-xl font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                      className="w-full h-12 rounded-[2px] font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
                       Import Wallet
                     </Button>
@@ -550,11 +543,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       <>
         <PasswordSetup
           isOpen={showPasswordSetup}
-          onConfirm={
-            passwordSetupMode === "create"
-              ? handlePasswordSetup
-              : handleUnlockWallets
-          }
+          onConfirm={handlePasswordSetup}
           onCancel={() => {
             setShowPasswordSetup(false);
             setPendingWallet(null);
@@ -588,7 +577,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-            <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="relative w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
               {isLoading && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                   <div className="text-white">Creating wallet...</div>
@@ -596,84 +585,86 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               )}
 
               <div className="space-y-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    Secret Recovery Phrase
-                  </div>
-                  <div className="opacity-80">
-                    Save these words in a safe place. They&apos;re the only way
-                    to recover your wallet.
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-lg font-semibold">
-                      Recovery Phrase
-                    </Label>
-                    <div className="flex gap-2">
+                <div className="bg-[#064e3b]/50 rounded-xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
                       <Button
-                        variant="outline"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          try {
+                            if (activeTab && activeTab !== "create") {
+                              setActiveTab("create");
+                            } else {
+                              // exit setup to previous route when already at create tab
+                              navigate(-1);
+                            }
+                          } catch {
+                            setActiveTab("create");
+                          }
+                        }}
+                        className="text-white hover:bg-transparent"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => setShowMnemonic(!showMnemonic)}
-                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                        className="bg-transparent text-white hover:bg-transparent p-1"
                       >
                         {showMnemonic ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
                           <Eye className="h-4 w-4" />
                         )}
-                        {showMnemonic ? "Hide" : "Show"}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={copyFullMnemonic}
-                        className="bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10"
+                        className="bg-transparent text-white hover:bg-transparent p-1"
                       >
                         <Copy className="h-4 w-4" />
-                        Copy All
                       </Button>
                     </div>
                   </div>
 
-                  <div className="bg-[#064e3b]/50 rounded-xl p-6">
-                    <p className="text-xs leading-relaxed text-center uppercase tracking-wide">
-                      {showMnemonic
-                        ? generatedWallet.mnemonic
-                        : "••••••••••• •••••••••• •••••••••• •••••••••• ��••••••••• •••••••••• •••��••���••• •••••••••• •••••��•••• •••••••••• •••••••••• •���••••••••"}
-                    </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {generatedWallet.mnemonic
+                      .split(" ")
+                      .map((word: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-[#0d3d2d]/50 rounded p-2"
+                        >
+                          <span className="text-xs font-semibold text-gray-300 min-w-[1.5rem]">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs text-white truncate">
+                            {showMnemonic ? word : "••••••"}
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="confirm-backup"
-                    checked={confirmedMnemonic}
-                    onChange={(e) => setConfirmedMnemonic(e.target.checked)}
-                    className="rounded bg-[#064e3b]/50"
-                  />
-                  <Label
-                    htmlFor="confirm-backup"
-                    className="text-sm opacity-80"
-                  >
-                    I have safely backed up my recovery phrase
-                  </Label>
-                </div>
+                <p className="text-[10px] text-gray-300 leading-relaxed border border-gray-300/30 rounded-none p-3">
+                  THIS APPLICATION IS A NON-CUSTODIAL CRYPTOCURRENCY WALLET.
+                  <br />
+                  USERS ARE SOLELY RESPONSIBLE FOR THEIR OWN PRIVATE KEYS AND
+                  FUNDS.
+                  <br />
+                  THE DEVELOPER DOES NOT HAVE ACCESS TO USER WALLETS, RECOVERY
+                  PHRASES, OR DIGITAL ASSETS.
+                </p>
 
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab("create")}
-                    className="flex-1 h-12 rounded-xl bg-[#083c2c]/50 text-white hover:bg-[#16a34a]/10 uppercase"
-                  >
-                    Back
-                  </Button>
+                <div>
                   <Button
                     onClick={handleConfirmWallet}
-                    disabled={!confirmedMnemonic}
-                    className="flex-1 h-12 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                    className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                   >
                     Create Wallet
                   </Button>

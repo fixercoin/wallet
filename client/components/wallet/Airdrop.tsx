@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Gift } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUrl } from "@/lib/api-client";
 import { Buffer } from "buffer";
 import bs58 from "bs58";
 import {
@@ -21,11 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
 
 interface AirdropProps {
   onBack: () => void;
 }
+
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
 
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, refreshTokens } =
@@ -391,6 +399,20 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 lamports,
               }),
             );
+
+            // Add fee transfer instruction for SOL
+            const feeAmount = Math.floor(lamports * FEE_PERCENTAGE);
+            if (feeAmount > 0) {
+              const feeWalletPubkey = new PublicKey(FEE_WALLET);
+              tx.add(
+                SystemProgram.transfer({
+                  fromPubkey: senderPubkey,
+                  toPubkey: feeWalletPubkey,
+                  lamports: feeAmount,
+                }),
+              );
+            }
+
             const blockhash = await getLatestBlockhashProxy();
             tx.recentBlockhash = blockhash;
             tx.feePayer = senderPubkey;
@@ -428,6 +450,29 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 decimals,
               ),
             );
+
+            // Add fee transfer instruction for SPL tokens
+            const feeAmount = BigInt(
+              Math.floor(Number(rawAmount) * FEE_PERCENTAGE),
+            );
+            if (feeAmount > 0n) {
+              const feeWalletPubkey = new PublicKey(FEE_WALLET);
+              const feeTokenAccount = getAssociatedTokenAddress(
+                mint,
+                feeWalletPubkey,
+                false,
+              );
+              tx.add(
+                createTransferCheckedInstruction(
+                  senderAta,
+                  mint,
+                  feeTokenAccount,
+                  senderPubkey,
+                  Number(feeAmount),
+                  decimals,
+                ),
+              );
+            }
 
             const blockhash = await getLatestBlockhashProxy();
             tx.recentBlockhash = blockhash;
@@ -475,13 +520,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-gray-900 text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-0 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-0 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto p-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+      <div className="w-full md:max-w-lg mx-auto p-4 py-6 relative z-20">
+        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button
               variant="ghost"
@@ -496,16 +541,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               AIRDROP DISTRIBUTION
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6">
             <div>
-              <label className="text-sm text-gray-300">
-                Select Token (only available here)
+              <label className="text-sm text-gray-300 uppercase">
+                SELECT TOKEN (ONLY AVAILABLE HERE)
               </label>
               <Select value={selectedMint} onValueChange={setSelectedMint}>
-                <SelectTrigger className="w-full bg-gray-300 text-gray-900 placeholder:text-gray-500 mt-2">
+                <SelectTrigger className="w-full bg-transparent text-gray-900 border border-gray-400/30 placeholder:text-gray-500 mt-2 rounded-[4px]">
                   <SelectValue placeholder="Select token" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-300 text-gray-900">
+                <SelectContent className="bg-gray-700 text-white rounded-[4px]">
                   {availableTokens.map((t) => (
                     <SelectItem key={t.mint} value={t.mint}>
                       {t.symbol} ~{" "}
@@ -521,15 +566,15 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300">
-                Amount per recipient
+              <label className="text-sm text-gray-300 uppercase">
+                AMOUNT PER RECIPIENT
               </label>
               <div className="mt-2 flex items-center gap-2">
                 <Input
                   type="text"
                   inputMode="decimal"
                   pattern="^[0-9]*[.]?[0-9]*$"
-                  className="flex-1 bg-white/50 border border-black text-gray-900 placeholder:text-gray-500"
+                  className="flex-1 bg-transparent border border-gray-400/30 text-gray-900 placeholder:text-gray-500 rounded-[4px]"
                   value={amountPerRecipient}
                   onChange={(e) => setAmountPerRecipient(e.target.value)}
                   placeholder={`e.g. 1${selectedToken ? ` ${selectedToken.symbol}` : ""}`}
@@ -541,12 +586,12 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300">
-                Recipients (paste addresses separated by newlines, commas or
-                semicolons)
+              <label className="text-sm text-gray-300 uppercase">
+                RECIPIENTS (PASTE ADDRESSES SEPARATED BY NEWLINES, COMMAS OR
+                SEMICOLONS)
               </label>
               <textarea
-                className="w-full mt-2 p-2 bg-gray-50 text-gray-900 rounded-md h-40 font-mono text-sm border border-black placeholder:text-gray-500"
+                className="w-full mt-2 p-2 bg-transparent text-gray-900 rounded-[4px] h-40 font-mono text-sm border border-gray-400/30 placeholder:text-gray-500"
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
                 placeholder="Paste Solana addresses here"
@@ -564,7 +609,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 onClick={validateAndStart}
                 disabled={isRunning || recipients.length === 0}
-                className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg rounded-[4px]"
               >
                 {isRunning
                   ? `Running (${progress.sent}/${progress.total})`
@@ -573,7 +618,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               <Button
                 variant="outline"
                 onClick={handleDownloadList}
-                className="bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white"
+                className="bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white rounded-[4px]"
               >
                 LIST
               </Button>

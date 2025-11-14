@@ -56,41 +56,29 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
     "#8338ec",
     "#3a86ff",
     "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
   ];
 
-  const particles = Array.from({ length: 60 }).map((_, i) => {
-    const angle = (i / 60) * Math.PI * 2;
-    const distance = 200 + Math.random() * 150;
+  const particles = Array.from({ length: 150 }).map((_, i) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 100 + Math.random() * 400;
     const tx = Math.cos(angle) * distance;
     const ty = Math.sin(angle) * distance;
-    const size = 8 + Math.random() * 16;
-    const delay = Math.random() * 0.1;
+    const width = 4 + Math.random() * 6;
+    const height = 6 + Math.random() * 10;
+    const delay = Math.random() * 0.2;
+    const rotation = Math.random() * 360;
+    const spinSpeed = 1 + Math.random() * 3;
 
     return {
       tx,
       ty,
       id: i,
       color: colors[i % colors.length],
-      size,
+      width,
+      height,
       delay,
+      rotation,
+      spinSpeed,
     };
   });
 
@@ -100,34 +88,23 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
         @keyframes burst-particle {
           0% {
             opacity: 1;
-            transform: translate(0, 0) scale(1) rotate(0deg);
+            transform: translate(0, 0) scale(1) rotate(var(--rotation));
           }
           50% {
             opacity: 1;
           }
           100% {
             opacity: 0;
-            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+            transform: translate(var(--tx), var(--ty)) scale(0) rotate(calc(var(--rotation) + 720deg));
           }
         }
-        @keyframes bloom-pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7), inset 0 0 20px rgba(255, 255, 255, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 30px 15px rgba(255, 255, 255, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.5);
-          }
-          100% {
-            box-shadow: 0 0 60px 30px rgba(255, 255, 255, 0), inset 0 0 20px rgba(255, 255, 255, 0);
-          }
-        }
-        @keyframes success-pop {
+        @keyframes done-pulse {
           0% {
             transform: scale(0);
             opacity: 0;
           }
-          60% {
-            transform: scale(1.2);
+          40% {
+            transform: scale(1.1);
             opacity: 1;
           }
           100% {
@@ -145,17 +122,17 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
               position: "fixed",
               left: "50%",
               top: "50%",
-              width: `${p.size}px`,
-              height: `${p.size}px`,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
               backgroundColor: p.color,
-              borderRadius: "50%",
-              marginLeft: `-${p.size / 2}px`,
-              marginTop: `-${p.size / 2}px`,
+              borderRadius: "2px",
+              marginLeft: `-${p.width / 2}px`,
+              marginTop: `-${p.height / 2}px`,
               "--tx": `${p.tx}px`,
               "--ty": `${p.ty}px`,
-              animation: `burst-particle 1.6s ease-out forwards`,
+              "--rotation": `${p.rotation}deg`,
+              animation: `burst-particle 2s ease-out forwards`,
               animationDelay: `${p.delay}s`,
-              boxShadow: `0 0 ${p.size}px ${p.color}80, 0 0 ${p.size * 2}px ${p.color}40`,
             } as any
           }
         />
@@ -166,13 +143,20 @@ const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
           position: "fixed",
           left: "50%",
           top: "50%",
-          marginLeft: "-50px",
-          marginTop: "-50px",
-          animation: "bloom-pulse 1.6s ease-out forwards",
+          transform: "translate(-50%, -50%)",
+          animation: "done-pulse 0.8s ease-out forwards",
+          zIndex: 60,
         }}
       >
-        <div className="w-24 h-24 bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
-          <Check className="w-12 h-12 text-white" strokeWidth={3} />
+        <div
+          className="text-5xl font-bold text-white drop-shadow-lg"
+          style={{
+            textShadow:
+              "0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.4)",
+            letterSpacing: "0.1em",
+          }}
+        >
+          SUCCESSFUL
         </div>
       </div>
     </div>
@@ -324,7 +308,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
+  const [quoteAge, setQuoteAge] = useState(0);
+
+  // Quote validity constants (in milliseconds)
+  const QUOTE_MAX_AGE_MS = 30000; // Jupiter quotes valid for 30 seconds
+  const QUOTE_WARNING_THRESHOLD_MS = 5000; // Show warning at 5 seconds remaining
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -412,6 +400,34 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, [wallet, userTokens]);
 
+  // Track quote age over time
+  useEffect(() => {
+    if (!quote || !quote.quoteTime) {
+      setQuoteAge(0);
+      return;
+    }
+
+    const updateQuoteAge = () => {
+      const age = Date.now() - quote.quoteTime;
+      setQuoteAge(age);
+
+      // Auto-refresh quote if it's getting too old (near expiration)
+      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
+        console.log(
+          "[SwapInterface] Quote approaching expiration, refreshing...",
+        );
+        getQuote().catch((e) => console.warn("Auto-refresh quote failed:", e));
+      }
+    };
+
+    // Update immediately
+    updateQuoteAge();
+
+    // Update every 500ms while quote is valid
+    const interval = setInterval(updateQuoteAge, 500);
+    return () => clearInterval(interval);
+  }, [quote?.quoteTime]);
+
   // Auto-fetch quotes when amount, fromMint, or toMint changes
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -430,6 +446,24 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const amt = Number(amountStr);
     if (isNaN(amt) || amt <= 0) throw new Error("Invalid amount");
     return BigInt(Math.round(amt * Math.pow(10, decimals)));
+  };
+
+  const isQuoteExpired = (): boolean => {
+    if (!quote || !quote.quoteTime) return true;
+    return quoteAge >= QUOTE_MAX_AGE_MS;
+  };
+
+  const isQuoteWarning = (): boolean => {
+    if (!quote || !quote.quoteTime) return false;
+    return (
+      quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS &&
+      !isQuoteExpired()
+    );
+  };
+
+  const getQuoteTimeRemaining = (): number => {
+    const remaining = Math.max(0, QUOTE_MAX_AGE_MS - quoteAge);
+    return Math.ceil(remaining / 1000);
   };
 
   const getQuote = async () => {
@@ -510,6 +544,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           hops: quoteResponse.routePlan?.length ?? 0,
           priceImpact,
           quoteTime: Date.now(),
+          slippageBps: 100,
         });
         setStatus("");
         setIsLoading(false);
@@ -564,6 +599,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
+      if (isQuoteExpired()) {
+        setStatus("Quote has expired. Please get a fresh quote.");
+        setIsLoading(false);
+        toast({
+          title: "Quote Expired",
+          description:
+            "Your quote has expired. Please request a new quote before swapping.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       const fromToken = tokenList.find((t) => t.address === fromMint);
       const toToken = tokenList.find((t) => t.address === toMint);
 
@@ -582,24 +629,56 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         throw new Error("Please get a quote first by clicking 'Get Quote'");
       }
 
-      // Refresh the quote immediately before swap to prevent STALE_QUOTE/expired quote errors
-      setStatus("Refreshing quote…");
+      // Smart quote refresh: be aggressive about freshness (refresh if >10 seconds old)
       const oldQuote = quote.quoteResponse;
       let freshQuote = oldQuote;
+      const slippageBps = quote.slippageBps || 100;
 
-      try {
-        const refreshed = await jupiterV6API.getQuote(
-          oldQuote.inputMint,
-          oldQuote.outputMint,
-          parseInt(oldQuote.inAmount),
-          oldQuote.slippageBps || 5000,
-        );
-        if (refreshed) {
-          freshQuote = refreshed;
-          console.log("✅ Quote refreshed successfully before swap");
+      // Check if quote still has reasonable time left (>10 seconds remaining)
+      const timeRemaining = getQuoteTimeRemaining();
+      const shouldRefresh = timeRemaining <= 10;
+
+      if (shouldRefresh) {
+        setStatus("Refreshing quote…");
+        try {
+          const refreshed = await jupiterV6API.getQuote(
+            oldQuote.inputMint,
+            oldQuote.outputMint,
+            parseInt(oldQuote.inAmount),
+            slippageBps,
+          );
+          if (refreshed) {
+            freshQuote = refreshed;
+            console.log("✅ Quote refreshed successfully before swap");
+          } else {
+            console.warn(
+              "Quote refresh returned null, attempting swap with original quote",
+            );
+          }
+        } catch (refreshErr) {
+          console.warn(
+            "Quote refresh failed, attempting swap with original quote",
+          );
+          const refreshErrorMsg =
+            refreshErr instanceof Error
+              ? refreshErr.message
+              : String(refreshErr);
+          if (refreshErrorMsg.includes("timeout")) {
+            throw new Error(`Quote refresh timed out. Please try again.`);
+          }
+          // Continue with original quote - let Jupiter validation handle it
         }
-      } catch (refreshErr) {
-        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+      } else {
+        console.log(
+          `Quote fresh (${timeRemaining}s remaining), using current quote`,
+        );
+      }
+
+      // Verify quote is not stale before sending to Jupiter
+      if (quoteAge >= QUOTE_MAX_AGE_MS) {
+        throw new Error(
+          "Quote expired during execution. Please get a new quote and try again.",
+        );
       }
 
       // Request swap transaction from Jupiter
@@ -636,18 +715,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           keypair,
         );
 
-        setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
         setShowSuccess(true);
         setStatus("");
         setIsLoading(false);
 
-        setTimeout(() => setShowSuccess(false), 3000);
-
-        toast({
-          title: "Swap Successful",
-          description: `Transaction: ${txSignature}`,
-          variant: "default",
-        });
+        setTimeout(() => setShowSuccess(false), 1600);
 
         setAmount("");
         setQuote(null);
@@ -658,21 +730,32 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
     } catch (err) {
       setIsLoading(false);
+      setQuote(null);
+      setStatus("");
 
       const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-
-      setStatus("");
 
       if (
         errorMsg.includes("QUOTE_EXPIRED") ||
         errorMsg.includes("STALE_QUOTE") ||
-        errorMsg.includes("expired")
+        errorMsg.includes("expired") ||
+        errorMsg.includes("Quote expired")
       ) {
         toast({
           title: "Quote Expired",
           description:
-            "The quote expired or changed. Please request a new quote and try again.",
+            "The quote expired or market conditions changed. Please request a new quote and try again.",
           variant: "default",
+        });
+        return null;
+      }
+
+      if (errorMsg.includes("refresh failed") || errorMsg.includes("timeout")) {
+        toast({
+          title: "Network Error",
+          description:
+            "Failed to refresh quote due to network issues. Please try again.",
+          variant: "destructive",
         });
         return null;
       }
@@ -708,19 +791,19 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   if (!wallet) {
     return (
       <div className="w-full max-w-md mx-auto px-4">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+        <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-[4px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h3 className="text-lg font-semibold text-gray-900 uppercase">
+              <h3 className="text-lg font-semibold text-white uppercase">
                 FIXORIUM TRADE
               </h3>
             </div>
@@ -731,7 +814,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <Button
               onClick={onBack}
               variant="outline"
-              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase"
+              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase rounded-[4px]"
             >
               Back
             </Button>
@@ -742,10 +825,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+    <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-[2px] border-0 bg-transparent">
         {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-[2px]">
             <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
           </div>
         )}
@@ -756,12 +839,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               aria-label="Back"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">
+            <div className="font-semibold text-sm text-white uppercase">
               FIXORIUM TRADE
             </div>
           </div>
@@ -775,7 +858,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </Label>
             <div className="flex gap-3">
               <Select value={fromMint} onValueChange={setFromMint}>
-                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-[2px] focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                   <SelectValue>
                     {fromToken ? (
                       <span className="text-gray-900 font-medium">
@@ -786,7 +869,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-[2px]">
                   {tokenList.length > 0 ? (
                     tokenList.map((t) => {
                       const tokenBalance =
@@ -817,7 +900,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-[2px] px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
               />
             </div>
           </div>
@@ -830,7 +913,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               To
             </Label>
             <Select value={toMint} onValueChange={setToMint}>
-              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-[2px] focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                 <SelectValue>
                   {toToken ? (
                     <span className="text-gray-900 font-medium">
@@ -841,7 +924,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+              <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-[2px]">
                 {tokenList.length > 0 ? (
                   tokenList.map((t) => {
                     const tokenBalance =
@@ -870,15 +953,38 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           {quote && (
-            <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+            <div
+              className={`p-4 border rounded-[2px] transition-colors ${
+                isQuoteExpired()
+                  ? "bg-transparent border-red-200"
+                  : isQuoteWarning()
+                    ? "bg-transparent border-yellow-200"
+                    : "bg-transparent border-[#a7f3d0]/30"
+              }`}
+            >
               <div className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">
                     Estimated receive:
                   </span>
-                  <span className="font-semibold text-gray-900">
-                    {quote.outHuman.toFixed(6)} {quote.outToken}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900">
+                      {quote.outHuman.toFixed(6)} {quote.outToken}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded-[2px] ${
+                        isQuoteExpired()
+                          ? "bg-red-200 text-red-700"
+                          : isQuoteWarning()
+                            ? "bg-yellow-200 text-yellow-700"
+                            : "bg-green-200 text-green-700"
+                      }`}
+                    >
+                      {isQuoteExpired()
+                        ? "Expired"
+                        : `${getQuoteTimeRemaining()}s`}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs text-gray-500">Route hops:</span>
@@ -899,18 +1005,27 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           )}
 
           {status && (
-            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-4 border-[#a7f3d0] p-3 rounded">
+            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-0 border border-[#a7f3d0] p-3 rounded-[2px]">
               {status}
             </div>
           )}
 
           <Button
             onClick={executeSwap}
-            disabled={!amount || isLoading}
-            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!amount || isLoading || isQuoteExpired()}
+            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-[2px] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              isQuoteExpired()
+                ? "Quote expired - please get a new quote"
+                : isQuoteWarning()
+                  ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                  : ""
+            }
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isQuoteExpired() ? (
+              "Quote Expired - Get New Quote"
             ) : (
               "Swap (Smart Route)"
             )}
@@ -918,15 +1033,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         <BloomExplosion show={showSuccess} />
-        {showSuccess && (
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-green-400 mt-32">
-                {successMsg}
-              </h2>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -4,8 +4,16 @@
  * This prevents exposure in localStorage while maintaining user session
  */
 
+import {
+  encryptWalletData,
+  isEncryptedWalletStorage,
+  isPlaintextWalletStorage,
+} from "@/lib/secure-storage";
+import type { WalletData } from "@/lib/wallet-proxy";
+
 const PASSWORD_SESSION_KEY = "wallet_encryption_password";
 const PASSWORD_REQUIRED_KEY = "wallet_requires_password";
+const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 
 /**
  * Set the wallet encryption password in session storage
@@ -76,4 +84,63 @@ export function markWalletAsPasswordProtected(): void {
  */
 export function isPasswordAvailable(): boolean {
   return getWalletPassword() !== null;
+}
+
+/**
+ * Encrypt currently stored wallets immediately using the password in session.
+ * If wallets are already encrypted or no password is present, this is a no-op.
+ */
+export function encryptStoredWalletsIfNeeded(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const password = getWalletPassword();
+    if (!password) return;
+
+    const stored = localStorage.getItem(WALLETS_STORAGE_KEY);
+    if (!stored) return;
+
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed) || parsed.length === 0) return;
+
+    // If already encrypted, skip
+    if (isEncryptedWalletStorage(parsed[0])) return;
+
+    // Coerce and encrypt
+    const plaintextWallets: WalletData[] = parsed.map((p: any) => {
+      const obj = { ...p } as any;
+      if (obj.secretKey && Array.isArray(obj.secretKey)) {
+        obj.secretKey = Uint8Array.from(obj.secretKey);
+      } else if (obj.secretKey && typeof obj.secretKey === "object") {
+        const vals = Object.values(obj.secretKey).filter(
+          (v) => typeof v === "number",
+        ) as number[];
+        if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
+      }
+      return obj as WalletData;
+    });
+
+    const encrypted = plaintextWallets.map((w) =>
+      encryptWalletData(w, password),
+    );
+    localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(encrypted));
+
+    // Notify other parts of the app (WalletContext) that wallets were encrypted
+    try {
+      if (
+        typeof window !== "undefined" &&
+        typeof window.dispatchEvent === "function"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("wallets_encrypted", {
+            detail: { timestamp: Date.now() },
+          }),
+        );
+      }
+    } catch (e) {
+      // ignore
+    }
+  } catch (e) {
+    // swallow to avoid breaking settings flow
+    console.warn("encryptStoredWalletsIfNeeded failed:", e);
+  }
 }

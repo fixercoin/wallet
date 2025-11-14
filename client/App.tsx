@@ -106,12 +106,10 @@ import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "next-themes";
-import MobileShell from "@/components/ui/MobileShell";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -119,6 +117,7 @@ import TokenListing from "./pages/TokenListing";
 import WalletHistory from "./pages/WalletHistory";
 import NotFound from "./pages/NotFound";
 import BuyCrypto from "./pages/BuyCrypto";
+import TokenSearchDetail from "./pages/TokenSearchDetail";
 import BuyNote from "./pages/BuyNote";
 import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";
@@ -129,6 +128,13 @@ import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
+import AutoBot from "./pages/AutoBot";
+import AirdropPage from "./pages/AirdropPage";
+import DappsPage from "./pages/DappsPage";
+import DappView from "./pages/DappView";
+import DappVisit from "./pages/DappVisit";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
 const queryClient = new QueryClient();
 
@@ -150,61 +156,37 @@ function AppRoutes() {
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
       <Route path="/wallet/history" element={<WalletHistory />} />
+      <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
+      <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/airdrop" element={<AirdropPage />} />
+      <Route path="/dapps" element={<DappsPage />} />
+      <Route path="/dapps/visit" element={<DappVisit />} />
+      <Route path="/dapps/view" element={<DappView />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 function App() {
-  const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 640px)").matches
-      : false,
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 640px)");
-    const handler = (e: MediaQueryListEvent) => setIsMobileMatch(e.matches);
-    try {
-      mq.addEventListener("change", handler);
-    } catch (e) {
-      // Safari fallback
-      // @ts-ignore
-      mq.addListener(handler);
-    }
-    return () => {
-      try {
-        mq.removeEventListener("change", handler);
-      } catch (e) {
-        // @ts-ignore
-        mq.removeListener(handler);
-      }
-    };
-  }, []);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <CurrencyProvider>
-              <BrowserRouter>
-                {isMobileMatch ? (
-                  <MobileShell>
+          <AppWithPasswordPrompt>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <CurrencyProvider>
+                <BrowserRouter>
+                  <div className="min-h-screen pb-20">
                     <AppRoutes />
-                  </MobileShell>
-                ) : (
-                  <div className="min-h-screen">
-                    <AppRoutes />
+                    <BottomNavigation />
                   </div>
-                )}
-              </BrowserRouter>
-            </CurrencyProvider>
-          </TooltipProvider>
+                </BrowserRouter>
+              </CurrencyProvider>
+            </TooltipProvider>
+          </AppWithPasswordPrompt>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

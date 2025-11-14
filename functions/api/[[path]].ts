@@ -393,9 +393,23 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       );
     }
 
+    // Build swap request with proper defaults (matching server implementation)
+    const swapRequest = {
+      quoteResponse: body.quoteResponse,
+      userPublicKey: body.userPublicKey,
+      wrapAndUnwrapSol:
+        body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
+      useSharedAccounts:
+        body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
+      computeUnitPriceMicroLamports: body.computeUnitPriceMicroLamports,
+      prioritizationFeeLamports: body.prioritizationFeeLamports,
+      asLegacyTransaction: body.asLegacyTransaction || false,
+      ...body,
+    };
+
     const endpoints = [
-      `${JUPITER_V6_SWAP_BASE}/swap`,
       `${JUPITER_SWAP_BASE}/swap`,
+      `${JUPITER_V6_SWAP_BASE}/swap`,
     ];
 
     let lastError = "";
@@ -406,26 +420,80 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           console.log(
-            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}: ${endpoint}`,
           );
 
           const response = await timeoutFetch(endpoint, {
             method: "POST",
-            headers: browserHeaders(),
-            body: JSON.stringify(body),
+            headers: browserHeaders({ Accept: "application/json" }),
+            body: JSON.stringify(swapRequest),
           });
 
           lastStatus = response.status;
+          const text = await response.text().catch(() => "");
 
           if (response.ok) {
-            const data = await response.json();
-            console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
-            return new Response(JSON.stringify(data), {
-              headers: CORS_HEADERS,
-            });
+            try {
+              const data = JSON.parse(text || "{}");
+              console.log(`[Jupiter Swap] Success on attempt ${attempt}`);
+              return new Response(JSON.stringify(data), {
+                headers: CORS_HEADERS,
+              });
+            } catch {
+              console.warn("[Jupiter Swap] Non-JSON success payload");
+              return new Response(text, { headers: CORS_HEADERS });
+            }
           }
 
-          const text = await response.text().catch(() => "");
+          // Parse error response
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch {}
+
+          const lower = (text || "").toLowerCase();
+          const isStaleQuote =
+            lower.includes("1016") ||
+            lower.includes("stale") ||
+            lower.includes("simulation") ||
+            lower.includes("swap simulation failed") ||
+            lower.includes("quote expired") ||
+            errorData?.code === 1016;
+
+          if (isStaleQuote) {
+            console.warn(
+              `[Jupiter Swap] Detected stale quote (1016) from ${endpoint}`,
+            );
+            return new Response(
+              JSON.stringify({
+                error: "STALE_QUOTE",
+                message: "Quote expired - market conditions changed",
+                details: text.slice(0, 300),
+                code: 1016,
+              }),
+              { status: 530, headers: CORS_HEADERS },
+            );
+          }
+
+          // Check for other client errors that shouldn't be retried
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            console.warn(
+              `[Jupiter Swap] Client error (${response.status}), not retrying`,
+            );
+            return new Response(
+              JSON.stringify({
+                error: `Swap request failed: ${response.statusText}`,
+                details: text,
+                code: "SWAP_REQUEST_ERROR",
+              }),
+              { status: response.status, headers: CORS_HEADERS },
+            );
+          }
+
           lastError = text;
 
           if (response.status === 429 || response.status >= 500) {
@@ -460,8 +528,8 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     );
     return new Response(
       JSON.stringify({
-        error: `Swap failed: ${lastError}`,
-        details: lastError,
+        error: "Swap failed",
+        details: lastError || "Unknown error",
         statusCode: lastStatus,
       }),
       { status: lastStatus >= 400 ? lastStatus : 502, headers: CORS_HEADERS },
@@ -470,9 +538,10 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
     console.error(`[Jupiter Swap] Exception: ${e?.message || e}`);
     return new Response(
       JSON.stringify({
-        error: String(e?.message || e),
+        error: "Failed to create swap",
+        details: String(e?.message || e),
       }),
-      { status: 500, headers: CORS_HEADERS },
+      { status: 502, headers: CORS_HEADERS },
     );
   }
 }
@@ -921,6 +990,219 @@ async function handleDexscreenerPrice(url: URL): Promise<Response> {
   }
 }
 
+async function handleDexscreenerTokens(url: URL): Promise<Response> {
+  try {
+    const mintsParam = url.searchParams.get("mints");
+    if (!mintsParam || typeof mintsParam !== "string") {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing or invalid 'mints' parameter. Expected comma-separated token mints.",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const rawMints = mintsParam
+      .split(",")
+      .map((m) => m.trim())
+      .filter(Boolean);
+    const uniqueMints = Array.from(new Set(rawMints));
+
+    if (uniqueMints.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No valid mints provided" }),
+        {
+          status: 400,
+          headers: CORS_HEADERS,
+        },
+      );
+    }
+
+    const MAX_TOKENS_PER_BATCH = 20;
+    const batches: string[][] = [];
+    for (let i = 0; i < uniqueMints.length; i += MAX_TOKENS_PER_BATCH) {
+      batches.push(uniqueMints.slice(i, i + MAX_TOKENS_PER_BATCH));
+    }
+
+    const endpoints = [DEXSCREENER_BASE, DEXSCREENER_IO];
+    const results: any[] = [];
+    let schemaVersion = "1.0.0";
+
+    for (const batch of batches) {
+      let success = false;
+      const path = `/tokens/${encodeURIComponent(batch.join(","))}`;
+
+      for (const base of endpoints) {
+        try {
+          const resp = await timeoutFetch(`${base}${path}`, {
+            method: "GET",
+            headers: browserHeaders(),
+          });
+          if (!resp.ok) {
+            continue;
+          }
+          const data = await safeJson(resp);
+          if (data?.schemaVersion) schemaVersion = data.schemaVersion;
+          if (Array.isArray(data?.pairs)) {
+            results.push(...data.pairs);
+          }
+          success = true;
+          break;
+        } catch {
+          // try next endpoint
+          continue;
+        }
+      }
+      // continue to next batch even if this one failed
+      if (!success) {
+        continue;
+      }
+    }
+
+    // Deduplicate and filter to Solana
+    const seen = new Set<string>();
+    const pairs = results
+      .filter((p: any) => (p?.chainId || "").toLowerCase() === "solana")
+      .filter((p: any) => {
+        const key = `${p?.baseToken?.address || ""}:${p?.quoteToken?.address || ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    return new Response(JSON.stringify({ schemaVersion, pairs }), {
+      headers: CORS_HEADERS,
+    });
+  } catch (err: any) {
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 200, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handleDexscreenerSearch(url: URL): Promise<Response> {
+  try {
+    const q = url.searchParams.get("q");
+    if (!q || typeof q !== "string") {
+      return new Response(
+        JSON.stringify({
+          error: "Missing or invalid 'q' parameter for search query.",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const endpoints = [DEXSCREENER_BASE, DEXSCREENER_IO];
+    let lastError: string | null = null;
+
+    for (const base of endpoints) {
+      try {
+        const resp = await timeoutFetch(
+          `${base}/search/?q=${encodeURIComponent(q)}`,
+          { method: "GET", headers: browserHeaders() },
+          25000,
+        );
+
+        if (!resp.ok) {
+          const data = await safeJson(resp);
+          lastError = `HTTP ${resp.status}: ${JSON.stringify(data)}`;
+          console.warn(`[DexScreener] ${base} search returned ${resp.status}`);
+          continue;
+        }
+
+        const data = await safeJson(resp);
+        const solanaPairs = (data?.pairs || [])
+          .filter(
+            (pair: any) => (pair.chainId || "").toLowerCase() === "solana",
+          )
+          .slice(0, 20);
+
+        return new Response(
+          JSON.stringify({
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs: solanaPairs,
+          }),
+          { headers: CORS_HEADERS },
+        );
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.warn(`[DexScreener] ${base} search error:`, lastError);
+        continue;
+      }
+    }
+
+    // All endpoints failed
+    return new Response(
+      JSON.stringify({
+        error: "DexScreener search failed",
+        details: lastError || "All endpoints failed",
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  } catch (err: any) {
+    console.error("[DexScreener] Search proxy error:", err);
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err), details: String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 500, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handleDexscreenerTrending(url: URL): Promise<Response> {
+  try {
+    const resp = await timeoutFetch(`${DEXSCREENER_BASE}/pairs/solana`, {
+      method: "GET",
+      headers: browserHeaders(),
+    });
+    const data = await safeJson(resp);
+
+    const trendingPairs = (data?.pairs || [])
+      .filter(
+        (pair: any) =>
+          pair.volume?.h24 > 1000 &&
+          pair.liquidity?.usd &&
+          pair.liquidity.usd > 10000,
+      )
+      .sort((a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
+      .slice(0, 50);
+
+    return new Response(
+      JSON.stringify({
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs: trendingPairs,
+      }),
+      {
+        headers: CORS_HEADERS,
+      },
+    );
+  } catch (err: any) {
+    console.error("[DexScreener] Trending proxy error:", err);
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      {
+        status: 500,
+        headers: CORS_HEADERS,
+      },
+    );
+  }
+}
+
 async function handleSolPrice(): Promise<Response> {
   const SOL_MINT = "So11111111111111111111111111111111111111112";
 
@@ -1273,10 +1555,26 @@ async function handler(request: Request): Promise<Response> {
         JSON.stringify({
           status: "ok",
           message: "DexScreener API Proxy",
-          endpoints: ["/api/dexscreener/price?tokenAddress=<mint>"],
+          endpoints: [
+            "/api/dexscreener/price?tokenAddress=<mint>",
+            "/api/dexscreener/search?q=<query>",
+            "/api/dexscreener/trending",
+          ],
         }),
         { headers: CORS_HEADERS },
       );
+    }
+
+    if (pathname.startsWith("/api/dexscreener/tokens")) {
+      return await handleDexscreenerTokens(url);
+    }
+
+    if (pathname.startsWith("/api/dexscreener/search")) {
+      return await handleDexscreenerSearch(url);
+    }
+
+    if (pathname.startsWith("/api/dexscreener/trending")) {
+      return await handleDexscreenerTrending(url);
     }
 
     if (pathname.startsWith("/api/dexscreener/price")) {
@@ -1368,4 +1666,7 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export const onRequest = handler;
+export async function onRequest(context: any): Promise<Response> {
+  // Cloudflare Pages Functions pass a context object; extract the Request
+  return handler(context.request as Request);
+}

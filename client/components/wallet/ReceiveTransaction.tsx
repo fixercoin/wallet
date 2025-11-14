@@ -42,15 +42,15 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 py-6 relative z-20">
+        <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
           <div className="p-6 space-y-6 text-gray-900">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -60,7 +60,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
             {/* QR Code */}
             <div className="text-center space-y-4">
-              <div className="inline-block bg-white p-3 rounded-lg">
+              <div className="inline-block bg-white p-3 rounded-[2px]">
                 <QRCode
                   value={wallet.publicKey}
                   size={160}
@@ -81,13 +81,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 <Input
                   value={wallet.publicKey}
                   readOnly
-                  className="font-mono text-sm bg-white text-gray-900 placeholder:text-gray-400"
+                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-[2px]"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyAddress}
-                  className="shrink-0 bg-white text-gray-900 hover:bg-gray-100"
+                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-[2px]"
                 >
                   {copied ? (
                     <Check className="h-4 w-4" />

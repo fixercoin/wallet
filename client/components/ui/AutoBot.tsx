@@ -187,7 +187,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
     const signedBase64 = base64FromBytes(signed);
 
     const body = {
-      method: "sendRawTransaction",
+      method: "sendTransaction",
       params: [
         signedBase64,
         { skipPreflight: false, preflightCommitment: "confirmed" },
@@ -302,7 +302,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const signedBase64 = base64FromBytes(signed);
                       // Send
                       const body = {
-                        method: "sendRawTransaction",
+                        method: "sendTransaction",
                         params: [
                           signedBase64,
                           {
@@ -346,7 +346,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                           bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
-                          method: "sendRawTransaction",
+                          method: "sendTransaction",
                           params: [
                             signedBase64,
                             {
@@ -679,7 +679,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <Card className="bg-black/30 border-white/10">
+                <Card className="bg-black/30 border-white/3">
                   <CardContent className="p-3 text-center">
                     <Zap className="h-5 w-5 text-cream mx-auto mb-1" />
                     <div className="text-xs text-gray-400">SOL</div>
@@ -690,7 +690,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-black/30 border-white/10">
+                <Card className="bg-black/30 border-white/3">
                   <CardContent className="p-3 text-center">
                     <Shield className="h-5 w-5 text-blue-400 mx-auto mb-1" />
                     <div className="text-xs text-gray-400">FIXERCOIN</div>
@@ -701,7 +701,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-black/30 border-white/10">
+                <Card className="bg-black/30 border-white/3">
                   <CardContent className="p-3 text-center">
                     <Clock className="h-5 w-5 text-purple-400 mx-auto mb-1" />
                     <div className="text-xs text-gray-400">PnL</div>

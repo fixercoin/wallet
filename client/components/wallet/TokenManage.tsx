@@ -26,9 +26,9 @@ export const TokenManage: React.FC<TokenManageProps> = ({
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
         <div className="w-full md:max-w-lg mx-auto px-0 sm:px-4 py-6 relative z-20">
-        <div className="text-center">
-          <p className="text-gray-500">Token not found</p>
-          <Button onClick={onBack} className="mt-4 rounded-[2px]">
+          <div className="text-center">
+            <p className="text-gray-500">Token not found</p>
+            <Button onClick={onBack} className="mt-4 rounded-[2px]">
               Go Back
             </Button>
           </div>

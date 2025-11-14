@@ -145,7 +145,9 @@ export default function TokenSearchDetail() {
 
             <div className="mt-4 text-xs text-gray-400">
               <div>Mint Address</div>
-              <div className="font-mono text-[11px] break-all text-gray-300">{mint}</div>
+              <div className="font-mono text-[11px] break-all text-gray-300">
+                {mint}
+              </div>
             </div>
 
             <div className="mt-4 flex gap-2">
@@ -154,7 +156,11 @@ export default function TokenSearchDetail() {
                   <Check className="h-4 w-4 mr-2" /> Added
                 </Button>
               ) : (
-                <Button onClick={onAdd} disabled={adding} className="flex-1 rounded-[2px]">
+                <Button
+                  onClick={onAdd}
+                  disabled={adding}
+                  className="flex-1 rounded-[2px]"
+                >
                   <Plus className="h-4 w-4 mr-2" /> Add Token
                 </Button>
               )}

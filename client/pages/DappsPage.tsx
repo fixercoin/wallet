@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import { useWallet } from "@/contexts/WalletContext";
-import { Search as SearchIcon, ExternalLink } from "lucide-react";
+import { Search as SearchIcon, ExternalLink, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface DappInfo {
@@ -177,7 +177,17 @@ export default function DappsPage() {
   };
 
   return (
-    <div className="w-full md:max-w-lg mx-auto p-4 py-6 capitalize">
+    <div className="w-full md:max-w-lg mx-auto p-4 capitalize">
+      <div className="pt-6 pb-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm">Back</span>
+        </button>
+      </div>
+
       <Card className="mb-4 rounded-none border border-gray-300/30">
         <CardContent className="p-3">
           <label className="text-sm text-gray-500 uppercase block">

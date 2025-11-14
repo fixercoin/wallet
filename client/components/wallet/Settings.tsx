@@ -345,7 +345,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           onChange={(e) =>
                             setShowPasswordField(e.target.checked)
                           }
-                          className="w-4 h-4 rounded-none"
+                          className="w-4 h-4 rounded-[4px]"
                         />
                         <label
                           htmlFor="showPassword"

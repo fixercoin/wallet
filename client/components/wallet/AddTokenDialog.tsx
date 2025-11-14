@@ -122,10 +122,10 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>Add Custom Token</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Add Custom Token</DialogTitle>
+          <DialogDescription className="text-gray-400">
             Enter the contract address of the token you want to add to your
             wallet.
           </DialogDescription>
@@ -133,27 +133,27 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="contract-address">Contract Address</Label>
+            <Label htmlFor="contract-address" className="text-gray-300">Contract Address</Label>
             <Input
               id="contract-address"
               placeholder="Enter token contract address..."
               value={contractAddress}
               onChange={(e) => setContractAddress(e.target.value)}
-              className="font-mono text-sm"
+              className="font-mono text-sm bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
             />
           </div>
 
           {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="bg-red-900/50 border-red-700">
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300">{error}</AlertDescription>
             </Alert>
           )}
 
           {tokenInfo && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
+            <Alert className="bg-green-900/50 border-green-700">
+              <CheckCircle className="h-4 w-4 text-green-400" />
+              <AlertDescription className="text-green-300">
                 <div className="space-y-1">
                   <div>
                     <strong>Token:</strong> {tokenInfo.name} ({tokenInfo.symbol}
@@ -175,7 +175,7 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
             <Button
               onClick={validateAndFetchToken}
               disabled={!contractAddress.trim() || isLoading}
-              className="flex-1"
+              className="flex-1 rounded-[4px] bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white"
             >
               {isLoading ? "Validating..." : "Validate Token"}
             </Button>
@@ -183,13 +183,13 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} className="rounded-[4px] bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
             Cancel
           </Button>
           <Button
             onClick={handleAddToken}
             disabled={!tokenInfo}
-            className="bg-green-600 hover:bg-green-700"
+            className="rounded-[4px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white"
           >
             Add Token
           </Button>

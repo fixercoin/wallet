@@ -410,7 +410,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           </svg>
 
           <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-            <div className="relative w-full max-w-md mx-auto bg-transparent overflow-hidden">
+            <div className="relative w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
               {isLoading && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                   <div className="text-white">Importing wallet...</div>

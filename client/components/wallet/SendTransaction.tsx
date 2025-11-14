@@ -1047,7 +1047,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
                   <Button
                     onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase rounded-none"
+                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase rounded-[4px]"
                     disabled={!recipient || !amount}
                   >
                     Continue

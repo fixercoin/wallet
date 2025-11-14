@@ -992,7 +992,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.25).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-[4px]"
                       >
                         25%
                       </Button>
@@ -1002,7 +1002,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.5).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-[4px]"
                       >
                         50%
                       </Button>
@@ -1012,7 +1012,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.75).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-[4px]"
                       >
                         75%
                       </Button>
@@ -1022,7 +1022,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.99).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-none"
+                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase rounded-[4px]"
                       >
                         Max
                       </Button>

@@ -240,7 +240,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-[4px] bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -248,7 +248,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -290,7 +290,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Password Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <button
                     onClick={() => setShowPasswordForm(!showPasswordForm)}
@@ -322,7 +322,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           placeholder="Enter password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-none"
+                          className="bg-white/5 text-gray-900 rounded-[4px]"
                         />
                       </div>
                       <div>
@@ -334,7 +334,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           placeholder="Confirm password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-none"
+                          className="bg-white/5 text-gray-900 rounded-[4px]"
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -345,7 +345,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           onChange={(e) =>
                             setShowPasswordField(e.target.checked)
                           }
-                          className="w-4 h-4 rounded-none"
+                          className="w-4 h-4 rounded-[4px]"
                         />
                         <label
                           htmlFor="showPassword"
@@ -384,7 +384,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -451,7 +451,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Private Key Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -508,7 +508,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* DApp Connected Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <div className="w-full flex items-center justify-between p-4 rounded-none">
                     <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
@@ -564,7 +564,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
 
                   {confirmDelete && (
-                    <div className="p-3 bg-red-500/20 rounded-none">
+                    <div className="p-3 bg-red-500/20 rounded-[4px]">
                       <div className="flex items-center gap-2 text-red-200 text-sm">
                         <AlertTriangle className="h-4 w-4" />
                         <span>This action cannot be undone</span>

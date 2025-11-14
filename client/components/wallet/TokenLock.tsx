@@ -868,7 +868,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <Button
-              className="w-full h-11 font-semibold border-0 rounded-none bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+              className="w-full h-11 font-semibold border-0 rounded-[4px] bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
               onClick={handleSubmit}
               disabled={isFormDisabled}
             >
@@ -1041,7 +1041,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       <div></div>
                       <Button
                         size="sm"
-                        className="h-9 px-4 text-xs font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                        className="h-9 px-4 text-xs font-semibold rounded-[4px] bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
                         onClick={() => performWithdraw(lock)}
                         disabled={!canWithdraw}
                       >

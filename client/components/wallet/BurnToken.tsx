@@ -714,7 +714,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               <Button
-                className="h-11 w-full border-0 font-semibold rounded-none bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                className="h-11 w-full border-0 font-semibold rounded-[4px] bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
                 onClick={handleBurn}
                 disabled={isConfirmDisabled}
               >

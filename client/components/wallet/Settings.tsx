@@ -564,7 +564,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
 
                   {confirmDelete && (
-                    <div className="p-3 bg-red-500/20 rounded-none">
+                    <div className="p-3 bg-red-500/20 rounded-[4px]">
                       <div className="flex items-center gap-2 text-red-200 text-sm">
                         <AlertTriangle className="h-4 w-4" />
                         <span>This action cannot be undone</span>

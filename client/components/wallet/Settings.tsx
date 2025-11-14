@@ -248,7 +248,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -290,7 +290,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Password Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <button
                     onClick={() => setShowPasswordForm(!showPasswordForm)}
@@ -384,7 +384,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -451,7 +451,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Private Key Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -508,7 +508,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* DApp Connected Card */}
-              <Card className="w-full bg-transparent rounded-none">
+              <Card className="w-full bg-transparent rounded-[4px]">
                 <CardContent className="p-0">
                   <div className="w-full flex items-center justify-between p-4 rounded-none">
                     <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">

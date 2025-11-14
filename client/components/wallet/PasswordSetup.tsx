@@ -162,14 +162,14 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                 onClick={onCancel}
                 disabled={isLoading}
                 variant="outline"
-                className="flex-1 bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 uppercase"
+                className="flex-1 bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 uppercase rounded-[2px]"
               >
                 {mode === "create" ? "Cancel" : "Close"}
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading || (!password.trim() && mode === "create")}
-                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold uppercase"
+                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold uppercase rounded-[2px]"
               >
                 {isLoading
                   ? "Processing..."

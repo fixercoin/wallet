@@ -87,7 +87,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={handleCopyAddress}
-                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-none"
+                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-[2px]"
                 >
                   {copied ? (
                     <Check className="h-4 w-4" />

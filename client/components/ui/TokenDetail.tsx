@@ -95,13 +95,13 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     <div className="min-h-screen bg-white text-[hsl(var(--foreground))]">
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="md:max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
             aria-label="Back"
-            className="text-white hover:bg-gray-700"
+            className="text-white hover:bg-gray-700 rounded-[2px]"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -115,14 +115,14 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             size="sm"
             onClick={handleRefresh}
             disabled={isLoading}
-            className="text-white hover:bg-gray-700"
+            className="text-white hover:bg-gray-700 rounded-[2px]"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="md:max-w-lg mx-auto px-4 py-6">
         {/* Price Card */}
         <PriceCard
           token={displayToken}

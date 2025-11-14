@@ -128,7 +128,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border border-gray-300/30 bg-transparent relative overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3">
             <Button
@@ -136,7 +136,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               size="icon"
               onClick={onBack}
               aria-label="Back"
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-card text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-card text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -150,7 +150,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-card text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-card text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -174,13 +174,13 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}
-                className="h-10 font-semibold rounded-[4px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+                className="h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
               >
                 BUY
               </Button>
               <Button
                 onClick={() => onSell(tokenMint)}
-                className="h-10 font-semibold rounded-[4px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+                className="h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
               >
                 SELL
               </Button>

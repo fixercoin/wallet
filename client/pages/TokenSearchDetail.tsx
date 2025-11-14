@@ -101,13 +101,13 @@ export default function TokenSearchDetail() {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900">
-      <div className="w-full max-w-md mx-auto px-4 py-6">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6">
         <div className="flex items-center gap-2 mb-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 rounded-[2px]"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -150,11 +150,11 @@ export default function TokenSearchDetail() {
 
             <div className="mt-4 flex gap-2">
               {alreadyAdded ? (
-                <Button disabled className="flex-1">
+                <Button disabled className="flex-1 rounded-[2px]">
                   <Check className="h-4 w-4 mr-2" /> Added
                 </Button>
               ) : (
-                <Button onClick={onAdd} disabled={adding} className="flex-1">
+                <Button onClick={onAdd} disabled={adding} className="flex-1 rounded-[2px]">
                   <Plus className="h-4 w-4 mr-2" /> Add Token
                 </Button>
               )}
@@ -162,7 +162,7 @@ export default function TokenSearchDetail() {
                 href={dexToken.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 text-sm text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center justify-center rounded-[2px] border border-gray-300 px-3 text-sm text-gray-700 hover:bg-gray-50"
               >
                 <ExternalLink className="h-4 w-4" />
               </a>

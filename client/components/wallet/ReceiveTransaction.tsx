@@ -60,7 +60,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
             {/* QR Code */}
             <div className="text-center space-y-4">
-              <div className="inline-block bg-white p-3 rounded-none">
+              <div className="inline-block bg-white p-3 rounded-[2px]">
                 <QRCode
                   value={wallet.publicKey}
                   size={160}

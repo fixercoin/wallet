@@ -133,7 +133,9 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="contract-address" className="text-gray-300">Contract Address</Label>
+            <Label htmlFor="contract-address" className="text-gray-300">
+              Contract Address
+            </Label>
             <Input
               id="contract-address"
               placeholder="Enter token contract address..."
@@ -144,9 +146,14 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
           </div>
 
           {error && (
-            <Alert variant="destructive" className="bg-red-900/50 border-red-700">
+            <Alert
+              variant="destructive"
+              className="bg-red-900/50 border-red-700"
+            >
               <AlertTriangle className="h-4 w-4 text-red-400" />
-              <AlertDescription className="text-red-300">{error}</AlertDescription>
+              <AlertDescription className="text-red-300">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -183,7 +190,11 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose} className="rounded-[4px] bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="rounded-[4px] bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+          >
             Cancel
           </Button>
           <Button

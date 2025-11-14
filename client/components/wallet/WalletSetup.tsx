@@ -489,7 +489,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     <Button
                       onClick={handleRecoverWallet}
                       disabled={!isMnemonicWordCountValid || isLoading}
-                      className="w-full h-12 rounded-none font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                      className="w-full h-12 rounded-lg font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
                       Recover Wallet
                     </Button>
@@ -517,7 +517,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         }
                       }}
                       disabled={!privateKeyInput.trim()}
-                      className="w-full h-12 rounded-none font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                      className="w-full h-12 rounded-lg font-semibold uppercase bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                     >
                       Import Wallet
                     </Button>

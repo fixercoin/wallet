@@ -322,7 +322,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           placeholder="Enter password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-none"
+                          className="bg-white/5 text-gray-900 rounded-[4px]"
                         />
                       </div>
                       <div>
@@ -334,7 +334,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                           placeholder="Confirm password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-none"
+                          className="bg-white/5 text-gray-900 rounded-[4px]"
                         />
                       </div>
                       <div className="flex items-center gap-2">

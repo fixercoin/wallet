@@ -572,7 +572,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden capitalize">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
         <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
@@ -714,7 +714,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               <Button
-                className="h-11 w-full border-0 font-semibold rounded-[4px] bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                className="h-11 w-full border-0 font-semibold rounded-[4px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg"
                 onClick={handleBurn}
                 disabled={isConfirmDisabled}
               >

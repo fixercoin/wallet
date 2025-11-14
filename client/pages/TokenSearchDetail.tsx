@@ -100,21 +100,21 @@ export default function TokenSearchDetail() {
   const priceUsd = dexToken.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900">
-      <div className="w-full max-w-md mx-auto px-4 py-6">
+    <div className="express-p2p-page dark-theme min-h-screen bg-gray-900 text-white">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6">
         <div className="flex items-center gap-2 mb-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 rounded-[2px]"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="text-base font-semibold">Token detail</div>
+          <div className="text-base font-semibold text-white">Token detail</div>
         </div>
 
-        <Card className="border border-[#e6f6ec]/40 bg-gradient-to-br from-white via-[#f0fff4] to-[#a7f3d0]">
+        <Card className="border border-gray-700/40 bg-gradient-to-br from-gray-800 via-gray-800 to-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
@@ -128,33 +128,39 @@ export default function TokenSearchDetail() {
                 ) : null}
               </div>
               <div className="min-w-0">
-                <div className="text-lg font-semibold text-gray-900">
+                <div className="text-lg font-semibold text-white">
                   {symbol || name}
                 </div>
-                <div className="text-xs text-gray-700 truncate">{name}</div>
+                <div className="text-xs text-gray-400 truncate">{name}</div>
               </div>
               {priceUsd > 0 ? (
                 <div className="ml-auto text-right">
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-sm font-semibold text-white">
                     ${priceUsd.toFixed(6)}
                   </div>
-                  <div className="text-xs text-gray-600">USD</div>
+                  <div className="text-xs text-gray-400">USD</div>
                 </div>
               ) : null}
             </div>
 
-            <div className="mt-4 text-xs text-gray-700">
+            <div className="mt-4 text-xs text-gray-400">
               <div>Mint Address</div>
-              <div className="font-mono text-[11px] break-all">{mint}</div>
+              <div className="font-mono text-[11px] break-all text-gray-300">
+                {mint}
+              </div>
             </div>
 
             <div className="mt-4 flex gap-2">
               {alreadyAdded ? (
-                <Button disabled className="flex-1">
+                <Button disabled className="flex-1 rounded-[2px]">
                   <Check className="h-4 w-4 mr-2" /> Added
                 </Button>
               ) : (
-                <Button onClick={onAdd} disabled={adding} className="flex-1">
+                <Button
+                  onClick={onAdd}
+                  disabled={adding}
+                  className="flex-1 rounded-[2px]"
+                >
                   <Plus className="h-4 w-4 mr-2" /> Add Token
                 </Button>
               )}
@@ -162,7 +168,7 @@ export default function TokenSearchDetail() {
                 href={dexToken.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 text-sm text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center justify-center rounded-[2px] border border-gray-600 px-3 text-sm text-gray-400 hover:bg-gray-700"
               >
                 <ExternalLink className="h-4 w-4" />
               </a>

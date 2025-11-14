@@ -562,7 +562,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 py-8">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-8">
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <div className="text-sm text-red-800">Wallet not connected</div>
@@ -573,7 +573,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (currentSession) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+      <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
         <div className="rounded-2xl border border-gray-700/50 bg-transparent backdrop-blur-sm">
           <div className="space-y-6 p-6 relative">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
@@ -688,7 +688,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <Button
                     onClick={handleStartSession}
                     disabled={isLoading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase rounded-[2px]"
                   >
                     {isLoading ? "Starting..." : "Start Bot"}
                   </Button>
@@ -702,7 +702,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={() => setCurrentSession(null)}
-                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase"
+                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase rounded-[2px]"
                 >
                   Close
                 </Button>
@@ -715,7 +715,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+    <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-none border-0 bg-transparent">
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
@@ -723,7 +723,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -933,7 +933,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           <Button
             onClick={handleStartMarketMaking}
             disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-none"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-[2px]"
           >
             {isLoading ? "Creating..." : "Create Market Maker Bot"}
           </Button>

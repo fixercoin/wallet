@@ -177,7 +177,7 @@ export default function DappsPage() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 py-6 capitalize">
+    <div className="w-full md:max-w-lg mx-auto p-4 py-6 capitalize">
       <Card className="mb-4 rounded-none border border-gray-300/30">
         <CardContent className="p-3">
           <label className="text-sm text-gray-500 uppercase block">

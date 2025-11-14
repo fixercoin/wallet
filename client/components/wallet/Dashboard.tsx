@@ -891,21 +891,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-10 w-full">
             <Button
               onClick={onSend}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-none font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-lg font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-none font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-lg font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-none font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-lg font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SWAP
             </Button>

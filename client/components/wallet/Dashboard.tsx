@@ -737,14 +737,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      <div className="w-full lg:max-w-4xl mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
         <div className="w-full mt-6 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2 flex-1">
               <TokenSearch
                 className="w-full mr-2"
-                inputClassName="bg-transparent text-foreground placeholder:text-[hsl(var(--muted-foreground))] border border-border focus-visible:ring-0 rounded-none"
+                inputClassName="bg-transparent text-foreground placeholder:text-[hsl(var(--muted-foreground))] border border-border focus-visible:ring-0 rounded-[2px]"
               />
             </div>
 
@@ -891,21 +891,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-10 w-full">
             <Button
               onClick={onSend}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[4px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SEND
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[4px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               RECEIVE
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[4px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
             >
               SWAP
             </Button>
@@ -943,10 +943,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-md border-0">
+                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between p-4 rounded-none sm:rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between p-4 rounded-none sm:rounded-[2px] hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
                       onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">

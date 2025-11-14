@@ -758,14 +758,14 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-gray-800 text-gray-900 relative overflow-hidden capitalize">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 space-y-3 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 py-6 space-y-3 relative z-20">
+        <div className="mt-6 mb-1 rounded-[2px] p-6 border-0 bg-transparent relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label="Back"
             >
               <ArrowLeft
@@ -793,7 +793,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-none">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-[2px]">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -827,7 +827,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-2 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400 rounded-none"
+                className="mt-2 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400 rounded-[2px]"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
@@ -850,7 +850,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-none">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-[2px]">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -868,7 +868,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <Button
-              className="w-full h-11 font-semibold border-0 rounded-[4px] bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+              className="w-full h-11 font-semibold border-0 rounded-[2px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg"
               onClick={handleSubmit}
               disabled={isFormDisabled}
             >
@@ -895,7 +895,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">
+        <div className="bg-transparent border-0 rounded-[2px] p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock
@@ -916,7 +916,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 variant="ghost"
                 size="icon"
                 onClick={refreshLocksFromStorage}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-white/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
                 aria-label="Refresh locks"
                 title="Refresh locks"
               >
@@ -946,7 +946,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-none border border-gray-300/30 bg-transparent space-y-3 text-white"
+                    className="p-4 rounded-[2px] border border-gray-300/30 bg-transparent space-y-3 text-white"
                   >
                     <div className="flex items-center justify-between">
                       <div>

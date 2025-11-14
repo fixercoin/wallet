@@ -688,7 +688,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <Button
                     onClick={handleStartSession}
                     disabled={isLoading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase rounded-[2px]"
                   >
                     {isLoading ? "Starting..." : "Start Bot"}
                   </Button>
@@ -702,7 +702,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={() => setCurrentSession(null)}
-                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase"
+                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase rounded-[2px]"
                 >
                   Close
                 </Button>
@@ -723,7 +723,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -933,7 +933,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           <Button
             onClick={handleStartMarketMaking}
             disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-none"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-[2px]"
           >
             {isLoading ? "Creating..." : "Create Market Maker Bot"}
           </Button>

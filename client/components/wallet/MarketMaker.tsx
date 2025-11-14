@@ -562,7 +562,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 py-8">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-8">
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <div className="text-sm text-red-800">Wallet not connected</div>
@@ -573,7 +573,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (currentSession) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+      <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
         <div className="rounded-2xl border border-gray-700/50 bg-transparent backdrop-blur-sm">
           <div className="space-y-6 p-6 relative">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
@@ -715,7 +715,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
+    <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-none border-0 bg-transparent">
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">

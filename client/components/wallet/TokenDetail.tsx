@@ -165,7 +165,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           <div className="px-4 pb-4 space-y-3">
             <div className="rounded-lg overflow-hidden border-0 bg-transparent">
               <div className="px-3 pt-3 text-sm font-medium text-foreground">
-                Buys vs Sells (5m → 24h)
+                Buys vs Sells (5m �� 24h)
               </div>
               <div className="p-3">
                 <BuySellLine mint={tokenMint} priceData={priceData} />
@@ -174,13 +174,13 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}
-                className="h-10 font-semibold bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+                className="h-10 font-semibold rounded-[4px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
               >
                 BUY
               </Button>
               <Button
                 onClick={() => onSell(tokenMint)}
-                className="h-10 font-semibold bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+                className="h-10 font-semibold rounded-[4px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
               >
                 SELL
               </Button>

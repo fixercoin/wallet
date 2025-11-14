@@ -825,10 +825,10 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-none border-0 bg-transparent">
+    <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-[2px] border-0 bg-transparent">
         {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-none">
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-[2px]">
             <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
           </div>
         )}
@@ -839,7 +839,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               aria-label="Back"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -858,7 +858,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </Label>
             <div className="flex gap-3">
               <Select value={fromMint} onValueChange={setFromMint}>
-                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-[2px] focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                   <SelectValue>
                     {fromToken ? (
                       <span className="text-gray-900 font-medium">
@@ -869,7 +869,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-none">
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-[2px]">
                   {tokenList.length > 0 ? (
                     tokenList.map((t) => {
                       const tokenBalance =
@@ -900,7 +900,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-[2px] px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
               />
             </div>
           </div>
@@ -913,7 +913,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               To
             </Label>
             <Select value={toMint} onValueChange={setToMint}>
-              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-none focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-[2px] focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                 <SelectValue>
                   {toToken ? (
                     <span className="text-gray-900 font-medium">
@@ -924,7 +924,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-none">
+              <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-[2px]">
                 {tokenList.length > 0 ? (
                   tokenList.map((t) => {
                     const tokenBalance =
@@ -954,7 +954,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {quote && (
             <div
-              className={`p-4 border rounded-none transition-colors ${
+              className={`p-4 border rounded-[2px] transition-colors ${
                 isQuoteExpired()
                   ? "bg-transparent border-red-200"
                   : isQuoteWarning()
@@ -972,7 +972,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       {quote.outHuman.toFixed(6)} {quote.outToken}
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-none ${
+                      className={`text-xs font-semibold px-2 py-1 rounded-[2px] ${
                         isQuoteExpired()
                           ? "bg-red-200 text-red-700"
                           : isQuoteWarning()
@@ -1005,7 +1005,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           )}
 
           {status && (
-            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-0 border border-[#a7f3d0] p-3 rounded-none">
+            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-0 border border-[#a7f3d0] p-3 rounded-[2px]">
               {status}
             </div>
           )}
@@ -1013,7 +1013,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <Button
             onClick={executeSwap}
             disabled={!amount || isLoading || isQuoteExpired()}
-            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-[4px] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-[2px] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             title={
               isQuoteExpired()
                 ? "Quote expired - please get a new quote"

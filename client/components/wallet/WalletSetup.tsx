@@ -341,7 +341,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets%2F3a15ce16386647f69de330d7428809d3%2F91b2877faec14ea19595368b705b1709?format=webp&width=800"
                     alt="Wallet"
-                    className="block mx-auto w-[300px] h-[300px] object-contain max-w-full"
+                    className="block mx-auto w-[250px] h-[250px] object-contain max-w-full"
                   />
                 </div>
 

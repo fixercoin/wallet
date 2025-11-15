@@ -231,7 +231,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           mode="unlock"
         />
         {/* Main welcome screen */}
-        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: 'hsl(0 0% 12%)' }}>
+        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: '#1f1f1f' }}>
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -305,7 +305,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           description={passwordSetupDescription}
           mode={passwordSetupMode}
         />
-        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: 'hsl(0 0% 12%)' }}>
+        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: '#1f1f1f' }}>
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -386,7 +386,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           description={passwordSetupDescription}
           mode={passwordSetupMode}
         />
-        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: 'hsl(0 0% 12%)' }}>
+        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: '#1f1f1f' }}>
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -553,7 +553,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           description={passwordSetupDescription}
           mode={passwordSetupMode}
         />
-        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: 'hsl(0 0% 12%)' }}>
+        <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: '#1f1f1f' }}>
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"

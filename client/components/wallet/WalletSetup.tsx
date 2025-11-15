@@ -241,15 +241,15 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
             aria-hidden
           >
             <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="60%" stopColor="#e6ffed" />
-                <stop offset="100%" stopColor="#22c55e" />
+              <linearGradient id="g1-unlock" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+                <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
               </linearGradient>
             </defs>
             <path
               d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-              fill="url(#g1)"
+              fill="url(#g1-unlock)"
               opacity="0.95"
             />
           </svg>

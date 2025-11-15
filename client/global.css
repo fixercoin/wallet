@@ -10,7 +10,7 @@
   */
   :root {
     /* Dark grey theme - all pages */
-    --background: 210 15% 18%; /* dark grey background */
+    --background: 0 0% 12%; /* dark grey background #1f1f1f */
     --foreground: 210 10% 92%; /* light grey text */
 
     --card: 210 13% 24%; /* slightly lighter grey for cards */

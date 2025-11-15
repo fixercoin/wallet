@@ -231,7 +231,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           mode="unlock"
         />
         {/* Main welcome screen */}
-        <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        <div
+          className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
+          style={{ backgroundColor: "#1f1f1f" }}
+        >
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -241,15 +244,15 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
             aria-hidden
           >
             <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="60%" stopColor="#e6ffed" />
-                <stop offset="100%" stopColor="#22c55e" />
+              <linearGradient id="g1-unlock" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+                <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
               </linearGradient>
             </defs>
             <path
               d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-              fill="url(#g1)"
+              fill="url(#g1-unlock)"
               opacity="0.95"
             />
           </svg>
@@ -266,7 +269,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-center text-gray-600">
+                  <p className="text-center text-gray-400">
                     Your wallets are encrypted and locked. Please enter your
                     password above to unlock them.
                   </p>
@@ -305,7 +308,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           description={passwordSetupDescription}
           mode={passwordSetupMode}
         />
-        <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        <div
+          className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
+          style={{ backgroundColor: "#1f1f1f" }}
+        >
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -315,15 +321,15 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
             aria-hidden
           >
             <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="60%" stopColor="#e6ffed" />
-                <stop offset="100%" stopColor="#22c55e" />
+              <linearGradient id="g2" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+                <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
               </linearGradient>
             </defs>
             <path
               d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-              fill="url(#g1)"
+              fill="url(#g2)"
               opacity="0.95"
             />
           </svg>
@@ -386,7 +392,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           description={passwordSetupDescription}
           mode={passwordSetupMode}
         />
-        <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        <div
+          className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
+          style={{ backgroundColor: "#1f1f1f" }}
+        >
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -396,15 +405,15 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
             aria-hidden
           >
             <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="60%" stopColor="#e6ffed" />
-                <stop offset="100%" stopColor="#22c55e" />
+              <linearGradient id="g3" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+                <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
               </linearGradient>
             </defs>
             <path
               d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-              fill="url(#g1)"
+              fill="url(#g3)"
               opacity="0.95"
             />
           </svg>
@@ -423,13 +432,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                     <div className="flex items-center gap-4 text-sm">
                       <span
                         onClick={() => setRecoverMode("mnemonic")}
-                        className={`${recoverMode === "mnemonic" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
+                        className={`${recoverMode === "mnemonic" ? "font-semibold text-white" : "opacity-70 text-gray-400"} cursor-pointer uppercase`}
                       >
                         Recovery Phrase
                       </span>
                       <span
                         onClick={() => setRecoverMode("privateKey")}
-                        className={`${recoverMode === "privateKey" ? "font-semibold" : "opacity-70"} cursor-pointer uppercase`}
+                        className={`${recoverMode === "privateKey" ? "font-semibold text-white" : "opacity-70 text-gray-400"} cursor-pointer uppercase`}
                       >
                         Private Key
                       </span>
@@ -457,14 +466,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                         onChange={(e) => setRecoveryPhrase(e.target.value)}
                         placeholder="Paste your 12 or 24-word recovery phrase here..."
                         aria-label="Recovery Phrase"
-                        className="w-full h-32 p-4 bg-[#083c2c]/50 rounded-none border border-white/80 text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
+                        className="w-full h-32 p-4 bg-[#1a1a1a] rounded-none border border-[#333] text-white placeholder:text-gray-500 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30"
                       />
-                      <p className="text-xs text-gray-300">
+                      <p className="text-xs text-gray-400">
                         Derivation Path (Solana default) →
                         <span className="ml-2 font-mono text-[11px] text-gray-300">
                           m/44&apos;/501&apos;/0&apos;/0&apos;
                         </span>
-                        <span className="ml-1 text-gray-300">
+                        <span className="ml-1 text-gray-400">
                           (compatible with Phantom and other Solana wallets)
                         </span>
                       </p>
@@ -479,7 +488,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                           : "Hidden"
                       }
                       aria-label="Private Key"
-                      className="w-full h-32 p-4 bg-[#083c2c]/50 rounded-none border border-white/80 text-white placeholder:text-gray-300 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
+                      className="w-full h-32 p-4 bg-[#1a1a1a] rounded-none border border-[#333] text-white placeholder:text-gray-500 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30"
                     />
                   )}
                 </div>
@@ -553,7 +562,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           description={passwordSetupDescription}
           mode={passwordSetupMode}
         />
-        <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+        <div
+          className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
+          style={{ backgroundColor: "#1f1f1f" }}
+        >
           {/* Decorative bottom green wave (SVG) */}
           <svg
             className="bottom-wave z-0"
@@ -563,15 +575,15 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
             aria-hidden
           >
             <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="60%" stopColor="#e6ffed" />
-                <stop offset="100%" stopColor="#22c55e" />
+              <linearGradient id="g4" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+                <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
               </linearGradient>
             </defs>
             <path
               d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-              fill="url(#g1)"
+              fill="url(#g4)"
               opacity="0.95"
             />
           </svg>
@@ -585,7 +597,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
               )}
 
               <div className="space-y-6">
-                <div className="bg-[#064e3b]/50 rounded-xl p-6">
+                <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#333]">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <Button
@@ -638,9 +650,9 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       .map((word: string, idx: number) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-2 bg-[#0d3d2d]/50 rounded p-2"
+                          className="flex items-center gap-2 bg-[#0f0f0f] rounded p-2 border border-[#2a2a2a]"
                         >
-                          <span className="text-xs font-semibold text-gray-300 min-w-[1.5rem]">
+                          <span className="text-xs font-semibold text-gray-400 min-w-[1.5rem]">
                             {idx + 1}
                           </span>
                           <span className="text-xs text-white truncate">
@@ -651,7 +663,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <p className="text-[10px] text-gray-300 leading-relaxed border border-gray-300/30 rounded-none p-3">
+                <p className="text-[10px] text-gray-400 leading-relaxed border border-[#333] rounded-none p-3 bg-[#0f0f0f]">
                   THIS APPLICATION IS A NON-CUSTODIAL CRYPTOCURRENCY WALLET.
                   <br />
                   USERS ARE SOLELY RESPONSIBLE FOR THEIR OWN PRIVATE KEYS AND

@@ -567,7 +567,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden" style={{ backgroundColor: '#1f1f1f' }}>
       {/* Decorative bottom green wave (SVG) */}
       <svg
         className="bottom-wave z-0"
@@ -577,15 +577,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         aria-hidden
       >
         <defs>
-          <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="#e6ffed" />
-            <stop offset="60%" stopColor="#c6f6d5" />
-            <stop offset="100%" stopColor="#22c55e" />
+          <linearGradient id="g-dashboard" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+            <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+            <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
           </linearGradient>
         </defs>
         <path
           d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-          fill="url(#g1)"
+          fill="url(#g-dashboard)"
           opacity="0.95"
         />
       </svg>

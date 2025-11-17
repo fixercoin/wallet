@@ -997,7 +997,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+                      <div className="text-right flex-shrink-0 flex items-center gap-3">
                         <div className="flex flex-col items-end">
                           <p className="text-sm font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}
@@ -1010,7 +1010,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                         {percentChange !== null && (
                           <Button
-                            className={`h-7 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 ${
+                            className={`h-8 px-3 rounded-[2px] font-semibold text-xs flex-shrink-0 ${
                               isPositive
                                 ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
                                 : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"

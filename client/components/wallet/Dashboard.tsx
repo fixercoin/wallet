@@ -977,22 +977,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
-                            {percentChange !== null ? (
-                              <span className="flex items-center gap-1">
-                                <span
-                                  className={`text-xs font-medium ${
-                                    isPositive
-                                      ? "text-green-400"
-                                      : "text-red-400"
-                                  }`}
-                                >
-                                  {isPositive ? "+" : ""}
-                                  {percentChange.toFixed(2)}%
-                                </span>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
                           </div>
                         </div>
                       </div>

@@ -997,15 +997,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-semibold text-white whitespace-nowrap">
-                          {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                        <p className="text-xs text-gray-300 whitespace-nowrap">
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
-                            : "$0.00"}
-                        </p>
+                      <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+                        <div className="flex flex-col items-end">
+                          <p className="text-sm font-semibold text-white whitespace-nowrap">
+                            {formatBalance(token.balance || 0, token.symbol)}
+                          </p>
+                          <p className="text-xs text-gray-300 whitespace-nowrap">
+                            {typeof token.price === "number" && token.price > 0
+                              ? `$${formatBalance((token.balance || 0) * token.price)}`
+                              : "$0.00"}
+                          </p>
+                        </div>
+                        {percentChange !== null && (
+                          <Button
+                            className={`h-7 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 ${
+                              isPositive
+                                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+                                : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {isPositive ? "+" : ""}{percentChange.toFixed(2)}%
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

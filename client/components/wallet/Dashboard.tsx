@@ -1000,7 +1000,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
                             }`}
                           >
-                            {isPositive ? "+" : ""}{percentChange.toFixed(2)}%
+                            {isPositive ? "+" : ""}
+                            {percentChange.toFixed(2)}%
                           </Button>
                         )}
                       </div>

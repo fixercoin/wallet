@@ -339,7 +339,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       // Add user tokens if available (avoid duplicates with standard tokens)
       const standardMints = new Set(standardTokens.map((t) => t.address));
       const userTokensNotInStandard = (userTokens || []).filter(
-        (ut) => !standardMints.has(ut.mint),
+        (ut) => !standardMints.has(ut.mint) && ut.symbol !== "USDT",
       );
 
       const combinedTokens = [

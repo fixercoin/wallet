@@ -547,7 +547,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const sortedTokens = useMemo(() => {
     const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens];
+    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();

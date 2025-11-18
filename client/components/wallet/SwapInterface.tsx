@@ -326,7 +326,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     try {
       // Build token list from TOKEN_MINTS constants + user tokens
-      const tokenMintEntries = Object.entries(TOKEN_MINTS);
+      const tokenMintEntries = Object.entries(TOKEN_MINTS).filter(
+        ([symbol]) => symbol !== "USDT"
+      );
       const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
         address: mint,
         symbol,

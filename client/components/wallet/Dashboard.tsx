@@ -546,8 +546,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens];
+    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
+    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
@@ -977,35 +977,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
-                            {percentChange !== null ? (
-                              <span className="flex items-center gap-1">
-                                <span
-                                  className={`text-xs font-medium ${
-                                    isPositive
-                                      ? "text-green-400"
-                                      : "text-red-400"
-                                  }`}
-                                >
-                                  {isPositive ? "+" : ""}
-                                  {percentChange.toFixed(2)}%
-                                </span>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-semibold text-white whitespace-nowrap">
-                          {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                        <p className="text-xs text-gray-300 whitespace-nowrap">
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
-                            : "$0.00"}
-                        </p>
+                      <div className="text-right flex-shrink-0 flex items-center gap-3">
+                        <div className="flex flex-col items-end">
+                          <p className="text-sm font-semibold text-white whitespace-nowrap">
+                            {formatBalance(token.balance || 0, token.symbol)}
+                          </p>
+                          <p className="text-xs text-gray-300 whitespace-nowrap">
+                            {typeof token.price === "number" && token.price > 0
+                              ? `$${formatBalance((token.balance || 0) * token.price)}`
+                              : "$0.00"}
+                          </p>
+                        </div>
+                        {percentChange !== null && (
+                          <Button
+                            className={`h-8 px-3 rounded-[2px] font-semibold text-xs flex-shrink-0 ${
+                              isPositive
+                                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+                                : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {isPositive ? "+" : ""}
+                            {percentChange.toFixed(2)}%
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

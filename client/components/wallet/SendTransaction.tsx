@@ -226,7 +226,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     // Show SOL first, then tokens with positive balance; always include FIXERCOIN and USDC
     const sol = tokens.find((t) => t.symbol === "SOL");
     const rest = tokens
-      .filter((t) => t.symbol !== "SOL")
+      .filter((t) => t.symbol !== "SOL" && t.symbol !== "USDT")
       .filter(
         (t) =>
           (t.balance || 0) > 0 ||

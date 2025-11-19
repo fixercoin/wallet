@@ -17,12 +17,6 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import {
-  setWalletPassword,
-  doesWalletRequirePassword,
-  markWalletAsPasswordProtected,
-  encryptStoredWalletsIfNeeded,
-} from "@/lib/wallet-password";
 import bs58 from "bs58";
 
 interface SettingsProps {

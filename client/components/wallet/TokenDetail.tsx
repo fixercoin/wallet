@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -163,14 +164,59 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
           {/* Chart and actions */}
           <div className="px-4 pb-4 space-y-3">
+            {/* Trading Chart Section */}
             <div className="rounded-lg overflow-hidden border-0 bg-transparent">
               <div className="px-3 pt-3 text-sm font-medium text-foreground">
-                Buys vs Sells (5m �� 24h)
+                Trading Chart
               </div>
-              <div className="p-3">
-                <BuySellLine mint={tokenMint} priceData={priceData} />
+              <div className="p-3 bg-gray-900/50 rounded-lg overflow-hidden">
+                {tokenMint === TOKEN_MINTS.SOL ? (
+                  // Binance SOL/USDT Chart via TradingView
+                  <iframe
+                    key="binance-chart"
+                    src="https://www.tradingview.com/widgetembed/?symbol=BINANCE:SOLUSDT&interval=60&symboledit=1&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=&utm_medium=&utm_campaign="
+                    style={{
+                      width: "100%",
+                      height: "500px",
+                      border: "none",
+                    }}
+                    allow="clipboard-read clipboard-write web-share"
+                  />
+                ) : tokenMint === TOKEN_MINTS.FIXERCOIN ||
+                  tokenMint === TOKEN_MINTS.USDC ? (
+                  // CoinMarketCap DEX Chart for FIXERCOIN/USDT
+                  <iframe
+                    key="cmc-fixercoin-chart"
+                    src="https://coinmarketcap.com/dexscan/solana/H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump_EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                    style={{
+                      width: "100%",
+                      height: "500px",
+                      border: "none",
+                    }}
+                    allow="clipboard-read clipboard-write web-share"
+                  />
+                ) : tokenMint ===
+                  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump" ? (
+                  // CoinMarketCap DEX Chart for LOCKER/USDT
+                  <iframe
+                    key="cmc-locker-chart"
+                    src="https://coinmarketcap.com/dexscan/solana/EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump_EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                    style={{
+                      width: "100%",
+                      height: "500px",
+                      border: "none",
+                    }}
+                    allow="clipboard-read clipboard-write web-share"
+                  />
+                ) : (
+                  // Fallback Buys vs Sells chart for other tokens
+                  <div>
+                    <BuySellLine mint={tokenMint} priceData={priceData} />
+                  </div>
+                )}
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}

@@ -900,7 +900,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               Token Address
             </Label>
             <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-sm">
-              {tokenAddress}
+              {tokenAddress.length > 10
+                ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
+                : tokenAddress}
             </div>
           </div>
 
@@ -982,25 +984,19 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="p-4 bg-gray-700 border border-gray-600 rounded-none space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Total SOL Needed:</span>
-              <span className="font-bold text-white">
-                ◎ {totalSOLNeeded.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Total Fees (2%):</span>
-              <span className="font-bold text-white">
-                ◎ {totalFees.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm pt-2 border-t border-gray-600">
-              <span className="text-gray-300">Your SOL Balance:</span>
+              <span className="text-gray-300">Available SOL:</span>
               <span
                 className={`font-bold ${
                   canAfford ? "text-green-400" : "text-red-400"
                 }`}
               >
                 ◎ {solBalance.toFixed(4)}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm pt-2 border-t border-gray-600">
+              <span className="text-gray-300">Required SOL:</span>
+              <span className="font-bold text-white">
+                ◎ {totalSOLNeeded.toFixed(4)}
               </span>
             </div>
             {!canAfford && (

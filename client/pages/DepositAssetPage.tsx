@@ -151,16 +151,6 @@ export default function DepositAssetPage() {
           </Card>
         </div>
 
-        {/* Back Button */}
-        <div className="px-4 sm:px-0 mt-6">
-          <Button
-            onClick={() => navigate(-1)}
-            variant="outline"
-            className="w-full"
-          >
-            Back to Assets
-          </Button>
-        </div>
       </div>
     </div>
   );

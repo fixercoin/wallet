@@ -74,11 +74,6 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
 
   const handlePasswordUnlocked = () => {
     setShowPasswordDialog(false);
-    // reset inactivity timer on successful unlock
-    if (idleTimerRef.current) {
-      window.clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = null;
-    }
   };
 
   if (isChecking) {

@@ -137,10 +137,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const handleConfirmWallet = async () => {
     if (!generatedWallet) return;
 
-    // Show password setup for new wallet creation
-    setPendingWallet(generatedWallet);
-    setPasswordSetupMode("create");
-    setShowPasswordSetup(true);
+    // Directly set up the wallet without password
+    await handleWalletSetup(generatedWallet);
   };
 
   const handleUnlockWallets = async (password: string) => {

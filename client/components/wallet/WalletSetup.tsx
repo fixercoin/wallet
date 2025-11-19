@@ -16,12 +16,6 @@ import { prefetchWalletAddressData } from "@/lib/services/address-setup";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { PasswordSetup } from "./PasswordSetup";
-import {
-  setWalletPassword,
-  markWalletAsPasswordProtected,
-  doesWalletRequirePassword,
-} from "@/lib/wallet-password";
 
 interface WalletSetupProps {
   onComplete: () => void;

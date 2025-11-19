@@ -190,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -978,7 +978,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-1 sm:gap-3 ml-auto flex-shrink-0">
+                      <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
                         <div>
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}

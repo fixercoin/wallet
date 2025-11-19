@@ -141,31 +141,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
     await handleWalletSetup(generatedWallet);
   };
 
-  const handleUnlockWallets = async (password: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const success = await unlockWithPassword(password);
-
-      if (success) {
-        setWalletPassword(password);
-        toast({
-          title: "Wallets Unlocked",
-          description: "Your wallets have been decrypted successfully.",
-        });
-        setShowPasswordSetup(false);
-        onComplete();
-      } else {
-        setError("Invalid password. Please try again.");
-      }
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to unlock wallets",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const copyFullMnemonic = async () => {
     if (!generatedWallet?.mnemonic) return;

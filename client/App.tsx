@@ -134,6 +134,7 @@ import DappsPage from "./pages/DappsPage";
 import DappView from "./pages/DappView";
 import DappVisit from "./pages/DappVisit";
 import AssetsPage from "./pages/AssetsPage";
+import DepositAssetPage from "./pages/DepositAssetPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 

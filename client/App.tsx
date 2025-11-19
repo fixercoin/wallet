@@ -134,6 +134,7 @@ import DappsPage from "./pages/DappsPage";
 import DappView from "./pages/DappView";
 import DappVisit from "./pages/DappVisit";
 import AssetsPage from "./pages/AssetsPage";
+import DepositAssetPage from "./pages/DepositAssetPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
@@ -162,6 +163,7 @@ function AppRoutes() {
       <Route path="/autobot" element={<AutoBot />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/assets" element={<AssetsPage />} />
+      <Route path="/assets/deposit" element={<DepositAssetPage />} />
       <Route path="/dapps" element={<DappsPage />} />
       <Route path="/dapps/visit" element={<DappVisit />} />
       <Route path="/dapps/view" element={<DappView />} />

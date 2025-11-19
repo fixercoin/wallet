@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
-import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -128,10 +127,11 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   const displayToken = enhancedToken || token;
 
   return (
-    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
-      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 bg-transparent relative overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3">
+    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col">
+      <div className="w-full md:max-w-lg mx-auto relative z-20 flex-1 flex flex-col">
+        {/* Header Section - With padding */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -156,82 +156,34 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
+        </div>
 
-          {/* Token Quick Info Card */}
-          <div className="px-4 py-3">
-            <TokenQuickInfoCard token={displayToken} />
-          </div>
+        {/* Token Quick Info Card - With padding */}
+        <div className="px-4 py-2">
+          <TokenQuickInfoCard token={displayToken} />
+        </div>
 
-          {/* Chart and actions */}
-          <div className="px-4 pb-4 space-y-3">
-            {/* Trading Chart Section */}
-            <div className="rounded-lg overflow-hidden border-0 bg-transparent">
-              <div className="px-3 pt-3 text-sm font-medium text-foreground">
-                Trading Chart
-              </div>
-              <div className="p-3 bg-gray-900/50 rounded-lg overflow-hidden">
-                {tokenMint === TOKEN_MINTS.SOL ? (
-                  // Binance SOL/USDT Chart via TradingView
-                  <iframe
-                    key="binance-chart"
-                    src="https://www.tradingview.com/widgetembed/?symbol=BINANCE:SOLUSDT&interval=60&symboledit=1&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=&utm_medium=&utm_campaign="
-                    style={{
-                      width: "100%",
-                      height: "500px",
-                      border: "none",
-                    }}
-                    allow="clipboard-read clipboard-write web-share"
-                  />
-                ) : tokenMint === TOKEN_MINTS.FIXERCOIN ||
-                  tokenMint === TOKEN_MINTS.USDC ? (
-                  // CoinMarketCap DEX Chart for FIXERCOIN/USDT
-                  <iframe
-                    key="cmc-fixercoin-chart"
-                    src="https://coinmarketcap.com/dexscan/solana/H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump_EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                    style={{
-                      width: "100%",
-                      height: "500px",
-                      border: "none",
-                    }}
-                    allow="clipboard-read clipboard-write web-share"
-                  />
-                ) : tokenMint ===
-                  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump" ? (
-                  // CoinMarketCap DEX Chart for LOCKER/USDT
-                  <iframe
-                    key="cmc-locker-chart"
-                    src="https://coinmarketcap.com/dexscan/solana/EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump_EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                    style={{
-                      width: "100%",
-                      height: "500px",
-                      border: "none",
-                    }}
-                    allow="clipboard-read clipboard-write web-share"
-                  />
-                ) : (
-                  // Fallback Buys vs Sells chart for other tokens
-                  <div>
-                    <BuySellLine mint={tokenMint} priceData={priceData} />
-                  </div>
-                )}
-              </div>
+        {/* Chart Section - Full width on mobile */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Trading Chart Section */}
+          <div className="rounded-lg overflow-hidden border-0 bg-transparent flex flex-col flex-1">
+            <div className="px-4 pt-3 text-sm font-medium text-foreground">
+              Trading Chart
             </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={() => onBuy(tokenMint)}
-                className="h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
-              >
-                BUY
-              </Button>
-              <Button
-                onClick={() => onSell(tokenMint)}
-                className="h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
-              >
-                SELL
-              </Button>
+            <div className="flex-1 overflow-hidden">
+              <BuySellLine mint={tokenMint} priceData={priceData} />
             </div>
           </div>
+        </div>
+
+        {/* QUICK BUY Button - Fixed at bottom with padding */}
+        <div className="px-4 py-4 border-t border-gray-800">
+          <Button
+            onClick={() => onBuy(tokenMint)}
+            className="w-full h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+          >
+            QUICK BUY
+          </Button>
         </div>
       </div>
     </div>

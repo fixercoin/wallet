@@ -103,7 +103,10 @@ export default function AssetsPage() {
                 })}
               </p>
             </div>
-            <Button className="bg-green-600 hover:bg-green-700 text-white rounded-[3px] px-4 py-2 text-sm font-medium">
+            <Button
+              onClick={() => navigate("/assets/deposit")}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-[3px] px-4 py-2 text-sm font-medium"
+            >
               DEPOSITE ASSET
             </Button>
           </div>

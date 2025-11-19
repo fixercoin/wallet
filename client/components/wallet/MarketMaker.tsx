@@ -693,6 +693,17 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
+                  Fee Information
+                </Label>
+                <div className="text-xs text-gray-400 bg-transparent p-3 rounded border border-gray-700/50 space-y-1">
+                  <p>• Buy Fee (1%): Transferred to {FEE_WALLET.slice(0, 8)}...</p>
+                  <p>• Sell Fee (1%): Transferred to fee wallet on auto-sell</p>
+                  <p>• All fees are deducted from transaction amounts</p>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Maker Accounts ({currentSession.makers.length})
                 </Label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">

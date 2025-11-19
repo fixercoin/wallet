@@ -163,6 +163,7 @@ function AppRoutes() {
       <Route path="/autobot" element={<AutoBot />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/assets" element={<AssetsPage />} />
+      <Route path="/assets/deposit" element={<DepositAssetPage />} />
       <Route path="/dapps" element={<DappsPage />} />
       <Route path="/dapps/visit" element={<DappVisit />} />
       <Route path="/dapps/view" element={<DappView />} />

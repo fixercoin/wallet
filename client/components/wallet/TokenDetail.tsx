@@ -170,18 +170,8 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
             <div className="px-4 pt-3 text-sm font-medium text-foreground">
               Trading Chart
             </div>
-            <div className="p-3 bg-gray-900/50 rounded-lg overflow-hidden flex-1 flex flex-col md:m-4 md:mx-4">
-              <iframe
-                key={`dexscreener-chart-${tokenMint}`}
-                src={`https://dexscreener.com/solana/${tokenMint}`}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  minHeight: "400px",
-                  border: "none",
-                }}
-                allow="clipboard-read clipboard-write web-share"
-              />
+            <div className="flex-1 overflow-hidden">
+              <BuySellLine mint={tokenMint} priceData={priceData} />
             </div>
           </div>
         </div>

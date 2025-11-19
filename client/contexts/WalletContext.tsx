@@ -751,61 +751,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setTokens(DEFAULT_TOKENS);
   };
 
-  const unlockWithPassword = async (password: string): Promise<boolean> => {
-    try {
-      // Determine source of encrypted wallets: prefer in-memory ref, fallback to localStorage
-      let encryptedData: any[] = [];
-      try {
-        if (
-          encryptedWalletsRef.current &&
-          encryptedWalletsRef.current.length > 0
-        ) {
-          encryptedData = encryptedWalletsRef.current;
-        } else {
-          const raw = localStorage.getItem(WALLETS_STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            encryptedData = Array.isArray(parsed) ? parsed : [];
-          }
-        }
-      } catch (e) {
-        console.warn(
-          "[WalletContext] Failed to read encrypted wallets from storage:",
-          e,
-        );
-        encryptedData = encryptedWalletsRef.current || [];
-      }
-
-      if (!encryptedData || encryptedData.length === 0) {
-        console.warn("[WalletContext] No encrypted wallets to unlock");
-        return false;
-      }
-
-      // Attempt to decrypt each entry. If any decryption fails, throw to indicate invalid password
-      const decrypted: any[] = [];
-      for (const enc of encryptedData) {
-        try {
-          const dec = decryptWalletData(enc, password);
-          decrypted.push(dec);
-        } catch (err) {
-          console.error("[WalletContext] Decryption failed for an entry:", err);
-          throw new Error("Invalid password or corrupted wallet data");
-        }
-      }
-
-      // Success: store password in session and update state
-      setWalletPassword(password);
-      setWallets(decrypted as any);
-      setNeedsPasswordUnlock(false);
-      if (decrypted.length > 0) setActivePublicKey(decrypted[0].publicKey);
-
-      console.log("[WalletContext] Wallets unlocked successfully");
-      return true;
-    } catch (error) {
-      console.error("[WalletContext] Failed to unlock wallets:", error);
-      return false;
-    }
-  };
 
   const value: WalletContextType = {
     wallet,

@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { BuySellLine } from "./token-detail/BuySellLine";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 interface TokenDetailProps {
   tokenMint: string;

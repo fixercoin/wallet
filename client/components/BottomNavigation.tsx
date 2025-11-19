@@ -58,7 +58,9 @@ export const BottomNavigation = () => {
               <button
                 onClick={() => navigate(item.path)}
                 className={`px-3 sm:px-4 py-2 transition-colors text-sm sm:text-base font-medium rounded-none ${
-                  active ? "text-green-500" : "text-gray-400 hover:text-gray-200"
+                  active
+                    ? "text-green-500"
+                    : "text-gray-400 hover:text-gray-200"
                 }`}
                 aria-label={item.label}
                 title={item.label}

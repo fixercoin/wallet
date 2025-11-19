@@ -64,11 +64,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const isMnemonicWordCountValid =
     recoveryWordCount === 12 || recoveryWordCount === 24;
 
-  const {
-    setWallet,
-    refreshBalance,
-    refreshTokens,
-  } = useWallet();
+  const { setWallet, refreshBalance, refreshTokens } = useWallet();
   const { toast } = useToast();
 
   const handleCreateWallet = () => {
@@ -92,17 +88,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setWallet(wallet);
 
       // Prefetch address data via RPC providers
-      void prefetchWalletAddressData(wallet.publicKey).catch(
-        () => undefined,
-      );
+      void prefetchWalletAddressData(wallet.publicKey).catch(() => undefined);
 
       await refreshBalance().catch(() => {});
       await refreshTokens().catch(() => {});
 
       toast({
         title: "Wallet Created",
-        description:
-          "Your wallet has been created successfully.",
+        description: "Your wallet has been created successfully.",
       });
 
       onComplete();

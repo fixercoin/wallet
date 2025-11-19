@@ -14,66 +14,25 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   children,
 }) => {
   const { needsPasswordUnlock, setNeedsPasswordUnlock } = useWallet();
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const [showPasswordDialog] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   const idleTimerRef = useRef<number | null>(null);
-  const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+
+  // Password unlock dialog is disabled
+  // The wallet will load without prompting for a password
 
   useEffect(() => {
-    const checkPasswordRequirement = async () => {
-      try {
-        const requiresPassword = await doesWalletRequirePassword();
-        if (requiresPassword && needsPasswordUnlock) {
-          setShowPasswordDialog(true);
-        }
-      } catch (error) {
-        console.error("Error checking password requirement:", error);
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkPasswordRequirement();
-  }, [needsPasswordUnlock]);
+    setIsChecking(false);
+  }, []);
 
   useEffect(() => {
-    const requiresPassword = doesWalletRequirePassword();
-    if (!requiresPassword || needsPasswordUnlock) return;
-
-    const resetTimer = () => {
-      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = window.setTimeout(() => {
-        try {
-          clearWalletPassword();
-          setNeedsPasswordUnlock(true);
-          setShowPasswordDialog(true);
-        } catch (e) {}
-      }, IDLE_TIMEOUT_MS);
-    };
-
-    resetTimer();
-
-    const onActivity = () => resetTimer();
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") resetTimer();
-    };
-
-    window.addEventListener("mousemove", onActivity);
-    window.addEventListener("keydown", onActivity);
-    window.addEventListener("touchstart", onActivity);
-    document.addEventListener("visibilitychange", onVisibility);
-
     return () => {
-      window.removeEventListener("mousemove", onActivity);
-      window.removeEventListener("keydown", onActivity);
-      window.removeEventListener("touchstart", onActivity);
-      document.removeEventListener("visibilitychange", onVisibility);
       if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
     };
-  }, [setNeedsPasswordUnlock, needsPasswordUnlock]);
+  }, []);
 
   const handlePasswordUnlocked = () => {
-    setShowPasswordDialog(false);
+    // Dialog is disabled, this callback is not used
   };
 
   if (isChecking) {
@@ -89,7 +48,7 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   return (
     <>
       <PasswordPromptDialog
-        isOpen={showPasswordDialog}
+        isOpen={false}
         onUnlocked={handlePasswordUnlocked}
       />
       {children}

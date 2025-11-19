@@ -93,7 +93,7 @@ export default function DepositAssetPage() {
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                   <code className="text-sm text-green-400 flex-1 break-all font-mono">
-                    {wallet?.publicKey || "Not connected"}
+                    {shortenAddress(wallet?.publicKey || "Not connected")}
                   </code>
                   <button
                     onClick={handleCopyAddress}

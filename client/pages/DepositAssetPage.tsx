@@ -74,10 +74,10 @@ export default function DepositAssetPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">
-              Deposit Asset
+              DEPOSIT ASSET
             </h1>
             <p className="text-sm text-gray-400">
-              Select a token and send it to your wallet address
+              SELECT A TOKEN AND SEND IT TO YOUR WALLET ADDRESS
             </p>
           </div>
         </div>

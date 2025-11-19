@@ -53,6 +53,11 @@ export default function DepositAssetPage() {
     }
   };
 
+  const shortenAddress = (address: string) => {
+    if (!address || address.length <= 12) return address;
+    return `${address.slice(0, 6)}...${address.slice(-6)}`;
+  };
+
   return (
     <div
       className="min-h-screen text-gray-100 pb-20"

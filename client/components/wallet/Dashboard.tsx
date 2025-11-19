@@ -891,26 +891,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-10 w-full">
+          <div className="flex items-center justify-around gap-4 mt-12 w-full px-0">
             <Button
               onClick={onSend}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              SEND
+              <Send className="h-8 w-8 text-[#22c55e]" />
+              <span>SEND</span>
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              RECEIVE
+              <Download className="h-8 w-8 text-[#22c55e]" />
+              <span>RECEIVE</span>
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              SWAP
+              <TrendingUp className="h-8 w-8 text-[#22c55e]" />
+              <span>SWAP</span>
             </Button>
           </div>
         </div>

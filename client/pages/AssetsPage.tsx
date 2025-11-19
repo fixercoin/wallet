@@ -121,7 +121,7 @@ export default function AssetsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2">
                           <span className="font-semibold text-white text-sm">
-                            {token.symbol}
+                            {token.symbol}/USDT
                           </span>
                           <span className="text-xs text-gray-400">
                             ${formatTokenPriceDisplay(token.price)}

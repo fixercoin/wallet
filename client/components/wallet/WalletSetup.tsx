@@ -69,8 +69,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
     setWallet,
     refreshBalance,
     refreshTokens,
-    needsPasswordUnlock,
-    unlockWithPassword,
   } = useWallet();
   const { toast } = useToast();
 

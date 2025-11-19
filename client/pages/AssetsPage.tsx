@@ -8,6 +8,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 
 export default function AssetsPage() {
+  const navigate = useNavigate();
   const { wallet, tokens, isLoading } = useWallet();
 
   const formatTokenPriceDisplay = (price?: number): string => {

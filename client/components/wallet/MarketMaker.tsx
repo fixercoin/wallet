@@ -894,8 +894,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         )}
                       </div>
                       {maker.errorMessage && (
-                        <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-2 rounded border border-red-500/30">
-                          {maker.errorMessage}
+                        <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-3 rounded border border-red-500/30 space-y-1">
+                          <div className="font-semibold">Error:</div>
+                          <div className="text-red-300">{formatErrorMessage(maker.errorMessage)}</div>
+                          <div className="text-red-500/60 text-[10px] mt-1 font-mono break-all">{maker.errorMessage.substring(0, 80)}</div>
                         </div>
                       )}
                     </div>

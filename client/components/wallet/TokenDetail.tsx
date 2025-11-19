@@ -216,14 +216,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               </div>
             </div>
 
-            <div className="rounded-lg overflow-hidden border-0 bg-transparent">
-              <div className="px-3 pt-3 text-sm font-medium text-foreground">
-                Buys vs Sells (5m �� 24h)
-              </div>
-              <div className="p-3">
-                <BuySellLine mint={tokenMint} priceData={priceData} />
-              </div>
-            </div>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => onBuy(tokenMint)}

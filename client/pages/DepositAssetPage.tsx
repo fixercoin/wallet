@@ -77,39 +77,6 @@ export default function DepositAssetPage() {
           </div>
         </div>
 
-        {/* Token Selection */}
-        <div className="px-4 sm:px-0 mb-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">
-            Select Token to Deposit
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {depositTokens.map((token) => (
-              <button
-                key={token.symbol}
-                onClick={() => setSelectedToken(token.symbol)}
-                className={`p-3 rounded-lg border transition-all ${
-                  selectedToken === token.symbol
-                    ? "border-green-400 bg-green-400/10"
-                    : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                }`}
-              >
-                <img
-                  src={token.logo}
-                  alt={token.symbol}
-                  className="h-8 w-8 rounded-full mb-2 mx-auto"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src =
-                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='%23fff' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3C/svg%3E";
-                  }}
-                />
-                <p className="font-semibold text-white text-sm">
-                  {token.symbol}
-                </p>
-                <p className="text-xs text-gray-400">{token.name}</p>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Wallet Address Card */}
         <div className="px-4 sm:px-0 mb-6">

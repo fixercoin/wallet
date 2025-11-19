@@ -45,35 +45,35 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 ACTIVE WALLET
               </div>
               <div className="w-full">
-                <div className="bg-transparent border border-gray-300/30 rounded-none p-4 flex items-center justify-between">
-                  <div className="min-w-0">
+                <div className="bg-transparent border border-gray-300/30 rounded-none p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <div className="text-xs text-gray-600 mb-1 uppercase">
                       ADDRESS
                     </div>
-                    <div className="font-mono text-sm break-all text-gray-900">
-                      {wallet
-                        ? shortenAddress(wallet.publicKey, 8)
-                        : "NO WALLET"}
+                    <div className="font-mono text-sm text-gray-900 flex items-center gap-2">
+                      <span className="truncate">
+                        {wallet
+                          ? shortenAddress(wallet.publicKey, 6)
+                          : "NO WALLET"}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopy}
+                        aria-label="COPY ADDRESS"
+                        className="text-gray-900 hover:bg-white/10 flex-shrink-0 h-6 w-6 p-0"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopy}
-                      aria-label="COPY ADDRESS"
-                      className="text-gray-900 hover:bg-white/10"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      onClick={() => onOpenSetup && onOpenSetup()}
-                      className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm"
-                      aria-label="ADD WALLET"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => onOpenSetup && onOpenSetup()}
+                    className="h-10 w-full sm:w-10 sm:h-10 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm flex-shrink-0"
+                    aria-label="ADD WALLET"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -86,7 +86,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-none flex items-center gap-2"
+                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-none flex flex-col sm:flex-row sm:items-center gap-2"
                   >
                     <button
                       onClick={() => {
@@ -96,26 +96,26 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                         selectWallet(w.publicKey);
                         onBack();
                       }}
-                      className="text-left flex-1"
+                      className="text-left flex-1 min-w-0"
                       title="SELECT THIS WALLET"
                     >
                       <div className="font-medium">
-                        {w.label ? w.label : shortenAddress(w.publicKey, 8)}
+                        {w.label ? w.label : shortenAddress(w.publicKey, 6)}
                       </div>
                       {w.label ? (
-                        <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {shortenAddress(w.publicKey, 8)}
+                        <div className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                          {shortenAddress(w.publicKey, 6)}
                         </div>
                       ) : null}
                     </button>
 
                     {editingKey === w.publicKey ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}
                           placeholder="ENTER NAME"
-                          className="h-8 w-36"
+                          className="h-8 flex-1 sm:w-36"
                         />
                         <Button
                           size="sm"
@@ -124,7 +124,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setEditingKey(null);
                             setLabelInput("");
                           }}
-                          className="h-8 px-2"
+                          className="h-8 px-2 flex-shrink-0"
                           aria-label="SAVE"
                         >
                           <Save className="h-4 w-4" />
@@ -136,7 +136,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setEditingKey(null);
                             setLabelInput("");
                           }}
-                          className="h-8 px-2"
+                          className="h-8 px-2 flex-shrink-0"
                           aria-label="CANCEL"
                         >
                           <X className="h-4 w-4" />
@@ -150,7 +150,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                           setEditingKey(w.publicKey);
                           setLabelInput(w.label || "");
                         }}
-                        className="h-8 px-2"
+                        className="h-8 px-2 w-full sm:w-auto"
                         aria-label="EDIT NAME"
                       >
                         <Edit2 className="h-4 w-4" />

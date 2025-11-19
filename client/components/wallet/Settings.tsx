@@ -13,8 +13,6 @@ import {
   Key,
   Eye,
   EyeOff,
-  Lock,
-  ExternalLink,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";

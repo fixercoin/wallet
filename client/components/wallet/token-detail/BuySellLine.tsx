@@ -7,9 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ScatterChart,
-  Scatter,
-  Cell,
+  ReferenceLine,
 } from "recharts";
 import { birdeyeAPI, BirdeyeToken } from "@/lib/services/birdeye";
 
@@ -32,81 +30,32 @@ const CandlestickTooltip = ({ active, payload }: any) => {
     const data = payload[0].payload;
     const isGreen = data.close >= data.open;
     return (
-      <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 backdrop-blur-md bg-opacity-90">
-        <p className="text-gray-200 text-xs font-medium mb-2">{data.time}</p>
+      <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-4 backdrop-blur-md bg-opacity-95">
+        <p className="text-gray-200 text-xs font-medium mb-3 pb-2 border-b border-gray-700">{data.time}</p>
         <div className="space-y-1 text-xs">
-          <p className="text-blue-400 font-semibold">
-            O: ${data.open.toFixed(8)}
-          </p>
-          <p className={`font-semibold ${isGreen ? "text-emerald-400" : "text-red-400"}`}>
-            H: ${data.high.toFixed(8)}
-          </p>
-          <p className={`font-semibold ${isGreen ? "text-emerald-400" : "text-red-400"}`}>
-            L: ${data.low.toFixed(8)}
-          </p>
-          <p className={`font-semibold ${isGreen ? "text-emerald-400" : "text-red-400"}`}>
-            C: ${data.close.toFixed(8)}
-          </p>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">Open:</span>
+            <span className="text-blue-400 font-semibold">${data.open.toFixed(8)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">High:</span>
+            <span className="text-emerald-400 font-semibold">${data.high.toFixed(8)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">Low:</span>
+            <span className="text-red-400 font-semibold">${data.low.toFixed(8)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">Close:</span>
+            <span className={`font-semibold ${isGreen ? "text-emerald-400" : "text-red-400"}`}>
+              ${data.close.toFixed(8)}
+            </span>
+          </div>
         </div>
       </div>
     );
   }
   return null;
-};
-
-const CustomCandlestick = (props: any) => {
-  const { x, y, width, height, payload } = props;
-
-  if (!payload || payload.length === 0) return null;
-
-  const data = payload[0];
-  const yAxis = props.yAxis;
-  const xAxis = props.xAxis;
-
-  if (!yAxis || !xAxis) return null;
-
-  const yScale = yAxis.scale;
-  const candleWidth = Math.max(width * 0.6, 4);
-  const halfWidth = candleWidth / 2;
-
-  const yOpen = yScale(data.open);
-  const yHigh = yScale(data.high);
-  const yLow = yScale(data.low);
-  const yClose = yScale(data.close);
-
-  const isGreen = data.close >= data.open;
-  const bodyTop = Math.min(yOpen, yClose);
-  const bodyBottom = Math.max(yOpen, yClose);
-  const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
-
-  const wickX = x + width / 2;
-  const bodyX = wickX - halfWidth;
-
-  return (
-    <g>
-      {/* Wick */}
-      <line
-        x1={wickX}
-        y1={yHigh}
-        x2={wickX}
-        y2={yLow}
-        stroke={isGreen ? "#10b981" : "#ef4444"}
-        strokeWidth={1}
-        opacity={0.6}
-      />
-      {/* Body */}
-      <rect
-        x={bodyX}
-        y={bodyTop}
-        width={candleWidth}
-        height={Math.max(bodyHeight, 2)}
-        fill={isGreen ? "#10b981" : "#ef4444"}
-        stroke={isGreen ? "#34d399" : "#fca5a5"}
-        strokeWidth={0.5}
-        opacity={0.85}
-      />
-    </g>
-  );
 };
 
 export const BuySellLine: React.FC<BuySellLineProps> = ({
@@ -203,7 +152,7 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
         </div>
       )}
 
-      {/* Candlestick Chart Section */}
+      {/* Candlestick Chart */}
       <div className="flex-1 rounded-xl bg-gradient-to-b from-gray-900/50 to-gray-900/20 border border-gray-800/50 shadow-xl backdrop-blur-sm overflow-hidden flex flex-col">
         <div className="px-4 pt-3 pb-2">
           <h3 className="text-xs font-semibold text-gray-300">Price Chart (24h)</h3>
@@ -239,21 +188,56 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
                 tick={{ fill: "#9ca3af" }}
                 width={55}
                 domain={["dataMin", "dataMax"]}
-                label={{ value: "Price", angle: -90, position: "insideLeft" }}
               />
-              <Tooltip content={<CandlestickTooltip />} cursor={false} />
+              <Tooltip content={<CandlestickTooltip />} cursor={{ strokeDasharray: "4 4" }} />
+              {/* Render candlesticks as visual elements */}
+              {chartData.map((candle, idx) => {
+                const isGreen = candle.close >= candle.open;
+                return (
+                  <g key={`candle-${idx}`}>
+                    {/* This creates the visual candlestick lines */}
+                    <ReferenceLine
+                      x={candle.time}
+                      stroke={isGreen ? "#10b981" : "#ef4444"}
+                      strokeWidth={1}
+                      opacity={0.3}
+                    />
+                  </g>
+                );
+              })}
+              {/* Close price line */}
               <Line
                 type="monotone"
                 dataKey="close"
-                stroke="transparent"
+                stroke="#3b82f6"
+                strokeWidth={2.5}
                 dot={false}
-                isAnimationActive={false}
-              />
-              <Scatter
-                dataKey="high"
-                shape={<CustomCandlestick />}
                 isAnimationActive={true}
-                animationDuration={600}
+                animationDuration={800}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* High price reference */}
+              <Line
+                type="monotone"
+                dataKey="high"
+                stroke="#10b981"
+                strokeWidth={1}
+                dot={false}
+                isAnimationActive={true}
+                animationDuration={800}
+                opacity={0.4}
+              />
+              {/* Low price reference */}
+              <Line
+                type="monotone"
+                dataKey="low"
+                stroke="#ef4444"
+                strokeWidth={1}
+                dot={false}
+                isAnimationActive={true}
+                animationDuration={800}
+                opacity={0.4}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -263,12 +247,16 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
       {/* Legend */}
       <div className="flex gap-6 justify-center px-2 py-2">
         <div className="flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></span>
+          <span className="text-xs font-medium text-gray-300">Close</span>
+        </div>
+        <div className="flex items-center gap-2">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></span>
-          <span className="text-xs font-medium text-gray-300">Bullish</span>
+          <span className="text-xs font-medium text-gray-300">High</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50"></span>
-          <span className="text-xs font-medium text-gray-300">Bearish</span>
+          <span className="text-xs font-medium text-gray-300">Low</span>
         </div>
       </div>
     </div>

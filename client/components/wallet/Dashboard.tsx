@@ -949,52 +949,45 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between p-4 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
-                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
+                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="font-semibold text-white text-sm">
-                              {token.symbol}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span
-                              className={`text-xs text-gray-300 ${
-                                ["SOL", "FIXERCOIN", "LOCKER"].includes(
-                                  (token.symbol || "").toUpperCase(),
-                                )
-                                  ? "animate-price-pulse"
-                                  : ""
-                              }`}
-                            >
-                              ${formatTokenPriceDisplay(token.price)}
-                            </span>
-                          </div>
-                        </div>
+                        <span className="font-semibold text-white text-xs whitespace-nowrap">
+                          {token.symbol}
+                        </span>
                       </div>
 
-                      <div className="text-right flex-shrink-0 flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                          <p className="text-sm font-semibold text-white whitespace-nowrap">
-                            {formatBalance(token.balance || 0, token.symbol)}
-                          </p>
-                          <p className="text-xs text-gray-300 whitespace-nowrap">
-                            {typeof token.price === "number" && token.price > 0
-                              ? `$${formatBalance((token.balance || 0) * token.price)}`
-                              : "$0.00"}
-                          </p>
-                        </div>
+                      <div className="flex-shrink-0 hidden sm:block">
+                        <span className="text-xs text-gray-300">
+                          ${formatTokenPriceDisplay(token.price)}
+                        </span>
+                      </div>
+
+                      <div className="flex-shrink-0">
+                        <p className="text-xs font-semibold text-white whitespace-nowrap">
+                          {formatBalance(token.balance || 0, token.symbol)}
+                        </p>
+                      </div>
+
+                      <div className="flex-shrink-0 hidden sm:block">
+                        <p className="text-xs text-gray-300 whitespace-nowrap">
+                          {typeof token.price === "number" && token.price > 0
+                            ? `$${formatBalance((token.balance || 0) * token.price)}`
+                            : "$0.00"}
+                        </p>
+                      </div>
+
+                      <div className="flex-shrink-0 ml-auto">
                         {percentChange !== null && (
                           <Button
-                            className={`h-8 px-3 rounded-[2px] font-semibold text-xs flex-shrink-0 ${
+                            className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
                               isPositive
                                 ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
                                 : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"

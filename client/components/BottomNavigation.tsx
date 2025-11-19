@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { Home, Zap, Gift, History } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const BottomNavigation = () => {
@@ -30,11 +30,10 @@ export const BottomNavigation = () => {
   }, []);
 
   const navItems = [
-    { path: "/", label: "HOME" },
-    { path: "/autobot", label: "SNIPPER" },
-    { path: "/airdrop", label: "DROPS" },
-    { path: "/dapps", label: "DAPP" },
-    { path: "/wallet/history", label: "HISTORY" },
+    { path: "/", label: "HOME", icon: Home },
+    { path: "/autobot", label: "SNIPPER", icon: Zap },
+    { path: "/airdrop", label: "DROPS", icon: Gift },
+    { path: "/wallet/history", label: "HISTORY", icon: History },
   ];
 
   const isActive = (path: string) => {
@@ -53,17 +52,19 @@ export const BottomNavigation = () => {
       <div className="flex items-center justify-between h-14 px-1 sm:px-2 md:px-4 gap-1 sm:gap-2 md:gap-4">
         {navItems.map((item) => {
           const active = isActive(item.path);
+          const Icon = item.icon;
 
           return (
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className={`flex-1 flex items-center justify-center py-2 px-1 sm:px-2 rounded-none transition-colors text-xs sm:text-sm font-semibold ${
+              className={`flex-1 flex items-center justify-center py-2 px-1 sm:px-2 rounded-none transition-colors ${
                 active ? "text-green-500" : "text-gray-400 hover:text-gray-200"
               }`}
               aria-label={item.label}
+              title={item.label}
             >
-              {item.label}
+              <Icon size={24} />
             </button>
           );
         })}

@@ -895,6 +895,91 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
+                  Session Summary
+                </Label>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Total Trades
+                    </div>
+                    <div className="text-lg font-bold text-white mt-1">
+                      {currentSession.makers.reduce(
+                        (sum, m) => sum + m.buyTransactions.length,
+                        0,
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Completed Sells
+                    </div>
+                    <div className="text-lg font-bold text-white mt-1">
+                      {currentSession.makers.reduce(
+                        (sum, m) => sum + m.sellTransactions.length,
+                        0,
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Total Profit
+                    </div>
+                    <div
+                      className={`text-lg font-bold mt-1 ${
+                        currentSession.makers.reduce(
+                          (sum, m) => sum + m.profitUSD,
+                          0,
+                        ) >= 0
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {currentSession.makers.reduce(
+                        (sum, m) => sum + m.profitUSD,
+                        0,
+                      ) >= 0 ? "+" : ""}
+                      {currentSession.makers
+                        .reduce((sum, m) => sum + m.profitUSD, 0)
+                        .toFixed(4)}{" "}
+                      ◎
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Win Rate
+                    </div>
+                    <div className="text-lg font-bold text-white mt-1">
+                      {(() => {
+                        const completedTrades = currentSession.makers.reduce(
+                          (sum, m) => sum + m.sellTransactions.length,
+                          0,
+                        );
+                        const profitableTrades = currentSession.makers.reduce(
+                          (sum, m) =>
+                            sum +
+                            m.sellTransactions.filter(
+                              (_, idx) =>
+                                idx < m.buyTransactions.length &&
+                                m.buyTransactions[idx].solAmount <
+                                  m.buyTransactions[idx].solAmount,
+                            ).length,
+                          0,
+                        );
+                        return completedTrades > 0
+                          ? (
+                              (profitableTrades / completedTrades) *
+                              100
+                            ).toFixed(1)
+                          : "0";
+                      })()}
+                      %
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Maker Accounts ({currentSession.makers.length})
                 </Label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">

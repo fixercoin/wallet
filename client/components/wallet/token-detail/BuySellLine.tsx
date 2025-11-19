@@ -83,7 +83,7 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex-1 rounded-lg bg-gradient-to-b from-slate-900 to-slate-800 border border-slate-700 shadow-lg overflow-hidden">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={400}>
           <ComposedChart
             data={chartData}
             margin={{ top: 20, right: 30, left: 0, bottom: 20 }}

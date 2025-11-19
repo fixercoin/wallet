@@ -34,129 +34,72 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
 
-const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+const SuccessDialog: React.FC<{ show: boolean; onClose: () => void }> = ({
+  show,
+  onClose,
+}) => {
   if (!show) return null;
 
-  const colors = [
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-  ];
-
-  const particles = Array.from({ length: 150 }).map((_, i) => {
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 100 + Math.random() * 400;
-    const tx = Math.cos(angle) * distance;
-    const ty = Math.sin(angle) * distance;
-    const width = 4 + Math.random() * 6;
-    const height = 6 + Math.random() * 10;
-    const delay = Math.random() * 0.2;
-    const rotation = Math.random() * 360;
-    const spinSpeed = 1 + Math.random() * 3;
-
-    return {
-      tx,
-      ty,
-      id: i,
-      color: colors[i % colors.length],
-      width,
-      height,
-      delay,
-      rotation,
-      spinSpeed,
-    };
-  });
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <style>{`
-        @keyframes burst-particle {
+        @keyframes slide-in {
           0% {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+          }
+          100% {
             opacity: 1;
-            transform: translate(0, 0) scale(1) rotate(var(--rotation));
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes checkmark-draw {
+          0% {
+            opacity: 0;
+            transform: scale(0);
           }
           50% {
             opacity: 1;
           }
           100% {
-            opacity: 0;
-            transform: translate(var(--tx), var(--ty)) scale(0) rotate(calc(var(--rotation) + 720deg));
+            opacity: 1;
+            transform: scale(1);
           }
         }
-        @keyframes done-pulse {
-          0% {
-            transform: scale(0);
-            opacity: 0;
-          }
-          40% {
-            transform: scale(1.1);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
+        .success-dialog {
+          animation: slide-in 0.4s ease-out forwards;
+        }
+        .checkmark {
+          animation: checkmark-draw 0.6s ease-out 0.2s forwards;
         }
       `}</style>
 
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          style={
-            {
-              position: "fixed",
-              left: "50%",
-              top: "50%",
-              width: `${p.width}px`,
-              height: `${p.height}px`,
-              backgroundColor: p.color,
-              borderRadius: "2px",
-              marginLeft: `-${p.width / 2}px`,
-              marginTop: `-${p.height / 2}px`,
-              "--tx": `${p.tx}px`,
-              "--ty": `${p.ty}px`,
-              "--rotation": `${p.rotation}deg`,
-              animation: `burst-particle 2s ease-out forwards`,
-              animationDelay: `${p.delay}s`,
-            } as any
-          }
-        />
-      ))}
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
 
-      <div
-        style={{
-          position: "fixed",
-          left: "50%",
-          top: "50%",
-          transform: "translate(-50%, -50%)",
-          animation: "done-pulse 0.8s ease-out forwards",
-          zIndex: 60,
-        }}
-      >
-        <div
-          className="text-5xl font-bold text-white drop-shadow-lg"
-          style={{
-            textShadow:
-              "0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.4)",
-            letterSpacing: "0.1em",
-          }}
-        >
-          SUCCESSFUL
+      <div className="relative z-50 w-full max-w-sm bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-emerald-500/40 rounded-lg shadow-2xl success-dialog">
+        <div className="p-8 flex flex-col items-center text-center space-y-6">
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-lg animate-pulse" />
+            <div className="relative w-16 h-16 flex items-center justify-center bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 rounded-full border border-emerald-500/60 checkmark">
+              <Check className="w-8 h-8 text-emerald-400" strokeWidth={3} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-white">Swap Successful!</h2>
+            <p className="text-sm text-slate-300">
+              Your token swap has been completed successfully on the Solana blockchain.
+            </p>
+          </div>
+
+          <div className="w-full pt-4">
+            <Button
+              onClick={onClose}
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-2 rounded-lg transition-all duration-200"
+            >
+              Done
+            </Button>
+          </div>
         </div>
       </div>
     </div>

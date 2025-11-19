@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Zap, Gift, History } from "lucide-react";
+import { Home, Zap, Gift, History, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const BottomNavigation = () => {
@@ -33,6 +33,7 @@ export const BottomNavigation = () => {
     { path: "/", label: "HOME", icon: Home },
     { path: "/autobot", label: "SNIPPER", icon: Zap },
     { path: "/airdrop", label: "DROPS", icon: Gift },
+    { path: "/assets", label: "ASSETS", icon: Coins },
     { path: "/wallet/history", label: "HISTORY", icon: History },
   ];
 

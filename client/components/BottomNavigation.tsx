@@ -68,7 +68,9 @@ export const BottomNavigation = () => {
                 {item.label}
               </button>
               {index < navItems.length - 1 && (
-                <span className="text-gray-500 px-1 md:px-2 lg:px-3 text-xs md:text-sm lg:text-base">|</span>
+                <span className="text-gray-500 px-1 md:px-2 lg:px-3 text-xs md:text-sm lg:text-base">
+                  |
+                </span>
               )}
             </React.Fragment>
           );

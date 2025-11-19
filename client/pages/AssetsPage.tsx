@@ -111,7 +111,9 @@ export default function AssetsPage() {
 
         {sortedTokens.length === 0 ? (
           <div className="text-center py-8 text-gray-300">
-            <p className="text-sm">{isLoading ? "Loading assets..." : "No tokens found"}</p>
+            <p className="text-sm">
+              {isLoading ? "Loading assets..." : "No tokens found"}
+            </p>
           </div>
         ) : (
           <div className="w-full space-y-0">

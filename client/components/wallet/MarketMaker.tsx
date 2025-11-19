@@ -306,7 +306,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       };
 
       const keypair = getKeypair();
-      if (!keypair) throw new Error("Failed to create keypair for fee transfer");
+      if (!keypair)
+        throw new Error("Failed to create keypair for fee transfer");
 
       transaction.sign(keypair);
 
@@ -544,10 +545,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     );
 
                     if (priceQuote) {
-                      const soldSOL = jupiterAPI.parseSwapAmount(
-                        priceQuote.outAmount,
-                        9,
-                      ) || 0;
+                      const soldSOL =
+                        jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
+                        0;
                       const buyPrice = amountSol / tokenAmount;
                       const sellPrice = soldSOL / tokenAmount;
                       const profitPercent =
@@ -555,12 +555,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                       if (profitPercent >= profitTarget) {
                         // Execute sell
-                        const sellSwap =
-                          await jupiterAPI.getSwapTransaction({
-                            quoteResponse: priceQuote,
-                            userPublicKey: wallet.publicKey,
-                            wrapAndUnwrapSol: true,
-                          });
+                        const sellSwap = await jupiterAPI.getSwapTransaction({
+                          quoteResponse: priceQuote,
+                          userPublicKey: wallet.publicKey,
+                          wrapAndUnwrapSol: true,
+                        });
 
                         if (sellSwap && sellSwap.swapTransaction) {
                           const sellSig = await sendSignedTxGeneric(
@@ -782,7 +781,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   Fee Information
                 </Label>
                 <div className="text-xs text-gray-400 bg-transparent p-3 rounded border border-gray-700/50 space-y-1">
-                  <p>• Buy Fee (1%): Transferred to {FEE_WALLET.slice(0, 8)}...</p>
+                  <p>
+                    • Buy Fee (1%): Transferred to {FEE_WALLET.slice(0, 8)}...
+                  </p>
                   <p>• Sell Fee (1%): Transferred to fee wallet on auto-sell</p>
                   <p>• All fees are deducted from transaction amounts</p>
                 </div>
@@ -813,15 +814,25 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         </span>
                       </div>
                       <div className="text-gray-400 mt-2 text-xs space-y-1">
-                        <div>Buys: {maker.buyTransactions.length} | Sells: {maker.sellTransactions.length}</div>
+                        <div>
+                          Buys: {maker.buyTransactions.length} | Sells:{" "}
+                          {maker.sellTransactions.length}
+                        </div>
                         {maker.buyTransactions.length > 0 && (
                           <div className="text-green-400">
-                            Buy Fees: ◎ {maker.buyTransactions.reduce((sum, tx) => sum + tx.feeAmount, 0).toFixed(4)}
+                            Buy Fees: ◎{" "}
+                            {maker.buyTransactions
+                              .reduce((sum, tx) => sum + tx.feeAmount, 0)
+                              .toFixed(4)}
                           </div>
                         )}
                         {maker.sellTransactions.length > 0 && (
                           <div className="text-blue-400">
-                            Sell Fees: ◎ {maker.sellTransactions.reduce((sum, tx) => sum + tx.feeAmount, 0).toFixed(4)} | Profit: ◎ {maker.profitUSD.toFixed(4)}
+                            Sell Fees: ◎{" "}
+                            {maker.sellTransactions
+                              .reduce((sum, tx) => sum + tx.feeAmount, 0)
+                              .toFixed(4)}{" "}
+                            | Profit: ◎ {maker.profitUSD.toFixed(4)}
                           </div>
                         )}
                       </div>

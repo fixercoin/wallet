@@ -787,6 +787,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           </div>
 
           <div className="p-4 bg-gray-700 border border-gray-600 rounded-none space-y-2">
+            <div className="text-xs text-gray-400 mb-3 pb-3 border-b border-gray-600">
+              <p className="font-semibold mb-1">Fee Breakdown:</p>
+              <p>• Buy Fee: 1%</p>
+              <p>• Sell Fee: 1%</p>
+              <p>• Token Account Rent: 0.002 SOL per maker</p>
+            </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-300">Total SOL Needed:</span>
               <span className="font-bold text-white">
@@ -794,7 +800,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Estimated Fees (1%):</span>
+              <span className="text-gray-300">Total Fees:</span>
               <span className="font-bold text-white">
                 ◎ {totalFees.toFixed(4)}
               </span>

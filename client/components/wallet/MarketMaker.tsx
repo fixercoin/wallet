@@ -705,12 +705,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Token Address
             </Label>
-            <Input
-              placeholder="Enter Token Address"
-              value={tokenAddress}
-              onChange={(e) => setTokenAddress(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
+            <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-sm">
+              {tokenAddress}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -729,12 +726,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Order Amount (SOL)
+              Order Amount Range (SOL)
             </Label>
             <div className="space-y-2">
               <div>
                 <Label className="text-xs text-gray-600 font-semibold">
-                  Minimum Amount
+                  From
                 </Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Input
@@ -749,7 +746,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               </div>
               <div>
                 <Label className="text-xs text-gray-600 font-semibold">
-                  Maximum Amount
+                  To
                 </Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Input
@@ -767,107 +764,27 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Delay Between Buys (seconds)
+              Delay Between Buys
             </Label>
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  Minimum Delay
-                </Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={minDelaySeconds}
-                  onChange={(e) => setMinDelaySeconds(e.target.value)}
-                  className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900 mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  Maximum Delay
-                </Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={maxDelaySeconds}
-                  onChange={(e) => setMaxDelaySeconds(e.target.value)}
-                  className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900 mt-1"
-                />
-              </div>
+            <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 text-sm">
+              {FIXED_DELAY_SECONDS} seconds (fixed)
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              What to do with tokens?
+              Profit Target (%) - Auto-Sell at Profit
             </Label>
-            <Select
-              value={sellStrategy}
-              onValueChange={(value: any) => setSellStrategy(value)}
-            >
-              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-none focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
-                <SelectItem value="hold">Hold (Manual Sell Later)</SelectItem>
-                <SelectItem value="auto-profit">
-                  Auto-Sell at Profit %
-                </SelectItem>
-                <SelectItem value="manual-target">
-                  Manual Price Target
-                </SelectItem>
-                <SelectItem value="gradually">Gradually Sell</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              value={profitTargetPercent}
+              onChange={(e) => setProfitTargetPercent(e.target.value)}
+              className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+            />
+            <p className="text-xs text-gray-500">Default: 5% profit target</p>
           </div>
-
-          {sellStrategy === "auto-profit" && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 uppercase text-xs font-semibold">
-                Profit Target (%)
-              </Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={profitTargetPercent}
-                onChange={(e) => setProfitTargetPercent(e.target.value)}
-                className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
-            </div>
-          )}
-
-          {sellStrategy === "manual-target" && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 uppercase text-xs font-semibold">
-                Manual Price Target
-              </Label>
-              <Input
-                type="number"
-                step="0.00001"
-                placeholder="Enter target price in USD"
-                value={manualPriceTarget}
-                onChange={(e) => setManualPriceTarget(e.target.value)}
-                className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
-            </div>
-          )}
-
-          {sellStrategy === "gradually" && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 uppercase text-xs font-semibold">
-                Gradually Sell (%)
-              </Label>
-              <Input
-                type="number"
-                min="0.1"
-                max="100"
-                step="0.1"
-                value={gradualSellPercent}
-                onChange={(e) => setGradualSellPercent(e.target.value)}
-                className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
-            </div>
-          )}
 
           <div className="p-4 bg-gray-700 border border-gray-600 rounded-none space-y-2">
             <div className="flex justify-between text-sm">

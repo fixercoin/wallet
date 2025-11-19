@@ -937,7 +937,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       {currentSession.makers.reduce(
                         (sum, m) => sum + m.profitUSD,
                         0,
-                      ) >= 0 ? "+" : ""}
+                      ) >= 0
+                        ? "+"
+                        : ""}
                       {currentSession.makers
                         .reduce((sum, m) => sum + m.profitUSD, 0)
                         .toFixed(4)}{" "}
@@ -1028,8 +1030,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       {maker.errorMessage && (
                         <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-3 rounded border border-red-500/30 space-y-1">
                           <div className="font-semibold">Error:</div>
-                          <div className="text-red-300">{formatErrorMessage(maker.errorMessage)}</div>
-                          <div className="text-red-500/60 text-[10px] mt-1 font-mono break-all">{maker.errorMessage.substring(0, 80)}</div>
+                          <div className="text-red-300">
+                            {formatErrorMessage(maker.errorMessage)}
+                          </div>
+                          <div className="text-red-500/60 text-[10px] mt-1 font-mono break-all">
+                            {maker.errorMessage.substring(0, 80)}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1092,7 +1098,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                       {trade.entryPrice.toFixed(8)} ◎/token
                                     </div>
                                     <div className="text-[10px] text-gray-500">
-                                      {trade.buyTx.tokenAmount.toFixed(2)} tokens
+                                      {trade.buyTx.tokenAmount.toFixed(2)}{" "}
+                                      tokens
                                     </div>
                                     <div className="text-[10px] text-gray-500">
                                       @ {trade.buyTx.solAmount.toFixed(4)} ◎
@@ -1110,8 +1117,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                         SELL EXIT
                                       </div>
                                       <div className="text-white font-semibold">
-                                        {trade.exitPrice?.toFixed(8) ||
-                                          "N/A"}{" "}
+                                        {trade.exitPrice?.toFixed(8) || "N/A"}{" "}
                                         ◎/token
                                       </div>
                                       <div className="text-[10px] text-gray-500">

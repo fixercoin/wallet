@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { PasswordPromptDialog } from "./PasswordPromptDialog";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface AppWithPasswordPromptProps {
   children: React.ReactNode;
@@ -8,10 +9,8 @@ interface AppWithPasswordPromptProps {
 export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   children,
 }) => {
+  const { needsPasswordUnlock, setNeedsPasswordUnlock } = useWallet();
   const idleTimerRef = useRef<number | null>(null);
-
-  // Password unlock dialog is disabled
-  // The wallet will load without prompting for a password
 
   useEffect(() => {
     return () => {
@@ -20,13 +19,13 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   }, []);
 
   const handlePasswordUnlocked = () => {
-    // Dialog is disabled, this callback is not used
+    setNeedsPasswordUnlock(false);
   };
 
   return (
     <>
       <PasswordPromptDialog
-        isOpen={false}
+        isOpen={needsPasswordUnlock}
         onUnlocked={handlePasswordUnlocked}
       />
       {children}

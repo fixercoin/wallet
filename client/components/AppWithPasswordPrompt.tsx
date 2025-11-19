@@ -8,16 +8,10 @@ interface AppWithPasswordPromptProps {
 export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   children,
 }) => {
-  const [showPasswordDialog] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
   const idleTimerRef = useRef<number | null>(null);
 
   // Password unlock dialog is disabled
   // The wallet will load without prompting for a password
-
-  useEffect(() => {
-    setIsChecking(false);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -28,16 +22,6 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   const handlePasswordUnlocked = () => {
     // Dialog is disabled, this callback is not used
   };
-
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-pulse text-lg text-gray-600">Loading...</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>

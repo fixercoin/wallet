@@ -42,7 +42,9 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_AMOUNT_SOL = 0.002;
 
-const SuccessDialog: React.FC<{ onContinue: () => void }> = ({ onContinue }) => {
+const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
+  onContinue,
+}) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <style>{`
@@ -73,9 +75,12 @@ const SuccessDialog: React.FC<{ onContinue: () => void }> = ({ onContinue }) => 
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900">Transaction Sent!</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Transaction Sent!
+            </h2>
             <p className="text-sm text-gray-600">
-              Your transaction has been successfully submitted to the Solana blockchain.
+              Your transaction has been successfully submitted to the Solana
+              blockchain.
             </p>
           </div>
 

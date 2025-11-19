@@ -88,7 +88,8 @@ const SuccessDialog: React.FC<{ show: boolean; onClose: () => void }> = ({
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-white">Swap Successful!</h2>
             <p className="text-sm text-slate-300">
-              Your token swap has been completed successfully on the Solana blockchain.
+              Your token swap has been completed successfully on the Solana
+              blockchain.
             </p>
           </div>
 
@@ -772,7 +773,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-[2px] border-0 bg-transparent">
-
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
             <Button
@@ -962,11 +962,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   : ""
             }
           >
-            {isLoading ? "Processing..." : isQuoteExpired() ? "Quote Expired - Get New Quote" : "Swap (Smart Route)"}
+            {isLoading
+              ? "Processing..."
+              : isQuoteExpired()
+                ? "Quote Expired - Get New Quote"
+                : "Swap (Smart Route)"}
           </Button>
         </div>
 
-        <SuccessDialog show={showSuccess} onClose={() => setShowSuccess(false)} />
+        <SuccessDialog
+          show={showSuccess}
+          onClose={() => setShowSuccess(false)}
+        />
       </div>
     </div>
   );

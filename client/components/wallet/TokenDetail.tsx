@@ -195,7 +195,8 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
                     }}
                     allow="clipboard-read clipboard-write web-share"
                   />
-                ) : tokenMint === "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump" ? (
+                ) : tokenMint ===
+                  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump" ? (
                   // CoinMarketCap DEX Chart for LOCKER/USDT
                   <iframe
                     key="cmc-locker-chart"

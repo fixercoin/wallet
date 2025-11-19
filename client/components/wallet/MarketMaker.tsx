@@ -726,9 +726,18 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           {maker.status}
                         </span>
                       </div>
-                      <div className="text-gray-400 mt-2 text-xs">
-                        Buys: {maker.buyTransactions.length} | Sells:{" "}
-                        {maker.sellTransactions.length}
+                      <div className="text-gray-400 mt-2 text-xs space-y-1">
+                        <div>Buys: {maker.buyTransactions.length} | Sells: {maker.sellTransactions.length}</div>
+                        {maker.buyTransactions.length > 0 && (
+                          <div className="text-green-400">
+                            Buy Fees: ◎ {maker.buyTransactions.reduce((sum, tx) => sum + tx.feeAmount, 0).toFixed(4)}
+                          </div>
+                        )}
+                        {maker.sellTransactions.length > 0 && (
+                          <div className="text-blue-400">
+                            Sell Fees: ◎ {maker.sellTransactions.reduce((sum, tx) => sum + tx.feeAmount, 0).toFixed(4)} | Profit: ◎ {maker.profitUSD.toFixed(4)}
+                          </div>
+                        )}
                       </div>
                       {maker.errorMessage && (
                         <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-2 rounded border border-red-500/30">

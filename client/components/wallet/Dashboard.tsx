@@ -741,6 +741,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
+        {/* Token Search - At Top */}
+        <div className="w-full mb-4 px-4 sm:px-0">
+          <TokenSearch
+            className="w-full"
+            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
+          />
+        </div>
+
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
@@ -1009,14 +1017,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-sm">No tokens found</p>
             </div>
           )}
-        </div>
-
-        {/* Token Search - Above Token Cards */}
-        <div className="w-full mb-4 px-4 sm:px-0">
-          <TokenSearch
-            className="w-full"
-            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
-          />
         </div>
       </div>
 

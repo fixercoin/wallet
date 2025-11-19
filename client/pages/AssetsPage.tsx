@@ -52,7 +52,30 @@ export default function AssetsPage() {
     return arr;
   }, [tokens]);
 
+  const getTotalPortfolioValue = (): number => {
+    let total = 0;
+
+    tokens.forEach((token) => {
+      if (
+        typeof token.balance === "number" &&
+        typeof token.price === "number" &&
+        isFinite(token.balance) &&
+        isFinite(token.price) &&
+        token.balance > 0 &&
+        token.price > 0
+      ) {
+        const tokenValue = token.balance * token.price;
+        total += tokenValue;
+      }
+    });
+
+    if (!isFinite(total) || total <= 0) return 0;
+    return total;
+  };
+
   if (!wallet) return null;
+
+  const totalBalance = getTotalPortfolioValue();
 
   return (
     <div

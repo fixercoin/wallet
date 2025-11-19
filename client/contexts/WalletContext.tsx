@@ -21,18 +21,6 @@ import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
-import {
-  encryptWalletData,
-  decryptWalletData,
-  isEncryptedWalletStorage,
-  isPlaintextWalletStorage,
-} from "@/lib/secure-storage";
-import {
-  getWalletPassword,
-  setWalletPassword,
-  markWalletAsPasswordProtected,
-  doesWalletRequirePassword,
-} from "@/lib/wallet-password";
 
 interface WalletContextType {
   wallet: WalletData | null; // active

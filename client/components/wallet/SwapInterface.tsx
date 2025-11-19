@@ -962,13 +962,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   : ""
             }
           >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isQuoteExpired() ? (
-              "Quote Expired - Get New Quote"
-            ) : (
-              "Swap (Smart Route)"
-            )}
+            {isLoading ? "Processing..." : isQuoteExpired() ? "Quote Expired - Get New Quote" : "Swap (Smart Route)"}
           </Button>
         </div>
 

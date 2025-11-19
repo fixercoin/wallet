@@ -743,54 +743,69 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
-                    aria-label="Wallet menu"
-                  >
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onSelect={() => onAccounts?.()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Wallet className="h-4 w-4" />
-                    <span>MY-WALLET</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onBurn}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Flame className="h-4 w-4" />
-                    <span>SPL-BURN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onLock}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK-SPL</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={onSettings}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>SETTINGS</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              {/* Action buttons */}
+              <Button
+                onClick={onSettings}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onBurn}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Burn"
+                title="Burn"
+              >
+                <Flame className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onLock}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Lock"
+                title="Lock"
+              >
+                <Lock className="h-4 w-4" />
+              </Button>
             </div>
+            {/* Dropdown menu - moved to right */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                  aria-label="Wallet menu"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => onAccounts?.()}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>MY-WALLET</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="text-center space-y-2">
+
+          {/* Token Search - Under Sign Line */}
+          <div className="w-full mb-4 px-0">
+            <TokenSearch
+              className="w-full"
+              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-[2.5px]"
+            />
+          </div>
+
+          <div className="text-center space-y-2 mt-8">
             {wallet
               ? (() => {
                   const total = getTotalPortfolioValue();
@@ -887,7 +902,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
             <Button
               onClick={onSend}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
               <Send className="h-8 w-8 text-[#22c55e]" />
               <span>SEND</span>
@@ -895,7 +910,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <Button
               onClick={onReceive}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
               <Download className="h-8 w-8 text-[#22c55e]" />
               <span>RECEIVE</span>
@@ -903,20 +918,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <Button
               onClick={onSwap}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
               <TrendingUp className="h-8 w-8 text-[#22c55e]" />
               <span>SWAP</span>
             </Button>
           </div>
-        </div>
-
-        {/* Token Search - Under Balance Card */}
-        <div className="w-full mb-4 mt-4 px-4 sm:px-0">
-          <TokenSearch
-            className="w-full"
-            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
-          />
         </div>
 
         {/* Tokens List */}
@@ -966,20 +973,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
                           {token.symbol}/USDT
                         </span>
-                      </div>
-
-                      <div className="flex-shrink-0 hidden sm:block">
-                        <span className="text-xs text-gray-300">
-                          ${formatTokenPriceDisplay(token.price)}
-                        </span>
-                      </div>
-
-                      <div className="flex-shrink-0 hidden sm:block">
-                        <p className="text-xs text-gray-300 whitespace-nowrap">
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
-                            : "$0.00"}
-                        </p>
                       </div>
 
                       <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">

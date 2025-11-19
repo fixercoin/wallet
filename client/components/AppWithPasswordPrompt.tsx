@@ -8,7 +8,6 @@ interface AppWithPasswordPromptProps {
 export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   children,
 }) => {
-  const { needsPasswordUnlock, setNeedsPasswordUnlock } = useWallet();
   const [showPasswordDialog] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const idleTimerRef = useRef<number | null>(null);

@@ -289,99 +289,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
-              {/* Password Card */}
-              <Card className="w-full bg-transparent rounded-[2px]">
-                <CardContent className="p-0">
-                  <button
-                    onClick={() => setShowPasswordForm(!showPasswordForm)}
-                    className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
-                  >
-                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
-                      <Lock className="h-5 w-5" />
-                      <span className="font-medium">
-                        {passwordEnabled ? "PASSWORD ENABLED" : "SET PASSWORD"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {passwordEnabled && (
-                        <span className="text-xs bg-green-500/20 text-green-600 px-2 py-1 rounded-none">
-                          Active
-                        </span>
-                      )}
-                      <Eye className="h-4 w-4 text-gray-600" />
-                    </div>
-                  </button>
-                  {showPasswordForm && (
-                    <div className="px-4 pb-4 space-y-3">
-                      <div>
-                        <label className="text-xs text-gray-600 font-semibold uppercase block mb-2">
-                          Password
-                        </label>
-                        <Input
-                          type={showPasswordField ? "text" : "password"}
-                          placeholder="Enter password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-[2px]"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-600 font-semibold uppercase block mb-2">
-                          Confirm Password
-                        </label>
-                        <Input
-                          type={showPasswordField ? "text" : "password"}
-                          placeholder="Confirm password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-[2px]"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="showPassword"
-                          checked={showPasswordField}
-                          onChange={(e) =>
-                            setShowPasswordField(e.target.checked)
-                          }
-                          className="w-4 h-4 rounded-[2px]"
-                        />
-                        <label
-                          htmlFor="showPassword"
-                          className="text-xs text-gray-600"
-                        >
-                          Show password
-                        </label>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleSetPassword}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-[2px]"
-                        >
-                          Set Password
-                        </Button>
-                        <Button
-                          onClick={() => setShowPasswordForm(false)}
-                          variant="outline"
-                          className="flex-1 bg-transparent text-gray-900 rounded-[2px]"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {passwordEnabled && !showPasswordForm && (
-                    <div className="px-4 pb-4">
-                      <p className="text-xs text-green-600">
-                        Password protection is active. You will be prompted for
-                        your password when you open the app.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Recovery Phrase Card */}
               <Card className="w-full bg-transparent rounded-[2px]">
@@ -507,32 +414,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
-              {/* DApp Connected Card */}
-              <Card className="w-full bg-transparent rounded-[2px]">
-                <CardContent className="p-0">
-                  <div className="w-full flex items-center justify-between p-4 rounded-none">
-                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
-                      <ExternalLink className="h-5 w-5" />
-                      <span className="font-medium">DAPP CONNECTIONS</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href="/dapps"
-                        className="text-xs text-gray-700 hover:underline"
-                      >
-                        Manage
-                      </a>
-                    </div>
-                  </div>
-                  <div className="px-4 pb-4">
-                    <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                      Shows dapps this wallet has connected to. Manage
-                      connections on the DApps page.
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>

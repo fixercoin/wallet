@@ -119,11 +119,11 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between">
+                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
                       <p className="font-semibold text-white text-sm whitespace-nowrap">
                         {token.symbol}/USDT
                       </p>
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-3">
                         <p className="text-xs text-gray-400 whitespace-nowrap">
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>

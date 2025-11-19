@@ -49,7 +49,7 @@ export const BottomNavigation = () => {
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-center h-14 px-1 sm:px-2 md:px-4">
+      <div className="flex items-center justify-center h-14 px-1 sm:px-2 md:px-4 flex-wrap">
         {navItems.map((item, index) => {
           const active = isActive(item.path);
 
@@ -57,7 +57,7 @@ export const BottomNavigation = () => {
             <React.Fragment key={item.label}>
               <button
                 onClick={() => navigate(item.path)}
-                className={`px-3 sm:px-4 py-2 transition-colors text-sm sm:text-base font-medium rounded-none ${
+                className={`px-2 sm:px-3 py-1 transition-colors text-xs font-medium rounded-none ${
                   active
                     ? "text-green-500"
                     : "text-gray-400 hover:text-gray-200"
@@ -68,7 +68,7 @@ export const BottomNavigation = () => {
                 {item.label}
               </button>
               {index < navItems.length - 1 && (
-                <span className="text-gray-500 px-2">|</span>
+                <span className="text-gray-500 px-1 text-xs">|</span>
               )}
             </React.Fragment>
           );

@@ -62,33 +62,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
 
-  // When the app requests a password unlock (lock state), clear in-memory wallets
-  // and reload encrypted wallet blobs from localStorage so unlockWithPassword can decrypt them.
-  useEffect(() => {
-    if (!needsPasswordUnlock) return;
-    try {
-      const raw = localStorage.getItem(WALLETS_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          encryptedWalletsRef.current = parsed;
-        }
-      }
-    } catch (e) {
-      console.warn(
-        "[WalletContext] Failed to reload encrypted wallets on lock:",
-        e,
-      );
-    }
-
-    // Clear sensitive in-memory wallet material
-    setWallets([]);
-    setActivePublicKey(null);
-    setBalance(0);
-    balanceRef.current = 0;
-    setTokens(DEFAULT_TOKENS);
-    // keep needsPasswordUnlock as-is; UI will show prompt
-  }, [needsPasswordUnlock]);
 
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {

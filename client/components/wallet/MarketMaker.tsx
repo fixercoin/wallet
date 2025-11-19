@@ -77,6 +77,53 @@ const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const FIXED_DELAY_SECONDS = 10;
 const FIXED_PROFIT_PERCENT = 5;
 
+// Helper function to calculate entry price (SOL per token)
+const getEntryPrice = (solAmount: number, tokenAmount: number): number => {
+  if (tokenAmount === 0) return 0;
+  return solAmount / tokenAmount;
+};
+
+// Helper function to calculate exit price (SOL per token)
+const getExitPrice = (solAmount: number, tokenAmount: number): number => {
+  if (tokenAmount === 0) return 0;
+  return solAmount / tokenAmount;
+};
+
+// Helper function to get trade pairs (buy + corresponding sell)
+const getTradePairs = (
+  buyTransactions: Transaction[],
+  sellTransactions: Transaction[],
+): Array<{
+  buyTx: Transaction;
+  sellTx?: Transaction;
+  entryPrice: number;
+  exitPrice?: number;
+  profitSOL?: number;
+  profitPercent?: number;
+}> => {
+  return buyTransactions.map((buyTx, index) => {
+    const sellTx = sellTransactions[index];
+    const entryPrice = getEntryPrice(buyTx.solAmount, buyTx.tokenAmount);
+    const exitPrice = sellTx
+      ? getExitPrice(sellTx.solAmount, sellTx.tokenAmount)
+      : undefined;
+    const profitSOL = sellTx ? sellTx.solAmount - buyTx.solAmount : undefined;
+    const profitPercent =
+      exitPrice && entryPrice > 0
+        ? ((exitPrice - entryPrice) / entryPrice) * 100
+        : undefined;
+
+    return {
+      buyTx,
+      sellTx,
+      entryPrice,
+      exitPrice,
+      profitSOL,
+      profitPercent,
+    };
+  });
+};
+
 // Helper function to format error messages for display
 const formatErrorMessage = (error: string): string => {
   if (!error) return "Unknown error occurred";

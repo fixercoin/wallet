@@ -102,13 +102,9 @@ export default function AssetsPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8 text-gray-400">
-            <p className="text-sm">Loading assets...</p>
-          </div>
-        ) : sortedTokens.length === 0 ? (
+        {sortedTokens.length === 0 ? (
           <div className="text-center py-8 text-gray-300">
-            <p className="text-sm">No tokens found</p>
+            <p className="text-sm">{isLoading ? "Loading assets..." : "No tokens found"}</p>
           </div>
         ) : (
           <div className="w-full space-y-0">
@@ -116,26 +112,18 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full flex items-center justify-between px-4 py-4 rounded-none sm:rounded-[2px]">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-sm">
-                          {token.symbol}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Amount: {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                      </div>
-
-                      <div className="flex-shrink-0 text-right">
-                        <p className="text-sm font-semibold text-white whitespace-nowrap">
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
-                            : "$0.00"}
-                        </p>
-                        <p className="text-xs text-gray-400 whitespace-nowrap mt-1">
-                          {token.symbol}/USDT
-                        </p>
-                      </div>
+                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px]">
+                      <p className="font-semibold text-white text-sm mb-2">
+                        {token.symbol}/USDT
+                      </p>
+                      <p className="text-xs text-gray-400 mb-1">
+                        Token amount: {formatBalance(token.balance || 0, token.symbol)}
+                      </p>
+                      <p className="text-sm font-semibold text-green-400">
+                        Token balance: {typeof token.price === "number" && token.price > 0
+                          ? `$${formatBalance((token.balance || 0) * token.price)}`
+                          : "$0.00"}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

@@ -170,57 +170,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       if (stored) {
         const parsed = JSON.parse(stored) as any[];
 
-        // Check if wallets are encrypted
-        const firstWallet = parsed?.[0];
-        if (isEncryptedWalletStorage(firstWallet)) {
-          console.log("[WalletContext] Encrypted wallets detected");
-          // Store encrypted wallets and mark as needing unlock
-          encryptedWalletsRef.current = parsed;
-          setNeedsPasswordUnlock(true);
-
-          // Try to unlock with existing password if available
-          const password = getWalletPassword();
-          if (password) {
-            try {
-              const decrypted = parsed.map((enc) =>
-                decryptWalletData(enc, password),
-              );
-              setWallets(decrypted);
-              if (decrypted.length > 0)
-                setActivePublicKey(decrypted[0].publicKey);
-              setNeedsPasswordUnlock(false);
-              console.log(
-                "[WalletContext] Wallets unlocked with stored password",
-              );
-            } catch (e) {
-              console.warn(
-                "[WalletContext] Failed to unlock with stored password:",
-                e,
-              );
-              setNeedsPasswordUnlock(true);
-            }
-          } else {
-            console.log(
-              "[WalletContext] No password in session, awaiting unlock",
-            );
+        // Load wallets as plaintext (encryption disabled)
+        const coerced: WalletData[] = (parsed || []).map((p) => {
+          const obj = { ...p } as any;
+          if (obj.secretKey && Array.isArray(obj.secretKey)) {
+            obj.secretKey = Uint8Array.from(obj.secretKey);
+          } else if (obj.secretKey && typeof obj.secretKey === "object") {
+            const vals = Object.values(obj.secretKey).filter(
+              (v) => typeof v === "number",
+            ) as number[];
+            if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
           }
-        } else {
-          // Plaintext wallets - coerce and load normally
-          const coerced: WalletData[] = (parsed || []).map((p) => {
-            const obj = { ...p } as any;
-            if (obj.secretKey && Array.isArray(obj.secretKey)) {
-              obj.secretKey = Uint8Array.from(obj.secretKey);
-            } else if (obj.secretKey && typeof obj.secretKey === "object") {
-              const vals = Object.values(obj.secretKey).filter(
-                (v) => typeof v === "number",
-              ) as number[];
-              if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
-            }
-            return obj as WalletData;
-          });
-          setWallets(coerced);
-          if (coerced.length > 0) setActivePublicKey(coerced[0].publicKey);
-        }
+          return obj as WalletData;
+        });
+        setWallets(coerced);
+        if (coerced.length > 0) setActivePublicKey(coerced[0].publicKey);
       }
     } catch (error) {
       console.error("Error loading wallets from storage:", error);

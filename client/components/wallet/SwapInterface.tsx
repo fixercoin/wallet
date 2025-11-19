@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterV6API } from "@/lib/services/jupiter-v6";
 import { rpcCall } from "@/lib/rpc-utils";

@@ -768,13 +768,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {/* Action buttons - moved to right */}
             <div className="flex items-center gap-3">
               <Button
-                onClick={onSettings}
+                onClick={onLock}
                 size="sm"
                 className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Settings"
-                title="Settings"
+                aria-label="Lock"
+                title="Lock"
               >
-                <Settings className="h-4 w-4" />
+                <Lock className="h-4 w-4" />
               </Button>
               <Button
                 onClick={onBurn}
@@ -786,13 +786,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Flame className="h-4 w-4" />
               </Button>
               <Button
-                onClick={onLock}
+                onClick={onSettings}
                 size="sm"
                 className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Lock"
-                title="Lock"
+                aria-label="Settings"
+                title="Settings"
               >
-                <Lock className="h-4 w-4" />
+                <Settings className="h-4 w-4" />
               </Button>
             </div>
           </div>

@@ -338,8 +338,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
-
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>

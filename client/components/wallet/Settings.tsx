@@ -154,7 +154,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
     onBack();
   };
 
-
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Decorative curved accent background elements */}
@@ -220,57 +219,57 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               {/* Recovery Phrase Card */}
               <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
                 <CardContent className="p-0">
-                <button
-                  onClick={() => {
-                    if (wallet?.mnemonic) {
-                      setRecoveryPhrase(wallet.mnemonic);
-                      setShowRecoveryPhrase(!showRecoveryPhrase);
-                      setShowPrivateKey(false);
-                    } else {
-                      toast({
-                        title: "Recovery Phrase Unavailable",
-                        description:
-                          "Recovery phrase is not available for this wallet",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
-                >
-                  <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
-                    <Key className="h-5 w-5" />
-                    <span className="font-medium">RECOVERY PHRASE</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {showRecoveryPhrase && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyRecoveryPhrase();
-                        }}
-                        className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {showRecoveryPhrase ? (
-                      <EyeOff className="h-4 w-4 text-gray-600" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-600" />
-                    )}
-                  </div>
-                </button>
-                {showRecoveryPhrase && (
-                  <div className="px-4 pb-4">
-                    <Textarea
-                      value={recoveryPhrase}
-                      readOnly
-                      className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
-                    />
-                  </div>
-                )}
+                  <button
+                    onClick={() => {
+                      if (wallet?.mnemonic) {
+                        setRecoveryPhrase(wallet.mnemonic);
+                        setShowRecoveryPhrase(!showRecoveryPhrase);
+                        setShowPrivateKey(false);
+                      } else {
+                        toast({
+                          title: "Recovery Phrase Unavailable",
+                          description:
+                            "Recovery phrase is not available for this wallet",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
+                  >
+                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
+                      <Key className="h-5 w-5" />
+                      <span className="font-medium">RECOVERY PHRASE</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {showRecoveryPhrase && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyRecoveryPhrase();
+                          }}
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {showRecoveryPhrase ? (
+                        <EyeOff className="h-4 w-4 text-gray-600" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-600" />
+                      )}
+                    </div>
+                  </button>
+                  {showRecoveryPhrase && (
+                    <div className="px-4 pb-4">
+                      <Textarea
+                        value={recoveryPhrase}
+                        readOnly
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
+                      />
+                    </div>
+                  )}
                   {!wallet?.mnemonic && (
                     <div className="px-4 pb-4">
                       <p className="text-xs text-red-400">
@@ -286,47 +285,47 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               {/* Private Key Card */}
               <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
                 <CardContent className="p-0">
-                <button
-                  onClick={() => {
-                    if (privateKeyBase58) {
-                      setShowPrivateKey(!showPrivateKey);
-                      setShowRecoveryPhrase(false);
-                    } else {
-                      toast({
-                        title: "Private Key Unavailable",
-                        description:
-                          "Private key is not available for this wallet",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
-                >
-                  <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
-                    <Key className="h-5 w-5" />
-                    <span className="font-medium">PRIVATE KEY</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {showPrivateKey && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyPrivateKey();
-                        }}
-                        className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {showPrivateKey ? (
-                      <EyeOff className="h-4 w-4 text-gray-600" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-600" />
-                    )}
-                  </div>
-                </button>
+                  <button
+                    onClick={() => {
+                      if (privateKeyBase58) {
+                        setShowPrivateKey(!showPrivateKey);
+                        setShowRecoveryPhrase(false);
+                      } else {
+                        toast({
+                          title: "Private Key Unavailable",
+                          description:
+                            "Private key is not available for this wallet",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
+                  >
+                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
+                      <Key className="h-5 w-5" />
+                      <span className="font-medium">PRIVATE KEY</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {showPrivateKey && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyPrivateKey();
+                          }}
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {showPrivateKey ? (
+                        <EyeOff className="h-4 w-4 text-gray-600" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-600" />
+                      )}
+                    </div>
+                  </button>
                   {showPrivateKey && (
                     <div className="px-4 pb-4">
                       <Textarea

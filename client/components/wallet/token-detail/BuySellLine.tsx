@@ -1,5 +1,12 @@
 import React, { useMemo } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
 
 interface BuySellLineProps {
   mint: string;
@@ -96,7 +103,10 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
                 }}
               >
                 {buysellData.data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip content={<CustomPieTooltip />} />
@@ -108,14 +118,21 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
         <div className="mt-4 space-y-3 text-sm">
           <div className="bg-slate-700/30 rounded px-3 py-2 border border-slate-600">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-slate-300 font-semibold">Buy/Sell Ratio</span>
+              <span className="text-slate-300 font-semibold">
+                Buy/Sell Ratio
+              </span>
               <span className="text-lg font-bold text-slate-100">
                 {buysellData.data[0].value}% / {buysellData.data[1].value}%
               </span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed">
-              This token shows {buysellData.data[0].value > buysellData.data[1].value ? "more buying" : "more selling"} activity. 
-              Buyers are {buysellData.data[0].value > 50 ? "dominating" : "lagging behind"} the market.
+              This token shows{" "}
+              {buysellData.data[0].value > buysellData.data[1].value
+                ? "more buying"
+                : "more selling"}{" "}
+              activity. Buyers are{" "}
+              {buysellData.data[0].value > 50 ? "dominating" : "lagging behind"}{" "}
+              the market.
             </p>
           </div>
 

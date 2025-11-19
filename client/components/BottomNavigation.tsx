@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Zap, Gift, History, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const BottomNavigation = () => {
@@ -30,11 +29,11 @@ export const BottomNavigation = () => {
   }, []);
 
   const navItems = [
-    { path: "/", label: "HOME", icon: Home },
-    { path: "/autobot", label: "SNIPPER", icon: Zap },
-    { path: "/airdrop", label: "DROPS", icon: Gift },
-    { path: "/assets", label: "ASSETS", icon: Coins },
-    { path: "/wallet/history", label: "HISTORY", icon: History },
+    { path: "/", label: "HOME" },
+    { path: "/autobot", label: "BOOST" },
+    { path: "/airdrop", label: "AIRDROP" },
+    { path: "/wallet/history", label: "HISTORY" },
+    { path: "/assets", label: "ASSET" },
   ];
 
   const isActive = (path: string) => {
@@ -50,23 +49,26 @@ export const BottomNavigation = () => {
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-between h-14 px-1 sm:px-2 md:px-4 gap-1 sm:gap-2 md:gap-4">
-        {navItems.map((item) => {
+      <div className="flex items-center justify-center h-14 px-1 sm:px-2 md:px-4">
+        {navItems.map((item, index) => {
           const active = isActive(item.path);
-          const Icon = item.icon;
 
           return (
-            <button
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              className={`flex-1 flex items-center justify-center py-2 px-1 sm:px-2 rounded-none transition-colors ${
-                active ? "text-green-500" : "text-gray-400 hover:text-gray-200"
-              }`}
-              aria-label={item.label}
-              title={item.label}
-            >
-              <Icon size={24} />
-            </button>
+            <React.Fragment key={item.label}>
+              <button
+                onClick={() => navigate(item.path)}
+                className={`px-3 sm:px-4 py-2 transition-colors text-sm sm:text-base font-medium rounded-none ${
+                  active ? "text-green-500" : "text-gray-400 hover:text-gray-200"
+                }`}
+                aria-label={item.label}
+                title={item.label}
+              >
+                {item.label}
+              </button>
+              {index < navItems.length - 1 && (
+                <span className="text-gray-500 px-2">|</span>
+              )}
+            </React.Fragment>
           );
         })}
       </div>

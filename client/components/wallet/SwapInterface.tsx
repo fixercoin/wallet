@@ -772,11 +772,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-[2px] border-0 bg-transparent">
-        {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-[2px]">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
-          </div>
-        )}
 
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
@@ -977,7 +972,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </Button>
         </div>
 
-        <BloomExplosion show={showSuccess} />
+        <SuccessDialog show={showSuccess} onClose={() => setShowSuccess(false)} />
       </div>
     </div>
   );

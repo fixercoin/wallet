@@ -1,11 +1,14 @@
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 
 export default function AssetsPage() {
+  const navigate = useNavigate();
   const { wallet, tokens, isLoading } = useWallet();
 
   const formatTokenPriceDisplay = (price?: number): string => {
@@ -73,8 +76,6 @@ export default function AssetsPage() {
     return total;
   };
 
-  if (!wallet) return null;
-
   const totalBalance = getTotalPortfolioValue();
 
   return (
@@ -84,26 +85,35 @@ export default function AssetsPage() {
     >
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4">
         <div className="px-4 sm:px-0 mb-6">
-          <h1 className="text-2xl font-bold text-white mb-4">Assets</h1>
-          <div className="bg-[#064e3b]/40 rounded-lg p-4 border border-[#22c55e]/30">
-            <p className="text-xs text-gray-400 mb-1">Total Balance</p>
-            <p className="text-3xl font-bold text-green-400">
-              $
-              {totalBalance.toLocaleString(undefined, {
-                minimumFractionDigits: 3,
-                maximumFractionDigits: 3,
-              })}
-            </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="text-white hover:text-gray-300 transition-colors mb-4 flex items-center"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <div className="bg-transparent rounded-[3px] p-4 border border-[#22c55e]/30 flex items-start justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Total Balance</p>
+              <p className="text-3xl font-bold text-green-400">
+                $
+                {totalBalance.toLocaleString(undefined, {
+                  minimumFractionDigits: 3,
+                  maximumFractionDigits: 3,
+                })}
+              </p>
+            </div>
+            <Button className="bg-green-600 hover:bg-green-700 text-white rounded-[3px] px-4 py-2 text-sm font-medium">
+              DEPOSITE ASSET
+            </Button>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8 text-gray-400">
-            <p className="text-sm">Loading assets...</p>
-          </div>
-        ) : sortedTokens.length === 0 ? (
+        {sortedTokens.length === 0 ? (
           <div className="text-center py-8 text-gray-300">
-            <p className="text-sm">No tokens found</p>
+            <p className="text-sm">
+              {isLoading ? "Loading assets..." : "No tokens found"}
+            </p>
           </div>
         ) : (
           <div className="w-full space-y-0">
@@ -111,30 +121,15 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full flex items-center gap-4 px-4 py-4 rounded-none sm:rounded-[2px]">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={token.logoURI} alt={token.symbol} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
-                          {token.symbol.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-semibold text-white text-sm">
-                            {token.symbol}/USDT
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ${formatTokenPriceDisplay(token.price)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex-shrink-0 text-right">
-                        <p className="text-sm font-semibold text-white whitespace-nowrap">
+                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
+                      <p className="font-semibold text-white text-sm whitespace-nowrap">
+                        {token.symbol}/USDT
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <p className="text-xs text-gray-400 whitespace-nowrap">
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>
-                        <p className="text-xs text-gray-400 whitespace-nowrap">
+                        <p className="text-sm font-semibold text-green-400 whitespace-nowrap">
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatBalance((token.balance || 0) * token.price)}`
                             : "$0.00"}

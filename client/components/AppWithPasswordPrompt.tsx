@@ -38,7 +38,7 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
 
   useEffect(() => {
     const requiresPassword = doesWalletRequirePassword();
-    if (!requiresPassword) return;
+    if (!requiresPassword || needsPasswordUnlock) return;
 
     const resetTimer = () => {
       if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
@@ -70,15 +70,10 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
       document.removeEventListener("visibilitychange", onVisibility);
       if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
     };
-  }, [setNeedsPasswordUnlock]);
+  }, [setNeedsPasswordUnlock, needsPasswordUnlock]);
 
   const handlePasswordUnlocked = () => {
     setShowPasswordDialog(false);
-    // reset inactivity timer on successful unlock
-    if (idleTimerRef.current) {
-      window.clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = null;
-    }
   };
 
   if (isChecking) {

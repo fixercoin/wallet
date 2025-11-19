@@ -689,7 +689,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>��� Early access to wallet updates</p>
+                  <p>����� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -949,7 +949,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-2 sm:gap-3"
                       onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -970,12 +970,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex-shrink-0">
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
-                          {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                      </div>
-
                       <div className="flex-shrink-0 hidden sm:block">
                         <p className="text-xs text-gray-300 whitespace-nowrap">
                           {typeof token.price === "number" && token.price > 0
@@ -984,7 +978,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                       </div>
 
-                      <div className="flex-shrink-0 ml-auto">
+                      <div className="flex items-center gap-1 sm:gap-2 ml-auto flex-shrink-0">
+                        <div className="flex flex-col sm:hidden">
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            {formatBalance(token.balance || 0, token.symbol)}
+                          </p>
+                        </div>
+
+                        <div className="hidden sm:flex sm:flex-col">
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            {formatBalance(token.balance || 0, token.symbol)}
+                          </p>
+                        </div>
+
                         {percentChange !== null && (
                           <Button
                             className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${

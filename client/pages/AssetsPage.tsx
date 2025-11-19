@@ -83,9 +83,18 @@ export default function AssetsPage() {
       style={{ backgroundColor: "#1f1f1f" }}
     >
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4">
-        <h1 className="text-2xl font-bold text-white px-4 sm:px-0 mb-6">
-          Assets
-        </h1>
+        <div className="px-4 sm:px-0 mb-6">
+          <h1 className="text-2xl font-bold text-white mb-4">Assets</h1>
+          <div className="bg-[#064e3b]/40 rounded-lg p-4 border border-[#22c55e]/30">
+            <p className="text-xs text-gray-400 mb-1">Total Balance</p>
+            <p className="text-3xl font-bold text-green-400">
+              ${totalBalance.toLocaleString(undefined, {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3,
+              })}
+            </p>
+          </div>
+        </div>
 
         {isLoading ? (
           <div className="text-center py-8 text-gray-400">

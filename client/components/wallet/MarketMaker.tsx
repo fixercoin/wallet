@@ -672,7 +672,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             const m = updatedSession.makers[i];
             if (m) {
               m.status = "error" as const;
-              m.errorMessage = `Transaction failed: ${errorMsg}`;
+              m.errorMessage = errorMsg;
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),

@@ -57,12 +57,6 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const [privateKeyInput, setPrivateKeyInput] = useState<string>("");
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
 
-  // Password protection state
-  const [showPasswordSetup, setShowPasswordSetup] = useState(false);
-  const [pendingWallet, setPendingWallet] = useState<any>(null);
-  const [passwordSetupMode, setPasswordSetupMode] = useState<
-    "create" | "unlock"
-  >("create");
 
   const normalizedRecoveryPhrase = normalizeMnemonicInput(recoveryPhrase);
   const recoveryWordCount = normalizedRecoveryPhrase

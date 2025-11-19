@@ -84,7 +84,7 @@ export default function AssetsPage() {
       style={{ backgroundColor: "#1f1f1f" }}
     >
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4">
-        <div className="px-4 sm:px-0 mb-6">
+        <div className="px-4 sm:px-0 mb-6 pt-6">
           <button
             onClick={() => navigate(-1)}
             className="text-white hover:text-gray-300 transition-colors mb-4 flex items-center"

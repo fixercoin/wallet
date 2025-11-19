@@ -86,15 +86,20 @@ export default function AssetsPage() {
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4">
         <div className="px-4 sm:px-0 mb-6">
           <h1 className="text-2xl font-bold text-white mb-4">Assets</h1>
-          <div className="bg-[#064e3b]/40 rounded-lg p-4 border border-[#22c55e]/30">
-            <p className="text-xs text-gray-400 mb-1">Total Balance</p>
-            <p className="text-3xl font-bold text-green-400">
-              $
-              {totalBalance.toLocaleString(undefined, {
-                minimumFractionDigits: 3,
-                maximumFractionDigits: 3,
-              })}
-            </p>
+          <div className="bg-transparent rounded-[3px] p-4 border border-[#22c55e]/30 flex items-start justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Total Balance</p>
+              <p className="text-3xl font-bold text-green-400">
+                $
+                {totalBalance.toLocaleString(undefined, {
+                  minimumFractionDigits: 3,
+                  maximumFractionDigits: 3,
+                })}
+              </p>
+            </div>
+            <Button className="bg-green-600 hover:bg-green-700 text-white rounded-[3px] px-4 py-2 text-sm font-medium">
+              Deposit
+            </Button>
           </div>
         </div>
 

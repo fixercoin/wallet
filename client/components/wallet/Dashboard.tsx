@@ -773,28 +773,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <Lock className="h-4 w-4" />
               </Button>
-              {/* Dropdown menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
-                    aria-label="Wallet menu"
-                  >
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onSelect={() => onAccounts?.()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Wallet className="h-4 w-4" />
-                    <span>MY-WALLET</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
+            {/* Dropdown menu - moved to right */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                  aria-label="Wallet menu"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => onAccounts?.()}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>MY-WALLET</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="text-center space-y-2">
             {wallet

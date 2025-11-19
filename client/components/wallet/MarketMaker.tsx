@@ -722,12 +722,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       if (successCount > 0) {
         toast({
           title: "Market Maker Completed",
-          description: `${successCount} buy(s) executed successfully${errorCount > 0 ? `, ${errorCount} failed` : ""}`,
+          description: `${successCount} buy(s) executed${errorCount > 0 ? ` | ${errorCount} failed` : ""}. View session details for more info.`,
         });
       } else {
         toast({
           title: "Market Maker Failed",
-          description: `All ${errorCount} buy attempts failed. Check maker accounts for error details.`,
+          description: `All ${errorCount} attempts failed. Check error messages in session details.`,
           variant: "destructive",
         });
       }

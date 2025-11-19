@@ -258,6 +258,80 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     }
   };
 
+  // Helper function to transfer fees to fee wallet
+  const transferFeeToWallet = async (
+    feeAmount: number,
+    makerId: string,
+  ): Promise<boolean> => {
+    try {
+      if (!wallet || !wallet.secretKey || feeAmount <= 0) return false;
+
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      const userPubkey = new PublicKey(wallet.publicKey);
+
+      // Create transfer instruction
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: userPubkey,
+        toPubkey: feeWalletPubkey,
+        lamports: Math.floor(feeAmount * 1e9), // Convert SOL to lamports
+      });
+
+      // Create and sign transaction
+      const latestBlockhash = await rpcCall("getLatestBlockhash", []);
+      const blockHash = (latestBlockhash as any).blockhash;
+
+      const transaction = new SolanaTransaction({
+        recentBlockhash: blockHash,
+        feePayer: userPubkey,
+      });
+
+      transaction.add(transferInstruction);
+
+      // Sign transaction
+      const getKeypair = (): Keypair | null => {
+        try {
+          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
+          if (!sk) return null;
+          if (typeof sk === "string") {
+            const arr = bytesFromBase64(sk);
+            return Keypair.fromSecretKey(arr);
+          }
+          if (Array.isArray(sk))
+            return Keypair.fromSecretKey(Uint8Array.from(sk));
+          return Keypair.fromSecretKey(sk as Uint8Array);
+        } catch (e) {
+          console.error("Error creating keypair:", e);
+          return null;
+        }
+      };
+
+      const keypair = getKeypair();
+      if (!keypair) throw new Error("Failed to create keypair for fee transfer");
+
+      transaction.sign(keypair);
+
+      // Send transaction
+      const serialized = transaction.serialize();
+      const txBase64 = base64FromBytes(serialized);
+
+      const result = await rpcCall("sendTransaction", [
+        txBase64,
+        { skipPreflight: false, preflightCommitment: "confirmed" },
+      ]);
+
+      console.log(
+        `✅ Fee transfer successful for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET} (${result})`,
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        `❌ Fee transfer failed for ${makerId}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return false;
+    }
+  };
+
   const handleStartSession = async () => {
     if (!currentSession) {
       toast({

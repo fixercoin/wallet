@@ -117,33 +117,24 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full flex items-center gap-4 px-4 py-4 rounded-none sm:rounded-[2px]">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={token.logoURI} alt={token.symbol} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
-                          {token.symbol.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-
+                    <div className="w-full flex items-center justify-between px-4 py-4 rounded-none sm:rounded-[2px]">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-semibold text-white text-sm">
-                            {token.symbol}/USDT
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ${formatTokenPriceDisplay(token.price)}
-                          </span>
-                        </div>
+                        <p className="font-semibold text-white text-sm">
+                          {token.symbol}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Amount: {formatBalance(token.balance || 0, token.symbol)}
+                        </p>
                       </div>
 
                       <div className="flex-shrink-0 text-right">
                         <p className="text-sm font-semibold text-white whitespace-nowrap">
-                          {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                        <p className="text-xs text-gray-400 whitespace-nowrap">
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatBalance((token.balance || 0) * token.price)}`
                             : "$0.00"}
+                        </p>
+                        <p className="text-xs text-gray-400 whitespace-nowrap mt-1">
+                          {token.symbol}/USDT
                         </p>
                       </div>
                     </div>

@@ -114,14 +114,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     initialMint || TOKEN_MINTS.SOL,
   );
   const [pendingTransactionSend, setPendingTransactionSend] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    if (step === "success") {
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    }
-  }, [step]);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),

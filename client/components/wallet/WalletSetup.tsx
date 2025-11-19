@@ -84,25 +84,16 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
     }
   };
 
-  const handlePasswordSetup = async (password: string) => {
-    if (!pendingWallet) {
-      setShowPasswordSetup(false);
-      return;
-    }
-
+  const handleWalletSetup = async (wallet: any) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Set password in session and mark wallet as password protected
-      setWalletPassword(password);
-      markWalletAsPasswordProtected();
-
-      // Set the wallet (will be encrypted on persist)
-      setWallet(pendingWallet);
+      // Set the wallet
+      setWallet(wallet);
 
       // Prefetch address data via RPC providers
-      void prefetchWalletAddressData(pendingWallet.publicKey).catch(
+      void prefetchWalletAddressData(wallet.publicKey).catch(
         () => undefined,
       );
 
@@ -110,13 +101,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       await refreshTokens().catch(() => {});
 
       toast({
-        title: "Wallet Secured",
+        title: "Wallet Created",
         description:
-          "Your wallet has been created and encrypted with your password.",
+          "Your wallet has been created successfully.",
       });
 
-      setShowPasswordSetup(false);
-      setPendingWallet(null);
       onComplete();
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));

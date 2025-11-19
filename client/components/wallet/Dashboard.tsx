@@ -891,7 +891,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-around gap-4 mt-12 w-full px-0">
+          <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
             <Button
               onClick={onSend}
               className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"

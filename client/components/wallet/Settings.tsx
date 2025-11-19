@@ -177,7 +177,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
-              <Card className="w-full bg-white/10 rounded-[2px]">
+              <Card className="w-full bg-white/10 rounded-[2px] border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -220,7 +220,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
 
               {/* Recovery Phrase Card */}
-              <div className="w-full">
+              <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
+                <CardContent className="p-0">
                 <button
                   onClick={() => {
                     if (wallet?.mnemonic) {
@@ -272,20 +273,22 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     />
                   </div>
                 )}
-                {!wallet?.mnemonic && (
-                  <div className="px-4 pb-4">
-                    <p className="text-xs text-red-400">
-                      This account was imported with a private key; no
-                      recovery phrase exists. Create/recover a wallet with a
-                      phrase to view it.
-                    </p>
-                  </div>
-                )}
-              </div>
+                  {!wallet?.mnemonic && (
+                    <div className="px-4 pb-4">
+                      <p className="text-xs text-red-400">
+                        This account was imported with a private key; no
+                        recovery phrase exists. Create/recover a wallet with a
+                        phrase to view it.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Private Key Card */}
-              <div className="w-full">
+              <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
+                <CardContent className="p-0">
                 <button
                   onClick={() => {
                     if (privateKeyBase58) {
@@ -327,16 +330,17 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                     )}
                   </div>
                 </button>
-                {showPrivateKey && (
-                  <div className="px-4 pb-4">
-                    <Textarea
-                      value={privateKeyBase58}
-                      readOnly
-                      className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
-                    />
-                  </div>
-                )}
-              </div>
+                  {showPrivateKey && (
+                    <div className="px-4 pb-4">
+                      <Textarea
+                        value={privateKeyBase58}
+                        readOnly
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
               <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
 

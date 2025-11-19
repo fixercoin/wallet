@@ -1,36 +1,18 @@
 import React, { useMemo } from "react";
-import {
-  ComposedChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface BuySellLineProps {
   mint: string;
   priceData?: Array<{ time: string; price: number; volume: number }>;
 }
 
-interface CandleData {
-  time: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-}
-
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload && payload[0]) {
     const data = payload[0].payload;
     return (
       <div className="bg-slate-950 border border-slate-700 rounded px-3 py-2 text-xs shadow-lg">
-        <p className="text-slate-300 font-semibold mb-1">{data.time}</p>
-        <p className="text-blue-400">C: ${data.close.toFixed(8)}</p>
-        <p className="text-green-400">H: ${data.high.toFixed(8)}</p>
-        <p className="text-red-400">L: ${data.low.toFixed(8)}</p>
+        <p className="text-slate-300 font-semibold">{data.name}</p>
+        <p className="text-blue-400">{data.value.toFixed(1)}%</p>
       </div>
     );
   }
@@ -38,7 +20,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
-  const chartData: CandleData[] = useMemo(() => {
+  const buysellData = useMemo(() => {
     let prices = priceData;
 
     if (!prices || prices.length === 0) {
@@ -49,108 +31,108 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
       }));
     }
 
-    const numCandles = 12;
-    const groupSize = Math.ceil(prices.length / numCandles);
-    const candles: CandleData[] = [];
+    // Calculate buy/sell ratio based on price movement
+    let buyVolume = 0;
+    let sellVolume = 0;
 
-    for (let i = 0; i < prices.length; i += groupSize) {
-      const group = prices.slice(i, i + groupSize);
-      if (group.length === 0) continue;
+    for (let i = 1; i < prices.length; i++) {
+      const priceDiff = prices[i].price - prices[i - 1].price;
+      const volume = prices[i].volume || 0;
 
-      const priceVals = group.map((p) => p.price);
-      candles.push({
-        time: group[Math.floor(group.length / 2)].time,
-        open: group[0].price,
-        close: group[group.length - 1].price,
-        high: Math.max(...priceVals),
-        low: Math.min(...priceVals),
-      });
+      if (priceDiff > 0) {
+        buyVolume += volume;
+      } else if (priceDiff < 0) {
+        sellVolume += volume;
+      } else {
+        buyVolume += volume * 0.5;
+        sellVolume += volume * 0.5;
+      }
     }
 
-    return candles.length > 0
-      ? candles
-      : [
-          {
-            time: "0:00",
-            open: 0.00005,
-            close: 0.00006,
-            high: 0.00007,
-            low: 0.00004,
-          },
-        ];
+    // If no volume data, use synthetic ratio
+    if (buyVolume === 0 && sellVolume === 0) {
+      buyVolume = 65;
+      sellVolume = 35;
+    }
+
+    const total = buyVolume + sellVolume;
+    const buyPercentage = (buyVolume / total) * 100;
+    const sellPercentage = (sellVolume / total) * 100;
+
+    return {
+      data: [
+        { name: "Buys", value: parseFloat(buyPercentage.toFixed(1)) },
+        { name: "Sells", value: parseFloat(sellPercentage.toFixed(1)) },
+      ],
+      buyVolume,
+      sellVolume,
+      total,
+    };
   }, [priceData]);
+
+  const COLORS = ["#10b981", "#ef4444"];
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex-1 rounded-lg bg-gradient-to-b from-slate-900 to-slate-800 border border-slate-700 shadow-lg overflow-hidden">
-        <ResponsiveContainer width="100%" height={400}>
-          <ComposedChart
-            data={chartData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
-          >
-            <defs>
-              <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#334155"
-              opacity={0.3}
-            />
-            <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-            <YAxis
-              stroke="#94a3b8"
-              tick={{ fontSize: 12 }}
-              width={60}
-              tickFormatter={(v) => `$${v.toFixed(5)}`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="close"
-              stroke="#3b82f6"
-              strokeWidth={3}
-              dot={false}
-              isAnimationActive={true}
-              name="Close"
-            />
-            <Line
-              type="monotone"
-              dataKey="high"
-              stroke="#10b981"
-              strokeWidth={1}
-              strokeOpacity={0.4}
-              dot={false}
-              isAnimationActive={true}
-              name="High"
-            />
-            <Line
-              type="monotone"
-              dataKey="low"
-              stroke="#ef4444"
-              strokeWidth={1}
-              strokeOpacity={0.4}
-              dot={false}
-              isAnimationActive={true}
-              name="Low"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="flex justify-center gap-6 mt-3 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          <span className="text-slate-300">Price</span>
+      <div className="flex-1 rounded-lg bg-gradient-to-b from-slate-900 to-slate-800 border border-slate-700 shadow-lg overflow-hidden flex flex-col p-4">
+        {/* Pie Chart */}
+        <div className="flex-1 flex items-center justify-center">
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={buysellData.data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey="value"
+                label={({ name, value }) => `${name}: ${value}%`}
+                labelLine={false}
+                labelStyle={{
+                  fontSize: 12,
+                  fontWeight: "bold",
+                  fill: "#e2e8f0",
+                }}
+              >
+                {buysellData.data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomPieTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-          <span className="text-slate-300">High</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-          <span className="text-slate-300">Low</span>
+
+        {/* Written Details Section */}
+        <div className="mt-4 space-y-3 text-sm">
+          <div className="bg-slate-700/30 rounded px-3 py-2 border border-slate-600">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-slate-300 font-semibold">Buy/Sell Ratio</span>
+              <span className="text-lg font-bold text-slate-100">
+                {buysellData.data[0].value}% / {buysellData.data[1].value}%
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              This token shows {buysellData.data[0].value > buysellData.data[1].value ? "more buying" : "more selling"} activity. 
+              Buyers are {buysellData.data[0].value > 50 ? "dominating" : "lagging behind"} the market.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-emerald-500/10 rounded px-2 py-2 border border-emerald-500/30">
+              <p className="text-emerald-400 text-xs font-semibold">Buys</p>
+              <p className="text-emerald-300 font-bold text-sm">
+                {buysellData.data[0].value}%
+              </p>
+            </div>
+            <div className="bg-red-500/10 rounded px-2 py-2 border border-red-500/30">
+              <p className="text-red-400 text-xs font-semibold">Sells</p>
+              <p className="text-red-300 font-bold text-sm">
+                {buysellData.data[1].value}%
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

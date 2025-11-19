@@ -952,6 +952,145 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </div>
               </div>
 
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
+                  Trade History
+                </Label>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {currentSession.makers.length === 0 ? (
+                    <p className="text-xs text-gray-500 text-center py-4">
+                      No trades yet
+                    </p>
+                  ) : (
+                    currentSession.makers
+                      .filter(
+                        (m) =>
+                          m.buyTransactions.length > 0 ||
+                          m.sellTransactions.length > 0,
+                      )
+                      .map((maker) => {
+                        const trades = getTradePairs(
+                          maker.buyTransactions,
+                          maker.sellTransactions,
+                        );
+                        return (
+                          <div key={maker.id} className="space-y-2">
+                            {trades.map((trade, idx) => (
+                              <div
+                                key={`${maker.id}-trade-${idx}`}
+                                className="text-xs bg-gray-800/30 border border-gray-700/50 rounded p-3 space-y-2"
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-mono text-gray-300">
+                                    {maker.id} - Trade {idx + 1}
+                                  </span>
+                                  {trade.profitSOL !== undefined && (
+                                    <span
+                                      className={`font-bold px-2 py-1 rounded text-[10px] ${
+                                        trade.profitSOL >= 0
+                                          ? "bg-green-500/20 text-green-400"
+                                          : "bg-red-500/20 text-red-400"
+                                      }`}
+                                    >
+                                      {trade.profitSOL >= 0 ? "+" : ""}
+                                      {trade.profitSOL.toFixed(4)} ◎
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-gray-400">
+                                  <div>
+                                    <div className="text-gray-500 text-[10px]">
+                                      BUY ENTRY
+                                    </div>
+                                    <div className="text-white font-semibold">
+                                      {trade.entryPrice.toFixed(8)} ◎/token
+                                    </div>
+                                    <div className="text-[10px] text-gray-500">
+                                      {trade.buyTx.tokenAmount.toFixed(2)} tokens
+                                    </div>
+                                    <div className="text-[10px] text-gray-500">
+                                      @ {trade.buyTx.solAmount.toFixed(4)} ◎
+                                    </div>
+                                    <div className="text-[10px] text-gray-600 mt-1">
+                                      {new Date(
+                                        trade.buyTx.timestamp,
+                                      ).toLocaleTimeString()}
+                                    </div>
+                                  </div>
+
+                                  {trade.sellTx ? (
+                                    <div>
+                                      <div className="text-gray-500 text-[10px]">
+                                        SELL EXIT
+                                      </div>
+                                      <div className="text-white font-semibold">
+                                        {trade.exitPrice?.toFixed(8) ||
+                                          "N/A"}{" "}
+                                        ◎/token
+                                      </div>
+                                      <div className="text-[10px] text-gray-500">
+                                        {trade.sellTx.tokenAmount.toFixed(2)}{" "}
+                                        tokens
+                                      </div>
+                                      <div className="text-[10px] text-gray-500">
+                                        @ {trade.sellTx.solAmount.toFixed(4)} ◎
+                                      </div>
+                                      <div className="text-[10px] text-gray-600 mt-1">
+                                        {new Date(
+                                          trade.sellTx.timestamp,
+                                        ).toLocaleTimeString()}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className="text-gray-500 text-[10px]">
+                                        SELL EXIT
+                                      </div>
+                                      <div className="text-yellow-400 font-semibold text-[11px]">
+                                        Pending/Held
+                                      </div>
+                                      <div className="text-[10px] text-gray-500 mt-2">
+                                        Waiting for sell signal
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {trade.profitSOL !== undefined &&
+                                  trade.profitPercent !== undefined && (
+                                    <div className="border-t border-gray-700/30 pt-2 flex justify-between">
+                                      <span className="text-gray-500">
+                                        Profit:
+                                      </span>
+                                      <span className="text-white font-semibold">
+                                        {trade.profitSOL >= 0 ? "+" : ""}
+                                        {trade.profitSOL.toFixed(4)} ◎ (
+                                        {trade.profitPercent.toFixed(2)}%)
+                                      </span>
+                                    </div>
+                                  )}
+
+                                {trade.buyTx.status === "failed" && (
+                                  <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-red-400 text-[10px]">
+                                    Buy transaction failed
+                                  </div>
+                                )}
+                                {trade.sellTx &&
+                                  trade.sellTx.status === "failed" && (
+                                    <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-red-400 text-[10px]">
+                                      Sell transaction failed
+                                    </div>
+                                  )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
               <div className="border-t border-gray-700/50 pt-4 flex gap-2">
                 {currentSession.status === "setup" && (
                   <Button

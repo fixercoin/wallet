@@ -689,7 +689,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>��� Early access to wallet updates</p>
+                  <p>���� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -744,13 +744,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2 flex-1">
-              <TokenSearch
-                className="w-full mr-2"
-                inputClassName="bg-transparent text-foreground placeholder:text-[hsl(var(--muted-foreground))] border border-border focus-visible:ring-0 rounded-[2px]"
-              />
-            </div>
-
             <div className="flex items-center gap-2">
               {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
               <DropdownMenu>
@@ -891,28 +884,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-10 w-full">
+          <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
             <Button
               onClick={onSend}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              SEND
+              <Send className="h-8 w-8 text-[#22c55e]" />
+              <span>SEND</span>
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              RECEIVE
+              <Download className="h-8 w-8 text-[#22c55e]" />
+              <span>RECEIVE</span>
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 min-w-[80px] sm:min-w-[100px] h-10 rounded-[2px] font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-lg font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              SWAP
+              <TrendingUp className="h-8 w-8 text-[#22c55e]" />
+              <span>SWAP</span>
             </Button>
           </div>
+        </div>
+
+        {/* Token Search - Under Balance Card */}
+        <div className="w-full mb-4 mt-4 px-4 sm:px-0">
+          <TokenSearch
+            className="w-full"
+            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
+          />
         </div>
 
         {/* Tokens List */}
@@ -949,52 +953,45 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between p-4 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-2 sm:gap-3"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
-                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
+                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="font-semibold text-white text-sm">
-                              {token.symbol}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span
-                              className={`text-xs text-gray-300 ${
-                                ["SOL", "FIXERCOIN", "LOCKER"].includes(
-                                  (token.symbol || "").toUpperCase(),
-                                )
-                                  ? "animate-price-pulse"
-                                  : ""
-                              }`}
-                            >
-                              ${formatTokenPriceDisplay(token.price)}
-                            </span>
-                          </div>
-                        </div>
+                        <span className="font-semibold text-white text-xs whitespace-nowrap">
+                          {token.symbol}/USDT
+                        </span>
                       </div>
 
-                      <div className="text-right flex-shrink-0 flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                          <p className="text-sm font-semibold text-white whitespace-nowrap">
+                      <div className="flex-shrink-0 hidden sm:block">
+                        <span className="text-xs text-gray-300">
+                          ${formatTokenPriceDisplay(token.price)}
+                        </span>
+                      </div>
+
+                      <div className="flex-shrink-0 hidden sm:block">
+                        <p className="text-xs text-gray-300 whitespace-nowrap">
+                          {typeof token.price === "number" && token.price > 0
+                            ? `$${formatBalance((token.balance || 0) * token.price)}`
+                            : "$0.00"}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
+                        <div>
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}
                           </p>
-                          <p className="text-xs text-gray-300 whitespace-nowrap">
-                            {typeof token.price === "number" && token.price > 0
-                              ? `$${formatBalance((token.balance || 0) * token.price)}`
-                              : "$0.00"}
-                          </p>
                         </div>
+
                         {percentChange !== null && (
                           <Button
-                            className={`h-8 px-3 rounded-[2px] font-semibold text-xs flex-shrink-0 ${
+                            className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
                               isPositive
                                 ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
                                 : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"

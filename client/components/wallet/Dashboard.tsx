@@ -190,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -960,7 +960,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol}
+                          {token.symbol}/USDT
                         </span>
                       </div>
 

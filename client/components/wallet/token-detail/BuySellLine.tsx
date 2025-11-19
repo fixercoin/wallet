@@ -37,9 +37,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export const BuySellLine: React.FC<BuySellLineProps> = ({
-  priceData,
-}) => {
+export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
   const chartData: CandleData[] = useMemo(() => {
     let prices = priceData;
 
@@ -69,58 +67,69 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
       });
     }
 
-    return candles.length > 0 ? candles : [
-      { time: "0:00", open: 0.00005, close: 0.00006, high: 0.00007, low: 0.00004 }
-    ];
+    return candles.length > 0
+      ? candles
+      : [
+          {
+            time: "0:00",
+            open: 0.00005,
+            close: 0.00006,
+            high: 0.00007,
+            low: 0.00004,
+          },
+        ];
   }, [priceData]);
 
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex-1 rounded-lg bg-gradient-to-b from-slate-900 to-slate-800 border border-slate-700 shadow-lg overflow-hidden">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+          >
             <defs>
               <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
                 <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-            <XAxis 
-              dataKey="time" 
-              stroke="#94a3b8" 
-              tick={{ fontSize: 12 }}
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#334155"
+              opacity={0.3}
             />
-            <YAxis 
+            <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+            <YAxis
               stroke="#94a3b8"
               tick={{ fontSize: 12 }}
               width={60}
               tickFormatter={(v) => `$${v.toFixed(5)}`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Line 
-              type="monotone" 
-              dataKey="close" 
-              stroke="#3b82f6" 
+            <Line
+              type="monotone"
+              dataKey="close"
+              stroke="#3b82f6"
               strokeWidth={3}
               dot={false}
               isAnimationActive={true}
               name="Close"
             />
-            <Line 
-              type="monotone" 
-              dataKey="high" 
-              stroke="#10b981" 
+            <Line
+              type="monotone"
+              dataKey="high"
+              stroke="#10b981"
               strokeWidth={1}
               strokeOpacity={0.4}
               dot={false}
               isAnimationActive={true}
               name="High"
             />
-            <Line 
-              type="monotone" 
-              dataKey="low" 
-              stroke="#ef4444" 
+            <Line
+              type="monotone"
+              dataKey="low"
+              stroke="#ef4444"
               strokeWidth={1}
               strokeOpacity={0.4}
               dot={false}

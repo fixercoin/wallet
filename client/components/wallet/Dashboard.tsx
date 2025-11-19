@@ -744,8 +744,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
+            <div className="flex items-center gap-3">
+              {/* Action buttons */}
+              <Button
+                onClick={onSettings}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onBurn}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Burn"
+                title="Burn"
+              >
+                <Flame className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onLock}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Lock"
+                title="Lock"
+              >
+                <Lock className="h-4 w-4" />
+              </Button>
+              {/* Dropdown menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -763,28 +791,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   >
                     <Wallet className="h-4 w-4" />
                     <span>MY-WALLET</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onBurn}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Flame className="h-4 w-4" />
-                    <span>SPL-BURN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onLock}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK-SPL</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={onSettings}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>SETTINGS</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

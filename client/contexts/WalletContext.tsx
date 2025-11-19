@@ -200,37 +200,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         return;
       }
 
-      // Check if wallets should be encrypted
-      const password = getWalletPassword();
-      const shouldEncrypt = doesWalletRequirePassword();
-
-      if (shouldEncrypt && password) {
-        // Encrypt wallets before storing
-        const encrypted = wallets.map((w) => {
-          try {
-            return encryptWalletData(w, password);
-          } catch (e) {
-            console.error("Failed to encrypt wallet:", e);
-            // Fallback to plaintext if encryption fails
-            const copy: any = { ...w } as any;
-            if (copy.secretKey instanceof Uint8Array)
-              copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-            return copy;
-          }
-        });
-        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(encrypted));
-        console.log("[WalletContext] Wallets saved encrypted");
-      } else {
-        // Store plaintext (for backward compatibility or if no password set)
-        const toStore = wallets.map((w) => {
-          const copy: any = { ...w } as any;
-          if (copy.secretKey instanceof Uint8Array)
-            copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-          return copy;
-        });
-        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-        console.log("[WalletContext] Wallets saved as plaintext");
-      }
+      // Store wallets as plaintext (encryption disabled)
+      const toStore = wallets.map((w) => {
+        const copy: any = { ...w } as any;
+        if (copy.secretKey instanceof Uint8Array)
+          copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+        return copy;
+      });
+      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
+      console.log("[WalletContext] Wallets saved as plaintext");
     } catch (e) {
       console.error("Failed to persist wallets:", e);
     }

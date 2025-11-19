@@ -805,7 +805,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             />
           </div>
 
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-2 mt-8">
             {wallet
               ? (() => {
                   const total = getTotalPortfolioValue();

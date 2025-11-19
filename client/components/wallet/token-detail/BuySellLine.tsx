@@ -7,6 +7,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  defs,
+  linearGradient,
+  stop,
 } from "recharts";
 import { birdeyeAPI, BirdeyeToken } from "@/lib/services/birdeye";
 
@@ -20,6 +23,30 @@ interface Point {
   buys: number;
   sells: number;
 }
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 backdrop-blur-md bg-opacity-90">
+        <p className="text-gray-200 text-xs font-medium mb-2">{data.label}</p>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+          <p className="text-emerald-400 text-xs font-semibold">
+            Buys: {payload[0]?.value || 0}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full bg-red-500"></span>
+          <p className="text-red-400 text-xs font-semibold">
+            Sells: {payload[1]?.value || 0}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const BuySellLine: React.FC<BuySellLineProps> = ({
   mint,
@@ -161,51 +188,90 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({
 
   const isStable = STABLE_MINTS.has(mint);
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-full flex flex-col px-4 py-4">
       {isStable && (
-        <div className="text-xs text-gray-500 mb-2">
-          Stablecoin detected — showing neutral activity (buy/sell data not
-          available).
+        <div className="text-xs text-gray-500 mb-3 pl-2">
+          Stablecoin detected — showing neutral activity
         </div>
       )}
       {error && (
-        <div className="text-xs text-red-500 mb-2" role="alert">
+        <div className="text-xs text-red-500 mb-3 pl-2" role="alert">
           {error}
         </div>
       )}
-      <ResponsiveContainer>
-        <LineChart
-          data={data}
-          margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="label" stroke="#6b7280" />
-          <YAxis stroke="#6b7280" allowDecimals={false} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-            }}
-            labelStyle={{ color: "#111827" }}
-          />
-          <Line
-            type="monotone"
-            dataKey="buys"
-            stroke="#22c55e"
-            strokeWidth={2}
-            dot={false}
-            name="Buys"
-          />
-          <Line
-            type="monotone"
-            dataKey="sells"
-            stroke="#ef4444"
-            strokeWidth={2}
-            dot={false}
-            name="Sells"
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      <div className="flex-1 rounded-xl bg-gradient-to-b from-gray-900/50 to-gray-900/20 border border-gray-800/50 shadow-xl backdrop-blur-sm overflow-hidden">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={data}
+            margin={{ top: 16, right: 24, left: -20, bottom: 16 }}
+          >
+            <defs>
+              <linearGradient id="colorBuys" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorSells" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="4 4"
+              stroke="#404040"
+              vertical={true}
+              opacity={0.3}
+            />
+            <XAxis
+              dataKey="label"
+              stroke="#8b8b8b"
+              style={{ fontSize: "12px", fontWeight: 500 }}
+              tick={{ fill: "#9ca3af" }}
+            />
+            <YAxis
+              stroke="#8b8b8b"
+              allowDecimals={false}
+              style={{ fontSize: "12px" }}
+              tick={{ fill: "#9ca3af" }}
+              width={30}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Line
+              type="linear"
+              dataKey="buys"
+              stroke="#10b981"
+              strokeWidth={3}
+              dot={false}
+              name="Buys"
+              isAnimationActive={true}
+              animationDuration={800}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <Line
+              type="linear"
+              dataKey="sells"
+              stroke="#ef4444"
+              strokeWidth={3}
+              dot={false}
+              name="Sells"
+              isAnimationActive={true}
+              animationDuration={800}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex gap-6 mt-4 px-2 justify-center">
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></span>
+          <span className="text-xs font-medium text-gray-300">Buys</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50"></span>
+          <span className="text-xs font-medium text-gray-300">Sells</span>
+        </div>
+      </div>
     </div>
   );
 };

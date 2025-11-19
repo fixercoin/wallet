@@ -63,7 +63,7 @@ export default function DepositAssetPage() {
       className="min-h-screen text-gray-100 pb-20"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4">
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4 pt-8">
         <div className="px-4 sm:px-0 mb-6">
           <button
             onClick={() => navigate("/assets")}

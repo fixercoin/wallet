@@ -1235,10 +1235,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Token Address
             </Label>
-            <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-sm">
-              {tokenAddress.length > 10
-                ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
-                : tokenAddress}
+            <div className="space-y-1">
+              <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-white font-semibold text-sm">
+                FIXERCOIN
+              </div>
+              <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-xs">
+                {tokenAddress.length > 10
+                  ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
+                  : tokenAddress}
+              </div>
             </div>
           </div>
 

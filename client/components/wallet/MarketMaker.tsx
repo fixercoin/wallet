@@ -585,6 +585,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                             `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ${sellFee.toFixed(4)} SOL`,
                           );
 
+                          // Transfer sell fee to fee wallet in real-time
+                          await transferFeeToWallet(sellFee, m.id);
+
                           setCurrentSession({
                             ...updatedSession,
                             makers: updatedSession.makers,

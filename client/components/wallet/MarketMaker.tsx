@@ -523,6 +523,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               console.log(
                 `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ${buyFee.toFixed(4)} SOL`,
               );
+
+              // Transfer buy fee to fee wallet in real-time
+              await transferFeeToWallet(buyFee, m.id);
+
               successCount++;
 
               // Trigger auto-sell if profit target is set

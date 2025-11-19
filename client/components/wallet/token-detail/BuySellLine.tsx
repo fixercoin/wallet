@@ -74,7 +74,7 @@ export const BuySellLine: React.FC<BuySellLineProps> = ({ priceData }) => {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex-1 rounded-lg bg-gradient-to-b from-slate-900 to-slate-800 border border-slate-700 shadow-lg overflow-hidden flex flex-col p-4">
+      <div className="flex-1 rounded-lg bg-transparent overflow-hidden flex flex-col p-4">
         {/* Pie Chart */}
         <div className="flex-1 flex items-center justify-center">
           <ResponsiveContainer width="100%" height={300}>

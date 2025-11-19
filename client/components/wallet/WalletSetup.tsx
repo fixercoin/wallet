@@ -123,10 +123,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
       const walletData = recoverWallet(normalizedMnemonic);
 
-      // Show password setup for new wallet import
-      setPendingWallet(walletData);
-      setPasswordSetupMode(doesWalletRequirePassword() ? "unlock" : "create");
-      setShowPasswordSetup(true);
+      // Directly set up the wallet without password
+      await handleWalletSetup(walletData);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to recover wallet",

@@ -77,6 +77,63 @@ const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const FIXED_DELAY_SECONDS = 10;
 const FIXED_PROFIT_PERCENT = 5;
 
+// Helper function to format error messages for display
+const formatErrorMessage = (error: string): string => {
+  if (!error) return "Unknown error occurred";
+
+  // Handle "already been processed" error
+  if (error.includes("already been processed")) {
+    return "Transaction already submitted. Please wait for it to confirm on-chain.";
+  }
+
+  // Handle RPC timeout
+  if (error.includes("timeout") || error.includes("abort")) {
+    return "Network timeout. The RPC endpoints are slow or unreachable.";
+  }
+
+  // Handle rate limiting
+  if (error.includes("429") || error.includes("rate limit")) {
+    return "Rate limited by RPC provider. Please wait before retrying.";
+  }
+
+  // Handle insufficient balance
+  if (error.includes("insufficient") || error.includes("not enough")) {
+    return "Insufficient balance to complete this transaction.";
+  }
+
+  // Handle invalid token
+  if (error.includes("No route found")) {
+    return "Token swap route not available. The token may not be tradeable.";
+  }
+
+  // Handle price impact
+  if (error.includes("Price impact")) {
+    return "Price impact too high. Token may be illiquid or price changed significantly.";
+  }
+
+  // Handle simulation failures
+  if (error.includes("Transaction simulation failed")) {
+    return "Transaction would fail on-chain. Check your balance and token availability.";
+  }
+
+  // Handle RPC call failed
+  if (error.includes("RPC call failed")) {
+    // Extract the underlying error message if available
+    const match = error.match(/:\s*(.+)$/);
+    if (match && match[1] && match[1].length > 5) {
+      return `Network error: ${match[1]}`;
+    }
+    return "Network error. Please check your connection and try again.";
+  }
+
+  // Truncate very long error messages
+  if (error.length > 150) {
+    return error.substring(0, 150) + "...";
+  }
+
+  return error;
+};
+
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const { wallet, tokens } = useWallet();
   const { toast } = useToast();

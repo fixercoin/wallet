@@ -718,14 +718,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
         </div>
 
-        {/* Token Search - Under Balance Card */}
-        <div className="w-full mb-4 mt-4 px-4 sm:px-0">
-          <TokenSearch
-            className="w-full"
-            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
-          />
-        </div>
-
         {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button

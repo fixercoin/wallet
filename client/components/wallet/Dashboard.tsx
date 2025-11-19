@@ -716,9 +716,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {earnedTokens} FIXERCOIN
                   </span>
                 </div>
-        </div>
+              </div>
 
-        {/* Action Buttons */}
+              {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
                   className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"

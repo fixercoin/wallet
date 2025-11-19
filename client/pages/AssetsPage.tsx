@@ -88,7 +88,8 @@ export default function AssetsPage() {
           <div className="bg-[#064e3b]/40 rounded-lg p-4 border border-[#22c55e]/30">
             <p className="text-xs text-gray-400 mb-1">Total Balance</p>
             <p className="text-3xl font-bold text-green-400">
-              ${totalBalance.toLocaleString(undefined, {
+              $
+              {totalBalance.toLocaleString(undefined, {
                 minimumFractionDigits: 3,
                 maximumFractionDigits: 3,
               })}

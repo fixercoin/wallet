@@ -689,7 +689,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>����� Early access to wallet updates</p>
+                  <p>��� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -978,14 +978,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-1 sm:gap-2 ml-auto flex-shrink-0">
-                        <div className="flex flex-col sm:hidden">
-                          <p className="text-xs font-semibold text-white whitespace-nowrap">
-                            {formatBalance(token.balance || 0, token.symbol)}
-                          </p>
-                        </div>
-
-                        <div className="hidden sm:flex sm:flex-col">
+                      <div className="flex items-center gap-1 sm:gap-3 ml-auto flex-shrink-0">
+                        <div>
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}
                           </p>

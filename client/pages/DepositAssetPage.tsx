@@ -116,7 +116,9 @@ export default function DepositAssetPage() {
           <Card className="bg-transparent border border-green-500/30 rounded-lg">
             <CardContent className="p-6 space-y-4">
               <div>
-                <p className="text-xs text-gray-400 mb-2">Your Wallet Address</p>
+                <p className="text-xs text-gray-400 mb-2">
+                  Your Wallet Address
+                </p>
                 <div className="flex items-center gap-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                   <code className="text-sm text-green-400 flex-1 break-all font-mono">
                     {wallet?.publicKey || "Not connected"}
@@ -153,8 +155,9 @@ export default function DepositAssetPage() {
 
               <div className="p-3 rounded-lg bg-yellow-900/20 border border-yellow-700/50">
                 <p className="text-xs text-yellow-300">
-                  <strong>Note:</strong> Only send {selectedTokenData?.symbol} to
-                  this address. Sending other tokens may result in permanent loss.
+                  <strong>Note:</strong> Only send {selectedTokenData?.symbol}{" "}
+                  to this address. Sending other tokens may result in permanent
+                  loss.
                 </p>
               </div>
             </CardContent>

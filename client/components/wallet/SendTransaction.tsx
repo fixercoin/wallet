@@ -768,14 +768,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
-        <BloomExplosion show={showSuccess} />
-        <div className="w-full max-w-md relative z-10">
-          <div className="bg-transparent p-8 text-center">
-            <h3 className="text-3xl font-extrabold text-gray-900 tracking-widest">
-              CONFIRMED
-            </h3>
-          </div>
-        </div>
+        <SuccessDialog onContinue={handleNewTransaction} />
       </div>
     );
   }

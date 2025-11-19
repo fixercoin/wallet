@@ -53,6 +53,11 @@ export default function DepositAssetPage() {
     }
   };
 
+  const shortenAddress = (address: string) => {
+    if (!address || address.length <= 12) return address;
+    return `${address.slice(0, 6)}...${address.slice(-6)}`;
+  };
+
   return (
     <div
       className="min-h-screen text-gray-100 pb-20"
@@ -61,7 +66,7 @@ export default function DepositAssetPage() {
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4">
         <div className="px-4 sm:px-0 mb-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/assets")}
             className="text-white hover:text-gray-300 transition-colors mb-4 flex items-center"
             aria-label="Go back"
           >
@@ -69,45 +74,11 @@ export default function DepositAssetPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">
-              Deposit Asset
+              DEPOSIT ASSET
             </h1>
             <p className="text-sm text-gray-400">
-              Select a token and send it to your wallet address
+              SELECT A TOKEN AND SEND IT TO YOUR WALLET ADDRESS
             </p>
-          </div>
-        </div>
-
-        {/* Token Selection */}
-        <div className="px-4 sm:px-0 mb-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">
-            Select Token to Deposit
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {depositTokens.map((token) => (
-              <button
-                key={token.symbol}
-                onClick={() => setSelectedToken(token.symbol)}
-                className={`p-3 rounded-lg border transition-all ${
-                  selectedToken === token.symbol
-                    ? "border-green-400 bg-green-400/10"
-                    : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                }`}
-              >
-                <img
-                  src={token.logo}
-                  alt={token.symbol}
-                  className="h-8 w-8 rounded-full mb-2 mx-auto"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src =
-                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='%23fff' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3C/svg%3E";
-                  }}
-                />
-                <p className="font-semibold text-white text-sm">
-                  {token.symbol}
-                </p>
-                <p className="text-xs text-gray-400">{token.name}</p>
-              </button>
-            ))}
           </div>
         </div>
 
@@ -121,7 +92,7 @@ export default function DepositAssetPage() {
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                   <code className="text-sm text-green-400 flex-1 break-all font-mono">
-                    {wallet?.publicKey || "Not connected"}
+                    {shortenAddress(wallet?.publicKey || "Not connected")}
                   </code>
                   <button
                     onClick={handleCopyAddress}
@@ -182,17 +153,6 @@ export default function DepositAssetPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Back Button */}
-        <div className="px-4 sm:px-0 mt-6">
-          <Button
-            onClick={() => navigate(-1)}
-            variant="outline"
-            className="w-full"
-          >
-            Back to Assets
-          </Button>
         </div>
       </div>
     </div>

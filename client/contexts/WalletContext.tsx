@@ -39,9 +39,6 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
-  unlockWithPassword: (password: string) => Promise<boolean>; // Decrypt wallets with password
-  needsPasswordUnlock: boolean; // True if wallets are encrypted but not unlocked
-  setNeedsPasswordUnlock: (value: boolean) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);

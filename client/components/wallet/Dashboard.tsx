@@ -975,19 +975,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex-shrink-0 hidden sm:block">
-                        <span className="text-xs text-gray-300">
-                          ${formatTokenPriceDisplay(token.price)}
-                        </span>
-                      </div>
-
-                      <div className="flex-shrink-0 hidden sm:block">
-                        <p className="text-xs text-gray-300 whitespace-nowrap">
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
-                            : "$0.00"}
-                        </p>
-                      </div>
 
                       <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
                         <div>

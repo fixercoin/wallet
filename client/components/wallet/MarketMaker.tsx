@@ -68,23 +68,28 @@ const FEE_PERCENTAGE = 0.01;
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
+const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+const FIXED_DELAY_SECONDS = 10;
+const FIXED_PROFIT_PERCENT = 5;
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const { wallet, tokens } = useWallet();
   const { toast } = useToast();
 
-  const [tokenAddress, setTokenAddress] = useState("");
+  const [tokenAddress] = useState(FIXED_TOKEN_ADDRESS);
   const [numberOfMakers, setNumberOfMakers] = useState("5");
   const [minOrderSOL, setMinOrderSOL] = useState("0.001");
   const [maxOrderSOL, setMaxOrderSOL] = useState("0.002");
-  const [minDelaySeconds, setMinDelaySeconds] = useState("10");
-  const [maxDelaySeconds, setMaxDelaySeconds] = useState("20");
-  const [sellStrategy, setSellStrategy] = useState<
+  const [minDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
+  const [maxDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
+  const [sellStrategy] = useState<
     "hold" | "auto-profit" | "manual-target" | "gradually"
   >("auto-profit");
-  const [profitTargetPercent, setProfitTargetPercent] = useState("5");
+  const [profitTargetPercent, setProfitTargetPercent] = useState(
+    String(FIXED_PROFIT_PERCENT),
+  );
   const [manualPriceTarget, setManualPriceTarget] = useState("");
-  const [gradualSellPercent, setGradualSellPercent] = useState("20");
+  const [gradualSellPercent] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
   const [currentSession, setCurrentSession] =
     useState<MarketMakerSession | null>(null);
@@ -105,9 +110,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const solBalance = solToken?.balance || 0;
 
   const validateInputs = useCallback((): string | null => {
-    if (!tokenAddress.trim()) return "Token address is required";
-    if (tokenAddress.length < 32) return "Invalid token address format";
-
     const numMakers = parseInt(numberOfMakers);
     if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
       return "Number of makers must be between 1 and 1000";
@@ -119,45 +121,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(maxSol) || maxSol <= 0) return "Max order amount must be > 0";
     if (minSol >= maxSol) return "Min order must be less than max order";
 
-    const minDelay = parseInt(minDelaySeconds);
-    const maxDelay = parseInt(maxDelaySeconds);
-
-    if (isNaN(minDelay) || minDelay < 0) return "Min delay must be >= 0";
-    if (isNaN(maxDelay) || maxDelay < 0) return "Max delay must be >= 0";
-    if (minDelay > maxDelay) return "Min delay must be <= max delay";
-
-    if (sellStrategy === "auto-profit") {
-      const profitTarget = parseFloat(profitTargetPercent);
-      if (isNaN(profitTarget) || profitTarget < 0.1)
-        return "Profit target must be >= 0.1%";
-    }
-
-    if (sellStrategy === "manual-target") {
-      if (!manualPriceTarget) return "Manual price target is required";
-      const target = parseFloat(manualPriceTarget);
-      if (isNaN(target) || target <= 0)
-        return "Price target must be a positive number";
-    }
-
-    if (sellStrategy === "gradually") {
-      const gradual = parseFloat(gradualSellPercent);
-      if (isNaN(gradual) || gradual <= 0 || gradual > 100)
-        return "Gradually sell percent must be between 0 and 100";
-    }
+    const profitTarget = parseFloat(profitTargetPercent);
+    if (isNaN(profitTarget) || profitTarget < 0.1)
+      return "Profit target must be >= 0.1%";
 
     return null;
-  }, [
-    tokenAddress,
-    numberOfMakers,
-    minOrderSOL,
-    maxOrderSOL,
-    minDelaySeconds,
-    maxDelaySeconds,
-    sellStrategy,
-    profitTargetPercent,
-    manualPriceTarget,
-    gradualSellPercent,
-  ]);
+  }, [numberOfMakers, minOrderSOL, maxOrderSOL, profitTargetPercent]);
 
   const calculateEstimatedCost = useCallback((): {
     totalSOLNeeded: number;

@@ -689,7 +689,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>��� Early access to wallet updates</p>
+                  <p>���� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -716,9 +716,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {earnedTokens} FIXERCOIN
                   </span>
                 </div>
-              </div>
+        </div>
 
-              {/* Action Buttons */}
+        {/* Token Search - Under Balance Card */}
+        <div className="w-full mb-4 mt-4 px-4 sm:px-0">
+          <TokenSearch
+            className="w-full"
+            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
+          />
+        </div>
+
+        {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
                   className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
@@ -741,14 +749,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
-        {/* Token Search - At Top */}
-        <div className="w-full mb-4 px-4 sm:px-0">
-          <TokenSearch
-            className="w-full"
-            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
-          />
-        </div>
-
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">

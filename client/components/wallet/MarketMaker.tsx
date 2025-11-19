@@ -422,24 +422,101 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             const sig = await sendSignedTxGeneric(swap.swapTransaction);
             const m = updatedSession.makers[i];
             if (m) {
+              const tokenAmount =
+                jupiterAPI.parseSwapAmount(
+                  quote.outAmount,
+                  quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
+                ) || 0;
+              const buyFee = amountSol * FEE_PERCENTAGE;
+
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
                 solAmount: amountSol,
-                tokenAmount:
-                  jupiterAPI.parseSwapAmount(
-                    quote.outAmount,
-                    quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
-                  ) || 0,
-                feeAmount: 0,
+                tokenAmount: tokenAmount,
+                feeAmount: buyFee,
                 signature: sig,
                 status: "confirmed",
               });
+              m.currentTokenBalance = tokenAmount;
               m.status = "completed" as const;
+
               console.log(
-                `✅ Maker ${m.id}: Buy transaction confirmed (${sig})`,
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ${buyFee.toFixed(4)} SOL`,
               );
               successCount++;
+
+              // Trigger auto-sell if profit target is set
+              if (currentSession.sellStrategy === "auto-profit") {
+                const profitTarget = currentSession.profitTargetPercent || 5;
+
+                // Wait a moment then check price for auto-sell
+                setTimeout(async () => {
+                  try {
+                    const priceQuote = await jupiterAPI.getQuote(
+                      currentSession.tokenAddress,
+                      SOL_MINT,
+                      jupiterAPI.formatSwapAmount(tokenAmount, 6), // Assuming 6 decimals for custom token
+                      120,
+                    );
+
+                    if (priceQuote) {
+                      const soldSOL = jupiterAPI.parseSwapAmount(
+                        priceQuote.outAmount,
+                        9,
+                      ) || 0;
+                      const buyPrice = amountSol / tokenAmount;
+                      const sellPrice = soldSOL / tokenAmount;
+                      const profitPercent =
+                        ((sellPrice - buyPrice) / buyPrice) * 100;
+
+                      if (profitPercent >= profitTarget) {
+                        // Execute sell
+                        const sellSwap =
+                          await jupiterAPI.getSwapTransaction({
+                            quoteResponse: priceQuote,
+                            userPublicKey: wallet.publicKey,
+                            wrapAndUnwrapSol: true,
+                          });
+
+                        if (sellSwap && sellSwap.swapTransaction) {
+                          const sellSig = await sendSignedTxGeneric(
+                            sellSwap.swapTransaction,
+                          );
+                          const sellFee = soldSOL * FEE_PERCENTAGE;
+
+                          m.sellTransactions.push({
+                            type: "sell",
+                            timestamp: Date.now(),
+                            solAmount: soldSOL,
+                            tokenAmount: tokenAmount,
+                            feeAmount: sellFee,
+                            signature: sellSig,
+                            status: "confirmed",
+                          });
+
+                          const profit = soldSOL - amountSol;
+                          m.profitUSD = profit;
+
+                          console.log(
+                            `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ${sellFee.toFixed(4)} SOL`,
+                          );
+
+                          setCurrentSession({
+                            ...updatedSession,
+                            makers: updatedSession.makers,
+                          });
+                        }
+                      }
+                    }
+                  } catch (autoSellError) {
+                    console.error(
+                      `Auto-sell error for Maker ${m.id}:`,
+                      autoSellError,
+                    );
+                  }
+                }, 2000); // 2 second delay before checking for auto-sell
+              }
             }
 
             setCurrentSession({

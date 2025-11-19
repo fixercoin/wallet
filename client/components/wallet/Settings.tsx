@@ -155,55 +155,6 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
     onBack();
   };
 
-  const handleSetPassword = async () => {
-    if (!newPassword) {
-      toast({
-        title: "Error",
-        description: "Please enter a password",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await setWalletPassword(newPassword);
-      markWalletAsPasswordProtected();
-      encryptStoredWalletsIfNeeded();
-      setPasswordEnabled(true);
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordForm(false);
-      toast({
-        title: "Success",
-        description:
-          "Password set successfully. You will be prompted for it when you open the app.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to set password",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">

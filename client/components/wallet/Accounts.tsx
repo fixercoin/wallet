@@ -86,7 +86,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-none flex items-center gap-2"
+                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-none flex flex-col sm:flex-row sm:items-center gap-2"
                   >
                     <button
                       onClick={() => {
@@ -96,26 +96,26 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                         selectWallet(w.publicKey);
                         onBack();
                       }}
-                      className="text-left flex-1"
+                      className="text-left flex-1 min-w-0"
                       title="SELECT THIS WALLET"
                     >
                       <div className="font-medium">
-                        {w.label ? w.label : shortenAddress(w.publicKey, 8)}
+                        {w.label ? w.label : shortenAddress(w.publicKey, 6)}
                       </div>
                       {w.label ? (
-                        <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {shortenAddress(w.publicKey, 8)}
+                        <div className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                          {shortenAddress(w.publicKey, 6)}
                         </div>
                       ) : null}
                     </button>
 
                     {editingKey === w.publicKey ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}
                           placeholder="ENTER NAME"
-                          className="h-8 w-36"
+                          className="h-8 flex-1 sm:w-36"
                         />
                         <Button
                           size="sm"
@@ -124,7 +124,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setEditingKey(null);
                             setLabelInput("");
                           }}
-                          className="h-8 px-2"
+                          className="h-8 px-2 flex-shrink-0"
                           aria-label="SAVE"
                         >
                           <Save className="h-4 w-4" />
@@ -136,7 +136,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setEditingKey(null);
                             setLabelInput("");
                           }}
-                          className="h-8 px-2"
+                          className="h-8 px-2 flex-shrink-0"
                           aria-label="CANCEL"
                         >
                           <X className="h-4 w-4" />
@@ -150,7 +150,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                           setEditingKey(w.publicKey);
                           setLabelInput(w.label || "");
                         }}
-                        className="h-8 px-2"
+                        className="h-8 px-2 w-full sm:w-auto"
                         aria-label="EDIT NAME"
                       >
                         <Edit2 className="h-4 w-4" />

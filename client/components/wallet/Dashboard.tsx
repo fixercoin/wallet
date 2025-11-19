@@ -796,6 +796,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Token Search - Under Sign Line */}
+          <div className="w-full mb-4 px-0">
+            <TokenSearch
+              className="w-full"
+              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
+            />
+          </div>
+
           <div className="text-center space-y-2">
             {wallet
               ? (() => {
@@ -915,14 +924,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <span>SWAP</span>
             </Button>
           </div>
-        </div>
-
-        {/* Token Search - Under Balance Card */}
-        <div className="w-full mb-4 mt-4 px-4 sm:px-0">
-          <TokenSearch
-            className="w-full"
-            inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
-          />
         </div>
 
         {/* Tokens List */}

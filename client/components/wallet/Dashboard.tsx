@@ -801,7 +801,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="w-full mb-4 px-0">
             <TokenSearch
               className="w-full"
-              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-lg"
+              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-[2.5px]"
             />
           </div>
 

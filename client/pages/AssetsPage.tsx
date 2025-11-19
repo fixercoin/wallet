@@ -73,8 +73,6 @@ export default function AssetsPage() {
     return total;
   };
 
-  if (!wallet) return null;
-
   const totalBalance = getTotalPortfolioValue();
 
   return (

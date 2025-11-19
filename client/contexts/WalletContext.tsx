@@ -62,7 +62,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
 
-
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -750,7 +749,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     balanceRef.current = 0;
     setTokens(DEFAULT_TOKENS);
   };
-
 
   const value: WalletContextType = {
     wallet,

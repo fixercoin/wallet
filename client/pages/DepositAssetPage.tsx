@@ -82,7 +82,6 @@ export default function DepositAssetPage() {
           </div>
         </div>
 
-
         {/* Wallet Address Card */}
         <div className="px-4 sm:px-0 mb-6">
           <Card className="bg-transparent border border-green-500/30 rounded-lg">
@@ -155,7 +154,6 @@ export default function DepositAssetPage() {
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   );

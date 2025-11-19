@@ -18,10 +18,7 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
 
   return (
     <>
-      <PasswordPromptDialog
-        isOpen={false}
-        onUnlocked={() => {}}
-      />
+      <PasswordPromptDialog isOpen={false} onUnlocked={() => {}} />
       {children}
     </>
   );

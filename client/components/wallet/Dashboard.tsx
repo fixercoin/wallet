@@ -744,8 +744,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
+            {/* Dropdown menu - moved to left */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                  aria-label="Wallet menu"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onSelect={() => onAccounts?.()}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>MY-WALLET</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Action buttons - moved to right */}
             <div className="flex items-center gap-3">
-              {/* Action buttons */}
               <Button
                 onClick={onSettings}
                 size="sm"
@@ -774,27 +795,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Lock className="h-4 w-4" />
               </Button>
             </div>
-            {/* Dropdown menu - moved to right */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
-                  aria-label="Wallet menu"
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>MY-WALLET</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           <div className="text-center space-y-2 mt-8">

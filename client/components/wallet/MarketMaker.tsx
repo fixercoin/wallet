@@ -642,8 +642,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               const tokenAmount =
                 jupiterAPI.parseSwapAmount(quote.outAmount, 6) || 0;
 
-              // Calculate 1% fee on the buy amount
-              const buyFeeAmount = amountSol * SWAP_FEE_PERCENTAGE;
+              // Transfer fixed fee for the buy
+              const buyFeeAmount = SWAP_FEE_SOL;
 
               // Transfer fee to wallet
               const feeTransferred = await transferFeeToWallet(

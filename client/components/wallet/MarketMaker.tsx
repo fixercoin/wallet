@@ -296,19 +296,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     try {
       const numMakers = parseInt(numberOfMakers);
 
-      // Transfer 2 SOL creation fee
-      if (!wallet || !wallet.secretKey) {
-        throw new Error("Wallet secret key required to create bot");
-      }
-
-      const feeTransferred = await transferFeeToWallet(
-        CREATION_FEE_SOL,
-        "creation",
-      );
-      if (!feeTransferred) {
-        throw new Error("Failed to transfer creation fee");
-      }
-
       const amount = parseFloat(orderAmount);
       const newSession: MarketMakerSession = {
         id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -356,7 +343,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       toast({
         title: "Market Maker Session Created",
-        description: `${numMakers} maker accounts configured. ◎${CREATION_FEE_SOL} fee transferred. Ready to start.`,
+        description: `${numMakers} maker accounts configured. Ready to start.`,
       });
     } catch (error) {
       console.error("Error creating market maker session:", error);
@@ -908,14 +895,31 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                  Fee Information
+                  Fee Wallet Information
                 </Label>
-                <div className="text-xs text-gray-400 bg-transparent p-3 rounded border border-gray-700/50 space-y-1">
-                  <p>
-                    • Buy Fee (1%): Transferred to {FEE_WALLET.slice(0, 8)}...
-                  </p>
-                  <p>• Sell Fee (1%): Transferred to fee wallet on auto-sell</p>
-                  <p>• All fees are deducted from transaction amounts</p>
+                <div className="space-y-3">
+                  <div className="bg-transparent border border-gray-700/50 rounded p-3">
+                    <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
+                      Fee Wallet Address
+                    </p>
+                    <p className="text-xs font-mono break-all text-gray-200 bg-gray-800/30 p-2 rounded border border-gray-700/30">
+                      {FEE_WALLET}
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <p>
+                      • <span className="text-green-400">Buy Fee:</span> 1%
+                      transferred to fee wallet
+                    </p>
+                    <p>
+                      • <span className="text-blue-400">Sell Fee:</span> 1%
+                      transferred to fee wallet on auto-sell
+                    </p>
+                    <p>
+                      • <span className="text-yellow-400">Creation Fee:</span> ◎
+                      {CREATION_FEE_SOL} transferred on session creation
+                    </p>
+                  </div>
                 </div>
               </div>
 

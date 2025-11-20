@@ -1443,15 +1443,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Delay Between Buys
-            </Label>
-            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-400 text-sm">
-              {FIXED_DELAY_SECONDS} seconds (fixed)
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
               Profit Target (%) - Auto-Sell at Profit
             </Label>
             <Input

@@ -125,7 +125,8 @@ When the bot executes buy/sell trades:
 - **@solana/spl-token version**: 0.4.14 (async getAssociatedTokenAddress)
 - **Fee percentage**: 0.01 (1%)
 - **Fee wallet**: `FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM`
-- **Affected operations**: Swaps, Token Burns, Token Locks, Airdrops
+- **Affected operations**: Swaps, Token Burns, Token Locks, Airdrops, MarketMaker Bot
+- **Transaction fee endpoint**: `/api/solana-send` (backend proxy for CORS-safe sending)
 
 ## Deployment Notes
 

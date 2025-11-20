@@ -70,7 +70,7 @@ interface MarketMakerSession {
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const CREATION_FEE_SOL = 0.01; // Fixed 0.01 SOL fee
-const SWAP_FEE_PERCENTAGE = 0.01; // 1% fee on each swap
+const SWAP_FEE_SOL = 0.0007; // Fixed 0.0007 SOL fee per swap
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";

@@ -893,7 +893,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </p>
               </div>
 
-
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Session Summary

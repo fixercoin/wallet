@@ -45,7 +45,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 ACTIVE WALLET
               </div>
               <div className="w-full">
-                <div className="bg-transparent border border-gray-300/30 rounded-none p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="bg-transparent border border-gray-300/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="text-xs text-gray-600 mb-1 uppercase">
                       ADDRESS
@@ -86,7 +86,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-none flex flex-col sm:flex-row sm:items-center gap-2"
+                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-col sm:flex-row sm:items-center gap-2"
                   >
                     <button
                       onClick={() => {

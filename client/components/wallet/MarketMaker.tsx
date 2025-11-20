@@ -375,7 +375,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       toast({
         title: "Market Maker Session Created",
-        description: `${numMakers} maker accounts configured. ◎${CREATION_FEE_SOL} fee transferred. Ready to start.`,
+        description: `${numMakers} maker accounts configured. ◎${creationFeeSOL.toFixed(6)} ($${CREATION_FEE_USD} USD) fee transferred. Ready to start.`,
       });
     } catch (error) {
       console.error("Error creating market maker session:", error);

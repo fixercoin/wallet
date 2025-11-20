@@ -1277,40 +1277,21 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Order Amount Range (SOL)
+              Order Amount (SOL)
             </Label>
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  From
-                </Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={minOrderSOL}
-                    onChange={(e) => setMinOrderSOL(e.target.value)}
-                    className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                  />
-                  <span className="text-sm text-gray-600">◎</span>
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  To
-                </Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={maxOrderSOL}
-                    onChange={(e) => setMaxOrderSOL(e.target.value)}
-                    className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                  />
-                  <span className="text-sm text-gray-600">◎</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.001"
+                min="0.01"
+                value={orderAmount}
+                onChange={(e) => setOrderAmount(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                placeholder="Minimum 0.01 SOL"
+              />
+              <span className="text-sm text-gray-600">◎</span>
             </div>
+            <p className="text-xs text-gray-500 mt-1">Minimum: 0.01 SOL • Unlimited maximum</p>
           </div>
 
           <div className="space-y-2">

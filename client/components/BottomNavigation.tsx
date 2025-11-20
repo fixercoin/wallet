@@ -29,11 +29,11 @@ export const BottomNavigation = () => {
   }, []);
 
   const navItems = [
-    { path: "/", label: "HOME", short: "H" },
-    { path: "/autobot", label: "BOOST", short: "B" },
-    { path: "/airdrop", label: "AIRDROP", short: "A" },
-    { path: "/wallet/history", label: "HISTORY", short: "H" },
-    { path: "/assets", label: "ASSET", short: "A" },
+    { path: "/", label: "HOME" },
+    { path: "/autobot", label: "BOOST" },
+    { path: "/airdrop", label: "AIRDROP" },
+    { path: "/wallet/history", label: "HISTORY" },
+    { path: "/assets", label: "ASSET" },
   ];
 
   const isActive = (path: string) => {

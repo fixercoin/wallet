@@ -188,7 +188,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const [tokenAddress] = useState(FIXED_TOKEN_ADDRESS);
   const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState("0.01");
+  const [orderAmount, setOrderAmount] = useState("0.02");
   const [minDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
   const [maxDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
   const [sellStrategy] = useState<

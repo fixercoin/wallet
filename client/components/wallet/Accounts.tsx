@@ -39,7 +39,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             </h1>
           </div>
 
-          <div className="px-4 pb-4 space-y-4">
+          <div className="px-4 sm:px-6 pb-4 space-y-4">
             <div>
               <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))] uppercase">
                 ACTIVE WALLET

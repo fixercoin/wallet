@@ -1,13 +1,22 @@
-# Fee Transfer Fix - Swap Fees Not Being Deducted
+# Fee Transfer Fix - Fees Not Being Received at Fee Wallet
 
 ## Problem
-After deploying to Cloudflare, token swaps were executing successfully but fee transfer instructions were **not being added to transactions**. When checking Solscan, there were no fee transfer instructions visible in the swap transactions.
+After deploying to Cloudflare, token swaps were executing successfully, but:
+1. **Fee transfer instructions were not being added** to swap transactions
+2. **MarketMaker bot fees were not reaching** the fee wallet
 
-## Root Cause
+When checking Solscan, there were no fee transfer instructions visible in transactions.
+
+## Root Causes
+
+### Issue #1: Async getAssociatedTokenAddress Not Awaited
 The `getAssociatedTokenAddress` function from `@solana/spl-token` is **async** and returns a Promise, but it was being used **without await** in multiple components. This caused:
 - Promise objects to be passed instead of PublicKey instances to transaction instruction creation
 - Instructions to fail silently due to invalid parameters
-- Fee transfer instructions to never be added to the transaction
+- Fee transfer instructions to never be added to transactions
+
+### Issue #2: MarketMaker Sending Transactions Directly to RPC (CORS Blocked)
+The MarketMaker bot was trying to send fee transfer transactions directly to public RPC endpoints from the browser, which gets **blocked by CORS** restrictions. The browser silently fails these requests, causing fees to never be submitted.
 
 ## Components Fixed
 

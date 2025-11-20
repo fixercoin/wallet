@@ -1173,14 +1173,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                       </div>
                                       <div>
                                         <div className="text-[10px] text-gray-500 uppercase">
-                                          Price per Token
-                                        </div>
-                                        <div className="text-sm font-bold text-white">
-                                          ◎{trade.entryPrice.toFixed(8)}
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <div className="text-[10px] text-gray-500 uppercase">
                                           Time
                                         </div>
                                         <div className="text-sm font-bold text-gray-300">

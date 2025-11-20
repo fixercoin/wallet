@@ -267,14 +267,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     const totalBuySol = numMakers * avgOrderSOL;
 
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
-    const creationFee = CREATION_FEE_SOL;
+    const creationFee = creationFeeSOL;
     const totalFees = tokenAccountFees + creationFee;
 
     return {
       totalSOLNeeded: totalBuySol + totalFees,
       totalFees,
     };
-  }, [numberOfMakers, minOrderSOL, maxOrderSOL]);
+  }, [numberOfMakers, minOrderSOL, maxOrderSOL, creationFeeSOL]);
 
   const { totalSOLNeeded, totalFees } = calculateEstimatedCost();
   const canAfford = solBalance >= totalSOLNeeded;

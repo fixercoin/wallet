@@ -238,11 +238,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     totalFees: number;
   } => {
     const numMakers = parseInt(numberOfMakers);
-    const minSol = parseFloat(minOrderSOL);
-    const maxSol = parseFloat(maxOrderSOL);
+    const amount = parseFloat(orderAmount);
 
-    const avgOrderSOL = (minSol + maxSol) / 2;
-    const totalBuySol = numMakers * avgOrderSOL;
+    const totalBuySol = numMakers * amount;
 
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
     const creationFee = CREATION_FEE_SOL;

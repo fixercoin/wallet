@@ -691,19 +691,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                             // Transfer fee to wallet
                             const sellFeeTransferred =
-                              await transferFeeToWallet(
-                                sellFeeAmount,
-                                m.id,
-                              );
+                              await transferFeeToWallet(sellFeeAmount, m.id);
 
                             m.sellTransactions.push({
                               type: "sell",
                               timestamp: Date.now(),
                               solAmount: soldSOL,
                               tokenAmount: tokenAmount,
-                              feeAmount: sellFeeTransferred
-                                ? sellFeeAmount
-                                : 0,
+                              feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
                               signature: sellSig,
                               status: "confirmed",
                             });

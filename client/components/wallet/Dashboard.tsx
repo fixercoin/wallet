@@ -63,8 +63,6 @@ import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { TokenSearch } from "./TokenSearch";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Globe } from "lucide-react";
 
 const QUEST_TASKS = [
   {

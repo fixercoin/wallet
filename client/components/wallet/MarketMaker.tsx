@@ -194,9 +194,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const [sellStrategy] = useState<
     "hold" | "auto-profit" | "manual-target" | "gradually"
   >("auto-profit");
-  const [profitTargetPercent, setProfitTargetPercent] = useState(
-    String(FIXED_PROFIT_PERCENT),
-  );
+  // Hardcoded 5% profit target - no user input allowed
+  const profitTargetPercent = String(FIXED_PROFIT_PERCENT);
   const [manualPriceTarget, setManualPriceTarget] = useState("");
   const [gradualSellPercent] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
@@ -228,12 +227,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(amount) || amount < 0.01)
       return "Order amount must be at least 0.01 SOL";
 
-    const profitTarget = parseFloat(profitTargetPercent);
-    if (isNaN(profitTarget) || profitTarget < 0.1)
-      return "Profit target must be >= 0.1%";
-
     return null;
-  }, [numberOfMakers, orderAmount, profitTargetPercent]);
+  }, [numberOfMakers, orderAmount]);
 
   const calculateEstimatedCost = useCallback((): {
     totalSOLNeeded: number;
@@ -661,100 +656,153 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               // Trigger auto-sell if profit target is set
               if (currentSession.sellStrategy === "auto-profit") {
                 const profitTarget = currentSession.profitTargetPercent || 5;
-                const buyPrice = amountSol / tokenAmount;
+                const buyPricePerToken = amountSol / tokenAmount;
 
-                // Polling mechanism to check for profit target
-                const checkAndSellInterval = setInterval(async () => {
-                  try {
-                    const priceQuote = await jupiterAPI.getQuote(
-                      currentSession.tokenAddress,
-                      SOL_MINT,
-                      jupiterAPI.formatSwapAmount(tokenAmount, 6),
-                      120,
-                    );
+                console.log(
+                  `🔄 Maker ${m.id}: Starting auto-sell monitoring. Buy price: ◎${buyPricePerToken.toFixed(9)}/token, Profit target: ${profitTarget}%`,
+                );
 
-                    if (priceQuote) {
+                // Start auto-sell monitoring in the background
+                (async () => {
+                  let shouldContinue = true;
+                  let checkCount = 0;
+                  const maxChecks = 100; // ~5 minutes at 3-second intervals
+
+                  while (shouldContinue && checkCount < maxChecks) {
+                    try {
+                      checkCount++;
+                      await new Promise((r) => setTimeout(r, 3000)); // Check every 3 seconds
+
+                      const priceQuote = await jupiterAPI.getQuote(
+                        currentSession.tokenAddress,
+                        SOL_MINT,
+                        jupiterAPI.formatSwapAmount(tokenAmount, 6),
+                        120,
+                      );
+
+                      if (!priceQuote) {
+                        console.warn(
+                          `⚠️ Maker ${m.id}: Failed to get price quote (check ${checkCount})`,
+                        );
+                        continue;
+                      }
+
                       const soldSOL =
                         jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
                         0;
-                      const sellPrice = soldSOL / tokenAmount;
+
+                      if (soldSOL <= 0) {
+                        console.warn(
+                          `⚠️ Maker ${m.id}: Invalid quote amount: ${soldSOL}`,
+                        );
+                        continue;
+                      }
+
+                      const sellPricePerToken = soldSOL / tokenAmount;
                       const profitPercent =
-                        ((sellPrice - buyPrice) / buyPrice) * 100;
+                        ((sellPricePerToken - buyPricePerToken) /
+                          buyPricePerToken) *
+                        100;
 
                       console.log(
-                        `📊 Maker ${m.id}: Current profit: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%)`,
+                        `📊 Maker ${m.id}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Current price: ◎${sellPricePerToken.toFixed(9)}/token)`,
                       );
 
+                      // Execute sell if profit target reached
                       if (profitPercent >= profitTarget) {
-                        clearInterval(checkAndSellInterval);
-                        // Execute sell
+                        console.log(
+                          `🚀 Maker ${m.id}: Profit target reached! Executing sell...`,
+                        );
+                        shouldContinue = false;
+
                         const sellSwap = await jupiterAPI.getSwapTransaction({
                           quoteResponse: priceQuote,
                           userPublicKey: wallet.publicKey,
                           wrapAndUnwrapSol: true,
                         });
 
-                        if (sellSwap && sellSwap.swapTransaction) {
-                          try {
-                            const sellSig = await sendSignedTxGeneric(
-                              sellSwap.swapTransaction,
-                            );
-
-                            // Calculate 1% fee on the sell amount
-                            const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
-
-                            // Transfer fee to wallet
-                            const sellFeeTransferred =
-                              await transferFeeToWallet(sellFeeAmount, m.id);
-
-                            m.sellTransactions.push({
-                              type: "sell",
-                              timestamp: Date.now(),
-                              solAmount: soldSOL,
-                              tokenAmount: tokenAmount,
-                              feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
-                              signature: sellSig,
-                              status: "confirmed",
-                            });
-
-                            const profit = soldSOL - amountSol;
-                            m.profitUSD = profit;
-
-                            console.log(
-                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ◎${sellFeeAmount.toFixed(4)}`,
-                            );
-
-                            setCurrentSession({
-                              ...updatedSession,
-                              makers: updatedSession.makers,
-                            });
-                          } catch (txError) {
-                            console.error(
-                              `Failed to send sell transaction for Maker ${m.id}:`,
-                              txError,
-                            );
-                          }
+                        if (!sellSwap || !sellSwap.swapTransaction) {
+                          throw new Error("Failed to build sell transaction");
                         }
+
+                        const sellSig = await sendSignedTxGeneric(
+                          sellSwap.swapTransaction,
+                        );
+
+                        // Calculate 1% fee on the sell amount
+                        const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+
+                        // Transfer fee to wallet
+                        const sellFeeTransferred = await transferFeeToWallet(
+                          sellFeeAmount,
+                          m.id,
+                        );
+
+                        m.sellTransactions.push({
+                          type: "sell",
+                          timestamp: Date.now(),
+                          solAmount: soldSOL,
+                          tokenAmount: tokenAmount,
+                          feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
+                          signature: sellSig,
+                          status: "confirmed",
+                        });
+
+                        const profit = soldSOL - amountSol;
+                        m.profitUSD = profit;
+
+                        console.log(
+                          `✅ Maker ${m.id}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ���${sellFeeAmount.toFixed(4)}`,
+                        );
+
+                        // Update session state with sell transaction
+                        setCurrentSession((prevSession) => {
+                          if (!prevSession) return prevSession;
+                          return {
+                            ...prevSession,
+                            makers: prevSession.makers.map((maker) =>
+                              maker.id === m.id
+                                ? {
+                                    ...maker,
+                                    sellTransactions: m.sellTransactions,
+                                    profitUSD: m.profitUSD,
+                                  }
+                                : maker,
+                            ),
+                          };
+                        });
+
+                        toast({
+                          title: "Auto-Sell Executed",
+                          description: `Maker ${m.id}: Sold at ${profitPercent.toFixed(2)}% profit (◎${profit.toFixed(4)})`,
+                        });
+                      }
+                    } catch (error) {
+                      const errorMsg =
+                        error instanceof Error ? error.message : String(error);
+                      console.error(
+                        `❌ Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
+                        error,
+                      );
+
+                      // Continue trying even if there's an error
+                      if (
+                        errorMsg.includes("timeout") ||
+                        errorMsg.includes("failed")
+                      ) {
+                        console.log(
+                          `🔄 Maker ${m.id}: Retrying in 3 seconds...`,
+                        );
                       }
                     }
-                  } catch (autoSellError) {
-                    console.error(
-                      `Auto-sell error for Maker ${m.id}:`,
-                      autoSellError,
-                    );
                   }
-                }, 3000); // Check every 3 seconds for profit target
 
-                // Stop checking after 5 minutes if profit target not reached
-                setTimeout(
-                  () => {
-                    clearInterval(checkAndSellInterval);
+                  if (shouldContinue) {
                     console.log(
                       `⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`,
                     );
-                  },
-                  5 * 60 * 1000,
-                );
+                  }
+                })();
               }
             }
 
@@ -891,6 +939,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   </Label>
                   <p className="text-sm text-white mt-1 capitalize">
                     {currentSession.sellStrategy}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
+                    Profit Target
+                  </Label>
+                  <p className="text-sm text-green-400 mt-1 font-bold">
+                    5% (Auto-Sell)
                   </p>
                 </div>
                 <div>
@@ -1422,17 +1478,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Profit Target (%) - Auto-Sell at Profit
+              Auto-Sell Profit Target
             </Label>
-            <Input
-              type="number"
-              step="0.1"
-              min="0.1"
-              value={profitTargetPercent}
-              onChange={(e) => setProfitTargetPercent(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
-            <p className="text-xs text-gray-500">Default: 5% profit target</p>
+            <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
+              <span className="text-2xl font-bold text-green-400">5%</span>
+            </div>
+            <p className="text-xs text-green-500/80">
+              Fixed at 5% - Will auto-sell when profit reaches this target
+            </p>
           </div>
 
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg space-y-2">

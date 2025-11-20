@@ -211,6 +211,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       return [];
     }
   });
+  const [creationFeeSOL, setCreationFeeSOL] = useState(0.02); // Default estimate: $2 at ~$100/SOL
+
+  // Fetch current SOL price and calculate $2 USD fee in SOL
+  React.useEffect(() => {
+    const fetchFee = async () => {
+      try {
+        const solPrice = await solPriceService.getSolPriceSimple();
+        const feeInSOL = CREATION_FEE_USD / solPrice;
+        setCreationFeeSOL(feeInSOL);
+        console.log(`Creation fee: $${CREATION_FEE_USD} USD = ${feeInSOL.toFixed(6)} SOL (SOL price: $${solPrice})`);
+      } catch (error) {
+        console.error("Failed to fetch SOL price for fee calculation:", error);
+        setCreationFeeSOL(CREATION_FEE_USD / 100); // Fallback to ~$100/SOL estimate
+      }
+    };
+    fetchFee();
+  }, []);
 
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),

@@ -450,10 +450,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         TOKEN_PROGRAM_ID,
       );
 
-      const tx = new Transaction().add(burnIx);
+      let tx = new Transaction().add(burnIx);
 
       // Add fee transfer instruction
-      addFeeTransferInstruction(
+      tx = await addFeeTransferInstruction(
         tx,
         selectedToken.mint,
         amtRaw,

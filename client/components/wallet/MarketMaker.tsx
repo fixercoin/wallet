@@ -194,9 +194,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const [sellStrategy] = useState<
     "hold" | "auto-profit" | "manual-target" | "gradually"
   >("auto-profit");
-  const [profitTargetPercent, setProfitTargetPercent] = useState(
-    String(FIXED_PROFIT_PERCENT),
-  );
+  // Hardcoded 5% profit target - no user input allowed
+  const profitTargetPercent = String(FIXED_PROFIT_PERCENT);
   const [manualPriceTarget, setManualPriceTarget] = useState("");
   const [gradualSellPercent] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
@@ -228,12 +227,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(amount) || amount < 0.01)
       return "Order amount must be at least 0.01 SOL";
 
-    const profitTarget = parseFloat(profitTargetPercent);
-    if (isNaN(profitTarget) || profitTarget < 0.1)
-      return "Profit target must be >= 0.1%";
-
     return null;
-  }, [numberOfMakers, orderAmount, profitTargetPercent]);
+  }, [numberOfMakers, orderAmount]);
 
   const calculateEstimatedCost = useCallback((): {
     totalSOLNeeded: number;
@@ -947,6 +942,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <Label className="text-xs text-gray-400 uppercase font-semibold">
+                    Profit Target
+                  </Label>
+                  <p className="text-sm text-green-400 mt-1 font-bold">
+                    5% (Auto-Sell)
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Order Range
                   </Label>
                   <p className="text-sm text-white mt-1">
@@ -1474,17 +1477,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Profit Target (%) - Auto-Sell at Profit
+              Auto-Sell Profit Target
             </Label>
-            <Input
-              type="number"
-              step="0.1"
-              min="0.1"
-              value={profitTargetPercent}
-              onChange={(e) => setProfitTargetPercent(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
-            <p className="text-xs text-gray-500">Default: 5% profit target</p>
+            <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
+              <span className="text-2xl font-bold text-green-400">5%</span>
+            </div>
+            <p className="text-xs text-green-500/80">Fixed at 5% - Will auto-sell when profit reaches this target</p>
           </div>
 
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg space-y-2">

@@ -125,7 +125,9 @@ async function addFeeTransferInstruction(
 
   try {
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
-    const userPubkey = new PublicKey(userPublicKey);
+    const userPubkeyStr =
+      typeof userPublicKey === "string" ? userPublicKey : userPublicKey.toString();
+    const userPubkey = new PublicKey(userPubkeyStr);
     const fromMintPubkey = new PublicKey(fromMint);
 
     let feeInstruction: TransactionInstruction;
@@ -167,18 +169,18 @@ async function addFeeTransferInstruction(
     const instructionsCount = tx.message.instructions.length;
     tx.message.instructions.push(feeInstruction);
     console.log(
-      `[SwapInterface] Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
+      `[SwapInterface] ✅ Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
     );
     return tx;
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     console.error(
-      "[SwapInterface] Error adding fee transfer instruction:",
+      "[SwapInterface] ❌ CRITICAL: Failed to add fee transfer instruction:",
       error,
     );
-    console.log(
-      "[SwapInterface] Continuing without fee - this should not happen in production",
+    throw new Error(
+      `Failed to add platform fee to transaction: ${errorMsg}. This is required for the swap to proceed.`,
     );
-    return tx;
   }
 }
 

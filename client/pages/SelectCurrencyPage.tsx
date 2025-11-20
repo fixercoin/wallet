@@ -107,8 +107,7 @@ export default function SelectCurrencyPage() {
           </div>
 
           <p className="text-xs text-gray-600 mb-4">
-            {t("major-currencies", "Major Currencies")}
-            {!loadingRates && " (with USD exchange rates)"}
+            {t("major-currencies", "Major Currencies")} (with USD exchange rates)
           </p>
 
           <div className="space-y-3">

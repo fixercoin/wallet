@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, AlertTriangle, Zap, X } from "lucide-react";
-import { solPriceService } from "@/lib/services/sol-price";
 
 interface MarketMakerProps {
   onBack: () => void;

@@ -46,9 +46,6 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               </div>
               <div className="w-full">
                 <div className="bg-transparent border border-gray-300/30 rounded-lg p-4 flex flex-row items-center justify-between gap-2">
-                  <div className="text-xs text-gray-600 uppercase flex-shrink-0">
-                    ADDRESS:
-                  </div>
                   <span className="font-mono text-xs text-gray-900 truncate flex-1 min-w-0">
                     {wallet
                       ? shortenAddress(wallet.publicKey, 6)

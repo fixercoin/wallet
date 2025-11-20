@@ -109,10 +109,10 @@ export default function SelectCurrencyPage() {
 
           <div className="space-y-3">
             {MAJOR_CURRENCIES.map((curr) => {
-              const isSelectable = currency === "USD" ? curr.code === "USD" : curr.code === "PKR";
-              const isSelected = (currency === "USD" && curr.code === "USD") || 
+              const isSelectable = curr.code === "USD" || curr.code === "PKR";
+              const isSelected = (currency === "USD" && curr.code === "USD") ||
                                 (currency === "PKR" && curr.code === "PKR");
-              
+
               return (
                 <Card
                   key={curr.code}

@@ -188,7 +188,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const [tokenAddress] = useState(FIXED_TOKEN_ADDRESS);
   const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState("0.01");
+  const [orderAmount, setOrderAmount] = useState("0.02");
   const [minDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
   const [maxDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
   const [sellStrategy] = useState<
@@ -1471,7 +1471,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               />
               <span className="text-sm text-gray-600">◎</span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p
+              className="text-xs text-gray-500 mt-1"
+              style={{ display: "none" }}
+            >
               Minimum: 0.01 SOL �� Unlimited maximum
             </p>
           </div>
@@ -1483,33 +1486,32 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
               <span className="text-2xl font-bold text-green-400">5%</span>
             </div>
-            <p className="text-xs text-green-500/80">
-              Fixed at 5% - Will auto-sell when profit reaches this target
-            </p>
           </div>
 
-          <div className="p-4 bg-transparent border border-gray-700 rounded-lg space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Available SOL:</span>
-              <span
-                className={`font-bold ${
-                  canAfford ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                ◎ {solBalance.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm pt-2 border-t border-gray-600">
-              <span className="text-gray-300">Required SOL:</span>
-              <span className="font-bold text-white">
-                ◎ {totalSOLNeeded.toFixed(4)}
-              </span>
-            </div>
-            {!canAfford && (
-              <div className="text-xs text-red-400 font-semibold pt-2">
-                Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
+          <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
+            <div className="flex items-center gap-[10px] text-sm flex-wrap">
+              <div className="flex items-center gap-[10px]">
+                <span className="text-gray-300">Available SOL:</span>
+                <span
+                  className={`font-bold ${
+                    canAfford ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  ◎ {solBalance.toFixed(4)}
+                </span>
               </div>
-            )}
+              <div className="flex items-center gap-[10px]">
+                <span className="text-gray-300">Required SOL:</span>
+                <span className="font-bold text-white">
+                  ◎ {totalSOLNeeded.toFixed(4)}
+                </span>
+              </div>
+              {!canAfford && (
+                <div className="text-xs text-red-400 font-semibold">
+                  Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
+                </div>
+              )}
+            </div>
           </div>
 
           <Button

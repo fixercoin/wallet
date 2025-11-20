@@ -4,26 +4,22 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+
   resolve: {
     alias: {
       "@": path.resolve(new URL(".", import.meta.url).pathname, "client"),
     },
   },
+
   build: {
     outDir: "dist",
     assetsDir: "assets",
     sourcemap: false,
     minify: "terser",
   },
+
   server: {
     host: true,
-    port: 5173,
-    proxy: {
-      "/api": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        rewrite: (path) => path,
-      },
-    },
-  },
+    port: 5173
+  }
 });

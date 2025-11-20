@@ -130,11 +130,9 @@ export default function SelectCurrencyPage() {
                           {curr.symbol} {curr.code}
                         </div>
                         <div className="text-xs text-gray-600">{curr.name}</div>
-                        {!loadingRates && (
-                          <div className="text-[10px] text-gray-500 mt-1">
-                            1 USD = {getExchangeRate(curr.code)} {curr.code}
-                          </div>
-                        )}
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          1 USD = {getExchangeRate(curr.code)} {curr.code}
+                        </div>
                       </div>
                       {isSelected && (
                         <Check className="h-5 w-5 text-green-500 font-bold" />

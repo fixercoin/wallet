@@ -250,7 +250,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       totalSOLNeeded: totalBuySol + totalFees,
       totalFees,
     };
-  }, [numberOfMakers, minOrderSOL, maxOrderSOL]);
+  }, [numberOfMakers, orderAmount]);
 
   const { totalSOLNeeded, totalFees } = calculateEstimatedCost();
   const canAfford = solBalance >= totalSOLNeeded;

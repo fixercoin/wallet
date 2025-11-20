@@ -41,10 +41,10 @@ export default function SelectLanguagePage() {
             {languages.map((lang) => (
               <Card
                 key={lang.code}
-                className={`cursor-pointer border-2 transition-all ${
+                className={`cursor-pointer border-2 transition-all bg-transparent ${
                   language === lang.code
-                    ? "border-green-500 bg-green-50"
-                    : "border-gray-300 hover:border-gray-400 bg-white"
+                    ? "border-green-500"
+                    : "border-gray-300 hover:border-gray-400"
                 }`}
                 onClick={() => handleLanguageSelect(lang.code as Language)}
               >

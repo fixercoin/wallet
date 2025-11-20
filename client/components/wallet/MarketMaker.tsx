@@ -617,12 +617,21 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
                 ) || 0;
 
+              // Calculate 1% fee on the buy amount
+              const buyFeeAmount = amountSol * SWAP_FEE_PERCENTAGE;
+
+              // Transfer fee to wallet
+              const feeTransferred = await transferFeeToWallet(
+                buyFeeAmount,
+                m.id,
+              );
+
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
                 solAmount: amountSol,
                 tokenAmount: tokenAmount,
-                feeAmount: 0,
+                feeAmount: feeTransferred ? buyFeeAmount : 0,
                 signature: sig,
                 status: "confirmed",
               });
@@ -630,7 +639,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               m.status = "completed" as const;
 
               console.log(
-                `�� Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount}`,
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ◎${buyFeeAmount.toFixed(4)}`,
               );
 
               successCount++;

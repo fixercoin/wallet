@@ -73,14 +73,22 @@ const response = await fetch("/api/solana-send", {
 
 ## Expected Behavior After Fix
 
-When users perform swaps (or other token operations), the fee transfer instruction will now be properly added to transactions:
-
+### For Swaps (SwapInterface, BurnToken, TokenLock, Airdrop)
+When users perform token operations, the fee transfer instruction will now be properly added:
 1. **1% fee is calculated** based on the input token amount
 2. **Associated token account is resolved** (async call properly awaited)
 3. **Fee transfer instruction is created** with correct PublicKey objects
 4. **Instruction is added to transaction** before signing
 5. **User sees fee deducted** in their balance
 6. **Fee reaches the wallet**: `FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM`
+
+### For MarketMaker Bot
+When the bot executes buy/sell trades:
+1. **1% fee is calculated** based on transaction amount
+2. **Fee transfer transaction is created** and signed locally
+3. **Transaction is sent via backend proxy** (`/api/solana-send`) to avoid CORS issues
+4. **Fee transfer is confirmed** on blockchain
+5. **Fee reaches the wallet**: `FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM`
 
 ## Verification Steps
 

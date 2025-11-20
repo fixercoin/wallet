@@ -222,19 +222,16 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
       return "Number of makers must be between 1 and 1000";
 
-    const minSol = parseFloat(minOrderSOL);
-    const maxSol = parseFloat(maxOrderSOL);
+    const amount = parseFloat(orderAmount);
 
-    if (isNaN(minSol) || minSol <= 0) return "Min order amount must be > 0";
-    if (isNaN(maxSol) || maxSol <= 0) return "Max order amount must be > 0";
-    if (minSol >= maxSol) return "Min order must be less than max order";
+    if (isNaN(amount) || amount < 0.01) return "Order amount must be at least 0.01 SOL";
 
     const profitTarget = parseFloat(profitTargetPercent);
     if (isNaN(profitTarget) || profitTarget < 0.1)
       return "Profit target must be >= 0.1%";
 
     return null;
-  }, [numberOfMakers, minOrderSOL, maxOrderSOL, profitTargetPercent]);
+  }, [numberOfMakers, orderAmount, profitTargetPercent]);
 
   const calculateEstimatedCost = useCallback((): {
     totalSOLNeeded: number;

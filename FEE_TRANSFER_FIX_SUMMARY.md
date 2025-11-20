@@ -134,5 +134,17 @@ These changes fix fee collection across all token operations:
 - ✅ Token burns (BurnToken)
 - ✅ Token locks (TokenLock)
 - ✅ Airdrops (Airdrop)
+- ✅ MarketMaker bot trades (MarketMaker)
 
-All changes are backward compatible and do not affect transaction execution, only the fee transfer instruction generation.
+### Key Improvements
+1. **Proper async/await handling** - All async token account lookups are now properly awaited
+2. **CORS-safe transaction sending** - MarketMaker now uses backend proxy instead of direct RPC calls
+3. **Better error handling** - Added comprehensive logging for debugging fee transfer failures
+4. **Backward compatible** - All changes maintain existing API contracts and don't affect other functionality
+
+### Files Modified
+- client/components/wallet/SwapInterface.tsx
+- client/components/wallet/BurnToken.tsx
+- client/components/wallet/TokenLock.tsx
+- client/components/wallet/Airdrop.tsx
+- client/components/wallet/MarketMaker.tsx

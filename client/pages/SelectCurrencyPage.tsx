@@ -61,8 +61,6 @@ export default function SelectCurrencyPage() {
       } catch (error) {
         console.error("Failed to fetch exchange rates:", error);
         setExchangeRates(FALLBACK_RATES);
-      } finally {
-        setLoadingRates(false);
       }
     };
 

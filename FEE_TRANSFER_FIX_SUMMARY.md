@@ -92,7 +92,7 @@ When the bot executes buy/sell trades:
 
 ## Verification Steps
 
-To verify the fix is working:
+### For Swaps/Token Operations (SwapInterface, BurnToken, TokenLock, Airdrop)
 
 1. **Check browser console** for the new debug logs:
    - `[SwapInterface] Attempting to add fee for token: ...`
@@ -101,11 +101,24 @@ To verify the fix is working:
    - `[SwapInterface] Fee instruction added successfully`
 
 2. **Check Solscan** for swap transactions:
-   - Should now see fee transfer instruction
+   - Should now see fee transfer instruction in transaction
    - Fee should be transferred to `FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM`
 
 3. **Check user balance** after swap:
-   - Should see 1% fee deducted from swap input amount
+   - Should see 1% fee deducted from input amount
+
+### For MarketMaker Bot
+
+1. **Check browser console** for fee transfer logs:
+   - `[MarketMaker] Sending fee transfer for {makerId}: ...`
+   - `✅ Fee transfer successful for {makerId}: ... (Signature: ...)`
+
+2. **Check Solscan** for separate fee transfer transactions:
+   - Should see SOL transfer transactions from wallet to fee wallet
+   - Each transaction amount should be 1% of the buy/sell amount
+
+3. **Check fee wallet balance**:
+   - Fee wallet should receive accumulated fees from all market maker operations
 
 ## Technical Details
 

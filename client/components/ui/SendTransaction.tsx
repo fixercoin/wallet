@@ -921,7 +921,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         {recipient.slice(0, 8)}...{recipient.slice(-8)}
                       </span>
                     </div>
-                    <Separator className="border-white/20" />
+                    <Separator className="border-white/5" />
                     <div className="flex justify-between text-lg font-semibold">
                       <span className="text-white">Amount:</span>
                       <span className="text-white">

@@ -5,6 +5,15 @@ import { Label } from "@/components/ui/label";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
+import { jupiterAPI } from "@/lib/services/jupiter";
+import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+import { VersionedTransaction, Keypair } from "@solana/web3.js";
+import { rpcCall } from "@/lib/rpc-utils";
+import {
+  PublicKey,
+  SystemProgram,
+  Transaction as SolanaTransaction,
+} from "@solana/web3.js";
 import {
   Select,
   SelectContent,
@@ -12,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, AlertTriangle, Zap } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Zap, X } from "lucide-react";
 
 interface MarketMakerProps {
   onBack: () => void;
@@ -27,6 +36,7 @@ interface MakerAccount {
   currentTokenBalance: number;
   profitUSD: number;
   status: "active" | "completed" | "error";
+  errorMessage?: string;
 }
 
 interface Transaction {
@@ -59,27 +69,135 @@ interface MarketMakerSession {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_PERCENTAGE = 0.01;
+const CREATION_FEE_SOL = 0.01; // Fixed 0.01 SOL fee
+const SWAP_FEE_PERCENTAGE = 0.01; // 1% fee on each swap
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
+const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+const FIXED_DELAY_SECONDS = 0; // Instant execution - no delay
+const FIXED_PROFIT_PERCENT = 5;
+
+// Helper function to calculate entry price (SOL per token)
+const getEntryPrice = (solAmount: number, tokenAmount: number): number => {
+  if (tokenAmount === 0) return 0;
+  return solAmount / tokenAmount;
+};
+
+// Helper function to calculate exit price (SOL per token)
+const getExitPrice = (solAmount: number, tokenAmount: number): number => {
+  if (tokenAmount === 0) return 0;
+  return solAmount / tokenAmount;
+};
+
+// Helper function to get trade pairs (buy + corresponding sell)
+const getTradePairs = (
+  buyTransactions: Transaction[],
+  sellTransactions: Transaction[],
+): Array<{
+  buyTx: Transaction;
+  sellTx?: Transaction;
+  entryPrice: number;
+  exitPrice?: number;
+  profitSOL?: number;
+  profitPercent?: number;
+}> => {
+  return buyTransactions.map((buyTx, index) => {
+    const sellTx = sellTransactions[index];
+    const entryPrice = getEntryPrice(buyTx.solAmount, buyTx.tokenAmount);
+    const exitPrice = sellTx
+      ? getExitPrice(sellTx.solAmount, sellTx.tokenAmount)
+      : undefined;
+    const profitSOL = sellTx ? sellTx.solAmount - buyTx.solAmount : undefined;
+    const profitPercent =
+      exitPrice && entryPrice > 0
+        ? ((exitPrice - entryPrice) / entryPrice) * 100
+        : undefined;
+
+    return {
+      buyTx,
+      sellTx,
+      entryPrice,
+      exitPrice,
+      profitSOL,
+      profitPercent,
+    };
+  });
+};
+
+// Helper function to format error messages for display
+const formatErrorMessage = (error: string): string => {
+  if (!error) return "Unknown error occurred";
+
+  // Handle "already been processed" error
+  if (error.includes("already been processed")) {
+    return "Transaction already submitted. Please wait for it to confirm on-chain.";
+  }
+
+  // Handle RPC timeout
+  if (error.includes("timeout") || error.includes("abort")) {
+    return "Network timeout. The RPC endpoints are slow or unreachable.";
+  }
+
+  // Handle rate limiting
+  if (error.includes("429") || error.includes("rate limit")) {
+    return "Rate limited by RPC provider. Please wait before retrying.";
+  }
+
+  // Handle insufficient balance
+  if (error.includes("insufficient") || error.includes("not enough")) {
+    return "Insufficient balance to complete this transaction.";
+  }
+
+  // Handle invalid token
+  if (error.includes("No route found")) {
+    return "Token swap route not available. The token may not be tradeable.";
+  }
+
+  // Handle price impact
+  if (error.includes("Price impact")) {
+    return "Price impact too high. Token may be illiquid or price changed significantly.";
+  }
+
+  // Handle simulation failures
+  if (error.includes("Transaction simulation failed")) {
+    return "Transaction would fail on-chain. Check your balance and token availability.";
+  }
+
+  // Handle RPC call failed
+  if (error.includes("RPC call failed")) {
+    // Extract the underlying error message if available
+    const match = error.match(/:\s*(.+)$/);
+    if (match && match[1] && match[1].length > 5) {
+      return `Network error: ${match[1]}`;
+    }
+    return "Network error. Please check your connection and try again.";
+  }
+
+  // Truncate very long error messages
+  if (error.length > 150) {
+    return error.substring(0, 150) + "...";
+  }
+
+  return error;
+};
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const { wallet, tokens } = useWallet();
   const { toast } = useToast();
 
-  const [tokenAddress, setTokenAddress] = useState("");
+  const [tokenAddress] = useState(FIXED_TOKEN_ADDRESS);
   const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [minOrderSOL, setMinOrderSOL] = useState("0.001");
-  const [maxOrderSOL, setMaxOrderSOL] = useState("0.002");
-  const [minDelaySeconds, setMinDelaySeconds] = useState("10");
-  const [maxDelaySeconds, setMaxDelaySeconds] = useState("20");
-  const [sellStrategy, setSellStrategy] = useState<
+  const [orderAmount, setOrderAmount] = useState("0.02");
+  const [minDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
+  const [maxDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
+  const [sellStrategy] = useState<
     "hold" | "auto-profit" | "manual-target" | "gradually"
   >("auto-profit");
-  const [profitTargetPercent, setProfitTargetPercent] = useState("5");
+  // Hardcoded 5% profit target - no user input allowed
+  const profitTargetPercent = String(FIXED_PROFIT_PERCENT);
   const [manualPriceTarget, setManualPriceTarget] = useState("");
-  const [gradualSellPercent, setGradualSellPercent] = useState("20");
+  const [gradualSellPercent] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
   const [currentSession, setCurrentSession] =
     useState<MarketMakerSession | null>(null);
@@ -100,84 +218,53 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const solBalance = solToken?.balance || 0;
 
   const validateInputs = useCallback((): string | null => {
-    if (!tokenAddress.trim()) return "Token address is required";
-    if (tokenAddress.length < 32) return "Invalid token address format";
-
     const numMakers = parseInt(numberOfMakers);
     if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
       return "Number of makers must be between 1 and 1000";
 
-    const minSol = parseFloat(minOrderSOL);
-    const maxSol = parseFloat(maxOrderSOL);
+    const amount = parseFloat(orderAmount);
 
-    if (isNaN(minSol) || minSol <= 0) return "Min order amount must be > 0";
-    if (isNaN(maxSol) || maxSol <= 0) return "Max order amount must be > 0";
-    if (minSol >= maxSol) return "Min order must be less than max order";
-
-    const minDelay = parseInt(minDelaySeconds);
-    const maxDelay = parseInt(maxDelaySeconds);
-
-    if (isNaN(minDelay) || minDelay < 0) return "Min delay must be >= 0";
-    if (isNaN(maxDelay) || maxDelay < 0) return "Max delay must be >= 0";
-    if (minDelay > maxDelay) return "Min delay must be <= max delay";
-
-    if (sellStrategy === "auto-profit") {
-      const profitTarget = parseFloat(profitTargetPercent);
-      if (isNaN(profitTarget) || profitTarget < 0.1)
-        return "Profit target must be >= 0.1%";
-    }
-
-    if (sellStrategy === "manual-target") {
-      if (!manualPriceTarget) return "Manual price target is required";
-      const target = parseFloat(manualPriceTarget);
-      if (isNaN(target) || target <= 0)
-        return "Price target must be a positive number";
-    }
-
-    if (sellStrategy === "gradually") {
-      const gradual = parseFloat(gradualSellPercent);
-      if (isNaN(gradual) || gradual <= 0 || gradual > 100)
-        return "Gradually sell percent must be between 0 and 100";
-    }
+    if (isNaN(amount) || amount < 0.01)
+      return "Order amount must be at least 0.01 SOL";
 
     return null;
-  }, [
-    tokenAddress,
-    numberOfMakers,
-    minOrderSOL,
-    maxOrderSOL,
-    minDelaySeconds,
-    maxDelaySeconds,
-    sellStrategy,
-    profitTargetPercent,
-    manualPriceTarget,
-    gradualSellPercent,
-  ]);
+  }, [numberOfMakers, orderAmount]);
 
   const calculateEstimatedCost = useCallback((): {
     totalSOLNeeded: number;
     totalFees: number;
   } => {
     const numMakers = parseInt(numberOfMakers);
-    const minSol = parseFloat(minOrderSOL);
-    const maxSol = parseFloat(maxOrderSOL);
+    const amount = parseFloat(orderAmount);
 
-    const avgOrderSOL = (minSol + maxSol) / 2;
-    const totalBuySol = numMakers * avgOrderSOL;
+    const totalBuySol = numMakers * amount;
 
-    const buyFees = totalBuySol * FEE_PERCENTAGE;
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
-    const sellFees = totalBuySol * FEE_PERCENTAGE;
-    const totalFees = buyFees + sellFees + tokenAccountFees;
+    const creationFee = CREATION_FEE_SOL;
+    const totalFees = tokenAccountFees + creationFee;
 
     return {
       totalSOLNeeded: totalBuySol + totalFees,
       totalFees,
     };
-  }, [numberOfMakers, minOrderSOL, maxOrderSOL]);
+  }, [numberOfMakers, orderAmount]);
 
   const { totalSOLNeeded, totalFees } = calculateEstimatedCost();
   const canAfford = solBalance >= totalSOLNeeded;
+
+  const handleRemoveSession = useCallback(
+    (sessionId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const updatedSessions = sessions.filter((s) => s.id !== sessionId);
+      setSessions(updatedSessions);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
+      toast({
+        title: "Session Removed",
+        description: "The session has been deleted",
+      });
+    },
+    [sessions, toast],
+  );
 
   const handleStartMarketMaking = async () => {
     const validationError = validateInputs();
@@ -203,13 +290,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     try {
       const numMakers = parseInt(numberOfMakers);
+
+      const amount = parseFloat(orderAmount);
       const newSession: MarketMakerSession = {
         id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tokenAddress: tokenAddress.trim(),
         tokenSymbol: "",
         numberOfMakers: numMakers,
-        minOrderSOL: parseFloat(minOrderSOL),
-        maxOrderSOL: parseFloat(maxOrderSOL),
+        minOrderSOL: amount,
+        maxOrderSOL: amount,
         minDelaySeconds: parseInt(minDelaySeconds),
         maxDelaySeconds: parseInt(maxDelaySeconds),
         sellStrategy,
@@ -229,8 +318,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         makers: Array.from({ length: numMakers }, (_, i) => ({
           id: `maker_${i + 1}`,
           address: "",
-          initialSOLAmount:
-            (parseFloat(minOrderSOL) + parseFloat(maxOrderSOL)) / 2,
+          initialSOLAmount: amount,
           buyTransactions: [],
           sellTransactions: [],
           currentTokenBalance: 0,
@@ -265,48 +353,143 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     }
   };
 
-  const handleStartSession = async () => {
-    if (!currentSession) return;
-
-    setIsLoading(true);
-
+  // Helper function to transfer fees to fee wallet
+  const transferFeeToWallet = async (
+    feeAmount: number,
+    makerId: string,
+  ): Promise<boolean> => {
     try {
-      const response = await fetch(resolveApiUrl("/api/market-maker/start"), {
+      if (!wallet || !wallet.secretKey || feeAmount <= 0) {
+        console.warn(
+          `[MarketMaker] Invalid wallet or fee amount for ${makerId}`,
+        );
+        return false;
+      }
+
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      const userPubkey = new PublicKey(wallet.publicKey);
+
+      // Create transfer instruction
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: userPubkey,
+        toPubkey: feeWalletPubkey,
+        lamports: Math.floor(feeAmount * 1e9), // Convert SOL to lamports
+      });
+
+      // Create and sign transaction
+      const latestBlockhash = await rpcCall("getLatestBlockhash", []);
+      const blockHash =
+        (latestBlockhash as any)?.value?.blockhash ||
+        (latestBlockhash as any)?.blockhash;
+
+      if (!blockHash) {
+        throw new Error("Failed to get latest blockhash for fee transfer");
+      }
+
+      const transaction = new SolanaTransaction({
+        recentBlockhash: blockHash,
+        feePayer: userPubkey,
+      });
+
+      transaction.add(transferInstruction);
+
+      // Sign transaction
+      const getKeypair = (): Keypair | null => {
+        try {
+          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
+          if (!sk) return null;
+          if (typeof sk === "string") {
+            const arr = bytesFromBase64(sk);
+            return Keypair.fromSecretKey(arr);
+          }
+          if (Array.isArray(sk))
+            return Keypair.fromSecretKey(Uint8Array.from(sk));
+          return Keypair.fromSecretKey(sk as Uint8Array);
+        } catch (e) {
+          console.error("[MarketMaker] Error creating keypair:", e);
+          return null;
+        }
+      };
+
+      const keypair = getKeypair();
+      if (!keypair) {
+        throw new Error("Failed to create keypair for fee transfer");
+      }
+
+      transaction.sign(keypair);
+
+      // Send transaction through backend proxy (avoids CORS issues)
+      const serialized = transaction.serialize();
+      const txBase64 = base64FromBytes(serialized);
+
+      console.log(
+        `[MarketMaker] Sending fee transfer for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET}`,
+      );
+
+      const response = await fetch("/api/solana-send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          sessionId: currentSession.id,
-          tokenAddress: currentSession.tokenAddress,
-          numberOfMakers: currentSession.numberOfMakers,
-          minOrderSOL: currentSession.minOrderSOL,
-          maxOrderSOL: currentSession.maxOrderSOL,
-          minDelaySeconds: currentSession.minDelaySeconds,
-          maxDelaySeconds: currentSession.maxDelaySeconds,
-          sellStrategy: currentSession.sellStrategy,
-          profitTargetPercent: currentSession.profitTargetPercent,
-          manualPriceTarget: currentSession.manualPriceTarget,
-          gradualSellPercent: currentSession.gradualSellPercent,
-          userWallet: wallet?.publicKey,
-          feeWallet: FEE_WALLET,
+          signedBase64: txBase64,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Backend returned ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.error || `HTTP ${response.status}`;
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
+      const signature = data.signature || data.result;
+
+      console.log(
+        `✅ Fee transfer successful for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET} (Signature: ${signature})`,
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        `❌ Fee transfer failed for ${makerId}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return false;
+    }
+  };
+
+  const handleStartSession = async () => {
+    if (!currentSession) {
+      toast({
+        title: "Error",
+        description: "No active session found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Client-side execution: perform repeated buys using Jupiter and sign/send locally
+      if (!wallet || !wallet.secretKey) {
+        throw new Error("Wallet secret key required for client-side execution");
+      }
+
+      const solDecimals = 9;
+      const numMakers = currentSession.numberOfMakers;
+      const makers = currentSession.makers.map((m) => ({
+        ...m,
+        status: "active" as const,
+        errorMessage: undefined,
+      }));
 
       const updatedSession = {
         ...currentSession,
-        makers: data.makers || currentSession.makers,
         status: "running" as const,
+        makers,
       };
-
       setCurrentSession(updatedSession);
-
       const updatedSessions = sessions.map((s) =>
         s.id === updatedSession.id ? updatedSession : s,
       );
@@ -315,8 +498,384 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       toast({
         title: "Market Making Started",
-        description: `Bot is now executing trades for ${updatedSession.numberOfMakers} makers`,
+        description: `Executing ${numMakers} buys. This may take a few moments...`,
       });
+
+      // Helper to sign and send base64 versioned tx
+      const getKeypair = (): Keypair | null => {
+        try {
+          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
+          if (!sk) return null;
+          if (typeof sk === "string") {
+            const arr = bytesFromBase64(sk);
+            return Keypair.fromSecretKey(arr);
+          }
+          if (Array.isArray(sk))
+            return Keypair.fromSecretKey(Uint8Array.from(sk));
+          return Keypair.fromSecretKey(sk as Uint8Array);
+        } catch (e) {
+          console.error("Error creating keypair:", e);
+          return null;
+        }
+      };
+
+      const sendSignedTxGeneric = async (txBase64: string): Promise<string> => {
+        const buf = bytesFromBase64(txBase64);
+        const vtx = VersionedTransaction.deserialize(buf);
+        const kp = getKeypair();
+        if (!kp) throw new Error("Missing keypair to sign transaction");
+        vtx.sign([kp]);
+        const signed = vtx.serialize();
+        const signedBase64 = base64FromBytes(signed);
+        const res = await rpcCall("sendTransaction", [
+          signedBase64,
+          { skipPreflight: false, preflightCommitment: "confirmed" },
+        ]);
+        return res as string;
+      };
+
+      // Track successful trades
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Execute sequential buys with delays
+      for (let i = 0; i < numMakers; i++) {
+        const amountSol = parseFloat(currentSession.minOrderSOL);
+
+        try {
+          const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);
+          const quote = await jupiterAPI.getQuote(
+            SOL_MINT,
+            currentSession.tokenAddress,
+            Number(rawAmount),
+            120,
+          );
+
+          if (!quote) {
+            const m = updatedSession.makers[i];
+            if (m) {
+              const error = "No route found for token swap";
+              m.status = "error" as const;
+              m.errorMessage = error;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+              console.error(`Maker ${m.id}: ${error}`);
+            }
+            errorCount++;
+            continue;
+          }
+
+          const impact =
+            Math.abs(parseFloat(quote.priceImpactPct || "0")) * 100;
+          if (isFinite(impact) && impact > 20) {
+            const m = updatedSession.makers[i];
+            if (m) {
+              const error = `Price impact too high: ${impact.toFixed(2)}%`;
+              m.status = "error" as const;
+              m.errorMessage = error;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+              console.error(`Maker ${m.id}: ${error}`);
+            }
+            errorCount++;
+            continue;
+          }
+
+          const swap = await jupiterAPI.getSwapTransaction({
+            quoteResponse: quote,
+            userPublicKey: wallet.publicKey,
+            wrapAndUnwrapSol: true,
+          });
+
+          if (!swap || !swap.swapTransaction) {
+            const m = updatedSession.makers[i];
+            if (m) {
+              const error = "Failed to build swap transaction";
+              m.status = "error" as const;
+              m.errorMessage = error;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+              console.error(`Maker ${m.id}: ${error}`);
+            }
+            errorCount++;
+            continue;
+          }
+
+          try {
+            const sig = await sendSignedTxGeneric(swap.swapTransaction);
+            const m = updatedSession.makers[i];
+            if (m) {
+              const tokenAmount =
+                jupiterAPI.parseSwapAmount(quote.outAmount, 6) || 0;
+
+              // Calculate 1% fee on the buy amount
+              const buyFeeAmount = amountSol * SWAP_FEE_PERCENTAGE;
+
+              // Transfer fee to wallet
+              const feeTransferred = await transferFeeToWallet(
+                buyFeeAmount,
+                m.id,
+              );
+
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: tokenAmount,
+                feeAmount: feeTransferred ? buyFeeAmount : 0,
+                signature: sig,
+                status: "confirmed",
+              });
+              m.currentTokenBalance = tokenAmount;
+              m.status = "completed" as const;
+
+              console.log(
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ◎${buyFeeAmount.toFixed(4)}`,
+              );
+
+              successCount++;
+
+              // Trigger auto-sell if profit target is set
+              if (currentSession.sellStrategy === "auto-profit") {
+                const profitTarget = currentSession.profitTargetPercent || 5;
+                const buyPricePerToken = amountSol / tokenAmount;
+
+                console.log(
+                  `🔄 Maker ${m.id}: Starting auto-sell monitoring. Buy price: ◎${buyPricePerToken.toFixed(9)}/token, Profit target: ${profitTarget}%`,
+                );
+
+                // Start auto-sell monitoring in the background
+                (async () => {
+                  let shouldContinue = true;
+                  let checkCount = 0;
+                  const maxChecks = 100; // ~5 minutes at 3-second intervals
+
+                  while (shouldContinue && checkCount < maxChecks) {
+                    try {
+                      checkCount++;
+                      await new Promise((r) => setTimeout(r, 3000)); // Check every 3 seconds
+
+                      const priceQuote = await jupiterAPI.getQuote(
+                        currentSession.tokenAddress,
+                        SOL_MINT,
+                        jupiterAPI.formatSwapAmount(tokenAmount, 6),
+                        120,
+                      );
+
+                      if (!priceQuote) {
+                        console.warn(
+                          `⚠️ Maker ${m.id}: Failed to get price quote (check ${checkCount})`,
+                        );
+                        continue;
+                      }
+
+                      const soldSOL =
+                        jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
+                        0;
+
+                      if (soldSOL <= 0) {
+                        console.warn(
+                          `⚠️ Maker ${m.id}: Invalid quote amount: ${soldSOL}`,
+                        );
+                        continue;
+                      }
+
+                      const sellPricePerToken = soldSOL / tokenAmount;
+                      const profitPercent =
+                        ((sellPricePerToken - buyPricePerToken) /
+                          buyPricePerToken) *
+                        100;
+
+                      console.log(
+                        `📊 Maker ${m.id}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Current price: ◎${sellPricePerToken.toFixed(9)}/token)`,
+                      );
+
+                      // Execute sell if profit target reached
+                      if (profitPercent >= profitTarget) {
+                        console.log(
+                          `🚀 Maker ${m.id}: Profit target reached! Executing sell...`,
+                        );
+                        shouldContinue = false;
+
+                        const sellSwap = await jupiterAPI.getSwapTransaction({
+                          quoteResponse: priceQuote,
+                          userPublicKey: wallet.publicKey,
+                          wrapAndUnwrapSol: true,
+                        });
+
+                        if (!sellSwap || !sellSwap.swapTransaction) {
+                          throw new Error("Failed to build sell transaction");
+                        }
+
+                        const sellSig = await sendSignedTxGeneric(
+                          sellSwap.swapTransaction,
+                        );
+
+                        // Calculate 1% fee on the sell amount
+                        const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+
+                        // Transfer fee to wallet
+                        const sellFeeTransferred = await transferFeeToWallet(
+                          sellFeeAmount,
+                          m.id,
+                        );
+
+                        m.sellTransactions.push({
+                          type: "sell",
+                          timestamp: Date.now(),
+                          solAmount: soldSOL,
+                          tokenAmount: tokenAmount,
+                          feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
+                          signature: sellSig,
+                          status: "confirmed",
+                        });
+
+                        const profit = soldSOL - amountSol;
+                        m.profitUSD = profit;
+
+                        console.log(
+                          `✅ Maker ${m.id}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ���${sellFeeAmount.toFixed(4)}`,
+                        );
+
+                        // Update session state with sell transaction
+                        setCurrentSession((prevSession) => {
+                          if (!prevSession) return prevSession;
+                          return {
+                            ...prevSession,
+                            makers: prevSession.makers.map((maker) =>
+                              maker.id === m.id
+                                ? {
+                                    ...maker,
+                                    sellTransactions: m.sellTransactions,
+                                    profitUSD: m.profitUSD,
+                                  }
+                                : maker,
+                            ),
+                          };
+                        });
+
+                        toast({
+                          title: "Auto-Sell Executed",
+                          description: `Maker ${m.id}: Sold at ${profitPercent.toFixed(2)}% profit (◎${profit.toFixed(4)})`,
+                        });
+                      }
+                    } catch (error) {
+                      const errorMsg =
+                        error instanceof Error ? error.message : String(error);
+                      console.error(
+                        `❌ Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
+                        error,
+                      );
+
+                      // Continue trying even if there's an error
+                      if (
+                        errorMsg.includes("timeout") ||
+                        errorMsg.includes("failed")
+                      ) {
+                        console.log(
+                          `🔄 Maker ${m.id}: Retrying in 3 seconds...`,
+                        );
+                      }
+                    }
+                  }
+
+                  if (shouldContinue) {
+                    console.log(
+                      `⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`,
+                    );
+                  }
+                })();
+              }
+            }
+
+            setCurrentSession({
+              ...updatedSession,
+              makers: updatedSession.makers,
+            });
+          } catch (txError) {
+            const errorMsg =
+              txError instanceof Error ? txError.message : String(txError);
+            console.error(`Error sending transaction for maker ${i}:`, txError);
+            const m = updatedSession.makers[i];
+            if (m) {
+              m.status = "error" as const;
+              m.errorMessage = errorMsg;
+              m.buyTransactions.push({
+                type: "buy",
+                timestamp: Date.now(),
+                solAmount: amountSol,
+                tokenAmount: 0,
+                feeAmount: 0,
+                status: "failed",
+              });
+            }
+            errorCount++;
+          }
+        } catch (e) {
+          const errorMsg = e instanceof Error ? e.message : String(e);
+          console.error(`Error processing maker ${i}:`, e);
+          const m = updatedSession.makers[i];
+          if (m) {
+            m.status = "error" as const;
+            m.errorMessage = errorMsg;
+            m.buyTransactions.push({
+              type: "buy",
+              timestamp: Date.now(),
+              solAmount: amountSol,
+              tokenAmount: 0,
+              feeAmount: 0,
+              status: "failed",
+            });
+          }
+          errorCount++;
+        }
+
+        // random delay between minDelay and maxDelay
+        const minD = parseInt(currentSession.minDelaySeconds) * 1000;
+        const maxD = parseInt(currentSession.maxDelaySeconds) * 1000;
+        const delay = minD + Math.random() * (maxD - minD);
+        await new Promise((r) => setTimeout(r, Math.max(0, delay)));
+      }
+
+      // finalize session
+      const final = { ...updatedSession, status: "completed" as const };
+      setCurrentSession(final);
+      const finalSessions = sessions.map((s) =>
+        s.id === final.id ? final : s,
+      );
+      setSessions(finalSessions);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(finalSessions));
+
+      if (successCount > 0) {
+        toast({
+          title: "Market Maker Completed",
+          description: `${successCount} buy(s) executed${errorCount > 0 ? ` | ${errorCount} failed` : ""}. View session details for more info.`,
+        });
+      } else {
+        toast({
+          title: "Market Maker Failed",
+          description: `All ${errorCount} attempts failed. Check error messages in session details.`,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error starting market maker:", error);
       toast({
@@ -327,6 +886,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             : "Failed to start market maker",
         variant: "destructive",
       });
+
+      setCurrentSession(currentSession);
     } finally {
       setIsLoading(false);
     }
@@ -334,7 +895,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 py-8">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-8">
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <div className="text-sm text-red-800">Wallet not connected</div>
@@ -345,19 +906,19 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   if (currentSession) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+      <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
+        <div className="rounded-2xl border border-gray-700/50 bg-transparent backdrop-blur-sm">
           <div className="space-y-6 p-6 relative">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCurrentSession(null)}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-700/30 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="font-semibold text-sm text-gray-900 uppercase">
+              <div className="font-semibold text-sm text-white uppercase">
                 Session Details
               </div>
             </div>
@@ -365,105 +926,473 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Number of Makers
                   </Label>
-                  <p className="text-lg font-bold text-gray-900 mt-1">
+                  <p className="text-lg font-bold text-white mt-1">
                     {currentSession.numberOfMakers}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Sell Strategy
                   </Label>
-                  <p className="text-sm text-gray-900 mt-1 capitalize">
+                  <p className="text-sm text-white mt-1 capitalize">
                     {currentSession.sellStrategy}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
-                    Order Range
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
+                    Profit Target
                   </Label>
-                  <p className="text-sm text-gray-900 mt-1">
-                    ◎ {currentSession.minOrderSOL.toFixed(4)} -{" "}
-                    {currentSession.maxOrderSOL.toFixed(4)}
+                  <p className="text-sm text-green-400 mt-1 font-bold">
+                    5% (Auto-Sell)
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 uppercase font-semibold">
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
+                    Order Range
+                  </Label>
+                  <p className="text-sm text-white mt-1">
+                    ◎ {currentSession.minOrderSOL.toFixed(4)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400 uppercase font-semibold">
                     Status
                   </Label>
-                  <p className="text-sm text-gray-900 mt-1 capitalize font-semibold">
+                  <p className="text-sm text-white mt-1 capitalize font-semibold">
                     {currentSession.status}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-700">Estimated Fees (1%):</span>
-                  <span className="font-bold text-gray-900">
-                    ◎ {currentSession.estimatedTotalFees.toFixed(4)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <Label className="text-xs text-gray-600 uppercase font-semibold mb-3 block">
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Token Address
                 </Label>
-                <p className="text-xs font-mono break-all text-gray-700 bg-gray-50 p-3 rounded border border-gray-200">
+                <p className="text-xs font-mono break-all text-gray-300 bg-transparent p-3 rounded border border-gray-700/50">
                   {currentSession.tokenAddress}
                 </p>
               </div>
 
-              <div className="border-t pt-4">
-                <Label className="text-xs text-gray-600 uppercase font-semibold mb-3 block">
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
+                  Session Summary
+                </Label>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Total Trades
+                    </div>
+                    <div className="text-lg font-bold text-white mt-1">
+                      {currentSession.makers.reduce(
+                        (sum, m) => sum + m.buyTransactions.length,
+                        0,
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Completed Sells
+                    </div>
+                    <div className="text-lg font-bold text-white mt-1">
+                      {currentSession.makers.reduce(
+                        (sum, m) => sum + m.sellTransactions.length,
+                        0,
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Total Profit
+                    </div>
+                    <div
+                      className={`text-lg font-bold mt-1 ${
+                        currentSession.makers.reduce(
+                          (sum, m) => sum + m.profitUSD,
+                          0,
+                        ) >= 0
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {currentSession.makers.reduce(
+                        (sum, m) => sum + m.profitUSD,
+                        0,
+                      ) >= 0
+                        ? "+"
+                        : ""}
+                      {currentSession.makers
+                        .reduce((sum, m) => sum + m.profitUSD, 0)
+                        .toFixed(4)}{" "}
+                      ◎
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
+                    <div className="text-[10px] text-gray-500 uppercase">
+                      Win Rate
+                    </div>
+                    <div className="text-lg font-bold text-white mt-1">
+                      {(() => {
+                        const completedTrades = currentSession.makers.reduce(
+                          (sum, m) => sum + m.sellTransactions.length,
+                          0,
+                        );
+                        const profitableTrades = currentSession.makers.reduce(
+                          (sum, m) =>
+                            sum +
+                            m.sellTransactions.filter(
+                              (_, idx) =>
+                                idx < m.buyTransactions.length &&
+                                m.buyTransactions[idx].solAmount <
+                                  m.buyTransactions[idx].solAmount,
+                            ).length,
+                          0,
+                        );
+                        return completedTrades > 0
+                          ? (
+                              (profitableTrades / completedTrades) *
+                              100
+                            ).toFixed(1)
+                          : "0";
+                      })()}
+                      %
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Maker Accounts ({currentSession.makers.length})
                 </Label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {currentSession.makers.map((maker) => (
                     <div
                       key={maker.id}
-                      className="text-xs p-3 bg-gray-50 rounded border border-gray-200"
+                      className="text-xs p-3 bg-transparent rounded border border-gray-700/50"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-mono text-gray-900">
-                          {maker.id}
-                        </span>
+                        <span className="font-mono text-white">{maker.id}</span>
                         <span
                           className={`text-xs font-semibold px-2 py-1 rounded ${
                             maker.status === "active"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-green-500/20 text-green-400"
                               : maker.status === "completed"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-red-100 text-red-700"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : "bg-red-500/20 text-red-400"
                           }`}
                         >
                           {maker.status}
                         </span>
                       </div>
-                      <div className="text-gray-600 mt-2 text-xs">
-                        Buys: {maker.buyTransactions.length} | Sells:{" "}
-                        {maker.sellTransactions.length}
+                      <div className="text-gray-400 mt-2 text-xs space-y-1">
+                        <div>
+                          Buys: {maker.buyTransactions.length} | Sells:{" "}
+                          {maker.sellTransactions.length}
+                        </div>
+                        {maker.buyTransactions.length > 0 && (
+                          <div className="text-green-400">
+                            Buy Fees: ◎{" "}
+                            {maker.buyTransactions
+                              .reduce((sum, tx) => sum + tx.feeAmount, 0)
+                              .toFixed(4)}
+                          </div>
+                        )}
+                        {maker.sellTransactions.length > 0 && (
+                          <div className="text-blue-400">
+                            Sell Fees: ◎{" "}
+                            {maker.sellTransactions
+                              .reduce((sum, tx) => sum + tx.feeAmount, 0)
+                              .toFixed(4)}{" "}
+                            | Profit: ◎ {maker.profitUSD.toFixed(4)}
+                          </div>
+                        )}
                       </div>
+                      {maker.errorMessage && (
+                        <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-3 rounded border border-red-500/30 space-y-1">
+                          <div className="font-semibold">Error:</div>
+                          <div className="text-red-300">
+                            {formatErrorMessage(maker.errorMessage)}
+                          </div>
+                          <div className="text-red-500/60 text-[10px] mt-1 font-mono break-all">
+                            {maker.errorMessage.substring(0, 80)}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="border-t pt-4 flex gap-2">
+              <div className="border-t border-gray-700/50 pt-4">
+                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
+                  Trade Execution Details
+                </Label>
+                <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                  {currentSession.makers.length === 0 ? (
+                    <p className="text-xs text-gray-500 text-center py-4">
+                      No trades yet
+                    </p>
+                  ) : (
+                    currentSession.makers
+                      .filter(
+                        (m) =>
+                          m.buyTransactions.length > 0 ||
+                          m.sellTransactions.length > 0,
+                      )
+                      .map((maker) => {
+                        const trades = getTradePairs(
+                          maker.buyTransactions,
+                          maker.sellTransactions,
+                        );
+                        return (
+                          <div key={maker.id} className="space-y-3">
+                            {trades.map((trade, idx) => {
+                              const profitPercent = trade.profitPercent ?? 0;
+                              const profitSOL = trade.profitSOL ?? 0;
+                              const targetProfit =
+                                currentSession.profitTargetPercent || 5;
+                              const currentProfitPercent = profitPercent;
+                              const progressPercent = Math.min(
+                                (currentProfitPercent / targetProfit) * 100,
+                                100,
+                              );
+                              const timeHeld = trade.sellTx
+                                ? Math.round(
+                                    (trade.sellTx.timestamp -
+                                      trade.buyTx.timestamp) /
+                                      1000,
+                                  )
+                                : Math.round(
+                                    (Date.now() - trade.buyTx.timestamp) / 1000,
+                                  );
+                              const formatTime = (seconds: number) => {
+                                if (seconds < 60) return `${seconds}s`;
+                                const mins = Math.floor(seconds / 60);
+                                const secs = seconds % 60;
+                                return `${mins}m ${secs}s`;
+                              };
+
+                              return (
+                                <div
+                                  key={`${maker.id}-trade-${idx}`}
+                                  className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 border border-gray-700/50 rounded-lg p-4 space-y-3"
+                                >
+                                  {/* Trade Header */}
+                                  <div className="flex justify-between items-start gap-2">
+                                    <div>
+                                      <div className="text-xs font-mono text-gray-400">
+                                        {maker.id}
+                                      </div>
+                                      <div className="text-sm font-bold text-white">
+                                        Trade #{idx + 1}
+                                      </div>
+                                    </div>
+                                    <span
+                                      className={`text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ${
+                                        profitSOL >= 0
+                                          ? "bg-green-500/20 text-green-400"
+                                          : "bg-red-500/20 text-red-400"
+                                      }`}
+                                    >
+                                      {profitSOL >= 0 ? "+" : ""}
+                                      {profitSOL.toFixed(4)} ◎
+                                    </span>
+                                  </div>
+
+                                  {/* Buy Details Section */}
+                                  <div className="bg-gray-800/30 rounded border border-blue-500/20 p-3 space-y-2">
+                                    <div className="text-xs font-semibold text-blue-400 uppercase">
+                                      BUY Entry
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <div className="text-[10px] text-gray-500 uppercase">
+                                          Amount Spent
+                                        </div>
+                                        <div className="text-sm font-bold text-white">
+                                          ◎ {trade.buyTx.solAmount.toFixed(4)}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[10px] text-gray-500 uppercase">
+                                          Tokens Bought
+                                        </div>
+                                        <div className="text-sm font-bold text-white">
+                                          {trade.buyTx.tokenAmount.toFixed(2)}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[10px] text-gray-500 uppercase">
+                                          Time
+                                        </div>
+                                        <div className="text-sm font-bold text-gray-300">
+                                          {new Date(
+                                            trade.buyTx.timestamp,
+                                          ).toLocaleTimeString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Profit Progress Bar */}
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <div className="text-xs font-semibold text-gray-400">
+                                        Profit Progress
+                                      </div>
+                                      <div className="text-xs font-bold text-white">
+                                        {currentProfitPercent.toFixed(2)}% /{" "}
+                                        {targetProfit}% target
+                                      </div>
+                                    </div>
+                                    <div className="w-full bg-gray-700/30 rounded-full h-2 border border-gray-700/50 overflow-hidden">
+                                      <div
+                                        className={`h-full transition-all duration-300 ${
+                                          currentProfitPercent >= targetProfit
+                                            ? "bg-gradient-to-r from-green-500 to-green-400"
+                                            : "bg-gradient-to-r from-blue-500 to-blue-400"
+                                        }`}
+                                        style={{
+                                          width: `${Math.max(progressPercent, 5)}%`,
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Sell Details Section */}
+                                  {trade.sellTx ? (
+                                    <div className="bg-gray-800/30 rounded border border-green-500/20 p-3 space-y-2">
+                                      <div className="text-xs font-semibold text-green-400 uppercase">
+                                        SELL Exit (Executed)
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 uppercase">
+                                            Amount Received
+                                          </div>
+                                          <div className="text-sm font-bold text-white">
+                                            ◎{" "}
+                                            {trade.sellTx.solAmount.toFixed(4)}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 uppercase">
+                                            Tokens Sold
+                                          </div>
+                                          <div className="text-sm font-bold text-white">
+                                            {trade.sellTx.tokenAmount.toFixed(
+                                              2,
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 uppercase">
+                                            Time Held
+                                          </div>
+                                          <div className="text-sm font-bold text-gray-300">
+                                            {formatTime(timeHeld)}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="text-[10px] text-gray-500 border-t border-gray-700/50 pt-2">
+                                        Executed at{" "}
+                                        {new Date(
+                                          trade.sellTx.timestamp,
+                                        ).toLocaleTimeString()}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-yellow-900/20 rounded border border-yellow-600/30 p-3 space-y-2">
+                                      <div className="text-xs font-semibold text-yellow-400 uppercase">
+                                        HOLDING - Awaiting Sell Signal
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 uppercase">
+                                            Current Profit
+                                          </div>
+                                          <div
+                                            className={`text-sm font-bold ${
+                                              currentProfitPercent >= 0
+                                                ? "text-green-400"
+                                                : "text-red-400"
+                                            }`}
+                                          >
+                                            {currentProfitPercent >= 0
+                                              ? "+"
+                                              : ""}
+                                            {currentProfitPercent.toFixed(2)}%
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 uppercase">
+                                            Time Held
+                                          </div>
+                                          <div className="text-sm font-bold text-gray-300">
+                                            {formatTime(timeHeld)}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Profit Summary */}
+                                  {trade.profitSOL !== undefined && (
+                                    <div className="border-t border-gray-700/30 pt-2 flex justify-between items-center">
+                                      <span className="text-xs text-gray-500 uppercase font-semibold">
+                                        Total Profit
+                                      </span>
+                                      <span
+                                        className={`font-bold ${
+                                          profitSOL >= 0
+                                            ? "text-green-400"
+                                            : "text-red-400"
+                                        }`}
+                                      >
+                                        {profitSOL >= 0 ? "+" : ""}
+                                        {profitSOL.toFixed(4)} ◎ (
+                                        {profitPercent.toFixed(2)}%)
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Error Status */}
+                                  {trade.buyTx.status === "failed" && (
+                                    <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-red-400 text-[10px] font-semibold">
+                                      ❌ Buy transaction failed
+                                    </div>
+                                  )}
+                                  {trade.sellTx &&
+                                    trade.sellTx.status === "failed" && (
+                                      <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-red-400 text-[10px] font-semibold">
+                                        ❌ Sell transaction failed
+                                      </div>
+                                    )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-700/50 pt-4 flex gap-2">
                 {currentSession.status === "setup" && (
                   <Button
                     onClick={handleStartSession}
                     disabled={isLoading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase rounded-[2px]"
                   >
                     {isLoading ? "Starting..." : "Start Bot"}
                   </Button>
                 )}
                 {currentSession.status === "running" && (
-                  <div className="flex-1 py-3 px-4 bg-green-50 border border-green-200 rounded text-xs text-green-800 font-bold flex items-center justify-center gap-2">
+                  <div className="flex-1 py-3 px-4 bg-green-500/20 border border-green-500/50 rounded text-xs text-green-400 font-bold flex items-center justify-center gap-2">
                     <Zap className="w-4 h-4" />
                     Running
                   </div>
@@ -471,7 +1400,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <Button
                   variant="outline"
                   onClick={() => setCurrentSession(null)}
-                  className="border border-gray-700 text-gray-900 uppercase"
+                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase rounded-[2px]"
                 >
                   Close
                 </Button>
@@ -484,19 +1413,19 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+    <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-none border-0 bg-transparent">
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">
+            <div className="font-semibold text-sm text-white uppercase">
               Fixorium Market Maker
             </div>
           </div>
@@ -505,12 +1434,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Token Address
             </Label>
-            <Input
-              placeholder="Enter Token Address"
-              value={tokenAddress}
-              onChange={(e) => setTokenAddress(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-400 font-mono text-xs">
+              {tokenAddress.length > 10
+                ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
+                : tokenAddress}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -531,215 +1459,111 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Order Amount (SOL)
             </Label>
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  Minimum Amount
-                </Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={minOrderSOL}
-                    onChange={(e) => setMinOrderSOL(e.target.value)}
-                    className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                  />
-                  <span className="text-sm text-gray-600">◎</span>
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  Maximum Amount
-                </Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={maxOrderSOL}
-                    onChange={(e) => setMaxOrderSOL(e.target.value)}
-                    className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                  />
-                  <span className="text-sm text-gray-600">◎</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.001"
+                min="0.01"
+                value={orderAmount}
+                onChange={(e) => setOrderAmount(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                placeholder="Minimum 0.01 SOL"
+              />
+              <span className="text-sm text-gray-600">◎</span>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Delay Between Buys (seconds)
-            </Label>
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  Minimum Delay
-                </Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={minDelaySeconds}
-                  onChange={(e) => setMinDelaySeconds(e.target.value)}
-                  className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900 mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  Maximum Delay
-                </Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={maxDelaySeconds}
-                  onChange={(e) => setMaxDelaySeconds(e.target.value)}
-                  className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900 mt-1"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              What to do with tokens?
-            </Label>
-            <Select
-              value={sellStrategy}
-              onValueChange={(value: any) => setSellStrategy(value)}
+            <p
+              className="text-xs text-gray-500 mt-1"
+              style={{ display: "none" }}
             >
-              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
-                <SelectItem value="hold">Hold (Manual Sell Later)</SelectItem>
-                <SelectItem value="auto-profit">
-                  Auto-Sell at Profit %
-                </SelectItem>
-                <SelectItem value="manual-target">
-                  Manual Price Target
-                </SelectItem>
-                <SelectItem value="gradually">Gradually Sell</SelectItem>
-              </SelectContent>
-            </Select>
+              Minimum: 0.01 SOL �� Unlimited maximum
+            </p>
           </div>
 
-          {sellStrategy === "auto-profit" && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 uppercase text-xs font-semibold">
-                Profit Target (%)
-              </Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={profitTargetPercent}
-                onChange={(e) => setProfitTargetPercent(e.target.value)}
-                className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
+          <div className="space-y-2">
+            <Label className="text-gray-700 uppercase text-xs font-semibold">
+              Auto-Sell Profit Target
+            </Label>
+            <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
+              <span className="text-2xl font-bold text-green-400">5%</span>
             </div>
-          )}
+          </div>
 
-          {sellStrategy === "manual-target" && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 uppercase text-xs font-semibold">
-                Manual Price Target
-              </Label>
-              <Input
-                type="number"
-                step="0.00001"
-                placeholder="Enter target price in USD"
-                value={manualPriceTarget}
-                onChange={(e) => setManualPriceTarget(e.target.value)}
-                className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
-            </div>
-          )}
-
-          {sellStrategy === "gradually" && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 uppercase text-xs font-semibold">
-                Gradually Sell (%)
-              </Label>
-              <Input
-                type="number"
-                min="0.1"
-                max="100"
-                step="0.1"
-                value={gradualSellPercent}
-                onChange={(e) => setGradualSellPercent(e.target.value)}
-                className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
-            </div>
-          )}
-
-          <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-700">Total SOL Needed:</span>
-              <span className="font-bold text-gray-900">
-                ◎ {totalSOLNeeded.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-700">Estimated Fees (1%):</span>
-              <span className="font-bold text-gray-900">
-                ◎ {totalFees.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm pt-2 border-t border-[#a7f3d0]/30">
-              <span className="text-gray-700">Your SOL Balance:</span>
-              <span
-                className={`font-bold ${
-                  canAfford ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                ◎ {solBalance.toFixed(4)}
-              </span>
-            </div>
-            {!canAfford && (
-              <div className="text-xs text-red-600 font-semibold pt-2">
-                Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
+          <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
+            <div className="flex items-center gap-[10px] text-sm flex-wrap">
+              <div className="flex items-center gap-[10px]">
+                <span className="text-gray-300">Available SOL:</span>
+                <span
+                  className={`font-bold ${
+                    canAfford ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  ◎ {solBalance.toFixed(4)}
+                </span>
               </div>
-            )}
+              <div className="flex items-center gap-[10px]">
+                <span className="text-gray-300">Required SOL:</span>
+                <span className="font-bold text-white">
+                  ◎ {totalSOLNeeded.toFixed(4)}
+                </span>
+              </div>
+              {!canAfford && (
+                <div className="text-xs text-red-400 font-semibold">
+                  Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
+                </div>
+              )}
+            </div>
           </div>
 
           <Button
             onClick={handleStartMarketMaking}
             disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-lg"
           >
             {isLoading ? "Creating..." : "Create Market Maker Bot"}
           </Button>
 
           {sessions.length > 0 && (
-            <div className="border-t pt-4">
-              <Label className="text-xs text-gray-600 uppercase font-semibold mb-3 block">
+            <div className="border-t border-gray-700/50 pt-4">
+              <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                 Previous Sessions
               </Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
-                    className="p-3 border border-gray-200 rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="p-3 border border-gray-700/50 rounded-lg bg-transparent cursor-pointer hover:bg-gray-700/20 transition-colors"
                     onClick={() => setCurrentSession(session)}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <p className="text-xs font-mono text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-xs font-mono text-white">
                           {session.id}
                         </p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                           {session.numberOfMakers} makers •{" "}
                           {session.sellStrategy}
                         </p>
                       </div>
-                      <span
-                        className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
-                          session.status === "running"
-                            ? "bg-green-100 text-green-700"
-                            : session.status === "completed"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {session.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
+                            session.status === "running"
+                              ? "bg-green-500/20 text-green-400"
+                              : session.status === "completed"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : "bg-gray-500/20 text-gray-300"
+                          }`}
+                        >
+                          {session.status}
+                        </span>
+                        <button
+                          onClick={(e) => handleRemoveSession(session.id, e)}
+                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                          title="Remove session"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -327,7 +327,7 @@ export default function Select() {
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
                 payload && payload.roomId ? (
-                  <div className="p-4 bg-[#0f1520]/50 border border-white/10">
+                  <div className="p-4 bg-[#0f1520]/50 border border-white/3">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="font-semibold text-sm text-white/90">
@@ -373,7 +373,7 @@ export default function Select() {
                 orders.map((o: any) => (
                   <div
                     key={o.id || o.orderId}
-                    className="p-4 bg-[#0f1520]/50 border border-white/10"
+                    className="p-4 bg-[#0f1520]/50 border border-white/3"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">

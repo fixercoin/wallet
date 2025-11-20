@@ -55,8 +55,17 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 // Request queue to prevent duplicate requests
 const requestQueue = new Map<string, Promise<any>>();
 
+// Public RPC endpoints for fallback (avoid endpoints that don't support CORS)
+// NOTE: These may still fail with CORS for transaction sending from browser
+// Best practice: use backend proxy for sendTransaction/simulateTransaction
+const PUBLIC_RPC_ENDPOINTS = [
+  "https://solana-rpc.publicnode.com/",
+  "https://solana.publicnode.com",
+];
+
 /**
- * Make a Solana JSON RPC call through our proxy
+ * Make a Solana JSON RPC call directly to public endpoints
+ * No backend proxy needed - calls public RPC endpoints directly
  */
 export const makeRpcCall = async (
   method: string,
@@ -71,191 +80,108 @@ export const makeRpcCall = async (
   }
 
   const requestPromise = (async () => {
+    // Combine configured RPC URL with public endpoints
+    const endpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(Boolean);
+    // Remove duplicates
+    const uniqueEndpoints = Array.from(new Set(endpoints));
+
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        let response: Response;
+      for (const endpoint of uniqueEndpoints) {
         try {
-          // Add timeout for the proxy RPC call
           const controller = new AbortController();
-          const timeoutMs = 15000; // 15s timeout for proxy RPC
+          const timeoutMs = 12000; // 12s timeout per endpoint
           const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-          response = await fetch("/api/solana-rpc", {
+          const response = await fetch(endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: Date.now(),
               method,
               params,
-              id: Date.now(),
             }),
             signal: controller.signal,
           });
+
           clearTimeout(timeout);
-        } catch (fetchErr) {
-          // Network/connection error (e.g. Dev server not running, middleware not mounted)
-          const fetchError =
-            fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
-          // Check if it's a timeout error
-          const isTimeout =
-            fetchError.includes("abort") || fetchError.includes("timeout");
-          if (isTimeout) {
+          if (!response.ok) {
+            const responseText = await response.text().catch(() => "");
+            const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
             console.warn(
-              `[RPC Call] ${method} timed out after ${timeoutMs}ms. Trying direct endpoints...`,
+              `[RPC] ${method} on ${endpoint} returned ${response.status}`,
             );
-          }
 
-          // Try calling known public RPC endpoints directly as a fallback
-          const directEndpoints = [
-            SOLANA_RPC_URL,
-            "https://rpc.ankr.com/solana",
-            "https://api.mainnet-beta.solana.com",
-            "https://solana.publicnode.com",
-          ].filter(Boolean);
-
-          for (const endpoint of directEndpoints) {
-            try {
-              const controller2 = new AbortController();
-              const timeout2 = setTimeout(() => controller2.abort(), 10000);
-              const resp2 = await fetch(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  jsonrpc: "2.0",
-                  id: Date.now(),
-                  method,
-                  params,
-                }),
-                signal: controller2.signal,
-              });
-              clearTimeout(timeout2);
-
-              if (!resp2.ok) {
-                const t = await resp2.text().catch(() => "");
-                console.warn(
-                  `Direct RPC ${endpoint} returned ${resp2.status}: ${t}`,
-                );
-                continue;
-              }
-
-              const txt2 = await resp2.text().catch(() => "");
-              try {
-                const parsed = txt2 ? JSON.parse(txt2) : null;
-                if (parsed && parsed.error) {
-                  throw new Error(parsed.error.message || "RPC error");
-                }
-                return parsed?.result ?? parsed ?? txt2;
-              } catch (e) {
-                return txt2;
-              }
-            } catch (e) {
-              console.warn(
-                `Direct RPC endpoint ${endpoint} failed:`,
-                e instanceof Error ? e.message : String(e),
-              );
-              continue;
+            if (response.status === 429) {
+              lastErrorStatus = 429;
             }
+
+            lastError = new Error(errorMsg);
+            continue;
           }
 
-          // Health check to provide better guidance
+          const text = await response.text().catch(() => "");
+          let data: any = null;
+
           try {
-            const health = await fetch("/api/health")
-              .then((r) => r.text())
-              .catch(() => "");
-            throw new Error(
-              `Network fetch failed: ${fetchError}. API health check: ${health || "no response"}`,
-            );
-          } catch (hcErr) {
-            throw new Error(
-              `Network fetch failed: ${fetchError}. API health check failed: ${hcErr instanceof Error ? hcErr.message : String(hcErr)}`,
-            );
-          }
-        }
-
-        if (!response.ok) {
-          // Try to read body as text, then try to parse JSON for structured error info
-          const responseText = await response.text().catch(() => "");
-          let parsedErr: any = null;
-          try {
-            parsedErr = responseText ? JSON.parse(responseText) : null;
-          } catch {}
-
-          const details =
-            parsedErr?.error?.message ||
-            parsedErr?.message ||
-            responseText ||
-            response.statusText ||
-            "(no response body)";
-
-          // If server-provided diagnostics endpoint exists, attempt to fetch and append
-          let serverDiag = "";
-          if (response.status === 500) {
-            try {
-              serverDiag = await fetch("/api/debug/rpc")
-                .then((d) => d.text())
-                .catch(() => "");
-            } catch {}
+            data = text ? JSON.parse(text) : null;
+          } catch (e) {
+            console.warn(`[RPC] Failed to parse response from ${endpoint}`);
+            lastError = new Error(`Failed to parse response: ${String(e)}`);
+            continue;
           }
 
-          const diagSuffix = serverDiag
-            ? ` Server diagnostics: ${serverDiag}`
-            : "";
-
-          // Special handling for rate limiting - use longer backoff
-          if (response.status === 429) {
-            lastErrorStatus = 429;
-            throw new Error(
-              `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
+          if (data && data.error) {
+            const errorMsg = data.error.message || JSON.stringify(data.error);
+            console.warn(
+              `[RPC] ${method} on ${endpoint} returned error:`,
+              data.error,
             );
+            lastError = new Error(errorMsg);
+            continue;
           }
 
-          throw new Error(
-            `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
-          );
+          // Success!
+          return data?.result ?? data ?? text;
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          const isTimeout =
+            errorMsg.includes("abort") || errorMsg.includes("timeout");
+
+          if (isTimeout) {
+            console.warn(`[RPC] ${method} on ${endpoint} timed out after 12s`);
+          } else {
+            console.warn(`[RPC] ${method} on ${endpoint} failed:`, errorMsg);
+          }
+
+          lastError = error instanceof Error ? error : new Error(errorMsg);
+          continue;
         }
+      }
 
-        // Try to parse response as JSON, if not available return raw text
-        const text = await response.text().catch(() => "");
-        let data: any = null;
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch (e) {
-          data = text;
-        }
+      // All endpoints failed for this attempt, retry if we have attempts left
+      if (attempt < retries) {
+        const isRateLimited = lastErrorStatus === 429;
+        const baseDelay = isRateLimited ? 2000 : 800;
+        const delayMs = baseDelay * Math.pow(2, attempt);
 
-        if (data && data.error) {
-          throw new Error(
-            `RPC error: ${data.error.message} (code: ${data.error.code || "unknown"})`,
-          );
-        }
+        console.warn(
+          `[RPC] ${method} failed on all endpoints (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms`,
+        );
 
-        return data?.result ?? data ?? text;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        if (attempt < retries) {
-          // Use exponential backoff, with extra delay for rate limiting
-          const isRateLimited = lastErrorStatus === 429;
-          const baseDelay = isRateLimited ? 3000 : 1000; // 3s base for 429, 1s for others
-          const delayMs = baseDelay * Math.pow(2, attempt); // Exponential: 3s, 6s, 12s for 429
-
-          console.warn(
-            `[RPC Call] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms:`,
-            lastError.message,
-          );
-
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
 
     throw new Error(
-      `RPC call failed after ${retries + 1} attempts: ${lastError?.message || "Unknown error"}`,
+      `RPC call failed after ${retries + 1} attempts across all endpoints: ${lastError?.message || "Unknown error"}`,
     );
   })();
 

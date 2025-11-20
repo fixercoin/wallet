@@ -1290,7 +1290,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                             Amount Received
                                           </div>
                                           <div className="text-sm font-bold text-white">
-                                            ◎{" "}
+                                            ��{" "}
                                             {trade.sellTx.solAmount.toFixed(4)}
                                           </div>
                                         </div>
@@ -1505,28 +1505,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           </div>
 
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
-            <div className="flex items-center gap-[10px] flex-wrap" style={{ fontSize: "10px" }}>
-              <div className="flex items-center gap-[10px]">
-                <span className="text-gray-300">Available SOL:</span>
-                <span
-                  className={`font-bold ${
-                    canAfford ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  ◎ {solBalance.toFixed(4)}
-                </span>
-              </div>
-              <div className="flex items-center gap-[10px]">
-                <span className="text-gray-300">Required SOL:</span>
-                <span className="font-bold text-white">
-                  ◎ {totalSOLNeeded.toFixed(4)}
-                </span>
-              </div>
-              {!canAfford && (
-                <div className="text-red-400 font-semibold">
-                  Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
-                </div>
-              )}
+            <div className="text-gray-300" style={{ fontSize: "10px", fontWeight: "600", letterSpacing: "0.5px" }}>
+              AVAILABLE SOL : <span className={canAfford ? "text-green-400" : "text-red-400"}>{solBalance.toFixed(4)}</span> REQUIRED : <span className="text-white">{totalSOLNeeded.toFixed(4)}</span> NEED : <span className="text-red-400">{(totalSOLNeeded - solBalance).toFixed(4)}</span>
             </div>
           </div>
 

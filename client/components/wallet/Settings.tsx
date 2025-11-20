@@ -342,11 +342,11 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
                   <div className="px-4 sm:px-0">
-                    <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full">
                       <Button
                         onClick={handleLogout}
                         variant="default"
-                        className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                        className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                       >
                         <LogOut className="h-4 w-4" />
                         Logout
@@ -355,7 +355,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Button
                         onClick={handleDeleteAccount}
                         variant="default"
-                        className={`w-full sm:w-40 flex items-center justify-center gap-2 rounded-lg ${
+                        className={`flex-1 flex items-center justify-center gap-2 rounded-lg ${
                           confirmDelete
                             ? "bg-green-700 hover:bg-green-800 text-white"
                             : "bg-green-600 hover:bg-green-700 text-white"

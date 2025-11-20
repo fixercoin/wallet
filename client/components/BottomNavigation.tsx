@@ -49,7 +49,7 @@ export const BottomNavigation = () => {
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-center h-14 md:h-16 lg:h-20 px-0.5 sm:px-1 md:px-4 lg:px-6 flex-wrap gap-0.5 sm:gap-1">
+      <div className="flex items-center justify-center h-12 xs:h-13 sm:h-14 md:h-16 lg:h-20 px-0.5 xs:px-1 sm:px-1.5 md:px-4 lg:px-6 flex-wrap gap-0.5 xs:gap-0.5 sm:gap-1 md:gap-1.5">
         {navItems.map((item, index) => {
           const active = isActive(item.path);
 
@@ -57,7 +57,7 @@ export const BottomNavigation = () => {
             <React.Fragment key={item.label}>
               <button
                 onClick={() => navigate(item.path)}
-                className={`px-1.5 sm:px-2 md:px-4 lg:px-6 py-1 md:py-2 lg:py-3 transition-colors text-[10px] sm:text-xs md:text-sm lg:text-base font-medium rounded-none whitespace-nowrap ${
+                className={`px-1 xs:px-1.5 sm:px-2 md:px-4 lg:px-6 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 transition-colors text-[8px] xs:text-[9px] sm:text-xs md:text-sm lg:text-base font-medium rounded-none leading-tight min-w-0 ${
                   active
                     ? "text-green-500"
                     : "text-gray-400 hover:text-gray-200"
@@ -65,10 +65,10 @@ export const BottomNavigation = () => {
                 aria-label={item.label}
                 title={item.label}
               >
-                {item.label}
+                <span className="block truncate">{item.label}</span>
               </button>
               {index < navItems.length - 1 && (
-                <span className="text-gray-500 px-0.5 sm:px-1 md:px-2 lg:px-3 text-[10px] sm:text-xs md:text-sm lg:text-base">
+                <span className="text-gray-500 px-0.5 xs:px-0.5 sm:px-1 md:px-2 lg:px-3 text-[6px] xs:text-[7px] sm:text-xs md:text-sm lg:text-base leading-tight flex-shrink-0">
                   |
                 </span>
               )}

@@ -224,7 +224,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     const amount = parseFloat(orderAmount);
 
-    if (isNaN(amount) || amount < 0.01) return "Order amount must be at least 0.01 SOL";
+    if (isNaN(amount) || amount < 0.01)
+      return "Order amount must be at least 0.01 SOL";
 
     const profitTarget = parseFloat(profitTargetPercent);
     if (isNaN(profitTarget) || profitTarget < 0.1)
@@ -299,7 +300,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         throw new Error("Wallet secret key required to create bot");
       }
 
-      const feeTransferred = await transferFeeToWallet(CREATION_FEE_SOL, "creation");
+      const feeTransferred = await transferFeeToWallet(
+        CREATION_FEE_SOL,
+        "creation",
+      );
       if (!feeTransferred) {
         throw new Error("Failed to transfer creation fee");
       }
@@ -711,10 +715,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 }, 3000); // Check every 3 seconds for profit target
 
                 // Stop checking after 5 minutes if profit target not reached
-                setTimeout(() => {
-                  clearInterval(checkAndSellInterval);
-                  console.log(`⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`);
-                }, 5 * 60 * 1000);
+                setTimeout(
+                  () => {
+                    clearInterval(checkAndSellInterval);
+                    console.log(
+                      `⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`,
+                    );
+                  },
+                  5 * 60 * 1000,
+                );
               }
             }
 
@@ -1281,7 +1290,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               />
               <span className="text-sm text-gray-600">◎</span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Minimum: 0.01 SOL • Unlimited maximum</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Minimum: 0.01 SOL • Unlimited maximum
+            </p>
           </div>
 
           <div className="space-y-2">

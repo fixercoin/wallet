@@ -304,13 +304,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         throw new Error("Failed to transfer creation fee");
       }
 
+      const amount = parseFloat(orderAmount);
       const newSession: MarketMakerSession = {
         id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tokenAddress: tokenAddress.trim(),
         tokenSymbol: "",
         numberOfMakers: numMakers,
-        minOrderSOL: parseFloat(minOrderSOL),
-        maxOrderSOL: parseFloat(maxOrderSOL),
+        minOrderSOL: amount,
+        maxOrderSOL: amount,
         minDelaySeconds: parseInt(minDelaySeconds),
         maxDelaySeconds: parseInt(maxDelaySeconds),
         sellStrategy,

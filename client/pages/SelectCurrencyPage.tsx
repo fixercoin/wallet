@@ -51,12 +51,17 @@ export default function SelectCurrencyPage() {
         );
         if (res.ok) {
           const data = await res.json();
-          if (data.rates) {
+          if (data.rates && Object.keys(data.rates).length > 0) {
             setExchangeRates(data.rates);
+          } else {
+            setExchangeRates(FALLBACK_RATES);
           }
+        } else {
+          setExchangeRates(FALLBACK_RATES);
         }
       } catch (error) {
         console.error("Failed to fetch exchange rates:", error);
+        setExchangeRates(FALLBACK_RATES);
       } finally {
         setLoadingRates(false);
       }

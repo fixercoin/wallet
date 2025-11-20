@@ -50,7 +50,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -60,7 +60,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
             {/* QR Code */}
             <div className="text-center space-y-4">
-              <div className="inline-block bg-white p-3 rounded-[2px]">
+              <div className="inline-block bg-white p-3 rounded-lg">
                 <QRCode
                   value={wallet.publicKey}
                   size={160}
@@ -81,13 +81,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 <Input
                   value={wallet.publicKey}
                   readOnly
-                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-[2px]"
+                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-lg"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyAddress}
-                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-[2px]"
+                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-md"
                 >
                   {copied ? (
                     <Check className="h-4 w-4" />

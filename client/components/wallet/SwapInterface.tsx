@@ -107,18 +107,19 @@ const SuccessDialog: React.FC<{ show: boolean; onClose: () => void }> = ({
   );
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   tx: VersionedTransaction,
   fromMint: string,
   fromAmount: string,
   decimals: number,
   userPublicKey: string,
-): VersionedTransaction {
+): Promise<VersionedTransaction> {
   const feeAmount = BigInt(
     Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
   );
 
   if (feeAmount === 0n) {
+    console.log("[SwapInterface] Fee amount is 0, skipping fee transfer");
     return tx;
   }
 
@@ -135,13 +136,16 @@ function addFeeTransferInstruction(
         toPubkey: feeWalletPubkey,
         lamports: Number(feeAmount),
       });
+      console.log(
+        `[SwapInterface] Adding SOL fee instruction: ${Number(feeAmount)} lamports to ${FEE_WALLET}`,
+      );
     } else {
-      const userTokenAccount = getAssociatedTokenAddress(
+      const userTokenAccount = await getAssociatedTokenAddress(
         fromMintPubkey,
         userPubkey,
         false,
       );
-      const feeTokenAccount = getAssociatedTokenAddress(
+      const feeTokenAccount = await getAssociatedTokenAddress(
         fromMintPubkey,
         feeWalletPubkey,
         false,
@@ -155,12 +159,25 @@ function addFeeTransferInstruction(
         Number(feeAmount),
         decimals,
       );
+      console.log(
+        `[SwapInterface] Adding SPL token fee instruction: ${Number(feeAmount)} tokens (${fromMint}) to ${FEE_WALLET}`,
+      );
     }
 
+    const instructionsCount = tx.message.instructions.length;
     tx.message.instructions.push(feeInstruction);
+    console.log(
+      `[SwapInterface] Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
+    );
     return tx;
   } catch (error) {
-    console.error("Error adding fee transfer instruction:", error);
+    console.error(
+      "[SwapInterface] Error adding fee transfer instruction:",
+      error,
+    );
+    console.log(
+      "[SwapInterface] Continuing without fee - this should not happen in production",
+    );
     return tx;
   }
 }
@@ -652,12 +669,19 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         // Add fee transfer instruction before signing
         const fromToken = tokenList.find((t) => t.address === fromMint);
         if (fromToken) {
-          tx = addFeeTransferInstruction(
+          console.log(
+            `[SwapInterface] Attempting to add fee for token: ${fromMint}, amount: ${amount}, decimals: ${fromToken.decimals}`,
+          );
+          tx = await addFeeTransferInstruction(
             tx,
             fromMint,
             amount,
             fromToken.decimals || 6,
             wallet.publicKey,
+          );
+        } else {
+          console.warn(
+            "[SwapInterface] Token not found in list, cannot add fee",
           );
         }
 

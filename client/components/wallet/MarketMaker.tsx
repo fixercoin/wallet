@@ -323,7 +323,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         throw new Error("Wallet secret key required to create bot");
       }
 
-      const feeTransferred = await transferFeeToWallet(CREATION_FEE_SOL, "creation");
+      const feeTransferred = await transferFeeToWallet(creationFeeSOL, "creation");
       if (!feeTransferred) {
         throw new Error("Failed to transfer creation fee");
       }

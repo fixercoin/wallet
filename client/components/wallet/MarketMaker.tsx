@@ -631,7 +631,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               const tokenAmount =
                 jupiterAPI.parseSwapAmount(
                   quote.outAmount,
-                  quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
+                  6,
                 ) || 0;
 
               // Calculate 1% fee on the buy amount

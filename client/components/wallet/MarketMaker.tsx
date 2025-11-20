@@ -1471,7 +1471,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               />
               <span className="text-sm text-gray-600">◎</span>
             </div>
-            <p className="text-xs text-gray-500 mt-1" style={{display: 'none'}}>
+            <p
+              className="text-xs text-gray-500 mt-1"
+              style={{ display: "none" }}
+            >
               Minimum: 0.01 SOL �� Unlimited maximum
             </p>
           </div>

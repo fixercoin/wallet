@@ -69,12 +69,12 @@ interface MarketMakerSession {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_PERCENTAGE = 0.01;
+const CREATION_FEE_SOL = 0.01; // Fixed 0.01 SOL fee
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
 const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const FIXED_DELAY_SECONDS = 10;
+const FIXED_DELAY_SECONDS = 60; // 1 minute
 const FIXED_PROFIT_PERCENT = 5;
 
 // Helper function to calculate entry price (SOL per token)
@@ -187,8 +187,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const [tokenAddress] = useState(FIXED_TOKEN_ADDRESS);
   const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [minOrderSOL, setMinOrderSOL] = useState("0.001");
-  const [maxOrderSOL, setMaxOrderSOL] = useState("0.002");
+  const [orderAmount, setOrderAmount] = useState("0.01");
   const [minDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
   const [maxDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
   const [sellStrategy] = useState<
@@ -223,41 +222,36 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
       return "Number of makers must be between 1 and 1000";
 
-    const minSol = parseFloat(minOrderSOL);
-    const maxSol = parseFloat(maxOrderSOL);
+    const amount = parseFloat(orderAmount);
 
-    if (isNaN(minSol) || minSol <= 0) return "Min order amount must be > 0";
-    if (isNaN(maxSol) || maxSol <= 0) return "Max order amount must be > 0";
-    if (minSol >= maxSol) return "Min order must be less than max order";
+    if (isNaN(amount) || amount < 0.01)
+      return "Order amount must be at least 0.01 SOL";
 
     const profitTarget = parseFloat(profitTargetPercent);
     if (isNaN(profitTarget) || profitTarget < 0.1)
       return "Profit target must be >= 0.1%";
 
     return null;
-  }, [numberOfMakers, minOrderSOL, maxOrderSOL, profitTargetPercent]);
+  }, [numberOfMakers, orderAmount, profitTargetPercent]);
 
   const calculateEstimatedCost = useCallback((): {
     totalSOLNeeded: number;
     totalFees: number;
   } => {
     const numMakers = parseInt(numberOfMakers);
-    const minSol = parseFloat(minOrderSOL);
-    const maxSol = parseFloat(maxOrderSOL);
+    const amount = parseFloat(orderAmount);
 
-    const avgOrderSOL = (minSol + maxSol) / 2;
-    const totalBuySol = numMakers * avgOrderSOL;
+    const totalBuySol = numMakers * amount;
 
-    const buyFees = totalBuySol * FEE_PERCENTAGE;
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
-    const sellFees = totalBuySol * FEE_PERCENTAGE;
-    const totalFees = buyFees + sellFees + tokenAccountFees;
+    const creationFee = CREATION_FEE_SOL;
+    const totalFees = tokenAccountFees + creationFee;
 
     return {
       totalSOLNeeded: totalBuySol + totalFees,
       totalFees,
     };
-  }, [numberOfMakers, minOrderSOL, maxOrderSOL]);
+  }, [numberOfMakers, orderAmount]);
 
   const { totalSOLNeeded, totalFees } = calculateEstimatedCost();
   const canAfford = solBalance >= totalSOLNeeded;
@@ -300,13 +294,28 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     try {
       const numMakers = parseInt(numberOfMakers);
+
+      // Transfer 2 SOL creation fee
+      if (!wallet || !wallet.secretKey) {
+        throw new Error("Wallet secret key required to create bot");
+      }
+
+      const feeTransferred = await transferFeeToWallet(
+        CREATION_FEE_SOL,
+        "creation",
+      );
+      if (!feeTransferred) {
+        throw new Error("Failed to transfer creation fee");
+      }
+
+      const amount = parseFloat(orderAmount);
       const newSession: MarketMakerSession = {
         id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tokenAddress: tokenAddress.trim(),
         tokenSymbol: "",
         numberOfMakers: numMakers,
-        minOrderSOL: parseFloat(minOrderSOL),
-        maxOrderSOL: parseFloat(maxOrderSOL),
+        minOrderSOL: amount,
+        maxOrderSOL: amount,
         minDelaySeconds: parseInt(minDelaySeconds),
         maxDelaySeconds: parseInt(maxDelaySeconds),
         sellStrategy,
@@ -326,8 +335,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         makers: Array.from({ length: numMakers }, (_, i) => ({
           id: `maker_${i + 1}`,
           address: "",
-          initialSOLAmount:
-            (parseFloat(minOrderSOL) + parseFloat(maxOrderSOL)) / 2,
+          initialSOLAmount: amount,
           buyTransactions: [],
           sellTransactions: [],
           currentTokenBalance: 0,
@@ -347,7 +355,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       toast({
         title: "Market Maker Session Created",
-        description: `${numMakers} maker accounts configured. Ready to start.`,
+        description: `${numMakers} maker accounts configured. ◎${CREATION_FEE_SOL} fee transferred. Ready to start.`,
       });
     } catch (error) {
       console.error("Error creating market maker session:", error);
@@ -519,11 +527,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       // Execute sequential buys with delays
       for (let i = 0; i < numMakers; i++) {
-        const amountSol =
-          parseFloat(currentSession.minOrderSOL) +
-          Math.random() *
-            (parseFloat(currentSession.maxOrderSOL) -
-              parseFloat(currentSession.minOrderSOL));
+        const amountSol = parseFloat(currentSession.minOrderSOL);
 
         try {
           const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);
@@ -611,14 +615,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   quote.outAmount,
                   quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
                 ) || 0;
-              const buyFee = amountSol * FEE_PERCENTAGE;
 
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
                 solAmount: amountSol,
                 tokenAmount: tokenAmount,
-                feeAmount: buyFee,
+                feeAmount: 0,
                 signature: sig,
                 status: "confirmed",
               });
@@ -626,25 +629,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               m.status = "completed" as const;
 
               console.log(
-                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ${buyFee.toFixed(4)} SOL`,
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount}`,
               );
-
-              // Transfer buy fee to fee wallet in real-time
-              await transferFeeToWallet(buyFee, m.id);
 
               successCount++;
 
               // Trigger auto-sell if profit target is set
               if (currentSession.sellStrategy === "auto-profit") {
                 const profitTarget = currentSession.profitTargetPercent || 5;
+                const buyPrice = amountSol / tokenAmount;
 
-                // Wait a moment then check price for auto-sell
-                setTimeout(async () => {
+                // Polling mechanism to check for profit target
+                const checkAndSellInterval = setInterval(async () => {
                   try {
                     const priceQuote = await jupiterAPI.getQuote(
                       currentSession.tokenAddress,
                       SOL_MINT,
-                      jupiterAPI.formatSwapAmount(tokenAmount, 6), // Assuming 6 decimals for custom token
+                      jupiterAPI.formatSwapAmount(tokenAmount, 6),
                       120,
                     );
 
@@ -652,12 +653,16 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       const soldSOL =
                         jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
                         0;
-                      const buyPrice = amountSol / tokenAmount;
                       const sellPrice = soldSOL / tokenAmount;
                       const profitPercent =
                         ((sellPrice - buyPrice) / buyPrice) * 100;
 
+                      console.log(
+                        `📊 Maker ${m.id}: Current profit: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%)`,
+                      );
+
                       if (profitPercent >= profitTarget) {
+                        clearInterval(checkAndSellInterval);
                         // Execute sell
                         const sellSwap = await jupiterAPI.getSwapTransaction({
                           quoteResponse: priceQuote,
@@ -666,35 +671,38 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         });
 
                         if (sellSwap && sellSwap.swapTransaction) {
-                          const sellSig = await sendSignedTxGeneric(
-                            sellSwap.swapTransaction,
-                          );
-                          const sellFee = soldSOL * FEE_PERCENTAGE;
+                          try {
+                            const sellSig = await sendSignedTxGeneric(
+                              sellSwap.swapTransaction,
+                            );
 
-                          m.sellTransactions.push({
-                            type: "sell",
-                            timestamp: Date.now(),
-                            solAmount: soldSOL,
-                            tokenAmount: tokenAmount,
-                            feeAmount: sellFee,
-                            signature: sellSig,
-                            status: "confirmed",
-                          });
+                            m.sellTransactions.push({
+                              type: "sell",
+                              timestamp: Date.now(),
+                              solAmount: soldSOL,
+                              tokenAmount: tokenAmount,
+                              feeAmount: 0,
+                              signature: sellSig,
+                              status: "confirmed",
+                            });
 
-                          const profit = soldSOL - amountSol;
-                          m.profitUSD = profit;
+                            const profit = soldSOL - amountSol;
+                            m.profitUSD = profit;
 
-                          console.log(
-                            `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ${sellFee.toFixed(4)} SOL`,
-                          );
+                            console.log(
+                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%)`,
+                            );
 
-                          // Transfer sell fee to fee wallet in real-time
-                          await transferFeeToWallet(sellFee, m.id);
-
-                          setCurrentSession({
-                            ...updatedSession,
-                            makers: updatedSession.makers,
-                          });
+                            setCurrentSession({
+                              ...updatedSession,
+                              makers: updatedSession.makers,
+                            });
+                          } catch (txError) {
+                            console.error(
+                              `Failed to send sell transaction for Maker ${m.id}:`,
+                              txError,
+                            );
+                          }
                         }
                       }
                     }
@@ -704,7 +712,18 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       autoSellError,
                     );
                   }
-                }, 2000); // 2 second delay before checking for auto-sell
+                }, 3000); // Check every 3 seconds for profit target
+
+                // Stop checking after 5 minutes if profit target not reached
+                setTimeout(
+                  () => {
+                    clearInterval(checkAndSellInterval);
+                    console.log(
+                      `⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`,
+                    );
+                  },
+                  5 * 60 * 1000,
+                );
               }
             }
 
@@ -848,8 +867,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     Order Range
                   </Label>
                   <p className="text-sm text-white mt-1">
-                    ◎ {currentSession.minOrderSOL.toFixed(4)} -{" "}
-                    {currentSession.maxOrderSOL.toFixed(4)}
+                    ◎ {currentSession.minOrderSOL.toFixed(4)}
                   </p>
                 </div>
                 <div>
@@ -1235,15 +1253,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Token Address
             </Label>
-            <div className="space-y-1">
-              <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-white font-semibold text-sm">
-                FIXERCOIN
-              </div>
-              <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-xs">
-                {tokenAddress.length > 10
-                  ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
-                  : tokenAddress}
-              </div>
+            <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-xs">
+              {tokenAddress.length > 10
+                ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
+                : tokenAddress}
             </div>
           </div>
 
@@ -1263,40 +1276,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Order Amount Range (SOL)
+              Order Amount (SOL)
             </Label>
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  From
-                </Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={minOrderSOL}
-                    onChange={(e) => setMinOrderSOL(e.target.value)}
-                    className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                  />
-                  <span className="text-sm text-gray-600">◎</span>
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600 font-semibold">
-                  To
-                </Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={maxOrderSOL}
-                    onChange={(e) => setMaxOrderSOL(e.target.value)}
-                    className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                  />
-                  <span className="text-sm text-gray-600">◎</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.001"
+                min="0.01"
+                value={orderAmount}
+                onChange={(e) => setOrderAmount(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                placeholder="Minimum 0.01 SOL"
+              />
+              <span className="text-sm text-gray-600">◎</span>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Minimum: 0.01 SOL • Unlimited maximum
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -1323,7 +1319,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <p className="text-xs text-gray-500">Default: 5% profit target</p>
           </div>
 
-          <div className="p-4 bg-gray-700 border border-gray-600 rounded-none space-y-2">
+          <div className="p-4 bg-transparent border border-gray-700 rounded-none space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-300">Available SOL:</span>
               <span

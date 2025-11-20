@@ -1505,7 +1505,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           </div>
 
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
-            <div className="flex items-center gap-[10px] text-sm flex-wrap">
+            <div className="flex items-center gap-[10px] flex-wrap" style={{ fontSize: "10px" }}>
               <div className="flex items-center gap-[10px]">
                 <span className="text-gray-300">Available SOL:</span>
                 <span
@@ -1523,7 +1523,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </span>
               </div>
               {!canAfford && (
-                <div className="text-xs text-red-400 font-semibold">
+                <div className="text-red-400 font-semibold">
                   Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
                 </div>
               )}

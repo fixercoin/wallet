@@ -75,7 +75,7 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
 const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const FIXED_DELAY_SECONDS = 60; // 1 minute
+const FIXED_DELAY_SECONDS = 0; // Instant execution - no delay
 const FIXED_PROFIT_PERCENT = 5;
 
 // Helper function to calculate entry price (SOL per token)

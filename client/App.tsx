@@ -170,6 +170,8 @@ function AppRoutes() {
       <Route path="/dapps" element={<DappsPage />} />
       <Route path="/dapps/visit" element={<DappVisit />} />
       <Route path="/dapps/view" element={<DappView />} />
+      <Route path="/select-language" element={<SelectLanguagePage />} />
+      <Route path="/select-currency" element={<SelectCurrencyPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

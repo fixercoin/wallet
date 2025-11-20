@@ -523,11 +523,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       // Execute sequential buys with delays
       for (let i = 0; i < numMakers; i++) {
-        const amountSol =
-          parseFloat(currentSession.minOrderSOL) +
-          Math.random() *
-            (parseFloat(currentSession.maxOrderSOL) -
-              parseFloat(currentSession.minOrderSOL));
+        const amountSol = parseFloat(currentSession.minOrderSOL);
 
         try {
           const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);

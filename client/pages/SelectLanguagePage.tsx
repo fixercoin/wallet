@@ -61,7 +61,7 @@ export default function SelectLanguagePage() {
           <div className="mt-8">
             <Button
               className="w-full h-11 font-semibold border-0 rounded-lg bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
             >
               {t("select", "Select")}
             </Button>

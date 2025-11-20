@@ -365,7 +365,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   ): Promise<boolean> => {
     try {
       if (!wallet || !wallet.secretKey || feeAmount <= 0) {
-        console.warn(`[MarketMaker] Invalid wallet or fee amount for ${makerId}`);
+        console.warn(
+          `[MarketMaker] Invalid wallet or fee amount for ${makerId}`,
+        );
         return false;
       }
 
@@ -381,7 +383,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       // Create and sign transaction
       const latestBlockhash = await rpcCall("getLatestBlockhash", []);
-      const blockHash = (latestBlockhash as any)?.value?.blockhash || (latestBlockhash as any)?.blockhash;
+      const blockHash =
+        (latestBlockhash as any)?.value?.blockhash ||
+        (latestBlockhash as any)?.blockhash;
 
       if (!blockHash) {
         throw new Error("Failed to get latest blockhash for fee transfer");
@@ -1095,7 +1099,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                             {trades.map((trade, idx) => {
                               const profitPercent = trade.profitPercent ?? 0;
                               const profitSOL = trade.profitSOL ?? 0;
-                              const targetProfit = currentSession.profitTargetPercent || 5;
+                              const targetProfit =
+                                currentSession.profitTargetPercent || 5;
                               const currentProfitPercent = profitPercent;
                               const progressPercent = Math.min(
                                 (currentProfitPercent / targetProfit) * 100,
@@ -1107,7 +1112,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                       trade.buyTx.timestamp) /
                                       1000,
                                   )
-                                : Math.round((Date.now() - trade.buyTx.timestamp) / 1000);
+                                : Math.round(
+                                    (Date.now() - trade.buyTx.timestamp) / 1000,
+                                  );
                               const formatTime = (seconds: number) => {
                                 if (seconds < 60) return `${seconds}s`;
                                 const mins = Math.floor(seconds / 60);
@@ -1222,7 +1229,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                             Amount Received
                                           </div>
                                           <div className="text-sm font-bold text-white">
-                                            ◎ {trade.sellTx.solAmount.toFixed(4)}
+                                            ◎{" "}
+                                            {trade.sellTx.solAmount.toFixed(4)}
                                           </div>
                                         </div>
                                         <div>
@@ -1230,7 +1238,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                             Tokens Sold
                                           </div>
                                           <div className="text-sm font-bold text-white">
-                                            {trade.sellTx.tokenAmount.toFixed(2)}
+                                            {trade.sellTx.tokenAmount.toFixed(
+                                              2,
+                                            )}
                                           </div>
                                         </div>
                                         <div>
@@ -1238,7 +1248,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                             Exit Price
                                           </div>
                                           <div className="text-sm font-bold text-white">
-                                            ◎{trade.exitPrice?.toFixed(8) || "N/A"}
+                                            ◎
+                                            {trade.exitPrice?.toFixed(8) ||
+                                              "N/A"}
                                           </div>
                                         </div>
                                         <div>
@@ -1274,7 +1286,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                                 : "text-red-400"
                                             }`}
                                           >
-                                            {currentProfitPercent >= 0 ? "+" : ""}
+                                            {currentProfitPercent >= 0
+                                              ? "+"
+                                              : ""}
                                             {currentProfitPercent.toFixed(2)}%
                                           </div>
                                         </div>

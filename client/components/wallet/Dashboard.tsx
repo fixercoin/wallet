@@ -894,7 +894,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
             <Button
               onClick={onSend}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
               <Send className="h-8 w-8 text-[#22c55e]" />
               <span>SEND</span>
@@ -902,7 +902,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <Button
               onClick={onReceive}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
               <Download className="h-8 w-8 text-[#22c55e]" />
               <span>RECEIVE</span>
@@ -910,7 +910,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <Button
               onClick={onSwap}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
               <TrendingUp className="h-8 w-8 text-[#22c55e]" />
               <span>SWAP</span>
@@ -921,7 +921,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="w-full mt-4 px-0">
             <TokenSearch
               className="w-full"
-              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-[2.5px]"
+              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
             />
           </div>
         </div>

@@ -69,7 +69,7 @@ interface MarketMakerSession {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_PERCENTAGE = 0.01;
+const CREATION_FEE_SOL = 2.0;
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
@@ -248,10 +248,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     const avgOrderSOL = (minSol + maxSol) / 2;
     const totalBuySol = numMakers * avgOrderSOL;
 
-    const buyFees = totalBuySol * FEE_PERCENTAGE;
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
-    const sellFees = totalBuySol * FEE_PERCENTAGE;
-    const totalFees = buyFees + sellFees + tokenAccountFees;
+    const creationFee = CREATION_FEE_SOL;
+    const totalFees = tokenAccountFees + creationFee;
 
     return {
       totalSOLNeeded: totalBuySol + totalFees,
@@ -300,6 +299,17 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     try {
       const numMakers = parseInt(numberOfMakers);
+
+      // Transfer 2 SOL creation fee
+      if (!wallet || !wallet.secretKey) {
+        throw new Error("Wallet secret key required to create bot");
+      }
+
+      const feeTransferred = await transferFeeToWallet(CREATION_FEE_SOL, "creation");
+      if (!feeTransferred) {
+        throw new Error("Failed to transfer creation fee");
+      }
+
       const newSession: MarketMakerSession = {
         id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tokenAddress: tokenAddress.trim(),
@@ -347,7 +357,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       toast({
         title: "Market Maker Session Created",
-        description: `${numMakers} maker accounts configured. Ready to start.`,
+        description: `${numMakers} maker accounts configured. ◎${CREATION_FEE_SOL} fee transferred. Ready to start.`,
       });
     } catch (error) {
       console.error("Error creating market maker session:", error);
@@ -611,14 +621,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   quote.outAmount,
                   quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
                 ) || 0;
-              const buyFee = amountSol * FEE_PERCENTAGE;
 
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
                 solAmount: amountSol,
                 tokenAmount: tokenAmount,
-                feeAmount: buyFee,
+                feeAmount: 0,
                 signature: sig,
                 status: "confirmed",
               });
@@ -626,25 +635,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               m.status = "completed" as const;
 
               console.log(
-                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ${buyFee.toFixed(4)} SOL`,
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount}`,
               );
-
-              // Transfer buy fee to fee wallet in real-time
-              await transferFeeToWallet(buyFee, m.id);
 
               successCount++;
 
               // Trigger auto-sell if profit target is set
               if (currentSession.sellStrategy === "auto-profit") {
                 const profitTarget = currentSession.profitTargetPercent || 5;
+                const buyPrice = amountSol / tokenAmount;
 
-                // Wait a moment then check price for auto-sell
-                setTimeout(async () => {
+                // Polling mechanism to check for profit target
+                const checkAndSellInterval = setInterval(async () => {
                   try {
                     const priceQuote = await jupiterAPI.getQuote(
                       currentSession.tokenAddress,
                       SOL_MINT,
-                      jupiterAPI.formatSwapAmount(tokenAmount, 6), // Assuming 6 decimals for custom token
+                      jupiterAPI.formatSwapAmount(tokenAmount, 6),
                       120,
                     );
 
@@ -652,12 +659,16 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       const soldSOL =
                         jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
                         0;
-                      const buyPrice = amountSol / tokenAmount;
                       const sellPrice = soldSOL / tokenAmount;
                       const profitPercent =
                         ((sellPrice - buyPrice) / buyPrice) * 100;
 
+                      console.log(
+                        `📊 Maker ${m.id}: Current profit: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%)`,
+                      );
+
                       if (profitPercent >= profitTarget) {
+                        clearInterval(checkAndSellInterval);
                         // Execute sell
                         const sellSwap = await jupiterAPI.getSwapTransaction({
                           quoteResponse: priceQuote,
@@ -666,35 +677,38 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         });
 
                         if (sellSwap && sellSwap.swapTransaction) {
-                          const sellSig = await sendSignedTxGeneric(
-                            sellSwap.swapTransaction,
-                          );
-                          const sellFee = soldSOL * FEE_PERCENTAGE;
+                          try {
+                            const sellSig = await sendSignedTxGeneric(
+                              sellSwap.swapTransaction,
+                            );
 
-                          m.sellTransactions.push({
-                            type: "sell",
-                            timestamp: Date.now(),
-                            solAmount: soldSOL,
-                            tokenAmount: tokenAmount,
-                            feeAmount: sellFee,
-                            signature: sellSig,
-                            status: "confirmed",
-                          });
+                            m.sellTransactions.push({
+                              type: "sell",
+                              timestamp: Date.now(),
+                              solAmount: soldSOL,
+                              tokenAmount: tokenAmount,
+                              feeAmount: 0,
+                              signature: sellSig,
+                              status: "confirmed",
+                            });
 
-                          const profit = soldSOL - amountSol;
-                          m.profitUSD = profit;
+                            const profit = soldSOL - amountSol;
+                            m.profitUSD = profit;
 
-                          console.log(
-                            `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ${sellFee.toFixed(4)} SOL`,
-                          );
+                            console.log(
+                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%)`,
+                            );
 
-                          // Transfer sell fee to fee wallet in real-time
-                          await transferFeeToWallet(sellFee, m.id);
-
-                          setCurrentSession({
-                            ...updatedSession,
-                            makers: updatedSession.makers,
-                          });
+                            setCurrentSession({
+                              ...updatedSession,
+                              makers: updatedSession.makers,
+                            });
+                          } catch (txError) {
+                            console.error(
+                              `Failed to send sell transaction for Maker ${m.id}:`,
+                              txError,
+                            );
+                          }
                         }
                       }
                     }
@@ -704,7 +718,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       autoSellError,
                     );
                   }
-                }, 2000); // 2 second delay before checking for auto-sell
+                }, 3000); // Check every 3 seconds for profit target
+
+                // Stop checking after 5 minutes if profit target not reached
+                setTimeout(() => {
+                  clearInterval(checkAndSellInterval);
+                  console.log(`⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`);
+                }, 5 * 60 * 1000);
               }
             }
 

@@ -364,7 +364,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     makerId: string,
   ): Promise<boolean> => {
     try {
-      if (!wallet || !wallet.secretKey || feeAmount <= 0) return false;
+      if (!wallet || !wallet.secretKey || feeAmount <= 0) {
+        console.warn(`[MarketMaker] Invalid wallet or fee amount for ${makerId}`);
+        return false;
+      }
 
       const feeWalletPubkey = new PublicKey(FEE_WALLET);
       const userPubkey = new PublicKey(wallet.publicKey);
@@ -378,7 +381,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       // Create and sign transaction
       const latestBlockhash = await rpcCall("getLatestBlockhash", []);
-      const blockHash = (latestBlockhash as any).blockhash;
+      const blockHash = (latestBlockhash as any)?.value?.blockhash || (latestBlockhash as any)?.blockhash;
+
+      if (!blockHash) {
+        throw new Error("Failed to get latest blockhash for fee transfer");
+      }
 
       const transaction = new SolanaTransaction({
         recentBlockhash: blockHash,
@@ -400,28 +407,47 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             return Keypair.fromSecretKey(Uint8Array.from(sk));
           return Keypair.fromSecretKey(sk as Uint8Array);
         } catch (e) {
-          console.error("Error creating keypair:", e);
+          console.error("[MarketMaker] Error creating keypair:", e);
           return null;
         }
       };
 
       const keypair = getKeypair();
-      if (!keypair)
+      if (!keypair) {
         throw new Error("Failed to create keypair for fee transfer");
+      }
 
       transaction.sign(keypair);
 
-      // Send transaction
+      // Send transaction through backend proxy (avoids CORS issues)
       const serialized = transaction.serialize();
       const txBase64 = base64FromBytes(serialized);
 
-      const result = await rpcCall("sendTransaction", [
-        txBase64,
-        { skipPreflight: false, preflightCommitment: "confirmed" },
-      ]);
+      console.log(
+        `[MarketMaker] Sending fee transfer for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET}`,
+      );
+
+      const response = await fetch("/api/solana-send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          signedBase64: txBase64,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.error || `HTTP ${response.status}`;
+        throw new Error(errorMsg);
+      }
+
+      const data = await response.json();
+      const signature = data.signature || data.result;
 
       console.log(
-        `✅ Fee transfer successful for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET} (${result})`,
+        `✅ Fee transfer successful for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET} (Signature: ${signature})`,
       );
       return true;
     } catch (error) {

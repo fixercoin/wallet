@@ -880,15 +880,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className="p-4 bg-transparent border border-green-500/30 rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Estimated Fees (1%):</span>
-                  <span className="font-bold text-white">
-                    ◎ {currentSession.estimatedTotalFees.toFixed(4)}
-                  </span>
-                </div>
-              </div>
-
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Token Address

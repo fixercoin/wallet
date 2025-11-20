@@ -102,11 +102,7 @@ export default function SelectCurrencyPage() {
               return (
                 <Card
                   key={curr.code}
-                  className={`cursor-pointer border-2 transition-all ${
-                    isSelected
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-300 hover:border-gray-400 bg-white"
-                  } ${!isSelectable && "opacity-60"}`}
+                  className={`cursor-pointer border-2 transition-all bg-transparent border-gray-300/30 ${!isSelectable && "opacity-60"}`}
                   onClick={() => isSelectable && handleCurrencySelect(curr.code)}
                 >
                   <CardContent className="p-4">

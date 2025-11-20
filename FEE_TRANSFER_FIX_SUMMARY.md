@@ -51,6 +51,26 @@ const userTokenAccount = await getAssociatedTokenAddress(fromMintPubkey, userPub
 **Issue**: Fee transfer instruction for airdrops not working
 - Added await to the `getAssociatedTokenAddress()` call for fee wallet account
 
+### 5. **MarketMaker.tsx** (Lines 361-434)
+**Issue**: Fee transfer transactions not reaching fee wallet due to CORS blocking
+- Changed from direct RPC call (`rpcCall("sendTransaction", ...)`) to backend proxy
+- Now uses `/api/solana-send` endpoint like SwapInterface
+- Added better error handling and logging
+- Validates blockhash response properly
+
+**Changes**:
+```typescript
+// Before: Direct RPC call blocked by browser CORS
+const result = await rpcCall("sendTransaction", [txBase64, {...}]);
+
+// After: Uses backend proxy to avoid CORS issues
+const response = await fetch("/api/solana-send", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ signedBase64: txBase64 }),
+});
+```
+
 ## Expected Behavior After Fix
 
 When users perform swaps (or other token operations), the fee transfer instruction will now be properly added to transactions:

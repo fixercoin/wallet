@@ -186,14 +186,16 @@ function App() {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <CurrencyProvider>
-                <BrowserRouter>
-                  <div className="min-h-screen pb-20">
-                    <AppRoutes />
-                    <BottomNavigation />
-                  </div>
-                </BrowserRouter>
-              </CurrencyProvider>
+              <LanguageProvider>
+                <CurrencyProvider>
+                  <BrowserRouter>
+                    <div className="min-h-screen pb-20">
+                      <AppRoutes />
+                      <BottomNavigation />
+                    </div>
+                  </BrowserRouter>
+                </CurrencyProvider>
+              </LanguageProvider>
             </TooltipProvider>
           </AppWithPasswordPrompt>
         </WalletProvider>

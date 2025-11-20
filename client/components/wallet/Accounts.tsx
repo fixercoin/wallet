@@ -45,31 +45,27 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 ACTIVE WALLET
               </div>
               <div className="w-full">
-                <div className="bg-transparent border border-gray-300/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs text-gray-600 mb-1 uppercase">
-                      ADDRESS
-                    </div>
-                    <div className="font-mono text-sm text-gray-900 flex items-center gap-2">
-                      <span className="truncate">
-                        {wallet
-                          ? shortenAddress(wallet.publicKey, 6)
-                          : "NO WALLET"}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopy}
-                        aria-label="COPY ADDRESS"
-                        className="text-gray-900 hover:bg-white/10 flex-shrink-0 h-6 w-6 p-0 ml-auto sm:ml-2"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
+                <div className="bg-transparent border border-gray-300/30 rounded-lg p-4 flex flex-row items-center justify-between gap-2">
+                  <div className="text-xs text-gray-600 uppercase flex-shrink-0">
+                    ADDRESS:
                   </div>
+                  <span className="font-mono text-xs text-gray-900 truncate flex-1 min-w-0">
+                    {wallet
+                      ? shortenAddress(wallet.publicKey, 6)
+                      : "NO WALLET"}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    aria-label="COPY ADDRESS"
+                    className="text-gray-900 hover:bg-white/10 flex-shrink-0 h-6 w-6 p-0"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
                   <Button
                     onClick={() => onOpenSetup && onOpenSetup()}
-                    className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm flex-shrink-0"
+                    className="h-8 w-8 p-0 rounded-full bg-gradient-to-r from-[#34d399] to-[#22c55e] text-white shadow-sm flex-shrink-0"
                     aria-label="ADD WALLET"
                   >
                     <Plus className="h-4 w-4" />

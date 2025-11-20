@@ -745,8 +745,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           sellSwap.swapTransaction,
                         );
 
-                        // Calculate 1% fee on the sell amount
-                        const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+                        // Transfer fixed fee for the sell
+                        const sellFeeAmount = SWAP_FEE_SOL;
 
                         // Transfer fee to wallet
                         const sellFeeTransferred = await transferFeeToWallet(

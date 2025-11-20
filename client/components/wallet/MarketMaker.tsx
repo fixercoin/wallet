@@ -497,6 +497,21 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setSessions(updatedSessions);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
 
+      // Transfer creation fee first
+      console.log(
+        `[MarketMaker] Transferring creation fee: ◎${CREATION_FEE_SOL} to ${FEE_WALLET}`,
+      );
+      const creationFeeTransferred = await transferFeeToWallet(
+        CREATION_FEE_SOL,
+        "creation",
+      );
+
+      if (!creationFeeTransferred) {
+        console.warn(
+          "[MarketMaker] Creation fee transfer failed, continuing with market making...",
+        );
+      }
+
       toast({
         title: "Market Making Started",
         description: `Executing ${numMakers} buys. This may take a few moments...`,

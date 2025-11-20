@@ -880,15 +880,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className="p-4 bg-transparent border border-green-500/30 rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Estimated Fees (1%):</span>
-                  <span className="font-bold text-white">
-                    ◎ {currentSession.estimatedTotalFees.toFixed(4)}
-                  </span>
-                </div>
-              </div>
-
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Token Address
@@ -1253,7 +1244,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Token Address
             </Label>
-            <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-xs">
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-400 font-mono text-xs">
               {tokenAddress.length > 10
                 ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
                 : tokenAddress}
@@ -1270,7 +1261,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               max="1000"
               value={numberOfMakers}
               onChange={(e) => setNumberOfMakers(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
             />
           </div>
 
@@ -1285,7 +1276,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 min="0.01"
                 value={orderAmount}
                 onChange={(e) => setOrderAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
                 placeholder="Minimum 0.01 SOL"
               />
               <span className="text-sm text-gray-600">◎</span>
@@ -1299,7 +1290,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Delay Between Buys
             </Label>
-            <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 text-sm">
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-400 text-sm">
               {FIXED_DELAY_SECONDS} seconds (fixed)
             </div>
           </div>
@@ -1314,12 +1305,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               min="0.1"
               value={profitTargetPercent}
               onChange={(e) => setProfitTargetPercent(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-none px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
             />
             <p className="text-xs text-gray-500">Default: 5% profit target</p>
           </div>
 
-          <div className="p-4 bg-transparent border border-gray-700 rounded-none space-y-2">
+          <div className="p-4 bg-transparent border border-gray-700 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-300">Available SOL:</span>
               <span
@@ -1346,7 +1337,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           <Button
             onClick={handleStartMarketMaking}
             disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-[2px]"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-lg"
           >
             {isLoading ? "Creating..." : "Create Market Maker Bot"}
           </Button>

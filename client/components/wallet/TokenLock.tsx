@@ -765,7 +765,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+              className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label="Back"
             >
               <ArrowLeft
@@ -793,7 +793,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-[2px]">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-lg">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -827,7 +827,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-2 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400 rounded-[2px]"
+                className="mt-2 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400 rounded-lg"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
@@ -850,7 +850,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-[2px]">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-lg">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -868,7 +868,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <Button
-              className="w-full h-11 font-semibold border-0 rounded-[2px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg"
+              className="w-full h-11 font-semibold border-0 rounded-lg bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg"
               onClick={handleSubmit}
               disabled={isFormDisabled}
             >

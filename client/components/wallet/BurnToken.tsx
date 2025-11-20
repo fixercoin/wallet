@@ -603,7 +603,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-2 bg-transparent border border-gray-300/30 text-black rounded-none">
+                  <SelectTrigger className="mt-2 bg-transparent border border-gray-300/30 text-black rounded-lg">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border border-black text-white">
@@ -635,7 +635,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <Card className="rounded-none border border-gray-300/30 bg-transparent px-4">
+                <Card className="rounded-lg border border-gray-300/30 bg-transparent px-4">
                   <CardContent className="pt-4 px-0 space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -682,14 +682,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-transparent border border-gray-300/30 text-black placeholder:text-gray-500 rounded-none"
+                    className="h-11 bg-transparent border border-gray-300/30 text-black placeholder:text-gray-500 rounded-lg"
                   />
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={handleUseMax}
                     disabled={isLoading || !selectedToken}
-                    className="h-11 rounded-none px-4 text-sm bg-green-500 border border-green-500 text-white hover:bg-green-600 hover:border-green-600"
+                    className="h-11 rounded-lg px-4 text-sm bg-green-500 border border-green-500 text-white hover:bg-green-600 hover:border-green-600"
                   >
                     Max
                   </Button>
@@ -714,7 +714,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               <Button
-                className="h-11 w-full border-0 font-semibold rounded-[4px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg"
+                className="h-11 w-full border-0 font-semibold rounded-lg bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg"
                 onClick={handleBurn}
                 disabled={isConfirmDisabled}
               >

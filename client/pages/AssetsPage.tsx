@@ -92,7 +92,7 @@ export default function AssetsPage() {
           >
             <ArrowLeft size={24} />
           </button>
-          <div className="bg-transparent rounded-[3px] p-4 border border-[#22c55e]/30 flex items-start justify-between">
+          <div className="bg-transparent rounded-lg p-4 border border-[#22c55e]/30 flex items-start justify-between">
             <div>
               <p className="text-xs text-gray-400 mb-1">Total Balance</p>
               <p className="text-3xl font-bold text-green-400">
@@ -105,7 +105,7 @@ export default function AssetsPage() {
             </div>
             <Button
               onClick={() => navigate("/assets/deposit")}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-[3px] px-4 py-2 text-sm font-medium"
+              className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-medium"
             >
               DEPOSITE ASSET
             </Button>

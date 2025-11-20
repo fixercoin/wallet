@@ -176,7 +176,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
-              <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -198,7 +198,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-transparent text-[hsl(var(--foreground))] p-2 pr-6 rounded-none font-mono"
+                          className="flex-1 bg-transparent text-[hsl(var(--foreground))] p-2 pr-6 rounded-md font-mono"
                         >
                           {wallets.map((w) => (
                             <option
@@ -217,7 +217,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -249,7 +249,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.stopPropagation();
                             handleCopyRecoveryPhrase();
                           }}
-                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-md"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -266,7 +266,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Textarea
                         value={recoveryPhrase}
                         readOnly
-                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-md"
                       />
                     </div>
                   )}
@@ -283,7 +283,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Private Key Card */}
-              <Card className="w-full bg-transparent rounded-[2px] border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -314,7 +314,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.stopPropagation();
                             handleCopyPrivateKey();
                           }}
-                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-md"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -331,7 +331,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Textarea
                         value={privateKeyBase58}
                         readOnly
-                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-md"
                       />
                     </div>
                   )}
@@ -346,7 +346,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Button
                         onClick={handleLogout}
                         variant="default"
-                        className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-[2px]"
+                        className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                       >
                         <LogOut className="h-4 w-4" />
                         Logout
@@ -355,7 +355,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Button
                         onClick={handleDeleteAccount}
                         variant="default"
-                        className={`w-full sm:w-40 flex items-center justify-center gap-2 rounded-[2px] ${
+                        className={`w-full sm:w-40 flex items-center justify-center gap-2 rounded-lg ${
                           confirmDelete
                             ? "bg-green-700 hover:bg-green-800 text-white"
                             : "bg-green-600 hover:bg-green-700 text-white"
@@ -377,7 +377,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setConfirmDelete(false)}
-                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-[2px]"
+                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
                       >
                         Cancel
                       </Button>

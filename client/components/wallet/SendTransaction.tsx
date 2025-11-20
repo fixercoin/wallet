@@ -791,7 +791,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={onBack}
-                  className="h-8 w-8 p-0 rounded-[4px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                  className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                   aria-label="Back"
                 >
                   <ArrowLeft className="h-4 w-4" />

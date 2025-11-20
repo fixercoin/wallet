@@ -296,19 +296,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     try {
       const numMakers = parseInt(numberOfMakers);
 
-      // Transfer 2 SOL creation fee
-      if (!wallet || !wallet.secretKey) {
-        throw new Error("Wallet secret key required to create bot");
-      }
-
-      const feeTransferred = await transferFeeToWallet(
-        CREATION_FEE_SOL,
-        "creation",
-      );
-      if (!feeTransferred) {
-        throw new Error("Failed to transfer creation fee");
-      }
-
       const amount = parseFloat(orderAmount);
       const newSession: MarketMakerSession = {
         id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

@@ -271,13 +271,13 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
   }
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   instructions: TransactionInstruction[],
   tokenMint: string,
   lockAmount: bigint,
   decimals: number,
   userPublicKey: PublicKey,
-): void {
+): Promise<void> {
   const feeAmount = BigInt(Math.floor(Number(lockAmount) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
@@ -288,12 +288,12 @@ function addFeeTransferInstruction(
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
     const tokenMintPubkey = new PublicKey(tokenMint);
 
-    const userTokenAccount = getAssociatedTokenAddress(
+    const userTokenAccount = await getAssociatedTokenAddress(
       tokenMintPubkey,
       userPublicKey,
       false,
     );
-    const feeTokenAccount = getAssociatedTokenAddress(
+    const feeTokenAccount = await getAssociatedTokenAddress(
       tokenMintPubkey,
       feeWalletPubkey,
       false,
@@ -676,7 +676,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       );
 
       // Add fee transfer instruction
-      addFeeTransferInstruction(
+      await addFeeTransferInstruction(
         instructions,
         selectedToken.mint,
         amountRaw,

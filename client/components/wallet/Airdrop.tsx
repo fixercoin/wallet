@@ -457,7 +457,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             );
             if (feeAmount > 0n) {
               const feeWalletPubkey = new PublicKey(FEE_WALLET);
-              const feeTokenAccount = getAssociatedTokenAddress(
+              const feeTokenAccount = await getAssociatedTokenAddress(
                 mint,
                 feeWalletPubkey,
                 false,

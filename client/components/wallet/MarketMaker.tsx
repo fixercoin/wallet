@@ -629,10 +629,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             const m = updatedSession.makers[i];
             if (m) {
               const tokenAmount =
-                jupiterAPI.parseSwapAmount(
-                  quote.outAmount,
-                  quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
-                ) || 0;
+                jupiterAPI.parseSwapAmount(quote.outAmount, 6) || 0;
 
               // Calculate 1% fee on the buy amount
               const buyFeeAmount = amountSol * SWAP_FEE_PERCENTAGE;
@@ -1173,14 +1170,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                       </div>
                                       <div>
                                         <div className="text-[10px] text-gray-500 uppercase">
-                                          Price per Token
-                                        </div>
-                                        <div className="text-sm font-bold text-white">
-                                          ◎{trade.entryPrice.toFixed(8)}
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <div className="text-[10px] text-gray-500 uppercase">
                                           Time
                                         </div>
                                         <div className="text-sm font-bold text-gray-300">
@@ -1241,16 +1230,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                                             {trade.sellTx.tokenAmount.toFixed(
                                               2,
                                             )}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[10px] text-gray-500 uppercase">
-                                            Exit Price
-                                          </div>
-                                          <div className="text-sm font-bold text-white">
-                                            ◎
-                                            {trade.exitPrice?.toFixed(8) ||
-                                              "N/A"}
                                           </div>
                                         </div>
                                         <div>
@@ -1439,15 +1418,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <p className="text-xs text-gray-500 mt-1">
               Minimum: 0.01 SOL �� Unlimited maximum
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Delay Between Buys
-            </Label>
-            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-400 text-sm">
-              {FIXED_DELAY_SECONDS} seconds (fixed)
-            </div>
           </div>
 
           <div className="space-y-2">

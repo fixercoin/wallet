@@ -241,7 +241,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
     const creationFee = CREATION_FEE_SOL;
-    const totalFees = tokenAccountFees + creationFee;
+    const swapFees = numMakers * SWAP_FEE_SOL * 2; // Buy and sell fees
+    const totalFees = tokenAccountFees + creationFee + swapFees;
 
     return {
       totalSOLNeeded: totalBuySol + totalFees,

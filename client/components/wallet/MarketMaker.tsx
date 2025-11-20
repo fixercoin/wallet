@@ -1505,8 +1505,24 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           </div>
 
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
-            <div className="text-gray-300" style={{ fontSize: "10px", fontWeight: "600", letterSpacing: "0.5px" }}>
-              AVAILABLE SOL : <span className={canAfford ? "text-green-400" : "text-red-400"}>{solBalance.toFixed(4)}</span> REQUIRED : <span className="text-white">{totalSOLNeeded.toFixed(4)}</span> NEED : <span className="text-red-400">{(totalSOLNeeded - solBalance).toFixed(4)}</span>
+            <div
+              className="text-gray-300"
+              style={{
+                fontSize: "10px",
+                fontWeight: "600",
+                letterSpacing: "0.5px",
+              }}
+            >
+              AVAILABLE SOL :{" "}
+              <span className={canAfford ? "text-green-400" : "text-red-400"}>
+                {solBalance.toFixed(4)}
+              </span>{" "}
+              REQUIRED :{" "}
+              <span className="text-white">{totalSOLNeeded.toFixed(4)}</span>{" "}
+              NEED :{" "}
+              <span className="text-red-400">
+                {(totalSOLNeeded - solBalance).toFixed(4)}
+              </span>
             </div>
           </div>
 

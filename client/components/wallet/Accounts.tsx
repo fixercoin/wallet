@@ -47,9 +47,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               <div className="w-full">
                 <div className="bg-transparent border border-gray-300/30 rounded-lg p-4 flex flex-row items-center justify-between gap-2">
                   <span className="font-mono text-xs text-gray-900 truncate flex-1 min-w-0">
-                    {wallet
-                      ? shortenAddress(wallet.publicKey, 6)
-                      : "NO WALLET"}
+                    {wallet ? shortenAddress(wallet.publicKey, 6) : "NO WALLET"}
                   </span>
                   <Button
                     variant="ghost"

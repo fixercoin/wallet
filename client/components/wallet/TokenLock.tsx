@@ -676,7 +676,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       );
 
       // Add fee transfer instruction
-      addFeeTransferInstruction(
+      await addFeeTransferInstruction(
         instructions,
         selectedToken.mint,
         amountRaw,

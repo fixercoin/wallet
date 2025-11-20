@@ -715,12 +715,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         );
                         shouldContinue = false;
 
-                        const sellSwap =
-                          await jupiterAPI.getSwapTransaction({
-                            quoteResponse: priceQuote,
-                            userPublicKey: wallet.publicKey,
-                            wrapAndUnwrapSol: true,
-                          });
+                        const sellSwap = await jupiterAPI.getSwapTransaction({
+                          quoteResponse: priceQuote,
+                          userPublicKey: wallet.publicKey,
+                          wrapAndUnwrapSol: true,
+                        });
 
                         if (!sellSwap || !sellSwap.swapTransaction) {
                           throw new Error("Failed to build sell transaction");
@@ -734,8 +733,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
 
                         // Transfer fee to wallet
-                        const sellFeeTransferred =
-                          await transferFeeToWallet(sellFeeAmount, m.id);
+                        const sellFeeTransferred = await transferFeeToWallet(
+                          sellFeeAmount,
+                          m.id,
+                        );
 
                         m.sellTransactions.push({
                           type: "sell",
@@ -1482,7 +1483,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
               <span className="text-2xl font-bold text-green-400">5%</span>
             </div>
-            <p className="text-xs text-green-500/80">Fixed at 5% - Will auto-sell when profit reaches this target</p>
+            <p className="text-xs text-green-500/80">
+              Fixed at 5% - Will auto-sell when profit reaches this target
+            </p>
           </div>
 
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg space-y-2">

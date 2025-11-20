@@ -126,7 +126,9 @@ async function addFeeTransferInstruction(
   try {
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
     const userPubkeyStr =
-      typeof userPublicKey === "string" ? userPublicKey : userPublicKey.toString();
+      typeof userPublicKey === "string"
+        ? userPublicKey
+        : userPublicKey.toString();
     const userPubkey = new PublicKey(userPubkeyStr);
     const fromMintPubkey = new PublicKey(fromMint);
 

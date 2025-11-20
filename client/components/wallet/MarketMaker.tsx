@@ -661,100 +661,152 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               // Trigger auto-sell if profit target is set
               if (currentSession.sellStrategy === "auto-profit") {
                 const profitTarget = currentSession.profitTargetPercent || 5;
-                const buyPrice = amountSol / tokenAmount;
+                const buyPricePerToken = amountSol / tokenAmount;
 
-                // Polling mechanism to check for profit target
-                const checkAndSellInterval = setInterval(async () => {
-                  try {
-                    const priceQuote = await jupiterAPI.getQuote(
-                      currentSession.tokenAddress,
-                      SOL_MINT,
-                      jupiterAPI.formatSwapAmount(tokenAmount, 6),
-                      120,
-                    );
+                console.log(
+                  `🔄 Maker ${m.id}: Starting auto-sell monitoring. Buy price: ◎${buyPricePerToken.toFixed(9)}/token, Profit target: ${profitTarget}%`,
+                );
 
-                    if (priceQuote) {
+                // Start auto-sell monitoring in the background
+                (async () => {
+                  let shouldContinue = true;
+                  let checkCount = 0;
+                  const maxChecks = 100; // ~5 minutes at 3-second intervals
+
+                  while (shouldContinue && checkCount < maxChecks) {
+                    try {
+                      checkCount++;
+                      await new Promise((r) => setTimeout(r, 3000)); // Check every 3 seconds
+
+                      const priceQuote = await jupiterAPI.getQuote(
+                        currentSession.tokenAddress,
+                        SOL_MINT,
+                        jupiterAPI.formatSwapAmount(tokenAmount, 6),
+                        120,
+                      );
+
+                      if (!priceQuote) {
+                        console.warn(
+                          `⚠️ Maker ${m.id}: Failed to get price quote (check ${checkCount})`,
+                        );
+                        continue;
+                      }
+
                       const soldSOL =
                         jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
                         0;
-                      const sellPrice = soldSOL / tokenAmount;
+
+                      if (soldSOL <= 0) {
+                        console.warn(
+                          `⚠️ Maker ${m.id}: Invalid quote amount: ${soldSOL}`,
+                        );
+                        continue;
+                      }
+
+                      const sellPricePerToken = soldSOL / tokenAmount;
                       const profitPercent =
-                        ((sellPrice - buyPrice) / buyPrice) * 100;
+                        ((sellPricePerToken - buyPricePerToken) /
+                          buyPricePerToken) *
+                        100;
 
                       console.log(
-                        `📊 Maker ${m.id}: Current profit: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%)`,
+                        `📊 Maker ${m.id}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Current price: ◎${sellPricePerToken.toFixed(9)}/token)`,
                       );
 
+                      // Execute sell if profit target reached
                       if (profitPercent >= profitTarget) {
-                        clearInterval(checkAndSellInterval);
-                        // Execute sell
-                        const sellSwap = await jupiterAPI.getSwapTransaction({
-                          quoteResponse: priceQuote,
-                          userPublicKey: wallet.publicKey,
-                          wrapAndUnwrapSol: true,
+                        console.log(
+                          `🚀 Maker ${m.id}: Profit target reached! Executing sell...`,
+                        );
+                        shouldContinue = false;
+
+                        const sellSwap =
+                          await jupiterAPI.getSwapTransaction({
+                            quoteResponse: priceQuote,
+                            userPublicKey: wallet.publicKey,
+                            wrapAndUnwrapSol: true,
+                          });
+
+                        if (!sellSwap || !sellSwap.swapTransaction) {
+                          throw new Error("Failed to build sell transaction");
+                        }
+
+                        const sellSig = await sendSignedTxGeneric(
+                          sellSwap.swapTransaction,
+                        );
+
+                        // Calculate 1% fee on the sell amount
+                        const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+
+                        // Transfer fee to wallet
+                        const sellFeeTransferred =
+                          await transferFeeToWallet(sellFeeAmount, m.id);
+
+                        m.sellTransactions.push({
+                          type: "sell",
+                          timestamp: Date.now(),
+                          solAmount: soldSOL,
+                          tokenAmount: tokenAmount,
+                          feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
+                          signature: sellSig,
+                          status: "confirmed",
                         });
 
-                        if (sellSwap && sellSwap.swapTransaction) {
-                          try {
-                            const sellSig = await sendSignedTxGeneric(
-                              sellSwap.swapTransaction,
-                            );
+                        const profit = soldSOL - amountSol;
+                        m.profitUSD = profit;
 
-                            // Calculate 1% fee on the sell amount
-                            const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+                        console.log(
+                          `✅ Maker ${m.id}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ���${sellFeeAmount.toFixed(4)}`,
+                        );
 
-                            // Transfer fee to wallet
-                            const sellFeeTransferred =
-                              await transferFeeToWallet(sellFeeAmount, m.id);
+                        // Update session state with sell transaction
+                        setCurrentSession((prevSession) => {
+                          if (!prevSession) return prevSession;
+                          return {
+                            ...prevSession,
+                            makers: prevSession.makers.map((maker) =>
+                              maker.id === m.id
+                                ? {
+                                    ...maker,
+                                    sellTransactions: m.sellTransactions,
+                                    profitUSD: m.profitUSD,
+                                  }
+                                : maker,
+                            ),
+                          };
+                        });
 
-                            m.sellTransactions.push({
-                              type: "sell",
-                              timestamp: Date.now(),
-                              solAmount: soldSOL,
-                              tokenAmount: tokenAmount,
-                              feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
-                              signature: sellSig,
-                              status: "confirmed",
-                            });
+                        toast({
+                          title: "Auto-Sell Executed",
+                          description: `Maker ${m.id}: Sold at ${profitPercent.toFixed(2)}% profit (◎${profit.toFixed(4)})`,
+                        });
+                      }
+                    } catch (error) {
+                      const errorMsg =
+                        error instanceof Error ? error.message : String(error);
+                      console.error(
+                        `❌ Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
+                        error,
+                      );
 
-                            const profit = soldSOL - amountSol;
-                            m.profitUSD = profit;
-
-                            console.log(
-                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ◎${sellFeeAmount.toFixed(4)}`,
-                            );
-
-                            setCurrentSession({
-                              ...updatedSession,
-                              makers: updatedSession.makers,
-                            });
-                          } catch (txError) {
-                            console.error(
-                              `Failed to send sell transaction for Maker ${m.id}:`,
-                              txError,
-                            );
-                          }
-                        }
+                      // Continue trying even if there's an error
+                      if (
+                        errorMsg.includes("timeout") ||
+                        errorMsg.includes("failed")
+                      ) {
+                        console.log(
+                          `🔄 Maker ${m.id}: Retrying in 3 seconds...`,
+                        );
                       }
                     }
-                  } catch (autoSellError) {
-                    console.error(
-                      `Auto-sell error for Maker ${m.id}:`,
-                      autoSellError,
-                    );
                   }
-                }, 3000); // Check every 3 seconds for profit target
 
-                // Stop checking after 5 minutes if profit target not reached
-                setTimeout(
-                  () => {
-                    clearInterval(checkAndSellInterval);
+                  if (shouldContinue) {
                     console.log(
                       `⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`,
                     );
-                  },
-                  5 * 60 * 1000,
-                );
+                  }
+                })();
               }
             }
 

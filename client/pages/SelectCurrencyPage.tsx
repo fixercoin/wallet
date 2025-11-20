@@ -7,9 +7,23 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { resolveApiUrl } from "@/lib/api-client";
 
-type MajorCurrency = "USD" | "EUR" | "GBP" | "JPY" | "AUD" | "CAD" | "CHF" | "CNY" | "INR" | "PKR";
+type MajorCurrency =
+  | "USD"
+  | "EUR"
+  | "GBP"
+  | "JPY"
+  | "AUD"
+  | "CAD"
+  | "CHF"
+  | "CNY"
+  | "INR"
+  | "PKR";
 
-const MAJOR_CURRENCIES: Array<{ code: MajorCurrency; name: string; symbol: string }> = [
+const MAJOR_CURRENCIES: Array<{
+  code: MajorCurrency;
+  name: string;
+  symbol: string;
+}> = [
   { code: "USD", name: "US Dollar", symbol: "$" },
   { code: "EUR", name: "Euro", symbol: "€" },
   { code: "GBP", name: "British Pound", symbol: "£" },
@@ -39,7 +53,8 @@ export default function SelectCurrencyPage() {
   const navigate = useNavigate();
   const { currency, setCurrency } = useCurrency();
   const { t } = useLanguage();
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(FALLBACK_RATES);
+  const [exchangeRates, setExchangeRates] =
+    useState<Record<string, number>>(FALLBACK_RATES);
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -104,20 +119,24 @@ export default function SelectCurrencyPage() {
           </div>
 
           <p className="text-xs text-gray-600 mb-4">
-            {t("major-currencies", "Major Currencies")} (with USD exchange rates)
+            {t("major-currencies", "Major Currencies")} (with USD exchange
+            rates)
           </p>
 
           <div className="space-y-3">
             {MAJOR_CURRENCIES.map((curr) => {
               const isSelectable = curr.code === "USD" || curr.code === "PKR";
-              const isSelected = (currency === "USD" && curr.code === "USD") ||
-                                (currency === "PKR" && curr.code === "PKR");
+              const isSelected =
+                (currency === "USD" && curr.code === "USD") ||
+                (currency === "PKR" && curr.code === "PKR");
 
               return (
                 <Card
                   key={curr.code}
                   className={`cursor-pointer border-2 transition-all bg-transparent border-gray-300/30 ${!isSelectable && "opacity-60"}`}
-                  onClick={() => isSelectable && handleCurrencySelect(curr.code)}
+                  onClick={() =>
+                    isSelectable && handleCurrencySelect(curr.code)
+                  }
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">

@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check } from "lucide-react";
-import { useLanguage, getLanguages, type Language } from "@/contexts/LanguageContext";
+import {
+  useLanguage,
+  getLanguages,
+  type Language,
+} from "@/contexts/LanguageContext";
 
 export default function SelectLanguagePage() {
   const navigate = useNavigate();

@@ -416,7 +416,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   const availableTokens = useMemo(() => {
     return tokens
-      .filter((token) => token.mint && !["SOL", "USDT", "USDC"].includes(token.symbol || ""))
+      .filter(
+        (token) =>
+          token.mint && !["SOL", "USDT", "USDC"].includes(token.symbol || ""),
+      )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
   }, [tokens]);
 

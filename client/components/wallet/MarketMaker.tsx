@@ -1485,28 +1485,30 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </div>
           </div>
 
-          <div className="p-4 bg-transparent border border-gray-700 rounded-lg space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Available SOL:</span>
-              <span
-                className={`font-bold ${
-                  canAfford ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                ◎ {solBalance.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm pt-2 border-t border-gray-600">
-              <span className="text-gray-300">Required SOL:</span>
-              <span className="font-bold text-white">
-                ◎ {totalSOLNeeded.toFixed(4)}
-              </span>
-            </div>
-            {!canAfford && (
-              <div className="text-xs text-red-400 font-semibold pt-2">
-                Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
+          <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
+            <div className="flex items-center gap-[10px] text-sm flex-wrap">
+              <div className="flex items-center gap-[10px]">
+                <span className="text-gray-300">Available SOL:</span>
+                <span
+                  className={`font-bold ${
+                    canAfford ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  ◎ {solBalance.toFixed(4)}
+                </span>
               </div>
-            )}
+              <div className="flex items-center gap-[10px]">
+                <span className="text-gray-300">Required SOL:</span>
+                <span className="font-bold text-white">
+                  ◎ {totalSOLNeeded.toFixed(4)}
+                </span>
+              </div>
+              {!canAfford && (
+                <div className="text-xs text-red-400 font-semibold">
+                  Need {(totalSOLNeeded - solBalance).toFixed(4)} more SOL
+                </div>
+              )}
+            </div>
           </div>
 
           <Button

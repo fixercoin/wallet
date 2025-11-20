@@ -22,6 +22,19 @@ const MAJOR_CURRENCIES: Array<{ code: MajorCurrency; name: string; symbol: strin
   { code: "PKR", name: "Pakistani Rupee", symbol: "₨" },
 ];
 
+const FALLBACK_RATES: Record<MajorCurrency, number> = {
+  USD: 1.0,
+  EUR: 0.92,
+  GBP: 0.79,
+  JPY: 149.5,
+  AUD: 1.53,
+  CAD: 1.36,
+  CHF: 0.88,
+  CNY: 7.24,
+  INR: 83.12,
+  PKR: 278.5,
+};
+
 export default function SelectCurrencyPage() {
   const navigate = useNavigate();
   const { currency, setCurrency } = useCurrency();

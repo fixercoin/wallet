@@ -341,7 +341,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
-                  <div className="px-4 sm:px-0">
+                  <div className="px-0 sm:px-4">
                     <div className="flex flex-col sm:flex-row gap-3 w-full">
                       <Button
                         onClick={handleLogout}

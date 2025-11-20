@@ -862,8 +862,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     Order Range
                   </Label>
                   <p className="text-sm text-white mt-1">
-                    ◎ {currentSession.minOrderSOL.toFixed(4)} -{" "}
-                    {currentSession.maxOrderSOL.toFixed(4)}
+                    ◎ {currentSession.minOrderSOL.toFixed(4)}
                   </p>
                 </div>
                 <div>

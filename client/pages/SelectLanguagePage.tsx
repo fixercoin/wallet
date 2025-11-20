@@ -22,7 +22,7 @@ export default function SelectLanguagePage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
               className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label={t("back", "Back")}
             >

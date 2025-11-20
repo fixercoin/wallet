@@ -895,36 +895,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
               <div className="border-t border-gray-700/50 pt-4">
                 <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                  Fee Wallet Information
-                </Label>
-                <div className="space-y-3">
-                  <div className="bg-transparent border border-gray-700/50 rounded p-3">
-                    <p className="text-xs text-gray-500 uppercase font-semibold mb-2">
-                      Fee Wallet Address
-                    </p>
-                    <p className="text-xs font-mono break-all text-gray-200 bg-gray-800/30 p-2 rounded border border-gray-700/30">
-                      {FEE_WALLET}
-                    </p>
-                  </div>
-                  <div className="text-xs text-gray-400 space-y-1">
-                    <p>
-                      • <span className="text-green-400">Buy Fee:</span> 1%
-                      transferred to fee wallet
-                    </p>
-                    <p>
-                      • <span className="text-blue-400">Sell Fee:</span> 1%
-                      transferred to fee wallet on auto-sell
-                    </p>
-                    <p>
-                      • <span className="text-yellow-400">Creation Fee:</span> ◎
-                      {CREATION_FEE_SOL} transferred on session creation
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-700/50 pt-4">
-                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
                   Session Summary
                 </Label>
                 <div className="grid grid-cols-2 gap-3 mb-4">

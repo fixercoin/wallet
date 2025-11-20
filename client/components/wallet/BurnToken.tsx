@@ -128,13 +128,13 @@ const ixBurnChecked = (
   });
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   tx: Transaction,
   tokenMint: string,
   burnAmount: bigint,
   decimals: number,
   userPublicKey: PublicKey,
-): Transaction {
+): Promise<Transaction> {
   const feeAmount = BigInt(Math.floor(Number(burnAmount) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
@@ -154,12 +154,12 @@ function addFeeTransferInstruction(
         lamports: Number(feeAmount),
       });
     } else {
-      const userTokenAccount = getAssociatedTokenAddress(
+      const userTokenAccount = await getAssociatedTokenAddress(
         tokenMintPubkey,
         userPublicKey,
         false,
       );
-      const feeTokenAccount = getAssociatedTokenAddress(
+      const feeTokenAccount = await getAssociatedTokenAddress(
         tokenMintPubkey,
         feeWalletPubkey,
         false,

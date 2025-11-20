@@ -74,7 +74,7 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
 const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const FIXED_DELAY_SECONDS = 10;
+const FIXED_DELAY_SECONDS = 60; // 1 minute
 const FIXED_PROFIT_PERCENT = 5;
 
 // Helper function to calculate entry price (SOL per token)
@@ -1242,22 +1242,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Token Address
-            </Label>
-            <div className="space-y-1">
-              <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-white font-semibold text-sm">
-                FIXERCOIN
-              </div>
-              <div className="bg-transparent border border-gray-700 rounded-none px-4 py-3 text-gray-400 font-mono text-xs">
-                {tokenAddress.length > 10
-                  ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
-                  : tokenAddress}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
               Number of Makers
             </Label>
             <Input
@@ -1313,7 +1297,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <p className="text-xs text-gray-500">Default: 5% profit target</p>
           </div>
 
-          <div className="p-4 bg-gray-700 border border-gray-600 rounded-none space-y-2">
+          <div className="p-4 bg-transparent border border-gray-700 rounded-none space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-300">Available SOL:</span>
               <span

@@ -13,13 +13,22 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
+  // Try primary env var
   const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBasePrimary) return envBasePrimary;
+  if (envBasePrimary) {
+    return envBasePrimary;
+  }
+
+  // Try alternative env var
   const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
-  if (envBaseAlt) return envBaseAlt;
+  if (envBaseAlt) {
+    return envBaseAlt;
+  }
+
   if (workingApiBase) return workingApiBase;
-  // Default to Cloudflare Worker backend
-  return "https://api.fixorium.com.pk";
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
+  return "";
 };
 
 let cachedBase: string | null = null;

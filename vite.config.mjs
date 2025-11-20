@@ -20,10 +20,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://api.fixorium.com.pk",
+        target: "http://localhost:3000",
         changeOrigin: true,
         rewrite: (path) => path,
-        secure: true,
       },
     },
   },

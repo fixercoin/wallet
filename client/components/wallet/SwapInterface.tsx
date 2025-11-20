@@ -647,7 +647,19 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       try {
         // Sign the transaction with local wallet
         setStatus("Signing transaction…");
-        const tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+        let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+
+        // Add fee transfer instruction before signing
+        const fromToken = tokenList.find((t) => t.address === fromMint);
+        if (fromToken) {
+          tx = addFeeTransferInstruction(
+            tx,
+            fromMint,
+            amount,
+            fromToken.decimals || 6,
+            wallet.publicKey,
+          );
+        }
 
         const keypair = getKeypair(wallet);
         if (!keypair) {

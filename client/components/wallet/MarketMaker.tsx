@@ -70,6 +70,7 @@ interface MarketMakerSession {
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const CREATION_FEE_SOL = 0.01; // Fixed 0.01 SOL fee
+const SWAP_FEE_PERCENTAGE = 0.01; // 1% fee on each swap
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
@@ -616,12 +617,21 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   quote.routePlan?.[0]?.swapInfo?.outAmount ? 0 : 0,
                 ) || 0;
 
+              // Calculate 1% fee on the buy amount
+              const buyFeeAmount = amountSol * SWAP_FEE_PERCENTAGE;
+
+              // Transfer fee to wallet
+              const feeTransferred = await transferFeeToWallet(
+                buyFeeAmount,
+                m.id,
+              );
+
               m.buyTransactions.push({
                 type: "buy",
                 timestamp: Date.now(),
                 solAmount: amountSol,
                 tokenAmount: tokenAmount,
-                feeAmount: 0,
+                feeAmount: feeTransferred ? buyFeeAmount : 0,
                 signature: sig,
                 status: "confirmed",
               });
@@ -629,7 +639,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               m.status = "completed" as const;
 
               console.log(
-                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount}`,
+                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ◎${buyFeeAmount.toFixed(4)}`,
               );
 
               successCount++;
@@ -676,12 +686,19 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                               sellSwap.swapTransaction,
                             );
 
+                            // Calculate 1% fee on the sell amount
+                            const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+
+                            // Transfer fee to wallet
+                            const sellFeeTransferred =
+                              await transferFeeToWallet(sellFeeAmount, m.id);
+
                             m.sellTransactions.push({
                               type: "sell",
                               timestamp: Date.now(),
                               solAmount: soldSOL,
                               tokenAmount: tokenAmount,
-                              feeAmount: 0,
+                              feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
                               signature: sellSig,
                               status: "confirmed",
                             });
@@ -690,7 +707,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                             m.profitUSD = profit;
 
                             console.log(
-                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%)`,
+                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ◎${sellFeeAmount.toFixed(4)}`,
                             );
 
                             setCurrentSession({
@@ -1282,7 +1299,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               <span className="text-sm text-gray-600">◎</span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Minimum: 0.01 SOL • Unlimited maximum
+              Minimum: 0.01 SOL �� Unlimited maximum
             </p>
           </div>
 

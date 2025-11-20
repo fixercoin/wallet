@@ -39,8 +39,7 @@ export default function SelectCurrencyPage() {
   const navigate = useNavigate();
   const { currency, setCurrency } = useCurrency();
   const { t } = useLanguage();
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-  const [loadingRates, setLoadingRates] = useState(true);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(FALLBACK_RATES);
 
   useEffect(() => {
     const fetchRates = async () => {

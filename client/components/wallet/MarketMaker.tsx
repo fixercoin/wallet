@@ -331,8 +331,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         makers: Array.from({ length: numMakers }, (_, i) => ({
           id: `maker_${i + 1}`,
           address: "",
-          initialSOLAmount:
-            (parseFloat(minOrderSOL) + parseFloat(maxOrderSOL)) / 2,
+          initialSOLAmount: amount,
           buyTransactions: [],
           sellTransactions: [],
           currentTokenBalance: 0,

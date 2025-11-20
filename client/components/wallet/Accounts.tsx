@@ -77,38 +77,14 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
               </div>
               <div className="space-y-2">
                 {wallets.map((w) => (
-                  <div
-                    key={w.publicKey}
-                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                  >
-                    <button
-                      onClick={() => {
-                        console.log(
-                          `[Accounts] Selected wallet: ${w.publicKey}`,
-                        );
-                        selectWallet(w.publicKey);
-                        onBack();
-                      }}
-                      className="text-left flex-1 min-w-0"
-                      title="SELECT THIS WALLET"
-                    >
-                      <div className="font-medium">
-                        {w.label ? w.label : shortenAddress(w.publicKey, 6)}
-                      </div>
-                      {w.label ? (
-                        <div className="text-xs text-[hsl(var(--muted-foreground))] truncate">
-                          {shortenAddress(w.publicKey, 6)}
-                        </div>
-                      ) : null}
-                    </button>
-
+                  <div key={w.publicKey}>
                     {editingKey === w.publicKey ? (
-                      <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
+                      <div className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-row items-center gap-2">
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}
                           placeholder="ENTER NAME"
-                          className="h-8 flex-1 sm:w-36"
+                          className="h-8 flex-1"
                         />
                         <Button
                           size="sm"
@@ -136,18 +112,40 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingKey(w.publicKey);
-                          setLabelInput(w.label || "");
-                        }}
-                        className="h-8 w-8 p-0 flex-shrink-0"
-                        aria-label="EDIT NAME"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+                      <div className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-row items-center justify-between gap-2">
+                        <button
+                          onClick={() => {
+                            console.log(
+                              `[Accounts] Selected wallet: ${w.publicKey}`,
+                            );
+                            selectWallet(w.publicKey);
+                            onBack();
+                          }}
+                          className="text-left flex-1 min-w-0 truncate"
+                          title="SELECT THIS WALLET"
+                        >
+                          <span className="text-sm font-medium truncate block">
+                            {w.label ? w.label : shortenAddress(w.publicKey, 6)}
+                          </span>
+                          {w.label ? (
+                            <span className="text-xs text-[hsl(var(--muted-foreground))] truncate block">
+                              {shortenAddress(w.publicKey, 6)}
+                            </span>
+                          ) : null}
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingKey(w.publicKey);
+                            setLabelInput(w.label || "");
+                          }}
+                          className="h-8 w-8 p-0 flex-shrink-0"
+                          aria-label="EDIT NAME"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}

@@ -86,7 +86,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div
                     key={w.publicKey}
-                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-col sm:flex-row sm:items-center gap-2"
+                    className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                   >
                     <button
                       onClick={() => {
@@ -110,7 +110,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                     </button>
 
                     {editingKey === w.publicKey ? (
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}
@@ -124,7 +124,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setEditingKey(null);
                             setLabelInput("");
                           }}
-                          className="h-8 px-2 flex-shrink-0"
+                          className="h-8 w-8 p-0 flex-shrink-0"
                           aria-label="SAVE"
                         >
                           <Save className="h-4 w-4" />
@@ -136,7 +136,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                             setEditingKey(null);
                             setLabelInput("");
                           }}
-                          className="h-8 px-2 flex-shrink-0"
+                          className="h-8 w-8 p-0 flex-shrink-0"
                           aria-label="CANCEL"
                         >
                           <X className="h-4 w-4" />
@@ -150,7 +150,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                           setEditingKey(w.publicKey);
                           setLabelInput(w.label || "");
                         }}
-                        className="h-8 px-2 w-full sm:w-auto"
+                        className="h-8 w-8 p-0 flex-shrink-0"
                         aria-label="EDIT NAME"
                       >
                         <Edit2 className="h-4 w-4" />

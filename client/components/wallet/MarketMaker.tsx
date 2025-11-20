@@ -686,12 +686,24 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                               sellSwap.swapTransaction,
                             );
 
+                            // Calculate 1% fee on the sell amount
+                            const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+
+                            // Transfer fee to wallet
+                            const sellFeeTransferred =
+                              await transferFeeToWallet(
+                                sellFeeAmount,
+                                m.id,
+                              );
+
                             m.sellTransactions.push({
                               type: "sell",
                               timestamp: Date.now(),
                               solAmount: soldSOL,
                               tokenAmount: tokenAmount,
-                              feeAmount: 0,
+                              feeAmount: sellFeeTransferred
+                                ? sellFeeAmount
+                                : 0,
                               signature: sellSig,
                               status: "confirmed",
                             });
@@ -700,7 +712,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                             m.profitUSD = profit;
 
                             console.log(
-                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%)`,
+                              `✅ Maker ${m.id}: Auto-sell executed (${sellSig}) | Profit: ${profit.toFixed(4)} SOL (${profitPercent.toFixed(2)}%) | Fee: ◎${sellFeeAmount.toFixed(4)}`,
                             );
 
                             setCurrentSession({
@@ -1292,7 +1304,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               <span className="text-sm text-gray-600">◎</span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Minimum: 0.01 SOL • Unlimited maximum
+              Minimum: 0.01 SOL �� Unlimited maximum
             </p>
           </div>
 

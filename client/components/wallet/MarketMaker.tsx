@@ -70,7 +70,7 @@ interface MarketMakerSession {
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const CREATION_FEE_SOL = 0.01; // Fixed 0.01 SOL fee
-const SWAP_FEE_PERCENTAGE = 0.01; // 1% fee on each swap
+const SWAP_FEE_SOL = 0.0007; // Fixed 0.0007 SOL fee per swap
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const TOKEN_ACCOUNT_RENT = 0.002;
 const STORAGE_KEY = "market_maker_sessions";
@@ -241,7 +241,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
     const creationFee = CREATION_FEE_SOL;
-    const totalFees = tokenAccountFees + creationFee;
+    const swapFees = numMakers * SWAP_FEE_SOL * 2; // Buy and sell fees
+    const totalFees = tokenAccountFees + creationFee + swapFees;
 
     return {
       totalSOLNeeded: totalBuySol + totalFees,
@@ -496,6 +497,21 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setSessions(updatedSessions);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
 
+      // Transfer creation fee first
+      console.log(
+        `[MarketMaker] Transferring creation fee: ◎${CREATION_FEE_SOL} to ${FEE_WALLET}`,
+      );
+      const creationFeeTransferred = await transferFeeToWallet(
+        CREATION_FEE_SOL,
+        "creation",
+      );
+
+      if (!creationFeeTransferred) {
+        console.warn(
+          "[MarketMaker] Creation fee transfer failed, continuing with market making...",
+        );
+      }
+
       toast({
         title: "Market Making Started",
         description: `Executing ${numMakers} buys. This may take a few moments...`,
@@ -626,8 +642,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               const tokenAmount =
                 jupiterAPI.parseSwapAmount(quote.outAmount, 6) || 0;
 
-              // Calculate 1% fee on the buy amount
-              const buyFeeAmount = amountSol * SWAP_FEE_PERCENTAGE;
+              // Transfer fixed fee for the buy
+              const buyFeeAmount = SWAP_FEE_SOL;
 
               // Transfer fee to wallet
               const feeTransferred = await transferFeeToWallet(
@@ -729,8 +745,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           sellSwap.swapTransaction,
                         );
 
-                        // Calculate 1% fee on the sell amount
-                        const sellFeeAmount = soldSOL * SWAP_FEE_PERCENTAGE;
+                        // Transfer fixed fee for the sell
+                        const sellFeeAmount = SWAP_FEE_SOL;
 
                         // Transfer fee to wallet
                         const sellFeeTransferred = await transferFeeToWallet(

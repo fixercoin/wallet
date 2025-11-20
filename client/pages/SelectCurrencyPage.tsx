@@ -77,9 +77,9 @@ export default function SelectCurrencyPage() {
   };
 
   const getExchangeRate = (code: MajorCurrency): string => {
-    if (!exchangeRates[code]) return "N/A";
-    const rate = exchangeRates[code];
     if (code === "USD") return "1.00";
+    const rate = exchangeRates[code] || FALLBACK_RATES[code];
+    if (!rate) return "N/A";
     return rate.toFixed(2);
   };
 

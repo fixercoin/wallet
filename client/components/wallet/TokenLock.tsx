@@ -416,7 +416,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   const availableTokens = useMemo(() => {
     return tokens
-      .filter((token) => token.mint && token.symbol !== "SOL")
+      .filter(
+        (token) =>
+          token.mint && !["SOL", "USDT", "USDC"].includes(token.symbol || ""),
+      )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
   }, [tokens]);
 
@@ -985,7 +988,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           ) : null}
                           {lock.withdrawSignature ? (
                             <>
-                              <span className="mx-1">•</span>
+                              <span className="mx-1">��</span>
                               Withdraw tx:{" "}
                               <a
                                 className="font-medium text-blue-600 underline-offset-4 hover:underline"

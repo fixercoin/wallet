@@ -126,7 +126,7 @@ export default function AssetsPage() {
                   <CardContent className="w-full p-0">
                     <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
                       <p className="font-semibold text-white whitespace-nowrap" style={{ fontSize: "10px" }}>
-                        {token.symbol}/USDT
+                        {token.symbol}
                       </p>
                       <div className="flex items-center gap-3">
                         <p className="text-gray-400 whitespace-nowrap" style={{ fontSize: "10px" }}>

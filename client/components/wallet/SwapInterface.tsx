@@ -682,10 +682,53 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const txBase64 = swapResponse.swapTransaction;
 
+      if (!txBase64 || typeof txBase64 !== "string") {
+        throw new Error(
+          `Invalid swap transaction data: expected base64 string, got ${typeof txBase64}`,
+        );
+      }
+
+      if (txBase64.length === 0) {
+        throw new Error("Swap transaction is empty");
+      }
+
       try {
         // Sign the transaction with local wallet
         setStatus("Signing transaction…");
-        let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+
+        let txBytes: Uint8Array;
+        try {
+          txBytes = bytesFromBase64(txBase64);
+        } catch (decodeError) {
+          const decodeMsg =
+            decodeError instanceof Error
+              ? decodeError.message
+              : String(decodeError);
+          throw new Error(
+            `Failed to decode swap transaction from base64: ${decodeMsg}`,
+          );
+        }
+
+        if (!txBytes || txBytes.length === 0) {
+          throw new Error("Decoded transaction is empty or invalid");
+        }
+
+        let tx: VersionedTransaction;
+        try {
+          tx = VersionedTransaction.deserialize(txBytes);
+        } catch (deserializeError) {
+          const deserializeMsg =
+            deserializeError instanceof Error
+              ? deserializeError.message
+              : String(deserializeError);
+          throw new Error(
+            `Failed to deserialize swap transaction (${txBytes.length} bytes): ${deserializeMsg}`,
+          );
+        }
+
+        if (!tx || !tx.message) {
+          throw new Error("Deserialized transaction is invalid or has no message");
+        }
 
         // Add fee transfer instruction before signing
         const fromToken = tokenList.find((t) => t.address === fromMint);

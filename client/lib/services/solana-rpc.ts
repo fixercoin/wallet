@@ -50,6 +50,13 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     decimals: 6,
     logoURI: "https://via.placeholder.com/64x64/8b5cf6/ffffff?text=LO",
   },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+  },
 };
 
 // Request queue to prevent duplicate requests
@@ -252,8 +259,17 @@ export const getTokenAccounts = async (publicKey: string) => {
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;
-        const balance = parsedInfo.tokenAmount.uiAmount || 0;
         const decimals = parsedInfo.tokenAmount.decimals;
+
+        // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+        let balance = 0;
+        if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+          balance = parsedInfo.tokenAmount.uiAmount;
+        } else if (parsedInfo.tokenAmount.amount) {
+          // Convert raw amount to UI amount using decimals
+          const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+          balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+        }
 
         const metadata = KNOWN_TOKENS[mint] || {
           mint,
@@ -292,8 +308,17 @@ export const getTokenAccounts = async (publicKey: string) => {
     return accounts.value.map((account: any) => {
       const parsedInfo = account.account.data.parsed.info;
       const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
       const decimals = parsedInfo.tokenAmount.decimals;
+
+      // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        // Convert raw amount to UI amount using decimals
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
 
       const metadata = KNOWN_TOKENS[mint] || {
         mint,

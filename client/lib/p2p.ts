@@ -1,9 +1,7 @@
 // ---------------------------
 // 🔧 Configuration Constants
 // ---------------------------
-export const API_BASE = (import.meta as any).env?.VITE_P2P_URL
-  ? String((import.meta as any).env.VITE_P2P_URL).replace(/\/$/, "")
-  : "";
+import { resolveApiUrl } from "./api-client";
 
 export const ADMIN_WALLET = "Ec72XPYcxYgpRFaNb9b6BHe1XdxtqFjzz2wLRTnx1owA";
 
@@ -34,8 +32,7 @@ export type P2PPost = {
 // ---------------------------
 
 export async function listOrders(roomId: string = "global") {
-  const base = API_BASE;
-  const url = `${base}/api/orders?roomId=${encodeURIComponent(roomId)}`;
+  const url = resolveApiUrl(`/api/orders?roomId=${encodeURIComponent(roomId)}`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load orders: ${res.status}`);
   return res.json() as Promise<{ orders: any[] }>;
@@ -53,8 +50,8 @@ export async function createOrder(
   },
   adminToken: string,
 ) {
-  const base = API_BASE;
-  const res = await fetch(`${base}/api/orders`, {
+  const url = resolveApiUrl(`/api/orders`);
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -77,8 +74,8 @@ export async function updateOrder(
   }>,
   adminToken: string,
 ) {
-  const base = API_BASE;
-  const res = await fetch(`${base}/api/orders/${encodeURIComponent(id)}`, {
+  const url = resolveApiUrl(`/api/orders/${encodeURIComponent(id)}`);
+  const res = await fetch(url, {
     method: "PUT",
     headers: {
       "content-type": "application/json",
@@ -91,8 +88,8 @@ export async function updateOrder(
 }
 
 export async function deleteOrder(id: string, adminToken: string) {
-  const base = API_BASE;
-  const res = await fetch(`${base}/api/orders/${encodeURIComponent(id)}`, {
+  const url = resolveApiUrl(`/api/orders/${encodeURIComponent(id)}`);
+  const res = await fetch(url, {
     method: "DELETE",
     headers: { authorization: `Bearer ${adminToken}` },
   });

@@ -15,10 +15,11 @@ import {
 } from "@/lib/wallet-proxy";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
-import { jupiterAPI } from "@/lib/services/jupiter";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
-import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
+import { birdeyeAPI } from "@/lib/services/birdeye";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { lockerPriceService } from "@/lib/services/locker-price";
+import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -35,6 +36,7 @@ interface WalletContextType {
   refreshBalance: () => Promise<void>;
   refreshTokens: () => Promise<void>;
   addCustomToken: (token: TokenInfo) => void;
+  removeToken: (tokenMint: string) => void;
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
@@ -48,6 +50,7 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
+const HIDDEN_TOKENS_KEY = "hidden_tokens";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [wallets, setWallets] = useState<WalletData[]>([]);
@@ -121,6 +124,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const stored = localStorage.getItem(WALLETS_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as any[];
+
+        // Load wallets as plaintext (encryption disabled)
         const coerced: WalletData[] = (parsed || []).map((p) => {
           const obj = { ...p } as any;
           if (obj.secretKey && Array.isArray(obj.secretKey)) {
@@ -145,61 +150,129 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Persist wallets whenever they change
   useEffect(() => {
     try {
+      if (wallets.length === 0) {
+        localStorage.removeItem(WALLETS_STORAGE_KEY);
+        return;
+      }
+
+      // Store wallets as plaintext (encryption disabled)
       const toStore = wallets.map((w) => {
         const copy: any = { ...w } as any;
         if (copy.secretKey instanceof Uint8Array)
           copy.secretKey = Array.from(copy.secretKey as Uint8Array);
         return copy;
       });
-      if (toStore.length > 0) {
-        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-      } else {
-        localStorage.removeItem(WALLETS_STORAGE_KEY);
-      }
+      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
+      console.log("[WalletContext] Wallets saved as plaintext");
     } catch (e) {
       console.error("Failed to persist wallets:", e);
     }
   }, [wallets]);
 
+  // Declare wallet first before using it in useEffect
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
 
+  // Sync wallet with Fixorium provider
   useEffect(() => {
     const provider = providerRef.current ?? ensureFixoriumProvider();
-    if (!provider) return;
-    provider.setDefaultConnection(globalConnection ?? null);
-    provider.setWallet(wallet);
+    if (!provider) {
+      console.warn("[WalletContext] Fixorium provider not available");
+      return;
+    }
+
+    if (!wallet) {
+      provider.setWallet(null);
+      return;
+    }
+
+    // Ensure secretKey is properly formatted as Uint8Array before setting on provider
+    try {
+      let secretKey: Uint8Array;
+
+      if (wallet.secretKey instanceof Uint8Array) {
+        secretKey = wallet.secretKey;
+      } else if (Array.isArray(wallet.secretKey)) {
+        secretKey = Uint8Array.from(wallet.secretKey);
+      } else if (typeof wallet.secretKey === "object") {
+        const vals = Object.values(wallet.secretKey).filter(
+          (v) => typeof v === "number",
+        ) as number[];
+        secretKey = Uint8Array.from(vals);
+      } else {
+        console.error(
+          "[WalletContext] Unsupported secretKey format:",
+          typeof wallet.secretKey,
+        );
+        return;
+      }
+
+      const walletToSet: WalletData = {
+        ...wallet,
+        secretKey,
+      };
+
+      provider.setWallet(walletToSet);
+      console.log(
+        `[WalletContext] Synced wallet with Fixorium provider: ${wallet.publicKey}`,
+      );
+    } catch (e) {
+      console.error(
+        "[WalletContext] Failed to sync wallet with Fixorium provider:",
+        e,
+      );
+    }
   }, [wallet]);
 
   // Refresh balance and tokens when active wallet changes and setup auto-refresh
   useEffect(() => {
-    if (wallet) {
-      (async () => {
-        await refreshBalance();
-        await refreshTokens();
-      })();
-
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-
-      refreshIntervalRef.current = setInterval(async () => {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 500));
-        await refreshTokens();
-      }, 60000);
-    } else {
+    if (!wallet) {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
         refreshIntervalRef.current = null;
       }
+      return;
     }
 
+    console.log(
+      `[WalletContext] Wallet changed to ${wallet.publicKey}, refreshing data...`,
+    );
+
+    // Trigger immediate refresh
+    const doRefresh = async () => {
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 300));
+        await refreshTokens();
+      } catch (err) {
+        console.error("[WalletContext] Error refreshing data:", err);
+      }
+    };
+
+    doRefresh();
+
+    // Clear any existing interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+
+    // Setup periodic refresh every 10 seconds
+    refreshIntervalRef.current = setInterval(async () => {
+      try {
+        await refreshBalance();
+        await new Promise((r) => setTimeout(r, 500));
+        await refreshTokens();
+      } catch (err) {
+        console.error("[WalletContext] Error in periodic refresh:", err);
+      }
+    }, 10000);
+
+    // Cleanup on unmount or wallet change
     return () => {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet?.publicKey]);
 
   const setWallet = (newWallet: WalletData | null) => {
@@ -247,12 +320,52 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const selectWallet = (publicKey: string) => {
     const found = wallets.find((w) => w.publicKey === publicKey);
     if (found) {
-      // Reset displayed balances immediately before switching
+      console.log(`[WalletContext] Selecting wallet: ${publicKey}`);
+
+      // Immediately reset displayed balances and tokens when switching
+      // This prevents showing old wallet's data while new data is loading
       setBalance(0);
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
+      setError(null);
+      setIsLoading(true);
 
+      // Set as active so other parts of the app update
       setActivePublicKey(publicKey);
+
+      // Also proactively fetch balance & tokens for the selected publicKey
+      (async () => {
+        try {
+          console.log(
+            `[WalletContext] Proactively fetching balance for ${publicKey}`,
+          );
+          const newBalance = await getBalance(publicKey);
+          if (typeof newBalance === "number" && !isNaN(newBalance)) {
+            setBalance(newBalance);
+            balanceRef.current = newBalance;
+          } else {
+            setBalance(0);
+            balanceRef.current = 0;
+          }
+          // Refresh tokens based on the newly selected publicKey
+          await refreshTokens();
+        } catch (err) {
+          console.error(
+            "[WalletContext] Error selecting wallet and refreshing:",
+            err,
+          );
+          setError("Failed to refresh selected wallet");
+          setBalance(0);
+          balanceRef.current = 0;
+        } finally {
+          setIsLoading(false);
+        }
+      })();
+    } else {
+      console.warn(
+        `[WalletContext] Wallet not found: ${publicKey}. Available wallets:`,
+        wallets.map((w) => w.publicKey),
+      );
     }
   };
 
@@ -288,8 +401,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const refreshTokens = async () => {
-    if (!wallet) return;
+    if (!wallet) {
+      console.warn("[WalletContext] refreshTokens called but wallet is null");
+      return;
+    }
 
+    // Clear price service caches to force fresh fetches
+    fixercoinPriceService.clearCache();
+    lockerPriceService.clearCache();
+    solPriceService.clearCache();
+    birdeyeAPI.clearCache();
+
+    console.log(
+      `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
+    );
     setError(null);
     setIsLoading(true);
 
@@ -322,179 +447,122 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           (t) => t.mint === customToken.mint,
         );
         if (existingTokenIndex >= 0) {
+          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
+          // but use custom metadata if RPC returned generic "Unknown Token"
+          const rpcToken = allTokens[existingTokenIndex];
+          const isRpcGeneric =
+            rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
+
           allTokens[existingTokenIndex] = {
-            ...customToken,
-            balance: allTokens[existingTokenIndex].balance,
+            ...rpcToken,
+            // Only override with custom metadata if RPC returned generic data
+            ...(isRpcGeneric && {
+              symbol: customToken.symbol,
+              name: customToken.name,
+              logoURI: customToken.logoURI,
+            }),
+            // Always keep the RPC balance and decimals
+            balance: rpcToken.balance,
+            decimals: rpcToken.decimals,
           };
         } else {
+          // Token doesn't exist from RPC - add it with balance 0 for now
+          // Will be updated below with actual balance fetch
           allTokens.push({ ...customToken, balance: 0 });
         }
       });
 
-      // Price fetching logic (same as before) - trimmed for brevity but preserved
+      // Fetch balances for custom tokens that weren't found in RPC results
+      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
+      const customTokensWithZeroBalance = allTokens.filter(
+        (token) =>
+          customTokenMintSet.has(token.mint) &&
+          (token.balance === 0 || token.balance === undefined),
+      );
+
+      // Fetch missing balances in parallel
+      if (customTokensWithZeroBalance.length > 0) {
+        console.log(
+          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
+        );
+
+        const balanceFetchPromises = customTokensWithZeroBalance.map(
+          async (token) => {
+            try {
+              const balance = await getTokenBalanceForMint(
+                wallet.publicKey,
+                token.mint,
+              );
+              return {
+                mint: token.mint,
+                balance: balance ?? 0,
+              };
+            } catch (error) {
+              console.warn(
+                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
+                error,
+              );
+              return {
+                mint: token.mint,
+                balance: 0,
+              };
+            }
+          },
+        );
+
+        const fetchedBalances = await Promise.all(balanceFetchPromises);
+
+        // Update allTokens with fetched balances
+        fetchedBalances.forEach(({ mint, balance }) => {
+          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
+          if (tokenIndex >= 0) {
+            allTokens[tokenIndex] = {
+              ...allTokens[tokenIndex],
+              balance,
+            };
+            console.log(
+              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
+            );
+          }
+        });
+      }
+
+      // Price fetching logic
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
+      const solMint = "So11111111111111111111111111111111111111112";
 
       try {
         const tokenMints = allTokens.map((token) => token.mint);
-        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
-        // Ensure pump fun tokens are included in the fetch
-        const allMintsToFetch = Array.from(
-          new Set([...tokenMints, fixercoinMint, lockerMint].filter(Boolean)),
-        );
-
+        // Fetch prices from Birdeye API (via proxy)
         try {
-          let dexTokens: any[] = [];
-          try {
-            const dexPromise = dexscreenerAPI.getTokensByMints(allMintsToFetch);
-            const timeout = new Promise<any[]>((resolve) =>
-              setTimeout(() => resolve([]), 5000),
-            );
-            dexTokens = await Promise.race([dexPromise, timeout]);
-          } catch (fetchErr) {
-            console.warn("DexScreener fetch error:", fetchErr);
-            dexTokens = [];
-          }
-
-          if (Array.isArray(dexTokens) && dexTokens.length > 0) {
-            try {
-              const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
-              prices = { ...prices, ...dexPrices };
-
-              // Log pump fun token prices
-              if (prices[fixercoinMint]) {
-                console.log(
-                  `[DexScreener] FIXERCOIN price: $${prices[fixercoinMint].toFixed(8)}`,
-                );
-              } else {
-                console.warn(
-                  `[DexScreener] FIXERCOIN price not found in DexScreener response`,
-                );
-              }
-
-              if (prices[lockerMint]) {
-                console.log(
-                  `[DexScreener] LOCKER price: $${prices[lockerMint].toFixed(8)}`,
-                );
-              } else {
-                console.warn(
-                  `[DexScreener] LOCKER price not found in DexScreener response`,
-                );
-              }
-            } catch (parseErr) {
-              console.error("Error parsing DexScreener prices:", parseErr);
-              prices = {};
-            }
-
-            try {
-              dexTokens.forEach((dt: any) => {
-                const mint = dt?.baseToken?.address;
-                const pc = dt?.priceChange;
-                const candidates = [pc?.h24, pc?.h6, pc?.h1, pc?.m5];
-                const ch = candidates.find(
-                  (v: any) => typeof v === "number" && isFinite(v),
-                );
-                if (mint && typeof ch === "number") {
-                  changeMap[mint] = ch;
-                  // Log pump fun token changes
-                  if (mint === fixercoinMint || mint === lockerMint) {
-                    console.log(
-                      `[DexScreener] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"}: 24h change = ${ch.toFixed(2)}%`,
-                    );
-                  }
-                }
-              });
-            } catch (inner) {
-              console.error("Error extracting price changes:", inner);
-            }
-          } else {
-            console.warn("DexScreener returned no token data");
-            prices = {};
-          }
-
-          // Check if we got any meaningful data (not just pump fun tokens)
-          const solMint = "So11111111111111111111111111111111111111112";
-          const hasMajorTokenPrice = Object.keys(prices).some(
-            (m) => m === solMint || prices[m] > 0.01, // At least one non-pump-fun token with decent price
+          const allMintsToFetch = Array.from(
+            new Set(tokenMints.filter(Boolean)),
           );
 
-          if (!hasMajorTokenPrice) {
-            console.warn(
-              `DexScreener returned limited data: ${Object.keys(prices).length} prices`,
-            );
-            // Don't throw - let Jupiter/CoinGecko fill in gaps
-          }
-        } catch (dexErr) {
-          console.warn(
-            "DexScreener primary fetch error, will try fallbacks:",
-            dexErr,
-          );
-          prices = {};
-        }
+          if (allMintsToFetch.length > 0) {
+            const birdeyeTokens =
+              await birdeyeAPI.getTokensByMints(allMintsToFetch);
+            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
+            prices = { ...prices, ...birdeyePrices };
 
-        // If pump fun prices still missing from initial fetch, try dedicated fetch
-        const pumpFunMintsNeeded = [];
-        if (!prices[fixercoinMint]) pumpFunMintsNeeded.push(fixercoinMint);
-        if (!prices[lockerMint]) pumpFunMintsNeeded.push(lockerMint);
-
-        if (pumpFunMintsNeeded.length > 0) {
-          try {
-            console.log(
-              `[DexScreener] Retrying pump fun tokens: ${pumpFunMintsNeeded.join(", ")}`,
-            );
-            const pumpTokens =
-              await dexscreenerAPI.getTokensByMints(pumpFunMintsNeeded);
-            pumpTokens.forEach((pt: any) => {
-              const mint = pt?.baseToken?.address;
-              if (mint && pt.priceUsd) {
-                const price = parseFloat(pt.priceUsd);
-                if (price > 0) {
-                  prices[mint] = price;
-                  console.log(
-                    `[DexScreener] ${mint === fixercoinMint ? "FIXERCOIN" : "LOCKER"} (retry): $${price.toFixed(8)}`,
-                  );
-                }
+            birdeyeTokens.forEach((token) => {
+              if (token.address && token.priceChange?.h24) {
+                changeMap[token.address] = token.priceChange.h24;
               }
             });
-          } catch (e) {
-            console.warn("Failed to fetch pump fun tokens in retry:", e);
           }
+        } catch (e) {
+          console.warn("Birdeye fetch failed:", e);
         }
 
-        // Try alternate source (CoinGecko via /api/stable-24h) for stablecoin 24h change
-        try {
-          const stableSymbols = allTokens
-            .filter((t) => stableMints.includes(t.mint))
-            .map((t) => (t.symbol || "").toUpperCase());
-          const uniqSyms = Array.from(new Set(stableSymbols)).filter(Boolean);
-          if (uniqSyms.length > 0) {
-            const params = new URLSearchParams({ symbols: uniqSyms.join(",") });
-            const resp = await fetch(
-              `/api/stable-24h?${params.toString()}`,
-            ).catch(() => new Response("", { status: 0 } as any));
-            if (resp.ok) {
-              const st = await resp.json();
-              const data = st?.data || {};
-              Object.keys(data).forEach((sym) => {
-                const entry = data[sym];
-                const mint = entry?.mint as string | undefined;
-                const ch = entry?.change24h;
-                const price = entry?.priceUsd;
-                if (mint && typeof ch === "number" && isFinite(ch)) {
-                  changeMap[mint] = ch;
-                }
-                if (mint && typeof price === "number" && price > 0) {
-                  prices[mint] = price;
-                }
-              });
-            }
-          }
-        } catch {}
-
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
+        const stableMints = [
+          "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+          "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+        ];
         stableMints.forEach((mint) => {
           if (!prices[mint]) prices[mint] = 1;
           if (
@@ -505,123 +573,136 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
-        // Ensure FIXERCOIN always has a valid price and change value (fallback to 0 if unavailable)
-        if (!prices[fixercoinMint] || prices[fixercoinMint] <= 0) {
-          prices[fixercoinMint] = 0.000023; // Conservative fallback price
-        }
-        if (
-          typeof changeMap[fixercoinMint] !== "number" ||
-          !isFinite(changeMap[fixercoinMint]!)
-        ) {
-          changeMap[fixercoinMint] = 0;
-        }
+        // Fetch FIXERCOIN and LOCKER prices using specialized services
+        const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+        const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
-        // Ensure LOCKER always has a defined change value (fallback to 0 if unavailable)
-        if (
-          typeof changeMap[lockerMint] !== "number" ||
-          !isFinite(changeMap[lockerMint]!)
-        ) {
-          changeMap[lockerMint] = 0;
-        }
+        try {
+          const [fixercoinData, lockerData] = await Promise.all([
+            fixercoinPriceService.getFixercoinPrice(),
+            lockerPriceService.getLockerPrice(),
+          ]);
 
-        const solMint = "So11111111111111111111111111111111111111112";
-        const hasSolPrice = prices[solMint];
-        const hasPumpFunPrices =
-          (prices[fixercoinMint] && prices[fixercoinMint] > 0) ||
-          (prices[lockerMint] && prices[lockerMint] > 0);
-
-        if (
-          (Object.keys(prices).length > 0 && hasSolPrice) ||
-          hasPumpFunPrices
-        ) {
-          priceSource = "dexscreener";
-          if (!hasSolPrice) {
+          if (
+            fixercoinData &&
+            fixercoinData.price > 0 &&
+            isFinite(fixercoinData.price)
+          ) {
+            prices[fixercoinMint] = fixercoinData.price;
+            changeMap[fixercoinMint] = fixercoinData.priceChange24h;
+            console.log(
+              `[WalletContext] ✅ FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%) via ${fixercoinData.derivationMethod}`,
+            );
+          } else {
             console.warn(
-              "[DexScreener] SOL price missing but got pump fun tokens, continuing to Jupiter for SOL",
+              `[WalletContext] ⚠️ FIXERCOIN price fetch resulted in invalid price:`,
+              fixercoinData,
             );
           }
-        } else if (Object.keys(prices).length > 0) {
-          console.warn(
-            `[DexScreener] Got ${Object.keys(prices).length} prices but no SOL, trying Jupiter as fallback`,
-          );
-        } else {
-          throw new Error(
-            "DexScreener returned no prices, falling back to Jupiter",
-          );
-        }
-      } catch (dexError) {
-        try {
-          const tokenMints = allTokens.map((token) => token.mint);
-          prices = await jupiterAPI.getTokenPrices(tokenMints);
-          if (Object.keys(prices).length > 0) {
-            priceSource = "jupiter";
+
+          if (
+            lockerData &&
+            lockerData.price > 0 &&
+            isFinite(lockerData.price)
+          ) {
+            prices[lockerMint] = lockerData.price;
+            changeMap[lockerMint] = lockerData.priceChange24h;
+            console.log(
+              `[WalletContext] ✅ LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%) via ${lockerData.derivationMethod}`,
+            );
           } else {
-            throw new Error("Jupiter also returned no prices");
+            console.warn(
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
+              lockerData,
+            );
           }
-        } catch (jupiterError) {
+        } catch (e) {
+          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER prices:", e);
+        }
+
+        // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint
+        if (!prices[solMint] || !isFinite(prices[solMint])) {
+          console.log(
+            "[WalletContext] SOL price missing from Birdeye, fetching from dedicated endpoint",
+          );
           try {
             const solPricePromise = solPriceService.getSolPrice();
             const timeout = new Promise<null>((resolve) =>
               setTimeout(() => resolve(null), 3000),
             );
             const solPriceData = await Promise.race([solPricePromise, timeout]);
-            prices = {
-              So11111111111111111111111111111111111111112:
-                solPriceData?.price || 100,
-            };
-            priceSource = solPriceData ? "coingecko" : "static";
-          } catch {
-            prices = { So11111111111111111111111111111111111111112: 100 };
-            priceSource = "static";
+
+            if (solPriceData && isFinite(solPriceData.price)) {
+              prices[solMint] = solPriceData.price;
+              if (
+                typeof solPriceData.price_change_24h === "number" &&
+                isFinite(solPriceData.price_change_24h)
+              ) {
+                changeMap[solMint] = solPriceData.price_change_24h;
+              }
+              console.log(
+                `[WalletContext] SOL price from dedicated endpoint: $${solPriceData.price}`,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              "[WalletContext] Failed to fetch SOL from dedicated endpoint:",
+              e,
+            );
           }
-          try {
-            const fixercoinPrice = await fixercoinPriceService.getPrice();
-            prices["H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"] =
-              fixercoinPrice;
-          } catch {}
+        }
+
+        if (Object.keys(prices).length > 0) {
+          priceSource = "birdeye";
+        } else {
+          throw new Error(
+            "No prices available from any source, using fallback",
+          );
+        }
+      } catch (dexError) {
+        console.warn(
+          "[WalletContext] Price fetching failed, using static fallback:",
+          dexError,
+        );
+        try {
+          const solPricePromise = solPriceService.getSolPrice();
+          const timeout = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), 3000),
+          );
+          const solPriceData = await Promise.race([solPricePromise, timeout]);
+          prices = {
+            [solMint]: solPriceData?.price || 100,
+          };
+          if (
+            solPriceData &&
+            typeof solPriceData.price_change_24h === "number"
+          ) {
+            changeMap[solMint] = solPriceData.price_change_24h;
+          }
+          priceSource = solPriceData ? "coingecko" : "static";
+        } catch {
+          prices = { [solMint]: 100 };
+          priceSource = "static";
         }
       }
 
-      // Ensure DexScreener prices for FIXERCOIN and LOCKER regardless of earlier fallbacks
-      try {
-        const specialMints = [fixercoinMint, lockerMint].filter(Boolean);
-        if (specialMints.length > 0) {
-          const dexTokens = await dexscreenerAPI.getTokensByMints(specialMints);
-          dexTokens.forEach((dt: any) => {
-            const mint = dt?.baseToken?.address as string | undefined;
-            const pStr = dt?.priceUsd as string | undefined;
-            const price = pStr ? parseFloat(pStr) : NaN;
-            if (
-              mint &&
-              typeof price === "number" &&
-              isFinite(price) &&
-              price > 0
-            ) {
-              prices[mint] = price;
-            }
-            const pc = dt?.priceChange || {};
-            const candidates = [pc.h24, pc.h6, pc.h1, pc.m5];
-            const ch = candidates.find(
-              (v: any) => typeof v === "number" && isFinite(v),
-            );
-            if (mint && typeof ch === "number") {
-              changeMap[mint] = ch;
-            }
-          });
-        }
-      } catch {}
+      // Load hidden tokens list
+      const hiddenTokens = JSON.parse(
+        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+      ) as string[];
 
-      const enhancedTokens = allTokens.map((token) => {
+      // Filter out hidden tokens from allTokens
+      const visibleTokens = allTokens.filter(
+        (token) => !hiddenTokens.includes(token.mint),
+      );
+
+      const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];
         let finalPrice = price;
 
         if (!finalPrice || finalPrice <= 0) {
           if (token.symbol === "SOL") {
             finalPrice = 100;
-          } else if (
-            token.mint === "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump"
-          ) {
-            finalPrice = 0.000023;
           } else {
             finalPrice = 0;
           }
@@ -692,7 +773,45 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     ];
     localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
 
+    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
+    try {
+      const hiddenTokens = JSON.parse(
+        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+      ) as string[];
+      const filtered = hiddenTokens.filter((m) => m !== token.mint);
+      if (filtered.length !== hiddenTokens.length) {
+        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
+      }
+    } catch (e) {
+      // ignore
+    }
+
     if (wallet) refreshTokens();
+  };
+
+  const removeToken = (tokenMint: string) => {
+    // Remove from custom tokens if it exists there
+    const customTokens = JSON.parse(
+      localStorage.getItem("custom_tokens") || "[]",
+    ) as TokenInfo[];
+    const newCustomTokens = customTokens.filter(
+      (t: TokenInfo) => t.mint !== tokenMint,
+    );
+    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
+
+    // Add to hidden tokens list to permanently hide it
+    const hiddenTokens = JSON.parse(
+      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
+    ) as string[];
+    if (!hiddenTokens.includes(tokenMint)) {
+      hiddenTokens.push(tokenMint);
+      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
+    }
+
+    // Update state immediately
+    setTokens((currentTokens) =>
+      currentTokens.filter((t) => t.mint !== tokenMint),
+    );
   };
 
   const logout = () => {
@@ -716,6 +835,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     refreshBalance,
     refreshTokens,
     addCustomToken,
+    removeToken,
     logout,
     updateWalletLabel,
     connection: globalConnection,

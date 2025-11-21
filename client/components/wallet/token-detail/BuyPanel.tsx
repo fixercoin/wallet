@@ -68,7 +68,7 @@ export const BuyPanel: React.FC<BuyPanelProps> = ({
         <Button
           onClick={onBuy}
           disabled={isLoading || !buyAmount || parseFloat(buyAmount) <= 0}
-          className="w-full disabled:opacity-50"
+          className="w-full disabled:opacity-50 rounded-[2px]"
         >
           {isLoading ? "Processing..." : `Buy ${token.symbol}`}
         </Button>

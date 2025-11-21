@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, ExternalLink } from "lucide-react";
 import { TokenInfo, shortenAddress } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { formatTokenAmount } from "@/lib/utils";
 
 interface TokenInfoCardProps {
   token: TokenInfo;
@@ -57,7 +58,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
           <div>
             <span className="text-sm text-gray-400">Balance</span>
             <p className="text-white font-medium">
-              {(token.balance || 0).toLocaleString()}
+              {formatTokenAmount(token.balance || 0, token.symbol)}
             </p>
           </div>
         </div>
@@ -72,7 +73,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
               variant="ghost"
               size="sm"
               onClick={handleCopyAddress}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700 rounded-[2px]"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -80,7 +81,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
               variant="ghost"
               size="sm"
               onClick={handleViewOnExplorer}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700 rounded-[2px]"
             >
               <ExternalLink className="h-4 w-4" />
             </Button>

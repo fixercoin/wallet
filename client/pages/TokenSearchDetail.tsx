@@ -18,9 +18,10 @@ export default function TokenSearchDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
+  const tokenMintToCheck = dexToken?.baseToken?.address || knownToken?.mint || mint;
   const alreadyAdded = useMemo(
-    () => tokens.some((t) => t.mint === mint),
-    [tokens, mint],
+    () => tokens.some((t) => t.mint === tokenMintToCheck),
+    [tokens, tokenMintToCheck],
   );
 
   useEffect(() => {

@@ -19,6 +19,7 @@ import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
+import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -465,10 +466,66 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             decimals: rpcToken.decimals,
           };
         } else {
-          // Token doesn't exist from RPC - add it with balance 0
+          // Token doesn't exist from RPC - add it with balance 0 for now
+          // Will be updated below with actual balance fetch
           allTokens.push({ ...customToken, balance: 0 });
         }
       });
+
+      // Fetch balances for custom tokens that weren't found in RPC results
+      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
+      const customTokensWithZeroBalance = allTokens.filter(
+        (token) =>
+          customTokenMintSet.has(token.mint) &&
+          (token.balance === 0 || token.balance === undefined),
+      );
+
+      // Fetch missing balances in parallel
+      if (customTokensWithZeroBalance.length > 0) {
+        console.log(
+          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
+        );
+
+        const balanceFetchPromises = customTokensWithZeroBalance.map(
+          async (token) => {
+            try {
+              const balance = await getTokenBalanceForMint(
+                wallet.publicKey,
+                token.mint,
+              );
+              return {
+                mint: token.mint,
+                balance: balance ?? 0,
+              };
+            } catch (error) {
+              console.warn(
+                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
+                error,
+              );
+              return {
+                mint: token.mint,
+                balance: 0,
+              };
+            }
+          },
+        );
+
+        const fetchedBalances = await Promise.all(balanceFetchPromises);
+
+        // Update allTokens with fetched balances
+        fetchedBalances.forEach(({ mint, balance }) => {
+          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
+          if (tokenIndex >= 0) {
+            allTokens[tokenIndex] = {
+              ...allTokens[tokenIndex],
+              balance,
+            };
+            console.log(
+              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
+            );
+          }
+        });
+      }
 
       // Price fetching logic
       let prices: Record<string, number> = {};

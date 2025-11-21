@@ -102,7 +102,8 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         mockTokenInfo.symbol = "FXM";
         mockTokenInfo.name = "Fixorium";
         mockTokenInfo.decimals = 6;
-        mockTokenInfo.logoURI = "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png";
+        mockTokenInfo.logoURI =
+          "https://i.postimg.cc/k513N8nv/cropped-circle-image-(5).png";
       }
 
       setTokenInfo(mockTokenInfo);

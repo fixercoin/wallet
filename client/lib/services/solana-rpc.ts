@@ -11,7 +11,7 @@ export interface TokenMetadata {
 }
 
 // Basic known token list (minimal, can be expanded)
-const KNOWN_TOKENS: Record<string, TokenMetadata> = {
+export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   So11111111111111111111111111111111111111112: {
     mint: "So11111111111111111111111111111111111111112",
     symbol: "SOL",

@@ -465,7 +465,6 @@ export const getTokenBalanceForMint = async (
 
   // Fallback: Try direct web3.js Connection
   try {
-    const { Connection, PublicKey } = await import("@solana/web3.js");
     const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
     const accounts = await conn.getParsedTokenAccountsByOwner(
       new PublicKey(walletAddress),

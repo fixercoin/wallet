@@ -62,7 +62,7 @@ export const BottomNavigation = () => {
               aria-label={item.label}
               title={item.label}
             >
-              <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-gray-300/30" />
+              <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-white/50" />
               <span className="block truncate text-[7px] xs:text-[8px] sm:text-[9px] md:text-xs lg:text-sm">
                 {item.label}
               </span>

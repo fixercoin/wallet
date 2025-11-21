@@ -68,20 +68,23 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
           );
 
           // Convert KNOWN_TOKENS to DexscreenerToken format for display
-          const convertedKnown = knownMatches.map((token) => ({
-            chainId: "solana",
-            pairAddress: token.mint,
-            baseToken: {
-              address: token.mint,
-              symbol: token.symbol,
-              name: token.name,
-            },
-            quoteToken: { address: "", symbol: "", name: "" },
-            priceUsd: "0",
-            info: {
-              imageUrl: token.logoURI,
-            },
-          } as any));
+          const convertedKnown = knownMatches.map(
+            (token) =>
+              ({
+                chainId: "solana",
+                pairAddress: token.mint,
+                baseToken: {
+                  address: token.mint,
+                  symbol: token.symbol,
+                  name: token.name,
+                },
+                quoteToken: { address: "", symbol: "", name: "" },
+                priceUsd: "0",
+                info: {
+                  imageUrl: token.logoURI,
+                },
+              }) as any,
+          );
 
           filtered.push(...convertedKnown);
         }

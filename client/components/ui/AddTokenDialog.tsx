@@ -98,7 +98,8 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         mockTokenInfo.symbol = "FXM";
         mockTokenInfo.name = "Fixorium";
         mockTokenInfo.decimals = 6;
-        mockTokenInfo.logoURI = "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800";
+        mockTokenInfo.logoURI =
+          "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800";
         mockTokenInfo.marketCap = 0;
         mockTokenInfo.volume24h = 0;
         mockTokenInfo.liquidity = 0;

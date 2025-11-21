@@ -18,7 +18,8 @@ export default function TokenSearchDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
-  const tokenMintToCheck = dexToken?.baseToken?.address || knownToken?.mint || mint;
+  const tokenMintToCheck =
+    dexToken?.baseToken?.address || knownToken?.mint || mint;
   const alreadyAdded = useMemo(
     () => tokens.some((t) => t.mint === tokenMintToCheck),
     [tokens, tokenMintToCheck],
@@ -47,8 +48,13 @@ export default function TokenSearchDetail() {
       const baseMint = dexToken?.baseToken?.address || knownToken?.mint || mint;
       const meta = await getTokenMetadata(baseMint).catch(() => null);
       const decimals = meta?.decimals ?? knownToken?.decimals ?? 9;
-      const symbol = dexToken?.baseToken?.symbol || knownToken?.symbol || meta?.symbol || "TOKEN";
-      const name = dexToken?.baseToken?.name || knownToken?.name || meta?.name || symbol;
+      const symbol =
+        dexToken?.baseToken?.symbol ||
+        knownToken?.symbol ||
+        meta?.symbol ||
+        "TOKEN";
+      const name =
+        dexToken?.baseToken?.name || knownToken?.name || meta?.name || symbol;
       const priceUsd = dexToken?.priceUsd
         ? parseFloat(dexToken.priceUsd)
         : undefined;

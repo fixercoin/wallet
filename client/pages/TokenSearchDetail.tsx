@@ -12,7 +12,7 @@ import { getTokenMetadata } from "@/lib/services/solana-rpc";
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();
   const navigate = useNavigate();
-  const { tokens, addCustomToken } = useWallet();
+  const { tokens, addCustomToken, refreshTokens } = useWallet();
   const { toast } = useToast();
   const [dexToken, setDexToken] = useState<DexscreenerToken | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +52,8 @@ export default function TokenSearchDetail() {
       const priceUsd = dexToken.priceUsd
         ? parseFloat(dexToken.priceUsd)
         : undefined;
+
+      // Get logo from DexScreener API
       const logoURI = dexToken.info?.imageUrl;
 
       const token: TokenInfo = {
@@ -64,6 +66,10 @@ export default function TokenSearchDetail() {
       };
 
       addCustomToken(token);
+
+      // Trigger immediate refresh to get balance and price data
+      await refreshTokens();
+
       toast({ title: "Token added" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

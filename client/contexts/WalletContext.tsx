@@ -446,11 +446,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           (t) => t.mint === customToken.mint,
         );
         if (existingTokenIndex >= 0) {
+          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
+          // but use custom metadata if RPC returned generic "Unknown Token"
+          const rpcToken = allTokens[existingTokenIndex];
+          const isRpcGeneric = rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
+
           allTokens[existingTokenIndex] = {
-            ...customToken,
-            balance: allTokens[existingTokenIndex].balance,
+            ...rpcToken,
+            // Only override with custom metadata if RPC returned generic data
+            ...(isRpcGeneric && {
+              symbol: customToken.symbol,
+              name: customToken.name,
+              logoURI: customToken.logoURI,
+            }),
+            // Always keep the RPC balance and decimals
+            balance: rpcToken.balance,
+            decimals: rpcToken.decimals,
           };
         } else {
+          // Token doesn't exist from RPC - add it with balance 0
           allTokens.push({ ...customToken, balance: 0 });
         }
       });

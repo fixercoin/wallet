@@ -473,43 +473,37 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
 
       // Fetch balances for custom tokens that weren't found in RPC results
-      const tokensToFetchBalance = customTokens.filter((customToken) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === customToken.mint,
-        );
-        // Only fetch balance if token wasn't found in RPC (existingTokenIndex would be the newly added one)
-        // We'll check if the token balance is still 0 and it's a custom token
-        if (existingTokenIndex >= 0) {
-          const token = allTokens[existingTokenIndex];
-          // If it's a custom token with 0 balance, try to fetch the actual balance
-          return (
-            token.balance === 0 &&
-            customTokens.some((ct) => ct.mint === token.mint)
-          );
-        }
-        return false;
-      });
+      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
+      const customTokensWithZeroBalance = allTokens.filter(
+        (token) =>
+          customTokenMintSet.has(token.mint) &&
+          (token.balance === 0 || token.balance === undefined),
+      );
 
       // Fetch missing balances in parallel
-      if (tokensToFetchBalance.length > 0) {
-        const balanceFetchPromises = tokensToFetchBalance.map(
-          async (customToken) => {
+      if (customTokensWithZeroBalance.length > 0) {
+        console.log(
+          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
+        );
+
+        const balanceFetchPromises = customTokensWithZeroBalance.map(
+          async (token) => {
             try {
               const balance = await getTokenBalanceForMint(
                 wallet.publicKey,
-                customToken.mint,
+                token.mint,
               );
               return {
-                mint: customToken.mint,
+                mint: token.mint,
                 balance: balance ?? 0,
               };
             } catch (error) {
               console.warn(
-                `[WalletContext] Failed to fetch balance for ${customToken.mint}:`,
+                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
                 error,
               );
               return {
-                mint: customToken.mint,
+                mint: token.mint,
                 balance: 0,
               };
             }

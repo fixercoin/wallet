@@ -1,4 +1,4 @@
-import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
+import { SOLANA_RPC_URL } from "../../utils/solanaConfig";
 import {
   Connection,
   Keypair,
@@ -269,7 +269,7 @@ export class FixoriumWalletProvider {
 
   private ensureConnection(): Connection {
     if (this.defaultConnection) return this.defaultConnection;
-    this.defaultConnection = new Connection(ALCHEMY_RPC_URL, {
+    this.defaultConnection = new Connection(SOLANA_RPC_URL, {
       commitment: DEFAULT_COMMITMENT,
     });
     return this.defaultConnection;

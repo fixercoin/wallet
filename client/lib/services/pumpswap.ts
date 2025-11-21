@@ -5,6 +5,8 @@
 // function below is a placeholder that returns null and instructs the caller to perform server-side
 // transaction construction with PumpSwap program details.
 
+import { resolveApiUrl } from "@/lib/api-client";
+
 export interface PumpPoolInfo {
   address: string;
   baseMint: string; // token A mint (e.g. SOL or token)
@@ -17,17 +19,17 @@ export interface PumpPoolInfo {
   raw?: any;
 }
 
-const SHYFT_BASE = (typeof process !== 'undefined' && process.env && process.env.SHYFT_API_BASE) || import.meta.env.VITE_SHYFT_API_BASE || "https://api.shyft.to";
-const SHYFT_API_KEY = (typeof process !== 'undefined' && process.env && process.env.SHYFT_API_KEY) || import.meta.env.VITE_SHYFT_API_KEY || ""; // recommended to set in env
+// Use proxy endpoint instead of direct Shyft API
+const PUMP_SWAP_PROXY_BASE = "/api/pumpfun";
 
-async function shyftFetch(path: string, method = "GET", body?: any) {
+async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
   };
-  if (SHYFT_API_KEY) headers["x-api-key"] = SHYFT_API_KEY;
 
-  const res = await fetch(`${SHYFT_BASE}${path}`, {
+  const url = resolveApiUrl(`${PUMP_SWAP_PROXY_BASE}${path}`);
+  const res = await fetch(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
@@ -40,18 +42,21 @@ async function shyftFetch(path: string, method = "GET", body?: any) {
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`Shyft API error: ${res.status} ${txt}`);
+    throw new Error(`Pump.fun proxy error: ${res.status} ${txt}`);
   }
 
   return await res.json().catch(() => null);
 }
 
-// Discover a PumpSwap pool by token pair. This calls Shyft DeFi API (pumpFunAmm) if available.
-export async function getPoolForPair(inputMint: string, outputMint: string): Promise<PumpPoolInfo | null> {
+// Discover a PumpSwap pool by token pair via proxy endpoint
+export async function getPoolForPair(
+  inputMint: string,
+  outputMint: string,
+): Promise<PumpPoolInfo | null> {
   try {
-    // Try Shyft DeFi API: /v1/defi/pair?dex=pumpFunAmm&base=&quote=
-    const path = `/v1/defi/pair?dex=pumpFunAmm&base=${encodeURIComponent(inputMint)}&quote=${encodeURIComponent(outputMint)}`;
-    const j = await shyftFetch(path, "GET");
+    // Call proxy endpoint to get pool info
+    const path = `/pool?base=${encodeURIComponent(inputMint)}&quote=${encodeURIComponent(outputMint)}`;
+    const j = await pumpFunProxyFetch(path, "GET");
     if (!j) return null;
 
     // Shyft response shapes vary: try common fields
@@ -69,12 +74,30 @@ export async function getPoolForPair(inputMint: string, outputMint: string): Pro
     const quoteDecimals = pool.quoteDecimals ?? pool.quoteMintDecimals ?? 9;
 
     // Reserves might be provided as raw amounts; attempt to parse
-    const baseReserveRaw = parseFloat(pool.baseReserve || pool.baseAmount || pool.reserveA || pool.reserve0 || 0);
-    const quoteReserveRaw = parseFloat(pool.quoteReserve || pool.quoteAmount || pool.reserveB || pool.reserve1 || 0);
+    const baseReserveRaw = parseFloat(
+      pool.baseReserve ||
+        pool.baseAmount ||
+        pool.reserveA ||
+        pool.reserve0 ||
+        0,
+    );
+    const quoteReserveRaw = parseFloat(
+      pool.quoteReserve ||
+        pool.quoteAmount ||
+        pool.reserveB ||
+        pool.reserve1 ||
+        0,
+    );
 
     // Convert to human-readable by dividing by 10^decimals if reserves appear large
-    const baseReserve = baseReserveRaw > 1e6 ? baseReserveRaw / Math.pow(10, baseDecimals) : baseReserveRaw;
-    const quoteReserve = quoteReserveRaw > 1e6 ? quoteReserveRaw / Math.pow(10, quoteDecimals) : quoteReserveRaw;
+    const baseReserve =
+      baseReserveRaw > 1e6
+        ? baseReserveRaw / Math.pow(10, baseDecimals)
+        : baseReserveRaw;
+    const quoteReserve =
+      quoteReserveRaw > 1e6
+        ? quoteReserveRaw / Math.pow(10, quoteDecimals)
+        : quoteReserveRaw;
 
     const info: PumpPoolInfo = {
       address: pool.poolAddress || pool.address || pool.id || "",
@@ -116,10 +139,14 @@ export function computeSwapOutput(
 
   // price impact approximated vs marginal price
   const midPrice = y / x; // output per input
-  const effectivePrice = outputAmount > 0 ? inputAmountHuman / outputAmount : midPrice;
+  const effectivePrice =
+    outputAmount > 0 ? inputAmountHuman / outputAmount : midPrice;
   const priceImpactPct = ((midPrice - effectivePrice) / midPrice) * 100;
 
-  return { outputAmount: Math.max(0, outputAmount), priceImpactPct: Math.abs(priceImpactPct) };
+  return {
+    outputAmount: Math.max(0, outputAmount),
+    priceImpactPct: Math.abs(priceImpactPct),
+  };
 }
 
 // Placeholder: building a PumpSwap program transaction typically requires program-specific
@@ -131,7 +158,9 @@ export async function buildSwapTransactionPlaceholder(
   inputIsBase: boolean,
   userPublicKey: string,
 ): Promise<null> {
-  console.warn("buildSwapTransactionPlaceholder called - PumpSwap program transaction building is not implemented client-side.");
+  console.warn(
+    "buildSwapTransactionPlaceholder called - PumpSwap program transaction building is not implemented client-side.",
+  );
   // Return null to indicate not available
   return null;
 }

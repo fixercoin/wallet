@@ -12,7 +12,6 @@ import {
   Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { API_BASE } from "@/lib/p2p";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
@@ -33,7 +32,6 @@ export default function VerifySell() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
-  const { send, events } = useDurableRoom("global", API_BASE);
 
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
@@ -75,37 +73,6 @@ export default function VerifySell() {
     setChatLog(history);
   }, [selectedOrder]);
 
-  useEffect(() => {
-    if (!events || !selectedOrder) return;
-    const last = events[events.length - 1];
-    if (!last) return;
-
-    if (last.kind === "chat") {
-      const txt = (last as any).data?.text || "";
-      const msg = parseWebSocketMessage(txt);
-      if (msg && msg.roomId === selectedOrder.roomId) {
-        saveChatMessage(msg);
-        setChatLog((prev) => [...prev, msg]);
-
-        if (
-          msg.type === "buyer_confirmed_receipt" &&
-          msg.senderWallet !== wallet?.publicKey
-        ) {
-          setBuyerConfirmed(true);
-          toast({
-            title: "Order Confirmed",
-            description: "Buyer has confirmed receipt. Closing chat...",
-          });
-          setTimeout(() => {
-            setPhase("completed");
-            clearNotificationsForRoom(selectedOrder.roomId);
-            moveOrderToCompleted();
-          }, 2000);
-        }
-      }
-    }
-  }, [events, selectedOrder, wallet?.publicKey]);
-
   const moveOrderToCompleted = () => {
     try {
       const completedRaw = localStorage.getItem("orders_completed");
@@ -140,7 +107,6 @@ export default function VerifySell() {
       };
 
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
 
       const notification: ChatNotification = {
@@ -153,7 +119,6 @@ export default function VerifySell() {
       };
 
       saveNotification(notification);
-      broadcastNotification(send, notification);
 
       toast({
         title: "Payment Verified",
@@ -185,7 +150,6 @@ export default function VerifySell() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setMessageInput("");
   };
@@ -206,7 +170,6 @@ export default function VerifySell() {
       };
 
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
       setSellerConfirmed(true);
 
@@ -406,7 +369,7 @@ export default function VerifySell() {
                 <Button
                   onClick={goBack}
                   variant="outline"
-                  className="w-full text-white border-white/20 hover:bg-white/10"
+                  className="w-full text-white border-white/5 hover:bg-white/10"
                 >
                   Cancel
                 </Button>
@@ -485,7 +448,7 @@ export default function VerifySell() {
                       className={`p-2 rounded text-xs ${
                         msg.senderWallet === wallet?.publicKey
                           ? "bg-[#FF7A5C]/20 border border-[#FF7A5C]/40 text-white/90"
-                          : "bg-white/10 border border-white/20 text-white/80"
+                          : "bg-white/10 border border-white/5 text-white/80"
                       }`}
                     >
                       <div className="font-semibold text-[#FF7A5C] mb-1">

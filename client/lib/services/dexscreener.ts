@@ -110,12 +110,31 @@ class DexscreenerAPI {
   getTokenPrices(tokens: DexscreenerToken[]): Record<string, number> {
     const prices: Record<string, number> = {};
 
-    tokens.forEach((token) => {
-      const mint = token.baseToken.address;
-      const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+    tokens.forEach((t) => {
+      const baseMint = t.baseToken?.address;
+      const quoteMint = t.quoteToken?.address;
+      const baseUsd = t.priceUsd ? parseFloat(t.priceUsd) : NaN;
+      const priceNative = t.priceNative ? parseFloat(t.priceNative) : NaN;
 
-      if (mint && price && price > 0) {
-        prices[mint] = price;
+      // Base token USD price (as reported by DexScreener)
+      if (baseMint && isFinite(baseUsd) && baseUsd > 0) {
+        prices[baseMint] = baseUsd;
+      }
+
+      // If possible, derive quote token USD price from baseUsd and priceNative
+      // priceNative is typically the base price in quote units. Therefore:
+      // quoteUsd = baseUsd / priceNative
+      if (
+        quoteMint &&
+        isFinite(baseUsd) &&
+        baseUsd > 0 &&
+        isFinite(priceNative) &&
+        priceNative > 0
+      ) {
+        const quoteUsd = baseUsd / priceNative;
+        if (quoteUsd > 0 && !prices[quoteMint]) {
+          prices[quoteMint] = quoteUsd;
+        }
       }
     });
 
@@ -149,55 +168,114 @@ class DexscreenerAPI {
 
     let fetchedTokens: DexscreenerToken[] = [];
     let fetchFailed = false;
+    let lastError: string = "";
 
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => {
+        console.warn(
+          `[DexScreener] Request timeout after 15s for ${toFetch.length} mints`,
+        );
+        controller.abort();
+      }, 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
-        console.log(`[DexScreener] Requesting: ${url}`);
+        console.log(
+          `[DexScreener] Requesting: ${url} (${toFetch.length} mints)`,
+        );
         const response = await fetch(url, { signal: controller.signal });
 
         if (response.ok) {
           try {
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+              throw new Error(
+                `Invalid content-type: ${contentType}. Expected application/json`,
+              );
+            }
+
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
             console.log(
-              `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens successfully`,
+              `[DexScreener] ✅ Fetched ${fetchedTokens.length} tokens from DexScreener`,
             );
-            // Validate that we got meaningful data (especially priceChange)
-            const withPriceChange = fetchedTokens.filter(
-              (t) =>
-                t.priceChange &&
-                (typeof t.priceChange.h24 === "number" ||
-                  typeof t.priceChange.h6 === "number" ||
-                  typeof t.priceChange.h1 === "number" ||
-                  typeof t.priceChange.m5 === "number"),
-            );
-            console.log(
-              `[DexScreener] Tokens with price change data: ${withPriceChange.length}/${fetchedTokens.length}`,
-            );
+
+            // Log which tokens we got
+            if (fetchedTokens.length > 0) {
+              const gotMints = Array.from(
+                new Set(
+                  fetchedTokens
+                    .flatMap((t) => [
+                      t.baseToken?.address,
+                      t.quoteToken?.address,
+                    ])
+                    .filter(Boolean) as string[],
+                ),
+              );
+              const missingMints = toFetch.filter((m) => !gotMints.includes(m));
+              console.log(
+                `[DexScreener] Got ${fetchedTokens.length} tokens, missing ${missingMints.length}:`,
+                missingMints,
+              );
+
+              // Log price data for debugging
+              const withPrice = fetchedTokens.filter(
+                (t) => t.priceUsd && parseFloat(t.priceUsd) > 0,
+              );
+              console.log(
+                `[DexScreener] Tokens with valid prices: ${withPrice.length}/${fetchedTokens.length}`,
+              );
+
+              // Log pump fun tokens specifically
+              const pumpFunTokens = fetchedTokens.filter(
+                (t) =>
+                  t.baseToken?.address ===
+                    "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump" ||
+                  t.baseToken?.address ===
+                    "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+              );
+              if (pumpFunTokens.length > 0) {
+                pumpFunTokens.forEach((pt) => {
+                  const isFixercoin =
+                    pt.baseToken?.address ===
+                    "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+                  console.log(
+                    `[DexScreener] ${isFixercoin ? "FIXERCOIN" : "LOCKER"}: price=${pt.priceUsd}, change24h=${pt.priceChange?.h24}%`,
+                  );
+                });
+              }
+            }
           } catch (parseErr) {
+            lastError = `Parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
             console.error(
-              `[DexScreener] ❌ Failed to parse response:`,
-              parseErr,
+              `[DexScreener] ��� Failed to parse response:`,
+              lastError,
             );
             fetchFailed = true;
           }
         } else {
+          lastError = `HTTP ${response.status}: ${response.statusText}`;
           console.error(
             `[DexScreener] ❌ Server returned ${response.status}: ${response.statusText}`,
           );
           fetchFailed = true;
         }
       } catch (err) {
-        // network/timeout -> swallow; fallback to stale cache
+        // Handle AbortError specially - it's often a timeout
+        if (err instanceof Error && err.name === "AbortError") {
+          lastError = "Request timeout (15s) - network might be slow";
+          console.warn(
+            `[DexScreener] ⏱️ Request timeout fetching ${toFetch.length} mints`,
+          );
+        } else {
+          lastError = err instanceof Error ? err.message : String(err);
+          console.warn(
+            `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
+            lastError,
+          );
+        }
         fetchFailed = true;
-        console.warn(
-          `[DexScreener] ❌ Network error fetching tokens:`,
-          err instanceof Error ? err.message : String(err),
-        );
       } finally {
         clearTimeout(timeoutId);
       }
@@ -206,11 +284,14 @@ class DexscreenerAPI {
     // If fetch failed, try to serve stale cached data instead of failing completely
     if (fetchFailed && toFetch.length > 0) {
       console.log(
-        `[DexScreener] ⚠️ Serving stale cache for ${toFetch.length} tokens`,
+        `[DexScreener] ⚠️ Fetch failed (${lastError}), trying stale cache for ${toFetch.length} tokens`,
       );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
         if (stale) {
+          console.log(
+            `[DexScreener] ℹ️ Using stale cache for ${mint} (${stale.token.baseToken?.symbol || "UNKNOWN"})`,
+          );
           fetchedTokens.push(stale.token);
         }
       });
@@ -246,8 +327,14 @@ class DexscreenerAPI {
       .map((m) => allTokensMap.get(m))
       .filter((t): t is DexscreenerToken => Boolean(t));
 
+    const missing = normalizedMints.filter(
+      (m) =>
+        !result.find(
+          (t) => t.baseToken?.address === m || t.quoteToken?.address === m,
+        ),
+    );
     console.log(
-      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"})`,
+      `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"}). Missing: ${missing.join(", ")}`,
     );
 
     return result;

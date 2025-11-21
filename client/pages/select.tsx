@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Send } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useToast } from "@/hooks/use-toast";
 import { listOrders } from "@/lib/p2p";
@@ -44,8 +43,6 @@ export default function Select() {
     () => derivedRoomId || "global",
     [derivedRoomId],
   );
-  const { send, events } = useDurableRoom(effectiveRoomId, API_BASE);
-  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -90,21 +87,6 @@ export default function Select() {
     setChatLog(history);
   }, [effectiveRoomId]);
 
-  useEffect(() => {
-    if (!events.length) return;
-    const last = events[events.length - 1] as any;
-    if (last.kind === "chat" && last.data?.text) {
-      const msg = parseWebSocketMessage(last.data.text);
-      if (msg && msg.roomId === effectiveRoomId) {
-        saveChatMessage(msg);
-        setChatLog((prev) => {
-          if (prev.find((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-      }
-    }
-  }, [events, effectiveRoomId]);
-
   const sendTextMessage = () => {
     if (!messageInput.trim() || !effectiveRoomId || !wallet?.publicKey) return;
     const userRole: "buyer" | "seller" =
@@ -119,7 +101,6 @@ export default function Select() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setMessageInput("");
   };
@@ -178,7 +159,6 @@ export default function Select() {
         timestamp: Date.now(),
       };
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
     } catch (e) {
       toast({
@@ -233,7 +213,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveChatMessage(message);
-        sendChatMessage(send, message);
         const notification: ChatNotification = {
           type: "payment_received",
           roomId,
@@ -249,8 +228,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveNotification(notification);
-        broadcastNotification(send, notification);
-        broadcastNotification(sendGlobal, notification);
         toast({
           title: "Seller notified",
           description: "Waiting for seller to verify payment...",
@@ -277,7 +254,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveChatMessage(message);
-        sendChatMessage(send, message);
         const notification: ChatNotification = {
           type: "status_change",
           roomId,
@@ -288,8 +264,6 @@ export default function Select() {
           timestamp: Date.now(),
         };
         saveNotification(notification);
-        broadcastNotification(send, notification);
-        broadcastNotification(sendGlobal, notification);
         toast({
           title: "Transfer marked sent",
           description: "Buyer will be notified",
@@ -353,7 +327,7 @@ export default function Select() {
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
                 payload && payload.roomId ? (
-                  <div className="p-4 bg-[#0f1520]/50 border border-white/10">
+                  <div className="p-4 bg-[#0f1520]/50 border border-white/3">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="font-semibold text-sm text-white/90">
@@ -399,7 +373,7 @@ export default function Select() {
                 orders.map((o: any) => (
                   <div
                     key={o.id || o.orderId}
-                    className="p-4 bg-[#0f1520]/50 border border-white/10"
+                    className="p-4 bg-[#0f1520]/50 border border-white/3"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">

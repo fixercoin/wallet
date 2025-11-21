@@ -1,7 +1,6 @@
 import { Connection, Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
-import { Connection, Keypair } from "@solana/web3.js";
-import { ALCHEMY_RPC_URL } from "../../utils/solanaConfig";
+import { SOLANA_RPC_URL } from "../../utils/solanaConfig";
 
 export {
   type WalletData,
@@ -20,7 +19,7 @@ let _connection: Connection | null = null;
 export const connection: Connection = (() => {
   try {
     if (!_connection) {
-      _connection = new Connection(ALCHEMY_RPC_URL, {
+      _connection = new Connection(SOLANA_RPC_URL, {
         commitment: "confirmed",
       });
     }

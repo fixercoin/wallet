@@ -1,8 +1,11 @@
 import { RequestHandler } from "express";
 
-const HELIUS_API_KEY =
-  process.env.HELIUS_API_KEY || "4e94fa63-8229-4242-8398-b97c512b660a";
-const HELIUS_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+// Helius is used as an RPC provider for wallet transaction history
+// NOT for token price fetching - prices should come from Jupiter, DexScreener, or DexTools
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
+const HELIUS_URL = HELIUS_API_KEY
+  ? `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`
+  : "";
 
 async function heliusRpc(method: string, params: any[] = []) {
   const resp = await fetch(HELIUS_URL, {

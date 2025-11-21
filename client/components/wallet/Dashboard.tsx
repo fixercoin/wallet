@@ -13,8 +13,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   TrendingUp,
-  Eye,
-  EyeOff,
   Settings,
   Bot,
   Plus,
@@ -22,16 +20,15 @@ import {
   Gift,
   Flame,
   Lock,
-  Coins,
   Bell,
   X,
+  Clock,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
   getPaymentReceivedNotifications,
   saveNotification,
 } from "@/lib/p2p-chat";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -61,11 +58,11 @@ interface DashboardProps {
 }
 
 import { useNavigate } from "react-router-dom";
-import { TopBar } from "./TopBar";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
+import { TokenSearch } from "./TokenSearch";
 
 const QUEST_TASKS = [
   {
@@ -118,9 +115,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     refreshBalance,
     refreshTokens,
     addCustomToken,
+    removeToken,
   } = useWallet();
   const { toast } = useToast();
-  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
@@ -263,7 +260,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 2000);
+    const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
 
     return () => {
       cancelled = true;
@@ -292,27 +289,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [wallet?.publicKey]);
 
-  // Persist incoming notifications and update pending badge (admin only)
-  useEffect(() => {
-    if (!wallet?.publicKey) return;
-    const last = events?.[events.length - 1];
-    if (!last || last.kind !== "notification") return;
-    const notif = last.data as any;
-    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
-      return;
-    try {
-      saveNotification(notif);
-    } catch {}
-    if (
-      ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() ===
-        String(ADMIN_WALLET).toLowerCase()
-    ) {
-      const updated = getPaymentReceivedNotifications(wallet.publicKey);
-      setPendingOrdersCount(updated.length);
-    }
-  }, [events, wallet?.publicKey]);
-
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
   useEffect(() => {
@@ -322,8 +298,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const check = async () => {
       try {
         const controller = new AbortController();
-        const to = setTimeout(() => controller.abort(), 4000); // slightly longer timeout
-        const res = await fetch("/health", { signal: controller.signal });
+        const to = setTimeout(() => controller.abort(), 4000);
+        // Health check via reliable ping endpoint
+        const res = await fetchWithFallback("/api/ping", {
+          method: "GET",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         clearTimeout(to);
 
         if (!res.ok) {
@@ -333,7 +316,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         }
 
         const data = await res.json().catch(() => null);
-        if (data && data.status === "ok") {
+        if (data) {
           healthFailureRef.current = 0;
           setIsServiceDown(false);
         } else {
@@ -414,8 +397,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatBalance = (amount: number | undefined): string => {
+  const handleTokenCardClick = (token: TokenInfo) => {
+    onTokenClick(token.mint);
+  };
+
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // FIXERCOIN and LOCKER always show exactly 2 decimal places
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
@@ -435,10 +432,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
-    return price.toFixed(6);
+    if (price >= 0.0001) return price.toFixed(6);
+    return price.toFixed(8);
   };
 
   const [usdToPkr, setUsdToPkr] = useState<number>(() => {
@@ -456,7 +454,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        const res = await fetch(
+          resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"),
+        );
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -546,8 +546,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens];
+    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
+    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
@@ -567,15 +567,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
+    <div
+      className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
+      style={{ backgroundColor: "#1f1f1f" }}
+    >
+      {/* Decorative bottom green wave (SVG) */}
+      <svg
+        className="bottom-wave z-0"
+        viewBox="0 0 1440 220"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="g-dashboard" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+            <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+            <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
+          fill="url(#g-dashboard)"
+          opacity="0.95"
+        />
+      </svg>
 
       {/* Quest Modal */}
       {showQuestModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
-          <div className="bg-gradient-to-br from-[#2d1b47] to-[#1f0f3d] rounded-2xl border border-[#a855f7]/40 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
+          <div className="bg-gradient-to-br from-[#064e3b] to-[#052e16] rounded-2xl border border-[#22c55e]/40 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
               <button
@@ -589,7 +610,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {/* Tagline */}
               <div className="text-center">
-                <p className="text-sm font-semibold text-[#a855f7] uppercase tracking-wider">
+                <p className="text-sm font-semibold text-[#22c55e] uppercase tracking-wider">
                   🚀 Grow. Earn. Win.
                 </p>
               </div>
@@ -602,7 +623,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </p>
 
               {/* How it works */}
-              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+              <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
                   How It Works
                 </h3>
@@ -629,7 +650,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <label className="flex items-start gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          className="mt-0.5 accent-[#a855f7]"
+                          className="mt-0.5 accent-[#22c55e]"
                           checked={completedTasks.has(t.id)}
                           onChange={() => toggleTask(t.id)}
                         />
@@ -643,14 +664,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#a855f7] hover:underline text-[11px] font-semibold"
+                          className="text-[#22c55e] hover:underline text-[11px] font-semibold"
                         >
                           Open
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#a855f7] hover:underline text-[11px] font-semibold"
+                          className="text-[#22c55e] hover:underline text-[11px] font-semibold"
                         >
                           Share
                         </button>
@@ -661,14 +682,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               {/* Rewards */}
-              <div className="bg-white/5 rounded-lg p-3 border border-[#ffffff66]/10">
+              <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  🎁 Rewards
+                  �� Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>⚡ Early access to wallet updates</p>
+                  <p>���� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -685,7 +706,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
                   <div
-                    className="bg-gradient-to-r from-[#a855f7] to-[#22c55e] h-2 rounded-full"
+                    className="bg-gradient-to-r from-[#34d399] to-[#22c55e] h-2 rounded-full"
                     style={{ width: `${progressPct}%` }}
                   ></div>
                 </div>
@@ -700,14 +721,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#a855f7] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
                   onClick={() => completeNextTask()}
                 >
                   Complete Task
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#2d1b47]/50 text-white hover:bg-[#a855f7]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#064e3b]/50 text-white hover:bg-[#a855f7]/10"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >
@@ -719,35 +740,64 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
-        {/* Top Bar - Outside Balance Card */}
-        <div className="mb-0">
-          <TopBar
-            onAccounts={onAccounts}
-            onAirdrop={onAirdrop}
-            onBurn={onBurn}
-            onLock={onLock}
-            onSettings={onSettings}
-            onQuestOpen={() => setShowQuestModal(true)}
-          />
-        </div>
-
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
-        <div className="mb-3 rounded-lg p-6 border border-[#555555]/40 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => setShowBalance(!showBalance)}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              {showBalance ? (
-                <Eye className="h-5 w-5 text-white/80" />
-              ) : (
-                <EyeOff className="h-5 w-5 text-white/80" />
-              )}
-            </button>
-            <div className="flex-1"></div>
+        <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            {/* Dropdown menu - moved to left */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                  aria-label="Wallet menu"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onSelect={() => onAccounts?.()}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>MY-WALLET</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Action buttons - moved to right */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={onLock}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Lock"
+                title="Lock"
+              >
+                <Lock className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onBurn}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Burn"
+                title="Burn"
+              >
+                <Flame className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={onSettings}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <div className="text-center space-y-2">
+
+          <div className="text-center space-y-2 mt-8">
             {wallet
               ? (() => {
                   const total = getTotalPortfolioValue();
@@ -757,13 +807,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     ) ||
                     (typeof balance === "number" && balance > 0);
                   if (!hasAnyBalance) {
+                    // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
+                    const usdZero = `0.000 $`;
                     return (
                       <>
-                        <div className="text-2xl font-bold text-white leading-tight">
-                          {showBalance ? "0.00 USD" : "****"}
+                        <div className="text-3xl font-medium text-gray-900 leading-tight">
+                          {showBalance ? `${usdZero}` : "****"}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? "24h: +0.00 USD (0.00%)" : "24h: ****"}
+                          {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
                         </div>
                       </>
                     );
@@ -799,92 +851,78 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   return (
                     <>
-                      <div className="text-2xl font-bold text-white leading-tight">
+                      <div className="text-3xl font-medium text-gray-900 leading-tight">
                         {showBalance
                           ? `${total.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })} USD`
+                              minimumFractionDigits: 3,
+                              maximumFractionDigits: 3,
+                            })} $`
                           : "****"}
                       </div>
                       {showBalance ? (
-                        <>
-                          {hasValidPriceChange && (
-                            <div className="flex items-center justify-center gap-2 mt-1">
-                              <span className="text-xs text-gray-400">
-                                24h:
-                              </span>
-                              {isPositive ? (
-                                <>
-                                  <ArrowUpRight className="h-3 w-3 text-green-400" />
-                                  <span className="text-xs font-medium text-green-400">
-                                    +
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    (+{change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDownLeft className="h-3 w-3 text-red-400" />
-                                  <span className="text-xs font-medium text-red-400">
-                                    -
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    ({change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {!hasValidPriceChange && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              24h: No data available
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-xs text-gray-400 mt-1">
-                          24h: ****
+                        <div
+                          className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                        >
+                          <span className="font-medium">
+                            {isPositive ? "+" : "-"}{" "}
+                            {Math.abs(totalChange24h).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3,
+                              },
+                            )}
+                          </span>
+                          <span className="ml-1">
+                            (
+                            {Math.abs(
+                              isFinite(change24hPercent) ? change24hPercent : 0,
+                            ).toFixed(2)}
+                            %)
+                          </span>
                         </div>
+                      ) : (
+                        <div className="text-xs text-gray-400 mt-1">****</div>
                       )}
                     </>
                   );
                 })()
               : "Connect wallet to see balance"}
           </div>
+
           {/* Action Buttons */}
-          <div className="flex items-center gap-3 mt-6">
+          <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
             <Button
               onClick={onSend}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              SEND
+              <Send className="h-8 w-8 text-[#22c55e]" />
+              <span>SEND</span>
             </Button>
 
             <Button
               onClick={onReceive}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/40 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              RECEIVE
+              <Download className="h-8 w-8 text-[#22c55e]" />
+              <span>RECEIVE</span>
             </Button>
 
             <Button
               onClick={onSwap}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#2d1b47]/50 hover:bg-[#a855f7]/20 border border-[#a855f7]/40 text-white flex items-center justify-center"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
             >
-              SWAP
+              <TrendingUp className="h-8 w-8 text-[#22c55e]" />
+              <span>SWAP</span>
             </Button>
+          </div>
+
+          {/* Token Search - Under Action Buttons */}
+          <div className="w-full mt-4 px-0">
+            <TokenSearch
+              className="w-full"
+              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
+            />
           </div>
         </div>
 
@@ -908,8 +946,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="space-y-2">
-          {sortedTokens.map((token) => {
+        <div className="w-full space-y-0">
+          {sortedTokens.map((token, index) => {
             const percentChange =
               typeof token.priceChange24h === "number" &&
               isFinite(token.priceChange24h)
@@ -918,66 +956,52 @@ export const Dashboard: React.FC<DashboardProps> = ({
             const isPositive = (percentChange ?? 0) >= 0;
 
             return (
-              <Card
-                key={token.mint}
-                className="bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 backdrop-blur-xl border border-[#555555]/30 rounded-md"
-              >
-                <CardContent className="p-0">
-                  <div
-                    className="flex items-center justify-between p-4 rounded-md hover:bg-[#1a2540]/60 cursor-pointer transition-colors"
-                    onClick={() => onTokenClick(token.mint)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={token.logoURI} alt={token.symbol} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
-                          {token.symbol.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-semibold text-white text-sm">
-                            {token.symbol}
-                          </span>
+              <div key={token.mint} className="w-full">
+                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+                  <CardContent className="w-full p-0">
+                    <div
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-2 sm:gap-3"
+                      onClick={() => handleTokenCardClick(token)}
+                    >
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarImage src={token.logoURI} alt={token.symbol} />
+                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
+                            {token.symbol.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-semibold text-white text-xs whitespace-nowrap">
+                          {token.symbol}/USDT
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
+                        <div>
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            {formatBalance(token.balance || 0, token.symbol)}
+                          </p>
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-xs text-gray-300">
-                            ${formatTokenPriceDisplay(token.price)}
-                          </span>
-                          {percentChange !== null ? (
-                            <span className="flex items-center gap-1">
-                              <span
-                                className={`text-xs font-medium ${
-                                  isPositive ? "text-green-400" : "text-red-400"
-                                }`}
-                              >
-                                {isPositive ? "+" : ""}
-                                {percentChange.toFixed(2)}%
-                              </span>
-                              <span className="text-xs text-gray-400">24h</span>
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">—</span>
-                          )}
-                        </div>
+
+                        {percentChange !== null && (
+                          <Button
+                            className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
+                              isPositive
+                                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+                                : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {isPositive ? "+" : ""}
+                            {percentChange.toFixed(2)}%
+                          </Button>
+                        )}
                       </div>
                     </div>
-
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-white">
-                        {formatBalance(
-                          token.symbol === "SOL" ? balance : token.balance || 0,
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-300">
-                        {typeof token.price === "number" && token.price > 0
-                          ? `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
-                          : "$0.00"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+                {index < sortedTokens.length - 1 && (
+                  <Separator className="bg-[#14532d]/30" />
+                )}
+              </div>
             );
           })}
 

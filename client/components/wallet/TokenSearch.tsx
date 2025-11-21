@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
+import { KNOWN_TOKENS } from "@/lib/services/solana-rpc";
 import { useNavigate } from "react-router-dom";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
 
@@ -56,6 +57,34 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
         const filtered = list.filter(
           (t) => (t.chainId || "").toLowerCase() === "solana",
         );
+
+        // If no results from DexScreener, check KNOWN_TOKENS
+        if (filtered.length === 0) {
+          const knownMatches = Object.values(KNOWN_TOKENS).filter(
+            (token) =>
+              token.symbol.toLowerCase().includes(q.toLowerCase()) ||
+              token.name.toLowerCase().includes(q.toLowerCase()) ||
+              token.mint.toLowerCase().includes(q.toLowerCase()),
+          );
+
+          // Convert KNOWN_TOKENS to DexscreenerToken format for display
+          const convertedKnown = knownMatches.map((token) => ({
+            chainId: "solana",
+            pairAddress: token.mint,
+            baseToken: {
+              address: token.mint,
+              symbol: token.symbol,
+              name: token.name,
+            },
+            quoteToken: { address: "", symbol: "", name: "" },
+            priceUsd: "0",
+            info: {
+              imageUrl: token.logoURI,
+            },
+          } as any));
+
+          filtered.push(...convertedKnown);
+        }
 
         if (!cancelled) {
           setResults(filtered);

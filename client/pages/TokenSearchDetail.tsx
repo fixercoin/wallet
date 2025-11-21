@@ -53,23 +53,8 @@ export default function TokenSearchDetail() {
         ? parseFloat(dexToken.priceUsd)
         : undefined;
 
-      // Try to get logo from multiple sources
-      let logoURI = dexToken.info?.imageUrl;
-
-      // If no logo from DexScreener, try to fetch from Birdeye
-      if (!logoURI) {
-        try {
-          const birdeyeToken = await fetch(
-            `/api/birdeye/price?address=${encodeURIComponent(baseMint)}`
-          ).then(r => r.json());
-
-          if (birdeyeToken?.data?.logoURI) {
-            logoURI = birdeyeToken.data.logoURI;
-          }
-        } catch {
-          // Birdeye lookup failed, will use undefined
-        }
-      }
+      // Get logo from DexScreener API
+      const logoURI = dexToken.info?.imageUrl;
 
       const token: TokenInfo = {
         mint: baseMint,

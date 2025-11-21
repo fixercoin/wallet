@@ -418,3 +418,84 @@ export const addKnownToken = (metadata: TokenMetadata) => {
 export const getKnownTokens = (): Record<string, TokenMetadata> => {
   return { ...KNOWN_TOKENS };
 };
+
+/**
+ * Fetch balance for a specific token mint
+ * This is useful for custom tokens that might not be in the general token list
+ */
+export const getTokenBalanceForMint = async (
+  walletAddress: string,
+  tokenMint: string,
+): Promise<number | null> => {
+  const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+  try {
+    // Try via API proxy first
+    const response = await makeRpcCall("getTokenAccountsByOwner", [
+      walletAddress,
+      { mint: tokenMint },
+      { encoding: "jsonParsed", commitment: "confirmed" },
+    ]);
+
+    const value = (response as any)?.value || [];
+    if (Array.isArray(value) && value.length > 0) {
+      const account = value[0];
+      const parsedInfo = account.account.data.parsed.info;
+      const decimals = parsedInfo.tokenAmount.decimals;
+
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
+
+      console.log(
+        `[Token Balance] Fetched ${tokenMint}: ${balance} via proxy RPC`,
+      );
+      return balance;
+    }
+  } catch (error) {
+    console.warn(
+      `[Token Balance] Proxy RPC failed for ${tokenMint}, attempting direct web3.js fallback:`,
+      error,
+    );
+  }
+
+  // Fallback: Try direct web3.js Connection
+  try {
+    const { Connection, PublicKey } = await import("@solana/web3.js");
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const accounts = await conn.getParsedTokenAccountsByOwner(
+      new PublicKey(walletAddress),
+      { mint: new PublicKey(tokenMint) },
+    );
+
+    if (accounts.value.length > 0) {
+      const account = accounts.value[0];
+      const parsedInfo = account.account.data.parsed.info;
+      const decimals = parsedInfo.tokenAmount.decimals;
+
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
+
+      console.log(
+        `[Token Balance] Fetched ${tokenMint}: ${balance} via web3.js fallback`,
+      );
+      return balance;
+    }
+  } catch (webError) {
+    console.warn(
+      `[Token Balance] Direct web3.js fallback also failed for ${tokenMint}:`,
+      webError,
+    );
+  }
+
+  return null;
+};

@@ -12,6 +12,8 @@ import {
   Key,
   Eye,
   EyeOff,
+  Twitter,
+  Send,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -335,6 +337,37 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       />
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Helpline Card */}
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-[hsl(var(--foreground))]">
+                      HELPLINE 24/7
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href="https://twitter.com/fixorium"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                        aria-label="Twitter"
+                      >
+                        <Twitter className="h-5 w-5" />
+                      </a>
+                      <a
+                        href="https://t.me/fixorium"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                        aria-label="Telegram"
+                      >
+                        <Send className="h-5 w-5" />
+                      </a>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 

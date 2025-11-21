@@ -55,7 +55,7 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     symbol: "FXM",
     name: "Fixorium",
     decimals: 6,
-    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+    logoURI: "https://i.postimg.cc/k513N8nv/cropped-circle-image-(5).png",
   },
 };
 

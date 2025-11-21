@@ -724,6 +724,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         let tx: VersionedTransaction;
         try {
           tx = VersionedTransaction.deserialize(txBytes);
+          console.log(
+            `[SwapInterface] Transaction deserialized successfully. Message type: ${tx.message?.constructor?.name}, Instructions count: ${tx.message?.instructions?.length || "undefined"}`,
+          );
         } catch (deserializeError) {
           const deserializeMsg =
             deserializeError instanceof Error
@@ -740,19 +743,34 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           );
         }
 
+        // Log transaction structure for debugging
+        console.log(
+          `[SwapInterface] Transaction message structure:`,
+          Object.keys(tx.message || {}).slice(0, 10),
+        );
+
         // Add fee transfer instruction before signing
         const fromToken = tokenList.find((t) => t.address === fromMint);
         if (fromToken) {
           console.log(
             `[SwapInterface] Attempting to add fee for token: ${fromMint}, amount: ${amount}, decimals: ${fromToken.decimals}`,
           );
-          tx = await addFeeTransferInstruction(
-            tx,
-            fromMint,
-            amount,
-            fromToken.decimals || 6,
-            wallet.publicKey,
-          );
+          try {
+            tx = await addFeeTransferInstruction(
+              tx,
+              fromMint,
+              amount,
+              fromToken.decimals || 6,
+              wallet.publicKey,
+            );
+          } catch (feeError) {
+            const feeErrorMsg =
+              feeError instanceof Error ? feeError.message : String(feeError);
+            console.warn(
+              `[SwapInterface] Failed to add fee instruction: ${feeErrorMsg}. Proceeding without fee.`,
+            );
+            // Don't throw - allow swap to proceed without fee
+          }
         } else {
           console.warn(
             "[SwapInterface] Token not found in list, cannot add fee",

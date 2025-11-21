@@ -50,6 +50,13 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     decimals: 6,
     logoURI: "https://via.placeholder.com/64x64/8b5cf6/ffffff?text=LO",
   },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+  },
 };
 
 // Request queue to prevent duplicate requests

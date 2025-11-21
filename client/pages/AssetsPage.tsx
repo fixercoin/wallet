@@ -23,16 +23,18 @@ export default function AssetsPage() {
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
-    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+    if (!amount || isNaN(amount)) {
+      return symbol === "SOL" ? "0.0000" : "0.00";
+    }
+    if (symbol === "SOL") {
       return amount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
       });
     }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
+      maximumFractionDigits: 2,
     });
   };
 
@@ -98,8 +100,8 @@ export default function AssetsPage() {
               <p className="text-3xl font-bold text-green-400">
                 $
                 {totalBalance.toLocaleString(undefined, {
-                  minimumFractionDigits: 3,
-                  maximumFractionDigits: 3,
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </p>
             </div>
@@ -125,14 +127,33 @@ export default function AssetsPage() {
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
-                      <p className="font-semibold text-white text-sm whitespace-nowrap">
-                        {token.symbol}/USDT
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <p className="text-xs text-gray-400 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <p
+                          className="font-semibold text-white whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
+                          {token.symbol}
+                        </p>
+                        <p
+                          className="text-green-400 whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
+                          {typeof token.price === "number" && token.price > 0
+                            ? `$${formatTokenPriceDisplay(token.price)}`
+                            : "$0.00"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p
+                          className="text-gray-400 whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>
-                        <p className="text-sm font-semibold text-green-400 whitespace-nowrap">
+                        <p
+                          className="font-semibold text-green-400 whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatBalance((token.balance || 0) * token.price)}`
                             : "$0.00"}

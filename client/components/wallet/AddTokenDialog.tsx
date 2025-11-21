@@ -54,7 +54,7 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
       let dexToken: any = null;
       try {
         const response = await fetch(
-          `/api/dexscreener/token?mint=${encodeURIComponent(mint)}`
+          `/api/dexscreener/token?mint=${encodeURIComponent(mint)}`,
         );
         if (response.ok) {
           const data = await response.json();

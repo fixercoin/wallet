@@ -23,16 +23,10 @@ export default function AssetsPage() {
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
-    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
-      return amount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
+    if (!amount || isNaN(amount)) return "0.0";
     return amount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
     });
   };
 

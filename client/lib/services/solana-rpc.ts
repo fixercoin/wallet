@@ -308,8 +308,17 @@ export const getTokenAccounts = async (publicKey: string) => {
     return accounts.value.map((account: any) => {
       const parsedInfo = account.account.data.parsed.info;
       const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
       const decimals = parsedInfo.tokenAmount.decimals;
+
+      // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        // Convert raw amount to UI amount using decimals
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
 
       const metadata = KNOWN_TOKENS[mint] || {
         mint,

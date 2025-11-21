@@ -83,7 +83,7 @@ export default function TokenSearchDetail() {
       addCustomToken(token);
 
       // Trigger immediate refresh to get balance and price data
-      const { refreshTokens } = require("@/contexts/WalletContext");
+      await refreshTokens();
 
       toast({ title: "Token added" });
     } catch (e) {

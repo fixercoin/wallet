@@ -46,7 +46,7 @@ const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
   onContinue,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-50">
       <style>{`
         @keyframes slide-in {
           0% {
@@ -63,7 +63,7 @@ const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
         }
       `}</style>
 
-      <div className="relative z-50 w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-2xl success-dialog">
+      <div className="relative z-50 w-full max-w-sm bg-gray-100 border border-gray-300 rounded-lg shadow-2xl success-dialog">
         <div className="p-8 flex flex-col items-center text-center space-y-6">
           <div className="relative w-20 h-20 flex items-center justify-center">
             <div className="absolute inset-0 bg-green-500/20 rounded-full blur-lg animate-pulse" />

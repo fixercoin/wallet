@@ -23,7 +23,15 @@ export default function AssetsPage() {
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
+    if (!amount || isNaN(amount)) {
+      return symbol === "SOL" ? "0.000" : "0.00";
+    }
+    if (symbol === "SOL") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,

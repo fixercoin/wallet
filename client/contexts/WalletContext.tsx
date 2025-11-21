@@ -455,12 +455,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
           allTokens[existingTokenIndex] = {
             ...rpcToken,
-            // Only override with custom metadata if RPC returned generic data
+            // Override with custom metadata if RPC returned generic data
             ...(isRpcGeneric && {
               symbol: customToken.symbol,
               name: customToken.name,
               logoURI: customToken.logoURI,
             }),
+            // Always use custom logoURI if available (user-added logo takes priority)
+            ...(customToken.logoURI && { logoURI: customToken.logoURI }),
             // Always keep the RPC balance and decimals
             balance: rpcToken.balance,
             decimals: rpcToken.decimals,

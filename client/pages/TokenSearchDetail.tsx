@@ -105,10 +105,10 @@ export default function TokenSearchDetail() {
     );
   }
 
-  const img = dexToken.info?.imageUrl;
-  const symbol = dexToken.baseToken?.symbol || "";
-  const name = dexToken.baseToken?.name || symbol;
-  const priceUsd = dexToken.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
+  const img = dexToken?.info?.imageUrl || knownToken?.logoURI;
+  const symbol = dexToken?.baseToken?.symbol || knownToken?.symbol || "";
+  const name = dexToken?.baseToken?.name || knownToken?.name || symbol;
+  const priceUsd = dexToken?.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
 
   return (
     <div className="express-p2p-page dark-theme min-h-screen bg-gray-900 text-white">

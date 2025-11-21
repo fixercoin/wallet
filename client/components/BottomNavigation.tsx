@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Home, Zap, Gift, Clock, Wallet } from "lucide-react";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -29,11 +30,11 @@ export const BottomNavigation = () => {
   }, []);
 
   const navItems = [
-    { path: "/", label: "HOME" },
-    { path: "/autobot", label: "BOOST" },
-    { path: "/airdrop", label: "AIRDROP" },
-    { path: "/wallet/history", label: "HISTORY" },
-    { path: "/assets", label: "ASSET" },
+    { path: "/", label: "HOME", icon: Home },
+    { path: "/autobot", label: "BOOST", icon: Zap },
+    { path: "/airdrop", label: "AIRDROP", icon: Gift },
+    { path: "/wallet/history", label: "HISTORY", icon: Clock },
+    { path: "/assets", label: "ASSET", icon: Wallet },
   ];
 
   const isActive = (path: string) => {

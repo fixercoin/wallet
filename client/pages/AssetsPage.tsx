@@ -24,12 +24,12 @@ export default function AssetsPage() {
     symbol?: string,
   ): string => {
     if (!amount || isNaN(amount)) {
-      return symbol === "SOL" ? "0.000" : "0.00";
+      return symbol === "SOL" ? "0.0000" : "0.00";
     }
     if (symbol === "SOL") {
       return amount.toLocaleString(undefined, {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
       });
     }
     return amount.toLocaleString(undefined, {

@@ -135,6 +135,14 @@ async function addFeeTransferInstruction(
       );
     }
 
+    // Ensure instructions array exists and is properly initialized
+    if (!tx.message.instructions) {
+      console.warn(
+        "[SwapInterface] Transaction instructions array is undefined, initializing empty array",
+      );
+      tx.message.instructions = [];
+    }
+
     if (!Array.isArray(tx.message.instructions)) {
       throw new Error(
         `Transaction message instructions is not an array. Got: ${typeof tx.message.instructions}. This indicates a corrupted or malformed transaction.`,

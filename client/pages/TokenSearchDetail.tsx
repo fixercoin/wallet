@@ -52,7 +52,24 @@ export default function TokenSearchDetail() {
       const priceUsd = dexToken.priceUsd
         ? parseFloat(dexToken.priceUsd)
         : undefined;
-      const logoURI = dexToken.info?.imageUrl;
+
+      // Try to get logo from multiple sources
+      let logoURI = dexToken.info?.imageUrl;
+
+      // If no logo from DexScreener, try to fetch from Birdeye
+      if (!logoURI) {
+        try {
+          const birdeyeToken = await fetch(
+            `/api/birdeye/price?address=${encodeURIComponent(baseMint)}`
+          ).then(r => r.json());
+
+          if (birdeyeToken?.data?.logoURI) {
+            logoURI = birdeyeToken.data.logoURI;
+          }
+        } catch {
+          // Birdeye lookup failed, will use undefined
+        }
+      }
 
       const token: TokenInfo = {
         mint: baseMint,
@@ -64,6 +81,10 @@ export default function TokenSearchDetail() {
       };
 
       addCustomToken(token);
+
+      // Trigger immediate refresh to get balance and price data
+      const { refreshTokens } = require("@/contexts/WalletContext");
+
       toast({ title: "Token added" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

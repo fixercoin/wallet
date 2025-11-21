@@ -727,7 +727,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
 
         if (!tx || !tx.message) {
-          throw new Error("Deserialized transaction is invalid or has no message");
+          throw new Error(
+            "Deserialized transaction is invalid or has no message",
+          );
         }
 
         // Add fee transfer instruction before signing

@@ -4,9 +4,7 @@ export function bytesFromBase64(b64: string): Uint8Array {
       "[bytesFromBase64] Invalid input: expected non-empty string, got",
       typeof b64,
     );
-    throw new Error(
-      `Invalid base64 input: expected string, got ${typeof b64}`,
-    );
+    throw new Error(`Invalid base64 input: expected string, got ${typeof b64}`);
   }
 
   try {
@@ -15,8 +13,7 @@ export function bytesFromBase64(b64: string): Uint8Array {
     for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
     return out;
   } catch (e) {
-    const errorMsg =
-      e instanceof Error ? e.message : String(e);
+    const errorMsg = e instanceof Error ? e.message : String(e);
     console.error(
       `[bytesFromBase64] Failed to decode base64 string (length: ${b64.length}). Error: ${errorMsg}`,
     );

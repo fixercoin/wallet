@@ -118,11 +118,18 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
-                      <p className="font-semibold text-white whitespace-nowrap" style={{ fontSize: "10px" }}>
-                        {token.symbol}
-                      </p>
-                      <div className="flex items-center gap-3">
+                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold text-white whitespace-nowrap" style={{ fontSize: "10px" }}>
+                          {token.symbol}
+                        </p>
+                        <p className="text-green-400 whitespace-nowrap" style={{ fontSize: "10px" }}>
+                          {typeof token.price === "number" && token.price > 0
+                            ? `$${formatTokenPriceDisplay(token.price)}`
+                            : "$0.00"}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
                         <p className="text-gray-400 whitespace-nowrap" style={{ fontSize: "10px" }}>
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>

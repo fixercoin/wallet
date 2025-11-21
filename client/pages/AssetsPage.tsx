@@ -128,20 +128,32 @@ export default function AssetsPage() {
                   <CardContent className="w-full p-0">
                     <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-white whitespace-nowrap" style={{ fontSize: "10px" }}>
+                        <p
+                          className="font-semibold text-white whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
                           {token.symbol}
                         </p>
-                        <p className="text-green-400 whitespace-nowrap" style={{ fontSize: "10px" }}>
+                        <p
+                          className="text-green-400 whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatTokenPriceDisplay(token.price)}`
                             : "$0.00"}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="text-gray-400 whitespace-nowrap" style={{ fontSize: "10px" }}>
+                        <p
+                          className="text-gray-400 whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
                           {formatBalance(token.balance || 0, token.symbol)}
                         </p>
-                        <p className="font-semibold text-green-400 whitespace-nowrap" style={{ fontSize: "10px" }}>
+                        <p
+                          className="font-semibold text-green-400 whitespace-nowrap"
+                          style={{ fontSize: "10px" }}
+                        >
                           {typeof token.price === "number" && token.price > 0
                             ? `$${formatBalance((token.balance || 0) * token.price)}`
                             : "$0.00"}

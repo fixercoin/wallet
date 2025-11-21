@@ -90,7 +90,9 @@ export default function TokenSearchDetail() {
     );
   }
 
-  if (!dexToken) {
+  // If token not found in DexScreener, check KNOWN_TOKENS
+  const knownToken = KNOWN_TOKENS[mint];
+  if (!dexToken && !knownToken) {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center">
         <div className="text-center">

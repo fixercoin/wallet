@@ -124,6 +124,23 @@ async function addFeeTransferInstruction(
   }
 
   try {
+    // Validate transaction structure before proceeding
+    if (!tx) {
+      throw new Error("Transaction object is null or undefined");
+    }
+
+    if (!tx.message) {
+      throw new Error(
+        "Transaction message is undefined - transaction may not be properly deserialized",
+      );
+    }
+
+    if (!Array.isArray(tx.message.instructions)) {
+      throw new Error(
+        `Transaction message instructions is not an array. Got: ${typeof tx.message.instructions}. This indicates a corrupted or malformed transaction.`,
+      );
+    }
+
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
     const userPubkeyStr =
       typeof userPublicKey === "string"

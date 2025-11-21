@@ -19,6 +19,7 @@ import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
+import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 

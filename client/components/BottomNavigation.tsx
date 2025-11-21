@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, Zap, Gift, Clock, Wallet } from "lucide-react";
+import { Home, Rocket, Sparkles, Wallet } from "lucide-react";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -31,9 +31,8 @@ export const BottomNavigation = () => {
 
   const navItems = [
     { path: "/", label: "HOME", icon: Home },
-    { path: "/autobot", label: "BOOST", icon: Zap },
-    { path: "/airdrop", label: "AIRDROP", icon: Gift },
-    { path: "/wallet/history", label: "HISTORY", icon: Clock },
+    { path: "/autobot", label: "BOOST", icon: Rocket },
+    { path: "/airdrop", label: "AIRDROP", icon: Sparkles },
     { path: "/assets", label: "ASSET", icon: Wallet },
   ];
 
@@ -56,24 +55,18 @@ export const BottomNavigation = () => {
           const Icon = item.icon;
 
           return (
-            <React.Fragment key={item.label}>
-              <button
-                onClick={() => navigate(item.path)}
-                className="flex-1 px-0.5 xs:px-1 sm:px-2 md:px-4 lg:px-6 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 transition-colors font-medium rounded-none leading-tight min-w-0 text-center flex flex-col items-center justify-center gap-0.5 xs:gap-1 text-white"
-                aria-label={item.label}
-                title={item.label}
-              >
-                <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-gray-300/30" />
-                <span className="block truncate text-[7px] xs:text-[8px] sm:text-[9px] md:text-xs lg:text-sm">
-                  {item.label}
-                </span>
-              </button>
-              {index < navItems.length - 1 && (
-                <span className="text-gray-500 px-0 xs:px-0.5 sm:px-1 md:px-2 lg:px-3 text-[8px] xs:text-[9px] sm:text-xs md:text-sm lg:text-base leading-tight flex-shrink-0">
-                  |
-                </span>
-              )}
-            </React.Fragment>
+            <button
+              key={item.label}
+              onClick={() => navigate(item.path)}
+              className="flex-1 px-0.5 xs:px-1 sm:px-2 md:px-4 lg:px-6 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 transition-colors font-medium rounded-none leading-tight min-w-0 text-center flex flex-col items-center justify-center gap-0.5 xs:gap-1 text-white"
+              aria-label={item.label}
+              title={item.label}
+            >
+              <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-white opacity-50" />
+              <span className="block truncate text-[7px] xs:text-[8px] sm:text-[9px] md:text-xs lg:text-sm">
+                {item.label}
+              </span>
+            </button>
           );
         })}
       </div>

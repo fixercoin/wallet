@@ -763,6 +763,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Wallet className="h-4 w-4" />
                   <span>MY-WALLET</span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => navigate("/wallet/history")}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Clock className="h-4 w-4" />
+                  <span>WALLET HISTORY</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Action buttons - moved to right */}

@@ -33,7 +33,6 @@ export const BottomNavigation = () => {
     { path: "/", label: "HOME", icon: Home },
     { path: "/autobot", label: "BOOST", icon: Zap },
     { path: "/airdrop", label: "AIRDROP", icon: Gift },
-    { path: "/wallet/history", label: "HISTORY", icon: Clock },
     { path: "/assets", label: "ASSET", icon: Wallet },
   ];
 

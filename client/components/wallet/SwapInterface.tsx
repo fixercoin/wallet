@@ -135,10 +135,12 @@ async function addFeeTransferInstruction(
       );
     }
 
+    // Check if instructions array exists and is properly typed
     if (!Array.isArray(tx.message.instructions)) {
-      throw new Error(
-        `Transaction message instructions is not an array. Got: ${typeof tx.message.instructions}. This indicates a corrupted or malformed transaction.`,
+      console.warn(
+        `[SwapInterface] Instructions array is not available (type: ${typeof tx.message.instructions}). Skipping fee instruction.`,
       );
+      return tx;
     }
 
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
@@ -185,11 +187,18 @@ async function addFeeTransferInstruction(
       );
     }
 
-    const instructionsCount = tx.message.instructions.length;
-    tx.message.instructions.push(feeInstruction);
-    console.log(
-      `[SwapInterface] ✅ Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
-    );
+    try {
+      const instructionsCount = tx.message.instructions.length;
+      tx.message.instructions.push(feeInstruction);
+      console.log(
+        `[SwapInterface] ✅ Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
+      );
+    } catch (pushError) {
+      console.warn(
+        `[SwapInterface] Could not push fee instruction (${pushError instanceof Error ? pushError.message : String(pushError)}). Returning transaction without fee.`,
+      );
+    }
+
     return tx;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
@@ -716,6 +725,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         let tx: VersionedTransaction;
         try {
           tx = VersionedTransaction.deserialize(txBytes);
+          console.log(
+            `[SwapInterface] Transaction deserialized successfully. Message type: ${tx.message?.constructor?.name}, Instructions count: ${tx.message?.instructions?.length || "undefined"}`,
+          );
         } catch (deserializeError) {
           const deserializeMsg =
             deserializeError instanceof Error
@@ -732,19 +744,34 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           );
         }
 
+        // Log transaction structure for debugging
+        console.log(
+          `[SwapInterface] Transaction message structure:`,
+          Object.keys(tx.message || {}).slice(0, 10),
+        );
+
         // Add fee transfer instruction before signing
         const fromToken = tokenList.find((t) => t.address === fromMint);
         if (fromToken) {
           console.log(
             `[SwapInterface] Attempting to add fee for token: ${fromMint}, amount: ${amount}, decimals: ${fromToken.decimals}`,
           );
-          tx = await addFeeTransferInstruction(
-            tx,
-            fromMint,
-            amount,
-            fromToken.decimals || 6,
-            wallet.publicKey,
-          );
+          try {
+            tx = await addFeeTransferInstruction(
+              tx,
+              fromMint,
+              amount,
+              fromToken.decimals || 6,
+              wallet.publicKey,
+            );
+          } catch (feeError) {
+            const feeErrorMsg =
+              feeError instanceof Error ? feeError.message : String(feeError);
+            console.warn(
+              `[SwapInterface] Failed to add fee instruction: ${feeErrorMsg}. Proceeding without fee.`,
+            );
+            // Don't throw - allow swap to proceed without fee
+          }
         } else {
           console.warn(
             "[SwapInterface] Token not found in list, cannot add fee",

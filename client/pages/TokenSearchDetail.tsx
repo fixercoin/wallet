@@ -7,7 +7,7 @@ import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
-import { getTokenMetadata } from "@/lib/services/solana-rpc";
+import { getTokenMetadata, KNOWN_TOKENS } from "@/lib/services/solana-rpc";
 
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();
@@ -53,8 +53,11 @@ export default function TokenSearchDetail() {
         ? parseFloat(dexToken.priceUsd)
         : undefined;
 
-      // Get logo from DexScreener API
-      const logoURI = dexToken.info?.imageUrl;
+      // Get logo from DexScreener API, fallback to KNOWN_TOKENS
+      let logoURI = dexToken.info?.imageUrl;
+      if (!logoURI && KNOWN_TOKENS[baseMint]) {
+        logoURI = KNOWN_TOKENS[baseMint].logoURI;
+      }
 
       const token: TokenInfo = {
         mint: baseMint,

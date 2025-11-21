@@ -11,7 +11,7 @@ export interface TokenMetadata {
 }
 
 // Basic known token list (minimal, can be expanded)
-const KNOWN_TOKENS: Record<string, TokenMetadata> = {
+export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   So11111111111111111111111111111111111111112: {
     mint: "So11111111111111111111111111111111111111112",
     symbol: "SOL",
@@ -55,7 +55,8 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     symbol: "FXM",
     name: "Fixorium",
     decimals: 6,
-    logoURI: "https://i.postimg.cc/k513N8nv/cropped-circle-image-(5).png",
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800",
   },
 };
 

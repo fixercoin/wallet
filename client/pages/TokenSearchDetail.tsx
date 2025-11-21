@@ -7,7 +7,7 @@ import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
-import { getTokenMetadata } from "@/lib/services/solana-rpc";
+import { getTokenMetadata, KNOWN_TOKENS } from "@/lib/services/solana-rpc";
 
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();
@@ -18,9 +18,11 @@ export default function TokenSearchDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
+  const tokenMintToCheck =
+    dexToken?.baseToken?.address || knownToken?.mint || mint;
   const alreadyAdded = useMemo(
-    () => tokens.some((t) => t.mint === mint),
-    [tokens, mint],
+    () => tokens.some((t) => t.mint === tokenMintToCheck),
+    [tokens, tokenMintToCheck],
   );
 
   useEffect(() => {
@@ -41,20 +43,24 @@ export default function TokenSearchDetail() {
   }, [mint]);
 
   const onAdd = async () => {
-    if (!dexToken) return;
     setAdding(true);
     try {
-      const baseMint = dexToken.baseToken?.address || mint;
+      const baseMint = dexToken?.baseToken?.address || knownToken?.mint || mint;
       const meta = await getTokenMetadata(baseMint).catch(() => null);
-      const decimals = meta?.decimals ?? 9;
-      const symbol = dexToken.baseToken?.symbol || meta?.symbol || "TOKEN";
-      const name = dexToken.baseToken?.name || meta?.name || symbol;
-      const priceUsd = dexToken.priceUsd
+      const decimals = meta?.decimals ?? knownToken?.decimals ?? 9;
+      const symbol =
+        dexToken?.baseToken?.symbol ||
+        knownToken?.symbol ||
+        meta?.symbol ||
+        "TOKEN";
+      const name =
+        dexToken?.baseToken?.name || knownToken?.name || meta?.name || symbol;
+      const priceUsd = dexToken?.priceUsd
         ? parseFloat(dexToken.priceUsd)
         : undefined;
 
-      // Get logo from DexScreener API
-      const logoURI = dexToken.info?.imageUrl;
+      // Get logo from DexScreener API, fallback to KNOWN_TOKENS
+      let logoURI = dexToken?.info?.imageUrl || knownToken?.logoURI;
 
       const token: TokenInfo = {
         mint: baseMint,
@@ -87,7 +93,9 @@ export default function TokenSearchDetail() {
     );
   }
 
-  if (!dexToken) {
+  // If token not found in DexScreener, check KNOWN_TOKENS
+  const knownToken = KNOWN_TOKENS[mint];
+  if (!dexToken && !knownToken) {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -100,10 +108,10 @@ export default function TokenSearchDetail() {
     );
   }
 
-  const img = dexToken.info?.imageUrl;
-  const symbol = dexToken.baseToken?.symbol || "";
-  const name = dexToken.baseToken?.name || symbol;
-  const priceUsd = dexToken.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
+  const img = dexToken?.info?.imageUrl || knownToken?.logoURI;
+  const symbol = dexToken?.baseToken?.symbol || knownToken?.symbol || "";
+  const name = dexToken?.baseToken?.name || knownToken?.name || symbol;
+  const priceUsd = dexToken?.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
 
   return (
     <div className="express-p2p-page dark-theme min-h-screen bg-gray-900 text-white">

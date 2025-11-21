@@ -41,23 +41,19 @@ export default function TokenSearchDetail() {
   }, [mint]);
 
   const onAdd = async () => {
-    if (!dexToken) return;
     setAdding(true);
     try {
-      const baseMint = dexToken.baseToken?.address || mint;
+      const baseMint = dexToken?.baseToken?.address || knownToken?.mint || mint;
       const meta = await getTokenMetadata(baseMint).catch(() => null);
-      const decimals = meta?.decimals ?? 9;
-      const symbol = dexToken.baseToken?.symbol || meta?.symbol || "TOKEN";
-      const name = dexToken.baseToken?.name || meta?.name || symbol;
-      const priceUsd = dexToken.priceUsd
+      const decimals = meta?.decimals ?? knownToken?.decimals ?? 9;
+      const symbol = dexToken?.baseToken?.symbol || knownToken?.symbol || meta?.symbol || "TOKEN";
+      const name = dexToken?.baseToken?.name || knownToken?.name || meta?.name || symbol;
+      const priceUsd = dexToken?.priceUsd
         ? parseFloat(dexToken.priceUsd)
         : undefined;
 
       // Get logo from DexScreener API, fallback to KNOWN_TOKENS
-      let logoURI = dexToken.info?.imageUrl;
-      if (!logoURI && KNOWN_TOKENS[baseMint]) {
-        logoURI = KNOWN_TOKENS[baseMint].logoURI;
-      }
+      let logoURI = dexToken?.info?.imageUrl || knownToken?.logoURI;
 
       const token: TokenInfo = {
         mint: baseMint,

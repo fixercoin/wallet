@@ -92,8 +92,8 @@ export default function AssetsPage() {
               <p className="text-3xl font-bold text-green-400">
                 $
                 {totalBalance.toLocaleString(undefined, {
-                  minimumFractionDigits: 1,
-                  maximumFractionDigits: 1,
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </p>
             </div>

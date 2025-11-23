@@ -408,31 +408,86 @@ export async function handleDexscreenerTokens(req, res) {
 export async function handleDexscreenerSearch(req, res) {
   try {
     const { q } = req.query;
-    if (!q) {
-      return res.status(400).json({ error: "Missing search query" });
+
+    if (!q || typeof q !== "string") {
+      return res.status(400).json({
+        error: "Missing or invalid 'q' parameter for search query.",
+      });
     }
 
-    const path = `/search/?q=${encodeURIComponent(String(q))}`;
-    const data = await tryDexscreenerEndpoints(path);
-    res.json(data);
+    console.log(`[DexScreener] Search request for: ${q}`);
+
+    const data = await tryDexscreenerEndpoints(
+      `/search/?q=${encodeURIComponent(q)}`
+    );
+
+    const solanaPairs = (data.pairs || [])
+      .filter((pair) => pair.chainId === "solana")
+      .slice(0, 20);
+
+    console.log(
+      `[DexScreener] ✅ Search response: ${solanaPairs.length} results`
+    );
+    res.json({
+      schemaVersion: data.schemaVersion || "1.0.0",
+      pairs: solanaPairs,
+    });
   } catch (error) {
-    res.status(502).json({
-      error: "DexScreener search failed",
-      details: error.message,
+    console.error("[DexScreener] ❌ Search proxy error:", {
+      query: req.query.q,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    res.status(500).json({
+      error: {
+        message: error instanceof Error ? error.message : "Internal error",
+        details: String(error),
+      },
+      schemaVersion: "1.0.0",
+      pairs: [],
     });
   }
 }
 
 export async function handleDexscreenerTrending(req, res) {
   try {
-    const { chainId = "solana" } = req.query;
-    const path = `/search/?q=&chainId=${chainId}`;
-    const data = await tryDexscreenerEndpoints(path);
-    res.json(data);
+    console.log("[DexScreener] Trending tokens request");
+
+    const data = await tryDexscreenerEndpoints("/pairs/solana");
+
+    const trendingPairs = (data.pairs || [])
+      .filter(
+        (pair) =>
+          pair.volume?.h24 > 1000 &&
+          pair.liquidity?.usd &&
+          pair.liquidity.usd > 10000
+      )
+      .sort((a, b) => {
+        const aVolume = a.volume?.h24 || 0;
+        const bVolume = b.volume?.h24 || 0;
+        return bVolume - aVolume;
+      })
+      .slice(0, 50);
+
+    console.log(
+      `[DexScreener] ✅ Trending response: ${trendingPairs.length} trending pairs`
+    );
+    res.json({
+      schemaVersion: data.schemaVersion || "1.0.0",
+      pairs: trendingPairs,
+    });
   } catch (error) {
-    res.status(502).json({
-      error: "DexScreener trending failed",
-      details: error.message,
+    console.error("[DexScreener] ❌ Trending proxy error:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    res.status(500).json({
+      error: {
+        message: error instanceof Error ? error.message : "Internal error",
+        details: String(error),
+      },
+      schemaVersion: "1.0.0",
+      pairs: [],
     });
   }
 }

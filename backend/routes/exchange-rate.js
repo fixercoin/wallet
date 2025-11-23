@@ -31,6 +31,54 @@ const MINT_TO_SEARCH_SYMBOL = {
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
 };
 
+async function fetchPriceFromJupiter(mint) {
+  try {
+    console.log(`[Jupiter Fallback] Fetching price for ${mint} from Jupiter`);
+
+    const params = new URLSearchParams({ ids: mint });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(`https://price.jup.ag/v4/price?${params}`, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(
+        `[Jupiter Fallback] API returned ${response.status} for mint ${mint}`,
+      );
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.data && data.data[mint] && data.data[mint].price) {
+      const price = data.data[mint].price;
+      if (isFinite(price) && price > 0) {
+        console.log(
+          `[Jupiter Fallback] ✅ Got price for ${mint} from Jupiter: $${price}`,
+        );
+        return price;
+      }
+    }
+
+    console.warn(`[Jupiter Fallback] No valid price data for ${mint}`);
+    return null;
+  } catch (error) {
+    console.warn(
+      `[Jupiter Fallback] Failed to fetch price:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
+
 async function fetchTokenPriceFromDexScreener(mint) {
   const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
   if (pairAddress) {

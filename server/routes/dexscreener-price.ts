@@ -117,6 +117,20 @@ async function getDerivedTokenPrice(
       }
     }
 
+    // If DexScreener failed, try Jupiter API
+    if (tokenPrice === null) {
+      console.log(
+        `[Derived Price] DexScreener failed for ${tokenSymbol}, trying Jupiter...`,
+      );
+      const jupiterPrice = await fetchPriceFromJupiter(tokenMint);
+      if (jupiterPrice !== null) {
+        tokenPrice = jupiterPrice;
+        console.log(
+          `[Derived Price] ✅ Got ${tokenSymbol} price from Jupiter: $${jupiterPrice.toFixed(8)}`,
+        );
+      }
+    }
+
     // If we still don't have a price, return null
     if (tokenPrice === null || !isFinite(tokenPrice) || tokenPrice <= 0) {
       console.warn(

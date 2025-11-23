@@ -259,7 +259,7 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
         }
       }
 
-      console.warn(`[SOL Price] Invalid or missing price data, using fallback`);
+      console.warn(`[SOL Price] Invalid or missing price data from DexScreener`);
     } catch (error) {
       console.warn(
         `[SOL Price] DexScreener fetch failed:`,
@@ -267,8 +267,26 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
       );
     }
 
+    // Try Jupiter API as fallback
+    console.log(`[SOL Price] Trying Jupiter API for SOL price...`);
+    const jupiterPrice = await fetchPriceFromJupiter(SOL_MINT);
+    if (jupiterPrice !== null) {
+      console.log(`[SOL Price] ✅ Got SOL price from Jupiter: $${jupiterPrice}`);
+      return res.json({
+        token: "SOL",
+        price: jupiterPrice,
+        priceUsd: jupiterPrice,
+        priceChange24h: 0,
+        volume24h: 0,
+        marketCap: 0,
+        source: "jupiter",
+      });
+    }
+
     // Fallback response with status 200 (not 502) to ensure client receives valid JSON
-    console.log(`[SOL Price] Returning fallback price: $${FALLBACK_SOL_PRICE}`);
+    console.log(
+      `[SOL Price] Both DexScreener and Jupiter failed, using hardcoded fallback: $${FALLBACK_SOL_PRICE}`,
+    );
     return res.json({
       token: "SOL",
       price: FALLBACK_SOL_PRICE,

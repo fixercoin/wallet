@@ -275,6 +275,60 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
   }
 };
 
+/**
+ * Fetch price from Jupiter API as fallback
+ */
+async function fetchPriceFromJupiter(mint: string): Promise<number | null> {
+  try {
+    console.log(`[Jupiter Fallback] Fetching price for ${mint} from Jupiter`);
+
+    const params = new URLSearchParams({ ids: mint });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(`https://price.jup.ag/v4/price?${params}`, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(
+        `[Jupiter Fallback] API returned ${response.status} for mint ${mint}`,
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      data?: Record<string, { price: number }>;
+    };
+
+    if (data.data && data.data[mint] && data.data[mint].price) {
+      const price = data.data[mint].price;
+      if (isFinite(price) && price > 0) {
+        console.log(
+          `[Jupiter Fallback] ✅ Got price for ${mint} from Jupiter: $${price}`,
+        );
+        return price;
+      }
+    }
+
+    console.warn(`[Jupiter Fallback] No valid price data for ${mint}`);
+    return null;
+  } catch (error) {
+    console.warn(
+      `[Jupiter Fallback] Failed to fetch price:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
+
 export const handleTokenPrice: RequestHandler = async (req, res) => {
   try {
     const tokenParam = (

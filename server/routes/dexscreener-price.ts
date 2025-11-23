@@ -444,6 +444,20 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
               console.warn(`[Token Price] Token lookup failed:`, e);
             }
           }
+
+          // If DexScreener completely failed, try Jupiter as fallback
+          if (priceUsd === null && mint) {
+            console.log(
+              `[Token Price] DexScreener failed for ${token}, trying Jupiter fallback...`,
+            );
+            const jupiterPrice = await fetchPriceFromJupiter(mint);
+            if (jupiterPrice !== null) {
+              priceUsd = jupiterPrice;
+              console.log(
+                `[Token Price] ✅ Got ${token} price from Jupiter: $${jupiterPrice}`,
+              );
+            }
+          }
         }
       } else if (mint) {
         const pairAddress = MINT_TO_PAIR_ADDRESS[mint];

@@ -72,10 +72,12 @@ async function tryDexscreenerEndpoints(path) {
         const text = await response.text();
         if (text.startsWith("<!doctype") || text.startsWith("<html")) {
           throw new Error(
-            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`
+            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`,
           );
         }
-        throw new Error(`Invalid content-type from ${endpoint}: ${contentType}`);
+        throw new Error(
+          `Invalid content-type from ${endpoint}: ${contentType}`,
+        );
       }
 
       const data = await response.json();
@@ -85,7 +87,7 @@ async function tryDexscreenerEndpoints(path) {
       lastError = error;
       console.warn(
         `DexScreener endpoint ${endpoint} failed:`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
       if (i < DEXSCREENER_ENDPOINTS.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -179,13 +181,13 @@ export async function handleDexscreenerTokens(req, res) {
 
     // Find mints that weren't found in the initial batch request
     const missingMints = Array.from(requestedMintsSet).filter(
-      (m) => !foundMintsSet.has(m)
+      (m) => !foundMintsSet.has(m),
     );
 
     // For missing mints, try pair address lookup first, then search fallback
     if (missingMints.length > 0) {
       console.log(
-        `[DexScreener] ${missingMints.length} mints not found via batch, trying pair/search fallback`
+        `[DexScreener] ${missingMints.length} mints not found via batch, trying pair/search fallback`,
       );
 
       for (const mint of missingMints) {
@@ -196,10 +198,10 @@ export async function handleDexscreenerTokens(req, res) {
         if (pairAddress) {
           try {
             console.log(
-              `[DexScreener] Trying pair address lookup for ${mint}: ${pairAddress}`
+              `[DexScreener] Trying pair address lookup for ${mint}: ${pairAddress}`,
             );
             const pairData = await tryDexscreenerEndpoints(
-              `/pairs/solana/${pairAddress}`
+              `/pairs/solana/${pairAddress}`,
             );
 
             if (
@@ -218,7 +220,7 @@ export async function handleDexscreenerTokens(req, res) {
                   basePrice > 0 ? (1 / basePrice).toFixed(20) : "0";
 
                 console.log(
-                  `[DexScreener] Swapping tokens: ${mint} was quoteToken, inverting price`
+                  `[DexScreener] Swapping tokens: ${mint} was quoteToken, inverting price`,
                 );
 
                 pair = {
@@ -233,20 +235,20 @@ export async function handleDexscreenerTokens(req, res) {
               }
 
               console.log(
-                `[DexScreener] ✅ Found ${mint} via pair address, priceUsd: ${pair.priceUsd || "N/A"}`
+                `[DexScreener] ✅ Found ${mint} via pair address, priceUsd: ${pair.priceUsd || "N/A"}`,
               );
               results.push(pair);
               foundMintsSet.add(mint);
               found = true;
             } else {
               console.warn(
-                `[DexScreener] Pair lookup returned no pairs for ${mint}`
+                `[DexScreener] Pair lookup returned no pairs for ${mint}`,
               );
             }
           } catch (pairErr) {
             console.warn(
               `[DexScreener] ⚠️ Pair address lookup failed for ${mint}:`,
-              pairErr instanceof Error ? pairErr.message : String(pairErr)
+              pairErr instanceof Error ? pairErr.message : String(pairErr),
             );
           }
         }
@@ -257,34 +259,34 @@ export async function handleDexscreenerTokens(req, res) {
           if (searchSymbol) {
             try {
               console.log(
-                `[DexScreener] Searching for ${mint} using symbol: ${searchSymbol}`
+                `[DexScreener] Searching for ${mint} using symbol: ${searchSymbol}`,
               );
               const searchData = await tryDexscreenerEndpoints(
-                `/search/?q=${encodeURIComponent(searchSymbol)}`
+                `/search/?q=${encodeURIComponent(searchSymbol)}`,
               );
 
               if (searchData?.pairs && Array.isArray(searchData.pairs)) {
                 let matchingPair = searchData.pairs.find(
                   (p) =>
-                    p.baseToken?.address === mint && p.chainId === "solana"
+                    p.baseToken?.address === mint && p.chainId === "solana",
                 );
 
                 if (!matchingPair) {
                   matchingPair = searchData.pairs.find(
                     (p) =>
-                      p.quoteToken?.address === mint && p.chainId === "solana"
+                      p.quoteToken?.address === mint && p.chainId === "solana",
                   );
                 }
 
                 if (!matchingPair) {
                   matchingPair = searchData.pairs.find(
-                    (p) => p.baseToken?.address === mint
+                    (p) => p.baseToken?.address === mint,
                   );
                 }
 
                 if (!matchingPair) {
                   matchingPair = searchData.pairs.find(
-                    (p) => p.quoteToken?.address === mint
+                    (p) => p.quoteToken?.address === mint,
                   );
                 }
 
@@ -294,20 +296,22 @@ export async function handleDexscreenerTokens(req, res) {
 
                 if (matchingPair) {
                   console.log(
-                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, priceUsd: ${matchingPair.priceUsd || "N/A"}`
+                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                   );
                   results.push(matchingPair);
                   foundMintsSet.add(mint);
                 } else {
                   console.warn(
-                    `[DexScreener] ⚠️ Search returned no matching results for ${mint}`
+                    `[DexScreener] ⚠️ Search returned no matching results for ${mint}`,
                   );
                 }
               }
             } catch (searchErr) {
               console.warn(
                 `[DexScreener] ⚠️ Search fallback failed for ${mint}:`,
-                searchErr instanceof Error ? searchErr.message : String(searchErr)
+                searchErr instanceof Error
+                  ? searchErr.message
+                  : String(searchErr),
               );
             }
           }
@@ -324,12 +328,12 @@ export async function handleDexscreenerTokens(req, res) {
             const symbol =
               STABLE_MINTS[mint] || MINT_TO_SEARCH_SYMBOL[mint] || undefined;
             const fallbackPrice = symbol
-              ? FALLBACK_USD[symbol] ?? FALLBACK_USD.FIXERCOIN
+              ? (FALLBACK_USD[symbol] ?? FALLBACK_USD.FIXERCOIN)
               : undefined;
 
             if (symbol && typeof fallbackPrice === "number") {
               console.log(
-                `[DexScreener] Adding synthetic fallback for ${mint} -> ${symbol} price=${fallbackPrice}`
+                `[DexScreener] Adding synthetic fallback for ${mint} -> ${symbol} price=${fallbackPrice}`,
               );
               const synthetic = {
                 chainId: "solana",
@@ -385,7 +389,7 @@ export async function handleDexscreenerTokens(req, res) {
       `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found` +
         (missingMints.length > 0
           ? ` (${missingMints.length} required fallback)`
-          : "")
+          : ""),
     );
     res.json({ schemaVersion, pairs: solanaPairs });
   } catch (error) {
@@ -418,7 +422,7 @@ export async function handleDexscreenerSearch(req, res) {
     console.log(`[DexScreener] Search request for: ${q}`);
 
     const data = await tryDexscreenerEndpoints(
-      `/search/?q=${encodeURIComponent(q)}`
+      `/search/?q=${encodeURIComponent(q)}`,
     );
 
     const solanaPairs = (data.pairs || [])
@@ -426,7 +430,7 @@ export async function handleDexscreenerSearch(req, res) {
       .slice(0, 20);
 
     console.log(
-      `[DexScreener] ✅ Search response: ${solanaPairs.length} results`
+      `[DexScreener] ✅ Search response: ${solanaPairs.length} results`,
     );
     res.json({
       schemaVersion: data.schemaVersion || "1.0.0",
@@ -460,7 +464,7 @@ export async function handleDexscreenerTrending(req, res) {
         (pair) =>
           pair.volume?.h24 > 1000 &&
           pair.liquidity?.usd &&
-          pair.liquidity.usd > 10000
+          pair.liquidity.usd > 10000,
       )
       .sort((a, b) => {
         const aVolume = a.volume?.h24 || 0;
@@ -470,7 +474,7 @@ export async function handleDexscreenerTrending(req, res) {
       .slice(0, 50);
 
     console.log(
-      `[DexScreener] ✅ Trending response: ${trendingPairs.length} trending pairs`
+      `[DexScreener] ✅ Trending response: ${trendingPairs.length} trending pairs`,
     );
     res.json({
       schemaVersion: data.schemaVersion || "1.0.0",

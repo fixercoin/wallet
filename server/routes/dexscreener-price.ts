@@ -273,7 +273,9 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
         }
       }
 
-      console.warn(`[SOL Price] Invalid or missing price data from DexScreener`);
+      console.warn(
+        `[SOL Price] Invalid or missing price data from DexScreener`,
+      );
     } catch (error) {
       console.warn(
         `[SOL Price] DexScreener fetch failed:`,
@@ -285,7 +287,9 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
     console.log(`[SOL Price] Trying Jupiter API for SOL price...`);
     const jupiterPrice = await fetchPriceFromJupiter(SOL_MINT);
     if (jupiterPrice !== null) {
-      console.log(`[SOL Price] ✅ Got SOL price from Jupiter: $${jupiterPrice}`);
+      console.log(
+        `[SOL Price] ✅ Got SOL price from Jupiter: $${jupiterPrice}`,
+      );
       return res.json({
         token: "SOL",
         price: jupiterPrice,

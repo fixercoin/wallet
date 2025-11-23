@@ -236,7 +236,9 @@ async function fetchTokenPriceFromDexScreener(mint) {
       return jupiterPrice;
     }
 
-    console.warn(`[DexScreener] No price found in DexScreener or Jupiter for ${mint}`);
+    console.warn(
+      `[DexScreener] No price found in DexScreener or Jupiter for ${mint}`,
+    );
     return null;
   } catch (error) {
     console.error(
@@ -245,7 +247,9 @@ async function fetchTokenPriceFromDexScreener(mint) {
     );
 
     // Try Jupiter as last resort
-    console.log(`[DexScreener] Error caught, trying Jupiter fallback for ${mint}...`);
+    console.log(
+      `[DexScreener] Error caught, trying Jupiter fallback for ${mint}...`,
+    );
     const jupiterPrice = await fetchPriceFromJupiter(mint);
     if (jupiterPrice !== null) {
       return jupiterPrice;

@@ -186,9 +186,27 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
       );
     }
 
-    // Fallback response - return zero price but valid JSON
+    // Try Jupiter API as fallback
     console.log(
-      `[DexScreener Price] Returning zero price fallback for ${token}`,
+      `[DexScreener Price] DexScreener failed for ${token}, trying Jupiter API...`,
+    );
+    const jupiterPrice = await fetchPriceFromJupiter(token);
+    if (jupiterPrice !== null) {
+      console.log(
+        `[DexScreener Price] ✅ Got price from Jupiter: $${jupiterPrice}`,
+      );
+      return res.json({
+        token,
+        price: jupiterPrice,
+        priceUsd: jupiterPrice.toString(),
+        data: null,
+        source: "jupiter",
+      });
+    }
+
+    // Fallback response - return zero price if both APIs fail
+    console.log(
+      `[DexScreener Price] Both DexScreener and Jupiter failed for ${token}`,
     );
     return res.json({
       token,
@@ -196,7 +214,7 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
       priceUsd: "0",
       data: null,
       source: "fallback",
-      error: "Token price not available from DexScreener",
+      error: "Token price not available from DexScreener or Jupiter",
     });
   } catch (error) {
     console.error(`[DexScreener Price] Handler error:`, error);

@@ -227,13 +227,30 @@ async function fetchTokenPriceFromDexScreener(mint) {
       }
     }
 
-    console.warn(`[DexScreener] No pairs found in response for ${mint}`);
+    // If DexScreener completely failed, try Jupiter API
+    console.log(
+      `[DexScreener] No pairs found, trying Jupiter API for ${mint}...`,
+    );
+    const jupiterPrice = await fetchPriceFromJupiter(mint);
+    if (jupiterPrice !== null) {
+      return jupiterPrice;
+    }
+
+    console.warn(`[DexScreener] No price found in DexScreener or Jupiter for ${mint}`);
     return null;
   } catch (error) {
     console.error(
       `[DexScreener] ❌ Failed to fetch ${mint}:`,
       error instanceof Error ? error.message : String(error),
     );
+
+    // Try Jupiter as last resort
+    console.log(`[DexScreener] Error caught, trying Jupiter fallback for ${mint}...`);
+    const jupiterPrice = await fetchPriceFromJupiter(mint);
+    if (jupiterPrice !== null) {
+      return jupiterPrice;
+    }
+
     return null;
   }
 }

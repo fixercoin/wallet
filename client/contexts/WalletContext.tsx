@@ -700,18 +700,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       );
 
       // Calculate SOL-based prices for tokens without valid prices
-      const tokensNeedingPrices = visibleTokens.filter(
-        (token) => {
-          const price = prices[token.mint];
-          const isInvalid = typeof price !== "number" || !isFinite(price) || price <= 0;
-          if (isInvalid) {
-            console.log(
-              `[WalletContext] Token ${token.symbol} (${token.mint}) needs price. Current: ${price}`,
-            );
-          }
-          return isInvalid;
-        },
-      );
+      const tokensNeedingPrices = visibleTokens.filter((token) => {
+        const price = prices[token.mint];
+        const isInvalid =
+          typeof price !== "number" || !isFinite(price) || price <= 0;
+        if (isInvalid) {
+          console.log(
+            `[WalletContext] Token ${token.symbol} (${token.mint}) needs price. Current: ${price}`,
+          );
+        }
+        return isInvalid;
+      });
 
       console.log(
         `[WalletContext] Token price analysis: ${visibleTokens.length} visible tokens, ${tokensNeedingPrices.length} need prices`,
@@ -729,7 +728,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
 
           try {
-            const priceData = await getTokenPriceBySol(token.mint, token.decimals);
+            const priceData = await getTokenPriceBySol(
+              token.mint,
+              token.decimals,
+            );
             if (priceData && priceData.tokenUsd > 0) {
               console.log(
                 `[WalletContext] ✅ SOL-based price for ${token.symbol}: $${priceData.tokenUsd.toFixed(8)}`,
@@ -748,11 +750,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const calculatedPrices = await Promise.all(solPricePromises);
         calculatedPrices.forEach(({ mint, price }) => {
           const existingPrice = prices[mint];
-          const hasValidPrice = typeof existingPrice === "number" && isFinite(existingPrice) && existingPrice > 0;
+          const hasValidPrice =
+            typeof existingPrice === "number" &&
+            isFinite(existingPrice) &&
+            existingPrice > 0;
           if (price && price > 0 && !hasValidPrice) {
             prices[mint] = price;
             priceSource = "sol-derived";
-            console.log(`[WalletContext] Updated price for ${mint} using SOL-derived pricing`);
+            console.log(
+              `[WalletContext] Updated price for ${mint} using SOL-derived pricing`,
+            );
           }
         });
       }

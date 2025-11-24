@@ -979,7 +979,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol} - ${typeof token.price === 'number' && isFinite(token.price) ? token.price.toFixed(token.price < 0.01 ? 6 : 2) : '0.00'}
+                          {token.symbol} - $
+                          {typeof token.price === "number" &&
+                          isFinite(token.price)
+                            ? token.price.toFixed(token.price < 0.01 ? 6 : 2)
+                            : "0.00"}
                         </span>
                       </div>
 
@@ -991,9 +995,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
 
                         {percentChange !== null && (
-                          <span className={`font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
-                            isPositive ? "text-green-400" : "text-red-400"
-                          }`}>
+                          <span
+                            className={`font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
+                              isPositive ? "text-green-400" : "text-red-400"
+                            }`}
+                          >
                             {isPositive ? "+" : ""}
                             {percentChange.toFixed(2)}%
                           </span>

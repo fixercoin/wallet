@@ -473,10 +473,24 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       }
 
       const totalElapsed = (Date.now() - startTime) / 1000;
-      toast({
-        title: "Airdrop Completed",
-        description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s.`,
-      });
+      if (sent === 0) {
+        toast({
+          title: "Airdrop Failed",
+          description: "No tokens were sent. Check console for details and ensure recipients have token accounts.",
+          variant: "destructive",
+        });
+      } else if (sent < recipients.length) {
+        toast({
+          title: "Airdrop Partial",
+          description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s. Some batches failed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Airdrop Completed",
+          description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s.`,
+        });
+      }
       setIsRunning(false);
       refreshBalance();
       refreshTokens();

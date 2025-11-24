@@ -408,7 +408,19 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 recipientPubkey,
               );
 
-              // Add transfer instruction - no pre-checks
+              // Check if recipient ATA exists
+              const recipientAccountInfo = await rpcCall("getAccountInfo", [
+                recipientAta.toString(),
+                { encoding: "base64" },
+              ]);
+
+              // Skip if recipient doesn't have ATA for this token
+              if (!recipientAccountInfo?.value) {
+                console.warn(`Skipping ${r}: no ATA for this token`);
+                continue;
+              }
+
+              // Add transfer instruction only if ATA exists
               tx.add(
                 createTransferCheckedInstruction(
                   senderAta,

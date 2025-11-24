@@ -142,8 +142,8 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
-                      <div className="flex flex-col gap-1 flex-1">
+                    <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <p
                           className="font-semibold text-white whitespace-nowrap"
                           style={{ fontSize: "11px" }}
@@ -159,7 +159,7 @@ export default function AssetsPage() {
                             : "$0.00"}
                         </p>
                       </div>
-                      <div className="flex flex-col gap-1 items-end flex-1">
+                      <div className="flex items-center gap-4 flex-1">
                         <p
                           className="text-gray-300 whitespace-nowrap font-medium"
                           style={{ fontSize: "11px" }}
@@ -174,7 +174,25 @@ export default function AssetsPage() {
                             ? `$${(token.balance || 0) * token.price > 0 ? formatBalance((token.balance || 0) * token.price) : "0.00"}`
                             : "$0.00"}
                         </p>
+                        <p
+                          className={`whitespace-nowrap font-medium ${
+                            (token.priceChange24h || 0) >= 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                          style={{ fontSize: "10px" }}
+                        >
+                          {typeof token.priceChange24h === "number"
+                            ? `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`
+                            : "0.00%"}
+                        </p>
                       </div>
+                      <Button
+                        onClick={() => navigate("/assets/deposit")}
+                        className="border border-green-500 text-green-500 hover:bg-green-500/10 bg-transparent rounded-lg px-3 py-1.5 text-xs font-medium transition-all flex-shrink-0"
+                      >
+                        ADD
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

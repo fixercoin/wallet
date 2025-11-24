@@ -979,7 +979,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol}/USDT
+                          {token.symbol}
                         </span>
                       </div>
 

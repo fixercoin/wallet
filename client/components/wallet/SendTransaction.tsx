@@ -254,21 +254,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     }
   };
 
-  const isNetworkError = (errorMsg: string): boolean => {
-    const lowerMsg = (errorMsg || "").toLowerCase();
-    return (
-      lowerMsg.includes("fetch") ||
-      lowerMsg.includes("network") ||
-      lowerMsg.includes("timeout") ||
-      lowerMsg.includes("abort") ||
-      lowerMsg.includes("connection") ||
-      lowerMsg.includes("econnrefused") ||
-      lowerMsg.includes("enotfound") ||
-      lowerMsg.includes("failed to fetch") ||
-      lowerMsg.includes("net::")
-    );
-  };
-
   const getLatestBlockhashProxy = async (): Promise<string> => {
     // Use direct RPC call for blockhash
     try {

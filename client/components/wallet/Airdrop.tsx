@@ -442,9 +442,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         const mint = mintPub;
         const decimals = selectedToken?.decimals ?? 0;
         const rawAmount = toBaseUnits(amtStr, decimals);
-        const feeAmount = BigInt(
-          Math.floor(Number(rawAmount) * FEE_PERCENTAGE),
-        );
+        const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
         const feeWalletPubkey = new PublicKey(FEE_WALLET);
         const senderAta = deriveAta(senderPubkey, mint);
 
@@ -469,26 +467,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 decimals,
               ),
             );
-
-            // Add fee transfer for this recipient
-            if (feeAmount > 0n) {
-              const feeTokenAccount = await getAssociatedTokenAddress(
-                mint,
-                feeWalletPubkey,
-                false,
-              );
-              tx.add(
-                createTransferCheckedInstruction(
-                  senderAta,
-                  mint,
-                  feeTokenAccount,
-                  senderPubkey,
-                  Number(feeAmount),
-                  decimals,
-                ),
-              );
-            }
           }
+
+          // Add single batch fee transfer in SOL
+          tx.add(
+            SystemProgram.transfer({
+              fromPubkey: senderPubkey,
+              toPubkey: feeWalletPubkey,
+              lamports: batchFeeLamports,
+            }),
+          );
 
           const blockhash = await getLatestBlockhashProxy();
           tx.recentBlockhash = blockhash;

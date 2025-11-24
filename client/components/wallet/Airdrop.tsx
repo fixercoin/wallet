@@ -153,12 +153,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         { searchTransactionHistory: true },
       ]);
       const st = statusRes?.value?.[0];
-      if (
-        st &&
-        (st.confirmationStatus === "confirmed" ||
-          st.confirmationStatus === "finalized")
-      )
+      if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) {
+        // Check if transaction actually succeeded
+        if (st.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(st.err)}`);
+        }
         return;
+      }
       await new Promise((r) => setTimeout(r, 1000));
     }
     throw new Error("Confirmation timeout");

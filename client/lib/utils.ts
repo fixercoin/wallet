@@ -35,8 +35,8 @@ export function formatAmountCompact(
 ): string {
   if (!amount || isNaN(amount)) return "0.00";
 
-  // Don't abbreviate certain tokens
-  if (["SOL", "USDC", "FIXERCOIN", "LOCKER"].includes(symbol || "")) {
+  // Only SOL and USDC use full format, all other tokens use abbreviation
+  if (["SOL", "USDC"].includes(symbol || "")) {
     return formatTokenAmount(amount, symbol);
   }
 

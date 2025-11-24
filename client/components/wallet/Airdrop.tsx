@@ -171,31 +171,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     return BigInt(full);
   };
 
-  const u64LE = (n: bigint): Uint8Array => {
-    const out = new Uint8Array(8);
-    let x = n;
-    for (let i = 0; i < 8; i++) {
-      out[i] = Number(x & BigInt(0xff));
-      x >>= BigInt(8);
-    }
-    return out;
-  };
-
-  const TOKEN_PROGRAM_ID = new PublicKey(
-    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-  );
-  const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  );
-
-  const deriveAta = (owner: PublicKey, mint: PublicKey): PublicKey => {
-    const [ata] = PublicKey.findProgramAddressSync(
-      [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    );
-    return ata;
-  };
-
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
     try {

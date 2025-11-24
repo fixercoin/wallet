@@ -838,9 +838,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-white font-medium">Processing transaction</p>
+                  <p className="text-white font-medium">
+                    Processing transaction
+                  </p>
                   <p className="text-gray-300 text-sm">Please wait...</p>
-                  <p className="text-gray-400 text-xs">May take up to 40 seconds</p>
+                  <p className="text-gray-400 text-xs">
+                    May take up to 40 seconds
+                  </p>
                 </div>
               </div>
             </div>

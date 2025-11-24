@@ -838,7 +838,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
             </div>
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900">Processing Transaction</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Processing Transaction
+            </h2>
             <p className="text-gray-600">
               Please wait while your transaction is being sent to the blockchain
             </p>

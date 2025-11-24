@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, getApiHeaders } from "@/lib/api-client";
 import { jupiterAPI } from "@/lib/services/jupiter";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
 import { VersionedTransaction, Keypair } from "@solana/web3.js";

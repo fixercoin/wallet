@@ -193,3 +193,91 @@ export async function getDerivedPrice(
   cache.set(token, result);
   return result;
 }
+
+async function getGenericTokensPerSol(
+  tokenMint: string,
+  tokenDecimals: number,
+): Promise<number | null> {
+  try {
+    const solMint = "So11111111111111111111111111111111111111112";
+
+    // Try Jupiter to get the exchange rate
+    const rawAmt = jupiterAPI.formatSwapAmount(1, 9); // SOL has 9 decimals
+    try {
+      const q = await jupiterAPI.getQuote(solMint, tokenMint, rawAmt as any);
+      if (!q || !q.outAmount || q.outAmount === "0") {
+        console.warn(`No Jupiter quote for token ${tokenMint}`);
+      } else {
+        const out = jupiterAPI.parseSwapAmount(q.outAmount, tokenDecimals);
+        if (Number.isFinite(out) && out > 0) {
+          console.log(
+            `1 SOL = ${out.toFixed(2)} tokens (mint=${tokenMint}, from Jupiter)`,
+          );
+          return out;
+        }
+      }
+    } catch (err) {
+      console.warn(`Jupiter error for token ${tokenMint}:`, err);
+    }
+
+    // If Jupiter failed, try DexScreener
+    try {
+      const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
+      if (dexData?.priceUsd) {
+        const tokenUsd = parseFloat(dexData.priceUsd);
+        if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
+          const solUsd = await getSolUsd();
+          const tokensPerSol = solUsd / tokenUsd;
+          console.log(
+            `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
+          );
+          return tokensPerSol;
+        }
+      }
+    } catch (err) {
+      console.warn(`DexScreener error for token ${tokenMint}:`, err);
+    }
+
+    console.warn(`No quote found for token ${tokenMint}`);
+    return null;
+  } catch (error) {
+    console.warn(`Error getting tokens per SOL for ${tokenMint}:`, error);
+    return null;
+  }
+}
+
+export async function getTokenPriceBySol(
+  mint: string,
+  decimals: number,
+): Promise<GenericTokenPrice | null> {
+  const now = Date.now();
+  const cached = genericTokenCache.get(mint);
+  if (cached && now - cached.updatedAt < CACHE_TTL_MS) return cached;
+
+  const [solUsd, tps] = await Promise.all([
+    getSolUsd(),
+    getGenericTokensPerSol(mint, decimals),
+  ]);
+
+  let tokensPerSol = tps ?? 0;
+  let tokenUsd = 0;
+
+  if (tokensPerSol > 0) {
+    tokenUsd = solUsd / tokensPerSol;
+  } else {
+    // If Jupiter/DexScreener failed, return null
+    // The caller should handle fallback to existing price data
+    console.warn(`Unable to calculate price for token ${mint}`);
+    return null;
+  }
+
+  const result: GenericTokenPrice = {
+    mint,
+    tokensPerSol,
+    tokenUsd,
+    solUsd,
+    updatedAt: now,
+  };
+  genericTokenCache.set(mint, result);
+  return result;
+}

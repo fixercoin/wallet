@@ -403,6 +403,17 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 recipientPubkey,
               );
 
+              // Validate recipient ATA exists before attempting transfer
+              const recipientAccountInfo = await rpcCall("getAccountInfo", [
+                recipientAta.toString(),
+                { encoding: "base64" },
+              ]);
+
+              if (!recipientAccountInfo?.value) {
+                console.warn(`Skipping recipient ${r}: no token account for this token`);
+                continue;
+              }
+
               // Use the proper SPL token transfer instruction
               tx.add(
                 createTransferCheckedInstruction(

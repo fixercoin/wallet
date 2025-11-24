@@ -101,12 +101,15 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   const rpcCall = async (method: string, params: any[]): Promise<any> => {
-    const r = await fetch("/api/solana-rpc", {
+    const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
     });
-    if (!r.ok) throw new Error(`RPC ${r.status}`);
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+    }
     const j = await r.json();
     if (j.error) throw new Error(j.error.message || "RPC error");
     return j.result;
@@ -127,12 +130,15 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       params: [b64, { skipPreflight: false, preflightCommitment: "confirmed" }],
       id: Date.now(),
     };
-    const resp = await fetch("/api/solana-rpc", {
+    const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!resp.ok) throw new Error(`RPC ${resp.status}`);
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => "");
+      throw new Error(`RPC ${resp.status}: ${t || resp.statusText}`);
+    }
     const j = await resp.json();
     if (j && j.error) throw new Error(j.error.message || "RPC error");
     return j.result || j;

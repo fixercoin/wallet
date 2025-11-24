@@ -955,18 +955,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-1">
                         <Avatar className="h-8 w-8 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                      </div>
-
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="text-left">
-                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                        <div className="text-left min-w-0">
+                          <p className="text-xs font-semibold text-white whitespace-nowrap truncate">
+                            {token.symbol}
+                          </p>
+                          <p className="text-xs text-gray-300 whitespace-nowrap">
                             $
                             {typeof token.price === "number" &&
                             isFinite(token.price)
@@ -979,18 +979,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ? "0.00"
                                 : "0.00000000"}
                           </p>
-                          <p className="text-xs text-gray-400 whitespace-nowrap">
-                            {token.symbol}
-                          </p>
                         </div>
-                        <div className="text-left">
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="text-right">
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatAmountCompact(token.balance, token.symbol)}
                           </p>
                         </div>
-                      </div>
-
-                      <div className="flex-shrink-0">
                         {typeof token.priceChange24h === "number" &&
                         isFinite(token.priceChange24h) ? (
                           <Button

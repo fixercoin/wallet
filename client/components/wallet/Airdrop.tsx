@@ -341,13 +341,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       selectedToken?.symbol === "SOL" ||
       selectedMint === "So11111111111111111111111111111111111111112";
 
+    const batchCount = Math.ceil(recipients.length / (isSolSel ? 80 : 20));
+    const totalFees = BATCH_FEE_SOL * batchCount;
+
     if (isSolSel) {
-      const requiredSol = amt * recipients.length;
+      const requiredSol = amt * recipients.length + totalFees;
       if (typeof balance !== "number" || balance < requiredSol) {
-        setError("Insufficient SOL for amount x recipients");
+        setError(`Insufficient SOL (need ${requiredSol.toFixed(6)} SOL including ${totalFees.toFixed(6)} SOL in fees)`);
         toast({
           title: "Insufficient SOL",
-          description: "Top up SOL or reduce amount/recipients.",
+          description: `Top up SOL or reduce amount/recipients. Fees: ${totalFees.toFixed(6)} SOL for ${batchCount} batch(es).`,
           variant: "destructive",
         });
         return;
@@ -359,6 +362,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         toast({
           title: "Insufficient tokens",
           description: `You need at least ${requiredToken} ${selectedToken.symbol}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      // For token transfers, also check SOL for fees
+      if (typeof balance !== "number" || balance < totalFees) {
+        setError(`Insufficient SOL for batch fees (${totalFees.toFixed(6)} SOL)`);
+        toast({
+          title: "Insufficient SOL",
+          description: `Need ${totalFees.toFixed(6)} SOL for batch fees (${batchCount} batch(es)).`,
           variant: "destructive",
         });
         return;

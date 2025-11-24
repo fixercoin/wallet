@@ -956,13 +956,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
-            const percentChange =
-              typeof token.priceChange24h === "number" &&
-              isFinite(token.priceChange24h)
-                ? token.priceChange24h
-                : null;
-            const isPositive = (percentChange ?? 0) >= 0;
-
             return (
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">

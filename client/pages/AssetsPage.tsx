@@ -38,6 +38,22 @@ export default function AssetsPage() {
     });
   };
 
+  const formatTokenAmountCompact = (amount: number | undefined): string => {
+    if (!amount || isNaN(amount) || amount === 0) return "0";
+
+    const absAmount = Math.abs(amount);
+    if (absAmount >= 1000000) {
+      return (amount / 1000000).toFixed(2).replace(/\.?0+$/, "") + "m";
+    }
+    if (absAmount >= 1000) {
+      return (amount / 1000).toFixed(2).replace(/\.?0+$/, "") + "k";
+    }
+    if (absAmount >= 1) {
+      return amount.toFixed(2).replace(/\.?0+$/, "");
+    }
+    return amount.toFixed(6).replace(/\.?0+$/, "");
+  };
+
   const sortedTokens = useMemo(() => {
     const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
     const arr = [...tokens].filter((t) => t.symbol !== "USDT");
@@ -107,7 +123,7 @@ export default function AssetsPage() {
             </div>
             <Button
               onClick={() => navigate("/assets/deposit")}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-medium"
+              className="border border-green-500 text-green-500 hover:bg-green-500/10 bg-transparent rounded-lg px-4 py-2 text-sm font-medium transition-all"
             >
               DEPOSITE ASSET
             </Button>
@@ -126,11 +142,11 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
+                    <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <p
                           className="font-semibold text-white whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
+                          style={{ fontSize: "11px" }}
                         >
                           {token.symbol}
                         </p>
@@ -143,21 +159,36 @@ export default function AssetsPage() {
                             : "$0.00"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-4">
+                        <p
+                          className="text-gray-300 whitespace-nowrap font-medium"
+                          style={{ fontSize: "11px" }}
+                        >
+                          {formatTokenAmountCompact(token.balance || 0)}
+                        </p>
                         <p
                           className="text-gray-400 whitespace-nowrap"
                           style={{ fontSize: "10px" }}
                         >
-                          {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                        <p
-                          className="font-semibold text-green-400 whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
-                        >
                           {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
+                            ? `$${(token.balance || 0) * token.price > 0 ? formatBalance((token.balance || 0) * token.price) : "0.00"}`
                             : "$0.00"}
                         </p>
+                        <button
+                          className={`border rounded px-2 py-1 whitespace-nowrap font-medium transition-all ${
+                            (token.priceChange24h || 0) >= 0
+                              ? "border-green-400 text-green-400 hover:bg-green-400/10"
+                              : "border-red-400 text-red-400 hover:bg-red-400/10"
+                          }`}
+                          style={{
+                            fontSize: "10px",
+                            backgroundColor: "transparent",
+                          }}
+                        >
+                          {typeof token.priceChange24h === "number"
+                            ? `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`
+                            : "0.00%"}
+                        </button>
                       </div>
                     </div>
                   </CardContent>

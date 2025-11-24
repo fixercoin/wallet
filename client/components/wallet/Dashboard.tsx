@@ -979,11 +979,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol} - $
-                          {typeof token.price === "number" &&
-                          isFinite(token.price)
-                            ? token.price.toFixed(token.price < 0.01 ? 6 : 2)
-                            : "0.00"}
+                          {token.symbol}
                         </span>
                       </div>
 

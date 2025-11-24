@@ -13,6 +13,8 @@ const RPC_ENDPOINTS = [
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
+  // Shyft RPC with embedded API key (reliable fallback)
+  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
   // Fallback public endpoints (prefer publicnode and ankr first)
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",

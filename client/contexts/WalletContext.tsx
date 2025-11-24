@@ -19,20 +19,9 @@ import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
+import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
-import {
-  encryptWalletData,
-  decryptWalletData,
-  isEncryptedWalletStorage,
-  isPlaintextWalletStorage,
-} from "@/lib/secure-storage";
-import {
-  getWalletPassword,
-  setWalletPassword,
-  markWalletAsPasswordProtected,
-  doesWalletRequirePassword,
-} from "@/lib/wallet-password";
 
 interface WalletContextType {
   wallet: WalletData | null; // active
@@ -51,9 +40,6 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   connection?: Connection | null;
-  unlockWithPassword: (password: string) => Promise<boolean>; // Decrypt wallets with password
-  needsPasswordUnlock: boolean; // True if wallets are encrypted but not unlocked
-  setNeedsPasswordUnlock: (value: boolean) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -76,9 +62,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
-  const [needsPasswordUnlock, setNeedsPasswordUnlock] =
-    useState<boolean>(false);
-  const encryptedWalletsRef = useRef<any[]>([]);
 
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {
@@ -142,57 +125,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       if (stored) {
         const parsed = JSON.parse(stored) as any[];
 
-        // Check if wallets are encrypted
-        const firstWallet = parsed?.[0];
-        if (isEncryptedWalletStorage(firstWallet)) {
-          console.log("[WalletContext] Encrypted wallets detected");
-          // Store encrypted wallets and mark as needing unlock
-          encryptedWalletsRef.current = parsed;
-          setNeedsPasswordUnlock(true);
-
-          // Try to unlock with existing password if available
-          const password = getWalletPassword();
-          if (password) {
-            try {
-              const decrypted = parsed.map((enc) =>
-                decryptWalletData(enc, password),
-              );
-              setWallets(decrypted);
-              if (decrypted.length > 0)
-                setActivePublicKey(decrypted[0].publicKey);
-              setNeedsPasswordUnlock(false);
-              console.log(
-                "[WalletContext] Wallets unlocked with stored password",
-              );
-            } catch (e) {
-              console.warn(
-                "[WalletContext] Failed to unlock with stored password:",
-                e,
-              );
-              setNeedsPasswordUnlock(true);
-            }
-          } else {
-            console.log(
-              "[WalletContext] No password in session, awaiting unlock",
-            );
+        // Load wallets as plaintext (encryption disabled)
+        const coerced: WalletData[] = (parsed || []).map((p) => {
+          const obj = { ...p } as any;
+          if (obj.secretKey && Array.isArray(obj.secretKey)) {
+            obj.secretKey = Uint8Array.from(obj.secretKey);
+          } else if (obj.secretKey && typeof obj.secretKey === "object") {
+            const vals = Object.values(obj.secretKey).filter(
+              (v) => typeof v === "number",
+            ) as number[];
+            if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
           }
-        } else {
-          // Plaintext wallets - coerce and load normally
-          const coerced: WalletData[] = (parsed || []).map((p) => {
-            const obj = { ...p } as any;
-            if (obj.secretKey && Array.isArray(obj.secretKey)) {
-              obj.secretKey = Uint8Array.from(obj.secretKey);
-            } else if (obj.secretKey && typeof obj.secretKey === "object") {
-              const vals = Object.values(obj.secretKey).filter(
-                (v) => typeof v === "number",
-              ) as number[];
-              if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
-            }
-            return obj as WalletData;
-          });
-          setWallets(coerced);
-          if (coerced.length > 0) setActivePublicKey(coerced[0].publicKey);
-        }
+          return obj as WalletData;
+        });
+        setWallets(coerced);
+        if (coerced.length > 0) setActivePublicKey(coerced[0].publicKey);
       }
     } catch (error) {
       console.error("Error loading wallets from storage:", error);
@@ -208,37 +155,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         return;
       }
 
-      // Check if wallets should be encrypted
-      const password = getWalletPassword();
-      const shouldEncrypt = doesWalletRequirePassword();
-
-      if (shouldEncrypt && password) {
-        // Encrypt wallets before storing
-        const encrypted = wallets.map((w) => {
-          try {
-            return encryptWalletData(w, password);
-          } catch (e) {
-            console.error("Failed to encrypt wallet:", e);
-            // Fallback to plaintext if encryption fails
-            const copy: any = { ...w } as any;
-            if (copy.secretKey instanceof Uint8Array)
-              copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-            return copy;
-          }
-        });
-        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(encrypted));
-        console.log("[WalletContext] Wallets saved encrypted");
-      } else {
-        // Store plaintext (for backward compatibility or if no password set)
-        const toStore = wallets.map((w) => {
-          const copy: any = { ...w } as any;
-          if (copy.secretKey instanceof Uint8Array)
-            copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-          return copy;
-        });
-        localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-        console.log("[WalletContext] Wallets saved as plaintext");
-      }
+      // Store wallets as plaintext (encryption disabled)
+      const toStore = wallets.map((w) => {
+        const copy: any = { ...w } as any;
+        if (copy.secretKey instanceof Uint8Array)
+          copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+        return copy;
+      });
+      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
+      console.log("[WalletContext] Wallets saved as plaintext");
     } catch (e) {
       console.error("Failed to persist wallets:", e);
     }
@@ -522,14 +447,87 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           (t) => t.mint === customToken.mint,
         );
         if (existingTokenIndex >= 0) {
+          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
+          // but use custom metadata if RPC returned generic "Unknown Token"
+          const rpcToken = allTokens[existingTokenIndex];
+          const isRpcGeneric =
+            rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
+
           allTokens[existingTokenIndex] = {
-            ...customToken,
-            balance: allTokens[existingTokenIndex].balance,
+            ...rpcToken,
+            // Override with custom metadata if RPC returned generic data
+            ...(isRpcGeneric && {
+              symbol: customToken.symbol,
+              name: customToken.name,
+              logoURI: customToken.logoURI,
+            }),
+            // Always use custom logoURI if available (user-added logo takes priority)
+            ...(customToken.logoURI && { logoURI: customToken.logoURI }),
+            // Always keep the RPC balance and decimals
+            balance: rpcToken.balance,
+            decimals: rpcToken.decimals,
           };
         } else {
+          // Token doesn't exist from RPC - add it with balance 0 for now
+          // Will be updated below with actual balance fetch
           allTokens.push({ ...customToken, balance: 0 });
         }
       });
+
+      // Fetch balances for custom tokens that weren't found in RPC results
+      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
+      const customTokensWithZeroBalance = allTokens.filter(
+        (token) =>
+          customTokenMintSet.has(token.mint) &&
+          (token.balance === 0 || token.balance === undefined),
+      );
+
+      // Fetch missing balances in parallel
+      if (customTokensWithZeroBalance.length > 0) {
+        console.log(
+          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
+        );
+
+        const balanceFetchPromises = customTokensWithZeroBalance.map(
+          async (token) => {
+            try {
+              const balance = await getTokenBalanceForMint(
+                wallet.publicKey,
+                token.mint,
+              );
+              return {
+                mint: token.mint,
+                balance: balance ?? 0,
+              };
+            } catch (error) {
+              console.warn(
+                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
+                error,
+              );
+              return {
+                mint: token.mint,
+                balance: 0,
+              };
+            }
+          },
+        );
+
+        const fetchedBalances = await Promise.all(balanceFetchPromises);
+
+        // Update allTokens with fetched balances
+        fetchedBalances.forEach(({ mint, balance }) => {
+          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
+          if (tokenIndex >= 0) {
+            allTokens[tokenIndex] = {
+              ...allTokens[tokenIndex],
+              balance,
+            };
+            console.log(
+              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
+            );
+          }
+        });
+      }
 
       // Price fetching logic
       let prices: Record<string, number> = {};
@@ -587,23 +585,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             lockerPriceService.getLockerPrice(),
           ]);
 
-          if (fixercoinData && fixercoinData.price > 0) {
+          if (
+            fixercoinData &&
+            fixercoinData.price > 0 &&
+            isFinite(fixercoinData.price)
+          ) {
             prices[fixercoinMint] = fixercoinData.price;
             changeMap[fixercoinMint] = fixercoinData.priceChange24h;
             console.log(
-              `[WalletContext] FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%)`,
+              `[WalletContext] ✅ FIXERCOIN price: $${fixercoinData.price.toFixed(8)} (24h: ${fixercoinData.priceChange24h.toFixed(2)}%) via ${fixercoinData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ FIXERCOIN price fetch resulted in invalid price:`,
+              fixercoinData,
             );
           }
 
-          if (lockerData && lockerData.price > 0) {
+          if (
+            lockerData &&
+            lockerData.price > 0 &&
+            isFinite(lockerData.price)
+          ) {
             prices[lockerMint] = lockerData.price;
             changeMap[lockerMint] = lockerData.priceChange24h;
             console.log(
-              `[WalletContext] LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%)`,
+              `[WalletContext] ✅ LOCKER price: $${lockerData.price.toFixed(8)} (24h: ${lockerData.priceChange24h.toFixed(2)}%) via ${lockerData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
+              lockerData,
             );
           }
         } catch (e) {
-          console.warn("Failed to fetch FIXERCOIN/LOCKER prices:", e);
+          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER prices:", e);
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint
@@ -808,30 +824,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setTokens(DEFAULT_TOKENS);
   };
 
-  const unlockWithPassword = async (password: string): Promise<boolean> => {
-    try {
-      if (encryptedWalletsRef.current.length === 0) {
-        console.warn("[WalletContext] No encrypted wallets to unlock");
-        return false;
-      }
-
-      const decrypted = encryptedWalletsRef.current.map((enc) =>
-        decryptWalletData(enc, password),
-      );
-
-      setWalletPassword(password);
-      setWallets(decrypted);
-      setNeedsPasswordUnlock(false);
-      if (decrypted.length > 0) setActivePublicKey(decrypted[0].publicKey);
-
-      console.log("[WalletContext] Wallets unlocked successfully");
-      return true;
-    } catch (error) {
-      console.error("[WalletContext] Failed to unlock wallets:", error);
-      return false;
-    }
-  };
-
   const value: WalletContextType = {
     wallet,
     wallets,
@@ -849,9 +841,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     logout,
     updateWalletLabel,
     connection: globalConnection,
-    unlockWithPassword,
-    needsPasswordUnlock,
-    setNeedsPasswordUnlock,
   };
 
   return (

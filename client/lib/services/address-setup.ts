@@ -1,3 +1,5 @@
+import { makeRpcCall } from "./solana-rpc";
+
 export type PrefetchedAddressData = {
   balanceLamports?: number;
   tokenAccounts?: any[];
@@ -5,34 +7,8 @@ export type PrefetchedAddressData = {
 };
 
 const rpcPost = async (method: string, params: any[]): Promise<any> => {
-  const body = { jsonrpc: "2.0", id: Date.now(), method, params };
-  const ctrl = new AbortController();
-  const timeout = setTimeout(() => ctrl.abort(), 12000);
-  try {
-    const resp = await fetch("/api/solana-rpc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
-    });
-    const text = await resp.text().catch(() => "");
-    let data: any = null;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = text;
-    }
-    if (!resp.ok || (data && data.error)) {
-      throw new Error(
-        (data && data.error && data.error.message) ||
-          resp.statusText ||
-          "RPC error",
-      );
-    }
-    return data?.result ?? data;
-  } finally {
-    clearTimeout(timeout);
-  }
+  // Use direct RPC call instead of proxy endpoint
+  return makeRpcCall(method, params);
 };
 
 /**

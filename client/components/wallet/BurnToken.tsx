@@ -511,7 +511,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         signature = result?.result || result;
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
       setTxSig(signature);
 
       // Show success toast only

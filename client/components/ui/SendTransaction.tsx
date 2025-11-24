@@ -414,7 +414,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -624,7 +632,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");

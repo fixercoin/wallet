@@ -393,6 +393,15 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         const rawAmount = toBaseUnits(amtStr, decimals);
         const senderAta = await getAssociatedTokenAddress(mint, senderPubkey);
 
+        // Verify sender's token account exists
+        const senderAccountInfo = await rpcCall("getAccountInfo", [
+          senderAta.toString(),
+          { encoding: "base64" },
+        ]);
+        if (!senderAccountInfo?.value) {
+          throw new Error("Sender does not have a token account for this token");
+        }
+
         for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
           const batch = recipients.slice(i, i + BATCH_SIZE);
           const tx = new Transaction();

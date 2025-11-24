@@ -143,10 +143,10 @@ export default function AssetsPage() {
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div className="w-full px-4 py-4 rounded-none sm:rounded-[2px] flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-1 flex-1">
                         <p
                           className="font-semibold text-white whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
+                          style={{ fontSize: "11px" }}
                         >
                           {token.symbol}
                         </p>
@@ -159,19 +159,19 @@ export default function AssetsPage() {
                             : "$0.00"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-1 items-end flex-1">
+                        <p
+                          className="text-gray-300 whitespace-nowrap font-medium"
+                          style={{ fontSize: "11px" }}
+                        >
+                          {formatTokenAmountCompact(token.balance || 0)}
+                        </p>
                         <p
                           className="text-gray-400 whitespace-nowrap"
                           style={{ fontSize: "10px" }}
                         >
-                          {formatBalance(token.balance || 0, token.symbol)}
-                        </p>
-                        <p
-                          className="font-semibold text-green-400 whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
-                        >
                           {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
+                            ? `$${(token.balance || 0) * token.price > 0 ? formatBalance((token.balance || 0) * token.price) : "0.00"}`
                             : "$0.00"}
                         </p>
                       </div>

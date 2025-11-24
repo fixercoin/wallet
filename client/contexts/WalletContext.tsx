@@ -703,8 +703,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const tokensNeedingPrices = visibleTokens.filter(
         (token) => {
           const price = prices[token.mint];
-          return typeof price !== "number" || !isFinite(price) || price <= 0;
+          const isInvalid = typeof price !== "number" || !isFinite(price) || price <= 0;
+          if (isInvalid) {
+            console.log(
+              `[WalletContext] Token ${token.symbol} (${token.mint}) needs price. Current: ${price}`,
+            );
+          }
+          return isInvalid;
         },
+      );
+
+      console.log(
+        `[WalletContext] Token price analysis: ${visibleTokens.length} visible tokens, ${tokensNeedingPrices.length} need prices`,
       );
 
       if (tokensNeedingPrices.length > 0) {

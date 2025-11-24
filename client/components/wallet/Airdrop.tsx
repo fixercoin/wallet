@@ -6,7 +6,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { Buffer } from "buffer";
-import bs58 from "bs58";
 import {
   Transaction,
   SystemProgram,

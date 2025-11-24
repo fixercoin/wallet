@@ -429,9 +429,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
       const response = await fetch("/api/solana-send", {
         method: "POST",
-        headers: {
+        headers: getApiHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
           signedBase64: txBase64,
         }),
@@ -721,7 +721,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         100;
 
                       console.log(
-                        `📊 Maker ${m.id}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Current price: ◎${sellPricePerToken.toFixed(9)}/token)`,
+                        `���� Maker ${m.id}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Current price: ◎${sellPricePerToken.toFixed(9)}/token)`,
                       );
 
                       // Execute sell if profit target reached

@@ -191,8 +191,11 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
     );
 
     try {
+      // Convert bytes to Base58 for RPC (Solana RPC expects Base58, not Base64)
+      const txBase58 = bs58.encode(txBuffer);
+
       const result = await callSolanaRpc("simulateTransaction", [
-        signedBase64,
+        txBase58,
         { signers: [], commitment: "processed" },
       ]);
 

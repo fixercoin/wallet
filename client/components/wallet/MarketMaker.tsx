@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -799,7 +799,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       const errorMsg =
                         error instanceof Error ? error.message : String(error);
                       console.error(
-                        `❌ Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
+                        `�� Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
                         error,
                       );
 

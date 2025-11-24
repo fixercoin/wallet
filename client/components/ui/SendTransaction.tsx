@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
 import {

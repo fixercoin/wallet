@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, Rocket, Wallet } from "lucide-react";
+import { Home, Rocket, Wallet, Flame } from "lucide-react";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();

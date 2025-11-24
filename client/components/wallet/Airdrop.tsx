@@ -365,7 +365,15 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
           try {
             const signature = await postTx(b64);
-            await confirmSignatureProxy(signature);
+            try {
+              await confirmSignatureProxy(signature);
+            } catch (confirmError) {
+              console.warn(
+                "Confirmation check failed, but transaction was already sent:",
+                confirmError,
+              );
+              // Don't fail the batch - it's already submitted to blockchain
+            }
             sent += batch.length;
           } catch (batchErr) {
             console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);

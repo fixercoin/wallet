@@ -199,46 +199,21 @@ async function getGenericTokensPerSol(
   tokenDecimals: number,
 ): Promise<number | null> {
   try {
-    const solMint = "So11111111111111111111111111111111111111112";
-
-    // Try Jupiter to get the exchange rate
-    const rawAmt = jupiterAPI.formatSwapAmount(1, 9); // SOL has 9 decimals
-    try {
-      const q = await jupiterAPI.getQuote(solMint, tokenMint, rawAmt as any);
-      if (!q || !q.outAmount || q.outAmount === "0") {
-        console.warn(`No Jupiter quote for token ${tokenMint}`);
-      } else {
-        const out = jupiterAPI.parseSwapAmount(q.outAmount, tokenDecimals);
-        if (Number.isFinite(out) && out > 0) {
-          console.log(
-            `1 SOL = ${out.toFixed(2)} tokens (mint=${tokenMint}, from Jupiter)`,
-          );
-          return out;
-        }
+    // Use DexScreener to get token USD price
+    const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
+    if (dexData?.priceUsd) {
+      const tokenUsd = parseFloat(dexData.priceUsd);
+      if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
+        const solUsd = await getSolUsd();
+        const tokensPerSol = solUsd / tokenUsd;
+        console.log(
+          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
+        );
+        return tokensPerSol;
       }
-    } catch (err) {
-      console.warn(`Jupiter error for token ${tokenMint}:`, err);
     }
 
-    // If Jupiter failed, try DexScreener
-    try {
-      const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
-      if (dexData?.priceUsd) {
-        const tokenUsd = parseFloat(dexData.priceUsd);
-        if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
-          const solUsd = await getSolUsd();
-          const tokensPerSol = solUsd / tokenUsd;
-          console.log(
-            `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
-          );
-          return tokensPerSol;
-        }
-      }
-    } catch (err) {
-      console.warn(`DexScreener error for token ${tokenMint}:`, err);
-    }
-
-    console.warn(`No quote found for token ${tokenMint}`);
+    console.warn(`No price data found for token ${tokenMint} on DexScreener`);
     return null;
   } catch (error) {
     console.warn(`Error getting tokens per SOL for ${tokenMint}:`, error);

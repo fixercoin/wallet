@@ -20,6 +20,7 @@ import { birdeyeAPI } from "@/lib/services/birdeye";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
+import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 
@@ -697,6 +698,71 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const visibleTokens = allTokens.filter(
         (token) => !hiddenTokens.includes(token.mint),
       );
+
+      // Calculate SOL-based prices for tokens without valid prices
+      const tokensNeedingPrices = visibleTokens.filter((token) => {
+        const price = prices[token.mint];
+        const isInvalid =
+          typeof price !== "number" || !isFinite(price) || price <= 0;
+        if (isInvalid) {
+          console.log(
+            `[WalletContext] Token ${token.symbol} (${token.mint}) needs price. Current: ${price}`,
+          );
+        }
+        return isInvalid;
+      });
+
+      console.log(
+        `[WalletContext] Token price analysis: ${visibleTokens.length} visible tokens, ${tokensNeedingPrices.length} need prices`,
+      );
+
+      if (tokensNeedingPrices.length > 0) {
+        console.log(
+          `[WalletContext] Calculating SOL-based prices for ${tokensNeedingPrices.length} tokens`,
+        );
+        const solMint = "So11111111111111111111111111111111111111112";
+        const solPricePromises = tokensNeedingPrices.map(async (token) => {
+          // Skip SOL itself
+          if (token.mint === solMint) {
+            return { mint: token.mint, price: null };
+          }
+
+          try {
+            const priceData = await getTokenPriceBySol(
+              token.mint,
+              token.decimals,
+            );
+            if (priceData && priceData.tokenUsd > 0) {
+              console.log(
+                `[WalletContext] ✅ SOL-based price for ${token.symbol}: $${priceData.tokenUsd.toFixed(8)}`,
+              );
+              return { mint: token.mint, price: priceData.tokenUsd };
+            }
+          } catch (err) {
+            console.warn(
+              `[WalletContext] Failed to calculate SOL price for ${token.symbol}:`,
+              err,
+            );
+          }
+          return { mint: token.mint, price: null };
+        });
+
+        const calculatedPrices = await Promise.all(solPricePromises);
+        calculatedPrices.forEach(({ mint, price }) => {
+          const existingPrice = prices[mint];
+          const hasValidPrice =
+            typeof existingPrice === "number" &&
+            isFinite(existingPrice) &&
+            existingPrice > 0;
+          if (price && price > 0 && !hasValidPrice) {
+            prices[mint] = price;
+            priceSource = "sol-derived";
+            console.log(
+              `[WalletContext] Updated price for ${mint} using SOL-derived pricing`,
+            );
+          }
+        });
+      }
 
       const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];

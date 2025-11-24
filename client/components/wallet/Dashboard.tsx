@@ -190,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -979,7 +979,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol}/USDT
+                          {token.symbol} - $
+                          {typeof token.price === "number" &&
+                          isFinite(token.price)
+                            ? token.price.toFixed(token.price < 0.01 ? 6 : 2)
+                            : "0.00"}
                         </span>
                       </div>
 
@@ -991,16 +995,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
 
                         {percentChange !== null && (
-                          <Button
-                            className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
-                              isPositive
-                                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
-                                : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
+                          <span
+                            className={`font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
+                              isPositive ? "text-green-400" : "text-red-400"
                             }`}
                           >
                             {isPositive ? "+" : ""}
                             {percentChange.toFixed(2)}%
-                          </Button>
+                          </span>
                         )}
                       </div>
                     </div>

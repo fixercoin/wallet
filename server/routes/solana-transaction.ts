@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import bs58 from "bs58";
 
 const RPC_ENDPOINTS = [
   process.env.SOLANA_RPC_URL || "",

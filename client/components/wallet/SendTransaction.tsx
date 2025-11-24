@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { rpcCall } from "@/lib/rpc-utils";
@@ -272,7 +272,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     // Use RPC call to check transaction confirmation
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       try {
         const statusRes = await rpcCall("getSignatureStatuses", [
@@ -829,9 +829,39 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "sending") {
     return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-pulse text-lg">Processing transaction...</div>
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse" />
+              <Loader2 className="w-16 h-16 text-green-600 animate-spin relative" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Processing Transaction
+            </h2>
+            <p className="text-gray-600">
+              Please wait while your transaction is being sent to the blockchain
+            </p>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+              <span className="text-gray-700">Signing transaction...</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full" />
+              <span className="text-gray-500">Sending to network...</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full" />
+              <span className="text-gray-500">Confirming on blockchain...</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-6">
+            This may take up to 40 seconds with slow network connection
+          </p>
         </div>
       </div>
     );

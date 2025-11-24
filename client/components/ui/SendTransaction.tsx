@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
@@ -204,7 +204,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       const statusRes = await rpcCall("getSignatureStatuses", [
         [sig],
@@ -829,8 +829,24 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl relative">
           {isLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 rounded-lg">
-              <div className="text-white">Processing transaction...</div>
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 rounded-lg">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
+                    <Loader2 className="w-12 h-12 text-purple-400 animate-spin relative" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-white font-medium">
+                    Processing transaction
+                  </p>
+                  <p className="text-gray-300 text-sm">Please wait...</p>
+                  <p className="text-gray-400 text-xs">
+                    May take up to 40 seconds
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

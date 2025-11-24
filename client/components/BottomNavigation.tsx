@@ -32,6 +32,7 @@ export const BottomNavigation = () => {
   const navItems = [
     { path: "/", label: "HOME", icon: Home },
     { path: "/autobot", label: "BOOST", icon: Rocket },
+    { path: "/burn", label: "BURN", icon: Flame },
     { path: "/assets", label: "ASSET", icon: Wallet },
   ];
 

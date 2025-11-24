@@ -538,6 +538,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     // Do not insert placeholder addresses. Provide an empty helper that does nothing.
   };
 
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (minutes < 60) return `${minutes}m ${secs}s`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-gray-900 text-gray-900 relative overflow-hidden">
       {/* Decorative curved accent background elements */}

@@ -410,16 +410,10 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 { encoding: "base64" },
               ]);
 
-              // Create ATA if it doesn't exist
+              // Skip if recipient doesn't have token account
               if (!recipientAccountInfo?.value) {
-                tx.add(
-                  createAssociatedTokenAccountInstruction(
-                    senderPubkey,
-                    recipientAta,
-                    recipientPubkey,
-                    mint,
-                  ),
-                );
+                console.warn(`Skipping ${r}: no token account for this token`);
+                continue;
               }
 
               // Add transfer instruction

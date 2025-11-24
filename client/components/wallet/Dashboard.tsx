@@ -858,8 +858,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           : "****"}
                       </div>
                       {showBalance ? (
-                        <div
-                          className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                        <Button
+                          className={`h-auto px-3 py-1 rounded-md font-medium text-xs bg-transparent hover:bg-white/10 border border-transparent transition-colors ${isPositive ? "text-green-400 hover:text-green-300" : "text-red-400 hover:text-red-300"}`}
+                          variant="ghost"
                         >
                           <span className="font-medium">
                             {isPositive ? "+" : "-"}{" "}
@@ -878,7 +879,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             ).toFixed(2)}
                             %)
                           </span>
-                        </div>
+                        </Button>
                       ) : (
                         <div className="text-xs text-gray-400 mt-1">****</div>
                       )}

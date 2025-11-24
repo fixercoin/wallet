@@ -995,7 +995,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
-                            {formatBalance(token.balance || 0, token.symbol)}
+                            {formatAmountCompact(token.balance, token.symbol)}
                           </p>
                         </div>
                       </div>

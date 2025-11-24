@@ -986,6 +986,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
                         <div>
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            ${typeof token.price === "number" &&
+                            isFinite(token.price)
+                              ? token.price.toFixed(token.price < 0.01 ? 6 : 2)
+                              : "0.00"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}
                           </p>
                         </div>

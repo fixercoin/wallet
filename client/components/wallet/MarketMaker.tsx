@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -572,7 +578,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           // Execute sell if profit target reached
           if (profitPercent >= profitTarget) {
-            console.log(`🚀 ${makerId}: Profit target reached! Executing sell...`);
+            console.log(
+              `🚀 ${makerId}: Profit target reached! Executing sell...`,
+            );
 
             const sellSwap = await jupiterAPI.getSwapTransaction({
               quoteResponse: priceQuote,

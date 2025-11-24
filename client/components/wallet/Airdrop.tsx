@@ -393,25 +393,37 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
           const batch = recipients.slice(i, i + BATCH_SIZE);
           const tx = new Transaction();
+          let validCount = 0;
 
           for (const r of batch) {
-            const recipientPubkey = new PublicKey(r);
-            const recipientAta = await getAssociatedTokenAddress(
-              mint,
-              recipientPubkey,
-            );
-
-            // Use the proper SPL token transfer instruction
-            tx.add(
-              createTransferCheckedInstruction(
-                senderAta,
+            try {
+              const recipientPubkey = new PublicKey(r);
+              const recipientAta = await getAssociatedTokenAddress(
                 mint,
-                recipientAta,
-                senderPubkey,
-                rawAmount,
-                decimals,
-              ),
-            );
+                recipientPubkey,
+              );
+
+              // Use the proper SPL token transfer instruction
+              tx.add(
+                createTransferCheckedInstruction(
+                  senderAta,
+                  mint,
+                  recipientAta,
+                  recipientPubkey,
+                  rawAmount,
+                  decimals,
+                ),
+              );
+              validCount++;
+            } catch (err) {
+              console.warn(`Skipping invalid recipient ${r}:`, err);
+            }
+          }
+
+          // Only send if we have valid recipients in this batch
+          if (validCount === 0) {
+            console.warn("No valid recipients in batch, skipping");
+            continue;
           }
 
           // Add batch fee
@@ -433,7 +445,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           try {
             const signature = await postTx(b64);
             await confirmSignatureProxy(signature);
-            sent += batch.length;
+            sent += validCount;
           } catch (batchErr) {
             console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);
           }

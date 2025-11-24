@@ -180,7 +180,10 @@ export default function AssetsPage() {
                               ? "border-green-400 text-green-400 hover:bg-green-400/10"
                               : "border-red-400 text-red-400 hover:bg-red-400/10"
                           }`}
-                          style={{ fontSize: "10px", backgroundColor: "transparent" }}
+                          style={{
+                            fontSize: "10px",
+                            backgroundColor: "transparent",
+                          }}
                         >
                           {typeof token.priceChange24h === "number"
                             ? `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`

@@ -240,7 +240,7 @@ export async function getTokenPriceBySol(
   if (tokensPerSol > 0) {
     tokenUsd = solUsd / tokensPerSol;
   } else {
-    // If Jupiter/DexScreener failed, return null
+    // If DexScreener failed, return null
     // The caller should handle fallback to existing price data
     console.warn(`Unable to calculate price for token ${mint}`);
     return null;

@@ -12,6 +12,14 @@ export interface DerivedPrice {
   updatedAt: number;
 }
 
+export interface GenericTokenPrice {
+  mint: string;
+  tokensPerSol: number; // how many token units per 1 SOL
+  tokenUsd: number; // USD price per 1 token
+  solUsd: number; // SOL USD price used
+  updatedAt: number;
+}
+
 const DECIMALS: Record<SupportedToken | "SOL", number> = {
   SOL: 9,
   FIXERCOIN: 6,
@@ -23,6 +31,8 @@ const FALLBACK_USD: Record<SupportedToken | "SOL", number> = {
   FIXERCOIN: 0.00008139, // Real-time market price
   LOCKER: 0.00001112, // Real-time market price
 };
+
+const genericTokenCache = new Map<string, GenericTokenPrice>();
 
 const cache = new Map<SupportedToken, DerivedPrice>();
 const CACHE_TTL_MS = 30_000;

@@ -314,13 +314,17 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       selectedToken?.symbol === "SOL" ||
       selectedMint === "So11111111111111111111111111111111111111112";
 
+    const BATCH_SIZE = isSolSel ? 30 : 15;
+    const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
+    const totalBatchFees = BATCH_FEE_SOL * totalBatches;
+
     if (isSolSel) {
-      const requiredSol = amt * recipients.length + BATCH_FEE_SOL;
+      const requiredSol = amt * recipients.length + totalBatchFees;
       if (typeof balance !== "number" || balance < requiredSol) {
-        setError(`Insufficient SOL (need ${requiredSol.toFixed(6)} SOL including ${BATCH_FEE_SOL.toFixed(6)} SOL in fees)`);
+        setError(`Insufficient SOL (need ${requiredSol.toFixed(6)} SOL including ${totalBatchFees.toFixed(6)} SOL in fees for ${totalBatches} batches)`);
         toast({
           title: "Insufficient SOL",
-          description: `Top up SOL or reduce amount/recipients. Fee: ${BATCH_FEE_SOL.toFixed(6)} SOL.`,
+          description: `Top up SOL or reduce amount/recipients. Total fees: ${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches.`,
           variant: "destructive",
         });
         return;
@@ -336,12 +340,12 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         });
         return;
       }
-      // For token transfers, also check SOL for fee
-      if (typeof balance !== "number" || balance < BATCH_FEE_SOL) {
-        setError(`Insufficient SOL for fee (${BATCH_FEE_SOL.toFixed(6)} SOL)`);
+      // For token transfers, also check SOL for all batch fees
+      if (typeof balance !== "number" || balance < totalBatchFees) {
+        setError(`Insufficient SOL for batch fees (${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches)`);
         toast({
           title: "Insufficient SOL",
-          description: `Need ${BATCH_FEE_SOL.toFixed(6)} SOL for transaction fee.`,
+          description: `Need ${totalBatchFees.toFixed(6)} SOL for transaction fees (${totalBatches} batches).`,
           variant: "destructive",
         });
         return;

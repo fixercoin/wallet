@@ -45,7 +45,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [recipientsText, setRecipientsText] = useState<string>("");
   const [amountPerRecipient, setAmountPerRecipient] = useState<string>("1");
   const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState<{ sent: number; total: number }>({
+  const [progress, setProgress] = useState<{
+    sent: number;
+    total: number;
+    startTime?: number;
+    elapsedSeconds?: number;
+    estimatedTotalSeconds?: number;
+  }>({
     sent: 0,
     total: 0,
   });

@@ -409,7 +409,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   senderAta,
                   mint,
                   recipientAta,
-                  recipientPubkey,
+                  senderPubkey,
                   rawAmount,
                   decimals,
                 ),

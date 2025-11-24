@@ -18,7 +18,6 @@ import {
   Plus,
   Menu,
   Gift,
-  Flame,
   Lock,
   Bell,
   X,

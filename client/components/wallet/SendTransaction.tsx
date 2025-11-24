@@ -219,6 +219,21 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     return btoa(bin);
   };
 
+  const isNetworkError = (errorMsg: string): boolean => {
+    const lowerMsg = (errorMsg || "").toLowerCase();
+    return (
+      lowerMsg.includes("fetch") ||
+      lowerMsg.includes("network") ||
+      lowerMsg.includes("timeout") ||
+      lowerMsg.includes("abort") ||
+      lowerMsg.includes("connection") ||
+      lowerMsg.includes("econnrefused") ||
+      lowerMsg.includes("enotfound") ||
+      lowerMsg.includes("failed to fetch") ||
+      lowerMsg.includes("net::")
+    );
+  };
+
   const postTx = async (url: string, b64: string) => {
     // Use the new RPC utility instead of direct fetch
     try {
@@ -231,7 +246,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       const msg = error instanceof Error ? error.message : String(error);
 
       // Detect network connection errors
-      if (this.isNetworkError(msg)) {
+      if (isNetworkError(msg)) {
         throw new Error(`Network connection issue: ${msg}`);
       }
 

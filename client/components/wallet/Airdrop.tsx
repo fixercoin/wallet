@@ -486,11 +486,20 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           const b64 = base64FromBytes(serialized);
 
           try {
+            console.log(`Sending batch with ${validCount} recipients, ${tx.instructions.length} instructions`);
+            console.log(`Sender ATA: ${senderAta.toString()}`);
+            console.log(`Mint: ${mint.toString()}`);
             const signature = await postTx(b64);
             await confirmSignatureProxy(signature);
             sent += validCount;
           } catch (batchErr) {
             console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);
+            console.error(`Full batch error details:`, {
+              validCount,
+              instructionCount: tx.instructions.length,
+              senderAta: senderAta.toString(),
+              mint: mint.toString(),
+            });
           }
 
           const elapsed = (Date.now() - startTime) / 1000;

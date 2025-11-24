@@ -385,20 +385,11 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           }
         }
       } else if (mintPub) {
-        // Process SPL token transfers with batching
+        // Process SPL token transfers with batching - simple send logic
         const mint = mintPub;
         const decimals = selectedToken?.decimals ?? 0;
         const rawAmount = toBaseUnits(amtStr, decimals);
         const senderAta = await getAssociatedTokenAddress(mint, senderPubkey);
-
-        // Verify sender's token account exists
-        const senderAccountInfo = await rpcCall("getAccountInfo", [
-          senderAta.toString(),
-          { encoding: "base64" },
-        ]);
-        if (!senderAccountInfo?.value) {
-          throw new Error("Sender does not have a token account for this token");
-        }
 
         for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
           const batch = recipients.slice(i, i + BATCH_SIZE);
@@ -407,38 +398,14 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
           for (const r of batch) {
             try {
+              // Only validate address is a valid Solana public key
               const recipientPubkey = new PublicKey(r);
-
-              // Check if recipient has SOL (is an active Solana wallet)
-              const recipientMainAccount = await rpcCall("getAccountInfo", [
-                recipientPubkey.toString(),
-                { encoding: "base64" },
-              ]);
-
-              // Skip if wallet doesn't exist on Solana
-              if (!recipientMainAccount?.value) {
-                console.warn(`Skipping ${r}: wallet not found on Solana`);
-                continue;
-              }
-
               const recipientAta = await getAssociatedTokenAddress(
                 mint,
                 recipientPubkey,
               );
 
-              // Check if recipient already has token account for this token
-              const recipientAccountInfo = await rpcCall("getAccountInfo", [
-                recipientAta.toString(),
-                { encoding: "base64" },
-              ]);
-
-              // Skip if recipient doesn't have token account (don't create ATA)
-              if (!recipientAccountInfo?.value) {
-                console.warn(`Skipping ${r}: no token account for this token`);
-                continue;
-              }
-
-              // Add transfer instruction
+              // Add transfer instruction - no pre-checks
               tx.add(
                 createTransferCheckedInstruction(
                   senderAta,
@@ -451,13 +418,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               );
               validCount++;
             } catch (err) {
-              console.warn(`Invalid recipient ${r}:`, err);
+              console.warn(`Invalid address ${r}: not a valid Solana address`);
             }
           }
 
-          // Only send if we have valid recipients in this batch
+          // Only send if we have valid addresses in this batch
           if (validCount === 0) {
-            console.warn("No valid recipients in batch, skipping");
+            console.warn("No valid addresses in batch, skipping");
             continue;
           }
 
@@ -478,20 +445,11 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           const b64 = base64FromBytes(serialized);
 
           try {
-            console.log(`Sending batch with ${validCount} recipients, ${tx.instructions.length} instructions`);
-            console.log(`Sender ATA: ${senderAta.toString()}`);
-            console.log(`Mint: ${mint.toString()}`);
             const signature = await postTx(b64);
             await confirmSignatureProxy(signature);
             sent += validCount;
           } catch (batchErr) {
             console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);
-            console.error(`Full batch error details:`, {
-              validCount,
-              instructionCount: tx.instructions.length,
-              senderAta: senderAta.toString(),
-              mint: mint.toString(),
-            });
           }
 
           const elapsed = (Date.now() - startTime) / 1000;

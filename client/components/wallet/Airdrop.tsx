@@ -616,13 +616,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                   ? `Running (${progress.sent}/${progress.total})`
                   : "Start Airdrop"}
               </Button>
-              <Button
-                variant="outline"
-                onClick={handleDownloadList}
-                className="bg-[#2d1b47]/50 border border-[#a855f7]/30 text-white rounded-lg"
-              >
-                LIST
-              </Button>
             </div>
 
             <div className="text-xs text-[hsl(var(--muted-foreground))]">

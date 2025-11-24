@@ -378,7 +378,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       const amtStr = amountPerRecipient.trim();
       const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
       const feeWalletPubkey = new PublicKey(FEE_WALLET);
-      const BATCH_SIZE = isSol ? 30 : 15;
       const DELAY_MS = 500;
 
       let sent = 0;

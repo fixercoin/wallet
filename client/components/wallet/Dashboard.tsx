@@ -962,7 +962,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="text-left min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
                           <p className="text-xs font-semibold text-white whitespace-nowrap truncate">
                             {token.symbol}
                           </p>

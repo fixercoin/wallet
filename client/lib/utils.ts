@@ -28,3 +28,31 @@ export function formatTokenAmount(
     maximumFractionDigits: 6,
   });
 }
+
+export function formatAmountCompact(
+  amount: number | undefined,
+  symbol?: string,
+): string {
+  if (!amount || isNaN(amount)) return "0.00";
+
+  // Don't abbreviate certain tokens
+  if (["SOL", "USDC", "FIXERCOIN", "LOCKER"].includes(symbol || "")) {
+    return formatTokenAmount(amount, symbol);
+  }
+
+  if (amount >= 1_000_000) {
+    return (amount / 1_000_000).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + "M";
+  }
+
+  if (amount >= 1_000) {
+    return (amount / 1_000).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + "K";
+  }
+
+  return formatTokenAmount(amount, symbol);
+}

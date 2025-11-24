@@ -165,7 +165,7 @@ function AppRoutes() {
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="/autobot" element={<AutoBot />} />
-      <Route path="/burn" element={<Index />} />
+      <Route path="/burn" element={<BurnTokenPage />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/assets" element={<AssetsPage />} />
       <Route path="/assets/deposit" element={<DepositAssetPage />} />

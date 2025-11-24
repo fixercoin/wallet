@@ -699,18 +699,22 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         (token) => !hiddenTokens.includes(token.mint),
       );
 
-      // Calculate SOL-based prices for tokens without prices
+      // Calculate SOL-based prices for tokens without valid prices
       const tokensNeedingPrices = visibleTokens.filter(
-        (token) => !prices[token.mint] || prices[token.mint] <= 0,
+        (token) => {
+          const price = prices[token.mint];
+          return typeof price !== "number" || !isFinite(price) || price <= 0;
+        },
       );
 
       if (tokensNeedingPrices.length > 0) {
         console.log(
           `[WalletContext] Calculating SOL-based prices for ${tokensNeedingPrices.length} tokens`,
         );
+        const solMint = "So11111111111111111111111111111111111111112";
         const solPricePromises = tokensNeedingPrices.map(async (token) => {
           // Skip SOL itself
-          if (token.symbol === "SOL") {
+          if (token.mint === solMint) {
             return { mint: token.mint, price: null };
           }
 
@@ -733,9 +737,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
         const calculatedPrices = await Promise.all(solPricePromises);
         calculatedPrices.forEach(({ mint, price }) => {
-          if (price && price > 0 && !prices[mint]) {
+          const existingPrice = prices[mint];
+          const hasValidPrice = typeof existingPrice === "number" && isFinite(existingPrice) && existingPrice > 0;
+          if (price && price > 0 && !hasValidPrice) {
             prices[mint] = price;
             priceSource = "sol-derived";
+            console.log(`[WalletContext] Updated price for ${mint} using SOL-derived pricing`);
           }
         });
       }

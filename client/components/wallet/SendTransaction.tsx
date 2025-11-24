@@ -229,8 +229,29 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       return result as string;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+
+      // Detect network connection errors
+      if (this.isNetworkError(msg)) {
+        throw new Error(`Network connection issue: ${msg}`);
+      }
+
       throw new Error(`Failed to send transaction: ${msg}`);
     }
+  };
+
+  const isNetworkError = (errorMsg: string): boolean => {
+    const lowerMsg = (errorMsg || "").toLowerCase();
+    return (
+      lowerMsg.includes("fetch") ||
+      lowerMsg.includes("network") ||
+      lowerMsg.includes("timeout") ||
+      lowerMsg.includes("abort") ||
+      lowerMsg.includes("connection") ||
+      lowerMsg.includes("econnrefused") ||
+      lowerMsg.includes("enotfound") ||
+      lowerMsg.includes("failed to fetch") ||
+      lowerMsg.includes("net::")
+    );
   };
 
   const getLatestBlockhashProxy = async (): Promise<string> => {

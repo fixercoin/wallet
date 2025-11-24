@@ -993,17 +993,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {formatBalance(token.balance || 0, token.symbol)}
                           </p>
                         </div>
-
-                        {percentChange !== null && (
-                          <span
-                            className={`font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
-                              isPositive ? "text-green-400" : "text-red-400"
-                            }`}
-                          >
-                            {isPositive ? "+" : ""}
-                            {percentChange.toFixed(2)}%
-                          </span>
-                        )}
                       </div>
                     </div>
                   </CardContent>

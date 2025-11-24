@@ -230,38 +230,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     });
   };
 
-  const generateWalletAddresses = (count: number): string[] => {
-    const addresses: string[] = [];
-    const cryptoObj = globalThis.crypto;
-
-    for (let i = 0; i < count; i++) {
-      const bytes = new Uint8Array(32);
-      if (cryptoObj?.getRandomValues) {
-        cryptoObj.getRandomValues(bytes);
-      } else {
-        for (let j = 0; j < bytes.length; j++) {
-          bytes[j] = Math.floor(Math.random() * 256);
-        }
-      }
-      addresses.push(bs58.encode(bytes));
-    }
-
-    return addresses;
-  };
-
-  const handleDownloadList = () => {
-    const addresses = generateWalletAddresses(1000);
-    const fileContents = `${addresses.join("\n")}\n`;
-    const blob = new Blob([fileContents], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "1000wallet.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
     try {

@@ -174,18 +174,18 @@ export default function AssetsPage() {
                             ? `$${(token.balance || 0) * token.price > 0 ? formatBalance((token.balance || 0) * token.price) : "0.00"}`
                             : "$0.00"}
                         </p>
-                        <p
-                          className={`whitespace-nowrap font-medium ${
+                        <button
+                          className={`border rounded px-2 py-1 whitespace-nowrap font-medium transition-all ${
                             (token.priceChange24h || 0) >= 0
-                              ? "text-green-400"
-                              : "text-red-400"
+                              ? "border-green-400 text-green-400 hover:bg-green-400/10"
+                              : "border-red-400 text-red-400 hover:bg-red-400/10"
                           }`}
-                          style={{ fontSize: "10px" }}
+                          style={{ fontSize: "10px", backgroundColor: "transparent" }}
                         >
                           {typeof token.priceChange24h === "number"
                             ? `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`
                             : "0.00%"}
-                        </p>
+                        </button>
                       </div>
                     </div>
                   </CardContent>

@@ -138,6 +138,7 @@ import AssetsPage from "./pages/AssetsPage";
 import DepositAssetPage from "./pages/DepositAssetPage";
 import SelectLanguagePage from "./pages/SelectLanguagePage";
 import SelectCurrencyPage from "./pages/SelectCurrencyPage";
+import BurnTokenPage from "./pages/BurnTokenPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 

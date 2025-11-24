@@ -33,7 +33,7 @@ interface AirdropProps {
 }
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_PERCENTAGE = 0.01;
+const BATCH_FEE_SOL = 0.0005; // Fixed fee per batch in SOL
 
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, refreshTokens } =

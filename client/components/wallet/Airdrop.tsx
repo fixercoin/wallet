@@ -409,7 +409,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
           for (const r of batch) {
             const recipientPubkey = new PublicKey(r);
-            const recipientAta = await getAssociatedTokenAddress(
+            const recipientAta = getAssociatedTokenAddress(
               mint,
               recipientPubkey,
             );

@@ -40,7 +40,7 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_AMOUNT_SOL = 0.0009;
+const FEE_AMOUNT_SOL = 0.0007;
 
 const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
   onContinue,
@@ -219,6 +219,21 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     return btoa(bin);
   };
 
+  const isNetworkError = (errorMsg: string): boolean => {
+    const lowerMsg = (errorMsg || "").toLowerCase();
+    return (
+      lowerMsg.includes("fetch") ||
+      lowerMsg.includes("network") ||
+      lowerMsg.includes("timeout") ||
+      lowerMsg.includes("abort") ||
+      lowerMsg.includes("connection") ||
+      lowerMsg.includes("econnrefused") ||
+      lowerMsg.includes("enotfound") ||
+      lowerMsg.includes("failed to fetch") ||
+      lowerMsg.includes("net::")
+    );
+  };
+
   const postTx = async (url: string, b64: string) => {
     // Use the new RPC utility instead of direct fetch
     try {
@@ -229,6 +244,12 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       return result as string;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+
+      // Detect network connection errors
+      if (isNetworkError(msg)) {
+        throw new Error(`Network connection issue: ${msg}`);
+      }
+
       throw new Error(`Failed to send transaction: ${msg}`);
     }
   };
@@ -492,7 +513,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("insufficient lamports") ||
         m.includes("insufficient sol") ||
@@ -713,7 +745,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("rent") ||
         m.includes("no room for fees")

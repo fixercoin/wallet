@@ -40,7 +40,7 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_AMOUNT_SOL = 0.0009;
+const FEE_AMOUNT_SOL = 0.0007;
 
 export const SendTransaction: React.FC<SendTransactionProps> = ({
   onBack,
@@ -440,7 +440,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("insufficient lamports") ||
         m.includes("insufficient sol") ||
@@ -659,7 +670,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("rent") ||
         m.includes("no room for fees")

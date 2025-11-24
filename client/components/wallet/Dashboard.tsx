@@ -991,7 +991,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {typeof token.priceChange24h === "number" &&
                         isFinite(token.priceChange24h) ? (
                           <Button
-                            className={`h-auto px-2 py-0.5 rounded-sm font-medium text-xs bg-transparent hover:bg-white/10 border border-transparent transition-colors ${token.priceChange24h >= 0 ? "text-green-400 hover:text-green-300" : "text-red-400 hover:text-red-300"}`}
+                            className={`h-auto px-2 py-0.5 rounded-sm font-medium text-xs bg-transparent hover:bg-white/10 border transition-colors ${token.priceChange24h >= 0 ? "border-green-400 text-green-400 hover:text-green-300" : "border-red-400 text-red-400 hover:text-red-300"}`}
                             variant="ghost"
                           >
                             {token.priceChange24h >= 0 ? "+" : ""}

@@ -28,6 +28,7 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+import { getApiHeaders } from "@/lib/api-client";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -263,9 +264,9 @@ async function sendSignedTx(
   try {
     const response = await fetch("/api/solana-send", {
       method: "POST",
-      headers: {
+      headers: getApiHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       body: JSON.stringify({
         signedBase64,
       }),

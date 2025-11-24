@@ -400,21 +400,40 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           for (const r of batch) {
             try {
               const recipientPubkey = new PublicKey(r);
+
+              // Check if recipient has SOL (is an active Solana wallet)
+              const recipientMainAccount = await rpcCall("getAccountInfo", [
+                recipientPubkey.toString(),
+                { encoding: "base64" },
+              ]);
+
+              // Skip if wallet doesn't exist on Solana
+              if (!recipientMainAccount?.value) {
+                console.warn(`Skipping ${r}: wallet not found on Solana`);
+                continue;
+              }
+
               const recipientAta = await getAssociatedTokenAddress(
                 mint,
                 recipientPubkey,
               );
 
-              // Check if recipient ATA exists
+              // Check if recipient already has token account for this token
               const recipientAccountInfo = await rpcCall("getAccountInfo", [
                 recipientAta.toString(),
                 { encoding: "base64" },
               ]);
 
-              // Skip if recipient doesn't have token account
+              // Create ATA if it doesn't exist
               if (!recipientAccountInfo?.value) {
-                console.warn(`Skipping ${r}: no token account for this token`);
-                continue;
+                tx.add(
+                  createAssociatedTokenAccountInstruction(
+                    senderPubkey,
+                    recipientAta,
+                    recipientPubkey,
+                    mint,
+                  ),
+                );
               }
 
               // Add transfer instruction

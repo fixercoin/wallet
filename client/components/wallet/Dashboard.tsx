@@ -981,8 +981,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             ${typeof token.price === "number" &&
                             isFinite(token.price)
-                              ? token.price.toFixed(token.price < 0.01 ? 6 : 2)
-                              : "0.00"}
+                              ? token.price.toFixed(8)
+                              : "0.00000000"}
                           </p>
                         </div>
                         <div>

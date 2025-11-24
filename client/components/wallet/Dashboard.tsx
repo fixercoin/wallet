@@ -991,16 +991,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
 
                         {percentChange !== null && (
-                          <Button
-                            className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
-                              isPositive
-                                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
-                                : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
-                            }`}
-                          >
+                          <span className={`font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
+                            isPositive ? "text-green-400" : "text-red-400"
+                          }`}>
                             {isPositive ? "+" : ""}
                             {percentChange.toFixed(2)}%
-                          </Button>
+                          </span>
                         )}
                       </div>
                     </div>

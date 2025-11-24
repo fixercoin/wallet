@@ -309,16 +309,18 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       return;
     }
 
-    // Quick balance checks
-    const isSolSel =
+    // Check if SOL or token airdrop
+    const isSol =
       selectedToken?.symbol === "SOL" ||
       selectedMint === "So11111111111111111111111111111111111111112";
 
-    const BATCH_SIZE = isSolSel ? 30 : 15;
+    // Calculate batch parameters
+    const BATCH_SIZE = isSol ? 30 : 15;
     const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
     const totalBatchFees = BATCH_FEE_SOL * totalBatches;
 
-    if (isSolSel) {
+    // Quick balance checks
+    if (isSol) {
       const requiredSol = amt * recipients.length + totalBatchFees;
       if (typeof balance !== "number" || balance < requiredSol) {
         setError(`Insufficient SOL (need ${requiredSol.toFixed(6)} SOL including ${totalBatchFees.toFixed(6)} SOL in fees for ${totalBatches} batches)`);
@@ -369,16 +371,11 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       const senderKeypair = Keypair.fromSecretKey(sk);
       const senderPubkey = senderKeypair.publicKey;
 
-      // If SOL airdrop, send lamports; if SPL, send tokens
-      const isSol =
-        selectedToken?.symbol === "SOL" ||
-        selectedMint === "So11111111111111111111111111111111111111112";
       const mintPub = isSol ? undefined : new PublicKey(selectedMint);
 
       const amtStr = amountPerRecipient.trim();
       const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
       const feeWalletPubkey = new PublicKey(FEE_WALLET);
-      const BATCH_SIZE = isSol ? 30 : 15;
       const DELAY_MS = 500;
 
       let sent = 0;

@@ -159,7 +159,7 @@ export default function AssetsPage() {
                             : "$0.00"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-4 flex-1">
+                      <div className="flex items-center gap-4">
                         <p
                           className="text-gray-300 whitespace-nowrap font-medium"
                           style={{ fontSize: "11px" }}
@@ -187,12 +187,6 @@ export default function AssetsPage() {
                             : "0.00%"}
                         </p>
                       </div>
-                      <Button
-                        onClick={() => navigate("/assets/deposit")}
-                        className="border border-green-500 text-green-500 hover:bg-green-500/10 bg-transparent rounded-lg px-3 py-1.5 text-xs font-medium transition-all flex-shrink-0"
-                      >
-                        ADD
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>

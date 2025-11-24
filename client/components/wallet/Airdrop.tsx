@@ -646,6 +646,51 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               </Button>
             </div>
 
+            {isRunning && (
+              <div className="space-y-3">
+                <div className="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-[#16a34a] to-[#22c55e] h-full transition-all duration-300"
+                    style={{
+                      width: `${(progress.sent / progress.total) * 100}%`,
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-300">
+                  <span>
+                    Progress: {progress.sent} / {progress.total}
+                  </span>
+                  <span>
+                    {progress.elapsedSeconds !== undefined
+                      ? `Elapsed: ${formatTime(progress.elapsedSeconds)}`
+                      : ""}
+                  </span>
+                </div>
+                {progress.estimatedTotalSeconds !== undefined && (
+                  <div className="flex justify-between text-xs text-gray-300">
+                    <span>Estimated time remaining:</span>
+                    <span>
+                      {formatTime(
+                        Math.max(
+                          0,
+                          progress.estimatedTotalSeconds -
+                            (progress.elapsedSeconds || 0),
+                        ),
+                      )}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>Total estimated time:</span>
+                  <span>
+                    {progress.estimatedTotalSeconds
+                      ? formatTime(progress.estimatedTotalSeconds)
+                      : "Calculating..."}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="text-xs text-[hsl(var(--muted-foreground))]">
               Tokens will be sent to provided addresses. This interface requires
               that the selected token is listed in your wallet tokens and that

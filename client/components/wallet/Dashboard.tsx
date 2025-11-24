@@ -978,14 +978,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-white text-xs whitespace-nowrap">
-                            {token.symbol}
-                          </span>
-                          <span className="text-gray-400 text-xs">
-                            ${typeof token.price === 'number' && isFinite(token.price) ? token.price.toFixed(token.price < 0.01 ? 6 : 2) : '0.00'}
-                          </span>
-                        </div>
+                        <span className="font-semibold text-white text-xs whitespace-nowrap">
+                          {token.symbol} - ${typeof token.price === 'number' && isFinite(token.price) ? token.price.toFixed(token.price < 0.01 ? 6 : 2) : '0.00'}
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">

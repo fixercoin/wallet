@@ -966,8 +966,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
-                        <div>
+                      <div className="flex items-center gap-2 sm:gap-3 ml-auto flex-shrink-0">
+                        <div className="text-right">
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             $
                             {typeof token.price === "number" &&
@@ -981,8 +981,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ? "0.00"
                                 : "0.00000000"}
                           </p>
+                          {typeof token.priceChange24h === "number" &&
+                          isFinite(token.priceChange24h) ? (
+                            <Button
+                              className={`h-auto px-2 py-0.5 rounded-sm font-medium text-xs bg-transparent hover:bg-white/10 border border-transparent transition-colors ${token.priceChange24h >= 0 ? "text-green-400 hover:text-green-300" : "text-red-400 hover:text-red-300"}`}
+                              variant="ghost"
+                            >
+                              {token.priceChange24h >= 0 ? "+" : ""}
+                              {token.priceChange24h.toFixed(2)}%
+                            </Button>
+                          ) : null}
                         </div>
-                        <div>
+                        <div className="text-right">
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}
                           </p>

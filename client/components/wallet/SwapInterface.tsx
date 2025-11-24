@@ -264,9 +264,9 @@ async function sendSignedTx(
   try {
     const response = await fetch("/api/solana-send", {
       method: "POST",
-      headers: {
+      headers: getApiHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       body: JSON.stringify({
         signedBase64,
       }),

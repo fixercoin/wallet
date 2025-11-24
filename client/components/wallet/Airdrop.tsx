@@ -253,7 +253,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       selectedMint === "So11111111111111111111111111111111111111112";
 
     // Calculate batch parameters
-    const BATCH_SIZE = isSol ? 30 : 15;
+    // SPL batch size reduced because ATA creation adds significant instruction data
+    const BATCH_SIZE = isSol ? 30 : 5;
     const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
     const totalBatchFees = BATCH_FEE_SOL * totalBatches;
 

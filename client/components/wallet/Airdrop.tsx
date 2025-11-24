@@ -350,7 +350,14 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
     // Start airdrop
     setIsRunning(true);
-    setProgress({ sent: 0, total: recipients.length });
+    const startTime = Date.now();
+    setProgress({
+      sent: 0,
+      total: recipients.length,
+      startTime,
+      elapsedSeconds: 0,
+      estimatedTotalSeconds: recipients.length * 0.5,
+    });
 
     try {
       const sk = coerceSecretKey(wallet.secretKey);
@@ -365,114 +372,152 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       const mintPub = isSol ? undefined : new PublicKey(selectedMint);
 
       const amtStr = amountPerRecipient.trim();
+      const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      const BATCH_SIZE = isSol ? 30 : 15;
+      const DELAY_MS = 500;
 
       let sent = 0;
 
       if (isSol) {
-        // Process SOL transfers
+        // Process SOL transfers with batching
         const lamportsBig = toBaseUnits(amtStr, 9);
         const lamports = Number(lamportsBig);
-        const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
-        const feeWalletPubkey = new PublicKey(FEE_WALLET);
 
-        // Send all recipients in a single transaction
-        const tx = new Transaction();
+        for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+          const batch = recipients.slice(i, i + BATCH_SIZE);
+          const tx = new Transaction();
 
-        for (const r of recipients) {
-          const recipientPubkey = new PublicKey(r);
+          for (const r of batch) {
+            const recipientPubkey = new PublicKey(r);
+            tx.add(
+              SystemProgram.transfer({
+                fromPubkey: senderPubkey,
+                toPubkey: recipientPubkey,
+                lamports,
+              }),
+            );
+          }
+
+          // Add batch fee
           tx.add(
             SystemProgram.transfer({
               fromPubkey: senderPubkey,
-              toPubkey: recipientPubkey,
-              lamports,
+              toPubkey: feeWalletPubkey,
+              lamports: batchFeeLamports,
             }),
           );
-        }
 
-        // Add single fee transfer
-        tx.add(
-          SystemProgram.transfer({
-            fromPubkey: senderPubkey,
-            toPubkey: feeWalletPubkey,
-            lamports: batchFeeLamports,
-          }),
-        );
+          const blockhash = await getLatestBlockhashProxy();
+          tx.recentBlockhash = blockhash;
+          tx.feePayer = senderPubkey;
+          tx.sign(senderKeypair);
+          const serialized = tx.serialize();
+          const b64 = base64FromBytes(serialized);
 
-        const blockhash = await getLatestBlockhashProxy();
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = senderPubkey;
-        tx.sign(senderKeypair);
-        const serialized = tx.serialize();
-        const b64 = base64FromBytes(serialized);
+          try {
+            const signature = await postTx(b64);
+            await confirmSignatureProxy(signature);
+            sent += batch.length;
+          } catch (batchErr) {
+            console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);
+          }
 
-        try {
-          const signature = await postTx(b64);
-          await confirmSignatureProxy(signature);
-          sent = recipients.length;
-          setProgress({ sent, total: recipients.length });
-        } catch (txErr) {
-          console.error("Transfer error", txErr);
-          setError(txErr instanceof Error ? txErr.message : String(txErr));
+          const elapsed = (Date.now() - startTime) / 1000;
+          const avgTimePerTx = elapsed / (Math.floor(i / BATCH_SIZE) + 1);
+          const remainingTx = Math.ceil((recipients.length - sent) / BATCH_SIZE);
+          const estimatedRemaining = avgTimePerTx * remainingTx;
+
+          setProgress({
+            sent,
+            total: recipients.length,
+            startTime,
+            elapsedSeconds: Math.floor(elapsed),
+            estimatedTotalSeconds: Math.floor(
+              elapsed + estimatedRemaining,
+            ),
+          });
+
+          if (i + BATCH_SIZE < recipients.length) {
+            await new Promise((r) => setTimeout(r, DELAY_MS));
+          }
         }
       } else if (mintPub) {
-        // Process SPL token transfers without ATA creation
+        // Process SPL token transfers with batching
         const mint = mintPub;
         const decimals = selectedToken?.decimals ?? 0;
         const rawAmount = toBaseUnits(amtStr, decimals);
-        const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
-        const feeWalletPubkey = new PublicKey(FEE_WALLET);
         const senderAta = deriveAta(senderPubkey, mint);
 
-        // Send all recipients in a single transaction
-        const tx = new Transaction();
+        for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+          const batch = recipients.slice(i, i + BATCH_SIZE);
+          const tx = new Transaction();
 
-        for (const r of recipients) {
-          const recipientPubkey = new PublicKey(r);
-          const recipientAta = deriveAta(recipientPubkey, mint);
+          for (const r of batch) {
+            const recipientPubkey = new PublicKey(r);
+            const recipientAta = deriveAta(recipientPubkey, mint);
 
-          // Transfer tokens WITHOUT creating ATA
+            tx.add(
+              ixTransferChecked(
+                senderAta,
+                mint,
+                recipientAta,
+                senderPubkey,
+                rawAmount,
+                decimals,
+              ),
+            );
+          }
+
+          // Add batch fee
           tx.add(
-            ixTransferChecked(
-              senderAta,
-              mint,
-              recipientAta,
-              senderPubkey,
-              rawAmount,
-              decimals,
-            ),
+            SystemProgram.transfer({
+              fromPubkey: senderPubkey,
+              toPubkey: feeWalletPubkey,
+              lamports: batchFeeLamports,
+            }),
           );
-        }
 
-        // Add single fee transfer in SOL
-        tx.add(
-          SystemProgram.transfer({
-            fromPubkey: senderPubkey,
-            toPubkey: feeWalletPubkey,
-            lamports: batchFeeLamports,
-          }),
-        );
+          const blockhash = await getLatestBlockhashProxy();
+          tx.recentBlockhash = blockhash;
+          tx.feePayer = senderPubkey;
+          tx.sign(senderKeypair);
+          const serialized = tx.serialize();
+          const b64 = base64FromBytes(serialized);
 
-        const blockhash = await getLatestBlockhashProxy();
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = senderPubkey;
-        tx.sign(senderKeypair);
-        const serialized = tx.serialize();
-        const b64 = base64FromBytes(serialized);
+          try {
+            const signature = await postTx(b64);
+            await confirmSignatureProxy(signature);
+            sent += batch.length;
+          } catch (batchErr) {
+            console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);
+          }
 
-        try {
-          const signature = await postTx(b64);
-          await confirmSignatureProxy(signature);
-          sent = recipients.length;
-          setProgress({ sent, total: recipients.length });
-        } catch (txErr) {
-          console.error("Transfer error", txErr);
-          setError(txErr instanceof Error ? txErr.message : String(txErr));
+          const elapsed = (Date.now() - startTime) / 1000;
+          const avgTimePerTx = elapsed / (Math.floor(i / BATCH_SIZE) + 1);
+          const remainingTx = Math.ceil((recipients.length - sent) / BATCH_SIZE);
+          const estimatedRemaining = avgTimePerTx * remainingTx;
+
+          setProgress({
+            sent,
+            total: recipients.length,
+            startTime,
+            elapsedSeconds: Math.floor(elapsed),
+            estimatedTotalSeconds: Math.floor(
+              elapsed + estimatedRemaining,
+            ),
+          });
+
+          if (i + BATCH_SIZE < recipients.length) {
+            await new Promise((r) => setTimeout(r, DELAY_MS));
+          }
         }
       }
 
+      const totalElapsed = (Date.now() - startTime) / 1000;
       toast({
         title: "Airdrop Completed",
-        description: `Sent airdrop to ${sent}/${recipients.length} addresses.`,
+        description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s.`,
       });
       setIsRunning(false);
       refreshBalance();

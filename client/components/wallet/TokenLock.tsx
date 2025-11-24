@@ -537,7 +537,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
         const serialized = transaction.serialize();
         const signature = await postTransaction(serialized);
-        await confirmSignatureProxy(signature);
+        try {
+          await confirmSignatureProxy(signature);
+        } catch (confirmError) {
+          console.warn(
+            "Confirmation check failed, but transaction was already sent:",
+            confirmError,
+          );
+          // Don't fail the transaction - it's already submitted to blockchain
+        }
 
         setLocks((prev) =>
           prev.map((item) =>

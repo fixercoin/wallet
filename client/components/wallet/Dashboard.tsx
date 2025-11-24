@@ -190,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -978,9 +978,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-white text-xs whitespace-nowrap">
+                            {token.symbol}
+                          </span>
+                          <span className="text-gray-400 text-xs">
+                            ${typeof token.price === 'number' && isFinite(token.price) ? token.price.toFixed(token.price < 0.01 ? 6 : 2) : '0.00'}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">

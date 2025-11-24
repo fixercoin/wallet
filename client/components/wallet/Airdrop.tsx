@@ -196,50 +196,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     return ata;
   };
 
-  const ixCreateAtaIdempotent = (
-    payer: PublicKey,
-    ata: PublicKey,
-    owner: PublicKey,
-    mint: PublicKey,
-  ): TransactionInstruction => {
-    const data = new Uint8Array([1]);
-    return new TransactionInstruction({
-      programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      keys: [
-        { pubkey: payer, isSigner: true, isWritable: true },
-        { pubkey: ata, isSigner: false, isWritable: true },
-        { pubkey: owner, isSigner: false, isWritable: false },
-        { pubkey: mint, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      ],
-      data,
-    });
-  };
-
-  const ixTransferChecked = (
-    source: PublicKey,
-    mint: PublicKey,
-    destination: PublicKey,
-    owner: PublicKey,
-    amount: bigint,
-    decimals: number,
-  ): TransactionInstruction => {
-    const data = new Uint8Array(1 + 8 + 1);
-    data[0] = 12;
-    data.set(u64LE(amount), 1);
-    data[1 + 8] = decimals;
-    return new TransactionInstruction({
-      programId: TOKEN_PROGRAM_ID,
-      keys: [
-        { pubkey: source, isSigner: false, isWritable: true },
-        { pubkey: mint, isSigner: false, isWritable: false },
-        { pubkey: destination, isSigner: false, isWritable: true },
-        { pubkey: owner, isSigner: true, isWritable: false },
-      ],
-      data,
-    });
-  };
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
     try {

@@ -388,7 +388,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         const mint = mintPub;
         const decimals = selectedToken?.decimals ?? 0;
         const rawAmount = toBaseUnits(amtStr, decimals);
-        const senderAta = await getAssociatedTokenAddress(mint, senderPubkey);
+        const senderAta = getAssociatedTokenAddress(mint, senderPubkey);
 
         // Validate sender has token account
         try {

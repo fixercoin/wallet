@@ -235,7 +235,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     });
   };
 
-
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
     try {
       if (!val) return null;
@@ -323,7 +322,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     if (isSol) {
       const requiredSol = amt * recipients.length + totalBatchFees;
       if (typeof balance !== "number" || balance < requiredSol) {
-        setError(`Insufficient SOL (need ${requiredSol.toFixed(6)} SOL including ${totalBatchFees.toFixed(6)} SOL in fees for ${totalBatches} batches)`);
+        setError(
+          `Insufficient SOL (need ${requiredSol.toFixed(6)} SOL including ${totalBatchFees.toFixed(6)} SOL in fees for ${totalBatches} batches)`,
+        );
         toast({
           title: "Insufficient SOL",
           description: `Top up SOL or reduce amount/recipients. Total fees: ${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches.`,
@@ -344,7 +345,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       }
       // For token transfers, also check SOL for all batch fees
       if (typeof balance !== "number" || balance < totalBatchFees) {
-        setError(`Insufficient SOL for batch fees (${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches)`);
+        setError(
+          `Insufficient SOL for batch fees (${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches)`,
+        );
         toast({
           title: "Insufficient SOL",
           description: `Need ${totalBatchFees.toFixed(6)} SOL for transaction fees (${totalBatches} batches).`,
@@ -426,7 +429,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
           const elapsed = (Date.now() - startTime) / 1000;
           const avgTimePerTx = elapsed / (Math.floor(i / BATCH_SIZE) + 1);
-          const remainingTx = Math.ceil((recipients.length - sent) / BATCH_SIZE);
+          const remainingTx = Math.ceil(
+            (recipients.length - sent) / BATCH_SIZE,
+          );
           const estimatedRemaining = avgTimePerTx * remainingTx;
 
           setProgress({
@@ -434,9 +439,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             total: recipients.length,
             startTime,
             elapsedSeconds: Math.floor(elapsed),
-            estimatedTotalSeconds: Math.floor(
-              elapsed + estimatedRemaining,
-            ),
+            estimatedTotalSeconds: Math.floor(elapsed + estimatedRemaining),
           });
 
           if (i + BATCH_SIZE < recipients.length) {
@@ -496,7 +499,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
           const elapsed = (Date.now() - startTime) / 1000;
           const avgTimePerTx = elapsed / (Math.floor(i / BATCH_SIZE) + 1);
-          const remainingTx = Math.ceil((recipients.length - sent) / BATCH_SIZE);
+          const remainingTx = Math.ceil(
+            (recipients.length - sent) / BATCH_SIZE,
+          );
           const estimatedRemaining = avgTimePerTx * remainingTx;
 
           setProgress({
@@ -504,9 +509,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             total: recipients.length,
             startTime,
             elapsedSeconds: Math.floor(elapsed),
-            estimatedTotalSeconds: Math.floor(
-              elapsed + estimatedRemaining,
-            ),
+            estimatedTotalSeconds: Math.floor(elapsed + estimatedRemaining),
           });
 
           if (i + BATCH_SIZE < recipients.length) {

@@ -405,7 +405,25 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 recipientPubkey,
               );
 
-              // Use the proper SPL token transfer instruction
+              // Check if recipient ATA exists
+              const recipientAccountInfo = await rpcCall("getAccountInfo", [
+                recipientAta.toString(),
+                { encoding: "base64" },
+              ]);
+
+              // Create ATA if it doesn't exist
+              if (!recipientAccountInfo?.value) {
+                tx.add(
+                  createAssociatedTokenAccountInstruction(
+                    senderPubkey,
+                    recipientAta,
+                    recipientPubkey,
+                    mint,
+                  ),
+                );
+              }
+
+              // Add transfer instruction
               tx.add(
                 createTransferCheckedInstruction(
                   senderAta,

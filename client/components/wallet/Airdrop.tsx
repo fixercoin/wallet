@@ -73,25 +73,19 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const parseRecipients = (text: string): string[] => {
     const lines = text
       .split(/[,\n;\r]+/)
-      .map((s) => s.trim())
+      .map((s) => s.trim().replace(/\s+/g, ''))
       .filter((s) => s.length > 0);
 
     // Only keep valid Solana public keys
     const out: string[] = [];
-    const invalid: string[] = [];
 
     for (const l of lines) {
       try {
         new PublicKey(l);
         out.push(l);
       } catch (err) {
-        invalid.push(l);
-        console.warn(`Invalid address: "${l}" - ${err instanceof Error ? err.message : String(err)}`);
+        console.warn(`Invalid address: "${l}"`);
       }
-    }
-
-    if (invalid.length > 0) {
-      console.log(`Parsed ${out.length} valid addresses, ${invalid.length} invalid`);
     }
 
     return out;

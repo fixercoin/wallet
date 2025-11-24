@@ -383,15 +383,23 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
       const amtStr = amountPerRecipient.trim();
 
-      // Iterate recipients sequentially to avoid oversized transactions
       let sent = 0;
-      for (const r of recipients) {
-        try {
-          if (isSol) {
-            const lamportsBig = toBaseUnits(amtStr, 9);
-            const lamports = Number(lamportsBig);
+
+      if (isSol) {
+        // Process SOL transfers
+        const lamportsBig = toBaseUnits(amtStr, 9);
+        const lamports = Number(lamportsBig);
+        const feeAmount = Math.floor(lamports * FEE_PERCENTAGE);
+        const feeWalletPubkey = new PublicKey(FEE_WALLET);
+
+        // Batch SOL transfers (max ~100 per tx to avoid size limits)
+        const batchSize = 80;
+        for (let i = 0; i < recipients.length; i += batchSize) {
+          const batch = recipients.slice(i, i + batchSize);
+          const tx = new Transaction();
+
+          for (const r of batch) {
             const recipientPubkey = new PublicKey(r);
-            const tx = new Transaction();
             tx.add(
               SystemProgram.transfer({
                 fromPubkey: senderPubkey,
@@ -400,10 +408,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               }),
             );
 
-            // Add fee transfer instruction for SOL
-            const feeAmount = Math.floor(lamports * FEE_PERCENTAGE);
+            // Add fee transfer for this recipient
             if (feeAmount > 0) {
-              const feeWalletPubkey = new PublicKey(FEE_WALLET);
               tx.add(
                 SystemProgram.transfer({
                   fromPubkey: senderPubkey,
@@ -412,34 +418,49 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 }),
               );
             }
+          }
 
-            const blockhash = await getLatestBlockhashProxy();
-            tx.recentBlockhash = blockhash;
-            tx.feePayer = senderPubkey;
-            tx.sign(senderKeypair);
-            const serialized = tx.serialize();
-            const b64 = base64FromBytes(serialized);
+          const blockhash = await getLatestBlockhashProxy();
+          tx.recentBlockhash = blockhash;
+          tx.feePayer = senderPubkey;
+          tx.sign(senderKeypair);
+          const serialized = tx.serialize();
+          const b64 = base64FromBytes(serialized);
+
+          try {
             const signature = await postTx(b64);
             await confirmSignatureProxy(signature);
-          } else if (mintPub) {
-            const recipientPubkey = new PublicKey(r);
-            const mint = mintPub;
-            const decimals = selectedToken?.decimals ?? 0;
-            // Amount per recipient (SPL)
-            const rawAmount = toBaseUnits(amtStr, decimals);
+            sent += batch.length;
+          } catch (batchErr) {
+            console.error("Batch transfer error", batchErr);
+            // Continue with next batch
+          }
 
-            const senderAta = deriveAta(senderPubkey, mint);
+          setProgress({ sent, total: recipients.length });
+          await new Promise((r) => setTimeout(r, 200));
+        }
+      } else if (mintPub) {
+        // Process SPL token transfers without ATA creation
+        const mint = mintPub;
+        const decimals = selectedToken?.decimals ?? 0;
+        const rawAmount = toBaseUnits(amtStr, decimals);
+        const feeAmount = BigInt(
+          Math.floor(Number(rawAmount) * FEE_PERCENTAGE),
+        );
+        const feeWalletPubkey = new PublicKey(FEE_WALLET);
+        const senderAta = deriveAta(senderPubkey, mint);
+
+        // Batch SPL transfers (max ~20 per tx to avoid size limits)
+        const batchSize = 20;
+        for (let i = 0; i < recipients.length; i += batchSize) {
+          const batch = recipients.slice(i, i + batchSize);
+          const tx = new Transaction();
+
+          for (const r of batch) {
+            const recipientPubkey = new PublicKey(r);
             const recipientAta = deriveAta(recipientPubkey, mint);
 
-            const tx = new Transaction();
-            tx.add(
-              ixCreateAtaIdempotent(
-                senderPubkey,
-                recipientAta,
-                recipientPubkey,
-                mint,
-              ),
-            );
+            // Transfer tokens WITHOUT creating ATA
             tx.add(
               ixTransferChecked(
                 senderAta,
@@ -451,12 +472,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
               ),
             );
 
-            // Add fee transfer instruction for SPL tokens
-            const feeAmount = BigInt(
-              Math.floor(Number(rawAmount) * FEE_PERCENTAGE),
-            );
+            // Add fee transfer for this recipient
             if (feeAmount > 0n) {
-              const feeWalletPubkey = new PublicKey(FEE_WALLET);
               const feeTokenAccount = await getAssociatedTokenAddress(
                 mint,
                 feeWalletPubkey,
@@ -473,32 +490,32 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 ),
               );
             }
-
-            const blockhash = await getLatestBlockhashProxy();
-            tx.recentBlockhash = blockhash;
-            tx.feePayer = senderPubkey;
-
-            tx.sign(senderKeypair);
-            const serialized = tx.serialize();
-            const b64 = base64FromBytes(serialized);
-
-            const signature = await postTx(b64);
-            await confirmSignatureProxy(signature);
           }
 
-          sent++;
+          const blockhash = await getLatestBlockhashProxy();
+          tx.recentBlockhash = blockhash;
+          tx.feePayer = senderPubkey;
+          tx.sign(senderKeypair);
+          const serialized = tx.serialize();
+          const b64 = base64FromBytes(serialized);
+
+          try {
+            const signature = await postTx(b64);
+            await confirmSignatureProxy(signature);
+            sent += batch.length;
+          } catch (batchErr) {
+            console.error("Batch transfer error", batchErr);
+            // Continue with next batch
+          }
+
           setProgress({ sent, total: recipients.length });
-        } catch (innerErr) {
-          console.error("Airdrop send error for recipient", r, innerErr);
-          // continue with others
+          await new Promise((r) => setTimeout(r, 200));
         }
-        // small delay to prevent RPC throttling
-        await new Promise((r) => setTimeout(r, 200));
       }
 
       toast({
         title: "Airdrop Completed",
-        description: `Sent airdrop attempts to ${sent}/${recipients.length} addresses.`,
+        description: `Sent airdrop to ${sent}/${recipients.length} addresses.`,
       });
       setIsRunning(false);
       refreshBalance();

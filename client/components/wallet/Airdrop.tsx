@@ -388,20 +388,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         const mint = mintPub;
         const decimals = selectedToken?.decimals ?? 0;
         const rawAmount = toBaseUnits(amtStr, decimals);
-        const senderAta = getAssociatedTokenAddress(mint, senderPubkey);
-
-        // Validate sender has token account
-        try {
-          const senderAccountInfo = await rpcCall("getAccountInfo", [
-            senderAta.toString(),
-            { encoding: "base64" },
-          ]);
-          if (!senderAccountInfo?.value) {
-            throw new Error("Sender does not have an associated token account for this token");
-          }
-        } catch (err) {
-          throw new Error(`Failed to validate sender token account: ${err instanceof Error ? err.message : String(err)}`);
-        }
+        const senderAta = await getAssociatedTokenAddress(mint, senderPubkey);
 
         for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
           const batch = recipients.slice(i, i + BATCH_SIZE);
@@ -409,7 +396,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
           for (const r of batch) {
             const recipientPubkey = new PublicKey(r);
-            const recipientAta = getAssociatedTokenAddress(
+            const recipientAta = await getAssociatedTokenAddress(
               mint,
               recipientPubkey,
             );

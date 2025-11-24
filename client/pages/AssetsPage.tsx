@@ -38,6 +38,22 @@ export default function AssetsPage() {
     });
   };
 
+  const formatTokenAmountCompact = (amount: number | undefined): string => {
+    if (!amount || isNaN(amount) || amount === 0) return "0";
+
+    const absAmount = Math.abs(amount);
+    if (absAmount >= 1000000) {
+      return (amount / 1000000).toFixed(2).replace(/\.?0+$/, "") + "m";
+    }
+    if (absAmount >= 1000) {
+      return (amount / 1000).toFixed(2).replace(/\.?0+$/, "") + "k";
+    }
+    if (absAmount >= 1) {
+      return amount.toFixed(2).replace(/\.?0+$/, "");
+    }
+    return amount.toFixed(6).replace(/\.?0+$/, "");
+  };
+
   const sortedTokens = useMemo(() => {
     const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
     const arr = [...tokens].filter((t) => t.symbol !== "USDT");

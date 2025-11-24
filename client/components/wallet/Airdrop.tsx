@@ -389,7 +389,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         // Process SOL transfers
         const lamportsBig = toBaseUnits(amtStr, 9);
         const lamports = Number(lamportsBig);
-        const feeAmount = Math.floor(lamports * FEE_PERCENTAGE);
+        const batchFeeLamports = Math.floor(BATCH_FEE_SOL * LAMPORTS_PER_SOL);
         const feeWalletPubkey = new PublicKey(FEE_WALLET);
 
         // Batch SOL transfers (max ~100 per tx to avoid size limits)
@@ -407,18 +407,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 lamports,
               }),
             );
-
-            // Add fee transfer for this recipient
-            if (feeAmount > 0) {
-              tx.add(
-                SystemProgram.transfer({
-                  fromPubkey: senderPubkey,
-                  toPubkey: feeWalletPubkey,
-                  lamports: feeAmount,
-                }),
-              );
-            }
           }
+
+          // Add single batch fee transfer
+          tx.add(
+            SystemProgram.transfer({
+              fromPubkey: senderPubkey,
+              toPubkey: feeWalletPubkey,
+              lamports: batchFeeLamports,
+            }),
+          );
 
           const blockhash = await getLatestBlockhashProxy();
           tx.recentBlockhash = blockhash;

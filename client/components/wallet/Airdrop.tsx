@@ -73,18 +73,21 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const parseRecipients = (text: string): string[] => {
     const lines = text
       .split(/[,\n;\r]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+      .map((s) => s.trim().replace(/\s+/g, ""))
+      .filter((s) => s.length > 0);
+
     // Only keep valid Solana public keys
     const out: string[] = [];
+
     for (const l of lines) {
       try {
         new PublicKey(l);
         out.push(l);
-      } catch {
-        // skip invalid
+      } catch (err) {
+        console.warn(`Invalid address: "${l}"`);
       }
     }
+
     return out;
   };
 
@@ -157,8 +160,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         st &&
         (st.confirmationStatus === "confirmed" ||
           st.confirmationStatus === "finalized")
-      )
+      ) {
+        // Check if transaction actually succeeded
+        if (st.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(st.err)}`);
+        }
         return;
+      }
       await new Promise((r) => setTimeout(r, 1000));
     }
     throw new Error("Confirmation timeout");
@@ -169,76 +177,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     const fracPart = fracPartRaw.padEnd(decimals, "0").slice(0, decimals);
     const full = `${intPart.replace(/[^0-9]/g, "")}${fracPart}` || "0";
     return BigInt(full);
-  };
-
-  const u64LE = (n: bigint): Uint8Array => {
-    const out = new Uint8Array(8);
-    let x = n;
-    for (let i = 0; i < 8; i++) {
-      out[i] = Number(x & BigInt(0xff));
-      x >>= BigInt(8);
-    }
-    return out;
-  };
-
-  const TOKEN_PROGRAM_ID = new PublicKey(
-    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-  );
-  const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  );
-
-  const deriveAta = (owner: PublicKey, mint: PublicKey): PublicKey => {
-    const [ata] = PublicKey.findProgramAddressSync(
-      [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    );
-    return ata;
-  };
-
-  const ixCreateAtaIdempotent = (
-    payer: PublicKey,
-    ata: PublicKey,
-    owner: PublicKey,
-    mint: PublicKey,
-  ): TransactionInstruction => {
-    const data = new Uint8Array([1]);
-    return new TransactionInstruction({
-      programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      keys: [
-        { pubkey: payer, isSigner: true, isWritable: true },
-        { pubkey: ata, isSigner: false, isWritable: true },
-        { pubkey: owner, isSigner: false, isWritable: false },
-        { pubkey: mint, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      ],
-      data,
-    });
-  };
-
-  const ixTransferChecked = (
-    source: PublicKey,
-    mint: PublicKey,
-    destination: PublicKey,
-    owner: PublicKey,
-    amount: bigint,
-    decimals: number,
-  ): TransactionInstruction => {
-    const data = new Uint8Array(1 + 8 + 1);
-    data[0] = 12;
-    data.set(u64LE(amount), 1);
-    data[1 + 8] = decimals;
-    return new TransactionInstruction({
-      programId: TOKEN_PROGRAM_ID,
-      keys: [
-        { pubkey: source, isSigner: false, isWritable: true },
-        { pubkey: mint, isSigner: false, isWritable: false },
-        { pubkey: destination, isSigner: false, isWritable: true },
-        { pubkey: owner, isSigner: true, isWritable: false },
-      ],
-      data,
-    });
   };
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
@@ -453,30 +391,59 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           }
         }
       } else if (mintPub) {
-        // Process SPL token transfers with batching
+        // Process SPL token transfers with batching - simple send logic
         const mint = mintPub;
         const decimals = selectedToken?.decimals ?? 0;
         const rawAmount = toBaseUnits(amtStr, decimals);
-        const senderAta = deriveAta(senderPubkey, mint);
+        const senderAta = await getAssociatedTokenAddress(mint, senderPubkey);
 
         for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
           const batch = recipients.slice(i, i + BATCH_SIZE);
           const tx = new Transaction();
+          let validCount = 0;
 
           for (const r of batch) {
-            const recipientPubkey = new PublicKey(r);
-            const recipientAta = deriveAta(recipientPubkey, mint);
-
-            tx.add(
-              ixTransferChecked(
-                senderAta,
+            try {
+              // Only validate address is a valid Solana public key
+              const recipientPubkey = new PublicKey(r);
+              const recipientAta = await getAssociatedTokenAddress(
                 mint,
-                recipientAta,
-                senderPubkey,
-                rawAmount,
-                decimals,
-              ),
-            );
+                recipientPubkey,
+              );
+
+              // Check if recipient ATA exists
+              const recipientAccountInfo = await rpcCall("getAccountInfo", [
+                recipientAta.toString(),
+                { encoding: "base64" },
+              ]);
+
+              // Skip if recipient doesn't have ATA for this token
+              if (!recipientAccountInfo?.value) {
+                console.warn(`Skipping ${r}: no ATA for this token`);
+                continue;
+              }
+
+              // Add transfer instruction only if ATA exists
+              tx.add(
+                createTransferCheckedInstruction(
+                  senderAta,
+                  mint,
+                  recipientAta,
+                  senderPubkey,
+                  rawAmount,
+                  decimals,
+                ),
+              );
+              validCount++;
+            } catch (err) {
+              console.warn(`Invalid address ${r}: not a valid Solana address`);
+            }
+          }
+
+          // Only send if we have valid addresses in this batch
+          if (validCount === 0) {
+            console.warn("No valid addresses in batch, skipping");
+            continue;
           }
 
           // Add batch fee
@@ -498,7 +465,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
           try {
             const signature = await postTx(b64);
             await confirmSignatureProxy(signature);
-            sent += batch.length;
+            sent += validCount;
           } catch (batchErr) {
             console.error(`Batch ${i / BATCH_SIZE} error:`, batchErr);
           }
@@ -525,10 +492,25 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       }
 
       const totalElapsed = (Date.now() - startTime) / 1000;
-      toast({
-        title: "Airdrop Completed",
-        description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s.`,
-      });
+      if (sent === 0) {
+        toast({
+          title: "Airdrop Failed",
+          description:
+            "No tokens were sent. Check console for details and ensure recipients have token accounts.",
+          variant: "destructive",
+        });
+      } else if (sent < recipients.length) {
+        toast({
+          title: "Airdrop Partial",
+          description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s. Some batches failed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Airdrop Completed",
+          description: `Sent ${sent}/${recipients.length} addresses in ${totalElapsed.toFixed(1)}s.`,
+        });
+      }
       setIsRunning(false);
       refreshBalance();
       refreshTokens();

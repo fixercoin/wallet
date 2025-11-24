@@ -73,7 +73,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const parseRecipients = (text: string): string[] => {
     const lines = text
       .split(/[,\n;\r]+/)
-      .map((s) => s.trim().replace(/\s+/g, ''))
+      .map((s) => s.trim().replace(/\s+/g, ""))
       .filter((s) => s.length > 0);
 
     // Only keep valid Solana public keys
@@ -156,7 +156,11 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         { searchTransactionHistory: true },
       ]);
       const st = statusRes?.value?.[0];
-      if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) {
+      if (
+        st &&
+        (st.confirmationStatus === "confirmed" ||
+          st.confirmationStatus === "finalized")
+      ) {
         // Check if transaction actually succeeded
         if (st.err) {
           throw new Error(`Transaction failed: ${JSON.stringify(st.err)}`);
@@ -174,7 +178,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     const full = `${intPart.replace(/[^0-9]/g, "")}${fracPart}` || "0";
     return BigInt(full);
   };
-
 
   const coerceSecretKey = (val: unknown): Uint8Array | null => {
     try {
@@ -492,7 +495,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       if (sent === 0) {
         toast({
           title: "Airdrop Failed",
-          description: "No tokens were sent. Check console for details and ensure recipients have token accounts.",
+          description:
+            "No tokens were sent. Check console for details and ensure recipients have token accounts.",
           variant: "destructive",
         });
       } else if (sent < recipients.length) {

@@ -829,8 +829,20 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl relative">
           {isLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 rounded-lg">
-              <div className="text-white">Processing transaction...</div>
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 rounded-lg">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
+                    <Loader2 className="w-12 h-12 text-purple-400 animate-spin relative" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-white font-medium">Processing transaction</p>
+                  <p className="text-gray-300 text-sm">Please wait...</p>
+                  <p className="text-gray-400 text-xs">May take up to 40 seconds</p>
+                </div>
+              </div>
             </div>
           )}
 

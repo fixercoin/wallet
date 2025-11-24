@@ -729,7 +729,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         console.log(
                           `🚀 Maker ${m.id}: Profit target reached! Executing sell...`,
                         );
-                        shouldContinue = false;
 
                         const sellSwap = await jupiterAPI.getSwapTransaction({
                           quoteResponse: priceQuote,
@@ -768,7 +767,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         m.profitUSD = profit;
 
                         console.log(
-                          `✅ Maker ${m.id}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ���${sellFeeAmount.toFixed(4)}`,
+                          `✅ Maker ${m.id}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ◎${sellFeeAmount.toFixed(4)}`,
                         );
 
                         // Update session state with sell transaction
@@ -792,6 +791,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           title: "Auto-Sell Executed",
                           description: `Maker ${m.id}: Sold at ${profitPercent.toFixed(2)}% profit (◎${profit.toFixed(4)})`,
                         });
+
+                        // Only stop monitoring after successful sell
+                        shouldContinue = false;
                       }
                     } catch (error) {
                       const errorMsg =

@@ -204,7 +204,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       const statusRes = await rpcCall("getSignatureStatuses", [
         [sig],

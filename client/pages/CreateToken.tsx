@@ -171,7 +171,7 @@ export default function CreateToken() {
       // Send
       const sendResp = await fetch(resolveApiUrl("/api/solana-send"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getApiHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ signedBase64 }),
       });
 

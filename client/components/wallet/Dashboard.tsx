@@ -18,7 +18,6 @@ import {
   Plus,
   Menu,
   Gift,
-  Flame,
   Lock,
   Bell,
   X,
@@ -785,15 +784,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Lock className="h-4 w-4" />
               </Button>
               <Button
-                onClick={onBurn}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Burn"
-                title="Burn"
-              >
-                <Flame className="h-4 w-4" />
-              </Button>
-              <Button
                 onClick={onSettings}
                 size="sm"
                 className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
@@ -956,13 +946,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
-            const percentChange =
-              typeof token.priceChange24h === "number" &&
-              isFinite(token.priceChange24h)
-                ? token.priceChange24h
-                : null;
-            const isPositive = (percentChange ?? 0) >= 0;
-
             return (
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
@@ -979,31 +962,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol} - $
-                          {typeof token.price === "number" &&
-                          isFinite(token.price)
-                            ? token.price.toFixed(token.price < 0.01 ? 6 : 2)
-                            : "0.00"}
+                          {token.symbol}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
                         <div>
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            $
+                            {typeof token.price === "number" &&
+                            isFinite(token.price)
+                              ? token.price.toFixed(
+                                  ["SOL", "USDC"].includes(token.symbol)
+                                    ? 2
+                                    : 8,
+                                )
+                              : ["SOL", "USDC"].includes(token.symbol)
+                                ? "0.00"
+                                : "0.00000000"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatBalance(token.balance || 0, token.symbol)}
                           </p>
                         </div>
-
-                        {percentChange !== null && (
-                          <span
-                            className={`font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
-                              isPositive ? "text-green-400" : "text-red-400"
-                            }`}
-                          >
-                            {isPositive ? "+" : ""}
-                            {percentChange.toFixed(2)}%
-                          </span>
-                        )}
                       </div>
                     </div>
                   </CardContent>

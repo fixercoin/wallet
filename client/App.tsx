@@ -138,6 +138,7 @@ import AssetsPage from "./pages/AssetsPage";
 import DepositAssetPage from "./pages/DepositAssetPage";
 import SelectLanguagePage from "./pages/SelectLanguagePage";
 import SelectCurrencyPage from "./pages/SelectCurrencyPage";
+import BurnTokenPage from "./pages/BurnTokenPage";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
@@ -164,6 +165,7 @@ function AppRoutes() {
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/burn" element={<BurnTokenPage />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/assets" element={<AssetsPage />} />
       <Route path="/assets/deposit" element={<DepositAssetPage />} />

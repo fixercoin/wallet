@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, Rocket, Sparkles, Wallet } from "lucide-react";
+import { Home, Rocket, Wallet, Flame } from "lucide-react";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export const BottomNavigation = () => {
   const navItems = [
     { path: "/", label: "HOME", icon: Home },
     { path: "/autobot", label: "BOOST", icon: Rocket },
-    { path: "/airdrop", label: "AIRDROP", icon: Sparkles },
+    { path: "/burn", label: "BURN", icon: Flame },
     { path: "/assets", label: "ASSET", icon: Wallet },
   ];
 

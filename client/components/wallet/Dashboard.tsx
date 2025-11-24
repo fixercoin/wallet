@@ -952,7 +952,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-2 sm:gap-3"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3"
                       onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -962,13 +962,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol}
-                        </span>
                       </div>
 
-                      <div className="flex items-center gap-2 sm:gap-3 ml-auto flex-shrink-0">
-                        <div className="text-right">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="text-left">
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             $
                             {typeof token.price === "number" &&
@@ -982,22 +979,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ? "0.00"
                                 : "0.00000000"}
                           </p>
-                          {typeof token.priceChange24h === "number" &&
-                          isFinite(token.priceChange24h) ? (
-                            <Button
-                              className={`h-auto px-2 py-0.5 rounded-sm font-medium text-xs bg-transparent hover:bg-white/10 border border-transparent transition-colors ${token.priceChange24h >= 0 ? "text-green-400 hover:text-green-300" : "text-red-400 hover:text-red-300"}`}
-                              variant="ghost"
-                            >
-                              {token.priceChange24h >= 0 ? "+" : ""}
-                              {token.priceChange24h.toFixed(2)}%
-                            </Button>
-                          ) : null}
+                          <p className="text-xs text-gray-400 whitespace-nowrap">
+                            {token.symbol}
+                          </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left">
                           <p className="text-xs font-semibold text-white whitespace-nowrap">
                             {formatAmountCompact(token.balance, token.symbol)}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="flex-shrink-0">
+                        {typeof token.priceChange24h === "number" &&
+                        isFinite(token.priceChange24h) ? (
+                          <Button
+                            className={`h-auto px-2 py-0.5 rounded-sm font-medium text-xs bg-transparent hover:bg-white/10 border border-transparent transition-colors ${token.priceChange24h >= 0 ? "text-green-400 hover:text-green-300" : "text-red-400 hover:text-red-300"}`}
+                            variant="ghost"
+                          >
+                            {token.priceChange24h >= 0 ? "+" : ""}
+                            {token.priceChange24h.toFixed(2)}%
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   </CardContent>

@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -459,6 +465,239 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     }
   };
 
+  const autoSellMonitoringRef = useRef<{ [key: string]: boolean }>({});
+
+  // Function to start auto-sell monitoring for a pending trade
+  const startAutoSellMonitoring = useCallback(
+    async (
+      sessionId: string,
+      makerId: string,
+      buyTx: Transaction,
+      session: MarketMakerSession,
+    ) => {
+      const monitoringKey = `${sessionId}-${makerId}`;
+
+      // Skip if already monitoring this trade
+      if (autoSellMonitoringRef.current[monitoringKey]) {
+        console.log(
+          `⏭️ Auto-sell monitoring already active for ${makerId} in session ${sessionId}`,
+        );
+        return;
+      }
+
+      // Mark as monitoring
+      autoSellMonitoringRef.current[monitoringKey] = true;
+
+      if (!wallet || !wallet.secretKey) {
+        console.warn(
+          `⚠️ Wallet not available for auto-sell monitoring of ${makerId}`,
+        );
+        return;
+      }
+
+      const tokenAmount = buyTx.tokenAmount;
+      const amountSol = buyTx.solAmount;
+      const buyPricePerToken = amountSol / tokenAmount;
+      const profitTarget = session.profitTargetPercent || 5;
+
+      console.log(
+        `🔄 Starting auto-sell monitoring for ${makerId}. Buy price: ◎${buyPricePerToken.toFixed(9)}/token, Profit target: ${profitTarget}%`,
+      );
+
+      const getKeypair = (): Keypair | null => {
+        try {
+          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
+          if (!sk) return null;
+          if (typeof sk === "string") {
+            const arr = bytesFromBase64(sk);
+            return Keypair.fromSecretKey(arr);
+          }
+          if (Array.isArray(sk))
+            return Keypair.fromSecretKey(Uint8Array.from(sk));
+          return Keypair.fromSecretKey(sk as Uint8Array);
+        } catch (e) {
+          console.error(`[Auto-Sell] Error creating keypair: ${e}`);
+          return null;
+        }
+      };
+
+      const sendSignedTxGeneric = async (txBase64: string): Promise<string> => {
+        const buf = bytesFromBase64(txBase64);
+        const vtx = VersionedTransaction.deserialize(buf);
+        const kp = getKeypair();
+        if (!kp) throw new Error("Missing keypair to sign transaction");
+        vtx.sign([kp]);
+        const signed = vtx.serialize();
+        const signedBase64 = base64FromBytes(signed);
+        const res = await rpcCall("sendTransaction", [
+          signedBase64,
+          { skipPreflight: false, preflightCommitment: "confirmed" },
+        ]);
+        return res as string;
+      };
+
+      // Start monitoring loop
+      let shouldContinue = true;
+      let checkCount = 0;
+      const maxChecks = 100; // ~5 minutes at 3-second intervals
+
+      while (shouldContinue && checkCount < maxChecks) {
+        try {
+          checkCount++;
+          await new Promise((r) => setTimeout(r, 3000)); // Check every 3 seconds
+
+          const priceQuote = await jupiterAPI.getQuote(
+            session.tokenAddress,
+            SOL_MINT,
+            jupiterAPI.formatSwapAmount(tokenAmount, 6),
+            120,
+          );
+
+          if (!priceQuote) {
+            console.warn(
+              `⚠️ ${makerId}: Failed to get price quote (check ${checkCount})`,
+            );
+            continue;
+          }
+
+          const soldSOL =
+            jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) || 0;
+
+          if (soldSOL <= 0) {
+            console.warn(`⚠️ ${makerId}: Invalid quote amount: ${soldSOL}`);
+            continue;
+          }
+
+          const sellPricePerToken = soldSOL / tokenAmount;
+          const profitPercent =
+            ((sellPricePerToken - buyPricePerToken) / buyPricePerToken) * 100;
+
+          console.log(
+            `📊 ${makerId}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Price: ◎${sellPricePerToken.toFixed(9)}/token)`,
+          );
+
+          // Execute sell if profit target reached
+          if (profitPercent >= profitTarget) {
+            console.log(
+              `🚀 ${makerId}: Profit target reached! Executing sell...`,
+            );
+
+            const sellSwap = await jupiterAPI.getSwapTransaction({
+              quoteResponse: priceQuote,
+              userPublicKey: wallet.publicKey,
+              wrapAndUnwrapSol: true,
+            });
+
+            if (!sellSwap || !sellSwap.swapTransaction) {
+              throw new Error("Failed to build sell transaction");
+            }
+
+            const sellSig = await sendSignedTxGeneric(sellSwap.swapTransaction);
+
+            // Transfer fixed fee for the sell
+            const sellFeeAmount = SWAP_FEE_SOL;
+            const sellFeeTransferred = await transferFeeToWallet(
+              sellFeeAmount,
+              makerId,
+            );
+
+            // Update session with sell transaction
+            const updatedSessions = sessions.map((s) => {
+              if (s.id !== sessionId) return s;
+              return {
+                ...s,
+                makers: s.makers.map((m) => {
+                  if (m.id !== makerId) return m;
+                  return {
+                    ...m,
+                    sellTransactions: [
+                      ...m.sellTransactions,
+                      {
+                        type: "sell" as const,
+                        timestamp: Date.now(),
+                        solAmount: soldSOL,
+                        tokenAmount: tokenAmount,
+                        feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
+                        signature: sellSig,
+                        status: "confirmed" as const,
+                      },
+                    ],
+                    profitUSD: soldSOL - amountSol,
+                  };
+                }),
+              };
+            });
+
+            setSessions(updatedSessions);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
+
+            const profit = soldSOL - amountSol;
+
+            console.log(
+              `✅ ${makerId}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ◎${sellFeeAmount.toFixed(4)}`,
+            );
+
+            toast({
+              title: "Auto-Sell Executed",
+              description: `${makerId}: Sold at ${profitPercent.toFixed(2)}% profit (◎${profit.toFixed(4)})`,
+            });
+
+            shouldContinue = false;
+          }
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          console.error(
+            `❌ ${makerId}: Auto-sell error on check #${checkCount}:`,
+            error,
+          );
+
+          if (
+            errorMsg.includes("timeout") ||
+            errorMsg.includes("failed") ||
+            errorMsg.includes("RPC")
+          ) {
+            console.log(`🔄 ${makerId}: Retrying in 3 seconds...`);
+          }
+        }
+      }
+
+      if (shouldContinue) {
+        console.log(
+          `⏱️ ${makerId}: Auto-sell timeout (5 minutes). Stopping profit check.`,
+        );
+      }
+
+      // Clear monitoring flag
+      delete autoSellMonitoringRef.current[monitoringKey];
+    },
+    [wallet, sessions, toast],
+  );
+
+  // Check for pending trades on component mount and when sessions change
+  useEffect(() => {
+    if (!wallet || !wallet.secretKey) {
+      return;
+    }
+
+    // Check all sessions for pending buy trades
+    sessions.forEach((session) => {
+      if (session.sellStrategy !== "auto-profit") return;
+
+      session.makers.forEach((maker) => {
+        // Check for buy transactions that don't have corresponding sell
+        maker.buyTransactions.forEach((buyTx, buyIndex) => {
+          const correspondingSell = maker.sellTransactions[buyIndex];
+
+          // If no sell exists and profit target is set, start monitoring
+          if (!correspondingSell && buyTx.status === "confirmed") {
+            startAutoSellMonitoring(session.id, maker.id, buyTx, session);
+          }
+        });
+      });
+    });
+  }, [wallet, sessions, startAutoSellMonitoring]);
+
   const handleStartSession = async () => {
     if (!currentSession) {
       toast({
@@ -799,7 +1038,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       const errorMsg =
                         error instanceof Error ? error.message : String(error);
                       console.error(
-                        `❌ Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
+                        `�� Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
                         error,
                       );
 

@@ -16,6 +16,16 @@ import { useNavigate } from "react-router-dom";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { solPriceService } from "@/lib/services/sol-price";
+import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
+import {
+  botOrdersStorage,
+  BotSession,
+  BotOrder,
+} from "@/lib/bot-orders-storage";
+import {
+  executeLimitOrder,
+  checkAndExecutePendingOrders,
+} from "@/lib/market-maker-executor";
 
 interface MarketMakerProps {
   onBack: () => void;
@@ -44,7 +54,7 @@ interface LimitOrder {
 }
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
-  const { tokens } = useWallet();
+  const { tokens, wallet } = useWallet();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -64,8 +74,29 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [solPrice, setSolPrice] = useState<number | null>(null);
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [session, setSession] = useState<BotSession | null>(null);
+  const [executingOrders, setExecutingOrders] = useState<Set<string>>(
+    new Set(),
+  );
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
+
+  // Initialize or load session on component mount
+  useEffect(() => {
+    let currentSession = botOrdersStorage.getCurrentSession();
+    if (!currentSession) {
+      // Create a new session if one doesn't exist
+      currentSession = botOrdersStorage.createSession(
+        "FIXERCOIN",
+        tokenConfig.mint,
+        1,
+        0.01,
+        0.00002,
+      );
+      botOrdersStorage.saveSession(currentSession);
+    }
+    setSession(currentSession);
+  }, []);
 
   // Fetch live price on component mount or token change, and set up polling
   useEffect(() => {
@@ -119,15 +150,149 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     fetchPrices();
 
-    // Set up polling to refresh prices every 30 seconds
+    // Set up polling to refresh prices every 5 seconds for responsive limit order execution
     const priceRefreshInterval = setInterval(() => {
       fetchPrices();
-    }, 30000);
+    }, 5000);
 
     return () => {
       clearInterval(priceRefreshInterval);
     };
   }, [selectedToken]);
+
+  // Auto-execution effect: check and execute pending orders when price matches
+  useEffect(() => {
+    if (!session || !livePrice || !wallet) {
+      if (!wallet) {
+        console.warn("[MarketMaker] Wallet not available for auto-execution");
+      }
+      return;
+    }
+
+    console.log("[MarketMaker] Auto-execution enabled. Wallet:", {
+      publicKey: wallet.publicKey,
+      hasSecretKey: !!wallet.secretKey,
+    });
+
+    const checkAndExecute = async () => {
+      try {
+        const currentSession = botOrdersStorage.getCurrentSession();
+        if (!currentSession) return;
+
+        const pendingBuyOrders = currentSession.buyOrders.filter(
+          (o) => o.status === "pending",
+        );
+        const pendingSellOrders = currentSession.sellOrders.filter(
+          (o) => o.status === "pending",
+        );
+
+        if (pendingBuyOrders.length === 0 && pendingSellOrders.length === 0) {
+          return;
+        }
+
+        console.log(
+          `[MarketMaker] Checking ${pendingBuyOrders.length + pendingSellOrders.length} pending orders at price ${livePrice}`,
+        );
+
+        // Check buy orders
+        for (const order of pendingBuyOrders) {
+          if (livePrice <= order.buyPrice && !executingOrders.has(order.id)) {
+            console.log(
+              `[MarketMaker] Price match for BUY order: ${livePrice} <= ${order.buyPrice}`,
+            );
+            setExecutingOrders((prev) => new Set([...prev, order.id]));
+
+            const result = await executeLimitOrder(
+              currentSession,
+              order,
+              livePrice,
+              wallet,
+            );
+
+            setExecutingOrders((prev) => {
+              const next = new Set(prev);
+              next.delete(order.id);
+              return next;
+            });
+
+            if (result.success) {
+              toast({
+                title: "Buy Order Executed",
+                description: `Successfully bought ${result.order?.tokenAmount?.toFixed(6) || "tokens"}`,
+              });
+              // Reload session
+              const updatedSession = botOrdersStorage.getCurrentSession();
+              if (updatedSession) {
+                setSession(updatedSession);
+              }
+            } else {
+              console.error(
+                "[MarketMaker] Buy order execution failed:",
+                result,
+              );
+              // Don't show error toast for every check - only log
+            }
+          }
+        }
+
+        // Check sell orders
+        for (const order of pendingSellOrders) {
+          if (
+            livePrice >= order.targetSellPrice &&
+            !executingOrders.has(order.id)
+          ) {
+            console.log(
+              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}`,
+            );
+            setExecutingOrders((prev) => new Set([...prev, order.id]));
+
+            const result = await executeLimitOrder(
+              currentSession,
+              order,
+              livePrice,
+              wallet,
+            );
+
+            setExecutingOrders((prev) => {
+              const next = new Set(prev);
+              next.delete(order.id);
+              return next;
+            });
+
+            if (result.success) {
+              toast({
+                title: "Sell Order Executed",
+                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${result.order?.solAmount?.toFixed(6) || "SOL"}`,
+              });
+              // Reload session
+              const updatedSession = botOrdersStorage.getCurrentSession();
+              if (updatedSession) {
+                setSession(updatedSession);
+              }
+            } else {
+              console.error(
+                "[MarketMaker] Sell order execution failed:",
+                result,
+              );
+              // Don't show error toast for every check - only log
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[MarketMaker] Error in auto-execution check:", error);
+      }
+    };
+
+    // Check for order execution every 10 seconds
+    const executionInterval = setInterval(checkAndExecute, 10000);
+
+    // Also check immediately on price change
+    checkAndExecute();
+
+    return () => {
+      clearInterval(executionInterval);
+    };
+  }, [session, livePrice, wallet, toast]);
 
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),
@@ -244,6 +409,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   };
 
   const handlePlaceOrder = async () => {
+    if (!session) {
+      toast({
+        title: "Error",
+        description: "No active session. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (orderMode === "BUY") {
       const validationError = validateBuyOrder();
       if (validationError) {
@@ -258,25 +432,35 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setIsLoading(true);
 
       try {
-        const orderData = {
-          type: "BUY",
-          token: selectedToken,
-          tokenMint: tokenConfig.mint,
-          price: parseFloat(buyOrder.price),
-          amount: parseFloat(buyOrder.amount),
-          totalSol: parseFloat(buyOrder.total),
-        };
+        const buyPrice = parseFloat(buyOrder.price);
+        const solAmount = parseFloat(buyOrder.total);
 
-        console.log("[MarketMaker] Placing buy limit order:", orderData);
+        const newOrder = botOrdersStorage.addBuyOrder(
+          session.id,
+          buyPrice,
+          solAmount,
+        );
+
+        if (!newOrder) {
+          throw new Error("Failed to create buy order");
+        }
+
+        // Update session
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
+        console.log("[MarketMaker] Buy order created:", newOrder);
 
         toast({
-          title: "Buy Order Placed",
-          description: `Limit buy order placed: ${buyOrder.amount} ${selectedToken} at ${buyOrder.price}`,
+          title: "Buy Order Created",
+          description: `Waiting for price to drop to ${buyPrice.toFixed(8)}. Current: ${livePrice?.toFixed(8)}`,
         });
 
         setBuyOrder({
-          price: "0.00001",
-          amount: "1000",
+          price: "",
+          amount: "",
           total: "0.01",
         });
       } catch (error) {
@@ -303,25 +487,36 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setIsLoading(true);
 
       try {
-        const orderData = {
-          type: "SELL",
-          token: selectedToken,
-          tokenMint: tokenConfig.mint,
-          price: parseFloat(sellOrder.price),
-          amount: parseFloat(sellOrder.amount),
-          totalSol: parseFloat(sellOrder.total),
-        };
+        const sellPrice = parseFloat(sellOrder.price);
+        const tokenAmount = parseFloat(sellOrder.amount);
 
-        console.log("[MarketMaker] Placing sell limit order:", orderData);
+        const newOrder = botOrdersStorage.addSellOrder(
+          session.id,
+          "", // buyOrderId - we'll use empty since this is a direct limit sell
+          sellPrice,
+          tokenAmount,
+        );
+
+        if (!newOrder) {
+          throw new Error("Failed to create sell order");
+        }
+
+        // Update session
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
+        console.log("[MarketMaker] Sell order created:", newOrder);
 
         toast({
-          title: "Sell Order Placed",
-          description: `Limit sell order placed: ${sellOrder.amount} ${selectedToken} at ${sellOrder.price}`,
+          title: "Sell Order Created",
+          description: `Waiting for price to rise to ${sellPrice.toFixed(8)}. Current: ${livePrice?.toFixed(8)}`,
         });
 
         setSellOrder({
-          price: "0.00002",
-          amount: "1000",
+          price: "",
+          amount: "",
           total: "0.02",
         });
       } catch (error) {
@@ -582,6 +777,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   : `PLACE ${orderMode === "BUY" ? "BUY" : "SELL"} ORDER`}
               </Button>
             </div>
+          </div>
+
+          <div className="mt-8">
+            <MarketMakerHistoryCard selectedToken={selectedToken} />
           </div>
         </div>
       </div>

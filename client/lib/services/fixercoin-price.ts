@@ -13,7 +13,7 @@ export interface FixercoinPriceData {
 class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 60000; // 1 minute cache
+  private readonly CACHE_DURATION = 5000; // 5 seconds cache for responsive limit orders
 
   async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
     try {

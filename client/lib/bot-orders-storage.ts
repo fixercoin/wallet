@@ -165,16 +165,25 @@ export const botOrdersStorage = {
       const session = sessions.find((s) => s.id === sessionId);
       if (!session) return null;
 
-      const buyOrder = session.buyOrders.find((o) => o.id === buyOrderId);
-      if (!buyOrder) return null;
+      let buyPrice = sellPrice; // Default to current sell price
+      let targetSellPrice = sellPrice; // For standalone sell orders
+
+      // If buyOrderId is provided and valid, use buy order's prices
+      if (buyOrderId) {
+        const buyOrder = session.buyOrders.find((o) => o.id === buyOrderId);
+        if (buyOrder) {
+          buyPrice = buyOrder.buyPrice;
+          targetSellPrice = buyOrder.targetSellPrice;
+        }
+      }
 
       const sellOrder: BotOrder = {
         id: `sell_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         type: "sell",
         token: session.token,
         tokenMint: session.tokenMint,
-        buyPrice: buyOrder.buyPrice,
-        targetSellPrice: buyOrder.targetSellPrice,
+        buyPrice,
+        targetSellPrice,
         actualSellPrice: sellPrice,
         timestamp: Date.now(),
         status: "pending",

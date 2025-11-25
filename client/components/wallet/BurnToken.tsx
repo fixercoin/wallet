@@ -640,8 +640,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
               {selectedToken ? (
                 <Card className="rounded-lg border border-gray-300/30 bg-transparent px-4">
-                  <CardContent className="pt-4 px-0 space-y-2">
-                    <div className="space-y-2">
+                  <CardContent className="pt-4 px-0">
+                    <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] font-semibold text-white">
                         {selectedToken.symbol ||
                           selectedToken.mint.slice(0, 6)}{" "}
@@ -652,16 +652,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           selectedToken.symbol,
                         )}
                       </p>
-                      <div className="text-[10px] text-gray-300">
-                        <a
-                          className="font-medium text-orange-500 underline-offset-4 hover:underline text-[10px]"
-                          href={`https://solscan.io/token/${selectedToken.mint}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {shortenAddress(selectedToken.mint, 6)}
-                        </a>
-                      </div>
+                      <a
+                        className="font-medium text-orange-500 underline-offset-4 hover:underline text-[10px] flex-shrink-0"
+                        href={`https://solscan.io/token/${selectedToken.mint}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {shortenAddress(selectedToken.mint, 6)}
+                      </a>
                     </div>
                   </CardContent>
                 </Card>

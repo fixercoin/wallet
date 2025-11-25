@@ -12,7 +12,7 @@ export interface LockerPriceData {
 class LockerPriceService {
   private cachedData: LockerPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 60000; // 1 minute cache
+  private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
 
   async getLockerPrice(): Promise<LockerPriceData | null> {
     try {

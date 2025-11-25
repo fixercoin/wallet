@@ -3,8 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
-import { botOrdersStorage, BotSession, BotOrder } from "@/lib/bot-orders-storage";
+import { botOrdersStorage, BotSession, BotOrder, TokenType } from "@/lib/bot-orders-storage";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
+
+const TOKEN_CONFIGS: Record<TokenType, { spread: number }> = {
+  FIXERCOIN: { spread: 0.000002 },
+  SOL: { spread: 2 },
+};
 
 export default function MarketMakerHistory() {
   const navigate = useNavigate();

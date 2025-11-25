@@ -18,6 +18,7 @@ export default function TokenSearchDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
+  const knownToken = KNOWN_TOKENS[mint];
   const tokenMintToCheck =
     dexToken?.baseToken?.address || knownToken?.mint || mint;
   const alreadyAdded = useMemo(
@@ -92,9 +93,6 @@ export default function TokenSearchDetail() {
       </div>
     );
   }
-
-  // If token not found in DexScreener, check KNOWN_TOKENS
-  const knownToken = KNOWN_TOKENS[mint];
   if (!dexToken && !knownToken) {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center">

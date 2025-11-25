@@ -138,9 +138,7 @@ export async function executeLimitOrder(
         };
       }
 
-      const swapTx = await jupiterV6API.getSwapTransaction({
-        quoteResponse: quote,
-        userPublicKey,
+      const swapTx = await jupiterV6API.createSwap(quote, userPublicKey, {
         wrapAndUnwrapSol: true,
       });
 
@@ -199,9 +197,7 @@ export async function executeLimitOrder(
         };
       }
 
-      const swapTx = await jupiterV6API.getSwapTransaction({
-        quoteResponse: quote,
-        userPublicKey,
+      const swapTx = await jupiterV6API.createSwap(quote, userPublicKey, {
         wrapAndUnwrapSol: true,
       });
 

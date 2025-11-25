@@ -380,6 +380,8 @@ export default function RunningMarketMaker() {
                     key={order.id}
                     buyOrder={order}
                     sellOrder={correspondingSell}
+                    executingFee={executingFee}
+                    onDeductFee={executeFeeDedcution}
                   />
                 );
               })}

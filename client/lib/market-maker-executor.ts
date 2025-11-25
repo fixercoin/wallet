@@ -80,11 +80,25 @@ export async function executeLimitOrder(
       }
     }
 
-    if (!wallet || !wallet.secretKey) {
-      console.error("[MarketMakerExecutor] Wallet missing secretKey:", wallet);
+    if (!wallet) {
+      console.error("[MarketMakerExecutor] Wallet is null or undefined");
       return {
         success: false,
-        error: "Wallet not available or missing secret key",
+        error: "Wallet not available",
+      };
+    }
+
+    if (!wallet.secretKey) {
+      console.error(
+        "[MarketMakerExecutor] Wallet does not have private key (secretKey). This is a view-only wallet.",
+        {
+          publicKey: wallet.publicKey,
+          hasSecretKey: !!wallet.secretKey,
+        }
+      );
+      return {
+        success: false,
+        error: "Cannot execute orders: wallet does not have private key access. Use a wallet with private keys.",
       };
     }
 

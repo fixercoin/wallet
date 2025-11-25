@@ -118,6 +118,7 @@ export const botOrdersStorage = {
         timestamp: Date.now(),
         status: "pending",
         solAmount,
+        feeDeducted: false,
       };
 
       session.buyOrders.push(buyOrder);

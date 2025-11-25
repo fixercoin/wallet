@@ -62,45 +62,62 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 
   // Fetch live price on component mount or token change
   useEffect(() => {
-    const fetchLivePrice = async () => {
+    const fetchPrices = async () => {
       setIsFetchingPrice(true);
       try {
-        let price: number | null = null;
+        let tokenPrice: number | null = null;
+        let solPriceUsd: number | null = null;
 
         if (selectedToken === "FIXERCOIN") {
           const priceData = await fixercoinPriceService.getFixercoinPrice();
           if (priceData && priceData.price > 0) {
-            price = priceData.price;
+            tokenPrice = priceData.price;
           }
         } else if (selectedToken === "SOL") {
           const solToken = await dexscreenerAPI.getTokenByMint(
             "So11111111111111111111111111111111111111112",
           );
           if (solToken && solToken.priceUsd) {
-            price = parseFloat(solToken.priceUsd);
+            tokenPrice = parseFloat(solToken.priceUsd);
           }
         }
 
-        if (price && price > 0) {
-          setLivePrice(price);
+        // Always fetch SOL price for calculation
+        try {
+          const solPriceData = await solPriceService.getSolPrice();
+          if (solPriceData && solPriceData.price > 0) {
+            solPriceUsd = solPriceData.price;
+          }
+        } catch (error) {
+          console.error("[MarketMaker] Error fetching SOL price:", error);
+        }
+
+        if (tokenPrice && tokenPrice > 0) {
+          setLivePrice(tokenPrice);
           console.log(
-            `[MarketMaker] Fetched live price for ${selectedToken}: ${price}`,
+            `[MarketMaker] Fetched live price for ${selectedToken}: ${tokenPrice}`,
           );
         }
+
+        if (solPriceUsd && solPriceUsd > 0) {
+          setSolPrice(solPriceUsd);
+          console.log(`[MarketMaker] Fetched SOL price: ${solPriceUsd}`);
+        }
       } catch (error) {
-        console.error("[MarketMaker] Error fetching live price:", error);
+        console.error("[MarketMaker] Error fetching prices:", error);
       } finally {
         setIsFetchingPrice(false);
       }
     };
 
-    fetchLivePrice();
+    fetchPrices();
   }, [selectedToken]);
 
   const solToken = useMemo(

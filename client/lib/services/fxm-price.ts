@@ -34,8 +34,7 @@ class FXMPriceService {
       );
 
       // Use derived pricing based on SOL pair
-      const pairingData =
-        await tokenPairPricingService.getDerivedPrice("FXM");
+      const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
 
       if (!pairingData) {
         console.warn("Failed to derive FXM price");

@@ -682,11 +682,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           }
 
-          if (
-            fxmData &&
-            fxmData.price > 0 &&
-            isFinite(fxmData.price)
-          ) {
+          if (fxmData && fxmData.price > 0 && isFinite(fxmData.price)) {
             prices[fxmMint] = fxmData.price;
             changeMap[fxmMint] = fxmData.priceChange24h;
             console.log(

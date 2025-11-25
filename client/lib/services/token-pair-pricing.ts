@@ -131,9 +131,7 @@ class TokenPairPricingService {
           );
           return priceInSol; // Return the SOL price directly
         } else {
-          console.warn(
-            `Invalid priceNative for ${tokenMint}: ${priceInSol}`,
-          );
+          console.warn(`Invalid priceNative for ${tokenMint}: ${priceInSol}`);
         }
       }
 

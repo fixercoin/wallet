@@ -252,7 +252,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Label>
             <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
               <span className="text-sm font-semibold text-green-400">
-                {selectedToken === "FIXERCOIN" ? "+0.0000200" : "+2"}{" "}
+                {selectedToken === "FIXERCOIN"
+                  ? `+${tokenConfig.spread.toFixed(8)}`
+                  : `+${tokenConfig.spread}`}{" "}
                 {selectedToken}
               </span>
             </div>

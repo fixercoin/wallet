@@ -1,7 +1,7 @@
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
 import { jupiterV6API } from "./services/jupiter-v6";
 import { botOrdersStorage, BotOrder, BotSession } from "./bot-orders-storage";
-import { base64FromBytes, bytesFromBase64 } from "@solana/web3.js/src/utils";
+import { bytesFromBase64, base64FromBytes } from "./bytes";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";

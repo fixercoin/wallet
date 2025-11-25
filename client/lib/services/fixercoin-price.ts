@@ -100,7 +100,9 @@ class FixercoinPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    console.log("[FixercoinPriceService] Cache cleared - next fetch will be fresh");
+    console.log(
+      "[FixercoinPriceService] Cache cleared - next fetch will be fresh",
+    );
   }
 }
 

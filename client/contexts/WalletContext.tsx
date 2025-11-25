@@ -179,7 +179,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     if (!w.secretKey) {
       console.warn(
-        `[WalletContext] Wallet ${w.publicKey} does not have a secretKey. It may be a view-only wallet or improperly loaded.`
+        `[WalletContext] Wallet ${w.publicKey} does not have a secretKey. It may be a view-only wallet or improperly loaded.`,
       );
       return w;
     }
@@ -195,19 +195,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         secretKeyArray = Uint8Array.from(w.secretKey);
       } else if (typeof w.secretKey === "object") {
         const vals = Object.values(w.secretKey).filter(
-          (v) => typeof v === "number"
+          (v) => typeof v === "number",
         ) as number[];
         if (vals.length > 0) {
           secretKeyArray = Uint8Array.from(vals);
         } else {
           console.warn(
-            `[WalletContext] Could not extract numeric values from secretKey object`
+            `[WalletContext] Could not extract numeric values from secretKey object`,
           );
           return w;
         }
       } else {
         console.warn(
-          `[WalletContext] Unexpected secretKey type: ${typeof w.secretKey}`
+          `[WalletContext] Unexpected secretKey type: ${typeof w.secretKey}`,
         );
         return w;
       }
@@ -219,7 +219,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (e) {
       console.error(
         `[WalletContext] Failed to ensure secretKey format for wallet ${w.publicKey}:`,
-        e
+        e,
       );
       return w;
     }

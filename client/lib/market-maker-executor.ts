@@ -94,11 +94,12 @@ export async function executeLimitOrder(
         {
           publicKey: wallet.publicKey,
           hasSecretKey: !!wallet.secretKey,
-        }
+        },
       );
       return {
         success: false,
-        error: "Cannot execute orders: wallet does not have private key access. Use a wallet with private keys.",
+        error:
+          "Cannot execute orders: wallet does not have private key access. Use a wallet with private keys.",
       };
     }
 

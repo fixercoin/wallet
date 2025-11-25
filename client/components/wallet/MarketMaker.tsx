@@ -171,7 +171,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     if (!wallet.secretKey) {
       console.warn(
-        "[MarketMaker] Wallet does not have private key available. Auto-execution will not proceed. Please use a wallet with private key access."
+        "[MarketMaker] Wallet does not have private key available. Auto-execution will not proceed. Please use a wallet with private key access.",
       );
       return;
     }
@@ -550,7 +550,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       {wallet && !wallet.secretKey && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900 font-medium">
-            ⚠️ Auto-execution requires a wallet with private key access. Your current wallet appears to be view-only. Please connect a wallet with private keys to enable auto-execution.
+            ⚠️ Auto-execution requires a wallet with private key access. Your
+            current wallet appears to be view-only. Please connect a wallet with
+            private keys to enable auto-execution.
           </p>
         </div>
       )}

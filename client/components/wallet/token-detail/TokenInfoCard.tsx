@@ -73,7 +73,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
               variant="ghost"
               size="sm"
               onClick={handleCopyAddress}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700 rounded-[2px]"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -81,7 +81,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
               variant="ghost"
               size="sm"
               onClick={handleViewOnExplorer}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700 rounded-[2px]"
             >
               <ExternalLink className="h-4 w-4" />
             </Button>

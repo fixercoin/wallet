@@ -4,10 +4,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { jupiterAPI } from "@/lib/services/jupiter";
-import { resolveApiUrl } from "@/lib/api-client";
+import { jupiterV6API } from "@/lib/services/jupiter-v6";
+import { rpcCall } from "@/lib/rpc-utils";
 import {
   Select,
   SelectContent,
@@ -28,117 +28,128 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+import { getApiHeaders } from "@/lib/api-client";
 
-const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
+const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_PERCENTAGE = 0.01;
 
-const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+const SuccessDialog: React.FC<{ show: boolean; onClose: () => void }> = ({
+  show,
+  onClose,
+}) => {
   if (!show) return null;
 
-  const particles = Array.from({ length: 24 }).map((_, i) => {
-    const angle = (i / 24) * Math.PI * 2;
-    const distance = 180;
-    const tx = Math.cos(angle) * distance;
-    const ty = Math.sin(angle) * distance;
-    return {
-      tx,
-      ty,
-      id: i,
-      color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][
-        i % 6
-      ],
-    };
-  });
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <style>{`
-        @keyframes burst {
+        @keyframes slide-in {
           0% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
           }
           100% {
-            opacity: 0;
-            transform: translate(var(--tx), var(--ty)) scale(0);
+            opacity: 1;
+            transform: scale(1) translateY(0);
           }
         }
-        @keyframes success-pop {
+        @keyframes checkmark-draw {
           0% {
-            transform: scale(0);
             opacity: 0;
+            transform: scale(0);
           }
-          60% {
-            transform: scale(1.15);
+          50% {
             opacity: 1;
           }
           100% {
-            transform: scale(1);
             opacity: 1;
+            transform: scale(1);
           }
+        }
+        .success-dialog {
+          animation: slide-in 0.4s ease-out forwards;
+        }
+        .checkmark {
+          animation: checkmark-draw 0.6s ease-out 0.2s forwards;
         }
       `}</style>
 
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          style={
-            {
-              position: "fixed",
-              left: "50%",
-              top: "50%",
-              width: "12px",
-              height: "12px",
-              backgroundColor: p.color,
-              borderRadius: "50%",
-              marginLeft: "-6px",
-              marginTop: "-6px",
-              "--tx": `${p.tx}px`,
-              "--ty": `${p.ty}px`,
-              animation: `burst 1.2s ease-out forwards`,
-            } as any
-          }
-        />
-      ))}
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
 
-      <div
-        style={{
-          position: "fixed",
-          left: "50%",
-          top: "50%",
-          marginLeft: "-40px",
-          marginTop: "-40px",
-          animation: "success-pop 0.7s ease-out forwards",
-        }}
-      >
-        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
-          <Check className="w-10 h-10 text-white" strokeWidth={3} />
+      <div className="relative z-50 w-full max-w-sm bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-emerald-500/40 rounded-lg shadow-2xl success-dialog">
+        <div className="p-8 flex flex-col items-center text-center space-y-6">
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-lg animate-pulse" />
+            <div className="relative w-16 h-16 flex items-center justify-center bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 rounded-full border border-emerald-500/60 checkmark">
+              <Check className="w-8 h-8 text-emerald-400" strokeWidth={3} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-white">Swap Successful!</h2>
+            <p className="text-sm text-slate-300">
+              Your token swap has been completed successfully on the Solana
+              blockchain.
+            </p>
+          </div>
+
+          <div className="w-full pt-4">
+            <Button
+              onClick={onClose}
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-2 rounded-lg transition-all duration-200"
+            >
+              Done
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   tx: VersionedTransaction,
   fromMint: string,
   fromAmount: string,
   decimals: number,
   userPublicKey: string,
-): VersionedTransaction {
+): Promise<VersionedTransaction> {
   const feeAmount = BigInt(
     Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
   );
 
   if (feeAmount === 0n) {
+    console.log("[SwapInterface] Fee amount is 0, skipping fee transfer");
     return tx;
   }
 
   try {
+    // Validate transaction structure before proceeding
+    if (!tx) {
+      throw new Error("Transaction object is null or undefined");
+    }
+
+    if (!tx.message) {
+      throw new Error(
+        "Transaction message is undefined - transaction may not be properly deserialized",
+      );
+    }
+
+    // Check if instructions array exists and is properly typed
+    if (!Array.isArray(tx.message.instructions)) {
+      console.warn(
+        `[SwapInterface] Instructions array is not available (type: ${typeof tx.message.instructions}). Skipping fee instruction.`,
+      );
+      return tx;
+    }
+
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
-    const userPubkey = new PublicKey(userPublicKey);
+    const userPubkeyStr =
+      typeof userPublicKey === "string"
+        ? userPublicKey
+        : userPublicKey.toString();
+    const userPubkey = new PublicKey(userPubkeyStr);
     const fromMintPubkey = new PublicKey(fromMint);
 
     let feeInstruction: TransactionInstruction;
@@ -149,13 +160,16 @@ function addFeeTransferInstruction(
         toPubkey: feeWalletPubkey,
         lamports: Number(feeAmount),
       });
+      console.log(
+        `[SwapInterface] Adding SOL fee instruction: ${Number(feeAmount)} lamports to ${FEE_WALLET}`,
+      );
     } else {
-      const userTokenAccount = getAssociatedTokenAddress(
+      const userTokenAccount = await getAssociatedTokenAddress(
         fromMintPubkey,
         userPubkey,
         false,
       );
-      const feeTokenAccount = getAssociatedTokenAddress(
+      const feeTokenAccount = await getAssociatedTokenAddress(
         fromMintPubkey,
         feeWalletPubkey,
         false,
@@ -169,13 +183,33 @@ function addFeeTransferInstruction(
         Number(feeAmount),
         decimals,
       );
+      console.log(
+        `[SwapInterface] Adding SPL token fee instruction: ${Number(feeAmount)} tokens (${fromMint}) to ${FEE_WALLET}`,
+      );
     }
 
-    tx.message.instructions.push(feeInstruction);
+    try {
+      const instructionsCount = tx.message.instructions.length;
+      tx.message.instructions.push(feeInstruction);
+      console.log(
+        `[SwapInterface] ✅ Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
+      );
+    } catch (pushError) {
+      console.warn(
+        `[SwapInterface] Could not push fee instruction (${pushError instanceof Error ? pushError.message : String(pushError)}). Returning transaction without fee.`,
+      );
+    }
+
     return tx;
   } catch (error) {
-    console.error("Error adding fee transfer instruction:", error);
-    return tx;
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(
+      "[SwapInterface] ❌ CRITICAL: Failed to add fee transfer instruction:",
+      error,
+    );
+    throw new Error(
+      `Failed to add platform fee to transaction: ${errorMsg}. This is required for the swap to proceed.`,
+    );
   }
 }
 
@@ -226,30 +260,31 @@ async function sendSignedTx(
   const signed = vtx.serialize();
   const signedBase64 = base64FromBytes(signed);
 
-  const body = {
-    method: "sendRawTransaction",
-    params: [
-      signedBase64,
-      { skipPreflight: false, preflightCommitment: "confirmed" },
-    ],
-    id: Date.now(),
-  };
+  // Send transaction through backend proxy to avoid CORS issues
+  try {
+    const response = await fetch("/api/solana-send", {
+      method: "POST",
+      headers: getApiHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({
+        signedBase64,
+      }),
+    });
 
-  const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+      );
+    }
 
-  if (!r.ok) {
-    const t = await r.text().catch(() => "");
-    throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+    const data = await response.json();
+    return data.signature || data.result;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to send transaction: ${msg}`);
   }
-
-  const j = await r.json();
-  if (j.error) throw new Error(j.error.message || "RPC error");
-
-  return j.result as string;
 }
 
 export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -260,12 +295,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [fromMint, setFromMint] = useState(SOL_MINT);
   const [toMint, setToMint] = useState(FIXER_MINT);
   const [amount, setAmount] = useState("");
-  const [quote, setQuote] = useState(null);
+  const [quote, setQuote] = useState<any>(null);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
+  const [quoteAge, setQuoteAge] = useState(0);
+
+  // Quote validity constants (in milliseconds)
+  const QUOTE_MAX_AGE_MS = 30000; // Jupiter quotes valid for 30 seconds
+  const QUOTE_WARNING_THRESHOLD_MS = 5000; // Show warning at 5 seconds remaining
 
   const fromToken = tokenList.find((t) => t.address === fromMint);
   const toToken = tokenList.find((t) => t.address === toMint);
@@ -277,78 +316,61 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const initTokenList = async () => {
     if (initialized) return;
 
-    setStatus("Loading tokens...");
-
     try {
-      const jupiterTokens = await jupiterAPI.getStrictTokenList();
+      // Build token list from TOKEN_MINTS constants + user tokens
+      const tokenMintEntries = Object.entries(TOKEN_MINTS).filter(
+        ([symbol]) => symbol !== "USDT",
+      );
+      const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
+        address: mint,
+        symbol,
+        decimals: symbol === "SOL" ? 9 : 6,
+        name: symbol,
+      }));
 
-      const setupTokenMints = Object.values(TOKEN_MINTS);
-      const setupTokens = jupiterTokens.filter((t) =>
-        setupTokenMints.includes(t.address),
+      // Add user tokens if available (avoid duplicates with standard tokens)
+      const standardMints = new Set(standardTokens.map((t) => t.address));
+      const userTokensNotInStandard = (userTokens || []).filter(
+        (ut) => !standardMints.has(ut.mint) && ut.symbol !== "USDT",
       );
 
-      const userTokenMints = (userTokens || []).map((t) => t.mint);
-      const userSetupTokens = jupiterTokens.filter((t) =>
-        userTokenMints.includes(t.address),
-      );
-
-      const combinedTokens = Array.from(
-        new Map([
-          ...setupTokens.map((t) => [t.address, t]),
-          ...userSetupTokens.map((t) => [t.address, t]),
-          ...jupiterTokens.map((t) => [t.address, t]),
-        ]).values(),
-      );
-
-      if (!combinedTokens || combinedTokens.length === 0) {
-        const fallbackTokens = (userTokens || []).map((ut) => ({
+      const combinedTokens = [
+        ...standardTokens,
+        ...userTokensNotInStandard.map((ut) => ({
           address: ut.mint,
           symbol: ut.symbol,
           decimals: ut.decimals,
           name: ut.name,
-        }));
-        setTokenList(fallbackTokens);
-      } else {
-        combinedTokens.sort((a, b) => {
-          if (a.address === SOL_MINT) return -1;
-          if (b.address === SOL_MINT) return 1;
-          if (a.address === FIXER_MINT) return -1;
-          if (b.address === FIXER_MINT) return 1;
-          return a.symbol.localeCompare(b.symbol);
-        });
-        setTokenList(combinedTokens);
-      }
+        })),
+      ];
 
+      // Sort: SOL first, then FIXERCOIN, then alphabetical
+      combinedTokens.sort((a, b) => {
+        if (a.address === SOL_MINT) return -1;
+        if (b.address === SOL_MINT) return 1;
+        if (a.address === FIXER_MINT) return -1;
+        if (b.address === FIXER_MINT) return 1;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+      setTokenList(combinedTokens);
       setInitialized(true);
       setStatus("");
     } catch (err) {
       console.error("[SwapInterface] Error loading tokens:", err);
-
-      const fallbackTokens = (userTokens || []).map((ut) => ({
-        address: ut.mint,
-        symbol: ut.symbol,
-        decimals: ut.decimals,
-        name: ut.name,
-      }));
-
-      if (fallbackTokens.length === 0) {
-        const defaultTokens = [
-          { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
-          {
-            address: FIXER_MINT,
-            symbol: "FIXERCOIN",
-            decimals: 6,
-            name: "FIXERCOIN",
-          },
-        ];
-        setTokenList(defaultTokens);
-      } else {
-        setTokenList(fallbackTokens);
-      }
-
-      // Don't show error for token loading - user can still trade with available tokens
-      setStatus("");
+      // Fallback to minimal token list
+      const fallbackTokens = [
+        { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+        {
+          address: FIXER_MINT,
+          symbol: "FIXERCOIN",
+          decimals: 6,
+          name: "FIXERCOIN",
+        },
+      ];
+      setTokenList(fallbackTokens);
       setInitialized(true);
+      setStatus("");
     }
   };
 
@@ -372,15 +394,75 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, [wallet, userTokens]);
 
+  // Track quote age over time
+  useEffect(() => {
+    if (!quote || !quote.quoteTime) {
+      setQuoteAge(0);
+      return;
+    }
+
+    const updateQuoteAge = () => {
+      const age = Date.now() - quote.quoteTime;
+      setQuoteAge(age);
+
+      // Auto-refresh quote if it's getting too old (near expiration)
+      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
+        console.log(
+          "[SwapInterface] Quote approaching expiration, refreshing...",
+        );
+        getQuote().catch((e) => console.warn("Auto-refresh quote failed:", e));
+      }
+    };
+
+    // Update immediately
+    updateQuoteAge();
+
+    // Update every 500ms while quote is valid
+    const interval = setInterval(updateQuoteAge, 500);
+    return () => clearInterval(interval);
+  }, [quote?.quoteTime]);
+
+  // Auto-fetch quotes when amount, fromMint, or toMint changes
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (amount && fromMint && toMint && !isLoading) {
+        getQuote().catch((e) => console.error("Auto-fetch quote failed:", e));
+      } else if (!amount) {
+        setQuote(null);
+        setStatus("");
+      }
+    }, 500); // 500ms debounce to avoid too many requests
+
+    return () => clearTimeout(debounceTimer);
+  }, [amount, fromMint, toMint, wallet]);
+
   const humanToRaw = (amountStr, decimals) => {
     const amt = Number(amountStr);
     if (isNaN(amt) || amt <= 0) throw new Error("Invalid amount");
     return BigInt(Math.round(amt * Math.pow(10, decimals)));
   };
 
+  const isQuoteExpired = (): boolean => {
+    if (!quote || !quote.quoteTime) return true;
+    return quoteAge >= QUOTE_MAX_AGE_MS;
+  };
+
+  const isQuoteWarning = (): boolean => {
+    if (!quote || !quote.quoteTime) return false;
+    return (
+      quoteAge >= QUOTE_MAX_AGE_MS - QUOTE_WARNING_THRESHOLD_MS &&
+      !isQuoteExpired()
+    );
+  };
+
+  const getQuoteTimeRemaining = (): number => {
+    const remaining = Math.max(0, QUOTE_MAX_AGE_MS - quoteAge);
+    return Math.ceil(remaining / 1000);
+  };
+
   const getQuote = async () => {
     try {
-      setStatus("Computing routes…");
+      setStatus("Computing Jupiter routes…");
       setIsLoading(true);
 
       if (!wallet) {
@@ -400,17 +482,27 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       const decimalsIn = fromToken.decimals ?? 6;
-      const amountRaw = humanToRaw(amount || "0", decimalsIn);
-      const amountStr = jupiterAPI.formatSwapAmount(
+
+      // Validate amount is not empty or zero
+      const amountNum = Number(amount || "0");
+      if (isNaN(amountNum) || amountNum <= 0) {
+        setQuote(null);
+        setStatus("Enter an amount to get a quote");
+        setIsLoading(false);
+        return null;
+      }
+
+      const amountRaw = humanToRaw(amount, decimalsIn);
+      const amountStr = jupiterV6API.formatSwapAmount(
         Number(amountRaw) / Math.pow(10, decimalsIn),
         decimalsIn,
       );
 
       // Use 1% slippage tolerance (100 basis points) for more forgiving execution
-      const quoteResponse = await jupiterAPI.getQuote(
+      const quoteResponse = await jupiterV6API.getQuote(
         fromMint,
         toMint,
-        parseInt(amountStr),
+        amountStr,
         100,
       );
 
@@ -421,21 +513,49 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      const outAmount = BigInt(quoteResponse.outAmount);
-      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+      // Validate quote response has required fields
+      if (!quoteResponse.outAmount) {
+        setQuote(null);
+        setStatus("Invalid quote response. Please try again.");
+        setIsLoading(false);
+        console.error(
+          "[SwapInterface] Quote missing outAmount:",
+          quoteResponse,
+        );
+        return null;
+      }
 
-      setQuote({
-        quoteResponse,
-        outHuman,
-        outToken: toToken.symbol,
-        hops: quoteResponse.routePlan?.length ?? 0,
-        quoteTime: Date.now(),
-      });
-      setStatus("");
-      setIsLoading(false);
-      return { quoteResponse };
+      try {
+        const outAmount = BigInt(quoteResponse.outAmount);
+        const outHuman =
+          Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+        const priceImpact = jupiterV6API.getPriceImpact(quoteResponse);
+
+        setQuote({
+          quoteResponse,
+          outHuman,
+          outToken: toToken.symbol,
+          hops: quoteResponse.routePlan?.length ?? 0,
+          priceImpact,
+          quoteTime: Date.now(),
+          slippageBps: 100,
+        });
+        setStatus("");
+        setIsLoading(false);
+        return { quoteResponse };
+      } catch (bigintErr) {
+        setQuote(null);
+        setStatus("Invalid quote amount format. Please try again.");
+        setIsLoading(false);
+        console.error(
+          "[SwapInterface] BigInt conversion error:",
+          bigintErr,
+          quoteResponse,
+        );
+        return null;
+      }
     } catch (err) {
-      const errorMsg = err.message || String(err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
       let friendlyMsg = "Failed to get quote. ";
 
       if (errorMsg.includes("timeout")) {
@@ -458,7 +578,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const confirmSwap = async () => {
     try {
-      setStatus("Preparing swap…");
+      setStatus("Preparing swap��");
       setIsLoading(true);
 
       if (!wallet) {
@@ -467,9 +587,21 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      if (!quote) {
-        setStatus("Get a quote first");
+      if (!amount || parseFloat(amount) <= 0) {
+        setStatus("Enter a valid amount");
         setIsLoading(false);
+        return null;
+      }
+
+      if (isQuoteExpired()) {
+        setStatus("Quote has expired. Please get a fresh quote.");
+        setIsLoading(false);
+        toast({
+          title: "Quote Expired",
+          description:
+            "Your quote has expired. Please request a new quote before swapping.",
+          variant: "destructive",
+        });
         return null;
       }
 
@@ -482,100 +614,224 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return null;
       }
 
-      setStatus("Refreshing quote before execution…");
+      const amountInHuman = parseFloat(amount);
 
-      // Refresh the quote immediately before execution to prevent STALE_QUOTE errors
-      // This ensures the quote is always valid when sent to Jupiter
-      let freshQuote = quote.quoteResponse;
-      try {
-        const refreshed = await jupiterAPI.getQuote(
-          fromMint,
-          toMint,
-          parseInt(quote.quoteResponse.inAmount),
-          quote.quoteResponse.slippageBps || 100,
-        );
-        if (refreshed) {
-          console.log("✅ Quote refreshed successfully before execution");
-          freshQuote = refreshed;
-        } else {
+      // ✅ Use Jupiter V6 for all token-to-token swaps
+      setStatus("Preparing Jupiter swap…");
+
+      if (!quote || !quote.quoteResponse) {
+        throw new Error("Please get a quote first by clicking 'Get Quote'");
+      }
+
+      // Smart quote refresh: be aggressive about freshness (refresh if >10 seconds old)
+      const oldQuote = quote.quoteResponse;
+      let freshQuote = oldQuote;
+      const slippageBps = quote.slippageBps || 100;
+
+      // Check if quote still has reasonable time left (>10 seconds remaining)
+      const timeRemaining = getQuoteTimeRemaining();
+      const shouldRefresh = timeRemaining <= 10;
+
+      if (shouldRefresh) {
+        setStatus("Refreshing quote…");
+        try {
+          const refreshed = await jupiterV6API.getQuote(
+            oldQuote.inputMint,
+            oldQuote.outputMint,
+            parseInt(oldQuote.inAmount),
+            slippageBps,
+          );
+          if (refreshed) {
+            freshQuote = refreshed;
+            console.log("✅ Quote refreshed successfully before swap");
+          } else {
+            console.warn(
+              "Quote refresh returned null, attempting swap with original quote",
+            );
+          }
+        } catch (refreshErr) {
           console.warn(
-            "Could not refresh quote, using cached quote - may result in STALE_QUOTE error",
+            "Quote refresh failed, attempting swap with original quote",
+          );
+          const refreshErrorMsg =
+            refreshErr instanceof Error
+              ? refreshErr.message
+              : String(refreshErr);
+          if (refreshErrorMsg.includes("timeout")) {
+            throw new Error(`Quote refresh timed out. Please try again.`);
+          }
+          // Continue with original quote - let Jupiter validation handle it
+        }
+      } else {
+        console.log(
+          `Quote fresh (${timeRemaining}s remaining), using current quote`,
+        );
+      }
+
+      // Verify quote is not stale before sending to Jupiter
+      if (quoteAge >= QUOTE_MAX_AGE_MS) {
+        throw new Error(
+          "Quote expired during execution. Please get a new quote and try again.",
+        );
+      }
+
+      // Request swap transaction from Jupiter
+      setStatus("Creating swap transaction…");
+      const swapResponse = await jupiterV6API.createSwap(
+        freshQuote,
+        wallet.publicKey,
+        {
+          wrapAndUnwrapSol: true,
+          useSharedAccounts: true,
+        },
+      );
+
+      if (!swapResponse || !swapResponse.swapTransaction) {
+        throw new Error("Failed to create swap transaction");
+      }
+
+      const txBase64 = swapResponse.swapTransaction;
+
+      if (!txBase64 || typeof txBase64 !== "string") {
+        throw new Error(
+          `Invalid swap transaction data: expected base64 string, got ${typeof txBase64}`,
+        );
+      }
+
+      if (txBase64.length === 0) {
+        throw new Error("Swap transaction is empty");
+      }
+
+      try {
+        // Sign the transaction with local wallet
+        setStatus("Signing transaction…");
+
+        let txBytes: Uint8Array;
+        try {
+          txBytes = bytesFromBase64(txBase64);
+        } catch (decodeError) {
+          const decodeMsg =
+            decodeError instanceof Error
+              ? decodeError.message
+              : String(decodeError);
+          throw new Error(
+            `Failed to decode swap transaction from base64: ${decodeMsg}`,
           );
         }
-      } catch (refreshErr) {
-        console.warn("Quote refresh failed, using cached quote:", refreshErr);
+
+        if (!txBytes || txBytes.length === 0) {
+          throw new Error("Decoded transaction is empty or invalid");
+        }
+
+        let tx: VersionedTransaction;
+        try {
+          tx = VersionedTransaction.deserialize(txBytes);
+          console.log(
+            `[SwapInterface] Transaction deserialized successfully. Message type: ${tx.message?.constructor?.name}, Instructions count: ${tx.message?.instructions?.length || "undefined"}`,
+          );
+        } catch (deserializeError) {
+          const deserializeMsg =
+            deserializeError instanceof Error
+              ? deserializeError.message
+              : String(deserializeError);
+          throw new Error(
+            `Failed to deserialize swap transaction (${txBytes.length} bytes): ${deserializeMsg}`,
+          );
+        }
+
+        if (!tx || !tx.message) {
+          throw new Error(
+            "Deserialized transaction is invalid or has no message",
+          );
+        }
+
+        // Log transaction structure for debugging
+        console.log(
+          `[SwapInterface] Transaction message structure:`,
+          Object.keys(tx.message || {}).slice(0, 10),
+        );
+
+        // Add fee transfer instruction before signing
+        const fromToken = tokenList.find((t) => t.address === fromMint);
+        if (fromToken) {
+          console.log(
+            `[SwapInterface] Attempting to add fee for token: ${fromMint}, amount: ${amount}, decimals: ${fromToken.decimals}`,
+          );
+          try {
+            tx = await addFeeTransferInstruction(
+              tx,
+              fromMint,
+              amount,
+              fromToken.decimals || 6,
+              wallet.publicKey,
+            );
+          } catch (feeError) {
+            const feeErrorMsg =
+              feeError instanceof Error ? feeError.message : String(feeError);
+            console.warn(
+              `[SwapInterface] Failed to add fee instruction: ${feeErrorMsg}. Proceeding without fee.`,
+            );
+            // Don't throw - allow swap to proceed without fee
+          }
+        } else {
+          console.warn(
+            "[SwapInterface] Token not found in list, cannot add fee",
+          );
+        }
+
+        const keypair = getKeypair(wallet);
+        if (!keypair) {
+          throw new Error("Invalid wallet secret key");
+        }
+
+        // Submit signed transaction
+        setStatus("Submitting transaction…");
+        const txSignature = await sendSignedTx(
+          base64FromBytes(tx.serialize()),
+          keypair,
+        );
+
+        setShowSuccess(true);
+        setStatus("");
+        setIsLoading(false);
+
+        setTimeout(() => setShowSuccess(false), 1600);
+
+        setAmount("");
+        setQuote(null);
+      } catch (swapError) {
+        throw new Error(
+          `Swap failed: ${swapError instanceof Error ? swapError.message : String(swapError)}`,
+        );
       }
-
-      setStatus("Preparing transaction…");
-
-      const swapRequest = {
-        quoteResponse: freshQuote,
-        userPublicKey: wallet.publicKey,
-        wrapAndUnwrapSol: true,
-      };
-
-      const swapResult = await jupiterAPI.getSwapTransaction(swapRequest);
-
-      if (!swapResult || !swapResult.swapTransaction) {
-        throw new Error("Swap transaction generation failed");
-      }
-
-      const txBase64 = swapResult.swapTransaction;
-      let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
-
-      const decimals = fromToken.decimals ?? 6;
-      tx = addFeeTransferInstruction(
-        tx,
-        fromMint,
-        amount,
-        decimals,
-        wallet.publicKey,
-      );
-
-      setStatus("Signing transaction…");
-
-      const keypair = getKeypair(wallet);
-      if (!keypair) {
-        throw new Error("Invalid wallet secret key");
-      }
-
-      const txSignature = await sendSignedTx(
-        base64FromBytes(tx.serialize()),
-        keypair,
-      );
-
-      setSuccessMsg(`Swap successful! Tx: ${txSignature.slice(0, 8)}...`);
-      setShowSuccess(true);
-      setStatus("");
-      setIsLoading(false);
-
-      setTimeout(() => setShowSuccess(false), 3000);
-
-      toast({
-        title: "Swap Successful",
-        description: `Transaction: ${txSignature}`,
-        variant: "default",
-      });
-
-      setAmount("");
-      setQuote(null);
     } catch (err) {
       setIsLoading(false);
+      setQuote(null);
+      setStatus("");
 
       const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-
-      setStatus("");
 
       if (
         errorMsg.includes("QUOTE_EXPIRED") ||
         errorMsg.includes("STALE_QUOTE") ||
-        errorMsg.includes("expired")
+        errorMsg.includes("expired") ||
+        errorMsg.includes("Quote expired")
       ) {
         toast({
           title: "Quote Expired",
           description:
-            "The quote expired or changed. Please request a new quote and try again.",
+            "The quote expired or market conditions changed. Please request a new quote and try again.",
           variant: "default",
+        });
+        return null;
+      }
+
+      if (errorMsg.includes("refresh failed") || errorMsg.includes("timeout")) {
+        toast({
+          title: "Network Error",
+          description:
+            "Failed to refresh quote due to network issues. Please try again.",
+          variant: "destructive",
         });
         return null;
       }
@@ -589,10 +845,18 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const executeSwap = async () => {
-    if (!quote || !wallet) {
+    if (!wallet) {
       toast({
         title: "Error",
-        description: "Quote or wallet missing",
+        description: "Wallet not connected",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast({
+        title: "Error",
+        description: "Enter a valid amount",
         variant: "destructive",
       });
       return;
@@ -603,19 +867,19 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   if (!wallet) {
     return (
       <div className="w-full max-w-md mx-auto px-4">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+        <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h3 className="text-lg font-semibold text-gray-900 uppercase">
+              <h3 className="text-lg font-semibold text-white uppercase">
                 FIXORIUM TRADE
               </h3>
             </div>
@@ -626,7 +890,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <Button
               onClick={onBack}
               variant="outline"
-              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase"
+              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase rounded-lg"
             >
               Back
             </Button>
@@ -637,26 +901,20 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
-        {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
-          </div>
-        )}
-
+    <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-[2px] border-0 bg-transparent">
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               aria-label="Back"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="font-semibold text-sm text-gray-900 uppercase">
+            <div className="font-semibold text-sm text-white uppercase">
               FIXORIUM TRADE
             </div>
           </div>
@@ -681,7 +939,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-lg">
                   {tokenList.length > 0 ? (
                     tokenList.map((t) => {
                       const tokenBalance =
@@ -736,7 +994,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+              <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-lg">
                 {tokenList.length > 0 ? (
                   tokenList.map((t) => {
                     const tokenBalance =
@@ -765,65 +1023,87 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           {quote && (
-            <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+            <div
+              className={`p-4 border rounded-lg transition-colors ${
+                isQuoteExpired()
+                  ? "bg-transparent border-red-200"
+                  : isQuoteWarning()
+                    ? "bg-transparent border-yellow-200"
+                    : "bg-transparent border-[#a7f3d0]/30"
+              }`}
+            >
               <div className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">
                     Estimated receive:
                   </span>
-                  <span className="font-semibold text-gray-900">
-                    {quote.outHuman.toFixed(6)} {quote.outToken}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900">
+                      {quote.outHuman.toFixed(6)} {quote.outToken}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                        isQuoteExpired()
+                          ? "bg-red-200 text-red-700"
+                          : isQuoteWarning()
+                            ? "bg-yellow-200 text-yellow-700"
+                            : "bg-green-200 text-green-700"
+                      }`}
+                    >
+                      {isQuoteExpired()
+                        ? "Expired"
+                        : `${getQuoteTimeRemaining()}s`}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs text-gray-500">Route hops:</span>
                   <span className="text-xs text-gray-600">{quote.hops}</span>
                 </div>
+                {quote.priceImpact !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-500">Price impact:</span>
+                    <span
+                      className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}
+                    >
+                      {quote.priceImpact.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {status && (
-            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-4 border-[#a7f3d0] p-3 rounded">
+            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-0 border border-[#a7f3d0] p-3 rounded-lg">
               {status}
             </div>
           )}
 
           <Button
-            onClick={getQuote}
-            disabled={!amount || isLoading}
-            className="w-full bg-gradient-to-r from-[#5a9f6f] to-[#3d7a52] hover:from-[#4a8f5f] hover:to-[#2d6a42] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Get Quote"
-            )}
-          </Button>
-
-          <Button
             onClick={executeSwap}
-            disabled={!amount || !quote || isLoading}
+            disabled={!amount || isLoading || isQuoteExpired()}
             className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              isQuoteExpired()
+                ? "Quote expired - please get a new quote"
+                : isQuoteWarning()
+                  ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                  : ""
+            }
           >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Convert (Swap)"
-            )}
+            {isLoading
+              ? "Processing..."
+              : isQuoteExpired()
+                ? "Quote Expired - Get New Quote"
+                : "Swap (Smart Route)"}
           </Button>
         </div>
 
-        <BloomExplosion show={showSuccess} />
-        {showSuccess && (
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-green-400 mt-32">
-                {successMsg}
-              </h2>
-            </div>
-          </div>
-        )}
+        <SuccessDialog
+          show={showSuccess}
+          onClose={() => setShowSuccess(false)}
+        />
       </div>
     </div>
   );

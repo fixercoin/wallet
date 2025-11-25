@@ -150,10 +150,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     fetchPrices();
 
-    // Set up polling to refresh prices every 300ms for real-time live price updates (SOL-based price for fixercoin)
+    // Set up polling to refresh prices every 20 seconds for live price updates
     const priceRefreshInterval = setInterval(() => {
       fetchPrices();
-    }, 300);
+    }, 20000);
 
     return () => {
       clearInterval(priceRefreshInterval);
@@ -546,7 +546,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       : parseFloat(currentOrder.amount) <= tokenBalance;
 
   return (
-    <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
+    <div className="w-full md:max-w-lg mx-auto px-2 md:px-4 relative z-0 pt-8">
       {wallet && !wallet.secretKey && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900 font-medium">

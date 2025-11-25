@@ -337,21 +337,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return;
     }
 
+    // Ensure secretKey is properly formatted
+    const walletToAdd = ensureWalletSecretKey(newWallet) || newWallet;
+
     // Reset displayed balances/tokens immediately to avoid showing previous wallet data
     setBalance(0);
     balanceRef.current = 0;
     setTokens(DEFAULT_TOKENS);
 
     // If wallet already exists in list, just set active
-    const exists = wallets.find((w) => w.publicKey === newWallet.publicKey);
+    const exists = wallets.find((w) => w.publicKey === walletToAdd.publicKey);
     if (exists) {
-      setActivePublicKey(newWallet.publicKey);
+      setActivePublicKey(walletToAdd.publicKey);
       return;
     }
 
     // Add and set active
-    setWallets((prev) => [newWallet, ...prev]);
-    setActivePublicKey(newWallet.publicKey);
+    setWallets((prev) => [walletToAdd, ...prev]);
+    setActivePublicKey(walletToAdd.publicKey);
   };
 
   const addWallet = (newWallet: WalletData) => {

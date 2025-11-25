@@ -60,8 +60,47 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     total: "0.02",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
+
+  // Fetch live price on component mount or token change
+  useEffect(() => {
+    const fetchLivePrice = async () => {
+      setIsFetchingPrice(true);
+      try {
+        let price: number | null = null;
+
+        if (selectedToken === "FIXERCOIN") {
+          const priceData = await fixercoinPriceService.getFixercoinPrice();
+          if (priceData && priceData.price > 0) {
+            price = priceData.price;
+          }
+        } else if (selectedToken === "SOL") {
+          const solToken = await dexscreenerAPI.getTokenByMint(
+            "So11111111111111111111111111111111111111112",
+          );
+          if (solToken && solToken.priceUsd) {
+            price = parseFloat(solToken.priceUsd);
+          }
+        }
+
+        if (price && price > 0) {
+          setLivePrice(price);
+          console.log(
+            `[MarketMaker] Fetched live price for ${selectedToken}: ${price}`,
+          );
+        }
+      } catch (error) {
+        console.error("[MarketMaker] Error fetching live price:", error);
+      } finally {
+        setIsFetchingPrice(false);
+      }
+    };
+
+    fetchLivePrice();
+  }, [selectedToken]);
 
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),

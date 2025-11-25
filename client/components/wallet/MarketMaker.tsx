@@ -476,7 +476,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           canAffordCurrent ? "text-green-400" : "text-red-400"
                         }
                       >
-                        {(selectedToken === "SOL" ? usdcBalance : solBalance).toFixed(8)}
+                        {(selectedToken === "SOL"
+                          ? usdcBalance
+                          : solBalance
+                        ).toFixed(8)}
                       </span>
                     </div>
                   </div>
@@ -541,7 +544,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE {selectedToken === "SOL" ? "USDC" : selectedToken}
+                      AVAILABLE{" "}
+                      {selectedToken === "SOL" ? "USDC" : selectedToken}
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       <span
@@ -549,7 +553,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           canAffordCurrent ? "text-green-400" : "text-red-400"
                         }
                       >
-                        {(selectedToken === "SOL" ? usdcBalance : tokenBalance).toFixed(8)}
+                        {(selectedToken === "SOL"
+                          ? usdcBalance
+                          : tokenBalance
+                        ).toFixed(8)}
                       </span>
                     </div>
                   </div>

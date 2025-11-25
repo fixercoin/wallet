@@ -34,6 +34,12 @@ const TOKEN_CONFIGS: Record<
     name: "LOCKER",
     pairAddress: undefined,
   },
+  FXM: {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "FXM",
+    pairAddress: undefined,
+  },
 };
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -43,6 +49,7 @@ const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
 const FALLBACK_PRICES: Record<string, number> = {
   FIXERCOIN: 0.00008139, // Real-time market price
   LOCKER: 0.00001112, // Real-time market price
+  FXM: 0.000003567, // Real-time market price
 };
 
 class TokenPairPricingService {
@@ -50,7 +57,7 @@ class TokenPairPricingService {
     string,
     { data: PairPricingData; expiresAt: number }
   >();
-  private readonly CACHE_DURATION = 1500; // 1.5 seconds - match DexTools real-time updates
+  private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
 
   /**
    * Get SOL price in USD from reliable dedicated service
@@ -101,7 +108,7 @@ class TokenPairPricingService {
   }
 
   /**
-   * Get the SOL pair price (how many tokens per 1 SOL)
+   * Get the SOL pair price (how many SOL needed to buy 1 token)
    */
   private async getSolPairPrice(tokenMint: string): Promise<number | null> {
     try {
@@ -113,35 +120,18 @@ class TokenPairPricingService {
         return null;
       }
 
-      // Look for a pair that quotes in SOL
-      // Get the price in USD, then calculate against SOL
-      if (tokenData.priceUsd) {
-        // priceUsd is the direct price
-        // But we want to find the SOL pair specifically
-        // DexScreener returns priceUsd which is already in USD
-        // To get SOL/TOKEN ratio, we can derive it from liquidity or look at pairs
-        const priceUsd = parseFloat(tokenData.priceUsd);
+      // Use priceNative which is the price in SOL (the native pair token on Solana)
+      // priceNative = how many SOL you need to buy 1 token
+      if (tokenData.priceNative) {
+        const priceInSol = parseFloat(tokenData.priceNative);
 
-        // Get SOL price
-        const solPrice = await this.getSolPrice();
-
-        // Calculate how many tokens per 1 SOL
-        // If token is $0.001 and SOL is $176, then 1 SOL = 176,000 tokens
-        if (
-          priceUsd > 0 &&
-          isFinite(priceUsd) &&
-          solPrice > 0 &&
-          isFinite(solPrice)
-        ) {
-          const tokensPerSol = solPrice / priceUsd;
+        if (priceInSol > 0 && isFinite(priceInSol)) {
           console.log(
-            `${tokenMint}: 1 SOL = ${tokensPerSol.toFixed(2)} tokens`,
+            `${tokenMint}: priceNative=${priceInSol.toFixed(8)} SOL (1 token = ${priceInSol.toFixed(8)} SOL)`,
           );
-          return tokensPerSol;
+          return priceInSol; // Return the SOL price directly
         } else {
-          console.warn(
-            `Invalid price data for ${tokenMint}: priceUsd=${priceUsd}, solPrice=${solPrice}`,
-          );
+          console.warn(`Invalid priceNative for ${tokenMint}: ${priceInSol}`);
         }
       }
 
@@ -175,18 +165,19 @@ class TokenPairPricingService {
       // Get SOL price in USD
       const solPrice = await this.getSolPrice();
 
-      // Get the SOL/TOKEN pair ratio
-      const tokensPerSol = await this.getSolPairPrice(config.mint);
+      // Get the SOL pair price (how many SOL to buy 1 token)
+      const priceInSol = await this.getSolPairPrice(config.mint);
 
-      if (!tokensPerSol || tokensPerSol <= 0) {
+      if (!priceInSol || priceInSol <= 0) {
         console.warn(
           `Could not determine SOL pair for ${symbol}, using fallback`,
         );
         return this.getFallbackPriceData(symbol, solPrice);
       }
 
-      // Calculate token price in USD
-      const derivedPrice = solPrice / tokensPerSol;
+      // Calculate token price in USD by multiplying SOL price by the SOL ratio
+      // derivedPrice = (how many SOL per token) * (SOL price in USD)
+      const derivedPrice = priceInSol * solPrice;
 
       // Fetch additional metadata from DexScreener
       const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
@@ -195,7 +186,7 @@ class TokenPairPricingService {
         tokenAddress: config.mint,
         tokenSymbol: symbol,
         solPrice,
-        pairRatio: tokensPerSol,
+        pairRatio: 1 / priceInSol, // How many tokens per 1 SOL
         derivedPrice: derivedPrice > 0 ? derivedPrice : FALLBACK_PRICES[symbol],
         priceChange24h: tokenData?.priceChange?.h24 || 0,
         volume24h: tokenData?.volume?.h24 || 0,
@@ -210,7 +201,7 @@ class TokenPairPricingService {
       });
 
       console.log(
-        `${symbol} derived price: $${priceData.derivedPrice.toFixed(8)} (1 SOL = ${tokensPerSol.toFixed(2)} ${symbol})`,
+        `${symbol} derived price: $${priceData.derivedPrice.toFixed(8)} (1 ${symbol} = ${priceInSol.toFixed(8)} SOL, SOL = $${solPrice.toFixed(2)})`,
       );
 
       return priceData;
@@ -222,17 +213,19 @@ class TokenPairPricingService {
   }
 
   /**
-   * Get both FIXERCOIN and LOCKER prices
+   * Get FIXERCOIN, LOCKER, and FXM prices
    */
   async getAllDerivedPrices(): Promise<Record<string, PairPricingData | null>> {
-    const [fixercoinData, lockerData] = await Promise.all([
+    const [fixercoinData, lockerData, fxmData] = await Promise.all([
       this.getDerivedPrice("FIXERCOIN"),
       this.getDerivedPrice("LOCKER"),
+      this.getDerivedPrice("FXM"),
     ]);
 
     return {
       FIXERCOIN: fixercoinData,
       LOCKER: lockerData,
+      FXM: fxmData,
     };
   }
 

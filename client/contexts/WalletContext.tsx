@@ -19,6 +19,7 @@ import { solPriceService } from "@/lib/services/sol-price";
 import { birdeyeAPI } from "@/lib/services/birdeye";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
+import { fxmPriceService } from "@/lib/services/fxm-price";
 import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
@@ -468,6 +469,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Clear price service caches to force fresh fetches
     fixercoinPriceService.clearCache();
     lockerPriceService.clearCache();
+    fxmPriceService.clearCache();
     solPriceService.clearCache();
     birdeyeAPI.clearCache();
 
@@ -634,14 +636,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
-        // Fetch FIXERCOIN and LOCKER prices using specialized services
+        // Fetch FIXERCOIN, LOCKER, and FXM prices using specialized services
         const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+        const fxmMint = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
 
         try {
-          const [fixercoinData, lockerData] = await Promise.all([
+          const [fixercoinData, lockerData, fxmData] = await Promise.all([
             fixercoinPriceService.getFixercoinPrice(),
             lockerPriceService.getLockerPrice(),
+            fxmPriceService.getFXMPrice(),
           ]);
 
           if (
@@ -677,8 +681,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               lockerData,
             );
           }
+
+          if (fxmData && fxmData.price > 0 && isFinite(fxmData.price)) {
+            prices[fxmMint] = fxmData.price;
+            changeMap[fxmMint] = fxmData.priceChange24h;
+            console.log(
+              `[WalletContext] ✅ FXM price: $${fxmData.price.toFixed(8)} (24h: ${fxmData.priceChange24h.toFixed(2)}%) via ${fxmData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price:`,
+              fxmData,
+            );
+          }
         } catch (e) {
-          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER prices:", e);
+          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER/FXM prices:", e);
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint

@@ -1,21 +1,20 @@
 import { tokenPairPricingService } from "./token-pair-pricing";
 
-export interface FixercoinPriceData {
+export interface FXMPriceData {
   price: number;
   priceChange24h: number;
   volume24h: number;
-  marketCap?: number;
   liquidity?: number;
   lastUpdated: Date;
   derivationMethod?: string;
 }
 
-class FixercoinPriceService {
-  private cachedData: FixercoinPriceData | null = null;
+class FXMPriceService {
+  private cachedData: FXMPriceData | null = null;
   private lastFetchTime: Date | null = null;
   private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
 
-  async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
+  async getFXMPrice(): Promise<FXMPriceData | null> {
     try {
       // Check if we have valid cached data (only from live prices, not fallbacks)
       if (
@@ -25,32 +24,30 @@ class FixercoinPriceService {
       ) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
-          console.log("Returning cached FIXERCOIN price data");
+          console.log("Returning cached FXM price data");
           return this.cachedData;
         }
       }
 
       console.log(
-        "Fetching fresh FIXERCOIN price using SOL pair derivation (DexTools logic)...",
+        "Fetching fresh FXM price using derived pricing (SOL pair)...",
       );
 
-      // Use derived pricing based on SOL pair - matches DexTools methodology
-      // If 1 SOL = X FIXERCOIN tokens, then 1 FIXERCOIN = (1 SOL price USD) / X tokens
-      const pairingData =
-        await tokenPairPricingService.getDerivedPrice("FIXERCOIN");
+      // Use derived pricing based on SOL pair
+      const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
 
       if (!pairingData) {
-        console.warn("Failed to derive FIXERCOIN price from SOL pair");
+        console.warn("Failed to derive FXM price");
         return this.getFallbackPrice();
       }
 
-      const priceData: FixercoinPriceData = {
+      const priceData: FXMPriceData = {
         price: pairingData.derivedPrice,
         priceChange24h: pairingData.priceChange24h,
         volume24h: pairingData.volume24h,
         liquidity: pairingData.liquidity,
         lastUpdated: pairingData.lastUpdated,
-        derivationMethod: `DexTools logic: 1 SOL = ${pairingData.pairRatio.toFixed(0)} FIXERCOIN → 1 FIXERCOIN = $${pairingData.derivedPrice.toFixed(8)}`,
+        derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} FXM)`,
       };
 
       // Only cache if we got valid, live price data (not fallback)
@@ -62,7 +59,7 @@ class FixercoinPriceService {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(
-          `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
+          `✅ FXM price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
         return priceData;
       } else {
@@ -73,16 +70,16 @@ class FixercoinPriceService {
         return this.getFallbackPrice();
       }
     } catch (error) {
-      console.error("Error fetching FIXERCOIN price:", error);
+      console.error("Error fetching FXM price:", error);
       // Don't cache fallback prices - force retry next time
       return this.getFallbackPrice();
     }
   }
 
-  private getFallbackPrice(): FixercoinPriceData {
-    console.log("Using fallback FIXERCOIN price");
+  private getFallbackPrice(): FXMPriceData {
+    console.log("Using fallback FXM price");
     return {
-      price: 0.00008139,
+      price: 0.000003567,
       priceChange24h: 0,
       volume24h: 0,
       lastUpdated: new Date(),
@@ -92,18 +89,16 @@ class FixercoinPriceService {
 
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
-    const data = await this.getFixercoinPrice();
-    return data?.price || 0.00008139;
+    const data = await this.getFXMPrice();
+    return data?.price || 0.000003567;
   }
 
   // Clear cache to force fresh fetch
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    console.log(
-      "[FixercoinPriceService] Cache cleared - next fetch will be fresh",
-    );
+    tokenPairPricingService.clearTokenCache("FXM");
   }
 }
 
-export const fixercoinPriceService = new FixercoinPriceService();
+export const fxmPriceService = new FXMPriceService();

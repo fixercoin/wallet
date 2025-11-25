@@ -2,9 +2,8 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
-  Connection,
 } from "@solana/web3.js";
-import { WalletData } from "@/lib/wallet-proxy";
+import { WalletData } from "@/lib/wallet";
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const FEE_AMOUNT_SOL = 0.0007;

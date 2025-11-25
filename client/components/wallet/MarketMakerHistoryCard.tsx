@@ -66,7 +66,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
   if (!session || allOrders.length === 0) {
     return (
-      <div className="bg-transparent border border-gray-700 rounded-lg p-4">
+      <div className="bg-transparent border border-gray-700 rounded-lg p-4 w-full">
         <div className="text-center text-gray-400 text-sm py-4">
           <Clock className="h-5 w-5 mx-auto mb-2 opacity-50" />
           No order history yet

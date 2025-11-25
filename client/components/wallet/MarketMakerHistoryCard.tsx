@@ -39,6 +39,31 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
     return () => clearInterval(refreshInterval);
   }, [selectedToken]);
 
+  const handleDeleteOrder = (orderId: string, orderType: "buy" | "sell") => {
+    const currentSession = botOrdersStorage.getCurrentSession();
+    if (!currentSession) return;
+
+    if (orderType === "buy") {
+      currentSession.buyOrders = currentSession.buyOrders.filter(
+        (o) => o.id !== orderId,
+      );
+    } else {
+      currentSession.sellOrders = currentSession.sellOrders.filter(
+        (o) => o.id !== orderId,
+      );
+    }
+
+    botOrdersStorage.saveSession(currentSession);
+    setSession(currentSession);
+
+    // Trigger re-render of orders list
+    const combined = [
+      ...currentSession.buyOrders,
+      ...currentSession.sellOrders,
+    ].sort((a, b) => b.timestamp - a.timestamp);
+    setAllOrders(combined);
+  };
+
   if (!session || allOrders.length === 0) {
     return (
       <div className="bg-transparent border border-gray-700 rounded-lg p-4">

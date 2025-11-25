@@ -1,4 +1,4 @@
-import { tokenPairPricingService } from "./token-pair-pricing";
+import { dexscreenerAPI } from "./dexscreener";
 
 export interface FixercoinPriceData {
   price: number;
@@ -13,7 +13,8 @@ export interface FixercoinPriceData {
 class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 5000; // 5 seconds cache for responsive limit orders
+  private readonly CACHE_DURATION = 3000; // 3 seconds cache for responsive limit orders
+  private readonly FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 
   async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
     try {
@@ -31,48 +32,47 @@ class FixercoinPriceService {
       }
 
       console.log(
-        "Fetching fresh FIXERCOIN price using derived pricing (SOL pair)...",
+        "Fetching fresh FIXERCOIN price directly from DexScreener API...",
       );
 
-      // Use derived pricing based on SOL pair
-      const pairingData =
-        await tokenPairPricingService.getDerivedPrice("FIXERCOIN");
+      // Fetch directly from DexScreener for most accurate real-time price
+      const tokenData = await dexscreenerAPI.getTokenByMint(this.FIXERCOIN_MINT);
 
-      if (!pairingData) {
-        console.warn("Failed to derive FIXERCOIN price");
+      if (!tokenData || !tokenData.priceUsd) {
+        console.warn("Failed to fetch FIXERCOIN price from DexScreener");
         return this.getFallbackPrice();
       }
 
+      const price = parseFloat(tokenData.priceUsd);
+      const priceChange24h = tokenData.priceChange24h || 0;
+      const volume24h = tokenData.volume24h || 0;
+
       const priceData: FixercoinPriceData = {
-        price: pairingData.derivedPrice,
-        priceChange24h: pairingData.priceChange24h,
-        volume24h: pairingData.volume24h,
-        liquidity: pairingData.liquidity,
-        lastUpdated: pairingData.lastUpdated,
-        derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(2)} FIXERCOIN)`,
+        price,
+        priceChange24h,
+        volume24h,
+        liquidity: tokenData.liquidity,
+        lastUpdated: new Date(),
+        derivationMethod: "DexScreener API",
       };
 
       // Only cache if we got valid, live price data (not fallback)
-      if (
-        priceData.price > 0 &&
-        isFinite(priceData.price) &&
-        pairingData.derivedPrice > 0
-      ) {
+      if (price > 0 && isFinite(price)) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(
-          `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
+          `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via DexScreener`,
         );
         return priceData;
       } else {
         console.warn(
-          "Invalid price data from derivation, using fallback (not cached)",
+          "Invalid price data from DexScreener, using fallback (not cached)",
         );
         // Don't cache fallback prices so they retry on next call
         return this.getFallbackPrice();
       }
     } catch (error) {
-      console.error("Error fetching FIXERCOIN price:", error);
+      console.error("Error fetching FIXERCOIN price from DexScreener:", error);
       // Don't cache fallback prices - force retry next time
       return this.getFallbackPrice();
     }

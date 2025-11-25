@@ -469,6 +469,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Clear price service caches to force fresh fetches
     fixercoinPriceService.clearCache();
     lockerPriceService.clearCache();
+    fxmPriceService.clearCache();
     solPriceService.clearCache();
     birdeyeAPI.clearCache();
 

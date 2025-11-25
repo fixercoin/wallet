@@ -151,16 +151,16 @@ export default function MarketMakerHistory() {
               <div className="text-center">
                 <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Live Price</div>
                 <div className="text-2xl font-bold text-green-400">
-                  ${sessionPrices[selectedSession.id] ? formatPrice(sessionPrices[selectedSession.id]) : "Loading..."}
+                  ${sessionPrices[selectedSession.id] ? formatTokenPrice(sessionPrices[selectedSession.id], selectedSession.token) : "Loading..."}
                 </div>
               </div>
               {sessionPrices[selectedSession.id] && (
                 <div className="text-center border-t border-gray-700/50 pt-3">
                   <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Target Price</div>
                   <div className="text-2xl font-bold text-emerald-300">
-                    ${formatPrice(sessionPrices[selectedSession.id] + selectedSession.priceSpread)}
+                    ${formatTokenPrice(sessionPrices[selectedSession.id] + selectedSession.priceSpread, selectedSession.token)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">Spread: ${formatPrice(selectedSession.priceSpread)}</div>
+                  <div className="text-xs text-gray-500 mt-2">Spread: ${formatTokenPrice(selectedSession.priceSpread, selectedSession.token)}</div>
                 </div>
               )}
             </div>
@@ -235,7 +235,7 @@ export default function MarketMakerHistory() {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Price</span>
                         <span className="text-white">
-                          ${formatPrice(order.buyPrice)}
+                          ${formatTokenPrice(order.buyPrice, selectedSession.token)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
@@ -292,13 +292,13 @@ export default function MarketMakerHistory() {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Buy Price</span>
                         <span className="text-white">
-                          ${formatPrice(order.buyPrice)}
+                          ${formatTokenPrice(order.buyPrice, selectedSession.token)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Sell Price</span>
                         <span className="text-white">
-                          ${formatPrice(order.actualSellPrice || order.targetSellPrice)}
+                          ${formatTokenPrice(order.actualSellPrice || order.targetSellPrice, selectedSession.token)}
                         </span>
                       </div>
                       {order.tokenAmount && (
@@ -404,13 +404,13 @@ export default function MarketMakerHistory() {
                           <div className="text-center">
                             <div className="text-gray-400 mb-1">Live Price</div>
                             <div className="font-semibold text-green-400">
-                              ${formatPrice(sessionPrices[session.id])}
+                              ${formatTokenPrice(sessionPrices[session.id], session.token)}
                             </div>
                           </div>
                           <div className="text-center">
                             <div className="text-gray-400 mb-1">Target Price</div>
                             <div className="font-semibold text-emerald-300">
-                              ${formatPrice(sessionPrices[session.id] + session.priceSpread)}
+                              ${formatTokenPrice(sessionPrices[session.id] + session.priceSpread, session.token)}
                             </div>
                           </div>
                         </div>

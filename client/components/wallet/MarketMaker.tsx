@@ -11,10 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 interface MarketMakerProps {
   onBack: () => void;

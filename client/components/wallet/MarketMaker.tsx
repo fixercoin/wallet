@@ -224,6 +224,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </div>
           </div>
 
+          <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+            <div className="text-xs text-blue-300">
+              <p className="font-semibold mb-1">Fee Structure:</p>
+              <p>• 0.0007 SOL per buy trade execution</p>
+              <p>• 0.0007 SOL per sell trade execution</p>
+              <p>• Fees deducted when trade is executed</p>
+            </div>
+          </div>
+
           <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
             <div
               className="text-gray-300"

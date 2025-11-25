@@ -51,7 +51,8 @@ export default function RunningMarketMaker() {
       try {
         const token = await dexscreenerAPI.getTokenByMint(session.tokenMint);
         if (token && token.priceUsd) {
-          setCurrentPrice(parseFloat(token.priceUsd));
+          const price = parseFloat(token.priceUsd);
+          setCurrentPrice(price);
         }
       } catch (error) {
         console.error("Error fetching price:", error);
@@ -59,6 +60,7 @@ export default function RunningMarketMaker() {
     };
 
     fetchPrice();
+    checkAndConvertPendingOrders();
 
     refreshIntervalRef.current = setInterval(() => {
       fetchPrice();
@@ -70,7 +72,7 @@ export default function RunningMarketMaker() {
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [session]);
+  }, [session, checkAndConvertPendingOrders]);
 
   const checkAndConvertPendingOrders = useCallback(() => {
     if (!session || !currentPrice) return;

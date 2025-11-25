@@ -150,10 +150,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     fetchPrices();
 
-    // Set up polling to refresh prices every 1.5 seconds for real-time DexTools-like updates
+    // Set up polling to refresh prices every 300ms for real-time live price updates (SOL-based price for fixercoin)
     const priceRefreshInterval = setInterval(() => {
       fetchPrices();
-    }, 1500);
+    }, 300);
 
     return () => {
       clearInterval(priceRefreshInterval);

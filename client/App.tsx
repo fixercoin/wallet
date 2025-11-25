@@ -175,7 +175,10 @@ function AppRoutes() {
       <Route path="/dapps/view" element={<DappView />} />
       <Route path="/select-language" element={<SelectLanguagePage />} />
       <Route path="/select-currency" element={<SelectCurrencyPage />} />
-      <Route path="/market-maker/running/:sessionId" element={<RunningMarketMaker />} />
+      <Route
+        path="/market-maker/running/:sessionId"
+        element={<RunningMarketMaker />}
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

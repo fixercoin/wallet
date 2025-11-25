@@ -2,10 +2,21 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Pause, Play, X, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Pause,
+  Play,
+  X,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
-import { botOrdersStorage, BotSession, BotOrder } from "@/lib/bot-orders-storage";
+import {
+  botOrdersStorage,
+  BotSession,
+  BotOrder,
+} from "@/lib/bot-orders-storage";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { feeTransfer } from "@/lib/fee-transfer";
 import { Keypair, PublicKey } from "@solana/web3.js";
@@ -25,10 +36,7 @@ export default function RunningMarketMaker() {
   const solToken = tokens.find((t) => t.symbol === "SOL");
   const solBalance = solToken?.balance || 0;
 
-  const TOKEN_CONFIGS: Record<
-    string,
-    { symbol: string; decimals: number }
-  > = {
+  const TOKEN_CONFIGS: Record<string, { symbol: string; decimals: number }> = {
     FIXERCOIN: { symbol: "FIXERCOIN", decimals: 6 },
     SOL: { symbol: "SOL", decimals: 9 },
   };
@@ -121,7 +129,8 @@ export default function RunningMarketMaker() {
         const serialized = tx.serialize();
         const encoded = Buffer.from(serialized).toString("base64");
 
-        const apiUrl = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "") + "/api/rpc";
+        const apiUrl =
+          (process.env.REACT_APP_API_URL || "").replace(/\/$/, "") + "/api/rpc";
         const response = await fetch(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -229,10 +238,7 @@ export default function RunningMarketMaker() {
     setSession(updatedSession);
 
     toast({
-      title:
-        updatedSession.status === "running"
-          ? "Bot Resumed"
-          : "Bot Paused",
+      title: updatedSession.status === "running" ? "Bot Resumed" : "Bot Paused",
     });
   };
 
@@ -266,12 +272,15 @@ export default function RunningMarketMaker() {
     );
   }
 
-  const tokenConfig = TOKEN_CONFIGS[session.token] || { symbol: session.token, decimals: 9 };
+  const tokenConfig = TOKEN_CONFIGS[session.token] || {
+    symbol: session.token,
+    decimals: 9,
+  };
   const pendingBuyOrders = session.buyOrders.filter(
-    (o) => o.status === "pending"
+    (o) => o.status === "pending",
   );
   const completedBuyOrders = session.buyOrders.filter(
-    (o) => o.status === "completed"
+    (o) => o.status === "completed",
   );
 
   return (
@@ -341,7 +350,7 @@ export default function RunningMarketMaker() {
             <div className="text-2xl font-bold text-green-400">
               {currentPrice
                 ? (session.token === "FIXERCOIN"
-                    ? currentPrice + 0.0000020
+                    ? currentPrice + 0.000002
                     : currentPrice + 2
                   ).toFixed(8)
                 : "Loading..."}
@@ -379,7 +388,7 @@ export default function RunningMarketMaker() {
             <div className="space-y-2">
               {completedBuyOrders.map((order) => {
                 const correspondingSell = session.sellOrders.find((s) =>
-                  s.id.includes(order.id)
+                  s.id.includes(order.id),
                 );
                 return (
                   <OrderDetailCard
@@ -404,9 +413,7 @@ function OrderCard({ order }: { order: BotOrder }) {
     <div className="p-3 border border-gray-700/40 rounded-lg bg-gray-800/30">
       <div className="flex justify-between items-start gap-2">
         <div className="flex-1 text-xs">
-          <div className="text-gray-300 font-mono">
-            #{order.id.slice(0, 8)}
-          </div>
+          <div className="text-gray-300 font-mono">#{order.id.slice(0, 8)}</div>
           <div className="text-gray-500 mt-1">
             Buy @ {order.buyPrice.toFixed(8)}
           </div>
@@ -507,7 +514,9 @@ function OrderDetailCard({
                     disabled={executingFee === sellOrder.id}
                     className="text-xs bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white px-2 py-1 rounded transition-colors"
                   >
-                    {executingFee === sellOrder.id ? "Deducting..." : "Deduct Fee"}
+                    {executingFee === sellOrder.id
+                      ? "Deducting..."
+                      : "Deduct Fee"}
                   </button>
                 )}
               </div>

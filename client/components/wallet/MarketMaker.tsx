@@ -26,7 +26,7 @@ const TOKEN_CONFIGS: Record<
   FIXERCOIN: {
     name: "FIXERCOIN",
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    spread: 0.0000020,
+    spread: 0.000002,
     decimals: 6,
   },
   SOL: {
@@ -164,7 +164,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               Token Address
             </Label>
-            <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as TokenType)}>
+            <Select
+              value={selectedToken}
+              onValueChange={(value) => setSelectedToken(value as TokenType)}
+            >
               <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
                 <SelectValue />
               </SelectTrigger>
@@ -216,9 +219,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Label>
             <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
               <span className="text-sm font-semibold text-green-400">
-                {selectedToken === "FIXERCOIN"
-                  ? "+0.00000200"
-                  : "+2"}{" "}
+                {selectedToken === "FIXERCOIN" ? "+0.00000200" : "+2"}{" "}
                 {selectedToken}
               </span>
             </div>
@@ -247,10 +248,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 {solBalance.toFixed(4)}
               </span>{" "}
               | REQUIRED :{" "}
-              <span className="text-white">{totalNeeded.toFixed(4)}</span> | NEED :{" "}
-              <span className="text-red-400">
-                {solNeeded.toFixed(4)}
-              </span>
+              <span className="text-white">{totalNeeded.toFixed(4)}</span> |
+              NEED :{" "}
+              <span className="text-red-400">{solNeeded.toFixed(4)}</span>
             </div>
           </div>
 

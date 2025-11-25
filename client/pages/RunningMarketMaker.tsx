@@ -14,11 +14,16 @@ export default function RunningMarketMaker() {
   const { sessionId = "" } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { wallet, tokens } = useWallet();
 
   const [session, setSession] = useState<BotSession | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [executingFee, setExecutingFee] = useState<string | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const solToken = tokens.find((t) => t.symbol === "SOL");
+  const solBalance = solToken?.balance || 0;
 
   const TOKEN_CONFIGS: Record<
     string,
